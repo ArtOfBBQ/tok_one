@@ -2,7 +2,7 @@
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 
-T1SoundSettings * T1_sound_settings = NULL;
+T1SoundSettings * T1_audio_state = NULL;
 
 #define PERMASOUND_NAME_MAX 64
 typedef struct PermaSound {
@@ -22,20 +22,20 @@ int32_t all_samples_size = 0;
 void T1_audio_init(
     void * (* arg_malloc_function)(size_t size))
 {
-    T1_sound_settings                 = arg_malloc_function(sizeof(T1SoundSettings));
-    T1_sound_settings->tone_frequency = 261.6f * 2; // 261.6 ~= Middle C frequency
-    T1_sound_settings->volume         = 0.08f;
-    T1_sound_settings->sample_rate    = 44100.0f;
-    T1_sound_settings->play_cursor    = 0;
-    T1_sound_settings->callback_runs  = 0;
+    T1_audio_state                 = arg_malloc_function(sizeof(T1SoundSettings));
+    T1_audio_state->tone_frequency = 261.6f * 2; // 261.6 ~= Middle C frequency
+    T1_audio_state->volume         = 0.08f;
+    T1_audio_state->sample_rate    = 44100.0f;
+    T1_audio_state->play_cursor    = 0;
+    T1_audio_state->callback_runs  = 0;
     // sound_settings->platform_buffer_size_bytes = platform_buffer_size;
-    T1_sound_settings->global_buffer_size_bytes = 41000 * 45 * 2;
-    log_assert(T1_sound_settings->global_buffer_size_bytes % 2 == 0);
-    T1_sound_settings->global_samples_size = T1_sound_settings->
+    T1_audio_state->global_buffer_size_bytes = 41000 * 45 * 2;
+    log_assert(T1_audio_state->global_buffer_size_bytes % 2 == 0);
+    T1_audio_state->global_samples_size = T1_audio_state->
         global_buffer_size_bytes / 2;
     
-    T1_sound_settings->samples_buffer = arg_malloc_function(
-        T1_sound_settings->global_buffer_size_bytes);
+    T1_audio_state->samples_buffer = arg_malloc_function(
+        T1_audio_state->global_buffer_size_bytes);
     
     T1_audio_clear_global_buffer();
     
@@ -60,22 +60,22 @@ void T1_audio_consume_int16_samples(
     const uint32_t samples_to_copy)
 {
     for (uint32_t _ = 0; _ < samples_to_copy; _++) {
-        uint32_t next_i = (T1_sound_settings->play_cursor) %
-            T1_sound_settings->global_samples_size;
+        uint32_t next_i = (T1_audio_state->play_cursor) %
+            T1_audio_state->global_samples_size;
         
         int32_t new_val = (int32_t)(
-            (float)T1_sound_settings->samples_buffer[next_i] *
-                T1_sound_settings->volume);
+            (float)T1_audio_state->samples_buffer[next_i] *
+                T1_audio_state->volume);
         
-        T1_sound_settings->samples_buffer[next_i] = 0;
+        T1_audio_state->samples_buffer[next_i] = 0;
         
         new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
         new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
         *recipient++ = (int16_t)new_val;
-        T1_sound_settings->play_cursor += 1;
+        T1_audio_state->play_cursor += 1;
     }
     
-    log_assert(T1_sound_settings->play_cursor < UINT64_MAX - 1000000);
+    log_assert(T1_audio_state->play_cursor < UINT64_MAX - 1000000);
 }
 
 #define DEFAULT_WRITING_OFFSET 12
@@ -85,19 +85,19 @@ void T1_audio_add_at_offset(
     const uint64_t play_cursor_offset,
     const float volume_mult)
 {
-    assert(data_size < (T1_sound_settings->global_buffer_size_bytes / 2));
+    assert(data_size < (T1_audio_state->global_buffer_size_bytes / 2));
     
     for (uint32_t i = 0; i < data_size; i++) {
         float new_value = data[i];
         new_value = new_value * volume_mult;
-        new_value += T1_sound_settings->samples_buffer[
-            (T1_sound_settings->play_cursor + i + play_cursor_offset) %
-                    T1_sound_settings->global_samples_size];
+        new_value += T1_audio_state->samples_buffer[
+            (T1_audio_state->play_cursor + i + play_cursor_offset) %
+                    T1_audio_state->global_samples_size];
         new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
         new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
-        T1_sound_settings->samples_buffer[
-            (T1_sound_settings->play_cursor + i + play_cursor_offset) %
-                T1_sound_settings->global_samples_size] = (int16_t)new_value;
+        T1_audio_state->samples_buffer[
+            (T1_audio_state->play_cursor + i + play_cursor_offset) %
+                T1_audio_state->global_samples_size] = (int16_t)new_value;
     }
 }
 
@@ -122,7 +122,7 @@ void T1_audio_copy(
     const uint32_t data_size,
     const bool32_t is_music)
 {
-    assert(data_size < T1_sound_settings->global_buffer_size_bytes);
+    assert(data_size < T1_audio_state->global_buffer_size_bytes);
     
     T1_audio_copy_at_offset(
         /* int16_t * data: */
@@ -141,18 +141,18 @@ void T1_audio_copy_at_offset(
     const uint64_t play_cursor_offset,
     const bool32_t is_music)
 {
-    assert(samples_size < T1_sound_settings->global_buffer_size_bytes);
+    assert(samples_size < T1_audio_state->global_buffer_size_bytes);
     
     for (uint32_t i = 0; i < samples_size; i++) {
         int32_t new_value = (int32_t)(samples[i] * (
             is_music ?
-                T1_sound_settings->music_volume :
-                T1_sound_settings->sfx_volume));
+                T1_audio_state->music_volume :
+                T1_audio_state->sfx_volume));
         new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
         new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
-        T1_sound_settings->samples_buffer[
+        T1_audio_state->samples_buffer[
             (i + play_cursor_offset) %
-                T1_sound_settings->global_samples_size] = (int16_t)new_value;
+                T1_audio_state->global_samples_size] = (int16_t)new_value;
     }
 }
 
@@ -293,9 +293,9 @@ void T1_audio_copy_permasound_to_global_buffer(
 void T1_audio_clear_global_buffer(void)
 {
     T1_std_memset(
-        T1_sound_settings->samples_buffer,
+        T1_audio_state->samples_buffer,
         0,
-        T1_sound_settings->global_buffer_size_bytes);
+        T1_audio_state->global_buffer_size_bytes);
 }
 
 int32_t T1_audio_get_permasound_id_or_register_new(

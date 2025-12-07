@@ -19,7 +19,7 @@ typedef struct {
     float sample_rate;
 } T1SoundSettings;
 
-extern T1SoundSettings * T1_sound_settings;
+extern T1SoundSettings * T1_audio_state;
 
 void T1_audio_init(
     void * (* arg_malloc_function)(size_t size));

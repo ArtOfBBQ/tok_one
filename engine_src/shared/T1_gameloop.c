@@ -286,7 +286,8 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_TERMINAL_ACTIVE undefined"
         #endif
         
-        T1_clientlogic_update(T1_engine_globals->elapsed);
+        T1_clientlogic_update(
+            T1_engine_globals->elapsed);
         
         clean_deleted_lights();
         

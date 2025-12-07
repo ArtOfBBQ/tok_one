@@ -256,7 +256,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
     
     log_assert(to_commit->duration_us > 0);
     
-    if (to_commit->delete_other_anims_targeting_same_object_id_on_commit)
+    if (to_commit->delete_other_anims_targeting_zsprite)
     {
         for (
             uint32_t anim_i = 0;

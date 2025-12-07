@@ -566,7 +566,7 @@ static bool32_t evaluate_terminal_command(
     {
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         unsigned char * recipient =
-            T1_mem_malloc_from_managed(T1_sound_settings->global_buffer_size_bytes + 100);
+            T1_mem_malloc_from_managed(T1_audio_state->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
         
         T1_wav_samples_to_wav(
@@ -575,11 +575,11 @@ static bool32_t evaluate_terminal_command(
             /* uint32_t * recipient_size: */
                 &recipient_size,
             /* const uint32_t recipient_cap: */
-                T1_sound_settings->global_buffer_size_bytes + 100,
+                T1_audio_state->global_buffer_size_bytes + 100,
             /* int16_t * samples: */
-                T1_sound_settings->samples_buffer,
+                T1_audio_state->samples_buffer,
             /* const uint32_t samples_size: */
-                T1_sound_settings->global_samples_size);
+                T1_audio_state->global_samples_size);
         
         T1_std_strcpy_cap(
             response,

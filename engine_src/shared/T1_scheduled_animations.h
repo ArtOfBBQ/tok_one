@@ -61,7 +61,7 @@ typedef struct T1ScheduledAnimation {
     
     bool32_t endpoints_not_deltas;
     
-    bool32_t delete_other_anims_targeting_same_object_id_on_commit;
+    bool32_t delete_other_anims_targeting_zsprite;
     bool32_t deleted;
     bool32_t committed;
 } T1ScheduledAnimation;

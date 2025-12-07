@@ -72,7 +72,9 @@ void T1_clientlogic_threadmain(int32_t threadmain_id);
 /*
 will be called once per frame, before rendering that frame
 */
-void T1_clientlogic_update(uint64_t elapsed_us);
+void T1_clientlogic_update(
+    uint64_t elapsed_us);
+
 /*
 will be called once per frame, after rendering that frame
 */

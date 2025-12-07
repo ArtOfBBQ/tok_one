@@ -307,8 +307,8 @@ void T1_appinit_before_gpu_init(
         T1_engine_globals->upcoming_fullscreen_request =
             T1_engine_globals->fullscreen;
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
-        T1_sound_settings->music_volume = engine_save_file->music_volume;
-        T1_sound_settings->sfx_volume = engine_save_file->sound_volume;
+        T1_audio_state->music_volume = engine_save_file->music_volume;
+        T1_audio_state->sfx_volume = engine_save_file->sound_volume;
         #elif T1_AUDIO_ACTIVE == T1_INACTIVE
         // Pass
         #else
@@ -859,8 +859,8 @@ void T1_appinit_shutdown(void)
     #if T1_ENGINE_SAVEFILE_ACTIVE
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    engine_save_file->music_volume = T1_sound_settings->music_volume;
-    engine_save_file->sound_volume = T1_sound_settings->sfx_volume;
+    engine_save_file->music_volume = T1_audio_state->music_volume;
+    engine_save_file->sound_volume = T1_audio_state->sfx_volume;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     #else
     #error "T1_AUDIO_ACTIVE undefined!"
