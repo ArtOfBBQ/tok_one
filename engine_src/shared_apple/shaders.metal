@@ -670,15 +670,17 @@ float4 get_lit(
         #endif
     }
     
+    lit_color =
+        ((1.0f - zsprite->ignore_lighting) *
+            lit_color) +
+        (zsprite->ignore_lighting *
+            ignore_lighting_color);
+    
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],
         zsprite->bonus_rgb[1],
         zsprite->bonus_rgb[2],
         0.0f);
-    
-    lit_color =
-        ((1.0f - zsprite->ignore_lighting) * lit_color) +
-        (zsprite->ignore_lighting * ignore_lighting_color);
     
     float4 rgba_cap = vector_float4(
         material->rgb_cap[0],
