@@ -106,6 +106,13 @@ static void show_dead_simple_text(
 void T1_gameloop_update_before_render_pass(
     T1GPUFrame * frame_data)
 {
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("T1_gameloop_update_before_render_pass()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+    
     T1_engine_globals->elapsed = T1_engine_globals->this_frame_timestamp_us -
         gameloop_previous_time;
     
@@ -150,19 +157,24 @@ void T1_gameloop_update_before_render_pass(
             "%");
         show_dead_simple_text(frame_data, loading_text, 1);
         
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         return;
     }
     
     if (!T1_gameloop_active) {
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         return;
     }
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("gameloop_update()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
     
     log_assert(frame_data->lights != NULL);
     log_assert(frame_data->camera != NULL);
@@ -174,9 +186,8 @@ void T1_gameloop_update_before_render_pass(
         gameloop_previous_time = T1_engine_globals->this_frame_timestamp_us;
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("gameloop_update()");
+        T1_profiler_end("T1_gameloop_update_before_render_pass()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        // Pass
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
@@ -195,6 +206,13 @@ void T1_gameloop_update_before_render_pass(
             frame_data,
             crashed_top_of_screen_msg,
             T1_engine_globals->elapsed);
+        
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         return;
     }
     
@@ -215,9 +233,8 @@ void T1_gameloop_update_before_render_pass(
             log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end("gameloop_update()");
+            T1_profiler_end("T1_gameloop_update_before_render_pass()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-            // Pass
             #else
             #error "T1_PROFILER_ACTIVE undefined"
             #endif
@@ -286,8 +303,20 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_TERMINAL_ACTIVE undefined"
         #endif
         
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_start("T1_clientlogic_update()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         T1_clientlogic_update(
             T1_engine_globals->elapsed);
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_clientlogic_update()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         
         clean_deleted_lights();
         
@@ -298,10 +327,23 @@ void T1_gameloop_update_before_render_pass(
             &T1_engine_globals->postproc_consts.lights_size,
             &T1_engine_globals->postproc_consts.shadowcaster_i);
         
+        
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_start("T1_renderer_hardware_render()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         T1_renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_us: */
                 T1_engine_globals->elapsed);
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_renderer_hardware_render()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
         
         uint32_t overflow_vertices = frame_data->verts_size % 3;
         frame_data->verts_size -= overflow_vertices;
@@ -325,7 +367,8 @@ void T1_gameloop_update_before_render_pass(
         shadowcaster_light_i;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("gameloop_update()");
+    T1_profiler_end(
+        "T1_gameloop_update_before_render_pass()");
     T1_profiler_draw_labels();
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
@@ -334,6 +377,13 @@ void T1_gameloop_update_before_render_pass(
 }
 
 void T1_gameloop_update_after_render_pass(void) {
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("T1_gameloop_update_after_render_pass()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+    
     if (T1_app_running) {
         T1_clientlogic_update_after_render_pass();
     }
@@ -354,4 +404,18 @@ void T1_gameloop_update_after_render_pass(void) {
         T1_engine_globals->upcoming_fullscreen_request = false;
         T1_platform_enter_fullscreen();
     }
+    
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end("T1_gameloop_update_after_render_pass()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+    
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_new_frame();
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
 }

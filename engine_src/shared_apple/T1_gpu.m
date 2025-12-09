@@ -390,10 +390,10 @@ bool32_t apple_gpu_init(
         setBlendingEnabled: YES];
     flat_billboard_quad_pls_desc
         .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorSourceAlpha;
+            MTLBlendFactorOne;
     flat_billboard_quad_pls_desc
         .colorAttachments[0].destinationRGBBlendFactor =
-            MTLBlendFactorOneMinusSourceAlpha;
+            MTLBlendFactorOne;
     flat_billboard_quad_pls_desc
         .colorAttachments[0].rgbBlendOperation =
             MTLBlendOperationAdd;

@@ -1131,7 +1131,7 @@ flat_billboard_quad_vertex_shader(
 fragment float4 flat_billboard_quad_fragment_shader(
     const FlatQuadPixel in [[stage_in]])
 {
-    return in.rgba;
+    return in.rgba * in.rgba[3];
 }
 
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE

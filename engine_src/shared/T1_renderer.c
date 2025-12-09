@@ -681,11 +681,23 @@ void T1_renderer_hardware_render(
     
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("construct render matrices");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
     construct_view_matrix();
     
     construct_projection_matrix();
     
     construct_model_and_normal_matrices();
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end("construct render matrices");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
     
     T1_std_memcpy(
         /* void * dest: */
@@ -713,28 +725,31 @@ void T1_renderer_hardware_render(
     add_alphablending_zpolygons_to_workload(frame_data);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
+    
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("T1_particle_add_all_to_frame_data()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
     T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
         /* uint64_t elapsed_us: */
             elapsed_us);
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end(
+        "T1_particle_add_all_to_frame_data()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+    
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error
     #endif
-    
-    if (frame_data->flat_billboard_quads_size > 1) {
-        qsort(
-            /* void * base: */
-                frame_data->flat_billboard_quads,
-            /* size_t nel: */
-                frame_data->flat_billboard_quads_size,
-            /* size_t width: */
-                sizeof(T1GPUFlatQuad),
-            /* int (* _Nonnull compar)(const void *, const void *): */
-                cmpr_circles_closest_z);
-    }
     
     construct_light_matrices(frame_data);
 }

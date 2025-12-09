@@ -5,7 +5,7 @@
 #ifndef __x86_64__
 static uint64_t __rdtsc(void)
 {
-    return 1;
+    return __builtin_readcyclecounter();
 }
 #endif
 
