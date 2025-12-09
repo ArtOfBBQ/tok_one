@@ -183,7 +183,7 @@ void T1_clientlogic_early_startup(
     T1_meta_struct(T1CPUzSprite, &ok);
     assert(ok);
     T1_meta_struct_field(T1CPUzSprite, T1CPUzSpriteSimdStats, simd_stats, &ok);
-    T1_meta_field(T1CPUzSprite, T1_TYPE_U8, alpha_blending_enabled, &ok);
+    T1_meta_field(T1CPUzSprite, T1_TYPE_U8, alpha_blending_on, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
     T1_meta_field(T1CPUzSprite, T1_TYPE_U8, visible, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
@@ -721,7 +721,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1ScheduledAnimation * anim =
                 T1_scheduled_animations_request_next(true);
             anim->affected_zsprite_id = target_zsprite_ids[j];
-            anim->delete_other_anims_targeting_same_object_id_on_commit = true;
+            anim->delete_other_anims_targeting_zsprite = true;
             anim->cpu_vals.xyz[0] =
                 T1_engineglobals_screenspace_x_to_x(new_x, new_z);
             anim->cpu_vals.xyz[1] =
@@ -740,7 +740,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         T1ScheduledAnimation * anim =
             T1_scheduled_animations_request_next(true);
         anim->affected_zsprite_id = target_zsprite_ids[j];
-        anim->delete_other_anims_targeting_same_object_id_on_commit = true;
+        anim->delete_other_anims_targeting_zsprite = true;
         anim->cpu_vals.xyz[0] =
             T1_engineglobals_screenspace_x_to_x(new_x, new_z);
         anim->cpu_vals.xyz[1] =

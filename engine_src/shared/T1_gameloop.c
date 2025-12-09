@@ -262,6 +262,8 @@ void T1_gameloop_update_before_render_pass(
        }
     } else if (T1_app_running) {
         
+        T1_frame_anims_new_frame_starts();
+        
         #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_resolve();
         #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE

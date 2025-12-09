@@ -39,7 +39,7 @@ of the engine for your specific app.
 #define T1_PARTICLES_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 2
 #define T1_NORMAL_MAPPING_ACTIVE 2
-#define T1_AUDIO_ACTIVE 1
+#define T1_AUDIO_ACTIVE 2
 #define T1_ENGINE_SAVEFILE_ACTIVE 1
 #define T1_PROFILER_ACTIVE 1
 #define T1_TONE_MAPPING_ACTIVE 1

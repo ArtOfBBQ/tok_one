@@ -75,88 +75,11 @@ inline static void add_alphablending_zpolygons_to_workload(
             frame_data->verts[frame_data->verts_size].polygon_i =
                 cpu_zp_i;
             frame_data->verts_size += 1;
-            log_assert(frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(
+                frame_data->verts_size <
+                    MAX_VERTICES_PER_BUFFER);
         }
     }
-    
-    #if 0
-    if (
-        frame_data->vertices_size > frame_data->first_alphablend_i)
-    {
-        log_assert(
-            (frame_data->vertices_size - frame_data->first_alphablend_i) % 3 == 0);
-        log_assert(frame_data->first_alphablend_i % 3 == 0);
-        
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        uint32_t initial_first_alphablend_i = frame_data->first_alphablend_i;
-        uint32_t initial_vertices_size = frame_data->vertices_size;
-        
-        for (
-            int32_t i = (int)frame_data->first_alphablend_i;
-            i < (int)frame_data->vertices_size;
-            i += 3)
-        {
-            log_assert(
-                frame_data->vertices[i+0].polygon_i ==
-                frame_data->vertices[i+1].polygon_i);
-            log_assert(
-                frame_data->vertices[i+0].polygon_i ==
-                frame_data->vertices[i+2].polygon_i);
-            log_assert(
-                frame_data->vertices[i+0].locked_vertex_i !=
-                frame_data->vertices[i+1].locked_vertex_i);
-            log_assert(
-                frame_data->vertices[i+0].locked_vertex_i !=
-                frame_data->vertices[i+2].locked_vertex_i);
-            log_assert(
-                frame_data->vertices[i+1].locked_vertex_i !=
-                frame_data->vertices[i+2].locked_vertex_i);
-        }
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
-        #endif
-        
-        qsort(
-            /* base: */
-                frame_data->vertices + frame_data->first_alphablend_i,
-            /* size_t nel: */
-                (frame_data->vertices_size -
-                    frame_data->first_alphablend_i) / 3,
-            /* size_t width: */
-                sizeof(GPUVertexIndices) * 3,
-            /* int (* _Nonnull compar)(const void *, const void *): */
-                compare_triangles_furthest_camera_dist);
-        
-        #if T1_LOGGER_ASSERTS_ACTIVE
-        log_assert(
-            frame_data->first_alphablend_i == initial_first_alphablend_i);
-        log_assert(frame_data->vertices_size == initial_vertices_size);
-        for (
-            int32_t i = (int)frame_data->first_alphablend_i;
-            i < (int)frame_data->vertices_size;
-            i += 3)
-        {
-            log_assert(
-                frame_data->vertices[i+0].polygon_i ==
-                frame_data->vertices[i+1].polygon_i);
-            log_assert(
-                frame_data->vertices[i+0].polygon_i ==
-                frame_data->vertices[i+2].polygon_i);
-            log_assert(
-                frame_data->vertices[i+0].locked_vertex_i !=
-                frame_data->vertices[i+1].locked_vertex_i);
-            log_assert(
-                frame_data->vertices[i+0].locked_vertex_i !=
-                frame_data->vertices[i+2].locked_vertex_i);
-            log_assert(
-                frame_data->vertices[i+1].locked_vertex_i !=
-                frame_data->vertices[i+2].locked_vertex_i);
-        }
-        #endif
-    }
-    #endif
 }
 
 inline static void add_opaque_zpolygons_to_workload(
@@ -752,4 +675,6 @@ void T1_renderer_hardware_render(
     #endif
     
     construct_light_matrices(frame_data);
+    
+    T1_frame_anims_apply_all(frame_data);
 }

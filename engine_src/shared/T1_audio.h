@@ -24,6 +24,13 @@ extern T1SoundSettings * T1_audio_state;
 void T1_audio_init(
     void * (* arg_malloc_function)(size_t size));
 
+// TODO: ***
+// This is implemented in apple_audio.c
+// so we must have gotten confused.
+// Let's fix that later
+// TODO: ***
+// void T1_audio_start_loop(void);
+
 void T1_audio_consume_int16_samples(
     int16_t * recipient,
     const uint32_t samples_to_copy);

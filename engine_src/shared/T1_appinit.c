@@ -243,6 +243,8 @@ void T1_appinit_before_gpu_init(
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             T1_platform_mutex_unlock);
     
+    T1_frame_anims_init();
+    
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_init(
         T1_platform_get_clock_frequency(),
