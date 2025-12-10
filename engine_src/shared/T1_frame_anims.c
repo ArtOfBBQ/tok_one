@@ -8,7 +8,6 @@ typedef enum : uint8_t {
 typedef struct {
     int32_t zsprite_id;
     int32_t touch_id;
-    T1CPUzSpriteSimdStats cpu_stats;
     T1GPUzSprite gpu_stats;
     T1FrameAnimFilter filter;
 } T1FrameAnim;
@@ -52,21 +51,46 @@ void T1_frame_anims_apply_all(
                 case T1FRAMEANIMFILTER_TOUCH_ID:
                     hit = frame_data->zsprite_list->
                         polygons[zp_i].touch_id ==
-                            T1_frame_anims[mod_i].touch_id;
+                            T1_frame_anims[mod_i].
+                                touch_id;
                 break;
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
                     hit = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id ==
-                            T1_frame_anims[mod_i].zsprite_id;
+                            T1_frame_anims[mod_i].
+                                zsprite_id;
                 break;
                 default:
                     log_assert(0);
             }
             
             if (hit) {
-                // TODO: add every property, not 1 test
-                frame_data->zsprite_list->
-                    polygons[zp_i].outline_alpha +=
-                            2.5f;
+                float * recip_ptr =
+                    (float *)(
+                        frame_data->zsprite_list->
+                            polygons + zp_i);
+                float * mod_ptr =
+                    (float *)(
+                        &T1_frame_anims[mod_i].
+                            gpu_stats);
+                
+                for (
+                    uint32_t _ = 0;
+                    _ < (sizeof(T1GPUzSprite) / 4);
+                    _ += SIMD_FLOAT_LANES)
+                {
+                    SIMD_FLOAT simd_mod = simd_load_floats(mod_ptr);
+                    
+                    SIMD_FLOAT simd_recip = simd_load_floats(recip_ptr);
+                    
+                    simd_store_floats(
+                        recip_ptr,
+                        simd_add_floats(
+                            simd_recip,
+                            simd_mod));
+                    
+                    recip_ptr += SIMD_FLOAT_LANES;
+                    mod_ptr += SIMD_FLOAT_LANES;
+                }
             }
         }
     }
@@ -75,7 +99,7 @@ void T1_frame_anims_apply_all(
 void T1_frame_anims_gpu_mod_to_touch_id_by_offset(
     const int32_t touch_id,
     const uint32_t gpu_prop_offset,
-    const float val_to_memcpy)
+    const float val_to_memcpy_32bit)
 {
     log_assert(touch_id >= 0);
     
@@ -87,7 +111,28 @@ void T1_frame_anims_gpu_mod_to_touch_id_by_offset(
         (char *)
             &T1_frame_anims[T1_frame_anims_size].
                 gpu_stats + gpu_prop_offset,
-        &val_to_memcpy,
+        &val_to_memcpy_32bit,
+        4);
+    
+    T1_frame_anims_size += 1;
+}
+
+void T1_frame_anims_gpu_mod_to_zsprite_id_by_offset(
+    const int32_t zsprite_id,
+    const uint32_t gpu_prop_offset,
+    const float val_to_memcpy_32bit)
+{
+    log_assert(zsprite_id >= 0);
+    
+    T1_frame_anims[T1_frame_anims_size].zsprite_id =
+        zsprite_id;
+    T1_frame_anims[T1_frame_anims_size].filter =
+        T1FRAMEANIMFILTER_ZSPRITE_ID;
+    T1_std_memcpy(
+        (char *)
+            &T1_frame_anims[T1_frame_anims_size].
+                gpu_stats + gpu_prop_offset,
+        &val_to_memcpy_32bit,
         4);
     
     T1_frame_anims_size += 1;
