@@ -103,18 +103,35 @@ void T1_frame_anims_gpu_mod_to_touch_id_by_offset(
 {
     log_assert(touch_id >= 0);
     
-    T1_frame_anims[T1_frame_anims_size].touch_id =
-        touch_id;
-    T1_frame_anims[T1_frame_anims_size].filter =
+    int32_t exist_i = -1;
+    for (
+        int32_t mod_i = 0;
+        mod_i < (int32_t)T1_frame_anims_size;
+        mod_i++)
+    {
+        if (
+            T1_frame_anims[mod_i].filter ==
+                T1FRAMEANIMFILTER_TOUCH_ID &&
+            T1_frame_anims[mod_i].touch_id == touch_id)
+        {
+            exist_i = mod_i;
+        }
+    }
+    
+    if (exist_i < 0) {
+        exist_i = (int32_t)T1_frame_anims_size;
+        T1_frame_anims_size += 1;
+    }
+    
+    T1_frame_anims[exist_i].touch_id = touch_id;
+    T1_frame_anims[exist_i].filter =
         T1FRAMEANIMFILTER_TOUCH_ID;
     T1_std_memcpy(
         (char *)
-            &T1_frame_anims[T1_frame_anims_size].
+            &T1_frame_anims[exist_i].
                 gpu_stats + gpu_prop_offset,
         &val_to_memcpy_32bit,
         4);
-    
-    T1_frame_anims_size += 1;
 }
 
 void T1_frame_anims_gpu_mod_to_zsprite_id_by_offset(
@@ -124,16 +141,35 @@ void T1_frame_anims_gpu_mod_to_zsprite_id_by_offset(
 {
     log_assert(zsprite_id >= 0);
     
-    T1_frame_anims[T1_frame_anims_size].zsprite_id =
+    int32_t exist_i = -1;
+    for (
+        int32_t mod_i = 0;
+        mod_i < (int32_t)T1_frame_anims_size;
+        mod_i++)
+    {
+        if (
+            T1_frame_anims[mod_i].filter ==
+                T1FRAMEANIMFILTER_ZSPRITE_ID &&
+            T1_frame_anims[mod_i].zsprite_id ==
+                zsprite_id)
+        {
+            exist_i = mod_i;
+        }
+    }
+    
+    if (exist_i < 0) {
+        exist_i = (int32_t)T1_frame_anims_size;
+        T1_frame_anims_size += 1;
+    }
+    
+    T1_frame_anims[exist_i].zsprite_id =
         zsprite_id;
-    T1_frame_anims[T1_frame_anims_size].filter =
+    T1_frame_anims[exist_i].filter =
         T1FRAMEANIMFILTER_ZSPRITE_ID;
     T1_std_memcpy(
         (char *)
-            &T1_frame_anims[T1_frame_anims_size].
+            &T1_frame_anims[exist_i].
                 gpu_stats + gpu_prop_offset,
         &val_to_memcpy_32bit,
         4);
-    
-    T1_frame_anims_size += 1;
 }

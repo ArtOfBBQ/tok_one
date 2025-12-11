@@ -168,7 +168,8 @@ void T1_gameloop_update_before_render_pass(
     
     if (!T1_gameloop_active) {
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        T1_profiler_end(
+            "T1_gameloop_update_before_render_pass()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -328,7 +329,6 @@ void T1_gameloop_update_before_render_pass(
             frame_data->lights,
             &T1_engine_globals->postproc_consts.lights_size,
             &T1_engine_globals->postproc_consts.shadowcaster_i);
-        
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_renderer_hardware_render()");

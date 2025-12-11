@@ -1238,7 +1238,7 @@ fragment float4 outlines_fragment_shader(
     }
     
     float4 ret = vector_float4(
-        1.0f, 0.03f, 0.20f, 1.0f);
+        0.7f, 0.03f, 1.00f, 1.0f);
     
     return ret * in.outline_alpha;
 }

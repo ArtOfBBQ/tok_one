@@ -1505,7 +1505,7 @@ static void T1_meta_get_field_recursive(
     if (metafield == NULL) {
         construct_public_metafield(&return_value->public);
         return_value->internal_field = NULL;
-        *good = 1;
+        *good = 0;
         return;
     }
     
@@ -1857,8 +1857,14 @@ void T1_meta_write_to_known_field_str(
         target_field_name,
         good);
     
+    if (!*good) {
+        return;
+    }
+    *good = 0;
+    
     #if T1_META_ASSERTS == T1_ACTIVE
-    assert(good);
+    assert(field.public.name != NULL);
+    assert(field.public.data_type != T1_TYPE_NOTSET);
     #elif T1_META_ASSERTS == T1_INACTIVE
     #else
     #error
@@ -2119,7 +2125,9 @@ void T1_meta_write_to_known_field_str(
         break;
         case T1_TYPE_CHAR:
             rightmost_array_i = 2;
-            while (field.public.array_sizes[rightmost_array_i] < 2) {
+            while (
+                field.public.array_sizes[rightmost_array_i] < 2)
+            {
                 rightmost_array_i -= 1;
             }
             
