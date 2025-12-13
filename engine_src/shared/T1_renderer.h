@@ -14,7 +14,7 @@
 #include "T1_zsprite.h"
 #include "T1_particle.h"
 #include "T1_io.h"
-#include "T1_frame_anims.h"
+#include "T1_frame_anim.h"
 
 #ifdef __cplusplus
 extern "C" {

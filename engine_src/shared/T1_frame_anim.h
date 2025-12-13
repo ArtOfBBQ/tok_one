@@ -1,5 +1,5 @@
-#ifndef T1_FRAMEANIMS_H
-#define T1_FRAMEANIMS_H
+#ifndef T1_FRAMEANIM_H
+#define T1_FRAMEANIM_H
 
 #include "T1_std.h"
 #include "T1_mem.h"
@@ -24,5 +24,5 @@ void T1_frame_anims_new_frame_starts(void);
 void T1_frame_anims_apply_all(
     T1GPUFrame * frame_data);
 
-#endif // T1_FRAMEANIMS_H
+#endif // T1_FRAMEANIM_H
 

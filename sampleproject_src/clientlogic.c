@@ -304,8 +304,8 @@ static void clientlogic_handle_keypresses(
         T1_io_keymap[T1_IO_KEY_S] = false;
         
         #if TEAPOT
-        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-        T1_scheduled_animations_request_shatter_and_destroy(
+        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+        T1_zsprite_anim_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
@@ -370,11 +370,11 @@ static void clientlogic_handle_keypresses(
         T1_io_keymap[T1_IO_KEY_T] = false;
         
         if (testswitch) {
-            #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-            T1_scheduled_animations_request_evaporate_and_destroy(
+            #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+            T1_zsprite_anim_evaporate_and_destroy(
                 teapot_object_ids[0],
                 900000);
-            #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+            #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -408,13 +408,13 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 touch_id_pierce == 5)
         {
-            #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-            T1_scheduled_animations_request_bump(
+            #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+            T1_zsprite_anim_bump(
                 /* const int32_t object_id: */
                     20,
                 /* const uint32_t wait: */
                     0);
-            #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+            #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -456,9 +456,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     {
         T1_io_events[T1_IO_LAST_LCLICK_START].handled = true;
         
-        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-        T1_scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
-        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+        T1_zsprite_anim_bump(teapot_object_ids[0], 0.0f);
+        #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

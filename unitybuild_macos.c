@@ -74,10 +74,10 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_texture_files.c"
 #include "T1_lines.c"
 #include "T1_zsprite.c"
-#include "T1_frame_anims.c"
+#include "T1_frame_anim.c"
 #include "T1_particle.c"
 #include "T1_easing.c"
-#include "T1_scheduled_animations.c" // requires zpolygon & parti
+#include "T1_zsprite_anim.c"
 #include "T1_text.c"
 #include "T1_uielement.c"
 #include "T1_profiler.c"

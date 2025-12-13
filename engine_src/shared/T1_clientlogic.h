@@ -30,7 +30,7 @@ extern "C" {
 #include "T1_io.h"
 #include "T1_text.h"
 #include "T1_uielement.h"
-// #include "scheduled_animations.h"
+#include "T1_zsprite_anim.h"
 #include "T1_logger.h"
 #include "T1_terminal.h"
 

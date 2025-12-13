@@ -45,6 +45,7 @@ void * T1_std_memset(
     
     return in;
 }
+
 void T1_std_memset_i16(
     void * in,
     int16_t value,
@@ -221,12 +222,16 @@ float T1_std_maxf(const float x, const float y)
 
 int T1_std_mini(const int x, const int y)
 {
-    return ((x <= y) * x) + ((y < x) * y);
+    return
+        ((x <= y) * x) +
+        ((y < x) * y);
 }
 
 int T1_std_maxi(const int x, const int y)
 {
-    return ((x <= y) * y) + ((x > y) * x);
+    return
+        ((x <= y) * y) +
+        ((x > y) * x);
 }
 
 void

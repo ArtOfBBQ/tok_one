@@ -695,7 +695,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
     
-    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
+    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
     float new_x =
         T1_engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
@@ -718,8 +718,8 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         float new_y = get_slider_y_screenspace((int32_t)i) -
             (T1_io_mouse_scroll_pos * 30.0f);
         for (uint32_t j = 0; j < 3; j++) {
-            T1ScheduledAnimation * anim =
-                T1_scheduled_animations_request_next(true);
+            T1zSpriteAnim * anim =
+                T1_zsprite_anim_request_next(true);
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_zsprite = true;
             anim->cpu_vals.xyz[0] =
@@ -728,7 +728,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 T1_engineglobals_screenspace_y_to_y(new_y, new_z);
             anim->cpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
-            T1_scheduled_animations_commit(anim);
+            T1_zsprite_anim_commit(anim);
         }
     }
     
@@ -737,8 +737,8 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     float new_title_y = get_slider_y_screenspace(-1) -
         (T1_io_mouse_scroll_pos * 30.0f);
     for (uint32_t j = 0; j < 2; j++) {
-        T1ScheduledAnimation * anim =
-            T1_scheduled_animations_request_next(true);
+        T1zSpriteAnim * anim =
+            T1_zsprite_anim_request_next(true);
         anim->affected_zsprite_id = target_zsprite_ids[j];
         anim->delete_other_anims_targeting_zsprite = true;
         anim->cpu_vals.xyz[0] =
@@ -747,12 +747,12 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
-        T1_scheduled_animations_commit(anim);
+        T1_zsprite_anim_commit(anim);
     }
-    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
     #else
     #error
-    #endif // T1_SCHEDULED_ANIMS_ACTIVE
+    #endif // T1_ZSPRITE_ANIM_ACTIVE
 }
 
 void T1_clientlogic_update_after_render_pass(void) {
@@ -948,9 +948,9 @@ void T1_clientlogic_window_resize(
     
     zlights_to_apply_size = 0;
     T1_uielement_delete_all();
-    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-    T1_scheduled_animations_delete_all();
-    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+    T1_zsprite_anim_delete_all();
+    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

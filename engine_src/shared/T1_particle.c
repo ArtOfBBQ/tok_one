@@ -312,7 +312,8 @@ void T1_particle_add_all_to_frame_data(
             spawn_i++)
         {
             uint64_t spawn_at = (spawn_i *
-                T1_particle_effects[i].pause_per_spawn);
+                T1_particle_effects[i].
+                    pause_per_spawn);
             
             uint64_t elapsed_since_last_spawn =
                 (

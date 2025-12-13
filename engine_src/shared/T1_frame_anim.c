@@ -1,4 +1,4 @@
-#include "T1_frame_anims.h"
+#include "T1_frame_anim.h"
 
 typedef enum : uint8_t {
     T1FRAMEANIMFILTER_ZSPRITE_ID,
