@@ -600,12 +600,13 @@ float4 get_lit(
             
             normal_map_sample_f4 = (normal_map_sample_f4 * 2.0f) - 1.0f;
             
-            normal_viewspace =
+            float4 normal_viewspace_f4 =
                 normal_map_sample[0] *
                     in.tangent_viewspace +
                 normal_map_sample[1] *
                     in.bitangent_viewspace +
                 normal_map_sample[2] * in.normal_viewspace;
+            normal_viewspace = (vector_float3)normal_viewspace_f4;
             
             // normalize again
             normal_viewspace = normalize(

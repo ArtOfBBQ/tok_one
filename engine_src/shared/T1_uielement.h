@@ -8,7 +8,7 @@
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_texture_array.h"
-#include "T1_scheduled_animations.h"
+#include "T1_zsprite_anim.h"
 #include "T1_text.h"
 #include "T1_profiler.h"
 

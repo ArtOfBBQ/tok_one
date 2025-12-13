@@ -8,34 +8,6 @@ void T1_renderer_init(void) {
     T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
 }
 
-#if 0
-inline static void draw_bounding_sphere(
-    GPUDataForSingleFrame * frame_data,
-    const float center_xyz[3],
-    const float sphere_radius)
-{
-    float cur_point[3];
-    for (float x_angle = 0.2f; x_angle < 6.28f; x_angle += 0.75f)
-    {
-        for (float y_angle = 0.0f; y_angle < 6.28f; y_angle += 0.75f)
-        {
-            cur_point[0] = 0.0f;
-            cur_point[1] = 0.0f;
-            cur_point[2] = sphere_radius;
-            
-            x_rotate_f3(cur_point, x_angle);
-            y_rotate_f3(cur_point, y_angle);
-            
-            cur_point[0] += center_xyz[0];
-            cur_point[1] += center_xyz[1];
-            cur_point[2] += center_xyz[2];
-            
-            add_point_vertex(frame_data, cur_point, /* color: */ 0.0f);
-        }
-    }
-}
-#endif
-
 inline static void add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
@@ -555,32 +527,6 @@ static void construct_model_and_normal_matrices(void)
                         model_4x4[j] * ic);
         }
     }
-}
-
-static int cmpr_circles_closest_z(
-    const void * a,
-    const void * b)
-{
-    float dists[3];
-    dists[0] = ((T1GPUFlatQuad *)a)->xyz[0] - camera.xyz[0];
-    dists[1] = ((T1GPUFlatQuad *)a)->xyz[1] - camera.xyz[1];
-    dists[2] = ((T1GPUFlatQuad *)a)->xyz[2] - camera.xyz[2];
-    
-    float dist_a_to_cam =
-        (dists[0] * dists[0]) +
-        (dists[1] * dists[1]) +
-        (dists[2] * dists[2]);
-    
-    dists[0] = ((T1GPUFlatQuad *)b)->xyz[0] - camera.xyz[0];
-    dists[1] = ((T1GPUFlatQuad *)b)->xyz[1] - camera.xyz[1];
-    dists[2] = ((T1GPUFlatQuad *)b)->xyz[2] - camera.xyz[2];
-    
-    float dist_b_to_cam =
-        (dists[0] * dists[0]) +
-        (dists[1] * dists[1]) +
-        (dists[2] * dists[2]);
-    
-    return dist_a_to_cam < dist_b_to_cam ? 1 : -1;
 }
 
 void T1_renderer_hardware_render(

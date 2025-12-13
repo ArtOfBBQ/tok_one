@@ -38,7 +38,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const bool32_t flip_uv_u,
     const bool32_t flip_uv_v);
 
-int32_t T1_objmodel_obj_resource_name_to_mesh_id(
+int32_t T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
 float T1_objmodel_get_x_multiplier_for_width(
     const int32_t mesh_id,
@@ -49,15 +49,16 @@ float T1_objmodel_get_y_multiplier_for_height(
     const float screenspace_height,
     const float given_z);
 
-// **********************************************************************
-// **                    Internal functions (ignore)                   **
-// **********************************************************************
-
+/*
+**********************************************************************
+**                    Internal functions (ignore)                   **
+**********************************************************************
+*/
 #define MATERIAL_NAMES_MAX 20
 
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {
-    char resource_name[OBJ_STRING_SIZE]; // the resource filename (without path)
+    char resource_name[OBJ_STRING_SIZE]; // resource filename
     int32_t mesh_id;
     int32_t vertices_head_i;
     int32_t vertices_size;
@@ -67,7 +68,7 @@ typedef struct MeshSummary {
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
     uint32_t locked_material_head_i;
-    uint32_t locked_material_base_offset; // UINT32_MAX if there's no base mat
+    uint32_t locked_material_base_offset; // UINT32_MAX = no base mat
     uint32_t materials_size;
 } MeshSummary;
 

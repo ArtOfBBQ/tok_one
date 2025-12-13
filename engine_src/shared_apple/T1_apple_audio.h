@@ -5,6 +5,6 @@
 
 #include "T1_audio.h"
 
-void T1_audio_start_loop(void);
+void T1_apple_audio_start_loop(void);
 
 #endif // APPLE_AUDIO_H

@@ -1,13 +1,32 @@
-#include "T1_scheduled_animations.h"
+#include "T1_zsprite_anim.h"
 
-#if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
+typedef struct {
+    T1zSpriteAnim public;
+    
+    /*
+    If this flag is set, the target values represent endpoints, not deltas,
+    until the animation is committed. During zsprite_anim_commit, the
+    values will be converted to normal delta values, and the animation will
+    be treated just like any other animation
+    */
+    uint64_t remaining_duration_us;
+    uint64_t remaining_pause_us;
+    float already_applied_t;
+    
+    bool32_t endpoints_not_deltas;
+    
+    bool32_t deleted;
+    bool32_t committed;
+} T1InternalzSpriteAnim;
+
+#if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
 
 #define FLT_SCHEDULEDANIM_IGNORE 0xFFFF
 
-T1ScheduledAnimation * scheduled_animations;
-uint32_t scheduled_animations_size = 0;
+T1InternalzSpriteAnim * zsprite_anims;
+uint32_t zsprite_anims_size = 0;
 
-typedef struct ScheduledAnimationState {
+typedef struct {
     T1GPUzSprite zsprite_final_pos_gpu;
     T1GPUzSprite zsprite_deltas[2];
     T1CPUzSpriteSimdStats zsprite_final_pos_cpu;
@@ -17,15 +36,15 @@ static ScheduledAnimationState * sas = NULL;
 
 static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
-void T1_scheduled_animations_init(void)
+void T1_zsprite_anim_init(void)
 {
-    scheduled_animations = (T1ScheduledAnimation *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    zsprite_anims = (T1InternalzSpriteAnim *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1InternalzSpriteAnim) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
     T1_std_memset(
-        scheduled_animations,
+        zsprite_anims,
         0,
-        sizeof(T1ScheduledAnimation));
-    scheduled_animations[0].deleted = true;
+        sizeof(T1InternalzSpriteAnim));
+    zsprite_anims[0].deleted = true;
     
     sas = (ScheduledAnimationState *)T1_mem_malloc_from_unmanaged(
         sizeof(ScheduledAnimationState));
@@ -36,51 +55,56 @@ void T1_scheduled_animations_init(void)
     
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
         T1_std_memcpy(
-            &scheduled_animations[i],
-            &scheduled_animations[0],
-            sizeof(T1ScheduledAnimation));
-        log_assert(scheduled_animations[i].deleted);
+            &zsprite_anims[i],
+            &zsprite_anims[0],
+            sizeof(T1InternalzSpriteAnim));
+        log_assert(zsprite_anims[i].deleted);
     }
     
     request_scheduled_anims_mutex_id = T1_platform_init_mutex_and_return_id();
 }
 
 static void construct_scheduled_animationA(
-    T1ScheduledAnimation * to_construct)
+    T1InternalzSpriteAnim * to_construct)
 {
-    T1_std_memset(to_construct, 0, sizeof(T1ScheduledAnimation));
+    T1_std_memset(
+        to_construct,
+        0,
+        sizeof(T1InternalzSpriteAnim));
     log_assert(!to_construct->committed);
     
-    to_construct->affected_zsprite_id = -1;
-    to_construct->affected_touchable_id = -1;
-    to_construct->runs = 1;
+    to_construct->public.affected_zsprite_id = -1;
+    to_construct->public.affected_touchable_id = -1;
+    to_construct->public.runs = 1;
     
     log_assert(!to_construct->deleted);
     log_assert(!to_construct->committed);
 }
 
-T1ScheduledAnimation * T1_scheduled_animations_request_next(
+T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool32_t endpoints_not_deltas)
 {
     T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
-    log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    T1ScheduledAnimation * return_value = NULL;
+    log_assert(zsprite_anims_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    T1InternalzSpriteAnim * return_value = NULL;
     
     for (
         uint32_t i = 0;
-        i < scheduled_animations_size;
+        i < zsprite_anims_size;
         i++)
     {
-        if (scheduled_animations[i].deleted)
+        if (zsprite_anims[i].deleted)
         {
-            return_value = &scheduled_animations[i];
+            return_value = &zsprite_anims[i];
         }
     }
     
     if (return_value == NULL) {
         log_assert(
-            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-        return_value = &scheduled_animations[scheduled_animations_size++];
+            zsprite_anims_size + 1 <
+                SCHEDULED_ANIMATIONS_ARRAYSIZE);
+        return_value =
+            &zsprite_anims[zsprite_anims_size++];
         log_assert(return_value->deleted);
     }
     
@@ -92,15 +116,15 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
     
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
-            &return_value->gpu_vals,
+            &return_value->public.gpu_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(T1GPUzSprite));
         T1_std_memset_f32(
-            &return_value->cpu_vals,
+            &return_value->public.cpu_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(T1CPUzSprite));
         T1_std_memset_f32(
-            &return_value->lightsource_vals,
+            &return_value->public.lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(zLightSource));
         return_value->endpoints_not_deltas = endpoints_not_deltas;
@@ -108,12 +132,12 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
     
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
     
-    return return_value;
+    return &return_value->public;
 }
 
 static void apply_animation_effects_for_given_eased_t(
     T1TPair t,
-    T1ScheduledAnimation * anim,
+    T1zSpriteAnim * anim,
     T1GPUzSprite * recip_gpu,
     T1CPUzSpriteSimdStats * recip_cpu)
 {
@@ -224,35 +248,58 @@ static void T1_scheduled_animations_get_projected_final_position_for(
     *recip_gpu = T1_zsprites_to_render->gpu_data[zp_i];
     *recip_cpu = T1_zsprites_to_render->cpu_data[zp_i].simd_stats;
     
-    for (uint32_t sa_i = 0; sa_i < scheduled_animations_size; sa_i++) {
+    for (
+        uint32_t sa_i = 0;
+        sa_i < zsprite_anims_size;
+        sa_i++)
+    {
+        T1InternalzSpriteAnim * a =
+            &zsprite_anims[sa_i];
+        
         if (
-            scheduled_animations[sa_i].affected_zsprite_id == zsprite_id &&
-            !scheduled_animations[sa_i].deleted &&
-            scheduled_animations[sa_i].committed &&
-            scheduled_animations[sa_i].duration_us > 0)
+            a->public.affected_zsprite_id == zsprite_id &&
+            !a->deleted &&
+            a->committed &&
+            a->public.duration_us > 0)
         {
             T1TPair t;
             t.now = 1.0f;
-            t.applied = scheduled_animations[sa_i].already_applied_t;
+            t.applied = a->already_applied_t;
             
             t.now = T1_easing_t_to_eased_t(
                 t.now,
-                scheduled_animations[sa_i].easing_type);
+                a->public.easing_type);
             t.applied = T1_easing_t_to_eased_t(
                 t.applied,
-                scheduled_animations[sa_i].easing_type);
+                a->public.easing_type);
             
             apply_animation_effects_for_given_eased_t(
                 t,
-                &scheduled_animations[sa_i],
+                &a->public,
                 recip_gpu,
                 recip_cpu);
         }
     }
 }
 
-void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
-    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
+void T1_zsprite_anim_commit(
+    T1zSpriteAnim * to_commit)
+{
+    T1_platform_mutex_lock(
+        request_scheduled_anims_mutex_id);
+    
+    /*
+    This extra cost of identifying the parent is
+    useless computation caused only by us trying to
+    keep our header file clean. OOPs.
+    */
+    T1InternalzSpriteAnim * parent = NULL;
+    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
+        if (&zsprite_anims[i].public == to_commit) {
+            parent = zsprite_anims + i;
+        }
+    }
+    log_assert(parent != NULL);
     
     log_assert(to_commit->duration_us > 0);
     
@@ -260,23 +307,26 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
     {
         for (
             uint32_t anim_i = 0;
-            anim_i < scheduled_animations_size;
+            anim_i < zsprite_anims_size;
             anim_i++)
         {
+            T1InternalzSpriteAnim * a =
+                &zsprite_anims[anim_i];
+            
             if (
-                scheduled_animations[anim_i].affected_zsprite_id ==
+                a->public.affected_zsprite_id ==
                     to_commit->affected_zsprite_id &&
-                scheduled_animations[anim_i].affected_touchable_id ==
+                a->public.affected_touchable_id ==
                     to_commit->affected_touchable_id &&
-                scheduled_animations[anim_i].committed &&
-                scheduled_animations[anim_i].endpoints_not_deltas)
+                a->committed &&
+                a->endpoints_not_deltas)
             {
-                scheduled_animations[anim_i].deleted = true;
+                zsprite_anims[anim_i].deleted = true;
             }
         }
     }
     
-    if (to_commit->endpoints_not_deltas) {
+    if (parent->endpoints_not_deltas) {
         int32_t first_zp_i = -1;
         for (
             int32_t zp_i = 0;
@@ -293,7 +343,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         }
         
         if (first_zp_i < 0) {
-            to_commit->deleted = true;
+            parent->deleted = true;
             T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
             return;
         }
@@ -339,8 +389,8 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         }
     }
     
-    log_assert(!to_commit->deleted);
-    log_assert(!to_commit->committed);
+    log_assert(!parent->deleted);
+    log_assert(!parent->committed);
     
     if (to_commit->affected_zsprite_id < 0) {
         log_assert(to_commit->affected_touchable_id >= 0);
@@ -354,20 +404,22 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         log_assert(to_commit->affected_zsprite_id == -1);
     }
     
-    log_assert(to_commit->already_applied_t == 0.0f);
+    log_assert(parent->already_applied_t == 0.0f);
     
-    to_commit->remaining_pause_us = to_commit->pause_us;
-    to_commit->remaining_duration_us = to_commit->duration_us;
+    parent->remaining_pause_us =
+        to_commit->pause_us;
+    parent->remaining_duration_us =
+        to_commit->duration_us;
     
-    log_assert(to_commit->remaining_duration_us > 0);
-    to_commit->committed = true;
+    log_assert(parent->remaining_duration_us > 0);
+    parent->committed = true;
     
-    log_assert(to_commit->committed);
-    log_assert(!to_commit->deleted);
+    log_assert(parent->committed);
+    log_assert(!parent->deleted);
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
-void T1_scheduled_animations_request_evaporate_and_destroy(
+void T1_zsprite_anim_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
@@ -462,7 +514,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
     #endif
 }
 
-void T1_scheduled_animations_request_shatter_and_destroy(
+void T1_zsprite_anim_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
@@ -567,24 +619,23 @@ void T1_scheduled_animations_request_shatter_and_destroy(
     #endif
 }
 
-void T1_scheduled_animations_request_fade_and_destroy(
+void T1_zsprite_anim_fade_and_destroy(
     const int32_t  object_id,
     const uint64_t duration_us)
 {
     log_assert(duration_us > 0);
     
     // register scheduled animation
-    T1ScheduledAnimation * fade_destroy = T1_scheduled_animations_request_next(true);
-    fade_destroy->endpoints_not_deltas = true;
+    T1zSpriteAnim * fade_destroy = T1_zsprite_anim_request_next(true);
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->lightsource_vals.reach = 0.0f;
     fade_destroy->gpu_vals.alpha = 0.0f;
     fade_destroy->delete_object_when_finished = true;
-    T1_scheduled_animations_commit(fade_destroy);
+    T1_zsprite_anim_commit(fade_destroy);
 }
 
-void T1_scheduled_animations_request_fade_to(
+void T1_zsprite_anim_fade_to(
     const int32_t zsprite_id,
     const uint64_t duration_us,
     const float target_alpha)
@@ -592,23 +643,24 @@ void T1_scheduled_animations_request_fade_to(
     log_assert(zsprite_id >= 0);
     
     // register scheduled animation
-    T1ScheduledAnimation * modify_alpha = T1_scheduled_animations_request_next(true);
+    T1zSpriteAnim * modify_alpha = T1_zsprite_anim_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_vals.alpha = target_alpha;
-    T1_scheduled_animations_commit(modify_alpha);
+    T1_zsprite_anim_commit(modify_alpha);
 }
 
-void T1_scheduled_animations_resolve(void)
+void T1_zsprite_anim_resolve(void)
 {
     T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     
     for (
-        int32_t animation_i = (int32_t)scheduled_animations_size - 1;
+        int32_t animation_i = (int32_t)zsprite_anims_size - 1;
         animation_i >= 0;
         animation_i--)
     {
-        T1ScheduledAnimation * anim = &scheduled_animations[animation_i];
+        T1InternalzSpriteAnim * anim =
+            &zsprite_anims[animation_i];
         
         if (
             anim->deleted ||
@@ -618,31 +670,36 @@ void T1_scheduled_animations_resolve(void)
         }
         
         if (anim->already_applied_t >= 1.0f) {
-            bool32_t delete = anim->runs == 1;
-            bool32_t reduce_runs = anim->runs > 0;
+            bool32_t delete =
+                anim->public.runs == 1;
+            bool32_t reduce_runs =
+                anim->public.runs > 0;
             
             if (delete) {
                 anim->deleted = true;
-                if (animation_i == (int32_t)scheduled_animations_size - 1) {
-                    scheduled_animations_size -= 1;
+                if (animation_i == (int32_t)zsprite_anims_size - 1) {
+                    zsprite_anims_size -= 1;
                 }
                 
-                if (anim->delete_object_when_finished) {
-                    delete_zlight(anim->affected_zsprite_id);
+                if (
+                    anim->public.
+                        delete_object_when_finished)
+                {
+                    delete_zlight(
+                        anim->public.affected_zsprite_id);
                     
-                    T1_zsprite_delete(anim->affected_zsprite_id);
-                    
-                    #if PARTICLES_ACTIVE
-                    T1_particle_delete(anim->affected_zsprite_id);
-                    #endif
+                    T1_zsprite_delete(
+                        anim->public.affected_zsprite_id);
                 }
             } else {
-                anim->remaining_duration_us = anim->duration_us;
-                anim->remaining_pause_us = anim->pause_us;
+                anim->remaining_duration_us =
+                    anim->public.duration_us;
+                anim->remaining_pause_us =
+                    anim->public.pause_us;
             }
             
             if (reduce_runs) {
-                anim->runs -= 1;
+                anim->public.runs -= 1;
             }
             
             anim->already_applied_t = 0.0f;
@@ -673,11 +730,13 @@ void T1_scheduled_animations_resolve(void)
         }
         
         uint64_t elapsed_so_far =
-            anim->duration_us - anim->remaining_duration_us;
-        log_assert(elapsed_so_far <= anim->duration_us);
+            anim->public.duration_us - anim->remaining_duration_us;
+        log_assert(
+            elapsed_so_far <=
+                anim->public.duration_us);
         
         T1TPair t;
-        t.now = (float)elapsed_so_far / (float)anim->duration_us;
+        t.now = (float)elapsed_so_far / (float)anim->public.duration_us;
         log_assert(t.now <= 1.0f);
         log_assert(t.now >= 0.0f);
         log_assert(t.now >= anim->already_applied_t);
@@ -686,8 +745,12 @@ void T1_scheduled_animations_resolve(void)
         log_assert(anim->already_applied_t <= t.now);
         anim->already_applied_t = t.now;
         
-        t.now = T1_easing_t_to_eased_t(t.now, anim->easing_type);
-        t.applied = T1_easing_t_to_eased_t(t.applied, anim->easing_type);
+        t.now = T1_easing_t_to_eased_t(
+            t.now,
+            anim->public.easing_type);
+        t.applied = T1_easing_t_to_eased_t(
+            t.applied,
+            anim->public.easing_type);
         
         // Apply effects
         for (
@@ -696,12 +759,12 @@ void T1_scheduled_animations_resolve(void)
             zp_i++)
         {
             if (
-                (anim->affected_zsprite_id >= 0 &&
+                (anim->public.affected_zsprite_id >= 0 &&
                 T1_zsprites_to_render->cpu_data[zp_i].zsprite_id !=
-                    anim->affected_zsprite_id) ||
-                (anim->affected_touchable_id >= 0 &&
+                    anim->public.affected_zsprite_id) ||
+                (anim->public.affected_touchable_id >= 0 &&
                 T1_zsprites_to_render->gpu_data[zp_i].touch_id !=
-                    anim->affected_touchable_id)
+                    anim->public.affected_touchable_id)
                 ||
                 T1_zsprites_to_render->cpu_data[zp_i].deleted)
             {
@@ -710,7 +773,7 @@ void T1_scheduled_animations_resolve(void)
             
             apply_animation_effects_for_given_eased_t(
                 t,
-                anim,
+                &anim->public,
                 T1_zsprites_to_render->gpu_data + zp_i,
                 &T1_zsprites_to_render->cpu_data[zp_i].simd_stats);
         }
@@ -719,22 +782,22 @@ void T1_scheduled_animations_resolve(void)
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
-void T1_scheduled_animations_request_dud_dance(
+void T1_zsprite_anim_dud_dance(
     const int32_t object_id,
     const float magnitude)
 {
-    T1ScheduledAnimation * move_request =
-        T1_scheduled_animations_request_next(false);
+    T1zSpriteAnim * move_request =
+        T1_zsprite_anim_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->cpu_vals.xyz[0] = magnitude * 0.05f;
     move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
     move_request->cpu_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
-    T1_scheduled_animations_commit(move_request);
+    T1_zsprite_anim_commit(move_request);
 }
 
-void T1_scheduled_animations_request_bump(
+void T1_zsprite_anim_bump(
     const int32_t object_id,
     const uint32_t wait)
 {
@@ -744,57 +807,62 @@ void T1_scheduled_animations_request_bump(
     (void)wait;
     #endif
     
-    T1ScheduledAnimation * move_request =
-        T1_scheduled_animations_request_next(false);
+    T1zSpriteAnim * move_request =
+        T1_zsprite_anim_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->cpu_vals.scale_factor = 0.25f;
     move_request->duration_us = 200000;
-    T1_scheduled_animations_commit(move_request);
+    T1_zsprite_anim_commit(move_request);
 }
 
-void T1_scheduled_animations_delete_all(void)
+void T1_zsprite_anim_delete_all(void)
 {
     T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        scheduled_animations[i].deleted = true;
+    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
+        zsprite_anims[i].deleted = true;
     }
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
-void T1_scheduled_animations_delete_endpoint_anims_targeting(
+void T1_zsprite_anim_delete_endpoint_anims_targeting(
     const int32_t object_id)
 {
     T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
         if (
-            !scheduled_animations[i].deleted &&
-            scheduled_animations[i].endpoints_not_deltas &&
-            scheduled_animations[i].affected_zsprite_id == (int32_t)object_id)
+            !zsprite_anims[i].deleted &&
+            zsprite_anims[i].endpoints_not_deltas &&
+            zsprite_anims[i].public.
+                affected_zsprite_id ==
+                    (int32_t)object_id)
         {
-            scheduled_animations[i].deleted = true;
+            zsprite_anims[i].deleted = true;
         }
     }
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
-void T1_scheduled_animations_delete_all_anims_targeting(
+void T1_zsprite_anim_delete_all_anims_targeting(
     const int32_t object_id)
 {
     T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
+        T1zSpriteAnim * a =
+            &zsprite_anims[i].public;
+        
         if (
-            !scheduled_animations[i].deleted &&
-            scheduled_animations[i].committed &&
-            scheduled_animations[i].affected_zsprite_id == object_id)
+            !zsprite_anims[i].deleted &&
+            zsprite_anims[i].committed &&
+            a->affected_zsprite_id == object_id)
         {
-            scheduled_animations[i].deleted = true;
+            zsprite_anims[i].deleted = true;
         }
     }
     T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
-void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
+void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     const int32_t zsprite_id,
     const float new_ignore_camera)
 {
@@ -865,7 +933,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     }
 }
 
-#elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+#elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif // T1_SCHEDULED_ANIMS_ACTIVE

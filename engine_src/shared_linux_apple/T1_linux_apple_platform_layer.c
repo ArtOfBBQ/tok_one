@@ -94,14 +94,6 @@ was unlocked
 void T1_platform_mutex_lock(
     const uint32_t mutex_id)
 {
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("platform_mutex_lock()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     log_assert(mutex_id < T1_MUTEXES_SIZE);
     log_assert(mutexes[mutex_id].initialized);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id].mutex));
@@ -112,13 +104,6 @@ void T1_platform_mutex_lock(
     (void)return_value;
     #endif
     
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("platform_mutex_lock()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
     return;
 }
 

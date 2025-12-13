@@ -265,11 +265,11 @@ void T1_gameloop_update_before_render_pass(
         
         T1_frame_anims_new_frame_starts();
         
-        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-        T1_scheduled_animations_resolve();
-        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+        T1_zsprite_anim_resolve();
+        #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
         #else
-        #error "T1_SCHEDULED_ANIMS_ACTIVE undefined"
+        #error
         #endif
         
         T1_platform_update_mouse_location();

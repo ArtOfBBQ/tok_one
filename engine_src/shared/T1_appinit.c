@@ -398,12 +398,12 @@ void T1_appinit_before_gpu_init(
     #error "T1_TERMINAL_ACTIVE undefined!"
     #endif
     
-    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-    T1_scheduled_animations_init();
-    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+    T1_zsprite_anim_init();
+    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
     // Pass
     #else
-    #error "T1_SCHEDULED_ANIMS_ACTIVE undefined!"
+    #error "T1_ZSPRITE_ANIM_ACTIVE undefined!"
     #endif
     
     T1_texture_array_init();
@@ -844,7 +844,7 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_start_loop();
+    T1_platform_audio_start_loop();
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else

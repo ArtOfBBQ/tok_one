@@ -1495,7 +1495,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     return return_value;
 }
 
-int32_t T1_objmodel_obj_resource_name_to_mesh_id(
+int32_t T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename)
 {
     for (int32_t i = 0; i < (int32_t)all_mesh_summaries_size; i++) {
