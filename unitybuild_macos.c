@@ -64,6 +64,8 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_apple_platform_layer.m"
 // 3. Files that are dependent on the platform layer
 #include "T1_mem.c"
+#include "T1_mesh.c"
+#include "T1_tex.c"
 #include "T1_objmodel.c"
 #include "T1_io.c"
 #include "T1_random.c"
@@ -81,7 +83,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_text.c"
 #include "T1_uielement.c"
 #include "T1_profiler.c"
-#if 0
+#if 1
 #include "clientlogic.c" // requires text and uielement
 #else
 #include "clientlogic_particledesigner.c" // requires text and uielement

@@ -107,6 +107,11 @@ bool32_t apple_gpu_init(
     float backing_scale_factor,
     char * error_msg_string)
 {
+    if (gpu_shared_data_collection == NULL) {
+        T1_std_strcpy_cap(error_msg_string, 128, "GPU frame buffer was not initialized");
+        return false;
+    }
+    
     ags = T1_mem_malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
@@ -1301,7 +1306,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 
 void T1_platform_gpu_copy_locked_vertices(void)
 {
-    gpu_shared_data_collection->locked_vertices_size = all_mesh_vertices->size;
+    gpu_shared_data_collection->locked_vertices_size = T1_objmodel_all_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1688,6 +1693,10 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     #else
     #error
     #endif
+    
+    if (funcptr_shared_gameloop_update == NULL) {
+        return;
+    }
     
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection->triple_buffers[ags->frame_i]);

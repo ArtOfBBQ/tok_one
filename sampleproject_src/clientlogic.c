@@ -232,7 +232,7 @@ void T1_clientlogic_late_startup(void) {
             1500.0f);
     font_settings->touch_id = -1;
     log_assert(
-        T1_zsprites_to_render->cpu_data[T1_zsprites_to_render->size-1].
+        T1_zsprite_list->cpu_data[T1_zsprite_list->size-1].
             zsprite_id == 21);
     
     for (uint32_t i = 0; i < 3; i++) {
@@ -319,7 +319,7 @@ static void clientlogic_handle_keypresses(
     
     if (T1_io_keymap[T1_IO_KEY_P] == true)
     {
-        T1_zsprites_to_render->cpu_data[0].simd_stats.xyz[2] += 0.001f;
+        T1_zsprite_list->cpu_data[0].simd_stats.xyz[2] += 0.001f;
     }
     
     if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
@@ -422,14 +422,14 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     }
     
     if (T1_io_keymap[T1_IO_KEY_R]) {
-        for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
-            if (T1_zsprites_to_render->cpu_data[i].zsprite_id == 20)
+        for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
+            if (T1_zsprite_list->cpu_data[i].zsprite_id == 20)
             {
-                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                T1_zsprite_list->cpu_data[i].simd_stats.
                     angle_xyz[0] += 0.014f;
-                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                T1_zsprite_list->cpu_data[i].simd_stats.
                     angle_xyz[1] += 0.01f;
-                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                T1_zsprite_list->cpu_data[i].simd_stats.
                     angle_xyz[2] += 0.003f;
             }
         }
@@ -466,11 +466,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     }
     
     if (T1_io_keymap[T1_IO_KEY_R]) {
-        for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
-            if (T1_zsprites_to_render->cpu_data[i].zsprite_id ==
+        for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
+            if (T1_zsprite_list->cpu_data[i].zsprite_id ==
                 teapot_object_ids[0])
             {
-                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                T1_zsprite_list->cpu_data[i].simd_stats.
                     angle_xyz[1] += 0.01f;
             }
         }

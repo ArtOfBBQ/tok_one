@@ -16,29 +16,29 @@ inline static void add_alphablending_zpolygons_to_workload(
     // Copy all vertices that do use alpha blending
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)T1_zsprites_to_render->size;
+        cpu_zp_i < (int32_t)T1_zsprite_list->size;
         cpu_zp_i++)
     {
         if (
-            T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_on)
+            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on)
         {
             continue;
         }
         
-        int32_t mesh_id = T1_zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
+        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
         
         int32_t vert_tail_i =
-            all_mesh_summaries[mesh_id].vertices_head_i +
-                all_mesh_summaries[mesh_id].vertices_size;
+            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
+                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         for (
-            int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
             vert_i < vert_tail_i;
             vert_i += 1)
         {
@@ -69,27 +69,27 @@ inline static void add_opaque_zpolygons_to_workload(
     
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)T1_zsprites_to_render->size;
+        cpu_zp_i < (int32_t)T1_zsprite_list->size;
         cpu_zp_i++)
     {
         if (
-            T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_on)
+            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on)
         {
             continue;
         }
         
-        int32_t mesh_id = T1_zsprites_to_render->
+        int32_t mesh_id = T1_zsprite_list->
             cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
+        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
         
         int32_t vert_tail_i =
-            all_mesh_summaries[mesh_id].
+            T1_objmodel_mesh_summaries[mesh_id].
                 vertices_head_i +
-                    all_mesh_summaries[mesh_id].
+                    T1_objmodel_mesh_summaries[mesh_id].
                         vertices_size;
         log_assert(
             vert_tail_i < MAX_VERTICES_PER_BUFFER);
@@ -98,7 +98,7 @@ inline static void add_opaque_zpolygons_to_workload(
         We are free to overflow the vertices buffer, since its end is not
         in use yet anyway.
         */
-        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
         cur_vals[0] = vert_i-2;
         cur_vals[1] = cpu_zp_i;
         cur_vals[2] = vert_i-1;
@@ -358,12 +358,12 @@ static void construct_model_and_normal_matrices(void)
     
     for (
         uint32_t i = 0;
-        i < T1_zsprites_to_render->size;
+        i < T1_zsprite_list->size;
         i++)
     {
         
         T1CPUzSpriteSimdStats * s =
-            &T1_zsprites_to_render->cpu_data[i].
+            &T1_zsprite_list->cpu_data[i].
                 simd_stats;
         
         T1_linal_float4x4_construct_identity(&result);
@@ -409,22 +409,22 @@ static void construct_model_and_normal_matrices(void)
             &result, &next);
         
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_4x4 + 4,
             result.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_4x4 + 8,
             result.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
@@ -464,23 +464,23 @@ static void construct_model_and_normal_matrices(void)
         T1_linal_float3x3_inverse_transpose_inplace(&view3x3);
         
         // send to gpu
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[0] = view3x3.rows[0].data[0];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[1] = view3x3.rows[0].data[1];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[2] = view3x3.rows[0].data[2];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[3] = view3x3.rows[1].data[0];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[4] = view3x3.rows[1].data[1];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[5] = view3x3.rows[1].data[2];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[6] = view3x3.rows[2].data[0];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[7] = view3x3.rows[2].data[1];
-        T1_zsprites_to_render->gpu_data[i].
+        T1_zsprite_list->gpu_data[i].
             normal_3x3[8] = view3x3.rows[2].data[2];
         
         T1_linal_float4x4_construct_from_ptr(
@@ -491,39 +491,39 @@ static void construct_model_and_normal_matrices(void)
             &next, &result);
         
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_view_4x4 + 0,
             next.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_view_4x4 + 4,
             next.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_view_4x4 + 8,
             next.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_view_4x4 + 12,
             next.rows[3].data,
             sizeof(float) * 4);
         
-        float ic = T1_zsprites_to_render->
+        float ic = T1_zsprite_list->
             cpu_data[i].simd_stats.ignore_camera;
         
         ic = T1_std_maxf(ic, 0.0f);
         ic = T1_std_minf(ic, 1.0f);
         
         for (uint32_t j = 0; j < 16; j++) {
-            T1_zsprites_to_render->gpu_data[i].
+            T1_zsprite_list->gpu_data[i].
                 model_view_4x4[j] =
-                    (T1_zsprites_to_render->gpu_data[i].
+                    (T1_zsprite_list->gpu_data[i].
                         model_view_4x4[j] *
                             (1.0f - ic)) +
-                    (T1_zsprites_to_render->gpu_data[i].
+                    (T1_zsprite_list->gpu_data[i].
                         model_4x4[j] * ic);
         }
     }
@@ -548,7 +548,7 @@ void T1_renderer_hardware_render(
         return;
     }
     
-    log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+    log_assert(T1_zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_start("construct render matrices");
@@ -572,19 +572,19 @@ void T1_renderer_hardware_render(
         /* void * dest: */
             frame_data->zsprite_list->polygons,
         /* const void * src: */
-            T1_zsprites_to_render->gpu_data,
+            T1_zsprite_list->gpu_data,
         /* size_t n: */
-            sizeof(T1GPUzSprite) * T1_zsprites_to_render->size);
-    frame_data->zsprite_list->size = T1_zsprites_to_render->size;
+            sizeof(T1GPUzSprite) * T1_zsprite_list->size);
+    frame_data->zsprite_list->size = T1_zsprite_list->size;
     
     log_assert(
-        frame_data->zsprite_list->size <= T1_zsprites_to_render->size);
+        frame_data->zsprite_list->size <= T1_zsprite_list->size);
     log_assert(
-        T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+        T1_zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     log_assert(
         frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
-    frame_data->zsprite_list->size = T1_zsprites_to_render->size;
+    frame_data->zsprite_list->size = T1_zsprite_list->size;
     
     *frame_data->postproc_consts =
         T1_engine_globals->postproc_consts;

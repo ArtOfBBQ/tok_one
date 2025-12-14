@@ -5,14 +5,18 @@
 
 #include "T1_std.h"
 #include "T1_simd.h"
-
+#include "T1_mem.h"
+#include "T1_cpu_to_gpu_types.h"
 #include "T1_easing.h"
 #include "T1_zsprite.h"
-#include "T1_particle.h"
+// #include "T1_particle.h"
 // #include "clientlogic.h"
 
 
-void T1_zsprite_anim_init(void);
+void T1_zsprite_anim_init(
+    uint32_t (* funcptr_init_mutex_and_return_id)(void),
+    void (* funcptr_mutex_lock)(const uint32_t),
+    void (* funcptr_mutex_unlock)(const uint32_t));
 
 void T1_zsprite_anim_resolve(void);
 

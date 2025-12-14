@@ -4,21 +4,14 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "T1_simd.h"
-#include "T1_logger.h"
-#include "T1_std.h"
-#include "T1_collision.h"
-#include "T1_platform_layer.h"
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_lightsource.h"
+#include "T1_simd.h"
+#include "T1_std.h"
+#include "T1_logger.h"
 #include "T1_engineglobals.h"
-#include "T1_texture_array.h"
 #include "T1_material.h"
-#include "T1_objmodel.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "T1_mesh.h"
+#include "T1_lightsource.h"
 
 typedef struct  {
     float xyz[3];
@@ -32,6 +25,8 @@ typedef struct  {
 
 typedef struct {
     T1CPUzSpriteSimdStats simd_stats;
+    
+    // private:
     uint64_t next_occlusion_in_us;
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     int32_t zsprite_id;
@@ -43,15 +38,6 @@ typedef struct {
 } T1CPUzSprite;
 
 typedef struct {
-    T1GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
-    T1GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
-    T1CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
-    uint32_t size;
-} T1zSpriteCollection;
-
-extern T1zSpriteCollection * T1_zsprites_to_render;
-
-typedef struct {
     T1GPUzSprite * gpu_data;
     T1CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
@@ -61,30 +47,14 @@ void T1_zsprite_construct_with_mesh_id(
     T1zSpriteRequest * to_construct,
     const int32_t mesh_id);
 void T1_zsprite_construct(T1zSpriteRequest * to_construct);
+
 // Allocate a PolygonRequest on the stack, then call this
 void T1_zsprite_request_next(
     T1zSpriteRequest * stack_recipient);
 void T1_zsprite_commit(T1zSpriteRequest * to_commit);
 
-
-/*
-Make a PolygonRequest (on the stack or whatever) and call this with an
-object_id.
-
-If a zPolygon exists with that object_id, the pointers in your LineRequest
-will be set so you can edit its properties. (So you can move your objects etc.)
-
-returns false if no such object_id, else true
-*/
-bool32_t T1_zsprite_fetch_by_zsprite_id(
-    T1zSpriteRequest * stack_recipient,
-    const int32_t zsprite_id);
-
 void T1_zsprite_delete(const int32_t with_zsprite_id);
-
-float T1_zsprite_dot_of_vertices_f3(
-    const float a[3],
-    const float b[3]);
+void T1_zsprite_delete_all(void);
 
 float T1_zsprite_get_z_multiplier_for_depth(
     T1CPUzSprite * for_poly,
@@ -104,10 +74,6 @@ void T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height);
-
-float T1_zsprite_get_distance_f3(
-    const float p1[3],
-    const float p2[3]);
 
 void T1_zsprite_construct_quad_around(
     const float mid_x,
@@ -134,8 +100,16 @@ void zsprite_construct_cube_around(
     const float depth,
     T1zSpriteRequest * stack_recipient);
 
-#ifdef __cplusplus
-}
-#endif
+/*
+BELOW: stuff we want to encapsulate
+*/
+typedef struct {
+    T1GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
+    T1GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
+    T1CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
+    uint32_t size;
+} T1zSpriteCollection;
+
+extern T1zSpriteCollection * T1_zsprite_list;
 
 #endif // ZSPRITE_H

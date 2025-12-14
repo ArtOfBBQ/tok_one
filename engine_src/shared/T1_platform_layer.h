@@ -42,12 +42,14 @@ on each platform
 #if T1_SHARED_APPLE_PLATFORM
 #import <Foundation/Foundation.h>
 #include <pthread.h>
+#include <errno.h> // for pthreads error codes
 #include <sys/time.h>
 #include <sys/sysctl.h> // for sysctl to get clock frequency
 #endif
 
 #if T1_LINUX_PLATFORM
 #include <pthread.h>
+#include <sys/errno.h> // for pthreads errors
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/stat.h> // stat function to check if dir exists

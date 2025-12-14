@@ -55,7 +55,7 @@ void T1_frame_anims_apply_all(
                                 touch_id;
                 break;
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
-                    hit = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id ==
+                    hit = T1_zsprite_list->cpu_data[zp_i].zsprite_id ==
                             T1_frame_anims[mod_i].
                                 zsprite_id;
                 break;

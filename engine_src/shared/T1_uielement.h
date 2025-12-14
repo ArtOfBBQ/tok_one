@@ -13,10 +13,6 @@
 #include "T1_profiler.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
 These options are applied to every new UI element (like a button or a slider)
 you make. They're things like colors/textures/size that I expect to be the
@@ -96,9 +92,5 @@ void T1_uielement_delete(
     const int32_t with_zsprite_id);
 
 void T1_uielement_delete_all(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // UI_ELEMENT_H

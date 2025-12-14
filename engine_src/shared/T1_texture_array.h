@@ -4,16 +4,12 @@
 #include "debigulator/src/decode_png.h"
 #include "debigulator/src/decode_bmp.h"
 
+#include "T1_tex.h"
 #include "T1_platform_layer.h"
 #include "T1_logger.h"
 #include "T1_mem.h"
 #include "T1_decodedimage.h"
 #include "T1_cpu_gpu_shared_types.h"
-
-typedef struct T1Tex {
-    int16_t array_i;
-    int16_t slice_i;
-} T1Tex;
 
 #define MAX_ASSET_FILENAME_SIZE 30
 #define MAX_ASSET_FILES 1500

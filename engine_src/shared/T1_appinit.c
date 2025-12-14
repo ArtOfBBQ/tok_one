@@ -354,9 +354,9 @@ void T1_appinit_before_gpu_init(
     
     T1_uielement_init();
     
-    T1_zsprites_to_render = (T1zSpriteCollection *)T1_mem_malloc_from_unmanaged(
+    T1_zsprite_list = (T1zSpriteCollection *)T1_mem_malloc_from_unmanaged(
         sizeof(T1zSpriteCollection));
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_list->size = 0;
     
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
@@ -399,7 +399,10 @@ void T1_appinit_before_gpu_init(
     #endif
     
     #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-    T1_zsprite_anim_init();
+    T1_zsprite_anim_init(
+        T1_platform_init_mutex_and_return_id,
+        T1_platform_mutex_lock,
+        T1_platform_mutex_unlock);
     #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -436,6 +439,14 @@ void T1_appinit_before_gpu_init(
                 font_metrics_file.contents,
             /* raw_fontmetrics_file_size: */
                 font_metrics_file.size_without_terminator);
+    } else {
+        // TODO: no font file, crash
+        T1_std_internal_strcpy_cap(
+            error_message,
+            128,
+            "Error - missing font.png at startup");
+        *success = 0;
+        return;
     }
     
     T1_io_init(T1_mem_malloc_from_unmanaged);
@@ -593,7 +604,7 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
-            all_mesh_vertices->gpu_data,
+            T1_objmodel_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     T1_platform_gpu_copy_locked_vertices();
@@ -703,25 +714,25 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     */
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
-    for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
-        if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
+    for (uint32_t i = 0; i < T1_objmodel_mesh_summaries_size; i++) {
+        if (T1_objmodel_mesh_summaries[i].shattered_vertices_head_i < 0) {
             if (
-                all_mesh_summaries[i].shattered_vertices_size <
+                T1_objmodel_mesh_summaries[i].shattered_vertices_size <
                     MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
                 T1_objmodel_create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
-                        all_mesh_summaries[i].mesh_id,
+                        T1_objmodel_mesh_summaries[i].mesh_id,
                     /* const uint32_t triangles_mulfiplier: */
                         (MIN_VERTICES_FOR_SHATTER_EFFECT /
-                            (uint32_t)all_mesh_summaries[i].vertices_size) + 1);
+                            (uint32_t)T1_objmodel_mesh_summaries[i].vertices_size) + 1);
                 log_assert(
-                    all_mesh_summaries[i].shattered_vertices_head_i >= 0);
+                    T1_objmodel_mesh_summaries[i].shattered_vertices_head_i >= 0);
             } else {
-                all_mesh_summaries[i].shattered_vertices_head_i =
-                    all_mesh_summaries[i].vertices_head_i;
-                all_mesh_summaries[i].shattered_vertices_size =
-                    all_mesh_summaries[i].vertices_size;
+                T1_objmodel_mesh_summaries[i].shattered_vertices_head_i =
+                    T1_objmodel_mesh_summaries[i].vertices_head_i;
+                T1_objmodel_mesh_summaries[i].shattered_vertices_size =
+                    T1_objmodel_mesh_summaries[i].vertices_size;
             }
         }
     }
@@ -740,7 +751,7 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
-            all_mesh_vertices->gpu_data,
+            T1_objmodel_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     T1_platform_gpu_copy_locked_vertices();

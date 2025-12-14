@@ -955,7 +955,7 @@ void T1_clientlogic_window_resize(
     #error
     #endif
     
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_list->size = 0;
     T1_zspriteid_clear_ui_element_touch_ids();
     
     pds->whitespace_height = get_whitespace_height();

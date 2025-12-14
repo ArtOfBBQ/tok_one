@@ -9,7 +9,8 @@ Get a file's size. Returns -1 if no such file
 same as platform_get_filesize() except it assumes
 the resources directory
 */
-uint64_t T1_platform_get_resource_size(const char * filename) {
+uint64_t T1_platform_get_resource_size(const char * filename)
+{
     char pathfile[512];
     T1_platform_resource_filename_to_pathfile(
         filename,
@@ -297,7 +298,7 @@ void T1_platform_layer_start_window_resize(
     T1_engine_globals->last_resize_request_us = timestamp;
     
     T1_uielement_delete_all();
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_delete_all();
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     T1_engine_globals->postproc_consts.fog_factor = 0.0f;

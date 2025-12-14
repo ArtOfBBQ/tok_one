@@ -11,10 +11,6 @@
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
 
-#if __cplusplus
-extern "C" {
-#endif
-
 void T1_macos_update_window_size(void);
 
 static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
@@ -357,7 +353,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillEnterFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_list->size = 0;
     T1_engine_globals->fullscreen = true;
 }
 
@@ -365,7 +361,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillExitFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_list->size = 0;
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
@@ -457,6 +453,10 @@ int main(int argc, const char * argv[]) {
     [window setAcceptsMouseMovedEvents:YES];
     [window setOrderedIndex:0];
     [window makeKeyAndOrderFront: nil];
+    
+    if (!success) {
+        T1_platform_request_messagebox(errmsg);
+    }
     
     id<MTLDevice> metal_device_for_window = MTLCreateSystemDefaultDevice();
     
@@ -576,7 +576,3 @@ void T1_platform_enter_fullscreen(void) {
 void T1_platform_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }
-
-#if __cplusplus
-}
-#endif

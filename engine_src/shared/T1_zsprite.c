@@ -1,6 +1,6 @@
 #include "T1_zsprite.h"
 
-T1zSpriteCollection * T1_zsprites_to_render = NULL;
+T1zSpriteCollection * T1_zsprite_list = NULL;
 
 void T1_zsprite_request_next(
     T1zSpriteRequest * stack_recipient)
@@ -10,15 +10,15 @@ void T1_zsprite_request_next(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < T1_zsprites_to_render->size;
+        zp_i < T1_zsprite_list->size;
         zp_i++)
     {
-        if (T1_zsprites_to_render->cpu_data[zp_i].deleted)
+        if (T1_zsprite_list->cpu_data[zp_i].deleted)
         {
             stack_recipient->cpu_data     =
-                &T1_zsprites_to_render->cpu_data[zp_i];
+                &T1_zsprite_list->cpu_data[zp_i];
             stack_recipient->gpu_data     =
-                &T1_zsprites_to_render->gpu_data[zp_i];
+                &T1_zsprite_list->gpu_data[zp_i];
             stack_recipient->cpu_data->committed = false;
             break;
         }
@@ -29,17 +29,17 @@ void T1_zsprite_request_next(
         stack_recipient->gpu_data == NULL)
     {
         stack_recipient->cpu_data =
-            &T1_zsprites_to_render->
-                cpu_data[T1_zsprites_to_render->size];
+            &T1_zsprite_list->
+                cpu_data[T1_zsprite_list->size];
         stack_recipient->gpu_data =
-            &T1_zsprites_to_render->
-                gpu_data[T1_zsprites_to_render->size];
-        stack_recipient->cpu_data[T1_zsprites_to_render->size].
+            &T1_zsprite_list->
+                gpu_data[T1_zsprite_list->size];
+        stack_recipient->cpu_data[T1_zsprite_list->size].
             deleted = false;
         stack_recipient->cpu_data->committed = false;
         
-        T1_zsprites_to_render->size += 1;
-        log_assert(T1_zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
+        T1_zsprite_list->size += 1;
+        log_assert(T1_zsprite_list->size + 1 < MAX_ZSPRITES_PER_BUFFER);
     }
     
     return;
@@ -50,21 +50,21 @@ void T1_zsprite_commit(
 {
     log_assert(to_commit->cpu_data->mesh_id >= 0);
     log_assert(to_commit->cpu_data->mesh_id <
-        (int32_t)all_mesh_summaries_size);
+        (int32_t)T1_objmodel_mesh_summaries_size);
     log_assert(to_commit->cpu_data->mesh_id < ALL_MESHES_SIZE);
     log_assert(
-        all_mesh_summaries[to_commit->cpu_data->mesh_id].
+        T1_objmodel_mesh_summaries[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t all_mesh_vertices_tail_i =
         (uint32_t)(
-            all_mesh_summaries
+            T1_objmodel_mesh_summaries
                 [to_commit->cpu_data->mesh_id].vertices_head_i +
-            all_mesh_summaries
+            T1_objmodel_mesh_summaries
                 [to_commit->cpu_data->mesh_id].vertices_size -
             1);
-    log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
+    log_assert(all_mesh_vertices_tail_i < T1_objmodel_all_vertices->size);
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -73,41 +73,19 @@ void T1_zsprite_commit(
     to_commit->cpu_data->committed = true;
 }
 
-bool32_t T1_zsprite_fetch_by_zsprite_id(
-    T1zSpriteRequest * recipient,
-    const int32_t object_id)
-{
-    T1_std_memset(recipient, 0, sizeof(T1zSpriteRequest));
-    
-    for (
-        uint32_t zp_i = 0;
-        zp_i < T1_zsprites_to_render->size;
-        zp_i++)
-    {
-        if (
-            !T1_zsprites_to_render->cpu_data[zp_i].deleted &&
-            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id == object_id)
-        {
-            recipient->cpu_data = &T1_zsprites_to_render->cpu_data[zp_i];
-            recipient->gpu_data = &T1_zsprites_to_render->gpu_data[zp_i];
-            return true;
-        }
-    }
-    
-    log_assert(recipient->cpu_data == NULL);
-    log_assert(recipient->gpu_data == NULL);
-    return false;
-}
-
 void T1_zsprite_delete(const int32_t with_object_id)
 {
-    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
-        if (T1_zsprites_to_render->cpu_data[i].zsprite_id == with_object_id)
+    for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
+        if (T1_zsprite_list->cpu_data[i].zsprite_id == with_object_id)
         {
-            T1_zsprites_to_render->cpu_data[i].deleted   = true;
-            T1_zsprites_to_render->cpu_data[i].zsprite_id = -1;
+            T1_zsprite_list->cpu_data[i].deleted   = true;
+            T1_zsprite_list->cpu_data[i].zsprite_id = -1;
         }
     }
+}
+
+void T1_zsprite_delete_all(void) {
+    T1_zsprite_list->size = 0;
 }
 
 float T1_zsprite_get_x_multiplier_for_width(
@@ -125,13 +103,13 @@ float T1_zsprite_get_x_multiplier_for_width(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
     
     float return_value =
-        for_width / all_mesh_summaries[for_poly->mesh_id].base_width;
+        for_width / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_width;
     
     return return_value;
 }
@@ -151,10 +129,10 @@ float T1_zsprite_get_z_multiplier_for_depth(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
     
     float return_value =
-        for_depth / all_mesh_summaries[for_poly->mesh_id].base_depth;
+        for_depth / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_depth;
     
     return return_value;
 }
@@ -174,10 +152,10 @@ float T1_zsprite_get_y_multiplier_for_height(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
     
     float return_value =
-        for_height / all_mesh_summaries[for_poly->mesh_id].base_height;
+        for_height / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_height;
     
     return return_value;
 }
@@ -223,11 +201,11 @@ void T1_zsprite_construct_with_mesh_id(
     to_construct->cpu_data->mesh_id = mesh_id;
     
     if (mesh_id >= 0 &&
-        all_mesh_summaries[mesh_id].locked_material_base_offset != UINT32_MAX)
+        T1_objmodel_mesh_summaries[mesh_id].locked_material_base_offset != UINT32_MAX)
     {
         uint32_t base_mat_i =
-            all_mesh_summaries[mesh_id].locked_material_head_i +
-            all_mesh_summaries[mesh_id].locked_material_base_offset;
+            T1_objmodel_mesh_summaries[mesh_id].locked_material_head_i +
+            T1_objmodel_mesh_summaries[mesh_id].locked_material_base_offset;
         
         to_construct->gpu_data->base_mat =
             all_mesh_materials->gpu_data[base_mat_i];
@@ -266,39 +244,6 @@ void T1_zsprite_construct(
     
     T1_material_construct(
         &to_construct->gpu_data->base_mat);
-}
-
-float T1_zsprite_get_distance_f3(
-    const float p1[3],
-    const float p2[3])
-{
-    return sqrtf(
-        ((p1[0] - p2[0]) * (p1[0] - p2[0])) +
-        ((p1[1] - p2[1]) * (p1[1] - p2[1])) +
-        ((p1[2] - p2[2]) * (p1[2] - p2[2])));
-}
-
-float T1_zsprite_dot_of_vertices_f3(
-    const float a[3],
-    const float b[3])
-{
-    float x =
-        (
-            a[0] * b[0]
-        );
-    x = (isnan(x) || !isfinite(x)) ? T1_F32_MAX : x;
-    
-    float y = (a[1] * b[1]);
-    y = (isnan(y) || !isfinite(y)) ? T1_F32_MAX : y;
-    
-    float z = (a[2] * b[2]);
-    z = (isnan(z) || !isfinite(z)) ? T1_F32_MAX : z;
-    
-    float return_value = x + y + z;
-    
-    log_assert(!isnan(return_value));
-    
-    return return_value;
 }
 
 void zsprite_construct_quad(

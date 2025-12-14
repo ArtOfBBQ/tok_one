@@ -48,7 +48,7 @@ static void show_dead_simple_text(
     #error "T1_PARTICLES_ACTIVE undefined"
     #endif
     zlights_to_apply_size = 0;
-    T1_zsprites_to_render->size = 0;
+    T1_zsprite_list->size = 0;
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     T1_engine_globals->postproc_consts.fog_factor = 0.0f;
@@ -275,18 +275,18 @@ void T1_gameloop_update_before_render_pass(
         T1_platform_update_mouse_location();
         
         // handle timed occlusions
-        for (uint32_t zs_i = 0; zs_i < T1_zsprites_to_render->size; zs_i++) {
+        for (uint32_t zs_i = 0; zs_i < T1_zsprite_list->size; zs_i++) {
             if (
-                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us >
+                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us >
                     T1_engine_globals->elapsed)
             {
-                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us -=
+                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us -=
                     T1_engine_globals->elapsed;
             } else if (
-                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us > 0)
+                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us > 0)
             {
-                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us = 0;
-                T1_zsprites_to_render->cpu_data[zs_i].visible = 0;
+                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us = 0;
+                T1_zsprite_list->cpu_data[zs_i].visible = 0;
             }
         }
         

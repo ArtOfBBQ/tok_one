@@ -61,7 +61,7 @@ bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id)
     
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (return_val != 0) {
         // EINVAL = The value specified by mutex is invalid
         log_assert(return_val != EINVAL);
@@ -73,6 +73,9 @@ bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id)
         log_assert(return_val == EBUSY);
         
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return return_val == 0;

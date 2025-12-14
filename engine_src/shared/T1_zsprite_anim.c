@@ -30,12 +30,18 @@ typedef struct {
     T1GPUzSprite zsprite_final_pos_gpu;
     T1GPUzSprite zsprite_deltas[2];
     T1CPUzSpriteSimdStats zsprite_final_pos_cpu;
+    uint32_t (* init_mutex_and_return_id)(void);
+    void (* mutex_lock)(const uint32_t);
+    void (* mutex_unlock)(const uint32_t);
     uint32_t mutex_id;
 } T1FrameAnimState;
 
 static T1FrameAnimState * fas = NULL;
 
-void T1_zsprite_anim_init(void)
+void T1_zsprite_anim_init(
+    uint32_t (* funcptr_init_mutex_and_return_id)(void),
+    void (* funcptr_mutex_lock)(const uint32_t),
+    void (* funcptr_mutex_unlock)(const uint32_t))
 {
     zsprite_anims = (T1InternalzSpriteAnim *)T1_mem_malloc_from_unmanaged(
         sizeof(T1InternalzSpriteAnim) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
@@ -52,6 +58,11 @@ void T1_zsprite_anim_init(void)
         0,
         sizeof(T1FrameAnimState));
     
+    fas->init_mutex_and_return_id =
+        funcptr_init_mutex_and_return_id;
+    fas->mutex_lock = funcptr_mutex_lock;
+    fas->mutex_unlock = funcptr_mutex_unlock;
+    
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
         T1_std_memcpy(
             &zsprite_anims[i],
@@ -60,7 +71,7 @@ void T1_zsprite_anim_init(void)
         log_assert(zsprite_anims[i].deleted);
     }
     
-    fas->mutex_id = T1_platform_init_mutex_and_return_id();
+    fas->mutex_id = fas->init_mutex_and_return_id();
 }
 
 static
@@ -98,7 +109,7 @@ static void construct_scheduled_animationA(
 T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool8_t endpoints_not_deltas)
 {
-    T1_platform_mutex_lock(
+    fas->mutex_lock(
         fas->mutex_id);
     log_assert(zsprite_anims_size <
         SCHEDULED_ANIMATIONS_ARRAYSIZE);
@@ -142,7 +153,7 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
         return_value->endpoints_not_deltas = endpoints_not_deltas;
     }
     
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
     
     return &return_value->public;
 }
@@ -254,11 +265,11 @@ static void T1_scheduled_animations_get_projected_final_position_for(
     T1CPUzSpriteSimdStats * recip_cpu)
 {
     log_assert(zp_i >= 0);
-    log_assert((uint32_t)zp_i < T1_zsprites_to_render->size);
+    log_assert((uint32_t)zp_i < T1_zsprite_list->size);
     
-    const int32_t zsprite_id = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id;
-    *recip_gpu = T1_zsprites_to_render->gpu_data[zp_i];
-    *recip_cpu = T1_zsprites_to_render->cpu_data[zp_i].simd_stats;
+    const int32_t zsprite_id = T1_zsprite_list->cpu_data[zp_i].zsprite_id;
+    *recip_gpu = T1_zsprite_list->gpu_data[zp_i];
+    *recip_cpu = T1_zsprite_list->cpu_data[zp_i].simd_stats;
     
     for (
         uint32_t sa_i = 0;
@@ -297,7 +308,7 @@ static void T1_scheduled_animations_get_projected_final_position_for(
 void T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit)
 {
-    T1_platform_mutex_lock(
+    fas->mutex_lock(
         fas->mutex_id);
     
     T1InternalzSpriteAnim * parent = T1_zsprite_anim_get_container(to_commit);
@@ -334,11 +345,11 @@ void T1_zsprite_anim_commit(
         int32_t first_zp_i = -1;
         for (
             int32_t zp_i = 0;
-            zp_i < (int32_t)T1_zsprites_to_render->size;
+            zp_i < (int32_t)T1_zsprite_list->size;
             zp_i++)
         {
             if (
-                T1_zsprites_to_render->cpu_data[zp_i].zsprite_id ==
+                T1_zsprite_list->cpu_data[zp_i].zsprite_id ==
                     to_commit->affected_zsprite_id)
             {
                 first_zp_i = zp_i;
@@ -348,10 +359,10 @@ void T1_zsprite_anim_commit(
         
         if (first_zp_i < 0) {
             parent->deleted = true;
-            T1_platform_mutex_unlock(fas->mutex_id);
+            fas->mutex_unlock(fas->mutex_id);
             return;
         }
-        log_assert(first_zp_i < (int32_t)T1_zsprites_to_render->size);
+        log_assert(first_zp_i < (int32_t)T1_zsprite_list->size);
         
         
         T1_scheduled_animations_get_projected_final_position_for(
@@ -421,7 +432,7 @@ void T1_zsprite_anim_commit(
     
     log_assert(parent->committed);
     log_assert(!parent->deleted);
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
 }
 
 void T1_zsprite_anim_evaporate_and_destroy(
@@ -656,7 +667,7 @@ void T1_zsprite_anim_fade_to(
 
 void T1_zsprite_anim_resolve(void)
 {
-    T1_platform_mutex_lock(fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
     
     for (
         int32_t animation_i = (int32_t)zsprite_anims_size - 1;
@@ -689,9 +700,6 @@ void T1_zsprite_anim_resolve(void)
                     anim->public.
                         delete_object_when_finished)
                 {
-                    delete_zlight(
-                        anim->public.affected_zsprite_id);
-                    
                     T1_zsprite_delete(
                         anim->public.affected_zsprite_id);
                 }
@@ -759,18 +767,18 @@ void T1_zsprite_anim_resolve(void)
         // Apply effects
         for (
             int32_t zp_i = 0;
-            zp_i < (int32_t)T1_zsprites_to_render->size;
+            zp_i < (int32_t)T1_zsprite_list->size;
             zp_i++)
         {
             if (
                 (anim->public.affected_zsprite_id >= 0 &&
-                T1_zsprites_to_render->cpu_data[zp_i].zsprite_id !=
+                T1_zsprite_list->cpu_data[zp_i].zsprite_id !=
                     anim->public.affected_zsprite_id) ||
                 (anim->public.affected_touchable_id >= 0 &&
-                T1_zsprites_to_render->gpu_data[zp_i].touch_id !=
+                T1_zsprite_list->gpu_data[zp_i].touch_id !=
                     anim->public.affected_touchable_id)
                 ||
-                T1_zsprites_to_render->cpu_data[zp_i].deleted)
+                T1_zsprite_list->cpu_data[zp_i].deleted)
             {
                 continue;
             }
@@ -778,12 +786,12 @@ void T1_zsprite_anim_resolve(void)
             apply_animation_effects_for_given_eased_t(
                 t,
                 &anim->public,
-                T1_zsprites_to_render->gpu_data + zp_i,
-                &T1_zsprites_to_render->cpu_data[zp_i].simd_stats);
+                T1_zsprite_list->gpu_data + zp_i,
+                &T1_zsprite_list->cpu_data[zp_i].simd_stats);
         }
     }
     
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
 }
 
 void T1_zsprite_anim_dud_dance(
@@ -823,17 +831,17 @@ void T1_zsprite_anim_bump(
 
 void T1_zsprite_anim_delete_all(void)
 {
-    T1_platform_mutex_lock(fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
     for (uint32_t i = 0; i < zsprite_anims_size; i++) {
         zsprite_anims[i].deleted = true;
     }
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
 }
 
 void T1_zsprite_anim_delete_endpoint_anims_targeting(
     const int32_t object_id)
 {
-    T1_platform_mutex_lock(fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
     for (uint32_t i = 0; i < zsprite_anims_size; i++) {
         if (
             !zsprite_anims[i].deleted &&
@@ -845,13 +853,13 @@ void T1_zsprite_anim_delete_endpoint_anims_targeting(
             zsprite_anims[i].deleted = true;
         }
     }
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
 }
 
 void T1_zsprite_anim_delete_all_anims_targeting(
     const int32_t object_id)
 {
-    T1_platform_mutex_lock(fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
     for (uint32_t i = 0; i < zsprite_anims_size; i++) {
         T1zSpriteAnim * a =
             &zsprite_anims[i].public;
@@ -864,7 +872,7 @@ void T1_zsprite_anim_delete_all_anims_targeting(
             zsprite_anims[i].deleted = true;
         }
     }
-    T1_platform_mutex_unlock(fas->mutex_id);
+    fas->mutex_unlock(fas->mutex_id);
 }
 
 void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
@@ -874,11 +882,11 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     T1GPUzSprite * zs = NULL;
     T1CPUzSprite * zs_cpu = NULL;
     
-    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++)
+    for (uint32_t i = 0; i < T1_zsprite_list->size; i++)
     {
-        if (T1_zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
-            zs = T1_zsprites_to_render->gpu_data + i;
-            zs_cpu = T1_zsprites_to_render->cpu_data + i;
+        if (T1_zsprite_list->cpu_data[i].zsprite_id == zsprite_id) {
+            zs = T1_zsprite_list->gpu_data + i;
+            zs_cpu = T1_zsprite_list->cpu_data + i;
         }
     }
     
