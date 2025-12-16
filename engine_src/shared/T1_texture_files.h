@@ -15,6 +15,17 @@ void T1_texture_files_register_new_by_splitting_file(
     const uint32_t rows,
     const uint32_t columns);
 
+void T1_texture_files_load_font_images(
+    bool32_t * success,
+    char * error_message);
+
+void T1_texture_files_register_new_by_splitting_file_error_handling(
+    const char * filename,
+    const uint32_t rows,
+    const uint32_t columns,
+    bool32_t * success,
+    char * error_message);
+
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_texture_files_runtime_register_png_from_writables(
     const char * filename,

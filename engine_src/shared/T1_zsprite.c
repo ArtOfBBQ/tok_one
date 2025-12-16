@@ -240,7 +240,12 @@ void T1_zsprite_construct(
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     to_construct->gpu_data->outline_alpha = -1.0f;
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_material_construct(
         &to_construct->gpu_data->base_mat);

@@ -198,6 +198,75 @@ void T1_texture_files_register_new_by_splitting_file(
         columns);
 }
 
+void T1_texture_files_load_font_images(
+    bool32_t * success,
+    char * error_message)
+{
+    *success = 0;
+    
+    if (T1_texture_arrays_size != 0) {
+        assert(0);
+        T1_std_strcpy_cap(
+            error_message,
+            256,
+            "Font error - other textures already "
+            "existed");
+        return;
+    }
+    
+    const char * fontfile = "font.png";
+    T1_texture_files_register_new_by_splitting_file_error_handling(
+        /* filename : */ fontfile,
+        /* rows     : */ 10,
+        /* columns  : */ 10,
+        success,
+        error_message);
+    T1_texture_arrays[0].request_init = false;
+}
+
+void T1_texture_files_register_new_by_splitting_file_error_handling(
+    const char * filename,
+    const uint32_t rows,
+    const uint32_t columns,
+    bool32_t * success,
+    char * error_message)
+{
+    *success = 0;
+    
+    T1DecodedImage stack_img;
+    T1DecodedImage * img = &stack_img;
+    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
+    
+    log_assert(img->good);
+    if (!img->good) {
+        T1_std_strcpy_cap(
+            error_message,
+            512,
+            "Couldn't read file: ");
+        T1_std_strcat_cap(
+            error_message,
+            512,
+            filename);
+        return;
+    }
+    
+    char filename_prefix[256];
+    T1_std_strcpy_cap(filename_prefix, 256, filename);
+    uint32_t i = 0;
+    while (filename_prefix[i] != '\0' && filename_prefix[i] != '.') {
+        i++;
+    }
+    filename_prefix[i] = '\0';
+    
+    T1_texture_array_register_new_by_splitting_image(
+        img,
+        filename_prefix,
+        rows,
+        columns);
+    
+    *success = 1;
+}
+
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_texture_files_runtime_register_png_from_writables(
     const char * filename,

@@ -418,13 +418,6 @@ int main(int argc, const char * argv[]) {
         &success,
         errmsg);
     
-    bool32_t initial_log_dump_succesful = false;
-    log_dump(&initial_log_dump_succesful);
-    if (!initial_log_dump_succesful) {
-        log_dump_and_crash("initial log dump unsuccesful, exiting app");
-        return 1;
-    }
-    
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
         /* x: */ T1_engine_globals->window_left,
@@ -538,20 +531,20 @@ int main(int argc, const char * argv[]) {
             errmsg);
         
         T1_platform_request_messagebox(errmsg2);
-    } else {
-        T1_platform_start_thread(
-            T1_appinit_after_gpu_init,
-            0);
     }
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (!success && T1_app_running) {
-        log_dump_and_crash(errmsg);
+    T1_appinit_after_gpu_init_step1(
+        &success,
+        errmsg);
+    
+    if (!success) {
+        T1_platform_request_messagebox(errmsg);
+        T1_app_running = false;
+    } else {
+        T1_platform_start_thread(
+            T1_appinit_after_gpu_init_step2,
+            0);
     }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);

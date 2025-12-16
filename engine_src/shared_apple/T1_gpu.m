@@ -239,6 +239,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
+    #if T1_ALPHABLENDUING_SHADER_ACTIVE == T1_ACTIVE
     id<MTLFunction> alphablending_fragment_shader =
         [ags->lib newFunctionWithName:
             @"alphablending_fragment_shader"];
@@ -249,6 +250,10 @@ bool32_t apple_gpu_init(
             "Missing function: alphablending_vertex_shader()");
         return false;
     }
+    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     id<MTLFunction> shadows_vertex_shader =
@@ -451,6 +456,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
+    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     MTLRenderPipelineDescriptor * alpha_pls_desc =
         [[MTLRenderPipelineDescriptor alloc] init];
     [alpha_pls_desc
@@ -504,6 +510,10 @@ bool32_t apple_gpu_init(
             "Failed to load the alphablending shader");
         return false;
     }
+    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     MTLDepthStencilDescriptor * depth_desc =
         [MTLDepthStencilDescriptor new];
@@ -1715,9 +1725,18 @@ static void set_basic_triangle_props_for_render_pass_encoder(
         return;
     }
     
+    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     uint32_t diamond_verts_size =
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
+    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    uint32_t diamond_verts_size =
+        gpu_shared_data_collection->
+            triple_buffers[ags->frame_i].verts_size;
+    #else
+    #error
+    #endif
+    
     log_assert(
         diamond_verts_size <= gpu_shared_data_collection->
             triple_buffers[ags->frame_i].verts_size);
@@ -1961,7 +1980,6 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     #error
     #endif
     
-    // diamond pipeline
     id<MTLRenderCommandEncoder> render_pass_2_opaque_triangles_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
@@ -2020,7 +2038,7 @@ static void set_basic_triangle_props_for_render_pass_encoder(
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
-    #if 1
+    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     if (
         T1_engine_globals->draw_triangles &&
         alphablend_verts_size > 0)
@@ -2042,7 +2060,7 @@ static void set_basic_triangle_props_for_render_pass_encoder(
         set_basic_triangle_props_for_render_pass_encoder(render_pass_3_alpha_triangles_encoder);
         
         [render_pass_3_alpha_triangles_encoder
-            setCullMode: MTLCullModeNone];
+            setCullMode: MTLCullModeBack];
         [render_pass_3_alpha_triangles_encoder
             setFrontFacingWinding:
                 MTLWindingCounterClockwise];
@@ -2082,6 +2100,9 @@ static void set_basic_triangle_props_for_render_pass_encoder(
         [render_pass_3_alpha_triangles_encoder
             endEncoding];
     }
+    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     // copy the touch id buffer to a CPU buffer so we can query
@@ -2107,8 +2128,11 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     // Render pass 2 downsamples the original texture
-    for (uint32_t ds_i = 0; ds_i < DOWNSAMPLES_SIZE; ds_i++) {
-        
+    for (
+        uint32_t ds_i = 0;
+        ds_i < DOWNSAMPLES_SIZE;
+        ds_i++)
+    {
         MTLViewport smaller_viewport = ags->cached_viewport;
         smaller_viewport.width = ags->downsampled_target_textures[ds_i].width;
         smaller_viewport.height = ags->downsampled_target_textures[ds_i].height;
@@ -2181,7 +2205,7 @@ static void set_basic_triangle_props_for_render_pass_encoder(
         [view currentRenderPassDescriptor];
     
     render_pass_4_composition_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
     render_pass_4_composition_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
     id<MTLRenderCommandEncoder> render_pass_4_composition =
@@ -2233,21 +2257,25 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     #error
     #endif
     
-    int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texturearray_i;
+    int32_t perlin_ta_i = gpu_shared_data_collection->
+        triple_buffers[ags->frame_i].
+            postproc_consts->perlin_texturearray_i;
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     int32_t perlin_t_i =
-        gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texture_i;
+        gpu_shared_data_collection->
+            triple_buffers[ags->frame_i].
+                postproc_consts->perlin_texture_i;
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);
+    
+    [render_pass_4_composition
+        setFragmentTexture: ags->metal_textures[perlin_ta_i]
+        atIndex:6];
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error
     #endif
-    
-    [render_pass_4_composition
-        setFragmentTexture: ags->metal_textures[perlin_ta_i]
-        atIndex:6];
     
     [render_pass_4_composition
         setFragmentTexture: ags->camera_depth_texture

@@ -1,5 +1,7 @@
 #include "T1_zsprite_anim.h"
 
+#if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+
 typedef struct {
     T1zSpriteAnim public;
     
@@ -18,8 +20,6 @@ typedef struct {
     bool8_t deleted;
     bool8_t committed;
 } T1InternalzSpriteAnim;
-
-#if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
 
 #define FLT_SCHEDULEDANIM_IGNORE 0xFFFF
 

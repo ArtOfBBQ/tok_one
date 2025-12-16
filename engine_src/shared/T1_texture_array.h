@@ -42,11 +42,6 @@ void T1_texture_array_init(void);
 
 void T1_texture_array_push_all_predecoded(void);
 
-void T1_texture_files_register_new_by_splitting_file(
-    const char * filename,
-    const uint32_t rows,
-    const uint32_t columns);
-
 void T1_texture_array_preregister_null_image(
     const char * filename,
     const uint32_t height,
@@ -61,8 +56,6 @@ void T1_texture_array_register_new_by_splitting_image(
 
 T1Tex T1_texture_array_get_filename_location(
     const char * for_filename);
-
-void T1_texture_array_load_font_images(void);
 
 void T1_texture_array_debug_dump_texturearray_to_writables(
     const int32_t texture_array_i,

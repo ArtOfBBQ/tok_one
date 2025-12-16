@@ -97,6 +97,19 @@ static void show_dead_simple_text(
         /* const float max_width: */
             T1_engine_globals->window_width - 30);
     
+    T1_engine_globals->draw_fps = 0;
+    T1_engine_globals->draw_triangles = true;
+    T1_engine_globals->draw_axes = 0;
+    T1_engine_globals->draw_fps = 0;
+    T1_engine_globals->show_profiler = false;
+    T1_engine_globals->postproc_consts.
+        perlin_texturearray_i = 0;
+    T1_engine_globals->postproc_consts.
+        perlin_texture_i = 0;
+    T1_engine_globals->postproc_consts.color_quantization = 1;
+    T1_engine_globals->postproc_consts.lights_size = 0;
+    T1_engine_globals->postproc_consts.shadowcaster_i = UINT32_MAX;
+    
     T1_renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_us: */
@@ -263,7 +276,12 @@ void T1_gameloop_update_before_render_pass(
        }
     } else if (T1_app_running) {
         
-        T1_frame_anims_new_frame_starts();
+        #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
+        T1_frame_anim_new_frame_starts();
+        #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
         
         #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
         T1_zsprite_anim_resolve();
@@ -350,8 +368,6 @@ void T1_gameloop_update_before_render_pass(
         uint32_t overflow_vertices = frame_data->verts_size % 3;
         frame_data->verts_size -= overflow_vertices;
     }
-    
-    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
     
     if (T1_engine_globals->draw_fps) {
         text_request_fps_counter(

@@ -510,18 +510,6 @@ T1Tex T1_texture_array_get_filename_location(
     return return_value;
 }
 
-void T1_texture_array_load_font_images(void) {
-    
-    // Don't call this, the engine should call it
-    assert(T1_texture_arrays_size == 0);
-    const char * fontfile = "font.png";
-    T1_texture_files_register_new_by_splitting_file(
-        /* filename : */ fontfile,
-        /* rows     : */ 10,
-        /* columns  : */ 10);
-    T1_texture_arrays[0].request_init = false;
-}
-
 void T1_texture_array_debug_dump_texturearray_to_writables(
     const int32_t texture_array_i,
     uint32_t * success)

@@ -16,14 +16,14 @@ typedef struct {
 static T1FrameAnim * T1_frame_anims = NULL;
 static uint32_t T1_frame_anims_size = 0;
 
-void T1_frame_anims_init(void) {
+void T1_frame_anim_init(void) {
     T1_frame_anims =
         T1_mem_malloc_from_unmanaged(
             sizeof(T1FrameAnim) *
                 T1_FRAME_ANIMS_CAP);
 }
 
-void T1_frame_anims_new_frame_starts(void) {
+void T1_frame_anim_new_frame_starts(void) {
     T1_frame_anims_size = 0;
     
     T1_std_memset(
@@ -33,7 +33,7 @@ void T1_frame_anims_new_frame_starts(void) {
             T1_FRAME_ANIMS_CAP);
 }
 
-void T1_frame_anims_apply_all(
+void T1_frame_anim_apply_all(
     T1GPUFrame * frame_data)
 {
     for (
@@ -96,7 +96,7 @@ void T1_frame_anims_apply_all(
     }
 }
 
-void T1_frame_anims_gpu_mod_to_touch_id_by_offset(
+void T1_frame_anim_gpu_mod_to_touch_id_by_offset(
     const int32_t touch_id,
     const uint32_t gpu_prop_offset,
     const float val_to_memcpy_32bit)
@@ -134,7 +134,7 @@ void T1_frame_anims_gpu_mod_to_touch_id_by_offset(
         4);
 }
 
-void T1_frame_anims_gpu_mod_to_zsprite_id_by_offset(
+void T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(
     const int32_t zsprite_id,
     const uint32_t gpu_prop_offset,
     const float val_to_memcpy_32bit)

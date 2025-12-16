@@ -584,14 +584,17 @@ void T1_renderer_hardware_render(
     log_assert(
         frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
-    frame_data->zsprite_list->size = T1_zsprite_list->size;
-    
     *frame_data->postproc_consts =
         T1_engine_globals->postproc_consts;
     
     add_opaque_zpolygons_to_workload(frame_data);
     
+    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     add_alphablending_zpolygons_to_workload(frame_data);
+    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
@@ -622,5 +625,12 @@ void T1_renderer_hardware_render(
     
     construct_light_matrices(frame_data);
     
-    T1_frame_anims_apply_all(frame_data);
+    #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
+    T1_frame_anim_apply_all(frame_data);
+    #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
 }

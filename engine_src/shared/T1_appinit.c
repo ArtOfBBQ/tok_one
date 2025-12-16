@@ -243,7 +243,7 @@ void T1_appinit_before_gpu_init(
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             T1_platform_mutex_unlock);
     
-    T1_frame_anims_init();
+    T1_frame_anim_init();
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_init(
@@ -328,11 +328,11 @@ void T1_appinit_before_gpu_init(
         T1_mem_free_from_managed(engine_save.contents);
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    engine_globals->fullscreen = false;
-    engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-    engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-    engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-    engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    T1_engine_globals->fullscreen = false;
+    T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
+    T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
+    T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
+    T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     sound_settings->music_volume  = 0.5f;
@@ -440,7 +440,6 @@ void T1_appinit_before_gpu_init(
             /* raw_fontmetrics_file_size: */
                 font_metrics_file.size_without_terminator);
     } else {
-        // TODO: no font file, crash
         T1_std_internal_strcpy_cap(
             error_message,
             128,
@@ -554,6 +553,19 @@ void T1_appinit_before_gpu_init(
             gpu_shared_data_collection->
                 projection_constants_allocation_size,
             T1_mem_page_size);
+    
+    bool32_t initial_log_dump_succesful = false;
+    log_dump(&initial_log_dump_succesful);
+    if (!initial_log_dump_succesful) {
+        log_dump_and_crash("initial log dump unsuccesful, exiting app");
+        T1_std_internal_strcpy_cap(
+            error_message,
+            128,
+            "Error - couldn't write the log file to "
+            "disk at startup");
+        *success = 0;
+        return;
+    }
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -584,14 +596,23 @@ static void T1_appinit_asset_loading_thread(int32_t asset_thread_id) {
 #error "T1_TEXTURES_ACTIVE undefined!"
 #endif
 
-void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
-    (void)throwaway_threadarg;
-    
-    T1_texture_array_load_font_images();
+void T1_appinit_after_gpu_init_step1(
+    bool32_t * success,
+    char * error_message)
+{
+    *success = 0;
     
     if (!T1_app_running) {
         return;
     }
+    
+    error_message[0] = '\0';
+    
+    T1_texture_files_load_font_images(
+        success,
+        error_message);
+    
+    if (!*success) { return; } else { *success = 0; }
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
@@ -609,23 +630,40 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     T1_platform_gpu_copy_locked_vertices();
     
+    T1_gameloop_active = true;
+    *success = true;
+}
+
+void T1_appinit_after_gpu_init_step2(
+    int32_t throwaway_threadarg)
+{
+    log_dump_and_crash("Forced crash in appinit step2");
+    
+    (void)throwaway_threadarg;
+    
+    if (!T1_app_running) {
+        return;
+    }
+    
     uint32_t perlin_good = 0;
     T1_texture_files_preregister_dds_resource(
         "perlin_noise.dds",
         &perlin_good);
     
-    if (!perlin_good) {
-        T1_gameloop_active = true;
-        log_dump_and_crash("Missing engine file: perlin_noise.dds");
-        return;
+    if (1 || !perlin_good) {
+        log_dump_and_crash(
+            "Missing engine file: "
+            "perlin_noise.dds");
+        T1_engine_globals->postproc_consts.perlin_texturearray_i = 1;
+        T1_engine_globals->postproc_consts.perlin_texture_i = 0;
+    } else {
+        T1Tex perlin_tex = T1_texture_array_get_filename_location(
+            "perlin_noise.dds");
+        T1_engine_globals->postproc_consts.perlin_texturearray_i =
+            perlin_tex.array_i;
+        T1_engine_globals->postproc_consts.perlin_texture_i =
+            perlin_tex.slice_i;
     }
-    
-    T1Tex perlin_tex = T1_texture_array_get_filename_location(
-        "perlin_noise.dds");
-    T1_engine_globals->postproc_consts.perlin_texturearray_i =
-        perlin_tex.array_i;
-    T1_engine_globals->postproc_consts.perlin_texture_i =
-        perlin_tex.slice_i;
     
     if (
         T1_engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
@@ -654,7 +692,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
         T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
-            T1_gameloop_active = true;
             if (errmsg[0] == '\0') {
                 T1_std_strcpy_cap(
                     errmsg,
@@ -682,7 +719,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
         log_assert(T1_engine_globals->startup_bytes_loaded == 0);
         
         if (!T1_app_running) {
-            T1_gameloop_active = true;
             return;
         }
         
@@ -749,7 +785,8 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->locked_vertices,
+            gpu_shared_data_collection->
+                locked_vertices,
         /* const void * src: */
             T1_objmodel_all_vertices->gpu_data,
         /* size_t n: */
@@ -766,7 +803,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     T1_platform_gpu_copy_locked_materials();
     
     if (!T1_app_running) {
-        T1_gameloop_active = true;
         return;
     }
     
@@ -774,7 +810,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     T1_appinit_asset_loading_thread(0);
     
     if (!T1_app_running) {
-        T1_gameloop_active = true;
         return;
     }
     
@@ -835,7 +870,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     if (!T1_app_running) {
-        T1_gameloop_active = true;
         return;
     }
     
@@ -850,7 +884,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     if (!T1_app_running) {
-        T1_gameloop_active = true;
         return;
     }
     
@@ -863,8 +896,6 @@ void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     T1_token_deinit(T1_mem_free_from_managed);
-    
-    T1_gameloop_active = true;
 }
 
 void T1_appinit_shutdown(void)

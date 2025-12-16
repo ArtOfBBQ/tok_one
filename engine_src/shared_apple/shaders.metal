@@ -770,6 +770,9 @@ fragment_shader(
     
     lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
     
+    lit_color[0] = 1.0f;
+    lit_color[3] = 1.0f;
+    
     FragmentAndTouchableOut packed_out =
         pack_color_and_touchable_id(lit_color, in.touchable_id);
     
@@ -916,7 +919,12 @@ single_quad_fragment_shader(
     #else
     #error
     #endif
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     texture2d_array<half> perlin_texture [[ texture(6) ]],
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     depth2d<float> camera_depth_map
         [[texture(CAMERADEPTH_TEXTUREARRAY_I)]])
 {
@@ -943,13 +951,14 @@ single_quad_fragment_shader(
     color_sample[3] = 1.0f;
     color_sample += clamp(in.bonus_rgb, 0.0h, 0.25h);
     
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     float dist = camera_depth_map.sample(sampler, texcoord);
     dist = clamp(dist - 0.96f, 0.0f, 0.04f) * 50.0f;
     dist = pow(dist, 2.0f);
     dist *= in.fog_factor;
     
     float progress = sin(float(in.curtime) * 0.0000001f);
-    progress = (progress + 1.0) * 0.5;
+    progress = (progress + 1.0f) * 0.5f;
     
     dist *= perlin_texture.sample(
         sampler,
@@ -961,8 +970,15 @@ single_quad_fragment_shader(
     
     color_sample =
         (vector_half4(
-            in.fog_rgb[0], in.fog_rgb[1], in.fog_rgb[2], 1.0h) * dist) +
+            in.fog_rgb[0],
+            in.fog_rgb[1],
+            in.fog_rgb[2],
+            1.0h) * dist) +
         (color_sample * (1.0h - dist));
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     // reinhard tone mapping
     #if T1_TONE_MAPPING_ACTIVE == T1_ACTIVE
@@ -997,7 +1013,8 @@ kernel void threshold_texture(
     
     half4 thresholded =
         in_color *
-        ((in_color[0] + in_color[1] + in_color[2]) > (1.05h * 3.0h));
+        ((in_color[0] + in_color[1] + in_color[2]) >
+            (1.05h * 3.0h));
     
     texture.write(thresholded, grid_pos);
 }
