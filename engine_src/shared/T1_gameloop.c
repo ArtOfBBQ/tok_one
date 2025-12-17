@@ -106,9 +106,12 @@ static void show_dead_simple_text(
         perlin_texturearray_i = 0;
     T1_engine_globals->postproc_consts.
         perlin_texture_i = 0;
-    T1_engine_globals->postproc_consts.color_quantization = 1;
-    T1_engine_globals->postproc_consts.lights_size = 0;
-    T1_engine_globals->postproc_consts.shadowcaster_i = UINT32_MAX;
+    T1_engine_globals->postproc_consts.
+        color_quantization = 1;
+    T1_engine_globals->postproc_consts.
+        lights_size = 0;
+    T1_engine_globals->postproc_consts.
+        shadowcaster_i = UINT32_MAX;
     
     T1_renderer_hardware_render(
             frame_data,
@@ -237,8 +240,10 @@ void T1_gameloop_update_before_render_pass(
             T1_engine_globals->last_resize_request_us < 2000000)
     {
         if (
-            T1_engine_globals->this_frame_timestamp_us -
-                T1_engine_globals->last_resize_request_us < 350000)
+            T1_engine_globals->
+                this_frame_timestamp_us -
+            T1_engine_globals->
+                last_resize_request_us < 350000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
@@ -274,7 +279,10 @@ void T1_gameloop_update_before_render_pass(
                 (uint32_t)T1_engine_globals->window_height,
                 (uint32_t)T1_engine_globals->window_width);
        }
-    } else if (T1_app_running) {
+    } else if (
+        T1_app_running &&
+        T1_engine_globals->clientlogic_early_startup_finished)
+    {
         
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
         T1_frame_anim_new_frame_starts();

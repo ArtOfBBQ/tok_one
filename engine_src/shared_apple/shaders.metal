@@ -770,9 +770,6 @@ fragment_shader(
     
     lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
     
-    lit_color[0] = 1.0f;
-    lit_color[3] = 1.0f;
-    
     FragmentAndTouchableOut packed_out =
         pack_color_and_touchable_id(lit_color, in.touchable_id);
     

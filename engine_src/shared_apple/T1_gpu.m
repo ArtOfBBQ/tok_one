@@ -239,7 +239,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    #if T1_ALPHABLENDUING_SHADER_ACTIVE == T1_ACTIVE
+    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     id<MTLFunction> alphablending_fragment_shader =
         [ags->lib newFunctionWithName:
             @"alphablending_fragment_shader"];

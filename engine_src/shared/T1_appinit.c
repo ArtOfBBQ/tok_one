@@ -243,7 +243,12 @@ void T1_appinit_before_gpu_init(
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             T1_platform_mutex_unlock);
     
+    #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
     T1_frame_anim_init();
+    #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_init(
@@ -512,13 +517,18 @@ void T1_appinit_before_gpu_init(
                     gpu_shared_data_collection->polygons_allocation_size,
                     T1_mem_page_size);
         
-        assert(gpu_shared_data_collection->lights_allocation_size > 0);
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].lights =
-            (T1GPULight *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->lights_allocation_size,
-                T1_mem_page_size);
-        assert(gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            lights != NULL);
+        assert(gpu_shared_data_collection->
+            lights_allocation_size > 0);
+        gpu_shared_data_collection->
+            triple_buffers[cur_frame_i].lights =
+            (T1GPULight *)
+                T1_mem_malloc_from_unmanaged_aligned(
+                    gpu_shared_data_collection->
+                        lights_allocation_size,
+                    T1_mem_page_size);
+        assert(gpu_shared_data_collection->
+            triple_buffers[cur_frame_i].
+                lights != NULL);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
             (T1GPUCamera *)T1_mem_malloc_from_unmanaged_aligned(
@@ -637,8 +647,6 @@ void T1_appinit_after_gpu_init_step1(
 void T1_appinit_after_gpu_init_step2(
     int32_t throwaway_threadarg)
 {
-    log_dump_and_crash("Forced crash in appinit step2");
-    
     (void)throwaway_threadarg;
     
     if (!T1_app_running) {
@@ -650,7 +658,7 @@ void T1_appinit_after_gpu_init_step2(
         "perlin_noise.dds",
         &perlin_good);
     
-    if (1 || !perlin_good) {
+    if (!perlin_good) {
         log_dump_and_crash(
             "Missing engine file: "
             "perlin_noise.dds");
@@ -703,7 +711,8 @@ void T1_appinit_after_gpu_init_step2(
             return;
         }
         
-        T1_engine_globals->clientlogic_early_startup_finished = 1;
+        T1_engine_globals->
+            clientlogic_early_startup_finished = 1;
         
         uint32_t core_count = T1_platform_get_cpu_logical_core_count();
         log_assert(core_count > 0);
@@ -724,7 +733,12 @@ void T1_appinit_after_gpu_init_step2(
         
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
         T1_loading_textures = true;
-        for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
+        for (
+            int32_t i = 1;
+            i < (int32_t)ias->
+                image_decoding_threads;
+            i++)
+        {
             T1_platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
                     T1_appinit_asset_loading_thread,
@@ -839,17 +853,20 @@ void T1_appinit_after_gpu_init_step2(
             longest_ta_i = i;
         }
     }
-    log_append("Slowest texture array: ");
-    log_append_int(longest_ta_i);
-    log_append("\nIncludes images: ");
-    log_append(T1_texture_arrays[longest_ta_i].images[0].filename);
-    for (
-        int32_t t_i = 1;
-        t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
-        t_i++)
-    {
-        log_append(", ");
-        log_append(T1_texture_arrays[longest_ta_i].images[t_i].filename);
+    
+    if (longest_ta_i >= 0) {
+        log_append("Slowest texture array: ");
+        log_append_int(longest_ta_i);
+        log_append("\nIncludes images: ");
+        log_append(T1_texture_arrays[longest_ta_i].images[0].filename);
+        for (
+            int32_t t_i = 1;
+            t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
+            t_i++)
+        {
+            log_append(", ");
+            log_append(T1_texture_arrays[longest_ta_i].images[t_i].filename);
+        }
     }
     
     T1_texture_array_push_all_predecoded();
