@@ -314,6 +314,35 @@ vertex_shader(
     return out;
 }
 
+fragment float4
+z_prepass_fragment_shader(
+    const RasterizerPixel in [[stage_in]],
+    const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
+    const device T1GPUConstMat * const_mats [[ buffer(6) ]],
+    const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
+{
+    unsigned int mat_i =
+        locked_vertices[in.locked_vertex_i].parent_material_i;
+    const device T1GPUConstMat * material =
+        mat_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_mat :
+            &const_mats[locked_vertices[in.locked_vertex_i].
+                locked_materials_head_i + mat_i];
+    
+    float4 lit_color = vector_float4(
+        1.0f,
+        1.0f,
+        1.0f,
+        1.0f);
+    
+    return lit_color;
+}
+
+
+
 struct FragmentAndTouchableOut {
     half4 color [[color(0)]];
     half4 touchable_id [[color(1)]];

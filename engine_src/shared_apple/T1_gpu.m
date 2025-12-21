@@ -41,6 +41,13 @@ typedef struct AppleGPUState {
     #endif
     id<MTLTexture> camera_depth_texture;
     
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    id<MTLRenderPipelineState> z_prepass_pls;
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> outlines_pls;
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
@@ -297,6 +304,55 @@ bool32_t apple_gpu_init(
             error:
                 &Error];
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    id<MTLFunction> z_prepass_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"vertex_shader"];
+    if (z_prepass_vertex_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> z_prepass_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"z_prepass_fragment_shader"];
+    if (z_prepass_fragment_shader == NULL) {
+        log_append("Missing function: z_prepass_fragment_shader()!");
+        
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: z_prepass_fragment_shader()");
+        return false;
+    }
+    
+    MTLRenderPipelineDescriptor * z_prepass_pls_desc =
+        [MTLRenderPipelineDescriptor new];
+    [z_prepass_pls_desc
+        setVertexFunction: z_prepass_vertex_shader];
+    [z_prepass_pls_desc
+        setFragmentFunction: z_prepass_fragment_shader];
+    z_prepass_pls_desc.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    z_prepass_pls_desc.label = @"z prepass pipeline state";
+    z_prepass_pls_desc
+        .colorAttachments[0]
+        .pixelFormat = ags->pixel_format_renderpass1;
+    
+    ags->z_prepass_pls =
+       [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                z_prepass_pls_desc
+            error:
+                &Error];
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1377,7 +1433,6 @@ set_basic_props_for_render_pass_descriptor(
 {
     desc.depthAttachment.loadAction =
         MTLLoadActionLoad;
-    assert(ags->render_target_texture != NULL);
     desc.colorAttachments[0].
         texture = ags->render_target_texture;
     desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
@@ -1709,7 +1764,8 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     }
     
     funcptr_shared_gameloop_update(
-        &gpu_shared_data_collection->triple_buffers[ags->frame_i]);
+        &gpu_shared_data_collection->
+            triple_buffers[ags->frame_i]);
     
     if (!ags || !ags->metal_active || !ags->viewport_set) {
         return;
@@ -1835,6 +1891,8 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     #error
     #endif
     
+    assert(ags->render_target_texture != NULL);
+    
     // To kick off our render loop, we blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
         [ags->touch_id_texture height] *
@@ -1861,19 +1919,168 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     
     [clear_touch_texture_blit_encoder endEncoding];
     
+    uint32_t z_buffer_cleared = false;
+    
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    MTLRenderPassDescriptor * z_prepass_descriptor =
+        [view currentRenderPassDescriptor];
+    z_prepass_descriptor.depthAttachment.loadAction =
+        z_buffer_cleared ?
+            MTLLoadActionLoad :
+            MTLLoadActionClear;
+    z_buffer_cleared = true;
+    z_prepass_descriptor.depthAttachment.clearDepth = 1.0f;
+    z_prepass_descriptor.depthAttachment.storeAction =
+        MTLStoreActionStore;
+    z_prepass_descriptor.depthAttachment.texture =
+        ags->camera_depth_texture;
+    z_prepass_descriptor.colorAttachments[0].texture =
+        ags->render_target_texture;
+    z_prepass_descriptor.colorAttachments[0].loadAction =
+        MTLLoadActionDontCare;
+    z_prepass_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionDontCare;
+    
+    id<MTLRenderCommandEncoder> render_pass_0_z_prepass_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                z_prepass_descriptor];
+    
+    [render_pass_0_z_prepass_encoder
+        setViewport: ags->render_target_viewport];
+    
+    // outlines pipeline
+    [render_pass_0_z_prepass_encoder
+        setRenderPipelineState: ags->z_prepass_pls];
+    [render_pass_0_z_prepass_encoder
+        setDepthStencilState: ags->opaque_depth_stencil_state];
+    [render_pass_0_z_prepass_encoder
+        setDepthClipMode: MTLDepthClipModeClip];
+    [render_pass_0_z_prepass_encoder setCullMode: MTLCullModeBack];
+    [render_pass_0_z_prepass_encoder
+        setFrontFacingWinding:
+            MTLWindingCounterClockwise];
+    
+    [render_pass_0_z_prepass_encoder
+        setVertexBuffer:
+            ags->vertex_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [render_pass_0_z_prepass_encoder
+        setVertexBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_0_z_prepass_encoder
+        setVertexBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset: 0
+        atIndex: 3];
+    
+    [render_pass_0_z_prepass_encoder
+        setVertexBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0 
+        atIndex:
+            4];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->light_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            2];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            3];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            4];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->locked_materials_buffer
+        offset:
+            0
+        atIndex:
+            6];
+    
+    [render_pass_0_z_prepass_encoder
+        setFragmentBuffer:
+            ags->postprocessing_constants_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            7];
+    
+    if (
+        T1_engine_globals->draw_triangles &&
+        diamond_verts_size > 0)
+    {
+        assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+        assert(diamond_verts_size % 3 == 0);
+        [render_pass_0_z_prepass_encoder
+            drawPrimitives:
+                MTLPrimitiveTypeTriangle
+            vertexStart:
+                0
+            vertexCount:
+                diamond_verts_size];
+    }
+    [render_pass_0_z_prepass_encoder endEncoding];
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     MTLRenderPassDescriptor * outlines_descriptor =
-    [view currentRenderPassDescriptor];
-    
+        [view currentRenderPassDescriptor];
     outlines_descriptor.depthAttachment.loadAction =
-        MTLLoadActionClear;
+        z_buffer_cleared ?
+            MTLLoadActionLoad :
+            MTLLoadActionClear;
+    z_buffer_cleared = true;
     outlines_descriptor.depthAttachment.clearDepth = 1.0f;
     outlines_descriptor.depthAttachment.storeAction =
         MTLStoreActionStore;
     outlines_descriptor.depthAttachment.texture =
         ags->camera_depth_texture;
     
-    assert(ags->render_target_texture != NULL);
     outlines_descriptor.colorAttachments[0].texture =
         ags->render_target_texture;
     outlines_descriptor.colorAttachments[0].storeAction =
@@ -1887,16 +2094,12 @@ static void set_basic_triangle_props_for_render_pass_encoder(
             renderCommandEncoderWithDescriptor:
                 outlines_descriptor];
     
-    assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
     [render_pass_1_draw_outlines_encoder
         setViewport: ags->render_target_viewport];
-    assert(ags->cached_viewport.width > 0.0f);
-    assert(ags->cached_viewport.height > 0.0f);
     
     // outlines pipeline
     [render_pass_1_draw_outlines_encoder
         setRenderPipelineState: ags->outlines_pls];
-    assert(ags->opaque_depth_stencil_state != nil);
     [render_pass_1_draw_outlines_encoder
         setDepthStencilState: ags->opaque_depth_stencil_state];
     [render_pass_1_draw_outlines_encoder
@@ -1968,7 +2171,6 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     opaque_tris_descriptor.depthAttachment.
         clearDepth = 1.0f;
     
-    assert(ags->render_target_texture != NULL);
     opaque_tris_descriptor.colorAttachments[0].
         texture = ags->render_target_texture;
     opaque_tris_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
