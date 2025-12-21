@@ -442,10 +442,12 @@ int main(int argc, const char * argv[]) {
         [NSString stringWithUTF8String:APPLICATION_NAME];
     [window setDelegate: window_delegate];
     [window setTitle: nsstring_app_name];
-    [window makeMainWindow]; 
+    [window makeMainWindow];
     [window setAcceptsMouseMovedEvents:YES];
     [window setOrderedIndex:0];
     [window makeKeyAndOrderFront: nil];
+    
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     
     if (!success) {
         T1_platform_request_messagebox(errmsg);
@@ -491,7 +493,7 @@ int main(int argc, const char * argv[]) {
             encoding:NSASCIIStringEncoding];
     
     bool32_t result = apple_gpu_init(
-        /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
+        /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */

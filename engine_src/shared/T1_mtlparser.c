@@ -203,7 +203,12 @@ static void parse_single_float_stat(
     initial_token_name[0] = '\0';
     mtlparser_state->mtlparser_strlcat(
         initial_token_name,
-        token->string_value == NULL ? "NULL" : token->string_value,
+        (
+            token == NULL ||
+            token->string_value ==
+                NULL) ?
+            "NULL" :
+            token->string_value,
         64);
     
     char stack_string_64bytes[64];

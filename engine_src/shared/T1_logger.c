@@ -253,12 +253,12 @@ log_dump_and_crash(const char * crash_message) {
         }
         crashed_top_of_screen_msg[i] = '\0';
     }
-    
-    T1_app_running = false;
-    
+
     #ifndef LOGGER_SILENCE
     printf("DUMP & CRASHED: %s\n", crash_message);
     #endif
+    
+    T1_app_running = false;
     
     #ifdef IGNORE_LOGGER
     assert(0);
