@@ -341,47 +341,27 @@ struct FragmentAndTouchableOut {
 /*
 We want to output an int32 for 1 of our render targets (touchable_id), but
 Metal enforces you use the same data type when you render to multiple targets
-simultaneously. That's why we're packing our int32 inside of float16 slots. On
+simultaneously. That's why we're packing our int32 inside of RGBA8Unorm slots. On
 the CPU side we'll retrieve them and put them back together as an int32.
 */
 static FragmentAndTouchableOut pack_color_and_touchable_id(
     float4 color,
     int32_t touchable_id)
 {
-    FragmentAndTouchableOut return_value;
+    FragmentAndTouchableOut out;
     
-    return_value.color = vector_half4(color[0], color[1], color[2], color[3]);
+    out.color = (half4)color;
     
-    // Interpret signed int32_t as uint32_t (0 to 2^32-1)
     uint uid = as_type<uint>(touchable_id);
     
-    // Note: We could just pack our 4-byte int into only 2 channels,
-    // and originally that's what I did, but it lead to a nasty bug
-    //
-    // we're using all 4 channels to avoid NaN values
-    // we found out that the GPU flattens all NaN behind our back later,
-    // which I guess is considered a risk-free optimization from their POV.
-    // (NaN can be represented by many bit patterns, but from their POV it
-    // will always have the same effect, so they replace all NaN with their
-    // own version of NaN)
-    // I think it's 1 of the more nasty traps I've ever run into,
-    // and I guess it's the price we pay here for using the graphics API in
-    // a way we're not supposed to.
+    out.touchable_id = half4(
+        half((uid      ) & 0xFFu) / 255.0h,
+        half((uid >>  8) & 0xFFu) / 255.0h,
+        half((uid >> 16) & 0xFFu) / 255.0h,
+        half((uid >> 24) & 0xFFu) / 255.0h
+    );
     
-    // Split into two 16-bit chunks
-    uint16_t fourth_8 = ((uid >> 24) & 0xFF);
-    uint16_t third_8  = ((uid >> 16) & 0xFF);
-    uint16_t second_8 = ((uid >> 8) & 0xFF);
-    uint16_t first_8  = (uid & 0xFF);
-    
-    // Pack into R and G channels (blue and alpha unused)
-    return_value.touchable_id = vector_half4(
-        as_type<half>(first_8), /* lowest 8 bits stored in red channel */
-        as_type<half>(second_8), /* 2nd lowest 8 bits (green channel) */
-        as_type<half>(third_8), /* blue channel */
-        as_type<half>(fourth_8)); /* alpha channel */
-    
-    return return_value;
+    return out;
 }
 
 // Gets the color given a material and lighting setup

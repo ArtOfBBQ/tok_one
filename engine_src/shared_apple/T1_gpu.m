@@ -12,7 +12,7 @@ typedef struct AppleGPUState {
     #endif
     NSUInteger frame_i;
     MTLViewport window_viewport;
-    MTLViewport render_view_viewports[T1_RENDER_VIEW_CAP];
+    MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
     
     id<MTLDevice> device;
     id<MTLLibrary> lib;
@@ -226,7 +226,8 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"vertex_shader"];
     if (vertex_shader == NULL) {
-        log_append("Missing function: vertex_shader()!");
+        log_append(
+            "Missing function: vertex_shader()!");
         
         T1_std_strcpy_cap(
             error_msg_string,
@@ -498,16 +499,23 @@ bool32_t apple_gpu_init(
     
     if (Error != NULL)
     {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Failed to init diamond pipeline: ");
+        T1_std_strcat_cap(
+            error_msg_string,
+            512,
+            [[[Error userInfo] descriptionInStringsFileFormat]
+                    cStringUsingEncoding:
+                        NSASCIIStringEncoding]);
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Failed to initialize diamond pipeline");
+        log_dump_and_crash(error_msg_string);
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Failed to initialize diamond pipeline");
+
         return false;
     }
     
@@ -971,51 +979,59 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     if (
         screen_x < 0 ||
         screen_y < 0 ||
-        screen_x >= (T1_engine_globals->window_width) ||
+        screen_x >=
+            (T1_engine_globals->window_width) ||
         screen_y >= (T1_engine_globals->window_height))
     {
         return -1;
     }
     
     uint32_t rtt_width  =
-        (uint32_t)ags->render_target_texture.width;
+        (uint32_t)ags->render_viewports[0].width;
     uint32_t rtt_height =
-        (uint32_t)ags->render_target_texture.height;
+        (uint32_t)ags->render_viewports[0].height;
     
     uint32_t screen_x_adj = (uint32_t)(
-        (screen_x / T1_engine_globals->window_width) *
-            rtt_width);
+        (screen_x * rtt_width) /
+            T1_engine_globals->window_width);
     uint32_t screen_y_adj = (uint32_t)(
-        (screen_y / T1_engine_globals->window_height) *
-            rtt_height);
+        (screen_y * rtt_height) /
+            T1_engine_globals->window_height);
     
-    if (screen_x_adj >= rtt_width ) { screen_x_adj = rtt_width;  }
-    if (screen_y_adj >= rtt_height) { screen_y_adj = rtt_height; }
+    if (screen_x_adj >= rtt_width )
+    {
+        screen_x_adj = rtt_width;
+    }
+    if (screen_y_adj >= rtt_height)
+    {
+        screen_y_adj = rtt_height;
+    }
     
     screen_y_adj = rtt_height - screen_y_adj;
     
-    uint16_t * data = (uint16_t *)[ags->touch_id_buffer contents];
+    uint8_t * data = (uint8_t *)[ags->touch_id_buffer contents];
     uint64_t size = [ags->touch_id_buffer allocatedSize];
     
-    uint32_t pixel_i = (screen_y_adj * rtt_width) + screen_x_adj;
-    if (
-        ((pixel_i * 4) + 3) >= (size / 2))
+    uint32_t pixel_i =
+        (screen_y_adj * rtt_width) + screen_x_adj;
+    
+    if (((pixel_i * 4) + 3) >= size)
     {
         return -1;
     }
     
-    uint16_t first_8bits = data[(pixel_i*4)+0] & 0xFF;
-    uint16_t second_8bits = data[(pixel_i*4)+1] & 0xFF;
-    uint16_t third_8bits = data[(pixel_i*4)+2] & 0xFF;
-    uint16_t fourth_8bits = data[(pixel_i*4)+3] & 0xFF;
+    // See shaders for the packing logic
+    uint32_t first_8bits  = data[(pixel_i*4)+0];
+    uint32_t second_8bits = data[(pixel_i*4)+1];
+    uint32_t third_8bits  = data[(pixel_i*4)+2];
+    uint32_t fourth_8bits = data[(pixel_i*4)+3];
     
-    uint32_t first_8  = first_8bits;  // red channel, see shaders
-    uint32_t second_8 = second_8bits; // green channel
-    uint32_t third_8  = third_8bits;  // blue channel
-    uint32_t fourth_8 = fourth_8bits; // alpha channel
-    
-    uint32_t uid = (fourth_8 << 24) | (third_8 << 16) | (second_8 << 8) | first_8;
-    int32_t final_id = *(int32_t *)&uid; // Direct reinterpretation
+    uint32_t uid =
+        (fourth_8bits << 24) |
+        (third_8bits  << 16) |
+        (second_8bits << 8) |
+        first_8bits;
+    int32_t final_id = *(int32_t *)&uid;
     
     if (final_id < -1) { final_id = -1; }
     
@@ -1133,23 +1149,40 @@ void T1_platform_gpu_fetch_rgba_at(
     
     // Copy from texture to buffer
     [blit_encoder
-        copyFromTexture: texture
-        sourceSlice: (NSUInteger)texture_i
-        sourceLevel: 0
-        sourceOrigin: MTLOriginMake(0, 0, 0)
-        sourceSize: MTLSizeMake(texture.width, texture.height, 1)
-        toBuffer: temp_buffer
-        destinationOffset: 0
-        destinationBytesPerRow: bytes_per_row
-        destinationBytesPerImage: bytes_per_image];
+        copyFromTexture:
+            texture
+        sourceSlice:
+            (NSUInteger)texture_i
+        sourceLevel:
+            0
+        sourceOrigin:
+            MTLOriginMake(0, 0, 0)
+        sourceSize:
+            MTLSizeMake(
+                texture.width, texture.height, 1)
+        toBuffer:
+            temp_buffer
+        destinationOffset:
+            0
+        destinationBytesPerRow:
+            bytes_per_row
+        destinationBytesPerImage:
+            bytes_per_image];
     
     [blit_encoder endEncoding];
-
-    // Add completion handler to copy data to rgba_recipient
-    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        if (cb.error == nil) {
+    
+    // Add completion handler to copy data
+    // to rgba_recipient
+    [command_buffer
+        addCompletedHandler:
+            ^(id<MTLCommandBuffer> cb) {
+        if (cb.error == nil)
+        {
             // Copy buffer contents to rgba_recipient
-            memcpy(rgba_recipient, [temp_buffer contents], bytes_per_image);
+            T1_std_memcpy(
+                rgba_recipient,
+                [temp_buffer contents],
+                bytes_per_image);
             *good = true;
         }
         // Release the temporary buffer
@@ -1445,8 +1478,11 @@ void T1_platform_gpu_copy_locked_materials(void)
 static void
 set_basic_props_for_render_pass_descriptor(
     MTLRenderPassDescriptor * desc,
-    id<MTLTexture> rtt)
+    const int32_t cam_i)
 {
+    id<MTLTexture> rtt =
+        ags->metal_textures[T1_render_views[cam_i].write_array_i];
+    
     desc.depthAttachment.loadAction =
         MTLLoadActionLoad;
     desc.colorAttachments[0].
@@ -1461,12 +1497,14 @@ set_basic_props_for_render_pass_descriptor(
         ags->camera_depth_texture;
     
     // ID Buffer for touchables
-    desc.colorAttachments[1].texture =
-        ags->touch_id_texture;
-    desc.colorAttachments[1].loadAction =
-        MTLLoadActionLoad; // We clear manually
-    desc.colorAttachments[1].storeAction =
-        MTLStoreActionStore;
+    if (cam_i == 0) {
+        desc.colorAttachments[1].texture =
+            ags->touch_id_texture;
+        desc.colorAttachments[1].loadAction =
+            MTLLoadActionLoad; // We clear manually
+        desc.colorAttachments[1].storeAction =
+            MTLStoreActionStore;
+    }
 }
 
 static void set_defaults_for_encoder(
@@ -1644,22 +1682,6 @@ static void set_defaults_for_encoder(
     *gpu_shared_data_collection->locked_pjc =
         T1_engine_globals->project_consts;
     
-    MTLTextureDescriptor * touch_id_tex_desc =
-        [MTLTextureDescriptor new];
-    touch_id_tex_desc.width =
-        (NSUInteger)ags->window_viewport.width;
-    touch_id_tex_desc.height =
-        (NSUInteger)ags->window_viewport.height;
-    touch_id_tex_desc.pixelFormat = ags->pixel_format_renderpass1;
-    touch_id_tex_desc.mipmapLevelCount = 1;
-    touch_id_tex_desc.storageMode = MTLStorageModePrivate;
-    touch_id_tex_desc.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderRead;
-    ags->touch_id_texture =
-        [ags->device
-            newTextureWithDescriptor: touch_id_tex_desc];
-    
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
@@ -1676,27 +1698,6 @@ static void set_defaults_for_encoder(
     ags->camera_depth_texture =
         [ags->device newTextureWithDescriptor: camera_depth_texture_descriptor];
     
-    uint64_t touch_buffer_size_bytes =
-        touch_id_tex_desc.width *
-            touch_id_tex_desc.height *
-            8;
-    
-    ags->touch_id_buffer = [ags->device
-        newBufferWithLength:
-            touch_buffer_size_bytes
-        options:
-            MTLResourceStorageModeShared];
-    
-    ags->touch_id_buffer_all_zeros = [ags->device
-        newBufferWithLength:
-            touch_buffer_size_bytes
-        options:
-            MTLResourceStorageModeShared];
-    int32_t minus_one = -1;
-    T1_std_memset_i32(
-        ags->touch_id_buffer_all_zeros.contents,
-        minus_one,
-        (uint32_t)touch_buffer_size_bytes);
     // Set up a texture for rendering to and apply post-processing to
     MTLTextureDescriptor * render_target_texture_desc =
         [MTLTextureDescriptor new];
@@ -1741,16 +1742,14 @@ static void set_defaults_for_encoder(
 
 - (void) updateInternalRenderViewSize: (unsigned int)at_i
 {
-    ags->render_view_viewports[at_i].originX = 0;
-    ags->render_view_viewports[at_i].originY = 0;
-    ags->render_view_viewports[at_i].width   =
-        T1_engine_globals->window_width *
-            ags->retina_scaling_factor;
-    ags->render_view_viewports[at_i].height  =
-        T1_engine_globals->window_height *
-            ags->retina_scaling_factor;
-    assert(ags->render_view_viewports[at_i].width > 0.0f);
-    assert(ags->render_view_viewports[at_i].height > 0.0f);
+    ags->render_viewports[at_i].originX = 0;
+    ags->render_viewports[at_i].originY = 0;
+    ags->render_viewports[at_i].width   =
+        T1_render_views[at_i].width;
+    ags->render_viewports[at_i].height  =
+        T1_render_views[at_i].height;
+    log_assert(ags->render_viewports[at_i].width > 0.0f);
+    log_assert(ags->render_viewports[at_i].height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -1758,76 +1757,8 @@ static void set_defaults_for_encoder(
     window_globals->projection_constants.near that's in our world space
     and much larger numbers
     */
-    ags->render_view_viewports[at_i].znear = 0.001f;
-    ags->render_view_viewports[at_i].zfar = 1.0f;
-    
-    ags->window_viewport = ags->render_view_viewports[0];
-    ags->window_viewport.width /= T1_engine_globals->pixelation_div;
-    ags->window_viewport.height /= T1_engine_globals->pixelation_div;
-    
-    *gpu_shared_data_collection->locked_pjc =
-        T1_engine_globals->project_consts;
-    
-    MTLTextureDescriptor * camera_depth_texture_descriptor =
-        [[MTLTextureDescriptor alloc] init];
-    camera_depth_texture_descriptor.textureType = MTLTextureType2D;
-    camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
-    camera_depth_texture_descriptor.width =
-        (unsigned long)ags->window_viewport.width;
-    camera_depth_texture_descriptor.height =
-        (unsigned long)ags->window_viewport.height;
-    camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
-    camera_depth_texture_descriptor.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderRead;
-    
-    ags->camera_depth_texture =
-        [ags->device newTextureWithDescriptor: camera_depth_texture_descriptor];
-    
-    // Set up a texture for rendering to and apply post-processing to
-    MTLTextureDescriptor * render_target_texture_desc =
-        [MTLTextureDescriptor new];
-    render_target_texture_desc.textureType = MTLTextureType2D;
-    render_target_texture_desc.width =
-        (unsigned long)ags->window_viewport.width;
-    render_target_texture_desc.height =
-        (unsigned long)ags->window_viewport.height;
-    render_target_texture_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    render_target_texture_desc.storageMode = MTLStorageModePrivate;
-    render_target_texture_desc.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderWrite |
-        MTLTextureUsageShaderRead;
-    render_target_texture_desc.mipmapLevelCount = 1;
-    
-    ags->render_target_texture = [ags->device
-        newTextureWithDescriptor: render_target_texture_desc];
-    
-    #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
-        
-        MTLTextureDescriptor * downsampled_target_texture_desc =
-            [MTLTextureDescriptor new];
-        downsampled_target_texture_desc.textureType = MTLTextureType2D;
-        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
-        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
-        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
-        downsampled_target_texture_desc.mipmapLevelCount = 1;
-        downsampled_target_texture_desc.storageMode = MTLStorageModePrivate;
-        downsampled_target_texture_desc.usage =
-            MTLTextureUsageShaderWrite |
-            MTLTextureUsageShaderRead;
-        ags->downsampled_target_textures[i] = [ags->device
-            newTextureWithDescriptor: downsampled_target_texture_desc];
-    }
-    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    if (at_i == 0) {
-    
-    }
+    ags->render_viewports[at_i].znear = 0.001f;
+    ags->render_viewports[at_i].zfar = 1.0f;
     
     ags->viewports_set[at_i] = true;
     
@@ -1836,10 +1767,11 @@ static void set_defaults_for_encoder(
     MTLTextureDescriptor * touch_id_tex_desc =
         [MTLTextureDescriptor new];
     touch_id_tex_desc.width =
-        (NSUInteger)ags->render_view_viewports[0].width;
+        (NSUInteger)ags->render_viewports[0].width;
     touch_id_tex_desc.height =
-        (NSUInteger)ags->render_view_viewports[0].height;
-    touch_id_tex_desc.pixelFormat = ags->pixel_format_renderpass1;
+        (NSUInteger)ags->render_viewports[0].height;
+    touch_id_tex_desc.pixelFormat =
+        MTLPixelFormatRGBA8Unorm;
     touch_id_tex_desc.mipmapLevelCount = 1;
     touch_id_tex_desc.storageMode = MTLStorageModePrivate;
     touch_id_tex_desc.usage =
@@ -1912,7 +1844,7 @@ static void set_defaults_for_encoder(
         &gpu_shared_data_collection->
             triple_buffers[ags->frame_i];
     
-    // To kick off our render loop, we blit to clear the touch id buffer
+    // Blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
         [ags->touch_id_texture height] *
         [ags->touch_id_texture width] *
@@ -1946,10 +1878,12 @@ static void set_defaults_for_encoder(
     [clear_touch_texture_blit_encoder endEncoding];
     
     for (
-        uint32_t cam_i = 0;
-        cam_i < f->render_views_size;
-        cam_i++)
+        int32_t cam_i = (int32_t)f->
+            render_views_size - 1;
+        cam_i >= 0;
+        cam_i--)
     {
+        log_assert(cam_i == 0); // congrats if you hit
         log_assert(ags->viewports_set[cam_i]);
         
         #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
@@ -2075,7 +2009,7 @@ static void set_defaults_for_encoder(
         MTLRenderPassDescriptor * opaque_tris_descriptor =
         [view currentRenderPassDescriptor];
         
-        set_basic_props_for_render_pass_descriptor(opaque_tris_descriptor, current_rtt);
+        set_basic_props_for_render_pass_descriptor(opaque_tris_descriptor, cam_i);
         
         #if T1_OUTLINES_ACTIVE == T1_ACTIVE
         // handled in basic
@@ -2106,7 +2040,7 @@ static void set_defaults_for_encoder(
         
         set_defaults_for_encoder(
             render_pass_2_opaque_triangles_encoder,
-            cam_i);
+            (uint32_t)cam_i);
         
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         for (
@@ -2154,7 +2088,7 @@ static void set_defaults_for_encoder(
             MTLRenderPassDescriptor *
                 alpha_tris_descriptor =
                     [view currentRenderPassDescriptor];
-            set_basic_props_for_render_pass_descriptor(alpha_tris_descriptor, current_rtt);
+            set_basic_props_for_render_pass_descriptor(alpha_tris_descriptor, cam_i);
             
             id<MTLRenderCommandEncoder>
                 render_pass_3_alpha_triangles_encoder =
@@ -2167,7 +2101,7 @@ static void set_defaults_for_encoder(
                     ags->alphablend_pls];
             set_defaults_for_encoder(
                 render_pass_3_alpha_triangles_encoder,
-                cam_i);
+                (uint32_t)cam_i);
             
             [render_pass_3_alpha_triangles_encoder
                 setCullMode: MTLCullModeBack];
@@ -2450,9 +2384,7 @@ void T1_platform_gpu_update_internal_render_viewport(
         updateInternalRenderViewSize:at_i];
 }
 
-void T1_platform_gpu_update_window_viewport(
-    const uint32_t at_i)
+void T1_platform_gpu_update_window_viewport(void)
 {
-    [apple_gpu_delegate
-        updateInternalRenderViewSize: at_i];
+    [apple_gpu_delegate updateFinalWindowSize];
 }
