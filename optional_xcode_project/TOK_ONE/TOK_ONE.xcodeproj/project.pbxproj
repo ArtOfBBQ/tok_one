@@ -138,6 +138,7 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
+		ECDAFF6A2EFBDCB000AE4CA1 /* T1_render_view.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */; };
 		ECDCFF4D2DDE0F2B002AA399 /* T1_mtlparser.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */; };
 		ECDCFF502DDE0F52002AA399 /* T1_tokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */; };
 		ECDD9C232DE2157500721A48 /* T1_texture_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_texture_files.c */; };
@@ -283,6 +284,8 @@
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		ECDAFF682EFBDCB000AE4CA1 /* T1_render_view.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_render_view.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_render_view.h; sourceTree = "<absolute>"; };
+		ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_render_view.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_render_view.c; sourceTree = "<absolute>"; };
 		ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_mtlparser.c; path = ../../engine_src/shared/T1_mtlparser.c; sourceTree = "<group>"; };
 		ECDCFF4C2DDE0F2A002AA399 /* T1_mtlparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_mtlparser.h; path = ../../engine_src/shared/T1_mtlparser.h; sourceTree = "<group>"; };
 		ECDCFF4E2DDE0F52002AA399 /* T1_tokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_tokenizer.h; path = ../../engine_src/shared/T1_tokenizer.h; sourceTree = "<group>"; };
@@ -473,6 +476,8 @@
 				601128782862511600F92967 /* T1_lightsource.c */,
 				ECE759CF2C400174004B0847 /* T1_lines.h */,
 				ECE759D02C400175004B0847 /* T1_lines.c */,
+				ECDAFF682EFBDCB000AE4CA1 /* T1_render_view.h */,
+				ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */,
 				601128752862511600F92967 /* T1_logger.h */,
 				6011287F2862511700F92967 /* T1_logger.c */,
 				EC676A382DE6D667001FD4DE /* T1_material.h */,
@@ -738,6 +743,7 @@
 				60A99917287BD4C4003F7159 /* T1_lightsource.c in Sources */,
 				60A99901287BD4C3003F7159 /* T1_text.h in Sources */,
 				60A9991C287BD4C4003F7159 /* inflate.c in Sources */,
+				ECDAFF6A2EFBDCB000AE4CA1 /* T1_render_view.c in Sources */,
 				EC9F971F2EEF6B86008D8481 /* T1_mesh.c in Sources */,
 				EC9F97202EEF6B86008D8481 /* T1_tex.c in Sources */,
 				60A9991D287BD4C4003F7159 /* T1_std.c in Sources */,

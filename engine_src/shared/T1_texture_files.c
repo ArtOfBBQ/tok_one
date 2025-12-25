@@ -366,6 +366,8 @@ void T1_texture_files_runtime_register_png_from_writables(
             T1_texture_arrays[loc.array_i].single_img_width,
         /* const uint32_t single_image_height: */
             T1_texture_arrays[loc.array_i].single_img_height,
+        /* const bool32_t is_render_target: */
+            false,
         /* const bool32_t use_bc1_compression: */
             false);
     

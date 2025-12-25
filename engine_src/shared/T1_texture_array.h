@@ -48,6 +48,9 @@ void T1_texture_array_preregister_null_image(
     const uint32_t width,
     const uint32_t use_bc1_compression);
 
+void T1_texture_array_set_initial_render_view(
+    void);
+
 void T1_texture_array_register_new_by_splitting_image(
     T1DecodedImage * new_image,
     const char * filename_prefix,

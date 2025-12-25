@@ -5,7 +5,7 @@ static uint32_t renderer_initialized = false;
 void T1_renderer_init(void) {
     renderer_initialized = true;
     
-    T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
+    T1_std_memset(T1_camera, 0, sizeof(T1GPURenderView));
 }
 
 inline static void add_alphablending_zpolygons_to_workload(
@@ -187,30 +187,30 @@ static void construct_projection_matrix(void) {
     #endif
     
     T1_std_memcpy(
-        camera.projection_4x4 + 0,
+        T1_camera->p_4x4 + 0,
         proj.rows[0].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.projection_4x4 + 4,
+        T1_camera->p_4x4 + 4,
         proj.rows[1].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.projection_4x4 + 8,
+        T1_camera->p_4x4 + 8,
         proj.rows[2].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.projection_4x4 + 12,
+        T1_camera->p_4x4 + 12,
         proj.rows[3].data,
         sizeof(float) * 4);
 }
 
 static void construct_view_matrix(void) {
-    camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
-    camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
-    camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
-    camera.xyz_sinangle[0] = sinf(camera.xyz_angle[0]);
-    camera.xyz_sinangle[1] = sinf(camera.xyz_angle[1]);
-    camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
+    T1_camera->xyz_cosangle[0] = cosf(T1_camera->xyz_angle[0]);
+    T1_camera->xyz_cosangle[1] = cosf(T1_camera->xyz_angle[1]);
+    T1_camera->xyz_cosangle[2] = cosf(T1_camera->xyz_angle[2]);
+    T1_camera->xyz_sinangle[0] = sinf(T1_camera->xyz_angle[0]);
+    T1_camera->xyz_sinangle[1] = sinf(T1_camera->xyz_angle[1]);
+    T1_camera->xyz_sinangle[2] = sinf(T1_camera->xyz_angle[2]);
     
     T1_linal_float4x4 result;
     T1_linal_float4x4 next;
@@ -219,9 +219,9 @@ static void construct_view_matrix(void) {
     
     T1_linal_float4x4_construct_xyz_rotation(
         &next,
-        -camera.xyz_angle[0],
-        -camera.xyz_angle[1],
-        -camera.xyz_angle[2]);
+        -T1_camera->xyz_angle[0],
+        -T1_camera->xyz_angle[1],
+        -T1_camera->xyz_angle[2]);
     
     T1_linal_float4x4_mul_float4x4_inplace(
         &result,
@@ -229,30 +229,49 @@ static void construct_view_matrix(void) {
     
     T1_linal_float4x4_construct(
         &next,
-        1.0f, 0.0f, 0.0f, -camera.xyz[0],
-        0.0f, 1.0f, 0.0f, -camera.xyz[1],
-        0.0f, 0.0f, 1.0f, -camera.xyz[2],
+        1.0f, 0.0f, 0.0f, -T1_camera->xyz[0],
+        0.0f, 1.0f, 0.0f, -T1_camera->xyz[1],
+        0.0f, 0.0f, 1.0f, -T1_camera->xyz[2],
         0.0f, 0.0f, 0.0f, 1.0f);
     
     T1_linal_float4x4_mul_float4x4_inplace(
         &result, &next);
     
     T1_std_memcpy(
-        camera.view_4x4 + 0,
+        T1_camera->v_4x4 + 0,
         result.rows[0].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.view_4x4 + 4,
+        T1_camera->v_4x4 + 4,
         result.rows[1].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.view_4x4 + 8,
+        T1_camera->v_4x4 + 8,
         result.rows[2].data,
         sizeof(float) * 4);
     T1_std_memcpy(
-        camera.view_4x4 + 12,
+        T1_camera->v_4x4 + 12,
         result.rows[3].data,
         sizeof(float) * 4);
+    
+    T1_linal_float3x3 view_3x3;
+    T1_linal_float4x4_extract_float3x3(
+        &result, 3, 3, &view_3x3);
+    
+    T1_linal_float3x3_inverse_transpose_inplace(
+        &view_3x3);
+    T1_std_memcpy(
+        T1_camera->normv_3x3 + 0,
+        view_3x3.rows[0].data,
+        sizeof(float) * 3);
+    T1_std_memcpy(
+        T1_camera->normv_3x3 + 3,
+        view_3x3.rows[1].data,
+        sizeof(float) * 3);
+    T1_std_memcpy(
+        T1_camera->normv_3x3 + 6,
+        view_3x3.rows[2].data,
+        sizeof(float) * 3);
 }
 
 static void construct_light_matrices(
@@ -261,7 +280,7 @@ static void construct_light_matrices(
     T1_linal_float4x4 mat_view;
     T1_linal_float4x4_construct_from_ptr(
         &mat_view,
-        camera.view_4x4);
+        T1_camera->v_4x4);
     
     T1_linal_float4x4 inv_camview_4x4;
     T1_std_memcpy(
@@ -354,7 +373,7 @@ static void construct_model_and_normal_matrices(void)
     T1_linal_float4x4 next;
     
     T1_linal_float3x3 model3x3;
-    T1_linal_float3x3 view3x3;
+    // T1_linal_float3x3 view3x3;
     
     for (
         uint32_t i = 0;
@@ -410,27 +429,28 @@ static void construct_model_and_normal_matrices(void)
         
         T1_std_memcpy(
             T1_zsprite_list->gpu_data[i].
-                model_4x4 + 0,
+                m_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprite_list->gpu_data[i].
-                model_4x4 + 4,
+                m_4x4 + 4,
             result.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprite_list->gpu_data[i].
-                model_4x4 + 8,
+                m_4x4 + 8,
             result.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprite_list->gpu_data[i].
-                model_4x4 + 12,
+                m_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
         
-        // Store topleft 3x3 of "model to world"
-        // matrix in result
+        // Next: transforming normals
+        // store topleft 3x3 of "model to world"
+        // matrix in model3x3
         T1_linal_float4x4_extract_float3x3(
             /* const T1_linal_float4x4 * in: */
                 &result,
@@ -441,91 +461,28 @@ static void construct_model_and_normal_matrices(void)
             /* T1_linal_float3x3 * out: */
                 &model3x3);
         
-        // store topleft 3x3 of camera's "to view"
-        // matrix in view3x3
-        T1_linal_float3x3_construct(
-            &view3x3,
-            camera.view_4x4[ 0],
-            camera.view_4x4[ 1],
-            camera.view_4x4[ 2],
-            camera.view_4x4[ 4],
-            camera.view_4x4[ 5],
-            camera.view_4x4[ 6],
-            camera.view_4x4[ 8],
-            camera.view_4x4[ 9],
-            camera.view_4x4[10]);
+        // inverse transpose the topleft 3x3
+        T1_linal_float3x3_inverse_transpose_inplace(&model3x3);
         
-        // view3x3 = view3x3 %*% model3x3
-        // so now view3x3 is a "model to camera view"
-        T1_linal_float3x3_mul_float3x3_inplace(
-            &view3x3, &model3x3);
-        
-        // inverse transpose the "model to cam view"
-        T1_linal_float3x3_inverse_transpose_inplace(&view3x3);
-        
-        // send to gpu
+        // store as the "normal to world" matrix
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[0] = view3x3.rows[0].data[0];
+            norm_3x3[0] = model3x3.rows[0].data[0];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[1] = view3x3.rows[0].data[1];
+            norm_3x3[1] = model3x3.rows[0].data[1];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[2] = view3x3.rows[0].data[2];
+            norm_3x3[2] = model3x3.rows[0].data[2];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[3] = view3x3.rows[1].data[0];
+            norm_3x3[3] = model3x3.rows[1].data[0];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[4] = view3x3.rows[1].data[1];
+            norm_3x3[4] = model3x3.rows[1].data[1];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[5] = view3x3.rows[1].data[2];
+            norm_3x3[5] = model3x3.rows[1].data[2];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[6] = view3x3.rows[2].data[0];
+            norm_3x3[6] = model3x3.rows[2].data[0];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[7] = view3x3.rows[2].data[1];
+            norm_3x3[7] = model3x3.rows[2].data[1];
         T1_zsprite_list->gpu_data[i].
-            normal_3x3[8] = view3x3.rows[2].data[2];
-        
-        T1_linal_float4x4_construct_from_ptr(
-            &next,
-            camera.view_4x4);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &next, &result);
-        
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                model_view_4x4 + 0,
-            next.rows[0].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                model_view_4x4 + 4,
-            next.rows[1].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                model_view_4x4 + 8,
-            next.rows[2].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                model_view_4x4 + 12,
-            next.rows[3].data,
-            sizeof(float) * 4);
-        
-        float ic = T1_zsprite_list->
-            cpu_data[i].simd_stats.ignore_camera;
-        
-        ic = T1_std_maxf(ic, 0.0f);
-        ic = T1_std_minf(ic, 1.0f);
-        
-        for (uint32_t j = 0; j < 16; j++) {
-            T1_zsprite_list->gpu_data[i].
-                model_view_4x4[j] =
-                    (T1_zsprite_list->gpu_data[i].
-                        model_view_4x4[j] *
-                            (1.0f - ic)) +
-                    (T1_zsprite_list->gpu_data[i].
-                        model_4x4[j] * ic);
-        }
+            norm_3x3[8] = model3x3.rows[2].data[2];
     }
 }
 
@@ -632,5 +589,18 @@ void T1_renderer_hardware_render(
     #error
     #endif
     
-    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
+    frame_data->render_views_size =
+        T1_render_views_size;
+    for (
+        uint32_t rv_i = 0;
+        rv_i < T1_render_views_size;
+        rv_i++)
+    {
+        log_assert(frame_data->render_views[rv_i] != NULL);
+        T1_std_memcpy(
+            frame_data->render_views[rv_i],
+            T1_render_views + rv_i,
+            sizeof(T1GPURenderView));
+        log_assert(frame_data->render_views[rv_i] != NULL);
+    }
 }

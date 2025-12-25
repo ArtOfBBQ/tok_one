@@ -177,7 +177,6 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, angle_xyz, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, scale_factor, &ok);
-    T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     
     T1_meta_struct(T1CPUzSprite, &ok);
@@ -199,6 +198,7 @@ void T1_clientlogic_early_startup(
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
@@ -551,13 +551,13 @@ static void redraw_all_sliders(void) {
 }
 
 static void request_gfx_from_empty_scene(void) {
-    camera.xyz[0] =  0.0f;
-    camera.xyz[1] = -0.5f;
-    camera.xyz[2] =  0.0f;
+    T1_camera->xyz[0] =  0.0f;
+    T1_camera->xyz[1] = -0.5f;
+    T1_camera->xyz[2] =  0.0f;
     
-    camera.xyz_angle[0] =  -0.35f;
-    camera.xyz_angle[1] =   0.00f;
-    camera.xyz_angle[2] =   0.00f;
+    T1_camera->xyz_angle[0] =  -0.35f;
+    T1_camera->xyz_angle[1] =   0.00f;
+    T1_camera->xyz_angle[2] =   0.00f;
     
     zLightSource * light = next_zlight();
     light->RGBA[0]       =  0.50f;
@@ -639,55 +639,55 @@ static void client_handle_keypresses(
     
     if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
     {
-        camera.xyz[0] -= cam_speed;
+        T1_camera->xyz[0] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_RIGHTARROW] == true)
     {
-        camera.xyz[0] += cam_speed;
+        T1_camera->xyz[0] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_DOWNARROW] == true)
     {
-        camera.xyz[1] -= cam_speed;
+        T1_camera->xyz[1] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_UPARROW] == true)
     {
-        camera.xyz[1] += cam_speed;
+        T1_camera->xyz[1] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_A] == true) {
-        camera.xyz_angle[0] += cam_rotation_speed;
+        T1_camera->xyz_angle[0] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_Z] == true) {
-        camera.xyz_angle[2] -= cam_rotation_speed;
+        T1_camera->xyz_angle[2] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_X] == true) {
-        camera.xyz_angle[2] += cam_rotation_speed;
+        T1_camera->xyz_angle[2] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_Q] == true) {
-        camera.xyz_angle[0] -= cam_rotation_speed;
+        T1_camera->xyz_angle[0] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_W] == true) {
-        camera.xyz_angle[1] -= cam_rotation_speed;
+        T1_camera->xyz_angle[1] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_S] == true) {
-        camera.xyz_angle[1] += cam_rotation_speed;
+        T1_camera->xyz_angle[1] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_BACKSLASH] == true) {
         // / key
-        camera.xyz[2] -= 0.01f;
+        T1_camera->xyz[2] -= 0.01f;
     }
     
     if (T1_io_keymap[T1_IO_KEY_UNDERSCORE] == true) {
-        camera.xyz[2] += 0.01f;
+        T1_camera->xyz[2] += 0.01f;
     }
 }
 

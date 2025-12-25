@@ -14,7 +14,9 @@ void T1_texture_array_push_all_predecoded(void)
         ta_i < (int32_t)T1_texture_arrays_size;
         ta_i++)
     {
-        log_assert(!T1_texture_arrays[ta_i].gpu_initted);
+        if (T1_texture_arrays[ta_i].gpu_initted) {
+            continue;
+        }
         
         T1_platform_gpu_init_texture_array(
             /* const int32_t texture_array_i: */
@@ -25,6 +27,8 @@ void T1_texture_array_push_all_predecoded(void)
                 T1_texture_arrays[ta_i].single_img_width,
             /* const uint32_t single_image_height: */
                 T1_texture_arrays[ta_i].single_img_height,
+            /* const bool32_t is_render_target: */
+                false,
             /* const bool32_t use_bc1_compression: */
                 T1_texture_arrays[ta_i].bc1_compressed);
         
@@ -317,6 +321,8 @@ static void register_to_texturearray_by_splitting_image(
             T1_texture_arrays[ta_i].single_img_width,
         /* const uint32_t single_image_height: */
             T1_texture_arrays[ta_i].single_img_height,
+        /* const bool32_t is_render_target: */
+            false,
         /* const uint32_t use_bc1_compression: */
             false);
     
@@ -397,6 +403,57 @@ static void register_to_texturearray_by_splitting_image(
     for (uint32_t i = 0; i < 256; i++) {
         free(filenames[i]);
     }
+}
+
+void T1_texture_array_set_initial_render_view(
+    void)
+{
+    log_assert(T1_render_views != NULL);
+    
+    T1_render_views_size = 1;
+    
+    T1_render_views[0].write_type = T1RENDERVIEW_WRITE_RENDER_TARGET;
+    T1_render_views[0].height = 512;
+    T1_render_views[0].width  = 512;
+    
+    const char * fake_name =
+        "T1_render_view_app_startup";
+    
+    T1_texture_array_preregister_null_image(
+        /* const char * filename: */
+            fake_name,
+        /* const uint32_t height: */
+            T1_render_views[0].height,
+        /* const uint32_t width: */
+            T1_render_views[0].width,
+        /* const uint32_t use_bc1_compression: */
+            false);
+    
+    T1Tex tex =
+        T1_texture_array_get_filename_location(
+            fake_name);
+    
+    T1_render_views[0].write_array_i = tex.array_i;
+    T1_render_views[0].write_slice_i = tex.slice_i;
+    log_assert(T1_render_views[0].write_array_i >= 1);
+    log_assert(T1_render_views[0].write_slice_i >= 0);
+    
+    T1_platform_gpu_init_texture_array(
+        /* const int32_t texture_array_i: */
+            tex.array_i,
+        /* const uint32_t num_images: */
+            T1_texture_arrays[tex.array_i].images_size,
+        /* const uint32_t single_image_width: */
+            T1_texture_arrays[tex.array_i].
+                single_img_width,
+        /* const uint32_t single_image_height: */
+            T1_texture_arrays[tex.array_i].
+                single_img_height,
+        /* const bool32_t is_render_target: */
+            true,
+        /* const bool32_t use_bc1_compression: */
+            false);
+    T1_texture_arrays[tex.array_i].gpu_initted = true;
 }
 
 void T1_texture_array_register_new_by_splitting_image(

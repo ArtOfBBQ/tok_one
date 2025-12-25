@@ -1,10 +1,5 @@
 #include "T1_lightsource.h"
 
-// The global camera
-// In a 2D game, move the x to the left to move all of your
-// sprites to the right
-T1GPUCamera camera;
-
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 uint32_t shadowcaster_light_i = 0;
@@ -286,21 +281,21 @@ void translate_lights(
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         translated_light_pos[0] =
-            zlights_to_apply[i].xyz[0] - camera.xyz[0];
+            zlights_to_apply[i].xyz[0] - T1_camera->xyz[0];
         translated_light_pos[1] =
-            zlights_to_apply[i].xyz[1] - camera.xyz[1];
+            zlights_to_apply[i].xyz[1] - T1_camera->xyz[1];
         translated_light_pos[2] =
-            zlights_to_apply[i].xyz[2] - camera.xyz[2];
+            zlights_to_apply[i].xyz[2] - T1_camera->xyz[2];
         
         x_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[0]);
+            -T1_camera->xyz_angle[0]);
         y_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[1]);
+            -T1_camera->xyz_angle[1]);
         z_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[2]);
+            -T1_camera->xyz_angle[2]);
         
         lights[i].xyz[0] = translated_light_pos[0];
         lights[i].xyz[1] = translated_light_pos[1];

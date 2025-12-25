@@ -322,7 +322,7 @@ void text_request_label_offset_around(
             
             letter.gpu_data->ignore_lighting =
                 font_settings->ignore_lighting;
-            letter.cpu_data->simd_stats.ignore_camera =
+            letter.gpu_data->ignore_camera =
                 font_settings->ignore_camera;
             letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
@@ -503,7 +503,7 @@ void text_request_label_renderable(
         letter.cpu_data->alpha_blending_on =
             font_settings->alpha_blending_on;
         letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
-        letter.cpu_data->simd_stats.ignore_camera = font_settings->ignore_camera;
+        letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
         letter.gpu_data->base_mat = font_settings->mat;
@@ -651,9 +651,9 @@ void text_request_top_touchable_id(
     T1_std_strcat_int_cap(fps_string, 512, top_touchable_id);
     
     T1_std_strcat_cap(fps_string, 512, ", camera xyz: [");
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[0]);
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[1]);
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[2]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[0]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[1]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[2]);
     T1_std_strcat_cap(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;

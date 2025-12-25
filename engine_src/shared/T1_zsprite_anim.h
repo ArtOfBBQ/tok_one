@@ -9,6 +9,7 @@
 #include "T1_cpu_to_gpu_types.h"
 #include "T1_easing.h"
 #include "T1_zsprite.h"
+#include "T1_render_view.h"
 // #include "T1_particle.h"
 // #include "clientlogic.h"
 

@@ -39,30 +39,42 @@ not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct {
-    float        xyz            [3];
+    float xyz            [3];
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    float        face_normal_xyz[3];
+    float face_normal_xyz[3];
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    float        normal_xyz     [3];
-    float        tangent_xyz    [3];
-    float        bitangent_xyz  [3];
-    float        uv             [2];
+    float        norm_xyz[3];
+    float        tan_xyz[3];
+    float        bitan_xyz[3];
+    float        uv[2];
     unsigned int locked_materials_head_i;
     unsigned int parent_material_i;
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
+typedef enum : uint8_t {
+    T1RENDERVIEW_WRITE_RENDER_TARGET = 0,
+    T1RENDERVIEW_WRITE_DEPTH = 1,
+    T1RENDERVIEW_WRITE_RGBA = 2,
+} T1RenderViewWriteType;
+
 typedef struct {
-    float view_4x4[16];
-    float projection_4x4[16];
-    float xyz[3];           // 12 bytes
-    float xyz_angle[3];     // 12 bytes
-    float xyz_cosangle[3];  // 12 bytes
-    float xyz_sinangle[3];  // 12 bytes
-    float padding[4];       //  8 bytes
-} T1GPUCamera;
+    float    v_4x4[16];
+    float    p_4x4[16];
+    float    normv_3x3[9];
+    float    xyz[3];           // 12 bytes
+    float    xyz_angle[3];     // 12 bytes
+    float    xyz_cosangle[3];  // 12 bytes
+    float    xyz_sinangle[3];  // 12 bytes
+    int      write_array_i;
+    int      write_slice_i;
+    uint32_t width;
+    uint32_t height;
+    T1RenderViewWriteType write_type;
+    uint8_t  padding_u8[3];
+} T1GPURenderView;
 
 typedef struct {
     float ambient_rgb[3];
@@ -84,13 +96,13 @@ typedef struct {
 
 typedef struct {
     T1GPUConstMat base_mat;
-    float         model_4x4[16];
-    float         model_view_4x4[16];
-    float         normal_3x3[9];
+    float         m_4x4[16];
+    float         norm_3x3[9];
     float         bonus_rgb[3];
     float         base_mat_uv_offsets[2];
     float         alpha;
     float         ignore_lighting;
+    float         ignore_camera;
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     float         outline_alpha;
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE

@@ -140,7 +140,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[2];
     current_command_input.gpu_data->base_mat.alpha =
         term_background_color[3];
-    current_command_input.cpu_data->simd_stats.ignore_camera = true;
+    current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->alpha_blending_on = true;
     current_command_input.cpu_data->visible = terminal_active;
@@ -189,7 +189,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->alpha_blending_on = true;
-    current_command_input.cpu_data->simd_stats.ignore_camera = true;
+    current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
     current_command_input.gpu_data->touch_id = -1;
@@ -435,12 +435,12 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "RESET CAMERA") ||
         T1_std_are_equal_strings(command, "CENTER CAMERA"))
     {
-        camera.xyz[0] = 0.0f;
-        camera.xyz[1] = 0.0f;
-        camera.xyz[2] = 0.0f;
-        camera.xyz_angle[0] = 0.0f;
-        camera.xyz_angle[1] = 0.0f;
-        camera.xyz_angle[2] = 0.0f;
+        T1_camera->xyz[0] = 0.0f;
+        T1_camera->xyz[1] = 0.0f;
+        T1_camera->xyz[2] = 0.0f;
+        T1_camera->xyz_angle[0] = 0.0f;
+        T1_camera->xyz_angle[1] = 0.0f;
+        T1_camera->xyz_angle[2] = 0.0f;
         T1_std_strcpy_cap(
             response,
             SINGLE_LINE_MAX,
@@ -462,7 +462,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[0]);
+            T1_camera->xyz[0]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -470,7 +470,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[1]);
+            T1_camera->xyz[1]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -478,7 +478,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[2]);
+            T1_camera->xyz[2]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -486,7 +486,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[0]);
+            T1_camera->xyz_angle[0]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -494,7 +494,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[1]);
+            T1_camera->xyz_angle[1]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -502,7 +502,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[2]);
+            T1_camera->xyz_angle[2]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -748,15 +748,15 @@ static bool32_t evaluate_terminal_command(
                     SINGLE_LINE_MAX,
                     ")");
                 
-                camera.xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
-                camera.xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
-                camera.xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
+                T1_camera->xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
+                T1_camera->xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
+                T1_camera->xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
                 
-                camera.xyz_angle[0] =
+                T1_camera->xyz_angle[0] =
                     zlights_to_apply[shadowcaster_light_i].xyz_angle[0];
-                camera.xyz_angle[1] =
+                T1_camera->xyz_angle[1] =
                     zlights_to_apply[shadowcaster_light_i].xyz_angle[1];
-                camera.xyz_angle[2] =
+                T1_camera->xyz_angle[2] =
                     zlights_to_apply[shadowcaster_light_i].xyz_angle[2];
             } else {
                 T1_std_strcpy_cap(

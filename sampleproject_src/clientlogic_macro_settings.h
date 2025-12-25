@@ -21,6 +21,8 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_LEFT   1650.0f
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
+#define T1_RENDER_VIEW_CAP 1
+
 #define T1_ACTIVE 1
 #define T1_INACTIVE 2
 
@@ -36,7 +38,7 @@ of the engine for your specific app.
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_ZSPRITE_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 2
-#define T1_OUTLINES_ACTIVE 1
+#define T1_OUTLINES_ACTIVE 2
 #define T1_TERMINAL_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2

@@ -58,18 +58,18 @@ static void show_dead_simple_text(
     #error "T1_FOG_ACTIVE undefined"
     #endif
     
-    camera.xyz[0] = 0.0f;
-    camera.xyz[1] = 0.0f;
-    camera.xyz[2] = 0.0f;
-    camera.xyz_angle[0] = 0.0f;
-    camera.xyz_angle[1] = 0.0f;
-    camera.xyz_angle[2] = 0.0f;
-    camera.xyz_cosangle[0] = 0.0f;
-    camera.xyz_cosangle[1] = 0.0f;
-    camera.xyz_cosangle[2] = 0.0f;
-    camera.xyz_sinangle[0] = 0.0f;
-    camera.xyz_sinangle[1] = 0.0f;
-    camera.xyz_sinangle[2] = 0.0f;
+    T1_camera->xyz[0] = 0.0f;
+    T1_camera->xyz[1] = 0.0f;
+    T1_camera->xyz[2] = 0.0f;
+    T1_camera->xyz_angle[0] = 0.0f;
+    T1_camera->xyz_angle[1] = 0.0f;
+    T1_camera->xyz_angle[2] = 0.0f;
+    T1_camera->xyz_cosangle[0] = 0.0f;
+    T1_camera->xyz_cosangle[1] = 0.0f;
+    T1_camera->xyz_cosangle[2] = 0.0f;
+    T1_camera->xyz_sinangle[0] = 0.0f;
+    T1_camera->xyz_sinangle[1] = 0.0f;
+    T1_camera->xyz_sinangle[2] = 0.0f;
     
     font_settings->font_height          = 20.0f;
     font_settings->mat.ambient_rgb[0]   = 1.0f;
@@ -194,7 +194,7 @@ void T1_gameloop_update_before_render_pass(
     }
     
     log_assert(frame_data->lights != NULL);
-    log_assert(frame_data->camera != NULL);
+    log_assert(frame_data->render_views != NULL);
     
     T1_engine_globals->this_frame_timestamp_us =
         T1_platform_get_current_time_us();
@@ -265,7 +265,7 @@ void T1_gameloop_update_before_render_pass(
             
             T1_engineglobals_init();
             
-            T1_platform_gpu_update_viewport();
+            T1_platform_gpu_update_viewport(0);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();

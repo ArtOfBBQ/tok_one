@@ -226,7 +226,7 @@ float T1_platform_y_to_y(const float y);
 
 void T1_platform_enter_fullscreen(void);
 void T1_platform_toggle_fullscreen(void);
-void T1_platform_gpu_update_viewport(void);
+void T1_platform_gpu_update_viewport(uint32_t at_i);
 
 void T1_platform_gpu_copy_locked_vertices(void);
 void T1_platform_gpu_copy_locked_materials(void);
@@ -240,7 +240,10 @@ void T1_platform_gpu_init_texture_array(
     const uint32_t num_images,
     const uint32_t single_image_width,
     const uint32_t single_image_height,
+    const bool32_t is_render_target,
     const bool32_t use_bc1_compression);
+
+void T1_platform_create_gpu_render_views(void);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_platform_gpu_generate_mipmaps_for_texture_array(

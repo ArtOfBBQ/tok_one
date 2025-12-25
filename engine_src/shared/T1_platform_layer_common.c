@@ -310,3 +310,13 @@ void T1_platform_layer_start_window_resize(
     #error
     #endif
 }
+
+void T1_platform_create_gpu_render_views(void)
+{
+    for (uint32_t rv_i = 0; rv_i < T1_render_views_size; rv_i++)
+    {
+        printf("create render view: %u\n", rv_i);
+    }
+    
+    printf("end\n");
+}

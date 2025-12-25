@@ -11,6 +11,7 @@
 #include "T1_std.h"
 #include "T1_engineglobals.h"
 #include "T1_triangle.h"
+#include "T1_render_view.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,8 +57,6 @@ void z_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_y,
     const SIMD_FLOAT cos_angles,
     const SIMD_FLOAT sin_angles);
-
-extern T1GPUCamera camera;
 
 typedef struct zLightSource {
     // you can make a group of lights and/or texquads by

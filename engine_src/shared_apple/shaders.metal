@@ -59,12 +59,13 @@ float4 xyz_rotate(const float4 vertices, const float4 xyz_angle) {
     return return_value;
 }
 
+#if 0
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1RenderView * camera [[ buffer(3) ]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],
     const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer (6) ]])
@@ -165,6 +166,7 @@ vertex float4 shadows_vertex_shader(
     
     return out_vec4 * projection;
 }
+#endif
 
 fragment void shadows_fragment_shader() {}
 
@@ -212,103 +214,91 @@ vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
-    const device T1GPUzSprite * polygons [[ buffer(1) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
-    const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]])
+    const device T1GPUzSprite * zsprites [[ buffer(1) ]],
+    const device T1GPURenderView * cam [[ buffer(3) ]],
+    const device T1GPULockedVertex * lverts [[ buffer(4) ]],
+    const device T1GPUProjectConsts * pc [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
     out.polygon_i = vertices[vertex_i].polygon_i;
-    out.locked_vertex_i =
-        vertices[vertex_i].locked_vertex_i;
+    out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    
+    const device T1GPULockedVertex * lv =
+        &lverts[out.locked_vertex_i];
+    const device T1GPUzSprite * zs =
+        &zsprites[out.polygon_i];
     
     float4 mesh_vertices = vector_float4(
-        locked_vertices[out.locked_vertex_i].xyz[0],
-        locked_vertices[out.locked_vertex_i].xyz[1],
-        locked_vertices[out.locked_vertex_i].xyz[2],
-        1.0f);
+        lv->xyz[0], lv->xyz[1], lv->xyz[2], 1.0f);
     
     float3 vertex_normal = vector_float3(
-        locked_vertices[out.locked_vertex_i].normal_xyz[0],
-        locked_vertices[out.locked_vertex_i].normal_xyz[1],
-        locked_vertices[out.locked_vertex_i].normal_xyz[2]);
+        lv->norm_xyz[0], lv->norm_xyz[1], lv->norm_xyz[2]);
     
     float3 vertex_tangent = vector_float3(
-        locked_vertices[out.locked_vertex_i].tangent_xyz[0],
-        locked_vertices[out.locked_vertex_i].tangent_xyz[1],
-        locked_vertices[out.locked_vertex_i].tangent_xyz[2]);
+        lv->tan_xyz[0], lv->tan_xyz[1], lv->tan_xyz[2]);
     
     float3 vertex_bitangent = vector_float3(
-        locked_vertices[out.locked_vertex_i].bitangent_xyz[0],
-        locked_vertices[out.locked_vertex_i].bitangent_xyz[1],
-        locked_vertices[out.locked_vertex_i].bitangent_xyz[2]);
+        lv->bitan_xyz[0], lv->bitan_xyz[1], lv->bitan_xyz[2]);
     
-    float4x4 model_and_view = matrix_float4x4(
-        polygons[out.polygon_i].model_view_4x4[ 0],
-        polygons[out.polygon_i].model_view_4x4[ 1],
-        polygons[out.polygon_i].model_view_4x4[ 2],
-        polygons[out.polygon_i].model_view_4x4[ 3],
-        polygons[out.polygon_i].model_view_4x4[ 4],
-        polygons[out.polygon_i].model_view_4x4[ 5],
-        polygons[out.polygon_i].model_view_4x4[ 6],
-        polygons[out.polygon_i].model_view_4x4[ 7],
-        polygons[out.polygon_i].model_view_4x4[ 8],
-        polygons[out.polygon_i].model_view_4x4[ 9],
-        polygons[out.polygon_i].model_view_4x4[10],
-        polygons[out.polygon_i].model_view_4x4[11],
-        polygons[out.polygon_i].model_view_4x4[12],
-        polygons[out.polygon_i].model_view_4x4[13],
-        polygons[out.polygon_i].model_view_4x4[14],
-        polygons[out.polygon_i].model_view_4x4[15]);
+    float4x4 model = matrix_float4x4(
+        zs->m_4x4[ 0], zs->m_4x4[ 1], zs->m_4x4[ 2], zs->m_4x4[ 3],
+        zs->m_4x4[ 4], zs->m_4x4[ 5], zs->m_4x4[ 6], zs->m_4x4[ 7],
+        zs->m_4x4[ 8], zs->m_4x4[ 9], zs->m_4x4[10], zs->m_4x4[11],
+        zs->m_4x4[12], zs->m_4x4[13], zs->m_4x4[14], zs->m_4x4[15]);
     
-    out.viewpos = mesh_vertices * model_and_view;
+    float4x4 view = matrix_float4x4(
+        cam->v_4x4[ 0], cam->v_4x4[ 1], cam->v_4x4[ 2], cam->v_4x4[ 3],
+        cam->v_4x4[ 4], cam->v_4x4[ 5], cam->v_4x4[ 6], cam->v_4x4[ 7],
+        cam->v_4x4[ 8], cam->v_4x4[ 9], cam->v_4x4[10], cam->v_4x4[11],
+        cam->v_4x4[12], cam->v_4x4[13], cam->v_4x4[14], cam->v_4x4[15]
+            );
     
-    out.touchable_id = polygons[out.polygon_i].touch_id;
+    float4 ignore_camera_vertices =
+        mesh_vertices * model;
+    out.viewpos = ignore_camera_vertices * view;
     
-    out.texture_coordinate = vector_float2(
-        locked_vertices[out.locked_vertex_i].uv[0],
-        locked_vertices[out.locked_vertex_i].uv[1]);
+    out.viewpos =
+        (zs->ignore_camera * ignore_camera_vertices) +
+        (1.0f - zs->ignore_camera) * out.viewpos;
+    
+    out.touchable_id = zs->touch_id;
+    
+    out.texture_coordinate = vector_float2(lv->uv[0], lv->uv[1]);
     
     float4x4 projection = matrix_float4x4(
-        camera->projection_4x4[ 0],
-        camera->projection_4x4[ 1],
-        camera->projection_4x4[ 2],
-        camera->projection_4x4[ 3],
-        camera->projection_4x4[ 4],
-        camera->projection_4x4[ 5],
-        camera->projection_4x4[ 6],
-        camera->projection_4x4[ 7],
-        camera->projection_4x4[ 8],
-        camera->projection_4x4[ 9],
-        camera->projection_4x4[10],
-        camera->projection_4x4[11],
-        camera->projection_4x4[12],
-        camera->projection_4x4[13],
-        camera->projection_4x4[14],
-        camera->projection_4x4[15]);
+        cam->p_4x4[ 0], cam->p_4x4[ 1], cam->p_4x4[ 2], cam->p_4x4[ 3],
+        cam->p_4x4[ 4], cam->p_4x4[ 5], cam->p_4x4[ 6], cam->p_4x4[ 7],
+        cam->p_4x4[ 8], cam->p_4x4[ 9], cam->p_4x4[10], cam->p_4x4[11],
+        cam->p_4x4[12], cam->p_4x4[13], cam->p_4x4[14], cam->p_4x4[15]
+            );
     
     out.projpos = out.viewpos * projection;
     
-    float3x3 normalmat3x3 = matrix_float3x3(
-        polygons[out.polygon_i].normal_3x3[ 0],
-        polygons[out.polygon_i].normal_3x3[ 1],
-        polygons[out.polygon_i].normal_3x3[ 2],
-        polygons[out.polygon_i].normal_3x3[ 3],
-        polygons[out.polygon_i].normal_3x3[ 4],
-        polygons[out.polygon_i].normal_3x3[ 5],
-        polygons[out.polygon_i].normal_3x3[ 6],
-        polygons[out.polygon_i].normal_3x3[ 7],
-        polygons[out.polygon_i].normal_3x3[ 8]);
+    float3x3 normalmodel3x3 = matrix_float3x3(
+        zs->norm_3x3[0], zs->norm_3x3[1], zs->norm_3x3[2],
+        zs->norm_3x3[3], zs->norm_3x3[4], zs->norm_3x3[5],
+        zs->norm_3x3[6], zs->norm_3x3[7], zs->norm_3x3[8]);
+    
+    float3x3 normalview3x3 = matrix_float3x3(
+        cam->normv_3x3[0], cam->normv_3x3[1], cam->normv_3x3[2],
+        cam->normv_3x3[3], cam->normv_3x3[4], cam->normv_3x3[5],
+        cam->normv_3x3[6], cam->normv_3x3[7], cam->normv_3x3[8]);
     
     out.normal_viewspace = vector_float4(
-        vertex_normal * normalmat3x3,
+        vertex_normal *
+        normalmodel3x3 *
+        normalview3x3,
         0.0f);
     out.tangent_viewspace = vector_float4(
-        vertex_tangent * normalmat3x3,
+        vertex_tangent *
+        normalmodel3x3 *
+        normalview3x3,
         0.0f);
     out.bitangent_viewspace = vector_float4(
-        vertex_bitangent * normalmat3x3,
+        vertex_bitangent *
+        normalmodel3x3 *
+        normalview3x3,
         0.0f);
     
     return out;
@@ -319,7 +309,7 @@ z_prepass_fragment_shader(
     const RasterizerPixel in [[stage_in]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPURenderView * camera [[ buffer(3) ]],
     const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
@@ -403,7 +393,7 @@ float4 get_lit(
     #error
     #endif
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
-    const device T1GPUCamera * camera,
+    const device T1GPURenderView * camera,
     const device T1GPULight * lights,
     const device T1GPUzSprite * zsprite,
     const device T1GPUConstMat * material,
@@ -743,7 +733,7 @@ fragment_shader(
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPURenderView * camera [[ buffer(3) ]],
     const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
@@ -819,7 +809,7 @@ alphablending_fragment_shader(
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPURenderView * camera [[ buffer(3) ]],
     const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * locked_materials [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
@@ -1098,7 +1088,7 @@ vertex FlatQuadPixel
 flat_billboard_quad_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUFlatQuad * quads [[ buffer(2) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]])
+    const device T1GPURenderView * camera [[ buffer(3) ]])
 {
     uint quad_i = vertex_i / 6;
     uint corner_id  = vertex_i % 6;
@@ -1123,40 +1113,40 @@ flat_billboard_quad_vertex_shader(
         1.0f);
     
     float4x4 view = matrix_float4x4(
-        camera->view_4x4[ 0],
-        camera->view_4x4[ 1],
-        camera->view_4x4[ 2],
-        camera->view_4x4[ 3],
-        camera->view_4x4[ 4],
-        camera->view_4x4[ 5],
-        camera->view_4x4[ 6],
-        camera->view_4x4[ 7],
-        camera->view_4x4[ 8],
-        camera->view_4x4[ 9],
-        camera->view_4x4[10],
-        camera->view_4x4[11],
-        camera->view_4x4[12],
-        camera->view_4x4[13],
-        camera->view_4x4[14],
-        camera->view_4x4[15]);
+        camera->v_4x4[ 0],
+        camera->v_4x4[ 1],
+        camera->v_4x4[ 2],
+        camera->v_4x4[ 3],
+        camera->v_4x4[ 4],
+        camera->v_4x4[ 5],
+        camera->v_4x4[ 6],
+        camera->v_4x4[ 7],
+        camera->v_4x4[ 8],
+        camera->v_4x4[ 9],
+        camera->v_4x4[10],
+        camera->v_4x4[11],
+        camera->v_4x4[12],
+        camera->v_4x4[13],
+        camera->v_4x4[14],
+        camera->v_4x4[15]);
     
     float4x4 projection = matrix_float4x4(
-        camera->projection_4x4[ 0],
-        camera->projection_4x4[ 1],
-        camera->projection_4x4[ 2],
-        camera->projection_4x4[ 3],
-        camera->projection_4x4[ 4],
-        camera->projection_4x4[ 5],
-        camera->projection_4x4[ 6],
-        camera->projection_4x4[ 7],
-        camera->projection_4x4[ 8],
-        camera->projection_4x4[ 9],
-        camera->projection_4x4[10],
-        camera->projection_4x4[11],
-        camera->projection_4x4[12],
-        camera->projection_4x4[13],
-        camera->projection_4x4[14],
-        camera->projection_4x4[15]);
+        camera->p_4x4[ 0],
+        camera->p_4x4[ 1],
+        camera->p_4x4[ 2],
+        camera->p_4x4[ 3],
+        camera->p_4x4[ 4],
+        camera->p_4x4[ 5],
+        camera->p_4x4[ 6],
+        camera->p_4x4[ 7],
+        camera->p_4x4[ 8],
+        camera->p_4x4[ 9],
+        camera->p_4x4[10],
+        camera->p_4x4[11],
+        camera->p_4x4[12],
+        camera->p_4x4[13],
+        camera->p_4x4[14],
+        camera->p_4x4[15]);
     
     out.projpos = worldpos * view * projection;
     
@@ -1190,7 +1180,7 @@ outlines_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
-    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPURenderView * camera [[ buffer(3) ]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]])
 {
     OutlinePixel out;

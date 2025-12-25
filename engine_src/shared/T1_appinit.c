@@ -152,7 +152,7 @@ static void test_simd_functions_floats(void) {
 static uint32_t pad_to_page_size(uint32_t base_allocation) {
     uint32_t return_value = base_allocation +
         (T1_mem_page_size - (base_allocation % T1_mem_page_size));
-    assert(return_value % T1_mem_page_size == 0);
+    log_assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
@@ -453,115 +453,133 @@ void T1_appinit_before_gpu_init(
         return;
     }
     
+    T1_render_view_init();
+    
     T1_io_init(T1_mem_malloc_from_unmanaged);
     
     T1_renderer_init();
     
     T1_clientlogic_init();
     
-    gpu_shared_data_collection = T1_mem_malloc_from_unmanaged(
-        sizeof(T1GPUSharedDataCollection));
+    gpu_shared_data_collection =
+        T1_mem_malloc_from_unmanaged(
+            sizeof(T1GPUSharedDataCollection));
+    log_assert(gpu_shared_data_collection != NULL);
+    
+    T1GPUSharedDataCollection * sd = gpu_shared_data_collection;
+    log_assert(sd != NULL);
+    
     T1_std_memset(
-        gpu_shared_data_collection,
+        sd,
         0,
         sizeof(T1GPUSharedDataCollection));
     
     // init the buffers that contain our vertices to send to the GPU
-    gpu_shared_data_collection->vertices_allocation_size =
-        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+    sd->vertices_alloc_size = pad_to_page_size(
+        sizeof(T1GPUVertexIndices) *
+            MAX_VERTICES_PER_BUFFER);
+    log_assert(sd->vertices_alloc_size > 0);
     
-    gpu_shared_data_collection->flat_quads_allocation_size =
-        pad_to_page_size(sizeof(T1GPUFlatQuad) * MAX_CIRCLES_PER_BUFFER);
+    sd->flat_quads_alloc_size =
+        pad_to_page_size(sizeof(T1GPUFlatQuad) *
+            MAX_CIRCLES_PER_BUFFER);
     
-    gpu_shared_data_collection->polygons_allocation_size =
-        pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
-    
-    gpu_shared_data_collection->lights_allocation_size =
-        pad_to_page_size(sizeof(T1GPULight) * MAX_LIGHTS_PER_BUFFER);
-    
-    gpu_shared_data_collection->camera_allocation_size =
-        pad_to_page_size(sizeof(T1GPUCamera));
-    
-    gpu_shared_data_collection->locked_vertices_allocation_size =
+    sd->polygons_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPUzSprite) *
+                MAX_ZSPRITES_PER_BUFFER);
     
-    gpu_shared_data_collection->const_mats_allocation_size =
+    sd->lights_alloc_size =
+        pad_to_page_size(sizeof(T1GPULight) *
+            MAX_LIGHTS_PER_BUFFER);
+    
+    sd->single_render_view_alloc_size =
+        pad_to_page_size(sizeof(T1GPURenderView));
+    
+    sd->locked_vertices_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPULockedVertex) *
+                ALL_LOCKED_VERTICES_SIZE);
     
-    gpu_shared_data_collection->projection_constants_allocation_size =
-        pad_to_page_size(sizeof(T1GPUProjectConsts));
+    sd->const_mats_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUConstMat) *
+                ALL_LOCKED_MATERIALS_SIZE);
     
-    gpu_shared_data_collection->postprocessing_constants_allocation_size =
-        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+    sd->projection_constants_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUProjectConsts));
+    
+    sd->postprocessing_constants_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUVertexIndices) *
+                MAX_VERTICES_PER_BUFFER);
     
     for (
         uint32_t cur_frame_i = 0;
         cur_frame_i < MAX_RENDERING_FRAME_BUFFERS;
         cur_frame_i++)
     {
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
-            (T1GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->vertices_allocation_size,
+        T1GPUFrame * f =
+            &sd->triple_buffers[cur_frame_i];
+        
+        f->verts = (T1GPUVertexIndices *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->vertices_alloc_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].flat_billboard_quads =
-            (T1GPUFlatQuad *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->flat_quads_allocation_size,
+        f->flat_billboard_quads = (T1GPUFlatQuad *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->flat_quads_alloc_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            zsprite_list =
-                (T1GPUzSpriteList *)T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->polygons_allocation_size,
-                    T1_mem_page_size);
+        f->zsprite_list = (T1GPUzSpriteList *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->polygons_alloc_size,
+                T1_mem_page_size);
         
-        assert(gpu_shared_data_collection->
-            lights_allocation_size > 0);
-        gpu_shared_data_collection->
-            triple_buffers[cur_frame_i].lights =
-            (T1GPULight *)
+        log_assert(sd->lights_alloc_size > 0);
+        f->lights = (T1GPULight *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->lights_alloc_size,
+                T1_mem_page_size);
+        log_assert(f->lights != NULL);
+        
+        for (
+            uint32_t cam_i = 0;
+            cam_i < T1_RENDER_VIEW_CAP;
+            cam_i++)
+        {
+            f->render_views[cam_i] = (T1GPURenderView *)
                 T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        lights_allocation_size,
+                    sd->single_render_view_alloc_size,
                     T1_mem_page_size);
-        assert(gpu_shared_data_collection->
-            triple_buffers[cur_frame_i].
-                lights != NULL);
+            
+            T1_std_memset_f32(
+                f->render_views[cam_i],
+                0.0f,
+                sizeof(T1GPURenderView));
+        }
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
-            (T1GPUCamera *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->camera_allocation_size,
+        f->postproc_consts = (T1GPUPostProcConsts *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->postprocessing_constants_alloc_size,
                 T1_mem_page_size);
-        
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            postproc_consts =
-                (T1GPUPostProcConsts *)T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        postprocessing_constants_allocation_size,
-                    T1_mem_page_size);
-        
-        T1_std_memset_f32(
-            gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
-            0.0f,
-            sizeof(T1GPUCamera));
     }
     
-    gpu_shared_data_collection->locked_vertices =
+    sd->locked_vertices =
         (T1GPULockedVertex *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->locked_vertices_allocation_size,
+            sd->locked_vertices_alloc_size,
             T1_mem_page_size);
     
-    gpu_shared_data_collection->const_mats =
-        (T1GPUConstMat *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->const_mats_allocation_size,
+    sd->const_mats = (T1GPUConstMat *)
+        T1_mem_malloc_from_unmanaged_aligned(
+            sd->const_mats_alloc_size,
             T1_mem_page_size);
     
-    gpu_shared_data_collection->locked_pjc =
-        (T1GPUProjectConsts *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->
-                projection_constants_allocation_size,
+    sd->locked_pjc = (T1GPUProjectConsts *)
+        T1_mem_malloc_from_unmanaged_aligned(
+            sd->projection_constants_alloc_size,
             T1_mem_page_size);
     
     bool32_t initial_log_dump_succesful = false;
@@ -624,10 +642,12 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
+    T1_texture_array_set_initial_render_view();
+    
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
-    T1_platform_gpu_update_viewport();
+    T1_platform_gpu_update_viewport(0);
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)

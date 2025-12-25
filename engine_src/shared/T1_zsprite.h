@@ -19,8 +19,7 @@ typedef struct  {
     float mul_xyz[3];
     float angle_xyz[3];
     float scale_factor;
-    float ignore_camera;
-    float padding[2];
+    float padding[3];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {

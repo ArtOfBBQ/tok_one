@@ -343,7 +343,7 @@ void T1_profiler_draw_labels(void) {
             /* PolygonRequest *stack_recipient: */
                 &profiler_backdrop);
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
-        profiler_backdrop.cpu_data->simd_stats.ignore_camera = 1.0f;
+        profiler_backdrop.gpu_data->ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[0] = 0.50f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[1] = 0.50f;

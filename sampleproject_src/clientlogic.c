@@ -86,7 +86,8 @@ static void request_teapots(void) {
         teapot_touch_ids[i] = T1_zspriteid_next_nonui_id();
         teapot_request.gpu_data->touch_id = teapot_touch_ids[i];
         teapot_request.gpu_data->ignore_lighting =  0.0f;
-        teapot_request.cpu_data->simd_stats.ignore_camera =  0.0f;
+        teapot_request.gpu_data->
+            ignore_camera =  0.0f;
         T1_zsprite_commit(&teapot_request);
     }
     #endif
@@ -133,7 +134,7 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.cpu_data->zsprite_id = light->object_id;
     lightcube_request.cpu_data->visible = true;
     lightcube_request.gpu_data->ignore_lighting = 1.0f;
-    lightcube_request.cpu_data->simd_stats.
+    lightcube_request.gpu_data->
         ignore_camera = 0.0f;
     lightcube_request.gpu_data->alpha = 1.0f;
     lightcube_request.gpu_data->base_mat.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
@@ -145,12 +146,12 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->remove_shadow = true;
     T1_zsprite_commit(&lightcube_request);
     
-    camera.xyz[0] = -4.50f;
-    camera.xyz[1] =  9.50f;
-    camera.xyz[2] = -0.5f;
-    camera.xyz_angle[0] =  0.1f;
-    camera.xyz_angle[1] =  0.2f;
-    camera.xyz_angle[2] =  0.0f;
+    T1_camera->xyz[0] = -4.50f;
+    T1_camera->xyz[1] =  9.50f;
+    T1_camera->xyz[2] = -0.5f;
+    T1_camera->xyz_angle[0] =  0.1f;
+    T1_camera->xyz_angle[1] =  0.2f;
+    T1_camera->xyz_angle[2] =  0.0f;
     
     request_teapots();
     
@@ -191,7 +192,7 @@ void T1_clientlogic_late_startup(void) {
     quad.cpu_data->simd_stats.angle_xyz[0]  = 1.8f;
     quad.cpu_data->simd_stats.angle_xyz[1]  = 0.0f;
     quad.cpu_data->simd_stats.angle_xyz[2]  = 0.65f;
-    quad.cpu_data->simd_stats.ignore_camera = 0.0f;
+    quad.gpu_data->ignore_camera = 0.0f;
     quad.gpu_data->ignore_lighting          = 0.0f;
     
     quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
@@ -269,7 +270,7 @@ void T1_clientlogic_late_startup(void) {
         quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
         quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
         quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-        quad.cpu_data->simd_stats.ignore_camera = 0.0f;
+        quad.gpu_data->ignore_camera = 0.0f;
         quad.gpu_data->ignore_lighting         = 0.0f;
         
         quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
@@ -324,46 +325,52 @@ static void clientlogic_handle_keypresses(
     
     if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
     {
-        camera.xyz[0] -= cam_speed;
+        T1_camera->xyz[0] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_RIGHTARROW] == true)
     {
-        camera.xyz[0] += cam_speed;
+        T1_camera->xyz[0] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_DOWNARROW] == true)
     {
-        camera.xyz[1] -= cam_speed;
+        T1_camera->xyz[1] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_UPARROW] == true)
     {
-        camera.xyz[1] += cam_speed;
+        T1_camera->xyz[1] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_A] == true) {
-        camera.xyz_angle[0] += cam_rotation_speed;
+        T1_camera->xyz_angle[0] +=
+            cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_Z] == true) {
-        camera.xyz_angle[2] -= cam_rotation_speed;
+        T1_camera->xyz_angle[2] -= cam_rotation_speed;
     }
     
-    if (T1_io_keymap[T1_IO_KEY_X] == true) {
-        camera.xyz_angle[2] += cam_rotation_speed;
+    if (
+        T1_io_keymap[T1_IO_KEY_X] == true)
+    {
+        T1_camera->xyz_angle[2] += cam_rotation_speed;
     }
     
-    if (T1_io_keymap[T1_IO_KEY_Q] == true) {
-        camera.xyz_angle[0] -= cam_rotation_speed;
+    if (T1_io_keymap[T1_IO_KEY_Q] == true)
+    {
+        T1_camera->xyz_angle[0] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_W] == true) {
-        camera.xyz_angle[1] -= cam_rotation_speed;
+        T1_camera->xyz_angle[1] -=
+            cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_S] == true) {
-        camera.xyz_angle[1] += cam_rotation_speed;
+        T1_camera->xyz_angle[1] +=
+            cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_T] == true) {
@@ -384,13 +391,15 @@ static void clientlogic_handle_keypresses(
         testswitch = !testswitch;
     }
     
-    if (T1_io_keymap[T1_IO_KEY_BACKSLASH] == true) {
+    if (
+        T1_io_keymap[T1_IO_KEY_BACKSLASH] == true)
+    {
         // / key
-        camera.xyz[2] -= 0.01f;
+        T1_camera->xyz[2] -= 0.01f;
     }
     
     if (T1_io_keymap[T1_IO_KEY_FULLSTOP] == true) {
-        camera.xyz[2] += 0.01f;
+        T1_camera->xyz[2] += 0.01f;
     }
 }
 
@@ -499,12 +508,12 @@ void T1_clientlogic_evaluate_terminal_command(
         command,
         "TEMPDEBUG"))
     {
-        camera.xyz[0] = -6.09f;
-        camera.xyz[1] = 11.547f;
-        camera.xyz[2] = 0.0999f;
-        camera.xyz_angle[0] = 1.053f;
-        camera.xyz_angle[1] = 0.20f;
-        camera.xyz_angle[2] = -102.92f;
+        T1_camera->xyz[0] = -6.09f;
+        T1_camera->xyz[1] = 11.547f;
+        T1_camera->xyz[2] = 0.0999f;
+        T1_camera->xyz_angle[0] = 1.053f;
+        T1_camera->xyz_angle[1] = 0.20f;
+        T1_camera->xyz_angle[2] = -102.92f;
         T1_std_strcpy_cap(response, response_cap, "Set camera to the debug scene");
         return;
     }
