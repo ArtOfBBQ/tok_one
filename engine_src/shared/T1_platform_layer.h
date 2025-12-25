@@ -226,7 +226,9 @@ float T1_platform_y_to_y(const float y);
 
 void T1_platform_enter_fullscreen(void);
 void T1_platform_toggle_fullscreen(void);
-void T1_platform_gpu_update_viewport(uint32_t at_i);
+void T1_platform_gpu_update_internal_render_viewport(
+    const uint32_t at_i);
+void T1_platform_gpu_update_window_viewport(uint32_t at_i);
 
 void T1_platform_gpu_copy_locked_vertices(void);
 void T1_platform_gpu_copy_locked_materials(void);

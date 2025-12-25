@@ -11,8 +11,8 @@ typedef struct AppleGPUState {
     #error
     #endif
     NSUInteger frame_i;
-    MTLViewport render_target_viewport;
-    MTLViewport cached_viewports[T1_RENDER_VIEW_CAP];
+    MTLViewport window_viewport;
+    MTLViewport render_view_viewports[T1_RENDER_VIEW_CAP];
     
     id<MTLDevice> device;
     id<MTLLibrary> lib;
@@ -1459,12 +1459,12 @@ set_basic_props_for_render_pass_descriptor(
         MTLStoreActionStore;
     desc.depthAttachment.texture =
         ags->camera_depth_texture;
-        
+    
     // ID Buffer for touchables
     desc.colorAttachments[1].texture =
         ags->touch_id_texture;
     desc.colorAttachments[1].loadAction =
-        MTLLoadActionLoad; // We clear manually with a blit before this pass
+        MTLLoadActionLoad; // We clear manually
     desc.colorAttachments[1].storeAction =
         MTLStoreActionStore;
 }
@@ -1616,18 +1616,18 @@ static void set_defaults_for_encoder(
 }
 
 @implementation MetalKitViewDelegate
-- (void) updateViewport: (unsigned int)at_i
+- (void) updateFinalWindowSize
 {
-    ags->cached_viewports[at_i].originX = 0;
-    ags->cached_viewports[at_i].originY = 0;
-    ags->cached_viewports[at_i].width   =
+    ags->window_viewport.originX = 0;
+    ags->window_viewport.originY = 0;
+    ags->window_viewport.width   =
         T1_engine_globals->window_width *
             ags->retina_scaling_factor;
-    ags->cached_viewports[at_i].height  =
+    ags->window_viewport.height  =
         T1_engine_globals->window_height *
             ags->retina_scaling_factor;
-    assert(ags->cached_viewports[at_i].width > 0.0f);
-    assert(ags->cached_viewports[at_i].height > 0.0f);
+    assert(ags->window_viewport.width > 0.0f);
+    assert(ags->window_viewport.height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -1635,12 +1635,11 @@ static void set_defaults_for_encoder(
     window_globals->projection_constants.near that's in our world space
     and much larger numbers
     */
-    ags->cached_viewports[at_i].znear = 0.001f;
-    ags->cached_viewports[at_i].zfar = 1.0f;
+    ags->window_viewport.znear = 0.001f;
+    ags->window_viewport.zfar = 1.0f;
     
-    ags->render_target_viewport = ags->cached_viewports[0];
-    ags->render_target_viewport.width /= T1_engine_globals->pixelation_div;
-    ags->render_target_viewport.height /= T1_engine_globals->pixelation_div;
+    ags->window_viewport.width /= T1_engine_globals->pixelation_div;
+    ags->window_viewport.height /= T1_engine_globals->pixelation_div;
     
     *gpu_shared_data_collection->locked_pjc =
         T1_engine_globals->project_consts;
@@ -1648,9 +1647,9 @@ static void set_defaults_for_encoder(
     MTLTextureDescriptor * touch_id_tex_desc =
         [MTLTextureDescriptor new];
     touch_id_tex_desc.width =
-        (NSUInteger)ags->render_target_viewport.width;
+        (NSUInteger)ags->window_viewport.width;
     touch_id_tex_desc.height =
-        (NSUInteger)ags->render_target_viewport.height;
+        (NSUInteger)ags->window_viewport.height;
     touch_id_tex_desc.pixelFormat = ags->pixel_format_renderpass1;
     touch_id_tex_desc.mipmapLevelCount = 1;
     touch_id_tex_desc.storageMode = MTLStorageModePrivate;
@@ -1661,35 +1660,14 @@ static void set_defaults_for_encoder(
         [ags->device
             newTextureWithDescriptor: touch_id_tex_desc];
     
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    MTLTextureDescriptor * shadows_texture_descriptor =
-        [[MTLTextureDescriptor alloc] init];
-    shadows_texture_descriptor.textureType = MTLTextureType2D;
-    shadows_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
-    shadows_texture_descriptor.width =
-        (unsigned long)ags->render_target_viewport.width;
-    shadows_texture_descriptor.height =
-        (unsigned long)ags->render_target_viewport.height;
-    shadows_texture_descriptor.storageMode = MTLStorageModePrivate;
-    shadows_texture_descriptor.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderRead;
-    
-    ags->shadows_texture =
-        [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
     camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
     camera_depth_texture_descriptor.width =
-        (unsigned long)ags->render_target_viewport.width;
+        (unsigned long)ags->window_viewport.width;
     camera_depth_texture_descriptor.height =
-        (unsigned long)ags->render_target_viewport.height;
+        (unsigned long)ags->window_viewport.height;
     camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
     camera_depth_texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
@@ -1724,9 +1702,96 @@ static void set_defaults_for_encoder(
         [MTLTextureDescriptor new];
     render_target_texture_desc.textureType = MTLTextureType2D;
     render_target_texture_desc.width =
-        (unsigned long)ags->render_target_viewport.width;
+        (unsigned long)ags->window_viewport.width;
     render_target_texture_desc.height =
-        (unsigned long)ags->render_target_viewport.height;
+        (unsigned long)ags->window_viewport.height;
+    render_target_texture_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    render_target_texture_desc.storageMode = MTLStorageModePrivate;
+    render_target_texture_desc.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderWrite |
+        MTLTextureUsageShaderRead;
+    render_target_texture_desc.mipmapLevelCount = 1;
+    
+    ags->render_target_texture = [ags->device
+        newTextureWithDescriptor: render_target_texture_desc];
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
+        
+        MTLTextureDescriptor * downsampled_target_texture_desc =
+            [MTLTextureDescriptor new];
+        downsampled_target_texture_desc.textureType = MTLTextureType2D;
+        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
+        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
+        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
+        downsampled_target_texture_desc.mipmapLevelCount = 1;
+        downsampled_target_texture_desc.storageMode = MTLStorageModePrivate;
+        downsampled_target_texture_desc.usage =
+            MTLTextureUsageShaderWrite |
+            MTLTextureUsageShaderRead;
+        ags->downsampled_target_textures[i] = [ags->device
+            newTextureWithDescriptor: downsampled_target_texture_desc];
+    }
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+}
+
+- (void) updateInternalRenderViewSize: (unsigned int)at_i
+{
+    ags->render_view_viewports[at_i].originX = 0;
+    ags->render_view_viewports[at_i].originY = 0;
+    ags->render_view_viewports[at_i].width   =
+        T1_engine_globals->window_width *
+            ags->retina_scaling_factor;
+    ags->render_view_viewports[at_i].height  =
+        T1_engine_globals->window_height *
+            ags->retina_scaling_factor;
+    assert(ags->render_view_viewports[at_i].width > 0.0f);
+    assert(ags->render_view_viewports[at_i].height > 0.0f);
+    
+    /*
+    These near/far values are the final viewport coordinates (after
+    fragment shader), not to be confused with
+    window_globals->projection_constants.near that's in our world space
+    and much larger numbers
+    */
+    ags->render_view_viewports[at_i].znear = 0.001f;
+    ags->render_view_viewports[at_i].zfar = 1.0f;
+    
+    ags->window_viewport = ags->render_view_viewports[0];
+    ags->window_viewport.width /= T1_engine_globals->pixelation_div;
+    ags->window_viewport.height /= T1_engine_globals->pixelation_div;
+    
+    *gpu_shared_data_collection->locked_pjc =
+        T1_engine_globals->project_consts;
+    
+    MTLTextureDescriptor * camera_depth_texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    camera_depth_texture_descriptor.textureType = MTLTextureType2D;
+    camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
+    camera_depth_texture_descriptor.width =
+        (unsigned long)ags->window_viewport.width;
+    camera_depth_texture_descriptor.height =
+        (unsigned long)ags->window_viewport.height;
+    camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
+    camera_depth_texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    ags->camera_depth_texture =
+        [ags->device newTextureWithDescriptor: camera_depth_texture_descriptor];
+    
+    // Set up a texture for rendering to and apply post-processing to
+    MTLTextureDescriptor * render_target_texture_desc =
+        [MTLTextureDescriptor new];
+    render_target_texture_desc.textureType = MTLTextureType2D;
+    render_target_texture_desc.width =
+        (unsigned long)ags->window_viewport.width;
+    render_target_texture_desc.height =
+        (unsigned long)ags->window_viewport.height;
     render_target_texture_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
     render_target_texture_desc.storageMode = MTLStorageModePrivate;
     render_target_texture_desc.usage =
@@ -1760,7 +1825,51 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
+    if (at_i == 0) {
+    
+    }
+    
     ags->viewports_set[at_i] = true;
+    
+    if (at_i != 0) { return; }
+    
+    MTLTextureDescriptor * touch_id_tex_desc =
+        [MTLTextureDescriptor new];
+    touch_id_tex_desc.width =
+        (NSUInteger)ags->render_view_viewports[0].width;
+    touch_id_tex_desc.height =
+        (NSUInteger)ags->render_view_viewports[0].height;
+    touch_id_tex_desc.pixelFormat = ags->pixel_format_renderpass1;
+    touch_id_tex_desc.mipmapLevelCount = 1;
+    touch_id_tex_desc.storageMode = MTLStorageModePrivate;
+    touch_id_tex_desc.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    ags->touch_id_texture =
+        [ags->device
+            newTextureWithDescriptor: touch_id_tex_desc];
+    
+    uint64_t touch_buffer_size_bytes =
+        touch_id_tex_desc.width *
+            touch_id_tex_desc.height *
+            8;
+    
+    ags->touch_id_buffer = [ags->device
+        newBufferWithLength:
+            touch_buffer_size_bytes
+        options:
+            MTLResourceStorageModeShared];
+    
+    ags->touch_id_buffer_all_zeros = [ags->device
+        newBufferWithLength:
+            touch_buffer_size_bytes
+        options:
+            MTLResourceStorageModeShared];
+    int32_t minus_one = -1;
+    T1_std_memset_i32(
+        ags->touch_id_buffer_all_zeros.contents,
+        minus_one,
+        (uint32_t)touch_buffer_size_bytes);
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -2116,7 +2225,8 @@ static void set_defaults_for_encoder(
                 1)
         toBuffer: ags->touch_id_buffer
         destinationOffset: 0
-        destinationBytesPerRow: [ags->touch_id_texture width] * 8
+        destinationBytesPerRow:
+            [ags->touch_id_texture width] * 8
         destinationBytesPerImage:
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
     [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
@@ -2217,7 +2327,7 @@ static void set_defaults_for_encoder(
             renderCommandEncoderWithDescriptor:
                 render_pass_4_composition_descriptor];
     
-    [render_pass_4_composition setViewport: ags->render_target_viewport];
+    [render_pass_4_composition setViewport: ags->window_viewport];
     
     [render_pass_4_composition setCullMode:MTLCullModeNone];
     
@@ -2332,8 +2442,17 @@ static void set_defaults_for_encoder(
 }
 @end
 
-void T1_platform_gpu_update_viewport(uint32_t at_i)
+void T1_platform_gpu_update_internal_render_viewport(
+    const uint32_t at_i)
 {
     ags->viewports_set[at_i] = false;
-    [apple_gpu_delegate updateViewport: at_i];
+    [apple_gpu_delegate
+        updateInternalRenderViewSize:at_i];
+}
+
+void T1_platform_gpu_update_window_viewport(
+    const uint32_t at_i)
+{
+    [apple_gpu_delegate
+        updateInternalRenderViewSize: at_i];
 }

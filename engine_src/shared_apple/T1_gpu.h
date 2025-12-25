@@ -32,7 +32,9 @@ void apple_gpu_initialize_texture_array(
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 - (void)
-    updateViewport;
+    updateFinalWindowSize;
+- (void)
+    updateInternalRenderViewSize: (unsigned int)at_i;
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;

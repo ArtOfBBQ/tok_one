@@ -647,7 +647,7 @@ void T1_appinit_after_gpu_init_step1(
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
-    T1_platform_gpu_update_viewport(0);
+    T1_platform_gpu_update_window_viewport(0);
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)

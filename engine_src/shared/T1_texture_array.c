@@ -442,7 +442,8 @@ void T1_texture_array_set_initial_render_view(
         /* const int32_t texture_array_i: */
             tex.array_i,
         /* const uint32_t num_images: */
-            T1_texture_arrays[tex.array_i].images_size,
+            T1_texture_arrays[tex.array_i].
+                images_size,
         /* const uint32_t single_image_width: */
             T1_texture_arrays[tex.array_i].
                 single_img_width,

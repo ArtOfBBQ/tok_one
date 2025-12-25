@@ -391,8 +391,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     return frameSize;
 }
 
-- (void)windowDidResize:(NSNotification *)notification {
-    
+- (void)windowDidResize:
+    (NSNotification *)notification
+{
     T1_engineglobals_update_window_size(
         /* float width: */
             [window getWidth],
@@ -401,7 +402,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         /* uint64_t at_timestamp_us: */
             T1_platform_get_current_time_us());
     
-    [apple_gpu_delegate updateViewport];
+    [apple_gpu_delegate updateFinalWindowSize];
 }
 @end
 

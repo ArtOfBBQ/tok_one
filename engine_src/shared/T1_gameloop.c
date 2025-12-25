@@ -265,7 +265,7 @@ void T1_gameloop_update_before_render_pass(
             
             T1_engineglobals_init();
             
-            T1_platform_gpu_update_viewport(0);
+            T1_platform_gpu_update_window_viewport(0);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();
