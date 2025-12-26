@@ -995,7 +995,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
         (screen_x * rtt_width) /
             T1_engine_globals->window_width);
     uint32_t screen_y_adj = (uint32_t)(
-        (screen_y * rtt_height) /
+        ((T1_engine_globals->window_height - screen_y) * rtt_height) /
             T1_engine_globals->window_height);
     
     if (screen_x_adj >= rtt_width )
@@ -1006,8 +1006,6 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     {
         screen_y_adj = rtt_height;
     }
-    
-    screen_y_adj = rtt_height - screen_y_adj;
     
     uint8_t * data = (uint8_t *)[ags->touch_id_buffer contents];
     uint64_t size = [ags->touch_id_buffer allocatedSize];
@@ -1784,7 +1782,7 @@ static void set_defaults_for_encoder(
     uint64_t touch_buffer_size_bytes =
         touch_id_tex_desc.width *
             touch_id_tex_desc.height *
-            8;
+            4;
     
     ags->touch_id_buffer = [ags->device
         newBufferWithLength:
@@ -1858,7 +1856,7 @@ static void set_defaults_for_encoder(
             ags->touch_id_buffer_all_zeros
         sourceOffset: 0
         sourceBytesPerRow:
-            [ags->touch_id_texture width] * 8
+            [ags->touch_id_texture width] * 4
         sourceBytesPerImage:
             size_bytes
         sourceSize:
@@ -2160,9 +2158,9 @@ static void set_defaults_for_encoder(
         toBuffer: ags->touch_id_buffer
         destinationOffset: 0
         destinationBytesPerRow:
-            [ags->touch_id_texture width] * 8
+            [ags->touch_id_texture width] * 4
         destinationBytesPerImage:
-            [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
+            [ags->touch_id_texture width] * [ags->touch_id_texture height] * 4];
     [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
