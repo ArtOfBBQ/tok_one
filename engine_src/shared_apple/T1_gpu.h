@@ -17,18 +17,19 @@
 extern uint64_t last_resize_request_at;
 
 bool32_t apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
-    void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
+    void (* arg_funcptr_shared_gameloop_update)
+        (T1GPUFrame *),
+    void (* arg_funcptr_gameloop_update_after_render)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
     float backing_scale_factor,
     char * error_msg_string);
 
-void apple_gpu_initialize_texture_array(
-    int32_t texturearray_i,
-    uint32_t textures_count,
-    uint32_t single_img_width,
-    uint32_t single_img_height);
+//void apple_gpu_initialize_texture_array(
+//    int32_t texturearray_i,
+//    uint32_t textures_count,
+//    uint32_t single_img_width,
+//    uint32_t single_img_height);
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 - (void)

@@ -237,7 +237,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
-void T1_platform_gpu_init_texture_array(
+void T1_platform_gpu_init_empty_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,

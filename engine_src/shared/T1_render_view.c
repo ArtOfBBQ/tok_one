@@ -15,7 +15,7 @@ T1RENDERVIEW_WRITE_RGBA)
 */
 T1GPURenderView * T1_render_views = NULL;
 T1GPURenderView * T1_camera = NULL;
-uint32_t T1_render_views_size = 1;
+uint32_t T1_render_views_size = 0;
 
 void T1_render_view_init(void) {
     log_assert(T1_RENDER_VIEW_CAP > 0);

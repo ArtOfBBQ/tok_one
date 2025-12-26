@@ -642,7 +642,8 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
-    T1_texture_array_set_initial_render_view();
+    T1_texture_array_create_new_render_view(
+        512, 512);
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
@@ -879,14 +880,14 @@ void T1_appinit_after_gpu_init_step2(
         log_append("Slowest texture array: ");
         log_append_int(longest_ta_i);
         log_append("\nIncludes images: ");
-        log_append(T1_texture_arrays[longest_ta_i].images[0].filename);
+        log_append(T1_texture_arrays[longest_ta_i].images[0].name);
         for (
             int32_t t_i = 1;
             t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
             t_i++)
         {
             log_append(", ");
-            log_append(T1_texture_arrays[longest_ta_i].images[t_i].filename);
+            log_append(T1_texture_arrays[longest_ta_i].images[t_i].name);
         }
     }
     

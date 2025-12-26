@@ -1036,7 +1036,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     return final_id;
 }
 
-void T1_platform_gpu_init_texture_array(
+void T1_platform_gpu_init_empty_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
@@ -1044,8 +1044,8 @@ void T1_platform_gpu_init_texture_array(
     const bool32_t is_render_target,
     const bool32_t use_bc1_compression)
 {
-    assert(texture_array_i >=  0);
-    assert(texture_array_i <  31);
+    log_assert(texture_array_i >=  0);
+    log_assert(texture_array_i <  31);
     
     if (ags->metal_textures[texture_array_i] != NULL)
     {
@@ -1055,20 +1055,26 @@ void T1_platform_gpu_init_texture_array(
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
-    texture_descriptor.textureType = MTLTextureType2DArray;
+    texture_descriptor.textureType =
+        MTLTextureType2DArray;
     texture_descriptor.arrayLength = num_images;
     texture_descriptor.pixelFormat = use_bc1_compression ?
         MTLPixelFormatBC1_RGBA :
         MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.storageMode = MTLStorageModePrivate;
-    if (is_render_target) {
-        texture_descriptor.usage = MTLTextureUsageShaderRead |
-        MTLTextureUsageRenderTarget;
+    texture_descriptor.storageMode =
+        MTLStorageModePrivate;
+    
+    if (is_render_target)
+    {
+        texture_descriptor.usage =
+            MTLTextureUsageShaderRead |
+            MTLTextureUsageRenderTarget;
     } else {
         texture_descriptor.usage = MTLTextureUsageShaderRead;
     }
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     texture_descriptor.mipmapLevelCount =
         use_bc1_compression || texture_array_i == 0 ?
         1 :
@@ -1076,11 +1082,19 @@ void T1_platform_gpu_init_texture_array(
             log2((double)MAX(
                 single_image_width,
                 single_image_height))) + 1;
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    texture_descriptor.mipmapLevelCount = 1;
+    #else
+    #error
+    #endif
     id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
     log_assert(ags->metal_textures[texture_array_i] == NULL);
     ags->metal_textures[texture_array_i] = texture;
+    
+    T1_texture_arrays[texture_array_i].
+        gpu_capacity = num_images;
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -1509,7 +1523,7 @@ static void set_defaults_for_encoder(
     id<MTLRenderCommandEncoder> encoder,
     const uint32_t cam_i)
 {
-    assert(ags->opaque_depth_stencil_state != nil);
+    log_assert(ags->opaque_depth_stencil_state != nil);
     [encoder
         setDepthStencilState: ags->opaque_depth_stencil_state];
     
@@ -1662,8 +1676,8 @@ static void set_defaults_for_encoder(
     ags->window_viewport.height  =
         T1_engine_globals->window_height *
             ags->retina_scaling_factor;
-    assert(ags->window_viewport.width > 0.0f);
-    assert(ags->window_viewport.height > 0.0f);
+    log_assert(ags->window_viewport.width > 0.0f);
+    log_assert(ags->window_viewport.height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -1876,12 +1890,11 @@ static void set_defaults_for_encoder(
     [clear_touch_texture_blit_encoder endEncoding];
     
     for (
-        int32_t cam_i = (int32_t)f->
-            render_views_size - 1;
+        int32_t cam_i =
+            (int32_t)f->render_views_size - 1;
         cam_i >= 0;
         cam_i--)
     {
-        log_assert(cam_i == 0); // congrats if you hit
         log_assert(ags->viewports_set[cam_i]);
         
         #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
@@ -1987,8 +2000,8 @@ static void set_defaults_for_encoder(
             T1_engine_globals->draw_triangles &&
             diamond_verts_size > 0)
         {
-            assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
-            assert(diamond_verts_size % 3 == 0);
+            log_assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(diamond_verts_size % 3 == 0);
             [render_pass_1_draw_outlines_encoder
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
@@ -2046,7 +2059,7 @@ static void set_defaults_for_encoder(
             i < f->verts_size;
             i++)
         {
-            assert(f->verts[i].locked_vertex_i <
+            log_assert(f->verts[i].locked_vertex_i <
                 ALL_LOCKED_VERTICES_SIZE);
         }
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
@@ -2058,8 +2071,8 @@ static void set_defaults_for_encoder(
             T1_engine_globals->draw_triangles &&
             diamond_verts_size > 0)
         {
-            assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
-            assert(diamond_verts_size % 3 == 0);
+            log_assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(diamond_verts_size % 3 == 0);
             [render_pass_2_opaque_triangles_encoder
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
@@ -2266,7 +2279,7 @@ static void set_defaults_for_encoder(
     [render_pass_4_composition
         setRenderPipelineState: ags->singlequad_pls];
     
-    assert(ags->quad_vertices != NULL);
+    log_assert(ags->quad_vertices != NULL);
     [render_pass_4_composition
         setVertexBytes:ags->quad_vertices
         length:sizeof(T1PostProcessingVertex)*6
@@ -2349,7 +2362,7 @@ static void set_defaults_for_encoder(
     
     ags->frame_i += 1;
     ags->frame_i %= MAX_RENDERING_FRAME_BUFFERS;
-    assert(ags->frame_i < MAX_RENDERING_FRAME_BUFFERS);
+    log_assert(ags->frame_i < MAX_RENDERING_FRAME_BUFFERS);
     
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

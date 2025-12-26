@@ -315,6 +315,8 @@ void T1_texture_files_runtime_register_png_from_writables(
             height,
         /* const uint32_t width: */
             width,
+        /* const uint32_t is_render_target,: */
+            false,
         /* const uint32_t is_dds_image: */
             false);
     
@@ -357,7 +359,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const uint32_t thread_id: */
             0);
     
-    T1_platform_gpu_init_texture_array(
+    T1_platform_gpu_init_empty_texture_array(
         /* const int32_t texture_array_i: */
             loc.array_i,
         /* const uint32_t num_images: */
@@ -439,6 +441,8 @@ void T1_texture_files_preregister_png_resource(
             height,
         /* const uint32_t width: */
             width,
+        /* const uint32_t is_render_target: */
+            false,
         /* const uint32_t is_dds_image: */
             false);
     
@@ -507,6 +511,8 @@ void T1_texture_files_preregister_dds_resource(
             header->height,
         /* const uint32_t width: */
             header->width,
+        /* const uint32_t is_render_target: */
+            false,
         /* const uint32_t is_dds_image: */
             true);
     
@@ -553,7 +559,7 @@ void T1_texture_files_decode_all_preregistered(
             t_i < T1_texture_arrays[ta_i].images_size;
             t_i++)
         {
-            if (T1_texture_arrays[ta_i].images[t_i].filename[0] == '\0') {
+            if (T1_texture_arrays[ta_i].images[t_i].name[0] == '\0') {
                 continue;
             }
             
@@ -566,7 +572,7 @@ void T1_texture_files_decode_all_preregistered(
                 /* DecodedImage * recipient: */
                     &T1_texture_arrays[ta_i].images[t_i].image,
                 /* const char * filename: */
-                    T1_texture_arrays[ta_i].images[t_i].filename,
+                    T1_texture_arrays[ta_i].images[t_i].name,
                 /* const uint32_t thread_id: */
                     thread_id);
             

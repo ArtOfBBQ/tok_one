@@ -142,7 +142,8 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->alpha_blending_on = true;
+    current_command_input.cpu_data->
+        alpha_blending_on = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
     current_command_input.gpu_data->touch_id = -1;
