@@ -13,7 +13,7 @@
 #include "T1_text.h"
 #include "T1_uielement.h"
 #include "T1_io.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_zsprite_anim.h"
 #include "T1_renderer.h"
 #include "T1_gameloop.h"

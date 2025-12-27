@@ -8,7 +8,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_tex.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_logger.h"
 
 #include "T1_triangle.h"

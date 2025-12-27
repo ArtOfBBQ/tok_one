@@ -6,7 +6,7 @@
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_cpu_to_gpu_types.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_objmodel.h"
 #include "T1_io.h"
 

@@ -21,7 +21,7 @@ void T1_texture_array_push_all_predecoded(void)
             continue;
         }
         
-        T1_platform_gpu_init_empty_texture_array(
+        T1_platform_gpu_copy_texture_array(
             /* const int32_t texture_array_i: */
                 ta_i,
             /* const uint32_t num_images: */
@@ -321,7 +321,7 @@ static void
     T1_texture_arrays[ta_i].single_img_width  = expected_width;
     T1_texture_arrays[ta_i].single_img_height = expected_height;
     
-    T1_platform_gpu_init_empty_texture_array(
+    T1_platform_gpu_copy_texture_array(
         /* const int32_t texture_array_i: */
             ta_i,
         /* const uint32_t num_images: */
@@ -421,7 +421,8 @@ int32_t T1_texture_array_create_new_render_view(
     log_assert(T1_render_views != NULL);
     
     uint32_t rv_i = T1_render_views_size;
-    log_assert(T1_render_views_size + 1 < T1_RENDER_VIEW_CAP);
+    log_assert(
+        T1_render_views_size + 1 <= T1_RENDER_VIEW_CAP);
     T1_render_views_size += 1;
     
     T1_render_views[rv_i].write_type =
@@ -462,29 +463,22 @@ int32_t T1_texture_array_create_new_render_view(
     log_assert(T1_render_views[rv_i].
         write_slice_i >= 0);
     
-    if (
-        T1_texture_arrays[tex.array_i].
-            gpu_capacity < 1)
-    {
-        T1_platform_gpu_init_empty_texture_array(
-            /* const int32_t texture_array_i: */
-                tex.array_i,
-            /* const uint32_t num_images: */
-                T1_texture_arrays[tex.array_i].
-                    images_size,
-            /* const uint32_t single_image_width: */
-                T1_texture_arrays[tex.array_i].
-                    single_img_width,
-            /* const uint32_t single_image_height: */
-                T1_texture_arrays[tex.array_i].
-                    single_img_height,
-            /* const bool32_t is_render_target: */
-                true,
-            /* const bool32_t use_bc1_compression: */
-                false);
-    } else {
-        log_assert(0);
-    }
+    T1_platform_gpu_copy_texture_array(
+        /* const int32_t texture_array_i: */
+            tex.array_i,
+        /* const uint32_t num_images: */
+            T1_texture_arrays[tex.array_i].
+                images_size,
+        /* const uint32_t single_image_width: */
+            T1_texture_arrays[tex.array_i].
+                single_img_width,
+        /* const uint32_t single_image_height: */
+            T1_texture_arrays[tex.array_i].
+                single_img_height,
+        /* const bool32_t is_render_target: */
+            true,
+        /* const bool32_t use_bc1_compression: */
+            false);
     
     return (int32_t)rv_i;
 }

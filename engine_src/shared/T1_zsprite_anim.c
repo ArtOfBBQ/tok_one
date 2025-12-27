@@ -719,7 +719,7 @@ void T1_zsprite_anim_resolve(void)
             continue;
         }
         
-        uint64_t elapsed = T1_engine_globals->elapsed;
+        uint64_t elapsed = T1_global->elapsed;
         
         if (anim->remaining_pause_us > 0) {
             

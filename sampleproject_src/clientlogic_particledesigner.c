@@ -118,11 +118,11 @@ void T1_clientlogic_init(void) {
 }
 
 static float get_whitespace_height(void) {
-    return T1_engine_globals->window_height / 200.0f;
+    return T1_global->window_height / 200.0f;
 }
 
 static float get_menu_element_height(void) {
-    return T1_engine_globals->window_height / 20.0f;
+    return T1_global->window_height / 20.0f;
 }
 
 static float get_slider_height_screenspace(void) {
@@ -134,7 +134,7 @@ static float get_slider_width_screenspace(void) {
 }
 
 static float get_slider_y_screenspace(int32_t i) {
-    return T1_engine_globals->window_height - 130 -
+    return T1_global->window_height - 130 -
             (pds->menu_element_height * i);
 }
 
@@ -288,7 +288,7 @@ void T1_clientlogic_early_startup(
     //    }
     //    *success = 0;
     
-    T1_engine_globals->draw_axes = true;
+    T1_global->draw_axes = true;
     
     pds->whitespace_height   = get_whitespace_height();
     pds->menu_element_height = get_menu_element_height();
@@ -375,7 +375,7 @@ static void redraw_all_sliders(void) {
     uint32_t num_properties = internal_T1_meta_get_num_of_fields_in_struct(
         pds->inspecting_field);
     
-    float cur_x = T1_engine_globals->window_width -
+    float cur_x = T1_global->window_width -
         (pds->slider_width / 2) - 15.0f;
     float cur_y = get_slider_y_screenspace(-1);
     next_ui_element_settings->perm.screenspace_x = cur_x;
@@ -542,7 +542,7 @@ static void redraw_all_sliders(void) {
                         /* const float z: */
                             0.75f,
                         /* const float max_width: */
-                            T1_engine_globals->window_width * 2);
+                            T1_global->window_width * 2);
             }
             
             pds->regs_size += 1;
@@ -697,7 +697,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     
     #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
     float new_x =
-        T1_engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
+        T1_global->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
     
     int32_t target_zsprite_ids[3];
@@ -723,9 +723,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_zsprite = true;
             anim->cpu_vals.xyz[0] =
-                T1_engineglobals_screenspace_x_to_x(new_x, new_z);
+                T1_global_screenspace_x_to_x(new_x, new_z);
             anim->cpu_vals.xyz[1] =
-                T1_engineglobals_screenspace_y_to_y(new_y, new_z);
+                T1_global_screenspace_y_to_y(new_y, new_z);
             anim->cpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_zsprite_anim_commit(anim);
@@ -742,9 +742,10 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         anim->affected_zsprite_id = target_zsprite_ids[j];
         anim->delete_other_anims_targeting_zsprite = true;
         anim->cpu_vals.xyz[0] =
-            T1_engineglobals_screenspace_x_to_x(new_x, new_z);
+            T1_global_screenspace_x_to_x(new_x, new_z);
         anim->cpu_vals.xyz[1] =
-            T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
+            T1_global_screenspace_y_to_y(
+                new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
         T1_zsprite_anim_commit(anim);

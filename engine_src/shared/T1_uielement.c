@@ -122,7 +122,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 {
                     // set slider value
                     float new_x_offset =
-                        T1_engineglobals_screenspace_x_to_x(
+                        T1_global_screenspace_x_to_x(
                             T1_io_events[
                                 T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
@@ -418,13 +418,13 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[i].label_zsprite_id)
                 {
                     xy_screenspace[0] =
-                        T1_engineglobals_x_to_screenspace_x(
+                        T1_global_x_to_screenspace_x(
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[0],
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[2]);
                     xy_screenspace[1] =
-                        T1_engineglobals_y_to_screenspace_y(
+                        T1_global_y_to_screenspace_y(
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[1],
                             T1_zsprite_list->cpu_data[zs_i].
@@ -715,7 +715,7 @@ void T1_uielement_request_slider(
         }
     }
     next_ae->slider_width =
-        T1_engineglobals_screenspace_width_to_width(
+        T1_global_screenspace_width_to_width(
             next_ui_element_settings->perm.slider_width_screenspace,
             next_ui_element_settings->perm.z);
     next_ae->slideable = true;
@@ -727,22 +727,22 @@ void T1_uielement_request_slider(
     T1_zsprite_request_next(&slider_back);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_global_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_global_screenspace_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             next_ae->user_set.z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_global_screenspace_width_to_width(
                 next_ae->user_set.
                     slider_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_global_screenspace_height_to_height(
                 next_ae->user_set.slider_height_screenspace,
                 next_ae->user_set.z),
         /* zPolygon * recipient: */
@@ -766,21 +766,21 @@ void T1_uielement_request_slider(
     float pin_z = next_ae->user_set.z - 0.00001f;
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_global_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_global_screenspace_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             pin_z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_global_screenspace_width_to_width(
                 next_ae->user_set.pin_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_global_screenspace_height_to_height(
                 next_ae->user_set.pin_height_screenspace,
                 next_ae->user_set.z),
         /* zPolygon * recipient: */
@@ -847,7 +847,7 @@ void T1_uielement_request_button(
     next_ae->label_zsprite_id      = button_label_id;
     
     next_ae->slider_width =
-        T1_engineglobals_screenspace_width_to_width(
+        T1_global_screenspace_width_to_width(
             next_ui_element_settings->perm.slider_width_screenspace,
             next_ui_element_settings->perm.z);
     next_ae->deleted = false;
@@ -858,21 +858,21 @@ void T1_uielement_request_button(
     T1_zsprite_request_next(&button_request);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_global_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_global_screenspace_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             next_ae->user_set.z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_global_screenspace_width_to_width(
                 next_ae->user_set.button_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_global_screenspace_height_to_height(
                 next_ae->user_set.button_height_screenspace,
                 next_ae->user_set.z),
         /* PolygonRequest * stack_recipient: */

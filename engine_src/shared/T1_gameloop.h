@@ -3,7 +3,7 @@
 
 #include "T1_terminal.h"
 #include "T1_logger.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_io.h"
 #include "T1_platform_layer.h"

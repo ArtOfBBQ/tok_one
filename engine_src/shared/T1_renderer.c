@@ -152,7 +152,8 @@ inline static void add_opaque_zpolygons_to_workload(
 
 static void construct_projection_matrix(void) {
     
-    T1GPUProjectConsts * p = &T1_engine_globals->project_consts;
+    T1GPUProjectConsts * p =
+        &T1_global->project_consts;
     
     T1_linal_float4x4 proj;
     const float y_scale = p->field_of_view_modifier;
@@ -186,92 +187,116 @@ static void construct_projection_matrix(void) {
         0.0f, 0.0f, 0.0f, 1.0f);
     #endif
     
-    T1_std_memcpy(
-        T1_camera->p_4x4 + 0,
-        proj.rows[0].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->p_4x4 + 4,
-        proj.rows[1].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->p_4x4 + 8,
-        proj.rows[2].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->p_4x4 + 12,
-        proj.rows[3].data,
-        sizeof(float) * 4);
+    for (
+        uint32_t i = 0;
+        i < T1_render_views_size;
+        i++)
+    {
+        T1GPURenderView * rv = T1_render_views + i;
+        
+        T1_std_memcpy(
+            rv->p_4x4 + 0,
+            proj.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->p_4x4 + 4,
+            proj.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->p_4x4 + 8,
+            proj.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->p_4x4 + 12,
+            proj.rows[3].data,
+            sizeof(float) * 4);
+    }
 }
 
 static void construct_view_matrix(void) {
-    T1_camera->xyz_cosangle[0] = cosf(T1_camera->xyz_angle[0]);
-    T1_camera->xyz_cosangle[1] = cosf(T1_camera->xyz_angle[1]);
-    T1_camera->xyz_cosangle[2] = cosf(T1_camera->xyz_angle[2]);
-    T1_camera->xyz_sinangle[0] = sinf(T1_camera->xyz_angle[0]);
-    T1_camera->xyz_sinangle[1] = sinf(T1_camera->xyz_angle[1]);
-    T1_camera->xyz_sinangle[2] = sinf(T1_camera->xyz_angle[2]);
     
     T1_linal_float4x4 result;
     T1_linal_float4x4 next;
-    
-    T1_linal_float4x4_construct_identity(&result);
-    
-    T1_linal_float4x4_construct_xyz_rotation(
-        &next,
-        -T1_camera->xyz_angle[0],
-        -T1_camera->xyz_angle[1],
-        -T1_camera->xyz_angle[2]);
-    
-    T1_linal_float4x4_mul_float4x4_inplace(
-        &result,
-        &next);
-    
-    T1_linal_float4x4_construct(
-        &next,
-        1.0f, 0.0f, 0.0f, -T1_camera->xyz[0],
-        0.0f, 1.0f, 0.0f, -T1_camera->xyz[1],
-        0.0f, 0.0f, 1.0f, -T1_camera->xyz[2],
-        0.0f, 0.0f, 0.0f, 1.0f);
-    
-    T1_linal_float4x4_mul_float4x4_inplace(
-        &result, &next);
-    
-    T1_std_memcpy(
-        T1_camera->v_4x4 + 0,
-        result.rows[0].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->v_4x4 + 4,
-        result.rows[1].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->v_4x4 + 8,
-        result.rows[2].data,
-        sizeof(float) * 4);
-    T1_std_memcpy(
-        T1_camera->v_4x4 + 12,
-        result.rows[3].data,
-        sizeof(float) * 4);
-    
     T1_linal_float3x3 view_3x3;
-    T1_linal_float4x4_extract_float3x3(
-        &result, 3, 3, &view_3x3);
     
-    T1_linal_float3x3_inverse_transpose_inplace(
-        &view_3x3);
-    T1_std_memcpy(
-        T1_camera->normv_3x3 + 0,
-        view_3x3.rows[0].data,
-        sizeof(float) * 3);
-    T1_std_memcpy(
-        T1_camera->normv_3x3 + 3,
-        view_3x3.rows[1].data,
-        sizeof(float) * 3);
-    T1_std_memcpy(
-        T1_camera->normv_3x3 + 6,
-        view_3x3.rows[2].data,
-        sizeof(float) * 3);
+    for (
+        uint32_t rv_i = 0;
+        rv_i < T1_render_views_size;
+        rv_i++)
+    {
+        T1GPURenderView * rv = T1_render_views + rv_i;
+        
+        rv->xyz_cosangle[0] =
+            cosf(T1_camera->xyz_angle[0]);
+        rv->xyz_cosangle[1] =
+            cosf(T1_camera->xyz_angle[1]);
+        rv->xyz_cosangle[2] =
+            cosf(T1_camera->xyz_angle[2]);
+        rv->xyz_sinangle[0] =
+            sinf(T1_camera->xyz_angle[0]);
+        rv->xyz_sinangle[1] =
+            sinf(T1_camera->xyz_angle[1]);
+        rv->xyz_sinangle[2] =
+            sinf(T1_camera->xyz_angle[2]);
+        
+        T1_linal_float4x4_construct_identity(
+            &result);
+        
+        T1_linal_float4x4_construct_xyz_rotation(
+            &next,
+            -rv->xyz_angle[0],
+            -rv->xyz_angle[1],
+            -rv->xyz_angle[2]);
+        
+        T1_linal_float4x4_mul_float4x4_inplace(
+            &result,
+            &next);
+        
+        T1_linal_float4x4_construct(
+            &next,
+            1.0f, 0.0f, 0.0f, -rv->xyz[0],
+            0.0f, 1.0f, 0.0f, -rv->xyz[1],
+            0.0f, 0.0f, 1.0f, -rv->xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
+        
+        T1_linal_float4x4_mul_float4x4_inplace(
+            &result, &next);
+        
+        T1_std_memcpy(
+            rv->v_4x4 + 0,
+            result.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->v_4x4 + 4,
+            result.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->v_4x4 + 8,
+            result.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            rv->v_4x4 + 12,
+            result.rows[3].data,
+            sizeof(float) * 4);
+        
+        T1_linal_float4x4_extract_float3x3(
+            &result, 3, 3, &view_3x3);
+        
+        T1_linal_float3x3_inverse_transpose_inplace(
+            &view_3x3);
+        T1_std_memcpy(
+            rv->normv_3x3 + 0,
+            view_3x3.rows[0].data,
+            sizeof(float) * 3);
+        T1_std_memcpy(
+            rv->normv_3x3 + 3,
+            view_3x3.rows[1].data,
+            sizeof(float) * 3);
+        T1_std_memcpy(
+            rv->normv_3x3 + 6,
+            view_3x3.rows[2].data,
+            sizeof(float) * 3);
+    }
 }
 
 static void construct_light_matrices(
@@ -542,7 +567,7 @@ void T1_renderer_hardware_render(
         frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
     *frame_data->postproc_consts =
-        T1_engine_globals->postproc_consts;
+        T1_global->postproc_consts;
     
     add_opaque_zpolygons_to_workload(frame_data);
     

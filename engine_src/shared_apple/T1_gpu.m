@@ -54,9 +54,12 @@ typedef struct AppleGPUState {
     #else
     #error
     #endif
-    id<MTLRenderPipelineState> diamond_pls;
-    id<MTLRenderPipelineState> alphablend_pls;
-    id<MTLRenderPipelineState> flat_billboard_quad_pls;
+    id<MTLRenderPipelineState> diamond_touch_pls;
+    id<MTLRenderPipelineState> alphablend_touch_pls;
+    id<MTLRenderPipelineState> bb_touch_pls;
+    id<MTLRenderPipelineState> diamond_notouch_pls;
+    id<MTLRenderPipelineState> alphablend_notouch_pls;
+    id<MTLRenderPipelineState> bb_notouch_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -419,7 +422,9 @@ bool32_t apple_gpu_init(
         flat_billboard_quad_vert_shader =
             [ags->lib newFunctionWithName:
                 @"flat_billboard_quad_vertex_shader"];
-    if (flat_billboard_quad_vert_shader == NULL) {
+    if (
+        flat_billboard_quad_vert_shader == NULL)
+    {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
@@ -440,8 +445,9 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * flat_billboard_quad_pls_desc =
-        [MTLRenderPipelineDescriptor new];
+    MTLRenderPipelineDescriptor *
+        flat_billboard_quad_pls_desc =
+            [MTLRenderPipelineDescriptor new];
     [flat_billboard_quad_pls_desc
         setVertexFunction: flat_billboard_quad_vert_shader];
     [flat_billboard_quad_pls_desc
@@ -466,9 +472,21 @@ bool32_t apple_gpu_init(
             MTLBlendOperationAdd;
     flat_billboard_quad_pls_desc.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
-    flat_billboard_quad_pls_desc.depthAttachmentPixelFormat =
-        MTLPixelFormatDepth32Float;
-    ags->flat_billboard_quad_pls =
+    flat_billboard_quad_pls_desc.
+        depthAttachmentPixelFormat =
+            MTLPixelFormatDepth32Float;
+    ags->bb_touch_pls =
+       [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                flat_billboard_quad_pls_desc
+            error:
+                &Error];
+    
+    log_assert(Error == nil);
+    
+    flat_billboard_quad_pls_desc.
+        colorAttachments[1] = nil;
+    ags->bb_notouch_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 flat_billboard_quad_pls_desc
@@ -489,8 +507,9 @@ bool32_t apple_gpu_init(
         ags->pixel_format_renderpass1;
     diamond_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    diamond_pls_desc.label = @"diamond pipeline state";
-    ags->diamond_pls =
+    diamond_pls_desc.label =
+        @"diamond pipeline state";
+    ags->diamond_touch_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 diamond_pls_desc 
@@ -515,9 +534,18 @@ bool32_t apple_gpu_init(
         #else
         #error
         #endif
-
+        
         return false;
     }
+    
+    diamond_pls_desc.colorAttachments[1] = nil;
+    ags->diamond_notouch_pls =
+        [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                diamond_pls_desc 
+            error:
+                &Error];
+    log_assert(Error == NULL);
     
     #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
     MTLRenderPipelineDescriptor * alpha_pls_desc =
@@ -546,7 +574,7 @@ bool32_t apple_gpu_init(
     alpha_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     alpha_pls_desc.label = @"Alphablending pipeline";
-    ags->alphablend_pls =
+    ags->alphablend_touch_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 alpha_pls_desc
@@ -578,20 +606,36 @@ bool32_t apple_gpu_init(
     #error
     #endif
     
+    alpha_pls_desc.colorAttachments[1] = nil;
+    ags->alphablend_notouch_pls =
+        [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                alpha_pls_desc 
+            error:
+                &Error];
+    log_assert(Error == NULL);
+    
     MTLDepthStencilDescriptor * depth_desc =
         [MTLDepthStencilDescriptor new];
     depth_desc.depthWriteEnabled = YES;
-    [depth_desc setDepthCompareFunction:MTLCompareFunctionLessEqual];
-    ags->opaque_depth_stencil_state = [with_metal_device
-        newDepthStencilStateWithDescriptor:depth_desc];
+    [depth_desc
+        setDepthCompareFunction:
+            MTLCompareFunctionLessEqual];
+    ags->opaque_depth_stencil_state =
+        [with_metal_device
+            newDepthStencilStateWithDescriptor:
+                depth_desc];
     
     if (Error != NULL)
     {
         log_append(
             [[Error localizedDescription]
-                cStringUsingEncoding:kCFStringEncodingASCII]);
+                cStringUsingEncoding:
+                    kCFStringEncodingASCII]);
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Error setting the depth stencil state\n");
+        log_dump_and_crash(
+            "Error setting the depth "
+            "stencil state\n");
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -600,7 +644,8 @@ bool32_t apple_gpu_init(
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Failed to load the depth stencil shader");
+            "Failed to load the depth "
+            "stencil shader");
         return false;
     }
     
@@ -980,8 +1025,8 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
         screen_x < 0 ||
         screen_y < 0 ||
         screen_x >=
-            (T1_engine_globals->window_width) ||
-        screen_y >= (T1_engine_globals->window_height))
+            (T1_global->window_width) ||
+        screen_y >= (T1_global->window_height))
     {
         return -1;
     }
@@ -993,10 +1038,10 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     
     uint32_t screen_x_adj = (uint32_t)(
         (screen_x * rtt_width) /
-            T1_engine_globals->window_width);
+            T1_global->window_width);
     uint32_t screen_y_adj = (uint32_t)(
-        ((T1_engine_globals->window_height - screen_y) * rtt_height) /
-            T1_engine_globals->window_height);
+        ((T1_global->window_height - screen_y) * rtt_height) /
+            T1_global->window_height);
     
     if (screen_x_adj >= rtt_width )
     {
@@ -1036,7 +1081,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     return final_id;
 }
 
-void T1_platform_gpu_init_empty_texture_array(
+void T1_platform_gpu_copy_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
@@ -1046,10 +1091,34 @@ void T1_platform_gpu_init_empty_texture_array(
 {
     log_assert(texture_array_i >=  0);
     log_assert(texture_array_i <  31);
+    bool32_t copy_prev = false;
+    id<MTLTexture> prev_copy = nil;
     
-    if (ags->metal_textures[texture_array_i] != NULL)
+    if (
+        ags->metal_textures[texture_array_i] ==
+            NULL)
     {
+        copy_prev = false;
+    } else if (
+        num_images >
+            [ags->metal_textures[texture_array_i]
+                arrayLength] ||
+        single_image_width != ags->
+            metal_textures[texture_array_i].width ||
+        single_image_height != ags->
+            metal_textures[texture_array_i].height)
+    {
+        copy_prev = true;
+        prev_copy =
+            ags->metal_textures[texture_array_i];
+        ags->metal_textures[texture_array_i] = NULL;
+    } else {
+        // TODO: blit a flat color to the eexisting
+        // TODO: textures to highlight missing
         log_assert(0);
+        log_assert(ags->metal_textures[texture_array_i].pixelFormat !=
+                MTLPixelFormatBC1_RGBA);
+        log_assert(ags->metal_textures[texture_array_i].usage == MTLTextureUsageRenderTarget);
         return;
     }
     
@@ -1095,6 +1164,21 @@ void T1_platform_gpu_init_empty_texture_array(
     
     T1_texture_arrays[texture_array_i].
         gpu_capacity = num_images;
+    
+    if (copy_prev) {
+        id<MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+        id<MTLBlitCommandEncoder> blitenc = [combuf blitCommandEncoder];
+        
+        [blitenc
+            copyFromTexture:
+                prev_copy
+            toTexture:
+                ags->metal_textures[texture_array_i]];
+        
+        [blitenc endEncoding];
+        [combuf commit];
+        [combuf waitUntilCompleted];
+    }
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -1122,9 +1206,11 @@ void T1_platform_gpu_fetch_rgba_at(
     if (texture == nil || texture.textureType != MTLTextureType2DArray) {
         return;
     }
-
-    if (texture.pixelFormat != MTLPixelFormatRGBA8Unorm) {
-        // Ensure the texture format is RGBA8Unorm for direct copying to uint8_t RGBA
+    
+    if (texture.pixelFormat != MTLPixelFormatRGBA8Unorm)
+    {
+        // Ensure the texture format is RGBA8Unorm
+        // for direct copying to uint8_t RGBA
         return;
     }
     
@@ -1224,7 +1310,8 @@ void T1_platform_gpu_generate_mipmaps_for_texture_array(
     // no mipmaps for bc1 compressed arrays
     log_assert(!T1_texture_arrays[texture_array_i].bc1_compressed);
     
-    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    id <MTLCommandBuffer> combuf =
+        [ags->command_queue commandBuffer];
     
     // Create a blit command encoder
     id<MTLBlitCommandEncoder> blit_mipmap_encoder = [combuf blitCommandEncoder];
@@ -1487,13 +1574,43 @@ void T1_platform_gpu_copy_locked_materials(void)
     [combuf commit];
 }
 
+static id<MTLTexture> get_texture_array_slice(
+    const int32_t at_array_i,
+    const int32_t at_slice_i)
+{
+    log_assert(at_array_i >= 0);
+    log_assert(at_slice_i >= 0);
+    
+    id<MTLTexture> parent =
+        ags->metal_textures[at_array_i];
+    NSRange level_range = NSMakeRange(
+        0, parent.mipmapLevelCount);
+    NSRange slice_range = NSMakeRange(
+        (NSUInteger)at_slice_i,
+        1);
+    
+    id<MTLTexture> retval = [parent
+        newTextureViewWithPixelFormat:
+            parent.pixelFormat
+        textureType:
+            MTLTextureType2D
+        levels:
+            level_range
+        slices:
+            slice_range];
+    
+    log_assert(retval != nil);
+    return retval;
+}
+
 static void
 set_basic_props_for_render_pass_descriptor(
     MTLRenderPassDescriptor * desc,
     const int32_t cam_i)
 {
-    id<MTLTexture> rtt =
-        ags->metal_textures[T1_render_views[cam_i].write_array_i];
+    id<MTLTexture> rtt = get_texture_array_slice(
+        T1_render_views[cam_i].write_array_i,
+        T1_render_views[cam_i].write_slice_i);
     
     desc.depthAttachment.loadAction =
         MTLLoadActionLoad;
@@ -1671,10 +1788,10 @@ static void set_defaults_for_encoder(
     ags->window_viewport.originX = 0;
     ags->window_viewport.originY = 0;
     ags->window_viewport.width   =
-        T1_engine_globals->window_width *
+        T1_global->window_width *
             ags->retina_scaling_factor;
     ags->window_viewport.height  =
-        T1_engine_globals->window_height *
+        T1_global->window_height *
             ags->retina_scaling_factor;
     log_assert(ags->window_viewport.width > 0.0f);
     log_assert(ags->window_viewport.height > 0.0f);
@@ -1688,11 +1805,11 @@ static void set_defaults_for_encoder(
     ags->window_viewport.znear = 0.001f;
     ags->window_viewport.zfar = 1.0f;
     
-    ags->window_viewport.width /= T1_engine_globals->pixelation_div;
-    ags->window_viewport.height /= T1_engine_globals->pixelation_div;
+    ags->window_viewport.width /= T1_global->pixelation_div;
+    ags->window_viewport.height /= T1_global->pixelation_div;
     
     *gpu_shared_data_collection->locked_pjc =
-        T1_engine_globals->project_consts;
+        T1_global->project_consts;
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
@@ -1913,8 +2030,9 @@ static void set_defaults_for_encoder(
         log_assert(T1_render_views[cam_i].write_slice_i >= 0);
         
         id<MTLTexture> current_rtt =
-            ags->metal_textures[T1_render_views[cam_i].write_array_i];
-        
+            get_texture_array_slice(
+                T1_render_views[cam_i].write_array_i,
+                T1_render_views[cam_i].write_slice_i);
         log_assert(current_rtt != NULL);
         
         uint32_t z_buffer_cleared = false;
@@ -2047,7 +2165,10 @@ static void set_defaults_for_encoder(
                     opaque_tris_descriptor];
         
         [render_pass_2_opaque_triangles_encoder
-            setRenderPipelineState: ags->diamond_pls];
+            setRenderPipelineState:
+                cam_i == 0 ?
+                    ags->diamond_touch_pls :
+                    ags->diamond_notouch_pls];
         
         set_defaults_for_encoder(
             render_pass_2_opaque_triangles_encoder,
@@ -2068,7 +2189,7 @@ static void set_defaults_for_encoder(
         #endif
         
         if (
-            T1_engine_globals->draw_triangles &&
+            T1_global->draw_triangles &&
             diamond_verts_size > 0)
         {
             log_assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
@@ -2093,13 +2214,15 @@ static void set_defaults_for_encoder(
         
         #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
         if (
-            T1_engine_globals->draw_triangles &&
+            T1_global->draw_triangles &&
             alphablend_verts_size > 0)
         {
             MTLRenderPassDescriptor *
                 alpha_tris_descriptor =
                     [view currentRenderPassDescriptor];
-            set_basic_props_for_render_pass_descriptor(alpha_tris_descriptor, cam_i);
+            set_basic_props_for_render_pass_descriptor(
+                alpha_tris_descriptor,
+                cam_i);
             
             id<MTLRenderCommandEncoder>
                 render_pass_3_alpha_triangles_encoder =
@@ -2109,7 +2232,9 @@ static void set_defaults_for_encoder(
             
             [render_pass_3_alpha_triangles_encoder
                 setRenderPipelineState:
-                    ags->alphablend_pls];
+                    cam_i == 0 ?
+                        ags->alphablend_touch_pls :
+                        ags->alphablend_notouch_pls];
             set_defaults_for_encoder(
                 render_pass_3_alpha_triangles_encoder,
                 (uint32_t)cam_i);
@@ -2130,8 +2255,11 @@ static void set_defaults_for_encoder(
             
             if (f->flat_billboard_quads_size > 0)
             {
-                [render_pass_3_alpha_triangles_encoder setRenderPipelineState:
-                    ags->flat_billboard_quad_pls];
+                [render_pass_3_alpha_triangles_encoder
+                    setRenderPipelineState:
+                        cam_i == 0 ?
+                            ags->bb_touch_pls :
+                            ags->bb_notouch_pls];
                 [render_pass_3_alpha_triangles_encoder setDepthStencilState:
                     ags->opaque_depth_stencil_state];
                 

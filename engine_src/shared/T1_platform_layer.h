@@ -74,7 +74,7 @@ extern "C" {
 #include "T1_mem.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_uielement.h"
 
 void T1_platform_init(
@@ -237,7 +237,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
-void T1_platform_gpu_init_empty_texture_array(
+void T1_platform_gpu_copy_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,

@@ -7,7 +7,7 @@
 #include "T1_random.h"
 #include "T1_lightsource.h"
 #include "T1_io.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
 
@@ -216,7 +216,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -233,7 +233,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -250,7 +250,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDown:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -261,7 +261,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseUp:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -272,7 +272,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -281,7 +281,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -354,7 +354,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     T1_uielement_delete_all();
     T1_zsprite_list->size = 0;
-    T1_engine_globals->fullscreen = true;
+    T1_global->fullscreen = true;
 }
 
 - (void)
@@ -368,12 +368,12 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     #else
     #error
     #endif
-    T1_engine_globals->fullscreen = false;
+    T1_global->fullscreen = false;
 }
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    T1_engineglobals_update_window_position(
+    T1_global_update_window_position(
         (float)(((NSWindow *)[notification object]).frame.origin.x),
         (float)(((NSWindow *)[notification object]).frame.origin.y));
 }
@@ -394,7 +394,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)windowDidResize:
     (NSNotification *)notification
 {
-    T1_engineglobals_update_window_size(
+    T1_global_update_window_size(
         /* float width: */
             [window getWidth],
         /* float height */
@@ -421,10 +421,10 @@ int main(int argc, const char * argv[]) {
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
-        /* x: */ T1_engine_globals->window_left,
-        /* y: */ T1_engine_globals->window_bottom,
-        /* width: */ T1_engine_globals->window_width,
-        /* height: */ T1_engine_globals->window_height);
+        /* x: */ T1_global->window_left,
+        /* y: */ T1_global->window_bottom,
+        /* width: */ T1_global->window_width,
+        /* height: */ T1_global->window_height);
     
     window =
         [[NSWindowWithCustomResponder alloc]

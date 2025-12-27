@@ -172,11 +172,11 @@ void T1_clientlogic_late_startup(void) {
         /* const float z: */
             TEAPOT_Z + 0.2f,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
-                T1_engine_globals->window_width * 2, 1.0f),
+            T1_global_screenspace_width_to_width(
+                T1_global->window_width * 2, 1.0f),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
-                T1_engine_globals->window_height * 2, 1.0f),
+            T1_global_screenspace_height_to_height(
+                T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
     quad.gpu_data->base_mat.texturearray_i = quad_texture_array_i;
@@ -246,11 +246,11 @@ void T1_clientlogic_late_startup(void) {
             /* const float z: */
                 TEAPOT_Z + 0.2f + (i * 0.75f),
             /* const float width: */
-                T1_engineglobals_screenspace_width_to_width(
-                    T1_engine_globals->window_width * 2, 1.0f),
+                T1_global_screenspace_width_to_width(
+                    T1_global->window_width * 2, 1.0f),
             /* const float height: */
-                T1_engineglobals_screenspace_height_to_height(
-                    T1_engine_globals->window_height * 2, 1.0f),
+                T1_global_screenspace_height_to_height(
+                    T1_global->window_height * 2, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad);
         

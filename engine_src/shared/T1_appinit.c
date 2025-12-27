@@ -284,9 +284,9 @@ void T1_appinit_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
     #endif
     
-    T1_engine_globals = (T1EngineGlobals *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1EngineGlobals));
-    T1_std_memset(T1_engine_globals, 0, sizeof(T1EngineGlobals));
+    T1_global = (T1Globals *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1Globals));
+    T1_std_memset(T1_global, 0, sizeof(T1Globals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
@@ -306,13 +306,15 @@ void T1_appinit_before_gpu_init(
         engine_save_file->window_width > 20 &&
         engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
     {
-        T1_engine_globals->window_height = engine_save_file->window_height;
-        T1_engine_globals->window_width  = engine_save_file->window_width;
-        T1_engine_globals->window_left   = engine_save_file->window_left;
-        T1_engine_globals->window_bottom = engine_save_file->window_bottom;
-        T1_engine_globals->fullscreen = engine_save_file->window_fullscreen;
-        T1_engine_globals->upcoming_fullscreen_request =
-            T1_engine_globals->fullscreen;
+        T1_global->window_height =
+            engine_save_file->window_height;
+        T1_global->window_width  =
+            engine_save_file->window_width;
+        T1_global->window_left   = engine_save_file->window_left;
+        T1_global->window_bottom = engine_save_file->window_bottom;
+        T1_global->fullscreen = engine_save_file->window_fullscreen;
+        T1_global->upcoming_fullscreen_request =
+            T1_global->fullscreen;
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         T1_audio_state->music_volume = engine_save_file->music_volume;
         T1_audio_state->sfx_volume = engine_save_file->sound_volume;
@@ -322,22 +324,23 @@ void T1_appinit_before_gpu_init(
         #error "T1_AUDIO_ACTIVE undefined!"
         #endif // T1_AUDIO_ACTIVE
     } else {
-        T1_engine_globals->fullscreen = false;
-        T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-        T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-        T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-        T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+        T1_global->fullscreen = false;
+        T1_global->window_height = INITIAL_WINDOW_HEIGHT;
+        T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+        T1_global->window_left   = INITIAL_WINDOW_LEFT;
+        T1_global->window_bottom =
+            INITIAL_WINDOW_BOTTOM;
     }
     
     if (engine_save.contents != NULL) {
         T1_mem_free_from_managed(engine_save.contents);
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    T1_engine_globals->fullscreen = false;
-    T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-    T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-    T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-    T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    T1_global->fullscreen = false;
+    T1_global->window_height = INITIAL_WINDOW_HEIGHT;
+    T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+    T1_global->window_left   = INITIAL_WINDOW_LEFT;
+    T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     sound_settings->music_volume  = 0.5f;
@@ -352,10 +355,10 @@ void T1_appinit_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
     #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
-    T1_engine_globals->aspect_ratio = T1_engine_globals->window_height /
-        T1_engine_globals->window_width;
+    T1_global->aspect_ratio = T1_global->window_height /
+        T1_global->window_width;
     
-    T1_engineglobals_init();
+    T1_global_init();
     
     T1_uielement_init();
     
@@ -684,20 +687,20 @@ void T1_appinit_after_gpu_init_step2(
         log_dump_and_crash(
             "Missing engine file: "
             "perlin_noise.dds");
-        T1_engine_globals->postproc_consts.perlin_texturearray_i = 1;
-        T1_engine_globals->postproc_consts.perlin_texture_i = 0;
+        T1_global->postproc_consts.perlin_texturearray_i = 1;
+        T1_global->postproc_consts.perlin_texture_i = 0;
     } else {
         T1Tex perlin_tex = T1_texture_array_get_filename_location(
             "perlin_noise.dds");
-        T1_engine_globals->postproc_consts.perlin_texturearray_i =
+        T1_global->postproc_consts.perlin_texturearray_i =
             perlin_tex.array_i;
-        T1_engine_globals->postproc_consts.perlin_texture_i =
+        T1_global->postproc_consts.perlin_texture_i =
             perlin_tex.slice_i;
     }
     
     if (
-        T1_engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
-        T1_engine_globals->postproc_consts.perlin_texture_i != 0)
+        T1_global->postproc_consts.perlin_texturearray_i < 1 ||
+        T1_global->postproc_consts.perlin_texture_i != 0)
     {
         T1_gameloop_active = true;
         log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
@@ -733,7 +736,7 @@ void T1_appinit_after_gpu_init_step2(
             return;
         }
         
-        T1_engine_globals->
+        T1_global->
             clientlogic_early_startup_finished = 1;
         
         uint32_t core_count = T1_platform_get_cpu_logical_core_count();
@@ -746,8 +749,8 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
-        log_assert(T1_engine_globals->startup_bytes_to_load == 0);
-        log_assert(T1_engine_globals->startup_bytes_loaded == 0);
+        log_assert(T1_global->startup_bytes_to_load == 0);
+        log_assert(T1_global->startup_bytes_loaded == 0);
         
         if (!T1_app_running) {
             return;
@@ -958,11 +961,16 @@ void T1_appinit_shutdown(void)
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     log_assert(engine_save_file != NULL);
-    engine_save_file->window_bottom = T1_engine_globals->window_bottom;
-    engine_save_file->window_height = T1_engine_globals->window_height;
-    engine_save_file->window_left = T1_engine_globals->window_left;
-    engine_save_file->window_width = T1_engine_globals->window_width;
-    engine_save_file->window_fullscreen = T1_engine_globals->fullscreen;
+    engine_save_file->window_bottom =
+        T1_global->window_bottom;
+    engine_save_file->window_height =
+        T1_global->window_height;
+    engine_save_file->window_left =
+        T1_global->window_left;
+    engine_save_file->window_width =
+        T1_global->window_width;
+    engine_save_file->window_fullscreen =
+        T1_global->fullscreen;
     
     uint32_t good = false;
     T1_platform_delete_writable("enginestate.dat");

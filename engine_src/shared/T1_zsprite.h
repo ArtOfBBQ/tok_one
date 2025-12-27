@@ -8,7 +8,7 @@
 #include "T1_simd.h"
 #include "T1_std.h"
 #include "T1_logger.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_material.h"
 #include "T1_mesh.h"
 #include "T1_lightsource.h"
