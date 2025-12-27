@@ -3,82 +3,6 @@
 static int32_t base_mesh_id = 1;
 static int32_t example_particles_id = -1;
 
-#if 0
-static void load_obj_basemodel(
-    char error_message[128],
-    uint32_t * success)
-{
-    *success = 0;
-    
-    char writables_path[256];
-    writables_path[0] = '\0';
-    
-    T1_platform_get_writables_path(
-        /* char * recipient: */
-            writables_path,
-        /* const uint32_t recipient_size: */
-            256);
-    
-    T1_platform_open_folder_in_window_if_possible(writables_path);
-    
-    char dir_sep[4];
-    T1_platform_get_directory_separator(dir_sep);
-    
-    char writables_filepath[256];
-    T1_std_strcpy_cap(writables_filepath, 256, writables_path);
-    T1_std_strcat_cap(writables_filepath, 256, dir_sep);
-    T1_std_strcat_cap(writables_filepath, 256, "basemodel.obj");
-    
-    if (!T1_platform_file_exists(writables_filepath)) {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Couldn't load basemodel.obj from "
-            "writables folder. Type WRITABLES in "
-            "terminal to open the folder.");
-        return;
-    }
-    
-    T1FileBuffer buffer;
-    buffer.good = 0;
-    buffer.size_without_terminator = T1_platform_get_filesize(writables_filepath);
-    buffer.contents = T1_mem_malloc_from_managed(
-        buffer.size_without_terminator+1);
-    
-    T1_platform_read_file(
-        /* const char * filepath: */
-            writables_filepath,
-        /* FileBuffer *out_preallocatedbuffer: */
-            &buffer);
-    
-    if (buffer.good) {
-        T1_objmodel_new_mesh_id_from_obj_mtl_text(
-            /* const char * original_obj_filename: */
-                "basemodel.obj",
-            /* const char * obj_text: */
-                buffer.contents,
-            /* const char * mtl_text: */
-                NULL);
-        
-        T1_platform_gpu_copy_locked_vertices();
-        T1_particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
-    } else {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Couldn't read basemodel.obj from "
-            "writables folder. Type WRITABLES in "
-            "terminal to open the folder.");
-        return;
-    }
-    
-    T1_mem_free_from_managed(buffer.contents);
-    
-    *success = 1;
-    return;
-}
-#endif
-
 typedef struct {
     char property_name[128];
     char property_type_name[128];
@@ -701,31 +625,57 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     float new_z = 0.75f;
     
     int32_t target_zsprite_ids[3];
-    for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
-        target_zsprite_ids[0] = pds->regs[i].slider_zsprite_id;
-        target_zsprite_ids[1] = pds->regs[i].pin_zsprite_id;
-        target_zsprite_ids[2] = pds->regs[i].label_zsprite_id;
-        if (target_zsprite_ids[0] == target_zsprite_ids[1]) {
+    for (
+        uint32_t i = pds->regs_head_i;
+        i < pds->regs_size;
+        i++)
+    {
+        target_zsprite_ids[0] =
+            pds->regs[i].slider_zsprite_id;
+        target_zsprite_ids[1] =
+            pds->regs[i].pin_zsprite_id;
+        target_zsprite_ids[2] =
+            pds->regs[i].label_zsprite_id;
+        
+        if (
+            target_zsprite_ids[0] ==
+                target_zsprite_ids[1])
+        {
             continue;
         }
-        if (target_zsprite_ids[0] == target_zsprite_ids[2]) {
+        
+        if (
+            target_zsprite_ids[0] ==
+                target_zsprite_ids[2])
+        {
             continue;
         }
-        if (target_zsprite_ids[1] == target_zsprite_ids[2]) {
+        
+        if (
+            target_zsprite_ids[1] ==
+                target_zsprite_ids[2])
+        {
             continue;
         }
                 
-        float new_y = get_slider_y_screenspace((int32_t)i) -
+        float new_y =
+            get_slider_y_screenspace((int32_t)i) -
             (T1_io_mouse_scroll_pos * 30.0f);
         for (uint32_t j = 0; j < 3; j++) {
             T1zSpriteAnim * anim =
                 T1_zsprite_anim_request_next(true);
-            anim->affected_zsprite_id = target_zsprite_ids[j];
-            anim->delete_other_anims_targeting_zsprite = true;
+            anim->affected_zsprite_id =
+                target_zsprite_ids[j];
+            anim->delete_other_anims_targeting_zsprite =
+                true;
             anim->cpu_vals.xyz[0] =
-                T1_global_screenspace_x_to_x(new_x, new_z);
+                T1_global_screenspace_x_to_x(
+                    new_x,
+                    new_z);
             anim->cpu_vals.xyz[1] =
-                T1_global_screenspace_y_to_y(new_y, new_z);
+                T1_global_screenspace_y_to_y(
+                    new_y,
+                    new_z);
             anim->cpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_zsprite_anim_commit(anim);
@@ -734,13 +684,21 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     
     target_zsprite_ids[0] = pds->title_zsprite_id;
     target_zsprite_ids[1] = pds->title_label_zsprite_id;
-    float new_title_y = get_slider_y_screenspace(-1) -
+    float new_title_y =
+        get_slider_y_screenspace(-1) -
         (T1_io_mouse_scroll_pos * 30.0f);
-    for (uint32_t j = 0; j < 2; j++) {
+    
+    for (
+        uint32_t j = 0;
+        j < 2;
+        j++)
+    {
         T1zSpriteAnim * anim =
             T1_zsprite_anim_request_next(true);
-        anim->affected_zsprite_id = target_zsprite_ids[j];
-        anim->delete_other_anims_targeting_zsprite = true;
+        anim->affected_zsprite_id =
+            target_zsprite_ids[j];
+        anim->delete_other_anims_targeting_zsprite =
+            true;
         anim->cpu_vals.xyz[0] =
             T1_global_screenspace_x_to_x(new_x, new_z);
         anim->cpu_vals.xyz[1] =

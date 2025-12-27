@@ -2072,7 +2072,7 @@ static void set_defaults_for_encoder(
                     outlines_descriptor];
         
         [render_pass_1_draw_outlines_encoder
-            setViewport: ags->render_target_viewport];
+            setViewport: ags->render_viewports[cam_i]];
         
         // outlines pipeline
         [render_pass_1_draw_outlines_encoder
@@ -2102,7 +2102,7 @@ static void set_defaults_for_encoder(
         
         [render_pass_1_draw_outlines_encoder
             setVertexBuffer:
-                ags->camera_buffers[ags->frame_i]
+                ags->camera_buffers[ags->frame_i][cam_i]
             offset: 0
             atIndex: 3];
         
@@ -2115,10 +2115,12 @@ static void set_defaults_for_encoder(
                 4];
         
         if (
-            T1_engine_globals->draw_triangles &&
+            T1_global->draw_triangles &&
             diamond_verts_size > 0)
         {
-            log_assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(
+                diamond_verts_size <
+                    MAX_VERTICES_PER_BUFFER);
             log_assert(diamond_verts_size % 3 == 0);
             [render_pass_1_draw_outlines_encoder
                 drawPrimitives:

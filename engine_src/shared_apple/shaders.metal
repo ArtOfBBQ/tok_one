@@ -1186,60 +1186,78 @@ outlines_vertex_shader(
     out.outline_alpha = polygons[polygon_i].
         outline_alpha;
     
-    float4x4 model_and_view = matrix_float4x4(
-        polygons[polygon_i].model_view_4x4[ 0],
-        polygons[polygon_i].model_view_4x4[ 1],
-        polygons[polygon_i].model_view_4x4[ 2],
-        polygons[polygon_i].model_view_4x4[ 3],
-        polygons[polygon_i].model_view_4x4[ 4],
-        polygons[polygon_i].model_view_4x4[ 5],
-        polygons[polygon_i].model_view_4x4[ 6],
-        polygons[polygon_i].model_view_4x4[ 7],
-        polygons[polygon_i].model_view_4x4[ 8],
-        polygons[polygon_i].model_view_4x4[ 9],
-        polygons[polygon_i].model_view_4x4[10],
-        polygons[polygon_i].model_view_4x4[11],
-        polygons[polygon_i].model_view_4x4[12],
-        polygons[polygon_i].model_view_4x4[13],
-        polygons[polygon_i].model_view_4x4[14],
-        polygons[polygon_i].model_view_4x4[15]);
+    float4x4 m_4x4 = matrix_float4x4(
+        polygons[polygon_i].m_4x4[ 0],
+        polygons[polygon_i].m_4x4[ 1],
+        polygons[polygon_i].m_4x4[ 2],
+        polygons[polygon_i].m_4x4[ 3],
+        polygons[polygon_i].m_4x4[ 4],
+        polygons[polygon_i].m_4x4[ 5],
+        polygons[polygon_i].m_4x4[ 6],
+        polygons[polygon_i].m_4x4[ 7],
+        polygons[polygon_i].m_4x4[ 8],
+        polygons[polygon_i].m_4x4[ 9],
+        polygons[polygon_i].m_4x4[10],
+        polygons[polygon_i].m_4x4[11],
+        polygons[polygon_i].m_4x4[12],
+        polygons[polygon_i].m_4x4[13],
+        polygons[polygon_i].m_4x4[14],
+        polygons[polygon_i].m_4x4[15]);
     
-    out.pos = vert * model_and_view;
+    float4x4 v_4x4 = matrix_float4x4(
+        camera->v_4x4[ 0],
+        camera->v_4x4[ 1],
+        camera->v_4x4[ 2],
+        camera->v_4x4[ 3],
+        camera->v_4x4[ 4],
+        camera->v_4x4[ 5],
+        camera->v_4x4[ 6],
+        camera->v_4x4[ 7],
+        camera->v_4x4[ 8],
+        camera->v_4x4[ 9],
+        camera->v_4x4[10],
+        camera->v_4x4[11],
+        camera->v_4x4[12],
+        camera->v_4x4[13],
+        camera->v_4x4[14],
+        camera->v_4x4[15]);
     
-    float3x3 normalmat3x3 = matrix_float3x3(
-        polygons[polygon_i].normal_3x3[ 0],
-        polygons[polygon_i].normal_3x3[ 1],
-        polygons[polygon_i].normal_3x3[ 2],
-        polygons[polygon_i].normal_3x3[ 3],
-        polygons[polygon_i].normal_3x3[ 4],
-        polygons[polygon_i].normal_3x3[ 5],
-        polygons[polygon_i].normal_3x3[ 6],
-        polygons[polygon_i].normal_3x3[ 7],
-        polygons[polygon_i].normal_3x3[ 8]);
+    float4x4 p_4x4 = matrix_float4x4(
+        camera->p_4x4[ 0],
+        camera->p_4x4[ 1],
+        camera->p_4x4[ 2],
+        camera->p_4x4[ 3],
+        camera->p_4x4[ 4],
+        camera->p_4x4[ 5],
+        camera->p_4x4[ 6],
+        camera->p_4x4[ 7],
+        camera->p_4x4[ 8],
+        camera->p_4x4[ 9],
+        camera->p_4x4[10],
+        camera->p_4x4[11],
+        camera->p_4x4[12],
+        camera->p_4x4[13],
+        camera->p_4x4[14],
+        camera->p_4x4[15]);
     
-    normal = normalize(normal * normalmat3x3);
+    out.pos = vert * m_4x4 * v_4x4;
+    
+    float3x3 n_3x3 = matrix_float3x3(
+        polygons[polygon_i].norm_3x3[ 0],
+        polygons[polygon_i].norm_3x3[ 1],
+        polygons[polygon_i].norm_3x3[ 2],
+        polygons[polygon_i].norm_3x3[ 3],
+        polygons[polygon_i].norm_3x3[ 4],
+        polygons[polygon_i].norm_3x3[ 5],
+        polygons[polygon_i].norm_3x3[ 6],
+        polygons[polygon_i].norm_3x3[ 7],
+        polygons[polygon_i].norm_3x3[ 8]);
+    
+    normal = normalize(normal * n_3x3);
     
     out.pos -= vector_float4(normal, 0.0f) * 0.002f;
     
-    float4x4 projection = matrix_float4x4(
-        camera->projection_4x4[ 0],
-        camera->projection_4x4[ 1],
-        camera->projection_4x4[ 2],
-        camera->projection_4x4[ 3],
-        camera->projection_4x4[ 4],
-        camera->projection_4x4[ 5],
-        camera->projection_4x4[ 6],
-        camera->projection_4x4[ 7],
-        camera->projection_4x4[ 8],
-        camera->projection_4x4[ 9],
-        camera->projection_4x4[10],
-        camera->projection_4x4[11],
-        camera->projection_4x4[12],
-        camera->projection_4x4[13],
-        camera->projection_4x4[14],
-        camera->projection_4x4[15]);
-    
-    out.pos = out.pos * projection;
+    out.pos *= p_4x4;
     
     return out;
 }
