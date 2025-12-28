@@ -35,7 +35,7 @@ typedef struct
     uint32_t polygons_alloc_size;
     uint32_t polygon_mats_alloc_size;
     uint32_t lights_alloc_size;
-    uint32_t single_render_view_alloc_size;
+    uint32_t render_view_alloc_size;
     uint32_t projection_constants_alloc_size;
     uint32_t postprocessing_constants_alloc_size;
     uint32_t frame_i;

@@ -571,9 +571,9 @@ void T1_renderer_hardware_render(
     
     add_opaque_zpolygons_to_workload(frame_data);
     
-    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     add_alphablending_zpolygons_to_workload(frame_data);
-    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

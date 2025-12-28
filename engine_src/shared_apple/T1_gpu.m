@@ -250,7 +250,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     id<MTLFunction> alphablending_fragment_shader =
         [ags->lib newFunctionWithName:
             @"alphablending_fragment_shader"];
@@ -261,7 +261,7 @@ bool32_t apple_gpu_init(
             "Missing function: alphablending_vertex_shader()");
         return false;
     }
-    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -547,7 +547,7 @@ bool32_t apple_gpu_init(
                 &Error];
     log_assert(Error == NULL);
     
-    #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     MTLRenderPipelineDescriptor * alpha_pls_desc =
         [[MTLRenderPipelineDescriptor alloc] init];
     [alpha_pls_desc
@@ -585,11 +585,13 @@ bool32_t apple_gpu_init(
     {
         log_append(
             [[Error localizedDescription]
-                cStringUsingEncoding:kCFStringEncodingASCII]);
+                cStringUsingEncoding:
+                    kCFStringEncodingASCII]);
         
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash(
-            "Error loading the alphablending shader\n");
+            "Error loading the alpha "
+            "blending shader\n");
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -601,10 +603,6 @@ bool32_t apple_gpu_init(
             "Failed to load the alphablending shader");
         return false;
     }
-    #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     
     alpha_pls_desc.colorAttachments[1] = nil;
     ags->alphablend_notouch_pls =
@@ -614,6 +612,10 @@ bool32_t apple_gpu_init(
             error:
                 &Error];
     log_assert(Error == NULL);
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     MTLDepthStencilDescriptor * depth_desc =
         [MTLDepthStencilDescriptor new];
@@ -747,12 +749,13 @@ bool32_t apple_gpu_init(
         {
             id<MTLBuffer> MTLBufferFrameCamera =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->render_views[rv_i]
-                /* the length weirdly needs to be page aligned also */
+                /* also needs to be aligned */
                     length:
-                        gpu_shared_data_collection->single_render_view_alloc_size
+                        gpu_shared_data_collection->
+                            render_view_alloc_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -783,7 +786,8 @@ bool32_t apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedVertices =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->locked_vertices_alloc_size
+                gpu_shared_data_collection->
+                    locked_vertices_alloc_size
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_vertex_buffer = MTLBufferLockedVertices;
@@ -1626,7 +1630,10 @@ set_basic_props_for_render_pass_descriptor(
         ags->camera_depth_texture;
     
     // ID Buffer for touchables
-    if (cam_i == 0) {
+    if (
+        T1_render_views[cam_i].write_type ==
+            T1RENDERVIEW_WRITE_RENDER_TARGET)
+    {
         desc.colorAttachments[1].texture =
             ags->touch_id_texture;
         desc.colorAttachments[1].loadAction =
@@ -2014,10 +2021,10 @@ static void set_defaults_for_encoder(
     {
         log_assert(ags->viewports_set[cam_i]);
         
-        #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
+        #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
         uint32_t diamond_verts_size =
             f->first_alphablend_i;
-        #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+        #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
         uint32_t diamond_verts_size = f->verts_size;
         #else
         #error
@@ -2166,11 +2173,27 @@ static void set_defaults_for_encoder(
                 renderCommandEncoderWithDescriptor:
                     opaque_tris_descriptor];
         
+        id<MTLRenderPipelineState> opq_pls = nil;
+        id<MTLRenderPipelineState> blnd_pls = nil;
+        switch (T1_render_views[cam_i].write_type) {
+            case T1RENDERVIEW_WRITE_RENDER_TARGET:
+                opq_pls = ags->diamond_touch_pls;
+                blnd_pls = ags->alphablend_touch_pls;
+            break;
+            case T1RENDERVIEW_WRITE_RGBA:
+                opq_pls =
+                    ags->diamond_notouch_pls;
+                blnd_pls =
+                    ags->alphablend_notouch_pls;
+            break;
+            case T1RENDERVIEW_WRITE_DEPTH:
+                log_assert(0);
+                blnd_pls = nil;
+            break;
+        }
         [render_pass_2_opaque_triangles_encoder
             setRenderPipelineState:
-                cam_i == 0 ?
-                    ags->diamond_touch_pls :
-                    ags->diamond_notouch_pls];
+                opq_pls];
         
         set_defaults_for_encoder(
             render_pass_2_opaque_triangles_encoder,
@@ -2214,10 +2237,11 @@ static void set_defaults_for_encoder(
             f->verts_size -
             f->first_alphablend_i;
         
-        #if T1_ALPHABLENDING_SHADER_ACTIVE == T1_ACTIVE
+        #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
         if (
             T1_global->draw_triangles &&
-            alphablend_verts_size > 0)
+            alphablend_verts_size > 0 &&
+            blnd_pls != nil)
         {
             MTLRenderPassDescriptor *
                 alpha_tris_descriptor =
@@ -2234,9 +2258,7 @@ static void set_defaults_for_encoder(
             
             [render_pass_3_alpha_triangles_encoder
                 setRenderPipelineState:
-                    cam_i == 0 ?
-                        ags->alphablend_touch_pls :
-                        ags->alphablend_notouch_pls];
+                    blnd_pls];
             set_defaults_for_encoder(
                 render_pass_3_alpha_triangles_encoder,
                 (uint32_t)cam_i);
@@ -2278,17 +2300,16 @@ static void set_defaults_for_encoder(
             [render_pass_3_alpha_triangles_encoder
                 endEncoding];
         }
-        #elif T1_ALPHABLENDING_SHADER_ACTIVE == T1_INACTIVE
+        #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
     }
     
-    // copy the touch id buffer to a CPU buffer so we can query
-    // what the top touch_id is
-    id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_encoder =
+    // copy the touch id buffer for CPU use
+    id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_enc =
         [command_buffer blitCommandEncoder];
-    [blit_touch_texture_to_cpu_buffer_encoder
+    [blit_touch_texture_to_cpu_buffer_enc
         copyFromTexture: ags->touch_id_texture
         sourceSlice: 0
         sourceLevel: 0
@@ -2304,7 +2325,7 @@ static void set_defaults_for_encoder(
             [ags->touch_id_texture width] * 4
         destinationBytesPerImage:
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 4];
-    [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
+    [blit_touch_texture_to_cpu_buffer_enc endEncoding];
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     // Render pass 2 downsamples the original texture

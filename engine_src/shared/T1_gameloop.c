@@ -291,6 +291,13 @@ void T1_gameloop_update_before_render_pass(
         #error
         #endif
         
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_render_view_validate();
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
         #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
         T1_zsprite_anim_resolve();
         #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE

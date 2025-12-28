@@ -496,7 +496,7 @@ void T1_appinit_before_gpu_init(
         pad_to_page_size(sizeof(T1GPULight) *
             MAX_LIGHTS_PER_BUFFER);
     
-    sd->single_render_view_alloc_size =
+    sd->render_view_alloc_size =
         pad_to_page_size(sizeof(T1GPURenderView));
     
     sd->locked_vertices_alloc_size =
@@ -555,7 +555,7 @@ void T1_appinit_before_gpu_init(
         {
             f->render_views[cam_i] = (T1GPURenderView *)
                 T1_mem_malloc_from_unmanaged_aligned(
-                    sd->single_render_view_alloc_size,
+                    sd->render_view_alloc_size,
                     T1_mem_page_size);
             
             T1_std_memset_f32(
