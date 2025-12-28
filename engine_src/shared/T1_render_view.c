@@ -27,9 +27,13 @@ void T1_render_view_init(void) {
 
 void T1_render_view_validate(void) {
     log_assert(T1_render_views != NULL);
-    log_assert(T1_render_views[0].write_type == T1RENDERVIEW_WRITE_RENDER_TARGET);
-    log_assert(T1_render_views_size > 0);
-    log_assert(T1_render_views_size <= T1_RENDER_VIEW_CAP);
+    log_assert(
+        T1_render_views[0].write_type ==
+            T1RENDERVIEW_WRITE_RENDER_TARGET);
+    log_assert(
+        T1_render_views_size > 0);
+    log_assert(
+        T1_render_views_size <= T1_RENDER_VIEW_CAP);
     
     for (
         uint32_t i = 1;

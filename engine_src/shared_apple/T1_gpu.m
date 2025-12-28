@@ -84,9 +84,9 @@ typedef struct AppleGPUState {
     #error
     #endif
     
-    id<MTLTexture> render_target_texture;
+    // id<MTLTexture> rtt;
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
+    id<MTLTexture> downsampled_rtts[DOWNSAMPLES_SIZE];
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -106,8 +106,8 @@ static AppleGPUState * ags = NULL;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
-static void (* funcptr_shared_gameloop_update)(T1GPUFrame *) = NULL;
-static void (* funcptr_shared_gameloop_update_after_render_pass)(void) = NULL;
+static void (* funcptr_gameloop_before_render)(T1GPUFrame *) = NULL;
+static void (* funcptr_gameloop_after_render)(void) = NULL;
 
 bool32_t apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
@@ -133,9 +133,9 @@ bool32_t apple_gpu_init(
     #error
     #endif
     
-    funcptr_shared_gameloop_update =
+    funcptr_gameloop_before_render =
         arg_funcptr_shared_gameloop_update;
-    funcptr_shared_gameloop_update_after_render_pass =
+    funcptr_gameloop_after_render =
         arg_funcptr_shared_gameloop_update_after_render_pass;
     
     ags->pixel_format_renderpass1 = MTLPixelFormatRGBA8Unorm;
@@ -876,7 +876,8 @@ bool32_t apple_gpu_init(
     
     ags->downsample_compute_pls =
         [ags->device
-            newComputePipelineStateWithFunction:downsample_func
+            newComputePipelineStateWithFunction:
+                downsample_func
             error:nil];
     
     id<MTLFunction> boxblur_func =
@@ -887,14 +888,15 @@ bool32_t apple_gpu_init(
             error:nil];
     
     id<MTLFunction> threshold_func =
-        [ags->lib newFunctionWithName: @"threshold_texture"];
+        [ags->lib newFunctionWithName:
+            @"threshold_texture"];
     
     ags->thres_compute_pls =
         [ags->device
-            newComputePipelineStateWithFunction:threshold_func
+            newComputePipelineStateWithFunction:
+                threshold_func
             error:nil];
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
-    // Pass
     #else
     #error
     #endif
@@ -903,12 +905,15 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"single_quad_vertex_shader"];
     if (singlequad_vertex_shader == NULL) {
-        log_append("Missing function: postprocess_vertex_shader()!");
+        log_append(
+            "Missing function: "
+            "postprocess_vertex_shader()!");
         
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: postprocess_vertex_shader()");
+            "Missing function: "
+            "postprocess_vertex_shader()");
         return false;
     }
     
@@ -965,9 +970,10 @@ bool32_t apple_gpu_init(
 
 #if T1_BLOOM_ACTIVE == T1_ACTIVE
 static float get_ds_width(
-    const uint32_t ds_i)
+    const uint32_t ds_i,
+    const uint32_t base_width)
 {
-    float return_value = (float)ags->render_target_texture.width * 0.5f;
+    float return_value = base_width * 0.5f;
     
     for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
@@ -977,9 +983,10 @@ static float get_ds_width(
 }
 
 static float get_ds_height(
-    const uint32_t ds_i)
+    const uint32_t ds_i,
+    const uint32_t base_height)
 {
-    float return_value = (float)ags->render_target_texture.height * 0.5f;
+    float return_value = base_height * 0.5f;
     
     for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
@@ -1832,43 +1839,58 @@ static void set_defaults_for_encoder(
         MTLTextureUsageShaderRead;
     
     ags->camera_depth_texture =
-        [ags->device newTextureWithDescriptor: camera_depth_texture_descriptor];
+        [ags->device newTextureWithDescriptor:
+            camera_depth_texture_descriptor];
     
-    // Set up a texture for rendering to and apply post-processing to
-    MTLTextureDescriptor * render_target_texture_desc =
+    // Set up a render target texture
+    #if 0
+    MTLTextureDescriptor * rtt_desc =
         [MTLTextureDescriptor new];
-    render_target_texture_desc.textureType = MTLTextureType2D;
-    render_target_texture_desc.width =
+    rtt_desc.textureType = MTLTextureType2D;
+    rtt_desc.width =
         (unsigned long)ags->window_viewport.width;
-    render_target_texture_desc.height =
+    rtt_desc.height =
         (unsigned long)ags->window_viewport.height;
-    render_target_texture_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    render_target_texture_desc.storageMode = MTLStorageModePrivate;
-    render_target_texture_desc.usage =
+    rtt_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    rtt_desc.storageMode = MTLStorageModePrivate;
+    rtt_desc.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderWrite |
         MTLTextureUsageShaderRead;
-    render_target_texture_desc.mipmapLevelCount = 1;
+    rtt_desc.mipmapLevelCount = 1;
     
-    ags->render_target_texture = [ags->device
-        newTextureWithDescriptor: render_target_texture_desc];
+    ags->rtt = [ags->device
+        newTextureWithDescriptor: rtt_desc];
+    #endif
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
         
-        MTLTextureDescriptor * downsampled_target_texture_desc =
+        MTLTextureDescriptor * downsampled_rtt_desc =
             [MTLTextureDescriptor new];
-        downsampled_target_texture_desc.textureType = MTLTextureType2D;
-        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
-        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
-        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
-        downsampled_target_texture_desc.mipmapLevelCount = 1;
-        downsampled_target_texture_desc.storageMode = MTLStorageModePrivate;
-        downsampled_target_texture_desc.usage =
+        downsampled_rtt_desc.textureType =
+            MTLTextureType2D;
+        downsampled_rtt_desc.width =
+            (NSUInteger)get_ds_width(
+                i,
+                (uint32_t)ags->
+                    render_viewports[0].width);
+        downsampled_rtt_desc.height =
+            (NSUInteger)get_ds_height(
+                i,
+                (uint32_t)ags->
+                    render_viewports[0].height);
+        downsampled_rtt_desc.pixelFormat =
+            MTLPixelFormatRGBA8Unorm;
+        downsampled_rtt_desc.mipmapLevelCount = 1;
+        downsampled_rtt_desc.storageMode =
+            MTLStorageModePrivate;
+        downsampled_rtt_desc.usage =
             MTLTextureUsageShaderWrite |
             MTLTextureUsageShaderRead;
-        ags->downsampled_target_textures[i] = [ags->device
-            newTextureWithDescriptor: downsampled_target_texture_desc];
+        ags->downsampled_rtts[i] = [ags->device
+            newTextureWithDescriptor:
+                downsampled_rtt_desc];
     }
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
@@ -1942,7 +1964,7 @@ static void set_defaults_for_encoder(
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    if (funcptr_shared_gameloop_update == NULL) {
+    if (funcptr_gameloop_before_render == NULL) {
         return;
     }
     
@@ -1953,7 +1975,7 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
-    funcptr_shared_gameloop_update(
+    funcptr_gameloop_before_render(
         gpu_shared_data_collection->
             triple_buffers + ags->frame_i);
     
@@ -1965,10 +1987,10 @@ static void set_defaults_for_encoder(
         return;
     }
     
-    id<MTLCommandBuffer> command_buffer =
+    id<MTLCommandBuffer> combuf =
         [ags->command_queue commandBuffer];
     
-    if (command_buffer == nil) {
+    if (combuf == nil) {
         #if T1_LOGGER_ASSERTS_ACTIVE
         log_dump_and_crash("error - can't get metal command buffer\n");
         #endif
@@ -1986,10 +2008,11 @@ static void set_defaults_for_encoder(
         [ags->touch_id_texture width] *
         8);
     
-    id <MTLBlitCommandEncoder> clear_touch_texture_blit_encoder =
-        [command_buffer blitCommandEncoder];
+    id <MTLBlitCommandEncoder>
+        clear_touch_tex_blit_enc =
+            [combuf blitCommandEncoder];
     
-    [clear_touch_texture_blit_encoder
+    [clear_touch_tex_blit_enc
         copyFromBuffer:
             ags->touch_id_buffer_all_zeros
         sourceOffset: 0
@@ -2011,7 +2034,7 @@ static void set_defaults_for_encoder(
         destinationOrigin:
             MTLOriginMake(0, 0, 0)];
     
-    [clear_touch_texture_blit_encoder endEncoding];
+    [clear_touch_tex_blit_enc endEncoding];
     
     for (
         int32_t cam_i =
@@ -2033,8 +2056,10 @@ static void set_defaults_for_encoder(
         log_assert(diamond_verts_size <=
             f->verts_size);
         
-        log_assert(T1_render_views[cam_i].write_array_i >= 1);
-        log_assert(T1_render_views[cam_i].write_slice_i >= 0);
+        log_assert(T1_render_views[cam_i].
+            write_array_i >= 1);
+        log_assert(T1_render_views[cam_i].
+            write_slice_i >= 0);
         
         id<MTLTexture> current_rtt =
             get_texture_array_slice(
@@ -2074,7 +2099,7 @@ static void set_defaults_for_encoder(
             MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
         
         id<MTLRenderCommandEncoder> render_pass_1_draw_outlines_encoder =
-            [command_buffer
+            [combuf
                 renderCommandEncoderWithDescriptor:
                     outlines_descriptor];
         
@@ -2169,7 +2194,7 @@ static void set_defaults_for_encoder(
         #endif
         
         id<MTLRenderCommandEncoder> render_pass_2_opaque_triangles_encoder =
-            [command_buffer
+            [combuf
                 renderCommandEncoderWithDescriptor:
                     opaque_tris_descriptor];
         
@@ -2252,7 +2277,7 @@ static void set_defaults_for_encoder(
             
             id<MTLRenderCommandEncoder>
                 render_pass_3_alpha_triangles_encoder =
-                    [command_buffer
+                    [combuf
                         renderCommandEncoderWithDescriptor:
                     alpha_tris_descriptor];
             
@@ -2306,9 +2331,14 @@ static void set_defaults_for_encoder(
         #endif
     }
     
+    id<MTLTexture> rtt =
+        get_texture_array_slice(
+            T1_render_views[0].write_array_i,
+            T1_render_views[0].write_slice_i);
+    
     // copy the touch id buffer for CPU use
     id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_enc =
-        [command_buffer blitCommandEncoder];
+        [combuf blitCommandEncoder];
     [blit_touch_texture_to_cpu_buffer_enc
         copyFromTexture: ags->touch_id_texture
         sourceSlice: 0
@@ -2335,12 +2365,12 @@ static void set_defaults_for_encoder(
         ds_i++)
     {
         MTLViewport smaller_viewport =
-            ags->cached_viewports[0];
+            ags->render_viewports[0];
+        
         smaller_viewport.width = ags->
-            downsampled_target_textures[ds_i].
-                width;
+            downsampled_rtts[ds_i].width;
         smaller_viewport.height = ags->
-            downsampled_target_textures[ds_i].height;
+            downsampled_rtts[ds_i].height;
         
         MTLSize grid = MTLSizeMake(
             (uint32_t)smaller_viewport.width,
@@ -2350,59 +2380,60 @@ static void set_defaults_for_encoder(
         MTLSize threadgroup = MTLSizeMake(16, 16, 1);
         
         if (ds_i < DOWNSAMPLES_CUTOFF) {
-            id<MTLComputeCommandEncoder> compute_encoder =
-            [command_buffer computeCommandEncoder];
-            
+            id<MTLComputeCommandEncoder>
+                compute_encoder =
+                    [combuf computeCommandEncoder];
             [compute_encoder
-                setComputePipelineState: ags->downsample_compute_pls];
+                setComputePipelineState:
+                    ags->downsample_compute_pls];
             [compute_encoder
                 setTexture: ds_i > 0 ?
-                    ags->downsampled_target_textures[ds_i-1] :
-                    ags->render_target_texture
+                    ags->downsampled_rtts[ds_i-1] :
+                    rtt
                 atIndex:0];
             [compute_encoder
-                setTexture: ags->downsampled_target_textures[ds_i]
-                atIndex:1];
-            
+                setTexture:
+                    ags->downsampled_rtts[ds_i]
+                atIndex:
+                    1];
             [compute_encoder
                 dispatchThreads:grid
                 threadsPerThreadgroup:threadgroup];
-            
             [compute_encoder endEncoding];
             
             // Mask only the brightest values
             if (ds_i == 0) {
-                id<MTLComputeCommandEncoder> thres_encoder =
-                    [command_buffer computeCommandEncoder];
+                id<MTLComputeCommandEncoder>
+                    thres_enc = [combuf
+                        computeCommandEncoder];
                 
-                [thres_encoder setComputePipelineState:
-                        ags->thres_compute_pls];
-                [thres_encoder
-                    setTexture: ags->downsampled_target_textures[0]
+                [thres_enc setComputePipelineState:
+                    ags->thres_compute_pls];
+                [thres_enc
+                    setTexture: ags->downsampled_rtts[ds_i]
                     atIndex:0];
-                [thres_encoder
+                [thres_enc
                     dispatchThreads:
                         grid
                     threadsPerThreadgroup:
                         threadgroup];
                 
-                [thres_encoder endEncoding];
+                [thres_enc endEncoding];
             }
         }
         
-        id<MTLComputeCommandEncoder> boxblur_encoder =
-            [command_buffer computeCommandEncoder];
-        
-        [boxblur_encoder
+        id<MTLComputeCommandEncoder> boxblur_enc =
+            [combuf computeCommandEncoder];
+        [boxblur_enc
             setComputePipelineState:
                 ags->boxblur_compute_pls];
-        [boxblur_encoder
-            setTexture: ags->downsampled_target_textures[ds_i]
+        [boxblur_enc
+            setTexture: ags->downsampled_rtts[ds_i]
             atIndex:0];
-        [boxblur_encoder
+        [boxblur_enc
             dispatchThreads:grid
             threadsPerThreadgroup:threadgroup];
-        [boxblur_encoder endEncoding];
+        [boxblur_enc endEncoding];
     }
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     // Pass
@@ -2411,67 +2442,69 @@ static void set_defaults_for_encoder(
     #endif
     
     // Render pass 4 puts a quad on the full screen
-    MTLRenderPassDescriptor * render_pass_4_composition_descriptor =
-        [view currentRenderPassDescriptor];
-    
-    render_pass_4_composition_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
-    render_pass_4_composition_descriptor.depthAttachment.loadAction =
-        MTLLoadActionClear;
-    id<MTLRenderCommandEncoder> render_pass_4_composition =
-        [command_buffer
+    MTLRenderPassDescriptor *
+        render_pass_4_comp_desc =
+            [view currentRenderPassDescriptor];
+    render_pass_4_comp_desc.colorAttachments[0].
+        clearColor =
+            MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
+    render_pass_4_comp_desc.
+        depthAttachment.loadAction =
+            MTLLoadActionClear;
+    id<MTLRenderCommandEncoder> render_pass_4_comp =
+        [combuf
             renderCommandEncoderWithDescriptor:
-                render_pass_4_composition_descriptor];
-    
-    [render_pass_4_composition setViewport: ags->window_viewport];
-    
-    [render_pass_4_composition setCullMode:MTLCullModeNone];
-    
-    [render_pass_4_composition
+                render_pass_4_comp_desc];
+    [render_pass_4_comp setViewport: ags->window_viewport];
+    [render_pass_4_comp setCullMode:MTLCullModeNone];
+    [render_pass_4_comp
         setRenderPipelineState: ags->singlequad_pls];
-    
     log_assert(ags->quad_vertices != NULL);
-    [render_pass_4_composition
+    [render_pass_4_comp
         setVertexBytes:ags->quad_vertices
         length:sizeof(T1PostProcessingVertex)*6
         atIndex:0];
-    
-    [render_pass_4_composition
+    [render_pass_4_comp
         setVertexBuffer:ags->postprocessing_constants_buffers[ags->frame_i]
         offset:0
         atIndex:1];
-    
-    id<MTLTexture> arr_tex = ags->metal_textures[T1_render_views[0].write_array_i];
-    
+    id<MTLTexture> arr_tex = ags->metal_textures[
+        T1_render_views[0].write_array_i];
     id<MTLTexture> sliced_tex = [arr_tex
         newTextureViewWithPixelFormat:
             arr_tex.pixelFormat
-        textureType:MTLTextureType2D
+        textureType:
+            MTLTextureType2D
         levels:
             NSMakeRange(0, arr_tex.mipmapLevelCount)
         slices:
             NSMakeRange(
                 (NSUInteger)T1_render_views[0].write_slice_i,
                 1)];
-    [render_pass_4_composition
+    [render_pass_4_comp
         setFragmentTexture: sliced_tex
         atIndex:0];
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    [render_pass_4_composition
-        setFragmentTexture: ags->downsampled_target_textures[0]
-        atIndex:1];
-    [render_pass_4_composition
-        setFragmentTexture: ags->downsampled_target_textures[1]
+    [render_pass_4_comp
+        setFragmentTexture:
+            ags->downsampled_rtts[0]
+        atIndex: 1];
+    [render_pass_4_comp
+        setFragmentTexture:
+            ags->downsampled_rtts[1]
         atIndex:2];
-    [render_pass_4_composition
-        setFragmentTexture: ags->downsampled_target_textures[2]
+    [render_pass_4_comp
+        setFragmentTexture:
+            ags->downsampled_rtts[2]
         atIndex:3];
-    [render_pass_4_composition
-        setFragmentTexture: ags->downsampled_target_textures[3]
+    [render_pass_4_comp
+        setFragmentTexture:
+            ags->downsampled_rtts[3]
         atIndex:4];
-    [render_pass_4_composition
-        setFragmentTexture: ags->downsampled_target_textures[4]
+    [render_pass_4_comp
+        setFragmentTexture:
+            ags->downsampled_rtts[4]
         atIndex:5];
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     // Pass
@@ -2487,7 +2520,7 @@ static void set_defaults_for_encoder(
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);
     
-    [render_pass_4_composition
+    [render_pass_4_comp
         setFragmentTexture: ags->metal_textures[perlin_ta_i]
         atIndex:6];
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
@@ -2496,26 +2529,21 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
-    [render_pass_4_composition
+    [render_pass_4_comp
         setFragmentTexture: ags->camera_depth_texture
         atIndex:CAMERADEPTH_TEXTUREARRAY_I];
-    
-    [render_pass_4_composition
+    [render_pass_4_comp
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
         vertexCount:6];
-    
-    [render_pass_4_composition endEncoding];
-    
-    // Schedule a present once the framebuffer is complete
-    // using the current drawable
-    [command_buffer presentDrawable: [view currentDrawable]];
+    [render_pass_4_comp endEncoding];
+    [combuf presentDrawable: [view currentDrawable]];
     
     ags->frame_i += 1;
     ags->frame_i %= MAX_RENDERING_FRAME_BUFFERS;
     log_assert(ags->frame_i < MAX_RENDERING_FRAME_BUFFERS);
     
-    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
         #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
@@ -2526,10 +2554,9 @@ static void set_defaults_for_encoder(
         #endif
     }];
     
-    [command_buffer commit];
-    // [command_buffer waitUntilCompleted];
+    [combuf commit];
     
-    funcptr_shared_gameloop_update_after_render_pass();
+    funcptr_gameloop_after_render();
 }
 
 - (void)mtkView:(MTKView *)view

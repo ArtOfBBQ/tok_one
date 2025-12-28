@@ -565,18 +565,11 @@ float4 get_lit(
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        #if 1
         float3 normal_viewspace = normalize(
             vector_float3(
                 in.normal_viewspace[0],
                 in.normal_viewspace[1],
                 in.normal_viewspace[2]));
-        #else
-        float3 normal_viewspace = vector_float3(
-            0.0f,
-            0.0f,
-            -1.0f);
-        #endif
         
         float3 object_to_light_viewspace = normalize(
             light_viewspace -
@@ -680,23 +673,17 @@ float4 get_lit(
         zsprite->bonus_rgb[0],
         zsprite->bonus_rgb[1],
         zsprite->bonus_rgb[2],
-        0.0f);
+        zsprite->alpha * material->alpha);
     
     float4 rgba_cap = vector_float4(
         material->rgb_cap[0],
         material->rgb_cap[1],
         material->rgb_cap[2],
-        1.0f);
+        material->rgb_cap[0]);
     
     lit_color = clamp(lit_color, 0.0f, rgba_cap);
     
-    return vector_float4(
-        lit_color[0],
-        lit_color[1],
-        lit_color[2],
-        clamp(zsprite->alpha, 0.0f, 1.0f) *
-            clamp(material->alpha, 0.0f, 1.0f) *
-            ignore_lighting_color[3]);;
+    return lit_color;
 }
 
 fragment FragmentAndTouchableOut
@@ -932,13 +919,20 @@ single_quad_fragment_shader(
     
     float2 texcoord = in.texcoord;
     
-    half4 color_sample = texture.sample(sampler, texcoord);
+    half4 color_sample = texture. sample(
+        sampler, texcoord);
+    
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    color_sample += downsampled_1.sample(sampler, texcoord);
-    color_sample += downsampled_2.sample(sampler, texcoord);
-    color_sample += downsampled_3.sample(sampler, texcoord);
-    color_sample += downsampled_4.sample(sampler, texcoord);
-    color_sample += downsampled_5.sample(sampler, texcoord);
+    color_sample += downsampled_1.sample(
+        sampler, texcoord);
+    color_sample += downsampled_2.sample(
+        sampler, texcoord);
+    color_sample += downsampled_3.sample(
+        sampler, texcoord);
+    color_sample += downsampled_4.sample(
+        sampler, texcoord);
+    color_sample += downsampled_5.sample(
+        sampler, texcoord);
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -988,7 +982,8 @@ single_quad_fragment_shader(
     
     #if T1_COLOR_QUANTIZATION_ACTIVE == T1_ACTIVE
     if (in.color_quantization > 1.0h) {
-        color_sample = floor(color_sample * in.color_quantization) /
+        color_sample = floor(
+            color_sample * in.color_quantization) /
             (in.color_quantization - 1.0h);
     }
     #elif T1_COLOR_QUANTIZATION_ACTIVE == T1_INACTIVE
@@ -1002,15 +997,15 @@ single_quad_fragment_shader(
 }
 
 kernel void threshold_texture(
-    texture2d<half, access::read_write> texture[[texture(0)]],
+    texture2d<half, access::read_write>
+        texture[[texture(0)]],
     uint2 grid_pos [[thread_position_in_grid]])
 {
     half4 in_color = texture.read(grid_pos);
     
     half4 thresholded =
         in_color *
-        ((in_color[0] + in_color[1] + in_color[2]) >
-            (1.05h * 3.0h));
+        (in_color[3] > 1.0f);
     
     texture.write(thresholded, grid_pos);
 }
@@ -1031,9 +1026,12 @@ kernel void downsample_texture(
     
     half4 in_color = (
         in_texture.read(input_pos) +
-        in_texture.read(input_pos + vector_uint2(1, 1)) +
-        in_texture.read(input_pos + vector_uint2(1, 0)) +
-        in_texture.read(input_pos + vector_uint2(0, 1))) / 4.0h;
+        in_texture.read(
+            input_pos + vector_uint2(1, 1)) +
+        in_texture.read(
+            input_pos + vector_uint2(1, 0)) +
+        in_texture.read(
+            input_pos + vector_uint2(0, 1))) / 4.0h;
     
     out_texture.write(in_color, out_pos);
 }
