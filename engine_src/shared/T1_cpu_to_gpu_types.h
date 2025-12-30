@@ -17,7 +17,11 @@ typedef struct
     uint32_t              verts_size;
     uint32_t              render_views_size;
     uint32_t              flat_billboard_quads_size;
-    uint32_t              first_alphablend_i;
+    uint32_t              opaq_verts_size;
+    uint32_t              first_alpha_i;
+    uint32_t              alpha_verts_size;
+    uint32_t              first_bloom_i;
+    uint32_t              bloom_verts_size;
 } T1GPUFrame;
 
 typedef struct

@@ -143,7 +143,7 @@ void T1_gameloop_update_before_render_pass(
     frame_data->verts_size               = 0;
     frame_data->flat_billboard_quads_size             = 0;
     frame_data->zsprite_list->size       = 0;
-    frame_data->first_alphablend_i       = 0;
+    frame_data->first_alpha_i       = 0;
     
     if (
         !T1_gameloop_active && T1_loading_textures)
@@ -308,7 +308,11 @@ void T1_gameloop_update_before_render_pass(
         T1_platform_update_mouse_location();
         
         // handle timed occlusions
-        for (uint32_t zs_i = 0; zs_i < T1_zsprite_list->size; zs_i++) {
+        for (
+            uint32_t zs_i = 0;
+            zs_i < T1_zsprite_list->size;
+            zs_i++)
+        {
             if (
                 T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us >
                     T1_global->elapsed)

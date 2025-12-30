@@ -663,9 +663,6 @@ void text_request_top_touchable_id(
     font_settings->mat.diffuse_rgb[0] = 1.0f;
     font_settings->mat.diffuse_rgb[1] = 1.0f;
     font_settings->mat.diffuse_rgb[2] = 1.0f;
-    font_settings->mat.rgb_cap[0] = 1.0f;
-    font_settings->mat.rgb_cap[1] = 1.0f;
-    font_settings->mat.rgb_cap[2] = 1.0f;
     font_settings->mat.uv_scroll[0] = 0.0f;
     font_settings->mat.uv_scroll[1] = 0.0f;
     font_settings->mat.alpha = 1.0f;

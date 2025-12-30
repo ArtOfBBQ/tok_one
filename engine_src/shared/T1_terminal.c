@@ -259,9 +259,6 @@ void terminal_render(void) {
         font_settings->mat.diffuse_rgb[1] = term_font_color[1];
         font_settings->mat.diffuse_rgb[2] = term_font_color[2];
         font_settings->mat.alpha = term_font_color[3];
-        font_settings->mat.rgb_cap[0] = term_font_rgb_cap[0];
-        font_settings->mat.rgb_cap[1] = term_font_rgb_cap[1];
-        font_settings->mat.rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
         font_settings->ignore_lighting = 1.0f;
         font_settings->touch_id = -1;

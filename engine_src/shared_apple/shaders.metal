@@ -314,13 +314,18 @@ z_prepass_fragment_shader(
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
+    #if 0
     unsigned int mat_i =
-        locked_vertices[in.locked_vertex_i].parent_material_i;
+        locked_vertices[in.locked_vertex_i].
+            parent_material_i;
+    
     const device T1GPUConstMat * material =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_mat :
-            &const_mats[locked_vertices[in.locked_vertex_i].
-                locked_materials_head_i + mat_i];
+            &const_mats[locked_vertices
+                [in.locked_vertex_i].
+                    locked_materials_head_i + mat_i];
+    #endif
     
     float4 lit_color = vector_float4(
         1.0f,
@@ -386,7 +391,7 @@ float4 get_lit(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
         material->ambient_rgb[2],
-        1.0f);
+        10.0f);
     lit_color *= 0.10f;
     #elif T1_AMBIENT_LIGHTING_ACTIVE == T1_INACTIVE
     float4 lit_color = vector_float4(
@@ -411,12 +416,6 @@ float4 get_lit(
     #else
     #error
     #endif
-    
-    float4 diffuse_tex_sample = vector_float4(
-        0.75f,
-        0.75f,
-        0.75f,
-        1.00f);
     
     float2 uv_adjusted =
         in.texture_coordinate + (
@@ -455,15 +454,15 @@ float4 get_lit(
     #endif
         // Sample the texture to obtain a color
         const half4 color_sample =
-            color_textures[material->texturearray_i].sample(
-                texture_sampler,
-                uv_adjusted,
-                material->texture_i);
-        diffuse_tex_sample = float4(color_sample);
+            color_textures[material->texturearray_i].
+                sample(
+                    texture_sampler,
+                    uv_adjusted,
+                    material->texture_i);
+        diffuse_base *= float4(color_sample);
     }
     
-    float4 ignore_lighting_color =
-        diffuse_tex_sample * diffuse_base;
+    float4 ignore_lighting_color = diffuse_base;
     
     for (
         uint32_t i = 0;
@@ -625,7 +624,6 @@ float4 get_lit(
         
         lit_color += (
             diffuse_base *
-            diffuse_tex_sample *
             light_diffuse_multiplier);
         #elif T1_DIFFUSE_LIGHTING_ACTIVE == T1_INACTIVE
         #else
@@ -663,6 +661,11 @@ float4 get_lit(
         #endif
     }
     
+    lit_color[3] =
+        lit_color[3] *
+        zsprite->alpha *
+        material->alpha;
+    
     lit_color =
         ((1.0f - zsprite->ignore_lighting) *
             lit_color) +
@@ -673,15 +676,9 @@ float4 get_lit(
         zsprite->bonus_rgb[0],
         zsprite->bonus_rgb[1],
         zsprite->bonus_rgb[2],
-        zsprite->alpha * material->alpha);
+        0.0f);
     
-    float4 rgba_cap = vector_float4(
-        material->rgb_cap[0],
-        material->rgb_cap[1],
-        material->rgb_cap[2],
-        material->rgb_cap[0]);
-    
-    lit_color = clamp(lit_color, 0.0f, rgba_cap);
+    lit_color = clamp(lit_color, 0.0f, 1.0f);
     
     return lit_color;
 }

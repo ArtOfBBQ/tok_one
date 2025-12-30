@@ -80,7 +80,6 @@ typedef struct {
     float ambient_rgb[3];
     float diffuse_rgb[3];
     float specular_rgb[3];
-    float rgb_cap[3];
     float uv_scroll[2];
     int   texturearray_i;
     int   texture_i;

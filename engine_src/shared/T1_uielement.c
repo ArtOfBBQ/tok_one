@@ -445,9 +445,6 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             font_settings->mat.ambient_rgb[0] = 0.5f;
             font_settings->mat.ambient_rgb[1] = 1.0f;
             font_settings->mat.ambient_rgb[2] = 1.0f;
-            font_settings->mat.rgb_cap[0] = 1.0f;
-            font_settings->mat.rgb_cap[1] = 1.0f;
-            font_settings->mat.rgb_cap[2] = 1.0f;
             font_settings->mat.alpha = 1.0f;
             font_settings->ignore_lighting =
                 active_ui_elements[i].user_set.ignore_lighting;

@@ -30,6 +30,7 @@ typedef struct {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     int32_t zsprite_id;
     
+    bool8_t bloom_on;
     bool8_t alpha_blending_on;
     bool8_t committed;
     bool8_t deleted;

@@ -8,52 +8,6 @@ void T1_renderer_init(void) {
     T1_std_memset(T1_camera, 0, sizeof(T1GPURenderView));
 }
 
-inline static void add_alphablending_zpolygons_to_workload(
-    T1GPUFrame * frame_data)
-{
-    frame_data->first_alphablend_i = frame_data->verts_size;
-    
-    // Copy all vertices that do use alpha blending
-    for (
-        int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)T1_zsprite_list->size;
-        cpu_zp_i++)
-    {
-        if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on)
-        {
-            continue;
-        }
-        
-        int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
-        log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
-        
-        int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
-                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
-        
-        for (
-            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
-            vert_i < vert_tail_i;
-            vert_i += 1)
-        {
-            frame_data->verts[frame_data->verts_size].locked_vertex_i =
-                vert_i;
-            frame_data->verts[frame_data->verts_size].polygon_i =
-                cpu_zp_i;
-            frame_data->verts_size += 1;
-            log_assert(
-                frame_data->verts_size <
-                    MAX_VERTICES_PER_BUFFER);
-        }
-    }
-}
-
 inline static void add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
@@ -73,10 +27,16 @@ inline static void add_opaque_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on)
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                deleted ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                visible ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                committed ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                alpha_blending_on ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                bloom_on)
         {
             continue;
         }
@@ -148,6 +108,139 @@ inline static void add_opaque_zpolygons_to_workload(
         #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
         #endif
     }
+    
+    frame_data->opaq_verts_size =
+        frame_data->verts_size;
+}
+
+inline static void add_alphablending_zpolygons_to_workload(
+    T1GPUFrame * frame_data)
+{
+    log_assert(frame_data->opaq_verts_size ==
+        frame_data->verts_size);
+    
+    frame_data->first_alpha_i = frame_data->verts_size;
+    
+    // Copy all vertices that do use alpha blending
+    for (
+        int32_t cpu_zp_i = 0;
+        cpu_zp_i < (int32_t)T1_zsprite_list->size;
+        cpu_zp_i++)
+    {
+        if (
+            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                bloom_on)
+        {
+            continue;
+        }
+        
+        int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
+        log_assert(mesh_id >= 0);
+        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+        
+        int32_t vert_tail_i =
+            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
+                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
+        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        
+        for (
+            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
+            vert_i < vert_tail_i;
+            vert_i += 1)
+        {
+            frame_data->verts[frame_data->verts_size].locked_vertex_i =
+                vert_i;
+            frame_data->verts[frame_data->verts_size].polygon_i =
+                cpu_zp_i;
+            frame_data->verts_size += 1;
+            log_assert(
+                frame_data->verts_size <
+                    MAX_VERTICES_PER_BUFFER);
+        }
+    }
+    
+    frame_data->alpha_verts_size =
+        frame_data->verts_size
+            - frame_data->first_alpha_i;
+    log_assert(
+        frame_data->alpha_verts_size +
+            frame_data->opaq_verts_size ==
+                frame_data->verts_size);
+}
+
+inline static void
+    add_bloom_zpolygons_to_workload(
+        T1GPUFrame * frame_data)
+{
+    log_assert(
+        frame_data->alpha_verts_size +
+        frame_data->opaq_verts_size ==
+        frame_data->verts_size);
+    
+    frame_data->first_bloom_i =
+        frame_data->verts_size;
+    
+    // Copy all vertices that do use bloom
+    for (
+        int32_t cpu_zp_i = 0;
+        cpu_zp_i < (int32_t)T1_zsprite_list->size;
+        cpu_zp_i++)
+    {
+        if (
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                deleted ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                visible ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                committed ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                alpha_blending_on ||
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                bloom_on)
+        {
+            continue;
+        }
+        
+        int32_t mesh_id =
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                mesh_id;
+        log_assert(mesh_id >= 0);
+        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+        
+        int32_t vert_tail_i =
+            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
+                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
+        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        
+        for (
+            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
+            vert_i < vert_tail_i;
+            vert_i += 1)
+        {
+            frame_data->verts[frame_data->verts_size].
+                locked_vertex_i = vert_i;
+            frame_data->verts[frame_data->verts_size].
+                polygon_i = cpu_zp_i;
+            frame_data->verts_size += 1;
+            log_assert(
+                frame_data->verts_size <
+                    MAX_VERTICES_PER_BUFFER);
+        }
+    }
+    
+    frame_data->bloom_verts_size =
+        frame_data->verts_size
+            - frame_data->first_bloom_i;
+    
+    log_assert(
+        frame_data->alpha_verts_size +
+            frame_data->opaq_verts_size +
+                frame_data->bloom_verts_size ==
+                frame_data->verts_size);
 }
 
 static void construct_projection_matrix(void) {
@@ -538,6 +631,11 @@ void T1_renderer_hardware_render(
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
+    
+    frame_data->opaq_verts_size = 0;
+    frame_data->alpha_verts_size = 0;
+    frame_data->bloom_verts_size = 0;
+    
     construct_view_matrix();
     
     construct_projection_matrix();
@@ -577,6 +675,8 @@ void T1_renderer_hardware_render(
     #else
     #error
     #endif
+    
+    add_bloom_zpolygons_to_workload(frame_data);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
