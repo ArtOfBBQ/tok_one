@@ -373,7 +373,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    T1_global_update_window_position(
+    T1_global_update_window_pos(
         (float)(((NSWindow *)[notification object]).frame.origin.x),
         (float)(((NSWindow *)[notification object]).frame.origin.y));
 }

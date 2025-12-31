@@ -2,14 +2,14 @@
 
 T1Globals * T1_global = NULL;
 
-float T1_global_x_to_screenspace_x(
+float T1_global_x_to_screen_x(
     const float x,
     const float given_z)
 {
     return (x * T1_global->project_consts.x_multiplier + given_z) * T1_global->window_width / (2.0f * given_z);
 }
 
-float T1_global_screenspace_x_to_x(
+float T1_global_screen_x_to_x(
     const float screenspace_x,
     const float given_z)
 {
@@ -19,7 +19,7 @@ float T1_global_screenspace_x_to_x(
             / T1_global->project_consts.x_multiplier;
 }
 
-float T1_global_y_to_screenspace_y(
+float T1_global_y_to_screen_y(
     const float y,
     const float given_z)
 {
@@ -28,7 +28,7 @@ float T1_global_y_to_screenspace_y(
         T1_global->project_consts.field_of_view_modifier + given_z) * T1_global->window_height / (2.0f * given_z);
 }
 
-float T1_global_screenspace_y_to_y(
+float T1_global_screen_y_to_y(
     const float screenspace_y,
     const float given_z)
 {
@@ -38,7 +38,7 @@ float T1_global_screenspace_y_to_y(
                 / T1_global->project_consts.field_of_view_modifier;
 }
 
-float T1_global_screenspace_height_to_height(
+float T1_global_screen_height_to_height(
     const float screenspace_height,
     const float given_z)
 {
@@ -48,7 +48,7 @@ float T1_global_screenspace_height_to_height(
                 / T1_global->project_consts.field_of_view_modifier;
 }
 
-float T1_global_screenspace_width_to_width(
+float T1_global_screen_width_to_width(
     const float screenspace_width,
     const float given_z)
 {
@@ -124,7 +124,7 @@ void T1_global_init(void) {
     T1_global->last_clickray_direction[2] = 1.0f;
 }
 
-void T1_global_update_window_position(
+void T1_global_update_window_pos(
     float left,
     float bottom)
 {

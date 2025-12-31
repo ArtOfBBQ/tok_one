@@ -661,16 +661,13 @@ float4 get_lit(
         #endif
     }
     
-    lit_color[3] =
-        lit_color[3] *
-        zsprite->alpha *
-        material->alpha;
-    
     lit_color =
         ((1.0f - zsprite->ignore_lighting) *
             lit_color) +
         (zsprite->ignore_lighting *
             ignore_lighting_color);
+    
+    lit_color[3] *= zsprite->alpha * material->alpha;
     
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],

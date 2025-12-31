@@ -2043,44 +2043,49 @@ static void set_defaults_for_encoder(
         #endif
         
         #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-        MTLRenderPassDescriptor * outlines_descriptor =
+        MTLRenderPassDescriptor * outlines_desc =
             [view currentRenderPassDescriptor];
-        outlines_descriptor.depthAttachment.loadAction =
+        outlines_desc.depthAttachment.loadAction =
             z_buffer_cleared ?
                 MTLLoadActionLoad :
                 MTLLoadActionClear;
         z_buffer_cleared = true;
-        outlines_descriptor.depthAttachment.clearDepth = 1.0f;
-        outlines_descriptor.depthAttachment.storeAction =
+        outlines_desc.depthAttachment.clearDepth = 1.0f;
+        outlines_desc.depthAttachment.storeAction =
             MTLStoreActionStore;
-        outlines_descriptor.depthAttachment.texture =
+        outlines_desc.depthAttachment.texture =
             ags->camera_depth_texture;
         
-        outlines_descriptor.colorAttachments[0].texture =
+        outlines_desc.colorAttachments[0].texture =
             current_rtt;
-        outlines_descriptor.colorAttachments[0].storeAction =
+        outlines_desc.colorAttachments[0].storeAction =
             MTLStoreActionStore;
         
-        outlines_descriptor.colorAttachments[0].clearColor =
+        outlines_desc.colorAttachments[0].clearColor =
             MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
         
         id<MTLRenderCommandEncoder> render_pass_1_draw_outlines_encoder =
             [combuf
                 renderCommandEncoderWithDescriptor:
-                    outlines_descriptor];
+                    outlines_desc];
         
         [render_pass_1_draw_outlines_encoder
-            setViewport: ags->render_viewports[cam_i]];
+            setViewport:
+                ags->render_viewports[cam_i]];
         
         // outlines pipeline
         [render_pass_1_draw_outlines_encoder
-            setRenderPipelineState: ags->outlines_pls];
+            setRenderPipelineState:
+                ags->outlines_pls];
         [render_pass_1_draw_outlines_encoder
-            setDepthStencilState: ags->opaque_depth_stencil_state];
+            setDepthStencilState:
+                ags->opaque_depth_stencil_state];
         [render_pass_1_draw_outlines_encoder
             setDepthClipMode: MTLDepthClipModeClip];
         [render_pass_1_draw_outlines_encoder setCullMode: MTLCullModeFront];
-        [render_pass_1_draw_outlines_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
+        [render_pass_1_draw_outlines_encoder
+            setFrontFacingWinding:
+                MTLWindingCounterClockwise];
         
         [render_pass_1_draw_outlines_encoder
             setVertexBuffer:
@@ -2135,11 +2140,11 @@ static void set_defaults_for_encoder(
         #endif
         
         // opaque triangles
-        MTLRenderPassDescriptor * opaque_tris_descriptor =
+        MTLRenderPassDescriptor * opaque_tris_desc =
         [view currentRenderPassDescriptor];
         
         set_defaults_for_render_descriptor(
-            opaque_tris_descriptor,
+            opaque_tris_desc,
             cam_i);
         
         #if T1_OUTLINES_ACTIVE == T1_ACTIVE
@@ -2164,7 +2169,7 @@ static void set_defaults_for_encoder(
         id<MTLRenderCommandEncoder>
             pass_2_opaque_tris_enc = [combuf
                 renderCommandEncoderWithDescriptor:
-                    opaque_tris_descriptor];
+                    opaque_tris_desc];
         
         id<MTLRenderPipelineState> opq_pls = nil;
         id<MTLRenderPipelineState> blnd_pls = nil;
@@ -2309,10 +2314,13 @@ static void set_defaults_for_encoder(
         if (
             T1_global->draw_triangles &&
             f->bloom_verts_size > 0 &&
-            blnd_pls != nil)
+            blnd_pls != nil &&
+            f->render_views[cam_i]->write_type ==
+                T1RENDERVIEW_WRITE_RENDER_TARGET)
         {
             // only render target can bloom atm
             log_assert(cam_i == 0);
+            
             MTLRenderPassDescriptor *
                 bloom_tris_desc = [view
                     currentRenderPassDescriptor];
