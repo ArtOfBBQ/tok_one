@@ -319,19 +319,6 @@ static void construct_view_matrix(void) {
     {
         T1GPURenderView * rv = T1_render_views + rv_i;
         
-        rv->xyz_cosangle[0] =
-            cosf(T1_camera->xyz_angle[0]);
-        rv->xyz_cosangle[1] =
-            cosf(T1_camera->xyz_angle[1]);
-        rv->xyz_cosangle[2] =
-            cosf(T1_camera->xyz_angle[2]);
-        rv->xyz_sinangle[0] =
-            sinf(T1_camera->xyz_angle[0]);
-        rv->xyz_sinangle[1] =
-            sinf(T1_camera->xyz_angle[1]);
-        rv->xyz_sinangle[2] =
-            sinf(T1_camera->xyz_angle[2]);
-        
         T1_linal_float4x4_construct_identity(
             &result);
         
@@ -631,10 +618,6 @@ void T1_renderer_hardware_render(
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
-    
-    frame_data->opaq_verts_size = 0;
-    frame_data->alpha_verts_size = 0;
-    frame_data->bloom_verts_size = 0;
     
     construct_view_matrix();
     

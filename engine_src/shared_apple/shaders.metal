@@ -443,6 +443,8 @@ float4 get_lit(
         #endif
         );
     
+    float4 texture_base = vector_float4(
+        1.0f, 1.0f, 1.0f, 1.0f);
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     if (material->texturearray_i >= 0)
     {
@@ -459,10 +461,11 @@ float4 get_lit(
                     texture_sampler,
                     uv_adjusted,
                     material->texture_i);
-        diffuse_base *= float4(color_sample);
+        texture_base = float4(color_sample);
     }
     
-    float4 ignore_lighting_color = diffuse_base;
+    float4 ignore_lighting_color =
+        diffuse_base * texture_base;
     
     for (
         uint32_t i = 0;
@@ -660,6 +663,8 @@ float4 get_lit(
         #error
         #endif
     }
+    
+    lit_color *= texture_base;
     
     lit_color =
         ((1.0f - zsprite->ignore_lighting) *

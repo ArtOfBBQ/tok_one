@@ -18,27 +18,18 @@ typedef struct AppleGPUState {
     id<MTLLibrary> lib;
     id<MTLCommandQueue> command_queue;
     
-    id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id light_buffers [MAX_RENDERING_FRAME_BUFFERS];
-    id vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id flat_quad_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id camera_buffers[MAX_RENDERING_FRAME_BUFFERS][T1_RENDER_VIEW_CAP];
-    id postprocessing_constants_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id polygon_buffers[MAX_FRAME_BUFFERS];
+    id light_buffers [MAX_FRAME_BUFFERS];
+    id vertex_buffers[MAX_FRAME_BUFFERS];
+    id flat_quad_buffers[MAX_FRAME_BUFFERS];
+    id camera_buffers[MAX_FRAME_BUFFERS][T1_RENDER_VIEW_CAP];
+    id postprocessing_constants_buffers[MAX_FRAME_BUFFERS];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
     id locked_materials_populator_buffer;
     id locked_materials_buffer;
     id projection_constants_buffer;
     
-    // Pipeline states (pls)
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    id<MTLRenderPipelineState> shadows_pls;
-    id<MTLTexture> shadows_texture;
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
     id<MTLTexture> camera_depth_texture;
     
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
@@ -651,7 +642,7 @@ bool32_t apple_gpu_init(
     
     for (
         uint32_t frame_i = 0;
-        frame_i < MAX_RENDERING_FRAME_BUFFERS;
+        frame_i < MAX_FRAME_BUFFERS;
         frame_i++)
     {
         T1GPUFrame * f = &gpu_shared_data_collection->
@@ -1950,9 +1941,21 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
+    T1GPUFrame * f =
+        &gpu_shared_data_collection->
+            triple_buffers[ags->frame_i];
+    
+    log_assert(f->opaq_verts_size <= f->verts_size);
+    log_assert(f->bloom_verts_size <= f->verts_size);
+    log_assert(f->alpha_verts_size <= f->verts_size);
+    
     funcptr_gameloop_before_render(
         gpu_shared_data_collection->
             triple_buffers + ags->frame_i);
+    
+    log_assert(f->opaq_verts_size <= f->verts_size);
+    log_assert(f->bloom_verts_size <= f->verts_size);
+    log_assert(f->alpha_verts_size <= f->verts_size);
     
     if (
         !ags ||
@@ -1973,9 +1976,9 @@ static void set_defaults_for_encoder(
         return;
     }
     
-    T1GPUFrame * f =
-        &gpu_shared_data_collection->
-            triple_buffers[ags->frame_i];
+    log_assert(f->opaq_verts_size <= f->verts_size);
+    log_assert(f->bloom_verts_size <= f->verts_size);
+    log_assert(f->alpha_verts_size <= f->verts_size);
     
     // Blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
@@ -2019,8 +2022,9 @@ static void set_defaults_for_encoder(
     {
         log_assert(ags->viewports_set[cam_i]);
         
-        log_assert(f->opaq_verts_size <=
-            f->verts_size);
+        log_assert(
+            f->opaq_verts_size <=
+                f->verts_size);
         
         log_assert(T1_render_views[cam_i].
             write_array_i >= 1);
@@ -2246,7 +2250,8 @@ static void set_defaults_for_encoder(
         {
             MTLRenderPassDescriptor *
                 alpha_tris_descriptor =
-                    [view currentRenderPassDescriptor];
+                    [view
+                        currentRenderPassDescriptor];
             set_defaults_for_render_descriptor(
                 alpha_tris_descriptor,
                 cam_i);
@@ -2452,13 +2457,6 @@ static void set_defaults_for_encoder(
         #endif
     }
     
-    #if 0
-    id<MTLTexture> rtt =
-        get_texture_array_slice(
-            T1_render_views[0].write_array_i,
-            T1_render_views[0].write_slice_i);
-    #endif
-    
     // copy the touch id buffer for CPU use
     id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_enc =
         [combuf blitCommandEncoder];
@@ -2575,8 +2573,8 @@ static void set_defaults_for_encoder(
     [combuf presentDrawable: [view currentDrawable]];
     
     ags->frame_i += 1;
-    ags->frame_i %= MAX_RENDERING_FRAME_BUFFERS;
-    log_assert(ags->frame_i < MAX_RENDERING_FRAME_BUFFERS);
+    ags->frame_i %= MAX_FRAME_BUFFERS;
+    log_assert(ags->frame_i < MAX_FRAME_BUFFERS);
     
     [combuf addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

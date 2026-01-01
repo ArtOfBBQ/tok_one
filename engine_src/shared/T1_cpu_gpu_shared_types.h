@@ -66,14 +66,11 @@ typedef struct {
     float    normv_3x3[9];
     float    xyz[3];           // 12 bytes
     float    xyz_angle[3];     // 12 bytes
-    float    xyz_cosangle[3];  // 12 bytes
-    float    xyz_sinangle[3];  // 12 bytes
     int      write_array_i;
     int      write_slice_i;
     uint32_t width;
     uint32_t height;
     T1RenderViewWriteType write_type;
-    uint8_t  padding_u8[3];
 } T1GPURenderView;
 
 typedef struct {

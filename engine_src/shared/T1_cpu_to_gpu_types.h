@@ -26,7 +26,7 @@ typedef struct
 
 typedef struct
 {
-    T1GPUFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    T1GPUFrame triple_buffers[MAX_FRAME_BUFFERS];
     T1GPUProjectConsts * locked_pjc;
     T1GPULockedVertex * locked_vertices;
     T1GPUConstMat * const_mats;

@@ -64,12 +64,6 @@ static void show_dead_simple_text(
     T1_camera->xyz_angle[0] = 0.0f;
     T1_camera->xyz_angle[1] = 0.0f;
     T1_camera->xyz_angle[2] = 0.0f;
-    T1_camera->xyz_cosangle[0] = 0.0f;
-    T1_camera->xyz_cosangle[1] = 0.0f;
-    T1_camera->xyz_cosangle[2] = 0.0f;
-    T1_camera->xyz_sinangle[0] = 0.0f;
-    T1_camera->xyz_sinangle[1] = 0.0f;
-    T1_camera->xyz_sinangle[2] = 0.0f;
     
     font_settings->font_height          = 20.0f;
     font_settings->mat.ambient_rgb[0]   = 1.0f;
@@ -129,10 +123,11 @@ void T1_gameloop_update_before_render_pass(
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    T1_global->elapsed = T1_global->this_frame_timestamp_us -
-        gameloop_previous_time;
+    T1_global->elapsed =
+        T1_global->this_frame_timestamp_us -
+            gameloop_previous_time;
     
-    // TODO: set the frame timestamp to an adjusted value also
+    // TODO: set frame timestamp to an adj value
     T1_global->elapsed = (uint64_t)(
         (double)T1_global->elapsed *
         (double)T1_global->timedelta_mult);
@@ -140,10 +135,14 @@ void T1_gameloop_update_before_render_pass(
     gameloop_previous_time = T1_global->this_frame_timestamp_us;
     
     frame_data->postproc_consts->lights_size = 0;
-    frame_data->verts_size               = 0;
+    frame_data->opaq_verts_size = 0;
+    frame_data->bloom_verts_size = 0;
+    frame_data->alpha_verts_size = 0;
+    frame_data->verts_size = 0;
     frame_data->flat_billboard_quads_size             = 0;
-    frame_data->zsprite_list->size       = 0;
-    frame_data->first_alpha_i       = 0;
+    frame_data->zsprite_list->size = 0;
+    frame_data->first_alpha_i = 0;
+    frame_data->first_bloom_i = 0;
     
     if (
         !T1_gameloop_active && T1_loading_textures)
@@ -378,7 +377,8 @@ void T1_gameloop_update_before_render_pass(
             /* uint64_t elapsed_us: */
                 T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_renderer_hardware_render()");
+        T1_profiler_end(
+            "T1_renderer_hardware_render()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -434,8 +434,11 @@ void T1_gameloop_update_after_render_pass(void) {
                 T1_io_events
                     [T1_IO_LAST_GPU_DATA].
                         screen_y);
-    T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_pierce =
-        T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_top;
+    
+    T1_io_events[T1_IO_LAST_GPU_DATA].
+        touch_id_pierce =
+            T1_io_events[T1_IO_LAST_GPU_DATA].
+                touch_id_top;
     
     if (T1_global->upcoming_fullscreen_request) {
         T1_global->upcoming_fullscreen_request = false;
