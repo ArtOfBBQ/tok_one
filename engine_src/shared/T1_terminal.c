@@ -712,62 +712,6 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        T1_std_are_equal_strings(command, "SET SHADOWCASTER 0"))
-    {
-        
-        shadowcaster_light_i = 0;
-        return true;
-    }
-    
-    if (
-        T1_std_are_equal_strings(command, "SHADOWCASTER OFF"))
-    {
-        
-        shadowcaster_light_i = UINT32_MAX;
-        return true;
-    }
-    
-    if (T1_std_are_equal_strings(command, "CAMERA TO SHADOWCASTER")) {
-        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-            if (
-                shadowcaster_light_i >= 0 &&
-                shadowcaster_light_i < zlights_to_apply_size)
-            {
-                T1_std_strcpy_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    "Setting camera to match shadowcaster (light ");
-                T1_std_strcat_uint_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    shadowcaster_light_i);
-                T1_std_strcat_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    ")");
-                
-                T1_camera->xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
-                T1_camera->xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
-                T1_camera->xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
-                
-                T1_camera->xyz_angle[0] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[0];
-                T1_camera->xyz_angle[1] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[1];
-                T1_camera->xyz_angle[2] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[2];
-            } else {
-                T1_std_strcpy_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    "The shadowcaster light is not set...");
-            }
-        }
-        
-        return true;
-    }
-    
-    if (
         T1_std_are_equal_strings(command, "DRAW TOP TOUCHABLE") ||
         T1_std_are_equal_strings(command, "DRAW TOP") ||
         T1_std_are_equal_strings(command, "SHOW TOP"))

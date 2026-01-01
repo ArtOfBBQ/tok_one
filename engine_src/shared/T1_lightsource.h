@@ -90,7 +90,6 @@ typedef struct zLightSource {
 // the rest of the array will be ignored
 extern zLightSource * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
-extern uint32_t shadowcaster_light_i;
 
 zLightSource * next_zlight(void);
 void commit_zlight(zLightSource * to_request);
@@ -105,8 +104,7 @@ void project_float4_to_2d_inplace(
 // just copy the lights without translation, for hardware renderer
 void copy_lights(
     T1GPULight * lights,
-    uint32_t * lights_size,
-    uint32_t * shadowcaster_i);
+    uint32_t * lights_size);
 
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)

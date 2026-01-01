@@ -104,8 +104,6 @@ static void show_dead_simple_text(
         color_quantization = 1;
     T1_global->postproc_consts.
         lights_size = 0;
-    T1_global->postproc_consts.
-        shadowcaster_i = UINT32_MAX;
     
     T1_renderer_hardware_render(
             frame_data,
@@ -363,8 +361,7 @@ void T1_gameloop_update_before_render_pass(
         // frame_data->postproc consts later inside hardware_render()
         copy_lights(
             frame_data->lights,
-            &T1_global->postproc_consts.lights_size,
-            &T1_global->postproc_consts.shadowcaster_i);
+            &T1_global->postproc_consts.lights_size);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_renderer_hardware_render()");
@@ -400,8 +397,6 @@ void T1_gameloop_update_before_render_pass(
     
     frame_data->postproc_consts->timestamp =
         (uint32_t)T1_global->this_frame_timestamp_us;
-    frame_data->postproc_consts->shadowcaster_i =
-        shadowcaster_light_i;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(

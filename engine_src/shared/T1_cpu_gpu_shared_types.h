@@ -176,7 +176,6 @@ typedef struct
     #endif
     unsigned int timestamp;
     unsigned int lights_size;
-    unsigned int shadowcaster_i;
     int perlin_texturearray_i;
     int perlin_texture_i;
     float padding[7];

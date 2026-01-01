@@ -25,11 +25,10 @@ bool32_t apple_gpu_init(
     float backing_scale_factor,
     char * error_msg_string);
 
-//void apple_gpu_initialize_texture_array(
-//    int32_t texturearray_i,
-//    uint32_t textures_count,
-//    uint32_t single_img_width,
-//    uint32_t single_img_height);
+void apple_gpu_make_depth_texture(
+    int32_t  slice_i,
+    uint32_t width,
+    uint32_t height);
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 - (void)

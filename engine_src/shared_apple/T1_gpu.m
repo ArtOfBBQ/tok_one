@@ -31,6 +31,7 @@ typedef struct AppleGPUState {
     id projection_constants_buffer;
     
     id<MTLTexture> camera_depth_texture;
+    id<MTLTexture> depth_textures[T1_RENDER_VIEW_CAP];
     
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> z_prepass_pls;
@@ -2609,4 +2610,23 @@ void T1_platform_gpu_update_internal_render_viewport(
 void T1_platform_gpu_update_window_viewport(void)
 {
     [apple_gpu_delegate updateFinalWindowSize];
+}
+
+void apple_gpu_make_depth_texture(
+    int32_t  slice_i,
+    uint32_t width,
+    uint32_t height)
+{
+    log_assert(ags->depth_textures[slice_i] == nil);
+    
+    MTLTextureDescriptor * desc =
+        [[MTLTextureDescriptor alloc] init];;
+    
+    desc.width = width;
+    desc.height = height;
+    desc.textureType = MTLTextureType2D;
+    desc.pixelFormat = MTLPixelFormatDepth32Float;
+    
+    ags->depth_textures[slice_i] =
+        [ags->device newTextureWithDescriptor: desc];
 }

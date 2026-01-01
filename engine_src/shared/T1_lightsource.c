@@ -2,7 +2,6 @@
 
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
-uint32_t shadowcaster_light_i = 0;
 
 static void construct_zlight(zLightSource * to_construct) {
     to_construct->xyz[0]        = 0.0f;
@@ -225,11 +224,9 @@ void project_float4_to_2d_inplace(
 
 void copy_lights(
     T1GPULight * lights,
-    uint32_t * lights_size,
-    uint32_t * shadowcaster_i)
+    uint32_t * lights_size)
 {
     *lights_size = 0;
-    *shadowcaster_i = shadowcaster_light_i;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         if (!zlights_to_apply[i].deleted) {
