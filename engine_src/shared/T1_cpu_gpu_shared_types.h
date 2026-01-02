@@ -4,7 +4,7 @@
 #include "clientlogic_macro_settings.h"
 
 #define CAMERADEPTH_TEXTUREARRAY_I 30
-#define SHADOWMAP_TEXTUREARRAY_I 31
+#define DEPTH_TEXTUREARRAYS_I 54321
 
 #ifndef TEXTUREARRAYS_SIZE
 #define TEXTUREARRAYS_SIZE 29
@@ -71,6 +71,7 @@ typedef struct {
     uint32_t width;
     uint32_t height;
     T1RenderViewWriteType write_type;
+    uint8_t  draw_outlines;
 } T1GPURenderView;
 
 typedef struct {

@@ -147,8 +147,9 @@ bool32_t T1_platform_file_exists(
     return false;
 }
 
-void T1_platform_mkdir_if_not_exist(const char * dirname) {    
-    
+void T1_platform_mkdir_if_not_exist(
+    const char * dirname)
+{
     log_append("make directory if it doesn't exist: ");
     log_append(dirname);
     log_append("\n");
@@ -190,9 +191,12 @@ void T1_platform_mkdir_if_not_exist(const char * dirname) {
     return;
 }
 
-void T1_platform_delete_file(const char * filepath) {
-    
-    log_append("trying to delete a file with NSFileManager: ");
+void T1_platform_delete_file(
+    const char * filepath)
+{
+    log_append(
+        "trying to delete a file with "
+        "NSFileManager: ");
     log_append(filepath);
     log_append("\n");
     NSString * nsfilepath = [NSString
@@ -375,4 +379,11 @@ void T1_platform_start_thread(
         ^{
             function_to_run(argument);
         });
+}
+
+uint32_t T1_platform_get_cpu_logical_core_count(void)
+{
+    NSUInteger core_count = [
+        [NSProcessInfo processInfo] activeProcessorCount];
+    return (core_count > 0) ? (unsigned int)core_count : 1;
 }

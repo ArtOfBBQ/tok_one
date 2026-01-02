@@ -226,6 +226,7 @@ float T1_platform_y_to_y(const float y);
 
 void T1_platform_enter_fullscreen(void);
 void T1_platform_toggle_fullscreen(void);
+
 void T1_platform_gpu_update_internal_render_viewport(
     const uint32_t at_i);
 void T1_platform_gpu_update_window_viewport(void);
@@ -244,8 +245,6 @@ void T1_platform_gpu_copy_texture_array(
     const uint32_t single_image_height,
     const bool32_t is_render_target,
     const bool32_t use_bc1_compression);
-
-void T1_platform_create_gpu_render_views(void);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_platform_gpu_generate_mipmaps_for_texture_array(
@@ -287,6 +286,11 @@ void T1_platform_gpu_fetch_rgba_at(
 #else
 #error
 #endif
+
+int32_t
+T1_platform_gpu_make_depth_tex(
+    const uint32_t width,
+    const uint32_t height);
 
 void T1_platform_update_mouse_location(void);
 

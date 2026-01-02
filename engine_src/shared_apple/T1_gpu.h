@@ -16,7 +16,7 @@
 
 extern uint64_t last_resize_request_at;
 
-bool32_t apple_gpu_init(
+bool32_t T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)
         (T1GPUFrame *),
     void (* arg_funcptr_gameloop_update_after_render)(void),
@@ -25,8 +25,8 @@ bool32_t apple_gpu_init(
     float backing_scale_factor,
     char * error_msg_string);
 
-void apple_gpu_make_depth_texture(
-    int32_t  slice_i,
+// returns slice_i of new depth texture
+int32_t T1_apple_gpu_make_depth_tex(
     uint32_t width,
     uint32_t height);
 
@@ -34,7 +34,7 @@ void apple_gpu_make_depth_texture(
 - (void)
     updateFinalWindowSize;
 - (void)
-    updateInternalRenderViewSize: (unsigned int)at_i;
+    updateRenderViewSize: (unsigned int)at_i;
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;
