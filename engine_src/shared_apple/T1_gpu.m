@@ -2371,27 +2371,63 @@ static void set_defaults_for_encoder(
         #error
         #endif
         
-        // TODO: render billboards
-        #if 0
         if (
-                f->flat_billboard_quads_size > 0 &&
-                bb_pls != nil)
-            {
-                [render_pass_3_alpha_triangles_encoder
-                    setRenderPipelineState: bb_pls];
-                [render_pass_3_alpha_triangles_encoder setDepthStencilState:
-                    ags->opaque_depth_stencil_state];
-                
-                [render_pass_3_alpha_triangles_encoder
-                    drawPrimitives:
-                        MTLPrimitiveTypeTriangle
-                    vertexStart:
-                        0
-                    vertexCount:
-                        f->flat_billboard_quads_size * 6
-                        ];
+            // T1_global->draw_billboards &&
+            f->flat_billboard_quads_size > 0 &&
+            bb_pls != nil)
+        {
+            MTLRenderPassDescriptor * bb_desc =
+                [view currentRenderPassDescriptor];
+            
+            set_defaults_for_render_descriptor(
+                bb_desc,
+                cam_i);
+            
+            bb_desc.depthAttachment.texture =
+                current_depth;
+            bb_desc.colorAttachments[0].texture = current_rtt;
+            
+            if (!z_buffer_cleared) {
+                bb_desc.depthAttachment.
+                    loadAction = MTLLoadActionClear;
+                bb_desc.depthAttachment.
+                    clearDepth = 1.0f;
+                z_buffer_cleared = true;
             }
-        #endif
+                
+            id<MTLRenderCommandEncoder>
+                pass_4_bb_enc = [combuf
+                    renderCommandEncoderWithDescriptor:
+                        bb_desc];
+            
+            [pass_4_bb_enc
+                setRenderPipelineState: bb_pls];
+            [pass_4_bb_enc setDepthStencilState:
+                ags->opaque_depth_stencil_state];
+            
+            [pass_4_bb_enc
+                setVertexBuffer:
+                    ags->flat_quad_buffers[ags->frame_i]
+                offset: 0
+                atIndex: 2];
+            
+            [pass_4_bb_enc
+                setVertexBuffer:
+                    ags->camera_buffers[ags->frame_i][cam_i]
+                offset: 0
+                atIndex: 3];
+            
+            [pass_4_bb_enc
+                drawPrimitives:
+                    MTLPrimitiveTypeTriangle
+                vertexStart:
+                    0
+                vertexCount:
+                    f->flat_billboard_quads_size * 6
+                ];
+            
+            [pass_4_bb_enc endEncoding];
+        }
         
         #if T1_BLOOM_ACTIVE == T1_ACTIVE
         log_assert(
@@ -2497,28 +2533,6 @@ static void set_defaults_for_encoder(
                         dispatchThreads:grid
                         threadsPerThreadgroup:threadgroup];
                     [compute_enc endEncoding];
-                    
-                    #if 0
-                    // Mask only the brightest values
-                    if (ds_i == 1) {
-                        id<MTLComputeCommandEncoder>
-                            thres_enc = [combuf
-                                computeCommandEncoder];
-                        
-                        [thres_enc setComputePipelineState:
-                            ags->thres_compute_pls];
-                        [thres_enc
-                            setTexture: ags->downsampled_rtts[ds_i]
-                            atIndex:0];
-                        [thres_enc
-                            dispatchThreads:
-                                grid
-                            threadsPerThreadgroup:
-                                threadgroup];
-                        
-                        [thres_enc endEncoding];
-                    }
-                    #endif
                 }
                 
                 id<MTLComputeCommandEncoder> boxblur_enc =
@@ -2565,32 +2579,32 @@ static void set_defaults_for_encoder(
         
     // Render pass 4 puts a quad on the full screen
     MTLRenderPassDescriptor *
-        render_pass_5_comp_desc =
+        pass_5_comp_desc =
             [view currentRenderPassDescriptor];
-    render_pass_5_comp_desc.colorAttachments[0].
+    pass_5_comp_desc.colorAttachments[0].
         clearColor =
             MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
-    render_pass_5_comp_desc.
+    pass_5_comp_desc.
         depthAttachment.loadAction =
             MTLLoadActionClear;
     
-    id<MTLRenderCommandEncoder> render_pass_5_comp =
+    id<MTLRenderCommandEncoder> pass_5_comp =
         [combuf
             renderCommandEncoderWithDescriptor:
-                render_pass_5_comp_desc];
-    [render_pass_5_comp setViewport: ags->window_viewport];
-    [render_pass_5_comp setCullMode: MTLCullModeNone];
-    [render_pass_5_comp
+                pass_5_comp_desc];
+    [pass_5_comp setViewport: ags->window_viewport];
+    [pass_5_comp setCullMode: MTLCullModeNone];
+    [pass_5_comp
         setRenderPipelineState: ags->singlequad_pls];
     log_assert(ags->quad_vertices != NULL);
-    [render_pass_5_comp
+    [pass_5_comp
         setVertexBytes:
             ags->quad_vertices
         length:
             sizeof(T1PostProcessingVertex)*6
         atIndex:
             0];
-    [render_pass_5_comp
+    [pass_5_comp
         setVertexBuffer:
             ags->postprocessing_constants_buffers[ags->frame_i]
         offset:0
@@ -2610,24 +2624,24 @@ static void set_defaults_for_encoder(
                 (NSUInteger)T1_render_views[0].
                     write_slice_i,
                 1)];
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture: sliced_tex
         atIndex:0];
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture:
             ags->downsampled_rtts[1]
         atIndex: 1];
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture:
             ags->downsampled_rtts[2]
         atIndex:2];
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture:
             ags->downsampled_rtts[3]
         atIndex:3];
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture:
             ags->downsampled_rtts[4]
         atIndex:4];
@@ -2645,7 +2659,7 @@ static void set_defaults_for_encoder(
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);
     
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture: ags->metal_textures[perlin_ta_i]
         atIndex:6];
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
@@ -2654,14 +2668,14 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
-    [render_pass_5_comp
+    [pass_5_comp
         setFragmentTexture: ags->camera_depth_texture
         atIndex:CAMERADEPTH_TEXTUREARRAY_I];
-    [render_pass_5_comp
+    [pass_5_comp
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
         vertexCount:6];
-    [render_pass_5_comp endEncoding];
+    [pass_5_comp endEncoding];
     [combuf presentDrawable: [view currentDrawable]];
     
     ags->frame_i += 1;
