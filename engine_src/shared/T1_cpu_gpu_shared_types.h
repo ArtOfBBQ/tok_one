@@ -61,17 +61,10 @@ typedef enum : uint8_t {
 } T1RenderViewWriteType;
 
 typedef struct {
+    // v = view, p = projection
     float    v_4x4[16];
     float    p_4x4[16];
     float    normv_3x3[9];
-    float    xyz[3];           // 12 bytes
-    float    xyz_angle[3];     // 12 bytes
-    int      write_array_i;
-    int      write_slice_i;
-    uint32_t width;
-    uint32_t height;
-    T1RenderViewWriteType write_type;
-    uint8_t  draw_outlines;
 } T1GPURenderView;
 
 typedef struct {
@@ -92,6 +85,7 @@ typedef struct {
 } T1GPUConstMat;
 
 typedef struct {
+    // m = model matrix
     T1GPUConstMat base_mat;
     float         m_4x4[16];
     float         norm_3x3[9];

@@ -420,15 +420,15 @@ int32_t T1_texture_array_create_new_render_view(
 {
     log_assert(T1_render_views != NULL);
     
-    uint32_t rv_i = T1_render_views_size;
+    uint32_t rv_i = T1_render_views->size;
     log_assert(
-        T1_render_views_size + 1 <= T1_RENDER_VIEW_CAP);
-    T1_render_views_size += 1;
+        T1_render_views->size + 1 <= T1_RENDER_VIEW_CAP);
+    T1_render_views->size += 1;
     
-    T1_render_views[rv_i].write_type =
+    T1_render_views->cpu[rv_i].write_type =
         T1RENDERVIEW_WRITE_RENDER_TARGET;
-    T1_render_views[rv_i].height = height;
-    T1_render_views[rv_i].width  = width;
+    T1_render_views->cpu[rv_i].height = height;
+    T1_render_views->cpu[rv_i].width  = width;
     
     char tex_name[64];
     T1_std_strcpy_cap(
@@ -444,9 +444,9 @@ int32_t T1_texture_array_create_new_render_view(
         /* const char * filename: */
             tex_name,
         /* const uint32_t height: */
-            T1_render_views[rv_i].height,
+            T1_render_views->cpu[rv_i].height,
         /* const uint32_t width: */
-            T1_render_views[rv_i].width,
+            T1_render_views->cpu[rv_i].width,
         /* const uint32_t is_render_target: */
             true,
         /* const uint32_t use_bc1_compression: */
@@ -456,11 +456,11 @@ int32_t T1_texture_array_create_new_render_view(
         T1_texture_array_get_filename_location(
             tex_name);
     
-    T1_render_views[rv_i].write_array_i = tex.array_i;
-    T1_render_views[rv_i].write_slice_i = tex.slice_i;
-    log_assert(T1_render_views[rv_i].
+    T1_render_views->cpu[rv_i].write_array_i = tex.array_i;
+    T1_render_views->cpu[rv_i].write_slice_i = tex.slice_i;
+    log_assert(T1_render_views->cpu[rv_i].
         write_array_i >= 1);
-    log_assert(T1_render_views[rv_i].
+    log_assert(T1_render_views->cpu[rv_i].
         write_slice_i >= 0);
     
     T1_platform_gpu_copy_texture_array(

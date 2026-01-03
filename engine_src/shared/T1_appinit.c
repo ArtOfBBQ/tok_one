@@ -520,7 +520,7 @@ void T1_appinit_before_gpu_init(
     
     for (
         uint32_t cur_frame_i = 0;
-        cur_frame_i < MAX_FRAME_BUFFERS;
+        cur_frame_i < FRAMES_CAP;
         cur_frame_i++)
     {
         T1GPUFrame * f =

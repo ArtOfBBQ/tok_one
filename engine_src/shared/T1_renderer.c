@@ -282,10 +282,10 @@ static void construct_projection_matrix(void) {
     
     for (
         uint32_t i = 0;
-        i < T1_render_views_size;
+        i < T1_render_views->size;
         i++)
     {
-        T1GPURenderView * rv = T1_render_views + i;
+        T1GPURenderView * rv = T1_render_views->gpu + i;
         
         T1_std_memcpy(
             rv->p_4x4 + 0,
@@ -314,19 +314,22 @@ static void construct_view_matrix(void) {
     
     for (
         uint32_t rv_i = 0;
-        rv_i < T1_render_views_size;
+        rv_i < T1_render_views->size;
         rv_i++)
     {
-        T1GPURenderView * rv = T1_render_views + rv_i;
+        T1GPURenderView * rv_gpu =
+            T1_render_views->gpu + rv_i;
+        T1CPURenderView * rv_cpu =
+            T1_render_views->cpu + rv_i;
         
         T1_linal_float4x4_construct_identity(
             &result);
         
         T1_linal_float4x4_construct_xyz_rotation(
             &next,
-            -rv->xyz_angle[0],
-            -rv->xyz_angle[1],
-            -rv->xyz_angle[2]);
+            -rv_cpu->xyz_angle[0],
+            -rv_cpu->xyz_angle[1],
+            -rv_cpu->xyz_angle[2]);
         
         T1_linal_float4x4_mul_float4x4_inplace(
             &result,
@@ -334,28 +337,28 @@ static void construct_view_matrix(void) {
         
         T1_linal_float4x4_construct(
             &next,
-            1.0f, 0.0f, 0.0f, -rv->xyz[0],
-            0.0f, 1.0f, 0.0f, -rv->xyz[1],
-            0.0f, 0.0f, 1.0f, -rv->xyz[2],
+            1.0f, 0.0f, 0.0f, -rv_cpu->xyz[0],
+            0.0f, 1.0f, 0.0f, -rv_cpu->xyz[1],
+            0.0f, 0.0f, 1.0f, -rv_cpu->xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
         T1_linal_float4x4_mul_float4x4_inplace(
             &result, &next);
         
         T1_std_memcpy(
-            rv->v_4x4 + 0,
+            rv_gpu->v_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            rv->v_4x4 + 4,
+            rv_gpu->v_4x4 + 4,
             result.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            rv->v_4x4 + 8,
+            rv_gpu->v_4x4 + 8,
             result.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            rv->v_4x4 + 12,
+            rv_gpu->v_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
         
@@ -365,15 +368,15 @@ static void construct_view_matrix(void) {
         T1_linal_float3x3_inverse_transpose_inplace(
             &view_3x3);
         T1_std_memcpy(
-            rv->normv_3x3 + 0,
+            rv_gpu->normv_3x3 + 0,
             view_3x3.rows[0].data,
             sizeof(float) * 3);
         T1_std_memcpy(
-            rv->normv_3x3 + 3,
+            rv_gpu->normv_3x3 + 3,
             view_3x3.rows[1].data,
             sizeof(float) * 3);
         T1_std_memcpy(
-            rv->normv_3x3 + 6,
+            rv_gpu->normv_3x3 + 6,
             view_3x3.rows[2].data,
             sizeof(float) * 3);
     }
@@ -385,7 +388,7 @@ static void construct_light_matrices(
     T1_linal_float4x4 mat_view;
     T1_linal_float4x4_construct_from_ptr(
         &mat_view,
-        T1_camera->v_4x4);
+        T1_render_views->gpu[0].v_4x4);
     
     T1_linal_float4x4 inv_camview_4x4;
     T1_std_memcpy(
@@ -606,11 +609,14 @@ void T1_renderer_hardware_render(
         frame_data == NULL ||
         frame_data->verts == NULL)
     {
-        log_append("ERROR: platform layer didnt pass recipients\n");
+        log_append(
+            "ERROR: platform layer didnt "
+            "pass recipients\n");
         return;
     }
     
-    log_assert(T1_zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
+    log_assert(T1_zsprite_list->size <
+        MAX_ZSPRITES_PER_BUFFER);
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_start("construct render matrices");
@@ -698,16 +704,16 @@ void T1_renderer_hardware_render(
     #endif
     
     frame_data->render_views_size =
-        T1_render_views_size;
+        T1_render_views->size;
     for (
         uint32_t rv_i = 0;
-        rv_i < T1_render_views_size;
+        rv_i < T1_render_views->size;
         rv_i++)
     {
         log_assert(frame_data->render_views[rv_i] != NULL);
         T1_std_memcpy(
             frame_data->render_views[rv_i],
-            T1_render_views + rv_i,
+            T1_render_views->gpu + rv_i,
             sizeof(T1GPURenderView));
         log_assert(frame_data->render_views[rv_i] != NULL);
     }
