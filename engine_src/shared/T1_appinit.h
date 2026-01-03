@@ -9,7 +9,7 @@
 #include "T1_profiler.h"
 #include "T1_random.h"
 #include "T1_audio.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_text.h"
 #include "T1_uielement.h"
 #include "T1_io.h"

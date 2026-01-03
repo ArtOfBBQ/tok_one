@@ -55,7 +55,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_triangle.c"
 #include "T1_material.c"
 #include "T1_render_view.c"
-#include "T1_lightsource.c"
+#include "T1_zlight.c"
 #include "T1_cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
 #include "T1_apple_audio.m"

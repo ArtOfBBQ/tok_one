@@ -1615,13 +1615,39 @@ static id<MTLTexture> get_texture_array_slice(
 static void
 set_defaults_for_render_descriptor(
     MTLRenderPassDescriptor * desc,
-    const int32_t cam_i)
+    const int32_t cam_i,
+    id<MTLTexture> current_depth,
+    id<MTLTexture> current_rtt,
+    uint32_t * depth_cleared,
+    uint32_t * rtt_cleared)
 {
-    desc.depthAttachment.loadAction =
-        MTLLoadActionLoad;
-    desc.depthAttachment.storeAction =
-        MTLStoreActionStore;
-    desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+    if (!*depth_cleared) {
+        desc.depthAttachment.
+            loadAction = MTLLoadActionClear;
+        desc.depthAttachment.
+            clearDepth = 1.0f;
+        
+        *depth_cleared = true;
+    } else {
+        desc.depthAttachment.
+            loadAction = MTLLoadActionLoad;
+    }
+    desc.depthAttachment.
+        storeAction = MTLStoreActionStore;
+    desc.depthAttachment.texture =
+        current_depth;
+    
+    if (!*rtt_cleared) {
+        desc.colorAttachments[0].loadAction = MTLLoadActionClear;
+        desc.colorAttachments[0].clearColor =
+            MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+        *rtt_cleared = true;
+    } else {
+        desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+    }
+    
+    desc.colorAttachments[0].
+        texture = current_rtt;
     desc.colorAttachments[0].storeAction =
         MTLStoreActionStore;
     
@@ -2047,15 +2073,19 @@ static void set_defaults_for_encoder(
         log_assert(T1_render_views->cpu[cam_i].
             write_slice_i >= 0);
         
+        uint32_t z_buffer_cleared = false;
+        uint32_t rtt_cleared = false;
+        
         id<MTLTexture> current_rtt = nil;
         id<MTLTexture> current_depth = nil;
-        uint32_t z_buffer_cleared = false;
         id<MTLRenderPipelineState> opq_pls = nil;
         id<MTLRenderPipelineState> blnd_pls = nil;
         id<MTLRenderPipelineState> bloom_pls = nil;
         id<MTLRenderPipelineState> bb_pls = nil;
         
-        switch (T1_render_views->cpu[cam_i].write_type) {
+        switch (
+            T1_render_views->cpu[cam_i].write_type)
+        {
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
                 current_rtt =
                     get_texture_array_slice(
@@ -2139,26 +2169,14 @@ static void set_defaults_for_encoder(
             
             MTLRenderPassDescriptor * outlines_desc =
                 [view currentRenderPassDescriptor];
-            outlines_desc.depthAttachment.loadAction =
-                z_buffer_cleared ?
-                    MTLLoadActionLoad :
-                    MTLLoadActionClear;
-            z_buffer_cleared = true;
-            outlines_desc.depthAttachment.
-                clearDepth = 1.0f;
-            outlines_desc.depthAttachment.
-                storeAction = MTLStoreActionStore;
-            outlines_desc.depthAttachment.texture =
-                current_depth;
             
-            outlines_desc.colorAttachments[0].
-                texture = current_rtt;
-            outlines_desc.
-                colorAttachments[0].storeAction =
-                    MTLStoreActionStore;
-            
-            outlines_desc.colorAttachments[0].clearColor =
-                MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+            set_defaults_for_render_descriptor(
+                outlines_desc,
+                cam_i,
+                current_depth,
+                current_rtt,
+                &z_buffer_cleared,
+                &rtt_cleared);
             
             id<MTLRenderCommandEncoder> render_pass_1_draw_outlines_encoder =
                 [combuf
@@ -2242,34 +2260,11 @@ static void set_defaults_for_encoder(
         
         set_defaults_for_render_descriptor(
             opaque_tris_desc,
-            cam_i);
-        
-        opaque_tris_desc.depthAttachment.texture =
-            current_depth;
-        opaque_tris_desc.colorAttachments[0].texture = current_rtt;
-        
-        if (!z_buffer_cleared) {
-            opaque_tris_desc.depthAttachment.
-                loadAction = MTLLoadActionClear;
-            opaque_tris_desc.depthAttachment.
-                clearDepth = 1.0f;
-            z_buffer_cleared = true;
-        }
-        
-        #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-        // handled in basic
-        #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-        opaque_tris_desc.colorAttachments[0].
-            texture = current_rtt;
-        opaque_tris_desc.colorAttachments[0].loadAction = MTLLoadActionClear;
-        opaque_tris_desc.colorAttachments[0].storeAction =
-            MTLStoreActionStore;
-        opaque_tris_desc.colorAttachments[0].clearColor =
-            MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
-        #else
-        #error
-        #endif
-        
+            cam_i,
+            current_depth,
+            current_rtt,
+            &z_buffer_cleared,
+            &rtt_cleared);
         id<MTLRenderCommandEncoder>
             pass_2_opaque_tris_enc = [combuf
                 renderCommandEncoderWithDescriptor:
@@ -2329,12 +2324,11 @@ static void set_defaults_for_encoder(
                         currentRenderPassDescriptor];
             set_defaults_for_render_descriptor(
                 alpha_tris_descriptor,
-                cam_i);
-            
-            alpha_tris_descriptor.colorAttachments[0].
-                texture = current_rtt;
-            alpha_tris_descriptor.depthAttachment.
-                texture = current_depth;
+                cam_i,
+                current_depth,
+                current_rtt,
+                &z_buffer_cleared,
+                &rtt_cleared);
             
             id<MTLRenderCommandEncoder>
                 pass_3_alpha_tris_enc = [combuf
@@ -2380,20 +2374,11 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 bb_desc,
-                cam_i);
-            
-            bb_desc.depthAttachment.texture =
-                current_depth;
-            bb_desc.colorAttachments[0].texture =
-                current_rtt;
-            
-            if (!z_buffer_cleared) {
-                bb_desc.depthAttachment.
-                    loadAction = MTLLoadActionClear;
-                bb_desc.depthAttachment.
-                    clearDepth = 1.0f;
-                z_buffer_cleared = true;
-            }
+                cam_i,
+                current_depth,
+                current_rtt,
+                &z_buffer_cleared,
+                &rtt_cleared);
             
             id<MTLRenderCommandEncoder>
                 pass_4_bb_enc = [combuf
@@ -2450,11 +2435,11 @@ static void set_defaults_for_encoder(
                     currentRenderPassDescriptor];
             set_defaults_for_render_descriptor(
                 bloom_tris_desc,
-                cam_i);
-            
-            bloom_tris_desc.depthAttachment.
-                texture = current_depth;
-            
+                cam_i,
+                current_depth,
+                current_rtt,
+                &z_buffer_cleared,
+                &rtt_cleared);
             id<MTLTexture> bloom_rtt =
                 ags->downsampled_rtts[0];
             bloom_tris_desc.colorAttachments[0].

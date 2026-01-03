@@ -11,7 +11,7 @@
 #include "T1_global.h"
 #include "T1_material.h"
 #include "T1_mesh.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 
 typedef struct  {
     float xyz[3];

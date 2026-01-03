@@ -100,8 +100,7 @@ void T1_clientlogic_late_startup(void) {
     teapot_xyz[1] = TEAPOT_Y;
     teapot_xyz[2] = TEAPOT_Z;
     
-    shadowcaster_light_i = 0;
-    zLightSource * light = next_zlight();
+    T1zLightSource * light = T1_zlight_next();
     light->RGBA[0]       =  1.0f;
     light->RGBA[1]       =  1.0f;
     light->RGBA[2]       =  1.0f;
@@ -112,11 +111,11 @@ void T1_clientlogic_late_startup(void) {
     light->xyz[0]        =  TEAPOT_X - 1.20f;
     light->xyz[1]        =  TEAPOT_Y + 0.50f;
     light->xyz[2]        =  TEAPOT_Z;
-    zlight_point_light_to_location(
+    T1_zlight_point_light_to_location(
         light->xyz_angle,
         light->xyz,
         teapot_xyz);
-    commit_zlight(light);
+    T1_zlight_commit(light);
     
     T1zSpriteRequest lightcube_request;
     T1_zsprite_request_next(&lightcube_request);
@@ -140,9 +139,7 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->base_mat.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
     lightcube_request.gpu_data->base_mat.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
     lightcube_request.gpu_data->base_mat.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
-    lightcube_request.gpu_data->base_mat.rgb_cap[0] = 5.0f;
-    lightcube_request.gpu_data->base_mat.rgb_cap[1] = 5.0f;
-    lightcube_request.gpu_data->base_mat.rgb_cap[2] = 5.0f;
+    lightcube_request.cpu_data->bloom_on = true;
     lightcube_request.gpu_data->remove_shadow = true;
     T1_zsprite_commit(&lightcube_request);
     
@@ -172,10 +169,10 @@ void T1_clientlogic_late_startup(void) {
         /* const float z: */
             TEAPOT_Z + 0.2f,
         /* const float width: */
-            T1_global_screenspace_width_to_width(
+            T1_global_screen_width_to_width(
                 T1_global->window_width * 2, 1.0f),
         /* const float height: */
-            T1_global_screenspace_height_to_height(
+            T1_global_screen_height_to_height(
                 T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
@@ -215,9 +212,6 @@ void T1_clientlogic_late_startup(void) {
     font_settings->ignore_camera = false;
     font_settings->alpha_blending_on = false;
     font_settings->ignore_lighting = 1.0f;
-    font_settings->mat.rgb_cap[0] = 5.0f;
-    font_settings->mat.rgb_cap[1] = 5.0f;
-    font_settings->mat.rgb_cap[2] = 5.0f;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,
@@ -246,10 +240,10 @@ void T1_clientlogic_late_startup(void) {
             /* const float z: */
                 TEAPOT_Z + 0.2f + (i * 0.75f),
             /* const float width: */
-                T1_global_screenspace_width_to_width(
+                T1_global_screen_width_to_width(
                     T1_global->window_width * 2, 1.0f),
             /* const float height: */
-                T1_global_screenspace_height_to_height(
+                T1_global_screen_height_to_height(
                     T1_global->window_height * 2, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad);

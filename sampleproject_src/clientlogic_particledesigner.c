@@ -79,7 +79,6 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_float_limits_for_last_field(-1.5f, 1.5f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 2.0f, &ok);
     T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
@@ -483,7 +482,7 @@ static void request_gfx_from_empty_scene(void) {
     T1_camera->xyz_angle[1] =   0.00f;
     T1_camera->xyz_angle[2] =   0.00f;
     
-    zLightSource * light = next_zlight();
+    T1zLightSource * light = T1_zlight_next();
     light->RGBA[0]       =  0.50f;
     light->RGBA[1]       =  0.15f;
     light->RGBA[2]       =  0.15f;
@@ -493,7 +492,7 @@ static void request_gfx_from_empty_scene(void) {
     light->xyz[0]        = -2.00f;
     light->xyz[1]        =  0.50f;
     light->xyz[2]        =  0.75f;
-    commit_zlight(light);
+    T1_zlight_commit(light);
     
     pds->regs_head_i = 0;
     pds->regs_size = 0;
@@ -669,11 +668,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             anim->delete_other_anims_targeting_zsprite =
                 true;
             anim->cpu_vals.xyz[0] =
-                T1_global_screenspace_x_to_x(
+                T1_global_screen_x_to_x(
                     new_x,
                     new_z);
             anim->cpu_vals.xyz[1] =
-                T1_global_screenspace_y_to_y(
+                T1_global_screen_y_to_y(
                     new_y,
                     new_z);
             anim->cpu_vals.xyz[2] = new_z;
@@ -700,9 +699,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         anim->delete_other_anims_targeting_zsprite =
             true;
         anim->cpu_vals.xyz[0] =
-            T1_global_screenspace_x_to_x(new_x, new_z);
+            T1_global_screen_x_to_x(new_x, new_z);
         anim->cpu_vals.xyz[1] =
-            T1_global_screenspace_y_to_y(
+            T1_global_screen_y_to_y(
                 new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;

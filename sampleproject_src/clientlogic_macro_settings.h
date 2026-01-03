@@ -53,7 +53,7 @@ of the engine for your specific app.
 #define T1_MIPMAPS_ACTIVE 1
 #define T1_FOG_ACTIVE 1
 
-#define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
+#define FRAMES_CAP 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER 240000
 #define MAX_LIGHTS_PER_BUFFER 3

@@ -1,9 +1,10 @@
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 
-zLightSource * zlights_to_apply = NULL;
+T1zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 
-static void construct_zlight(zLightSource * to_construct) {
+static void T1_zlight_construct(T1zLightSource * to_construct)
+{
     to_construct->xyz[0]        = 0.0f;
     to_construct->xyz[1]        = 0.0f;
     to_construct->xyz[2]        = 0.0f;
@@ -20,12 +21,12 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->committed     = false;
 }
 
-zLightSource * next_zlight(void) {
-    zLightSource * return_value = NULL;
+T1zLightSource * T1_zlight_next(void) {
+    T1zLightSource * return_value = NULL;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].deleted) {
             return_value = &zlights_to_apply[i];
-            construct_zlight(return_value);
+            T1_zlight_construct(return_value);
             return return_value;
         }
     }
@@ -35,12 +36,12 @@ zLightSource * next_zlight(void) {
     return_value->committed = false;
     zlights_to_apply_size += 1;
     
-    construct_zlight(return_value);
+    T1_zlight_construct(return_value);
     
     return return_value;
 }
 
-void commit_zlight(zLightSource * to_request)
+void T1_zlight_commit(T1zLightSource * to_request)
 {
     log_assert(!to_request->deleted);
     to_request->committed = true;
@@ -192,7 +193,7 @@ void z_rotate_zvertices_inplace(
     *vec_to_rotate_x = rotated_x;
 }
 
-void clean_deleted_lights(void)
+void T1_zlight_clean_all_deleted(void)
 {
     while (
         zlights_to_apply_size > 0
@@ -202,7 +203,7 @@ void clean_deleted_lights(void)
     }
 }
 
-void project_float4_to_2d_inplace(
+void T1_zlight_project_float4_to_2d_inplace(
     float * position_x,
     float * position_y,
     float * position_z)
@@ -222,7 +223,7 @@ void project_float4_to_2d_inplace(
     *position_z += z_addition;
 }
 
-void copy_lights(
+void T1_zlight_copy_all(
     T1GPULight * lights,
     uint32_t * lights_size)
 {
@@ -267,7 +268,7 @@ void copy_lights(
 }
 
 // move each light so the camera becomes position 0,0,0
-void translate_lights(
+void T1_zlight_translate_all(
     T1GPULight * lights,
     uint32_t * lights_size)
 {
@@ -308,7 +309,7 @@ void translate_lights(
     *lights_size = zlights_to_apply_size;
 }
 
-void delete_zlight(const int32_t with_object_id) {
+void T1_zlight_delete(const int32_t with_object_id) {
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].object_id == with_object_id)
         {
@@ -325,7 +326,7 @@ to look at point_to_xyz instead
 
 from_pos_xyz is the current position of the light
 */
-void zlight_point_light_to_location(
+void T1_zlight_point_light_to_location(
     float * recipient_xyz_angle,
     const float * from_pos_xyz,
     const float * point_to_xyz)

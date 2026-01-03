@@ -355,11 +355,11 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         
-        clean_deleted_lights();
+        T1_zlight_clean_all_deleted();
         
         // engine_globals->postproc_consts will be copied to
         // frame_data->postproc consts later inside hardware_render()
-        copy_lights(
+        T1_zlight_copy_all(
             frame_data->lights,
             &T1_global->postproc_consts.lights_size);
         

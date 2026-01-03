@@ -34,7 +34,7 @@ typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
-    log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(T1zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
     log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
@@ -369,12 +369,13 @@ void T1_appinit_before_gpu_init(
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
     T1_objmodel_init();
-    zlights_to_apply = (zLightSource *)T1_mem_malloc_from_unmanaged(
-        sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+    zlights_to_apply = (T1zLightSource *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1zLightSource) * MAX_LIGHTS_PER_BUFFER);
     T1_std_memset(
         zlights_to_apply,
         0,
-        sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+        sizeof(T1zLightSource) *
+            MAX_LIGHTS_PER_BUFFER);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #if 0

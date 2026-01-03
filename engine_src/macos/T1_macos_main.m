@@ -5,7 +5,7 @@
 #include "T1_appinit.h"
 #include "T1_logger.h"
 #include "T1_random.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_simd.h"
