@@ -972,6 +972,9 @@ T1_platform_gpu_make_depth_tex(
     const uint32_t width,
     const uint32_t height)
 {
+    log_assert(height <= 4000);
+    log_assert(width <= 4000);
+    
     return T1_apple_gpu_make_depth_tex(
         width,
         height);
@@ -1972,8 +1975,9 @@ static void set_defaults_for_encoder(
             triple_buffers + ags->frame_i);
     
     if (
-        (T1_global->last_resize_request_us -
-        f->postproc_consts->timestamp) < 450000)
+        (f->postproc_consts->timestamp -
+            T1_global->last_resize_request_us)
+                < 250000)
     {
         return;
     }
