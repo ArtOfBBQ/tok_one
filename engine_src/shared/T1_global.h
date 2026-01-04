@@ -39,7 +39,6 @@ platform layer doesn't need to do anything and can just record values directly
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
-    T1GPUProjectConsts project_consts;
     
     uint64_t elapsed;
     uint64_t this_frame_timestamp_us;
@@ -59,7 +58,6 @@ typedef struct {
     float window_width;
     float window_left;
     float window_bottom;
-    float aspect_ratio;
     
     bool8_t draw_mouseptr;
     bool8_t draw_imputed_normals;
@@ -80,29 +78,6 @@ extern T1Globals * T1_global;
 void T1_global_register_transformed_imputed_normal_for_debugging(
     const float origin[3],
     const float imputed_normal[3]);
-
-float T1_global_x_to_screen_x(
-    const float x,
-    const float given_z);
-
-// To convert from our screenspace system to 'world x' that is used for
-// the position of zpolygons
-float T1_global_screen_x_to_x(const float screenspace_x, const float given_z);
-
-float T1_global_y_to_screen_y(
-    const float y,
-    const float given_z);
-
-// To convert from our screenspace system to 'world y' that is used for
-// the position of zpolygons
-float T1_global_screen_y_to_y(
-    const float screenspace_y,
-    const float given_z);
-
-float T1_global_screen_height_to_height(
-    const float screenspace_height, const float given_z);
-float T1_global_screen_width_to_width(
-    const float screenspace_width, const float given_z);
 
 void T1_global_init(void);
 

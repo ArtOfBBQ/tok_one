@@ -27,7 +27,6 @@ typedef struct
 typedef struct
 {
     T1GPUFrame triple_buffers[FRAMES_CAP];
-    T1GPUProjectConsts * locked_pjc;
     T1GPULockedVertex * locked_vertices;
     T1GPUConstMat * const_mats;
     uint32_t locked_vertices_size;
@@ -40,7 +39,6 @@ typedef struct
     uint32_t polygon_mats_alloc_size;
     uint32_t lights_alloc_size;
     uint32_t render_view_alloc_size;
-    uint32_t projection_constants_alloc_size;
     uint32_t postprocessing_constants_alloc_size;
     uint32_t frame_i;
 } T1GPUSharedDataCollection;

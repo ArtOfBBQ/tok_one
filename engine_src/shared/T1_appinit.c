@@ -355,9 +355,6 @@ void T1_appinit_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
     #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
-    T1_global->aspect_ratio = T1_global->window_height /
-        T1_global->window_width;
-    
     T1_global_init();
     
     T1_uielement_init();
@@ -458,7 +455,7 @@ void T1_appinit_before_gpu_init(
     }
     
     T1_render_view_init();
-    
+        
     T1_io_init(T1_mem_malloc_from_unmanaged);
     
     T1_renderer_init();
@@ -509,10 +506,6 @@ void T1_appinit_before_gpu_init(
         pad_to_page_size(
             sizeof(T1GPUConstMat) *
                 ALL_LOCKED_MATERIALS_SIZE);
-    
-    sd->projection_constants_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUProjectConsts));
     
     sd->postprocessing_constants_alloc_size =
         pad_to_page_size(
@@ -581,11 +574,6 @@ void T1_appinit_before_gpu_init(
             sd->const_mats_alloc_size,
             T1_mem_page_size);
     
-    sd->locked_pjc = (T1GPUProjectConsts *)
-        T1_mem_malloc_from_unmanaged_aligned(
-            sd->projection_constants_alloc_size,
-            T1_mem_page_size);
-    
     bool32_t initial_log_dump_succesful = false;
     log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
@@ -651,7 +639,7 @@ void T1_appinit_after_gpu_init_step1(
     uint32_t rv_width = (uint32_t)
         T1_global->window_width;
     
-    while (rv_height > 1024 || rv_width > 1024) {
+    while (rv_height > 2048 || rv_width > 2048) {
         rv_height /= 2;
         rv_width  /= 2;
     }

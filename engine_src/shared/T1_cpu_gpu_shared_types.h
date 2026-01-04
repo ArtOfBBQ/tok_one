@@ -62,7 +62,7 @@ typedef enum : uint8_t {
     T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
     T1RENDERVIEW_WRITE_DEPTH = 2,
     T1RENDERVIEW_WRITE_RGBA = 3,
-    T1RENDERVIEW_WRITE_ABOVEBOUNDS = 3,
+    T1RENDERVIEW_WRITE_ABOVEBOUNDS = 4,
 } T1RenderViewWriteType;
 
 typedef struct {
@@ -131,15 +131,6 @@ typedef struct {
     float rgb[3];
     int   shadow_map_depth_tex_i;
 } T1GPULight;
-
-typedef struct {
-    float znear;
-    float zfar;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-    float x_multiplier;
-    float y_multiplier;
-} T1GPUProjectConsts;
 
 typedef struct
 {

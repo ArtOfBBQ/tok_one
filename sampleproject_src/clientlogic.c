@@ -169,10 +169,10 @@ void T1_clientlogic_late_startup(void) {
         /* const float z: */
             TEAPOT_Z + 0.2f,
         /* const float width: */
-            T1_global_screen_width_to_width(
+            T1_render_view_screen_width_to_width(
                 T1_global->window_width * 2, 1.0f),
         /* const float height: */
-            T1_global_screen_height_to_height(
+            T1_render_view_screen_height_to_height(
                 T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
@@ -240,10 +240,10 @@ void T1_clientlogic_late_startup(void) {
             /* const float z: */
                 TEAPOT_Z + 0.2f + (i * 0.75f),
             /* const float width: */
-                T1_global_screen_width_to_width(
+                T1_render_view_screen_width_to_width(
                     T1_global->window_width * 2, 1.0f),
             /* const float height: */
-                T1_global_screen_height_to_height(
+                T1_render_view_screen_height_to_height(
                     T1_global->window_height * 2, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad);

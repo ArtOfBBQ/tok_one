@@ -105,27 +105,36 @@ void terminal_redraw_backgrounds(void) {
     
     T1zSpriteRequest current_command_input;
     T1_zsprite_request_next(&current_command_input);
+    float mid_x = T1_render_view_screen_x_to_x(
+        T1_global->window_width / 2,
+        TERM_Z);
+    
+    float mid_y = T1_render_view_screen_y_to_y(
+        (TERMINAL_WHITESPACE * 1.5f) +
+        (TERM_FONT_SIZE / 2),
+        TERM_Z);
+    
+    float width = T1_render_view_screen_width_to_width(
+        T1_global->window_width -
+            (TERMINAL_WHITESPACE * 2),
+        TERM_Z);
+    
+    float height =
+        T1_render_view_screen_height_to_height(
+            current_input_height,
+            TERM_Z);
+    
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_global_screen_x_to_x(
-                T1_global->window_width / 2,
-                TERM_Z),
+            mid_x,
         /* const float mid_y: */
-            T1_global_screen_y_to_y(
-                (TERMINAL_WHITESPACE * 1.5f) +
-                (TERM_FONT_SIZE / 2),
-                TERM_Z),
+            mid_y,
         /* const float z: */
             TERM_Z,
         /* const float width: */
-            T1_global_screen_width_to_width(
-                T1_global->window_width -
-                    (TERMINAL_WHITESPACE * 2),
-                TERM_Z),
+            width,
         /* const float height: */
-            T1_global_screen_height_to_height(
-                current_input_height,
-                TERM_Z),
+            height,
         /* zPolygon * recipien: */
             &current_command_input);
     
@@ -154,11 +163,11 @@ void terminal_redraw_backgrounds(void) {
     T1_zsprite_construct(&current_command_input);
     T1_zsprite_construct_quad_around(
        /* const float mid_x: */
-           T1_global_screen_x_to_x(
+           T1_render_view_screen_x_to_x(
                T1_global->window_width / 2,
                TERM_Z),
        /* const float mid_y: */
-           T1_global_screen_y_to_y(
+           T1_render_view_screen_y_to_y(
                (command_history_height / 2) +
                    current_input_height +
                    (TERMINAL_WHITESPACE * 2),
@@ -166,12 +175,12 @@ void terminal_redraw_backgrounds(void) {
        /* const float z: */
            TERM_Z,
        /* const float width: */
-           T1_global_screen_width_to_width(
+           T1_render_view_screen_width_to_width(
                 T1_global->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
        /* const float height: */
-           T1_global_screen_height_to_height(
+           T1_render_view_screen_height_to_height(
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */

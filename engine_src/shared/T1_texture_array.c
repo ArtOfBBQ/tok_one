@@ -420,13 +420,15 @@ int32_t T1_texture_array_create_new_render_view(
 {
     log_assert(T1_render_views != NULL);
     
-    int32_t rv_i = T1_render_view_fetch_next();
+    int32_t rv_i = T1_render_view_fetch_next(
+        height,
+        width);
     if (rv_i < 0) { return rv_i; }
     
     T1_render_views->cpu[rv_i].write_type =
         T1RENDERVIEW_WRITE_RENDER_TARGET;
-    T1_render_views->cpu[rv_i].height = height;
-    T1_render_views->cpu[rv_i].width  = width;
+    log_assert(T1_render_views->cpu[rv_i].height == height);
+    log_assert(T1_render_views->cpu[rv_i].width == width);
     T1_render_views->cpu[rv_i].draw_outlines = true;
     
     char tex_name[64];
@@ -434,7 +436,7 @@ int32_t T1_texture_array_create_new_render_view(
         tex_name,
         64,
         "__%T1%__renderview_");
-    T1_std_strcat_uint_cap(
+    T1_std_strcat_int_cap(
         tex_name,
         64,
         rv_i);
@@ -455,12 +457,14 @@ int32_t T1_texture_array_create_new_render_view(
         T1_texture_array_get_filename_location(
             tex_name);
     
-    T1_render_views->cpu[rv_i].write_array_i = tex.array_i;
-    T1_render_views->cpu[rv_i].write_slice_i = tex.slice_i;
-    log_assert(T1_render_views->cpu[rv_i].
-        write_array_i >= 1);
-    log_assert(T1_render_views->cpu[rv_i].
-        write_slice_i >= 0);
+    T1_render_views->cpu[rv_i].write_array_i =
+        tex.array_i;
+    T1_render_views->cpu[rv_i].write_slice_i =
+        tex.slice_i;
+    log_assert(
+        T1_render_views->cpu[rv_i].write_array_i >= 1);
+    log_assert(
+        T1_render_views->cpu[rv_i].write_slice_i >= 0);
     
     T1_platform_gpu_copy_texture_array(
         /* const int32_t texture_array_i: */

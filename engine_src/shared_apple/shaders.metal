@@ -59,117 +59,6 @@ float4 xyz_rotate(const float4 vertices, const float4 xyz_angle) {
     return return_value;
 }
 
-#if 0
-vertex float4 shadows_vertex_shader(
-    uint vertex_i [[ vertex_id ]],
-    const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
-    const device T1GPUzSprite * polygons [[ buffer(1) ]],
-    const device T1GPULight * lights [[ buffer(2) ]],
-    const device T1RenderView * camera [[ buffer(3) ]],
-    const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]],
-    const device T1GPUPostProcConsts * updating_globals [[ buffer (6) ]])
-{
-    uint polygon_i = vertices[vertex_i].polygon_i;
-    
-    if (polygons[polygon_i].remove_shadow) {
-        // early out by failing the depth test
-        return vector_float4(
-            0.0f,
-            0.0f,
-            projection_constants->zfar + 10.0f,
-            1.0f);
-    }
-    
-    uint locked_vertex_i = vertices[vertex_i].
-        locked_vertex_i;
-    
-    float4 mesh_vertices = vector_float4(
-        locked_vertices[locked_vertex_i].xyz[0],
-        locked_vertices[locked_vertex_i].xyz[1],
-        locked_vertices[locked_vertex_i].xyz[2],
-        1.0f);
-    
-    float4x4 to_camview_4x4 = matrix_float4x4(
-        polygons[polygon_i].model_view_4x4[ 0],
-        polygons[polygon_i].model_view_4x4[ 1],
-        polygons[polygon_i].model_view_4x4[ 2],
-        polygons[polygon_i].model_view_4x4[ 3],
-        polygons[polygon_i].model_view_4x4[ 4],
-        polygons[polygon_i].model_view_4x4[ 5],
-        polygons[polygon_i].model_view_4x4[ 6],
-        polygons[polygon_i].model_view_4x4[ 7],
-        polygons[polygon_i].model_view_4x4[ 8],
-        polygons[polygon_i].model_view_4x4[ 9],
-        polygons[polygon_i].model_view_4x4[10],
-        polygons[polygon_i].model_view_4x4[11],
-        polygons[polygon_i].model_view_4x4[12],
-        polygons[polygon_i].model_view_4x4[13],
-        polygons[polygon_i].model_view_4x4[14],
-        polygons[polygon_i].model_view_4x4[15]);
-    
-    float4 out_vec4 = mesh_vertices * to_camview_4x4;
-    
-    float4x4 cam_to_light_4x4 = matrix_float4x4(
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 0],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 1],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 2],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 3],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 4],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 5],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 6],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 7],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 8],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[ 9],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[10],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[11],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[12],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[13],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[14],
-        lights[updating_globals->shadowcaster_i].
-            camview_to_lightview_4x4[15]);
-    
-    out_vec4 *= cam_to_light_4x4;
-    
-    float4x4 projection = matrix_float4x4(
-        camera->projection_4x4[ 0],
-        camera->projection_4x4[ 1],
-        camera->projection_4x4[ 2],
-        camera->projection_4x4[ 3],
-        camera->projection_4x4[ 4],
-        camera->projection_4x4[ 5],
-        camera->projection_4x4[ 6],
-        camera->projection_4x4[ 7],
-        camera->projection_4x4[ 8],
-        camera->projection_4x4[ 9],
-        camera->projection_4x4[10],
-        camera->projection_4x4[11],
-        camera->projection_4x4[12],
-        camera->projection_4x4[13],
-        camera->projection_4x4[14],
-        camera->projection_4x4[15]);
-    
-    return out_vec4 * projection;
-}
-#endif
-
-fragment void shadows_fragment_shader() {}
-
 typedef struct
 {
     float4 projpos [[position]];
@@ -216,8 +105,7 @@ vertex_shader(
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * zsprites [[ buffer(1) ]],
     const device T1GPURenderView * cam [[ buffer(3) ]],
-    const device T1GPULockedVertex * lverts [[ buffer(4) ]],
-    const device T1GPUProjectConsts * pc [[ buffer(5) ]])
+    const device T1GPULockedVertex * lverts [[ buffer(4) ]])
 {
     RasterizerPixel out;
     
@@ -310,7 +198,6 @@ z_prepass_fragment_shader(
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
-    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
@@ -533,8 +420,8 @@ float4 get_lit(
             float4 light_clip_pos = in.viewpos * cam_to_light_4x4 * projection;
             
             float2 shadow_uv =
-                ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) +
-                    0.5f;
+                ((light_clip_pos.xy /
+                    light_clip_pos.w) * 0.5f) + 0.5f;
             
             shadow_uv[1] = 1.0f - shadow_uv[1];
             float shadow_depth = shadow_maps[lights[i].shadow_map_depth_tex_i].sample(
@@ -701,7 +588,6 @@ fragment_shader(
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
-    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
@@ -778,7 +664,6 @@ alphablending_fragment_shader(
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
-    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
     const device T1GPUConstMat * locked_materials [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {

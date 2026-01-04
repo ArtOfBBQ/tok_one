@@ -205,6 +205,7 @@ void T1_zlight_clean_all_deleted(void)
     }
 }
 
+#if 0
 void T1_zlight_project_float4_to_2d_inplace(
     float * position_x,
     float * position_y,
@@ -224,6 +225,7 @@ void T1_zlight_project_float4_to_2d_inplace(
     *position_z *= z_multiplier;
     *position_z += z_addition;
 }
+#endif
 
 void T1_zlight_copy_all(
     T1GPULight * lights,

@@ -315,17 +315,26 @@ void T1_zsprite_construct_quad_around(
         stack_recipient->cpu_data->simd_stats.mul_xyz[1] / 20.0f;
     
     #define THRESH 0.00001f
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[0] < THRESH) {
+    if (
+        stack_recipient->cpu_data->simd_stats.
+            mul_xyz[0] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[0] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[1] < THRESH) {
+    if (
+        stack_recipient->cpu_data->simd_stats.
+            mul_xyz[1] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[1] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[2] < THRESH) {
+    if (stack_recipient->cpu_data->simd_stats.
+        mul_xyz[2] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[2] = THRESH;
     }
     
-    stack_recipient->cpu_data->mesh_id = BASIC_QUAD_MESH_ID;
+    stack_recipient->cpu_data->mesh_id =
+        BASIC_QUAD_MESH_ID;
 }
 
 void zsprite_construct_cube_around(

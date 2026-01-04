@@ -1511,7 +1511,7 @@ float T1_objmodel_get_x_multiplier_for_width(
     const float screenspace_width,
     const float given_z)
 {
-    return T1_global_screen_width_to_width(
+    return T1_render_view_screen_width_to_width(
         /* const float screenspace_width: */
             screenspace_width /
                 T1_objmodel_mesh_summaries[mesh_id].base_width,
@@ -1524,7 +1524,7 @@ float T1_objmodel_get_y_multiplier_for_height(
     const float screenspace_height,
     const float given_z)
 {
-    return T1_global_screen_height_to_height(
+    return T1_render_view_screen_height_to_height(
         /* const float screenspace_width: */
             screenspace_height /
                 T1_objmodel_mesh_summaries[mesh_id].base_height,

@@ -2,62 +2,6 @@
 
 T1Globals * T1_global = NULL;
 
-float T1_global_x_to_screen_x(
-    const float x,
-    const float given_z)
-{
-    return (x * T1_global->project_consts.x_multiplier + given_z) * T1_global->window_width / (2.0f * given_z);
-}
-
-float T1_global_screen_x_to_x(
-    const float screenspace_x,
-    const float given_z)
-{
-    return (
-        (((screenspace_x * 2.0f) / T1_global->window_width) - 1.0f)
-            * given_z)
-            / T1_global->project_consts.x_multiplier;
-}
-
-float T1_global_y_to_screen_y(
-    const float y,
-    const float given_z)
-{
-    return (
-        y *
-        T1_global->project_consts.field_of_view_modifier + given_z) * T1_global->window_height / (2.0f * given_z);
-}
-
-float T1_global_screen_y_to_y(
-    const float screenspace_y,
-    const float given_z)
-{
-    return (
-        (((screenspace_y * 2.0f) / T1_global->window_height) - 1.0f)
-            * given_z)
-                / T1_global->project_consts.field_of_view_modifier;
-}
-
-float T1_global_screen_height_to_height(
-    const float screenspace_height,
-    const float given_z)
-{
-    return ((
-        (screenspace_height * 2.0f) / T1_global->window_height)
-            * given_z)
-                / T1_global->project_consts.field_of_view_modifier;
-}
-
-float T1_global_screen_width_to_width(
-    const float screenspace_width,
-    const float given_z)
-{
-    return
-        (((screenspace_width * 2.0f) / T1_global->window_width)
-            * given_z)
-            / T1_global->project_consts.x_multiplier;
-}
-
 void T1_global_init(void) {
     
     if (
@@ -66,21 +10,6 @@ void T1_global_init(void) {
     {
         return;
     }
-    
-    T1GPUProjectConsts * pjc = &T1_global->project_consts;
-    
-    pjc->znear =  0.1f;
-    pjc->zfar  =  6.0f;
-    
-    float field_of_view = 75.0f;
-    pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    
-    pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
-    
-    // pjc->q = pjc->zfar / (pjc->zfar - pjc->znear);
-    pjc->x_multiplier = T1_global->aspect_ratio *
-        pjc->field_of_view_modifier;
-    pjc->y_multiplier = pjc->field_of_view_modifier;
     
     T1_global->draw_imputed_normals   = false;
     T1_global->draw_fps               = false;
@@ -139,8 +68,6 @@ void T1_global_update_window_size(
 {
     T1_global->window_height = height;
     T1_global->window_width = width;
-    
-    T1_global->aspect_ratio = height / width;
     
     T1_global->last_resize_request_us = at_timestamp_us;
 }

@@ -668,11 +668,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             anim->delete_other_anims_targeting_zsprite =
                 true;
             anim->cpu_vals.xyz[0] =
-                T1_global_screen_x_to_x(
+                T1_render_view_screen_x_to_x(
                     new_x,
                     new_z);
             anim->cpu_vals.xyz[1] =
-                T1_global_screen_y_to_y(
+                T1_render_view_screen_y_to_y(
                     new_y,
                     new_z);
             anim->cpu_vals.xyz[2] = new_z;
@@ -699,9 +699,10 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         anim->delete_other_anims_targeting_zsprite =
             true;
         anim->cpu_vals.xyz[0] =
-            T1_global_screen_x_to_x(new_x, new_z);
+            T1_render_view_screen_x_to_x(
+                new_x, new_z);
         anim->cpu_vals.xyz[1] =
-            T1_global_screen_y_to_y(
+            T1_render_view_screen_y_to_y(
                 new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;

@@ -771,23 +771,6 @@ bool32_t T1_apple_gpu_init(
                 MTLResourceStorageModePrivate];
     ags->locked_materials_buffer = MTLBufferLockedMaterials;
     
-    id<MTLBuffer> MTLBufferProjectionConstants =
-        [with_metal_device
-            /* the pointer needs to be page aligned */
-                 newBufferWithBytesNoCopy:
-                     gpu_shared_data_collection->locked_pjc
-            /* the length weirdly needs to be page aligned also */
-                length:
-                    gpu_shared_data_collection->
-                        projection_constants_alloc_size
-                options:
-                    MTLResourceStorageModeShared
-            /* deallocator = nil to opt out */
-                deallocator:
-                    nil];
-    
-    ags->projection_constants_buffer = MTLBufferProjectionConstants;
-    
     #define FLVERT 1.0f
     #define TEX_MAX 1.0f
     #define TEX_MIN 0.0f
@@ -1597,7 +1580,7 @@ set_defaults_for_render_descriptor(
     if (!*rtt_cleared) {
         desc.colorAttachments[0].loadAction = MTLLoadActionClear;
         desc.colorAttachments[0].clearColor =
-            MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+            MTLClearColorMake(1.0f, 0.0f, 1.0f, 1.0f);
         *rtt_cleared = true;
     } else {
         desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
@@ -1801,9 +1784,6 @@ static void set_defaults_for_encoder(
     
     ags->window_viewport.width /= T1_global->pixelation_div;
     ags->window_viewport.height /= T1_global->pixelation_div;
-    
-    *gpu_shared_data_collection->locked_pjc =
-        T1_global->project_consts;
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
@@ -2077,6 +2057,9 @@ static void set_defaults_for_encoder(
         switch (
             T1_render_views->cpu[cam_i].write_type)
         {
+            case T1RENDERVIEW_WRITE_BELOWBOUNDS:
+                log_assert(0);
+            break;
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
                 current_rtt =
                     get_texture_array_slice(
@@ -2137,6 +2120,9 @@ static void set_defaults_for_encoder(
                 blnd_pls = ags->depth_only_pls;
                 bloom_pls = ags->depth_only_pls;
                 bb_pls = nil;
+            break;
+            case T1RENDERVIEW_WRITE_ABOVEBOUNDS:
+                log_assert(0);
             break;
         }
         
@@ -2564,7 +2550,7 @@ static void set_defaults_for_encoder(
             [view currentRenderPassDescriptor];
     pass_5_comp_desc.colorAttachments[0].
         clearColor =
-            MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
+            MTLClearColorMake(1.0f, 0.0f, 1.0f, 1.0f);
     pass_5_comp_desc.
         depthAttachment.loadAction =
             MTLLoadActionClear;

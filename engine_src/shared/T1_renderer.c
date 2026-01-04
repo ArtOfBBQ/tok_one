@@ -245,47 +245,47 @@ inline static void
 
 static void construct_projection_matrix(void) {
     
-    T1GPUProjectConsts * p =
-        &T1_global->project_consts;
+    T1GPUProjectConsts * p = NULL;
     
     T1_linal_float4x4 proj;
-    const float y_scale = p->field_of_view_modifier;
-    const float x_scale = p->x_multiplier;
     
-    const float tan_half_fov_y = 1.0f / y_scale;
-    const float fov_y_rad = 2.0f * atanf(tan_half_fov_y);
-    const float aspect = y_scale / x_scale;
-    
-    const float zn = p->znear;
-    const float zf = p->zfar;
-    
-    const float f = 1.0f / tanf(fov_y_rad * 0.5f);
-    
-    #if 1
-    // perspective projection
-    T1_linal_float4x4_construct(
-        &proj,
-        f / aspect, 0.0f, 0.0f, 0.0f,
-        0.0f, f, 0.0f, 0.0f,
-        0.0f, 0.0f, zf / (zf - zn), -zf * zn / (zf - zn),
-        0.0f, 0.0f, 1.0f, 0.0f
-    );
-    #else
-    // orthographic projection
-    T1_linal_float4x4_construct(
-        &proj,
-        1.0f,  0.0f,  0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.01f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f);
-    #endif
+    // Temporary: we get rendering working again
+    // by making sure we're handling the easy case first
+    log_assert(T1_render_views->cpu[0].width ==
+        T1_global->window_width);
+    log_assert(T1_render_views->cpu[0].height ==
+        T1_global->window_height);
     
     for (
         uint32_t i = 0;
-        i < T1_render_views->size;
+        i < T1_RENDER_VIEW_CAP;
         i++)
     {
-        T1GPURenderView * rv = T1_render_views->gpu + i;
+        T1GPURenderView * rv = &T1_render_views->gpu[i];
+        
+        const float w =
+            (float)T1_render_views->cpu[i].width;
+        const float h =
+            (float)T1_render_views->cpu[i].height;
+        
+        const float vertical_fov_degrees = 75.0f;
+        const float zn = 0.1f;
+        const float zf = 6.0f;
+        
+        float ar = w / h;
+        
+        float half_fov_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
+        float f = 1.0f / tanf(half_fov_rad);
+        
+        float x_scale = f / ar;
+        float y_scale = f;
+        
+        T1_linal_float4x4_construct(&proj,
+            x_scale, 0.0f, 0.0f, 0.0f,
+            0.0f, y_scale, 0.0f, 0.0f,
+            0.0f, 0.0f, zf / (zf-zn), -zf*zn/(zf-zn),
+            0.0f, 0.0f, 1.0f, 0.0f
+        );
         
         T1_std_memcpy(
             rv->p_4x4 + 0,
@@ -709,7 +709,7 @@ void T1_renderer_hardware_render(
         T1_render_views->size;
     for (
         uint32_t rv_i = 0;
-        rv_i < T1_render_views->size;
+        rv_i < T1_RENDER_VIEW_CAP;
         rv_i++)
     {
         log_assert(frame_data->render_views[rv_i] != NULL);
