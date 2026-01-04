@@ -482,7 +482,7 @@ static void request_gfx_from_empty_scene(void) {
     T1_camera->xyz_angle[1] =   0.00f;
     T1_camera->xyz_angle[2] =   0.00f;
     
-    T1zLightSource * light = T1_zlight_next();
+    T1zLight * light = T1_zlight_next();
     light->RGBA[0]       =  0.50f;
     light->RGBA[1]       =  0.15f;
     light->RGBA[2]       =  0.15f;

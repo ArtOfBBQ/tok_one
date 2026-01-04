@@ -372,7 +372,7 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
 // Gets the color given a material and lighting setup
 float4 get_lit(
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    texture2d<float> shadow_map,
+    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_maps,
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -507,24 +507,25 @@ float4 get_lit(
             lights[i].camview_to_lightview_4x4[15]);
         
         float4x4 projection = matrix_float4x4(
-            camera->projection_4x4[ 0],
-            camera->projection_4x4[ 1],
-            camera->projection_4x4[ 2],
-            camera->projection_4x4[ 3],
-            camera->projection_4x4[ 4],
-            camera->projection_4x4[ 5],
-            camera->projection_4x4[ 6],
-            camera->projection_4x4[ 7],
-            camera->projection_4x4[ 8],
-            camera->projection_4x4[ 9],
-            camera->projection_4x4[10],
-            camera->projection_4x4[11],
-            camera->projection_4x4[12],
-            camera->projection_4x4[13],
-            camera->projection_4x4[14],
-            camera->projection_4x4[15]);
+            camera->p_4x4[ 0],
+            camera->p_4x4[ 1],
+            camera->p_4x4[ 2],
+            camera->p_4x4[ 3],
+            camera->p_4x4[ 4],
+            camera->p_4x4[ 5],
+            camera->p_4x4[ 6],
+            camera->p_4x4[ 7],
+            camera->p_4x4[ 8],
+            camera->p_4x4[ 9],
+            camera->p_4x4[10],
+            camera->p_4x4[11],
+            camera->p_4x4[12],
+            camera->p_4x4[13],
+            camera->p_4x4[14],
+            camera->p_4x4[15]);
         
-        if (globals->shadowcaster_i == i) {
+        if (lights[i].shadow_map_depth_tex_i >= 0)
+        {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
                 min_filter::nearest);
@@ -536,7 +537,7 @@ float4 get_lit(
                     0.5f;
             
             shadow_uv[1] = 1.0f - shadow_uv[1];
-            float shadow_depth = shadow_map.sample(
+            float shadow_depth = shadow_maps[lights[i].shadow_map_depth_tex_i].sample(
                 shadow_sampler,
                 shadow_uv).r;
             
@@ -691,7 +692,7 @@ fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_map [[texture(SHADOW_MAPS_1ST_FRAGARG_I)]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -767,7 +768,8 @@ alphablending_fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0), maybe_unused ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    array<texture2d<float>, T1_RENDER_VIEW_CAP>
+        shadow_maps[[ texture(SHADOW_MAPS_1ST_FRAGARG_I), maybe_unused ]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -791,7 +793,7 @@ alphablending_fragment_shader(
     float4 lit_color = get_lit(
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
         /* texture2d<float> shadow_map: */
-            shadow_map,
+            shadow_maps,
         #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -908,7 +910,7 @@ single_quad_fragment_shader(
     #error
     #endif
     depth2d<float> camera_depth_map
-        [[texture(CAMERADEPTH_TEXTUREARRAY_I)]])
+        [[texture(CAM_DEPTH_FRAGARG_I)]])
 {
     constexpr sampler sampler(
         s_address::repeat,

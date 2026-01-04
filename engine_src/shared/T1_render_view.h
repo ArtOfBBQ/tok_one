@@ -9,13 +9,13 @@
 typedef struct {
     float    xyz[3];           // 12 bytes
     float    xyz_angle[3];     // 12 bytes
-    int32_t  attached_light_i; // -1 for no light
     int32_t  write_array_i;
     int32_t  write_slice_i;
     uint32_t width;
     uint32_t height;
     T1RenderViewWriteType write_type;
     uint8_t  draw_outlines;
+    uint8_t  deleted;
 } T1CPURenderView;
 
 typedef struct {
@@ -28,6 +28,10 @@ extern T1RenderViewCollection * T1_render_views;
 extern T1CPURenderView * T1_camera; // convenience
 
 void T1_render_view_init(void);
+
+int32_t T1_render_view_fetch_next(void);
+
+void T1_render_view_delete(const int32_t rv_i);
 
 void T1_render_view_validate(void);
 

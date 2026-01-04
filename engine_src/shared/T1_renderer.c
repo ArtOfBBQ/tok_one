@@ -625,6 +625,8 @@ void T1_renderer_hardware_render(
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
+    T1_zlight_update_all_attached_render_views();
+    
     construct_view_matrix();
     
     construct_projection_matrix();

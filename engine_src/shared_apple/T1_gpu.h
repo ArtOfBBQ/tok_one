@@ -34,7 +34,7 @@ int32_t T1_apple_gpu_make_depth_tex(
 - (void)
     updateFinalWindowSize;
 - (void)
-    updateRenderViewSize: (unsigned int)at_i;
+    updateRenderViewSize: (int)at_i;
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;

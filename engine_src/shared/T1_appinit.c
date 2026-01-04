@@ -34,7 +34,7 @@ typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
-    log_assert(sizeof(T1zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
@@ -369,12 +369,12 @@ void T1_appinit_before_gpu_init(
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
     T1_objmodel_init();
-    zlights_to_apply = (T1zLightSource *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1zLightSource) * MAX_LIGHTS_PER_BUFFER);
+    zlights_to_apply = (T1zLight *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1zLight) * MAX_LIGHTS_PER_BUFFER);
     T1_std_memset(
         zlights_to_apply,
         0,
-        sizeof(T1zLightSource) *
+        sizeof(T1zLight) *
             MAX_LIGHTS_PER_BUFFER);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -646,8 +646,19 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
+    uint32_t rv_height = (uint32_t)
+        T1_global->window_height;
+    uint32_t rv_width = (uint32_t)
+        T1_global->window_width;
+    
+    while (rv_height > 1024 || rv_width > 1024) {
+        rv_height /= 2;
+        rv_width  /= 2;
+    }
+    
     T1_texture_array_create_new_render_view(
-        512, 512);
+        rv_height,
+        rv_width);
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
@@ -709,9 +720,9 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[0] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[1] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[2] = 0.5f;
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     // Pass
     #else

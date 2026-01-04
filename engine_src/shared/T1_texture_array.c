@@ -420,15 +420,14 @@ int32_t T1_texture_array_create_new_render_view(
 {
     log_assert(T1_render_views != NULL);
     
-    uint32_t rv_i = T1_render_views->size;
-    log_assert(
-        T1_render_views->size + 1 <= T1_RENDER_VIEW_CAP);
-    T1_render_views->size += 1;
+    int32_t rv_i = T1_render_view_fetch_next();
+    if (rv_i < 0) { return rv_i; }
     
     T1_render_views->cpu[rv_i].write_type =
         T1RENDERVIEW_WRITE_RENDER_TARGET;
     T1_render_views->cpu[rv_i].height = height;
     T1_render_views->cpu[rv_i].width  = width;
+    T1_render_views->cpu[rv_i].draw_outlines = true;
     
     char tex_name[64];
     T1_std_strcpy_cap(
@@ -480,7 +479,7 @@ int32_t T1_texture_array_create_new_render_view(
         /* const bool32_t use_bc1_compression: */
             false);
     
-    return (int32_t)rv_i;
+    return rv_i;
 }
 
 void T1_texture_array_register_new_by_splitting_image(

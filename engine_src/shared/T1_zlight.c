@@ -1,9 +1,9 @@
 #include "T1_zlight.h"
 
-T1zLightSource * zlights_to_apply = NULL;
+T1zLight * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 
-static void T1_zlight_construct(T1zLightSource * to_construct)
+static void T1_zlight_construct(T1zLight * to_construct)
 {
     to_construct->xyz[0]        = 0.0f;
     to_construct->xyz[1]        = 0.0f;
@@ -19,10 +19,12 @@ static void T1_zlight_construct(T1zLightSource * to_construct)
     to_construct->specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted       = false;
     to_construct->committed     = false;
+    
+    to_construct->shadow_map_depth_texture_i = -1;
 }
 
-T1zLightSource * T1_zlight_next(void) {
-    T1zLightSource * return_value = NULL;
+T1zLight * T1_zlight_next(void) {
+    T1zLight * return_value = NULL;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].deleted) {
             return_value = &zlights_to_apply[i];
@@ -41,7 +43,7 @@ T1zLightSource * T1_zlight_next(void) {
     return return_value;
 }
 
-void T1_zlight_commit(T1zLightSource * to_request)
+void T1_zlight_commit(T1zLight * to_request)
 {
     log_assert(!to_request->deleted);
     to_request->committed = true;
@@ -368,4 +370,58 @@ void T1_zlight_point_light_to_location(
     recipient_xyz_angle[0] = pitch; // X rotation (pitch)
     recipient_xyz_angle[1] = yaw;   // Y rotation (yaw)
     recipient_xyz_angle[2] = roll;  // Z rotation (roll)
+}
+
+void T1_zlight_update_all_attached_render_views(void)
+{
+    for (
+        uint32_t zl_i = 0;
+        zl_i < zlights_to_apply_size;
+        zl_i++)
+    {
+        int32_t depth_i = zlights_to_apply[zl_i].
+            shadow_map_depth_texture_i;
+        
+        if (depth_i < 0) { continue; }
+        
+        log_assert(depth_i < T1_RENDER_VIEW_CAP);
+        
+        int32_t rv_i = -1;
+        
+        for (
+            int32_t i = 0;
+            i < (int32_t)T1_render_views->size;
+            i++)
+        {
+            if (
+                T1_render_views->cpu[i].write_array_i ==
+                    DEPTH_TEXTUREARRAYS_I &&
+                T1_render_views->cpu[i].write_slice_i ==
+                    depth_i)
+            {
+                rv_i = i;
+            }
+        }
+        
+        if (rv_i < 0) {
+            continue;
+        }
+        
+        log_assert(rv_i <
+            (int32_t)T1_render_views->size);
+        log_assert(rv_i < T1_RENDER_VIEW_CAP);
+        
+        T1_render_views->cpu[rv_i].xyz[0] =
+            zlights_to_apply[zl_i].xyz[0];
+        T1_render_views->cpu[rv_i].xyz[1] =
+            zlights_to_apply[zl_i].xyz[1];
+        T1_render_views->cpu[rv_i].xyz[2] =
+            zlights_to_apply[zl_i].xyz[2];
+        T1_render_views->cpu[rv_i].xyz_angle[0] =
+            zlights_to_apply[zl_i].xyz_angle[0];
+        T1_render_views->cpu[rv_i].xyz_angle[1] =
+            zlights_to_apply[zl_i].xyz_angle[1];
+        T1_render_views->cpu[rv_i].xyz_angle[2] =
+            zlights_to_apply[zl_i].xyz_angle[2];
+    }
 }

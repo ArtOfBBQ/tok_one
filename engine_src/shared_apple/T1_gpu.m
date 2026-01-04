@@ -257,53 +257,7 @@ bool32_t T1_apple_gpu_init(
     #else
     #error
     #endif
-    
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    id<MTLFunction> shadows_vertex_shader =
-        [ags->lib newFunctionWithName:
-            @"shadows_vertex_shader"];
-    if (shadows_vertex_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Missing function: shadows_vertex_shader()");
-        return false;
-    }
-    
-    id<MTLFunction> shadows_fragment_shader =
-        [ags->lib newFunctionWithName:
-            @"shadows_fragment_shader"];
-    if (shadows_fragment_shader == NULL) {
-        log_append("Missing function: shadows_fragment_shader()!");
         
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Missing function: shadows_fragment_shader()");
-        return false;
-    }
-    
-    MTLRenderPipelineDescriptor * shadows_pls_desc =
-        [MTLRenderPipelineDescriptor new];
-    [shadows_pls_desc
-        setVertexFunction: shadows_vertex_shader];
-    [shadows_pls_desc
-        setFragmentFunction: nil];
-    shadows_pls_desc.depthAttachmentPixelFormat =
-        MTLPixelFormatDepth32Float;
-    shadows_pls_desc.label = @"shadow pipeline state";
-    
-    ags->shadows_pls =
-       [with_metal_device
-            newRenderPipelineStateWithDescriptor:
-                shadows_pls_desc
-            error:
-                &Error];
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
     id<MTLFunction> z_prepass_vertex_shader =
         [ags->lib newFunctionWithName:
@@ -1678,6 +1632,8 @@ static void set_defaults_for_encoder(
     [encoder setFrontFacingWinding:
         MTLWindingCounterClockwise];
     
+    [encoder setViewport: ags->render_viewports[cam_i]];
+    
     [encoder
         setVertexBuffer:
             ags->vertex_buffers[ags->frame_i]
@@ -1801,9 +1757,15 @@ static void set_defaults_for_encoder(
     #endif
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    [encoder
-        setFragmentTexture: ags->shadows_texture
-        atIndex: SHADOWMAP_TEXTUREARRAY_I];
+    for (
+        uint32_t rv_i = 0;
+        rv_i < T1_RENDER_VIEW_CAP;
+        rv_i++)
+    {
+        [encoder
+            setFragmentTexture: ags->depth_textures[rv_i]
+            atIndex: SHADOW_MAPS_1ST_FRAGARG_I + rv_i];
+    }
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -1900,8 +1862,11 @@ static void set_defaults_for_encoder(
     #endif
 }
 
-- (void) updateRenderViewSize: (unsigned int)at_i
+- (void) updateRenderViewSize: (int)at_i
 {
+    log_assert(at_i >= 0);
+    log_assert(at_i < T1_RENDER_VIEW_CAP);
+    
     ags->render_viewports[at_i].originX = 0;
     ags->render_viewports[at_i].originY = 0;
     ags->render_viewports[at_i].width   =
@@ -1927,9 +1892,9 @@ static void set_defaults_for_encoder(
     MTLTextureDescriptor * touch_id_tex_desc =
         [MTLTextureDescriptor new];
     touch_id_tex_desc.width =
-        (NSUInteger)ags->render_viewports[0].width;
+        (NSUInteger)ags->render_viewports[at_i].width;
     touch_id_tex_desc.height =
-        (NSUInteger)ags->render_viewports[0].height;
+        (NSUInteger)ags->render_viewports[at_i].height;
     touch_id_tex_desc.pixelFormat =
         MTLPixelFormatRGBA8Unorm;
     touch_id_tex_desc.mipmapLevelCount = 1;
@@ -1939,7 +1904,8 @@ static void set_defaults_for_encoder(
         MTLTextureUsageShaderRead;
     ags->touch_id_texture =
         [ags->device
-            newTextureWithDescriptor: touch_id_tex_desc];
+            newTextureWithDescriptor:
+                touch_id_tex_desc];
     
     uint64_t touch_buffer_size_bytes =
         touch_id_tex_desc.width *
@@ -1972,9 +1938,19 @@ static void set_defaults_for_encoder(
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    if (funcptr_gameloop_before_render == NULL) {
+    if (
+        funcptr_gameloop_before_render == NULL ||
+        T1_render_views->size < 1 ||
+        T1_render_views->cpu[0].deleted)
+    {
         return;
     }
+    
+    log_assert(
+        T1_render_views->cpu[0].write_array_i >= 0);
+    log_assert(
+        T1_render_views->cpu[0].write_array_i <
+            (int)T1_texture_arrays_size);
     
     #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
@@ -1994,6 +1970,13 @@ static void set_defaults_for_encoder(
     funcptr_gameloop_before_render(
         gpu_shared_data_collection->
             triple_buffers + ags->frame_i);
+    
+    if (
+        (T1_global->last_resize_request_us -
+        f->postproc_consts->timestamp) < 450000)
+    {
+        return;
+    }
     
     log_assert(f->opaq_verts_size <= f->verts_size);
     log_assert(f->bloom_verts_size <= f->verts_size);
@@ -2062,6 +2045,10 @@ static void set_defaults_for_encoder(
         cam_i >= 0;
         cam_i--)
     {
+        if (T1_render_views->cpu[cam_i].deleted) {
+            continue;
+        }
+        
         log_assert(ags->viewports_set[cam_i]);
         
         log_assert(
@@ -2178,30 +2165,34 @@ static void set_defaults_for_encoder(
                 &z_buffer_cleared,
                 &rtt_cleared);
             
-            id<MTLRenderCommandEncoder> render_pass_1_draw_outlines_encoder =
+            // TODO: stuff
+            outlines_desc.colorAttachments[1].texture =
+                nil;
+            
+            id<MTLRenderCommandEncoder> pass_1_outline_enc =
                 [combuf
                     renderCommandEncoderWithDescriptor:
                         outlines_desc];
             
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setViewport:
                     ags->render_viewports[cam_i]];
             
             // outlines pipeline
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setRenderPipelineState:
                     ags->outlines_pls];
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setDepthStencilState:
                     ags->opaque_depth_stencil_state];
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setDepthClipMode: MTLDepthClipModeClip];
-            [render_pass_1_draw_outlines_encoder setCullMode: MTLCullModeFront];
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc setCullMode: MTLCullModeFront];
+            [pass_1_outline_enc
                 setFrontFacingWinding:
                     MTLWindingCounterClockwise];
             
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setVertexBuffer:
                     ags->vertex_buffers[ags->frame_i]
                 offset:
@@ -2209,7 +2200,7 @@ static void set_defaults_for_encoder(
                 atIndex:
                     0];
             
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setVertexBuffer:
                     ags->polygon_buffers[ags->frame_i]
                 offset:
@@ -2217,13 +2208,13 @@ static void set_defaults_for_encoder(
                 atIndex:
                     1];
             
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setVertexBuffer:
                     ags->cam_buffers[ags->frame_i][cam_i]
                 offset: 0
                 atIndex: 3];
             
-            [render_pass_1_draw_outlines_encoder
+            [pass_1_outline_enc
                 setVertexBuffer:
                     ags->locked_vertex_buffer
                 offset:
@@ -2239,7 +2230,7 @@ static void set_defaults_for_encoder(
                     f->opaq_verts_size <
                         MAX_VERTICES_PER_BUFFER);
                 log_assert(f->opaq_verts_size % 3 == 0);
-                [render_pass_1_draw_outlines_encoder
+                [pass_1_outline_enc
                     drawPrimitives:
                         MTLPrimitiveTypeTriangle
                     vertexStart:
@@ -2247,7 +2238,7 @@ static void set_defaults_for_encoder(
                     vertexCount:
                         f->opaq_verts_size];
             }
-            [render_pass_1_draw_outlines_encoder endEncoding];
+            [pass_1_outline_enc endEncoding];
         }
         #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
         #else
@@ -2256,7 +2247,7 @@ static void set_defaults_for_encoder(
         
         // opaque triangles
         MTLRenderPassDescriptor * opaque_tris_desc =
-        [view currentRenderPassDescriptor];
+            [view currentRenderPassDescriptor];
         
         set_defaults_for_render_descriptor(
             opaque_tris_desc,
@@ -2596,6 +2587,8 @@ static void set_defaults_for_encoder(
         offset:0
         atIndex:1];
     
+    log_assert(T1_render_views->cpu[0].write_array_i >= 0);
+    log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_texture_arrays_size);
     id<MTLTexture> arr_tex = ags->metal_textures[
         T1_render_views->cpu[0].write_array_i];
     id<MTLTexture> sliced_tex = [arr_tex
@@ -2656,7 +2649,7 @@ static void set_defaults_for_encoder(
     
     [pass_5_comp
         setFragmentTexture: ags->cam_depth_texture
-        atIndex:CAMERADEPTH_TEXTUREARRAY_I];
+        atIndex: CAM_DEPTH_FRAGARG_I];
     [pass_5_comp
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
@@ -2691,8 +2684,11 @@ static void set_defaults_for_encoder(
 @end
 
 void T1_platform_gpu_update_internal_render_viewport(
-    const uint32_t at_i)
+    const int32_t at_i)
 {
+    log_assert(at_i >= 0);
+    log_assert(at_i < T1_RENDER_VIEW_CAP);
+    
     ags->viewports_set[at_i] = false;
     [apple_gpu_delegate
         updateRenderViewSize:at_i];

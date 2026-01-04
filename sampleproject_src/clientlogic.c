@@ -100,7 +100,7 @@ void T1_clientlogic_late_startup(void) {
     teapot_xyz[1] = TEAPOT_Y;
     teapot_xyz[2] = TEAPOT_Z;
     
-    T1zLightSource * light = T1_zlight_next();
+    T1zLight * light = T1_zlight_next();
     light->RGBA[0]       =  1.0f;
     light->RGBA[1]       =  1.0f;
     light->RGBA[2]       =  1.0f;
@@ -265,7 +265,7 @@ void T1_clientlogic_late_startup(void) {
         quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
         quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
         quad.gpu_data->ignore_camera = 0.0f;
-        quad.gpu_data->ignore_lighting         = 0.0f;
+        quad.gpu_data->ignore_lighting = 0.0f;
         
         quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
         quad.gpu_data->base_mat.ambient_rgb[1] = 0.05f;

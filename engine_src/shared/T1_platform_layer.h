@@ -228,7 +228,7 @@ void T1_platform_enter_fullscreen(void);
 void T1_platform_toggle_fullscreen(void);
 
 void T1_platform_gpu_update_internal_render_viewport(
-    const uint32_t at_i);
+    const int32_t at_i);
 void T1_platform_gpu_update_window_viewport(void);
 
 void T1_platform_gpu_copy_locked_vertices(void);

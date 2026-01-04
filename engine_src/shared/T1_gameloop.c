@@ -260,6 +260,16 @@ void T1_gameloop_update_before_render_pass(
             T1_global->last_resize_request_us = 0;
             log_append("\nOK, resize window\n");
             
+            #if 0
+            for (
+                int32_t rv_i = 0;
+                rv_i < (int32_t)T1_render_views->size;
+                rv_i++)
+            {
+                T1_render_view_delete(rv_i);
+            }
+            #endif
+            
             T1_global_init();
             
             T1_platform_gpu_update_window_viewport();

@@ -78,18 +78,19 @@ typedef struct {
     float reach; // light's reach
     float diffuse;     // how much diffuse light does this radiate?
     float specular;
-    float simd_padding[5];
-} T1zLightSource; // 17 floats = 68 bytes
+    int32_t shadow_map_depth_texture_i;
+    float simd_padding[4];
+} T1zLight; // 17 floats = 68 bytes
 
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
-extern T1zLightSource * zlights_to_apply;
+extern T1zLight * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
 
-T1zLightSource * T1_zlight_next(void);
+T1zLight * T1_zlight_next(void);
 void T1_zlight_commit(
-    T1zLightSource * to_request);
+    T1zLight * to_request);
 
 void T1_zlight_clean_all_deleted(void);
 
@@ -118,6 +119,8 @@ void T1_zlight_point_light_to_location(
     float * recipient_xyz_angle,
     const float * from_pos_xyz,
     const float * point_to_xyz);
+
+void T1_zlight_update_all_attached_render_views(void);
 
 #ifdef __cplusplus
 }

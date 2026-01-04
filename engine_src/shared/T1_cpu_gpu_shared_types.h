@@ -3,7 +3,10 @@
 
 #include "clientlogic_macro_settings.h"
 
-#define CAMERADEPTH_TEXTUREARRAY_I 30
+#define CAM_DEPTH_FRAGARG_I 30
+#define SHADOW_MAPS_1ST_FRAGARG_I 31
+
+
 #define DEPTH_TEXTUREARRAYS_I 54321
 
 #ifndef TEXTUREARRAYS_SIZE
@@ -55,9 +58,11 @@ typedef struct {
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
 typedef enum : uint8_t {
-    T1RENDERVIEW_WRITE_RENDER_TARGET = 0,
-    T1RENDERVIEW_WRITE_DEPTH = 1,
-    T1RENDERVIEW_WRITE_RGBA = 2,
+    T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
+    T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
+    T1RENDERVIEW_WRITE_DEPTH = 2,
+    T1RENDERVIEW_WRITE_RGBA = 3,
+    T1RENDERVIEW_WRITE_ABOVEBOUNDS = 3,
 } T1RenderViewWriteType;
 
 typedef struct {
@@ -124,6 +129,7 @@ typedef struct {
     float specular;
     float reach;
     float rgb[3];
+    int   shadow_map_depth_tex_i;
 } T1GPULight;
 
 typedef struct {
