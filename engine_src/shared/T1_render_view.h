@@ -42,8 +42,8 @@ extern T1CPURenderView * T1_camera; // convenience
 void T1_render_view_init(void);
 
 int32_t T1_render_view_fetch_next(
-    const uint32_t height,
-    const uint32_t width);
+    const uint32_t width,
+    const uint32_t height);
 
 void T1_render_view_delete(const int32_t rv_i);
 

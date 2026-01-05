@@ -149,8 +149,8 @@ typedef struct
     #else
     #error
     #endif
-    float screen_width;
-    float screen_height;
+    // float screen_width;
+    // float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;

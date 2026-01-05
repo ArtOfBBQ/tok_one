@@ -634,19 +634,19 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
-    uint32_t rv_height = (uint32_t)
-        T1_global->window_height;
     uint32_t rv_width = (uint32_t)
         T1_global->window_width;
+    uint32_t rv_height = (uint32_t)
+        T1_global->window_height;
     
-    while (rv_height > 2048 || rv_width > 2048) {
-        rv_height /= 2;
+    while (rv_width > 2048 || rv_height > 2048) {
         rv_width  /= 2;
+        rv_height /= 2;
     }
     
     T1_texture_array_create_new_render_view(
-        rv_height,
-        rv_width);
+        rv_width,
+        rv_height);
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.

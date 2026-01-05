@@ -26,10 +26,6 @@ void T1_global_init(void) {
     T1_global->postproc_consts.timestamp = 0;
     T1_global->postproc_consts.blur_pct = 0.18f;
     T1_global->postproc_consts.nonblur_pct = 1.0f;
-    T1_global->postproc_consts.screen_height =
-        T1_global->window_height;
-    T1_global->postproc_consts.screen_width =
-        T1_global->window_width;
     T1_global->postproc_consts.color_quantization = 1.0f;
     T1_global->postproc_consts.rgb_add[0] = 0.0f;
     T1_global->postproc_consts.rgb_add[1] = 0.0f;

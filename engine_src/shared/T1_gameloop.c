@@ -249,30 +249,62 @@ void T1_gameloop_update_before_render_pass(
             log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end("T1_gameloop_update_before_render_pass()");
+            T1_profiler_end(
+                "T1_gameloop_update_b4_render_pass()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
             #else
             #error "T1_PROFILER_ACTIVE undefined"
             #endif
             return;
         } else {
+            T1_global_init();
             
             T1_global->last_resize_request_us = 0;
             log_append("\nOK, resize window\n");
             
-            #if 0
+            log_assert(
+                (int32_t)T1_render_views->size <=
+                    T1_RENDER_VIEW_CAP);
             for (
                 int32_t rv_i = 0;
                 rv_i < (int32_t)T1_render_views->size;
                 rv_i++)
             {
+                if (
+                    !T1_render_views->cpu[rv_i].
+                        deleted &&
+                    T1_render_views->cpu[rv_i].
+                        write_array_i >= 0)
+                {
+                    T1_texture_array_delete_slice(
+                        T1_render_views->cpu[rv_i].
+                            write_array_i,
+                        T1_render_views->cpu[rv_i].
+                            write_slice_i);
+                }
+                
                 T1_render_view_delete(rv_i);
             }
-            #endif
+            log_assert(T1_render_views->size == 0);
             
-            T1_global_init();
+            // TODO:
+            // use an internal render size
+            // determined by settings, not window
+            int32_t rv_i =
+                T1_texture_array_create_new_render_view(
+                    (uint32_t)T1_global->window_width,
+                    (uint32_t)T1_global->window_height);
+            log_assert(rv_i == 0);
+            log_assert(
+                !T1_render_views->cpu[0].deleted);
+            log_assert(
+                T1_render_views->cpu[0].write_type ==
+                    T1RENDERVIEW_WRITE_RENDER_TARGET);
+            log_assert(
+                !T1_texture_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
             
             T1_platform_gpu_update_window_viewport();
+            T1_platform_gpu_update_internal_render_viewport(rv_i);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();
@@ -283,8 +315,8 @@ void T1_gameloop_update_before_render_pass(
             #endif
             
             T1_clientlogic_window_resize(
-                (uint32_t)T1_global->window_height,
-                (uint32_t)T1_global->window_width);
+                (uint32_t)T1_global->window_width,
+                (uint32_t)T1_global->window_height);
        }
     } else if (
         T1_app_running &&

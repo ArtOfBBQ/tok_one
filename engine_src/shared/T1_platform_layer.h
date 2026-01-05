@@ -282,6 +282,12 @@ void T1_platform_gpu_fetch_rgba_at(
     uint32_t * recipient_height,
     const uint32_t recipient_cap,
     uint32_t * good);
+
+void T1_platform_gpu_delete_texture_array(
+    const int32_t array_i);
+
+void T1_platform_gpu_delete_depth_tex(
+    const int32_t slice_i);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error

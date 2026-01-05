@@ -97,8 +97,8 @@ this will be called whenever your app's window resizes - you can react by
 updating your layout to match the new window
 */
 void T1_clientlogic_window_resize(
-    const uint32_t new_height,
-    const uint32_t new_width);
+    const uint32_t new_width,
+    const uint32_t new_height);
 
 #ifdef __cplusplus
 }

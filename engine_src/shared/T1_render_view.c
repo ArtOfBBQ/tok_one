@@ -72,8 +72,8 @@ static void T1_render_view_construct(
 }
 
 int32_t T1_render_view_fetch_next(
-    const uint32_t height,
-    const uint32_t width)
+    const uint32_t width,
+    const uint32_t height)
 {
     int32_t ret = -1;
     
@@ -116,8 +116,8 @@ void T1_render_view_delete(
     log_assert(rv_i < T1_RENDER_VIEW_CAP);
     
     T1_render_view_construct(
-        T1_render_views->cpu,
-        T1_render_views->gpu,
+        T1_render_views->cpu + rv_i,
+        T1_render_views->gpu + rv_i,
         0,
         0);
     T1_render_views->cpu[rv_i].deleted = true;

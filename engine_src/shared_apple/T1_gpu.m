@@ -1059,12 +1059,10 @@ void T1_platform_gpu_copy_texture_array(
             ags->metal_textures[texture_array_i];
         ags->metal_textures[texture_array_i] = NULL;
     } else {
-        // TODO: blit a flat color to the existing
-        // TODO: textures to highlight missing
-        log_assert(0);
-        log_assert(ags->metal_textures[texture_array_i].pixelFormat !=
-                MTLPixelFormatBC1_RGBA);
-        log_assert(ags->metal_textures[texture_array_i].usage == MTLTextureUsageRenderTarget);
+        log_assert(ags->metal_textures[texture_array_i].
+            pixelFormat != MTLPixelFormatBC1_RGBA);
+        log_assert((ags->metal_textures[texture_array_i].
+            usage & MTLTextureUsageRenderTarget) > 0);
         return;
     }
     
@@ -1125,6 +1123,22 @@ void T1_platform_gpu_copy_texture_array(
         [combuf commit];
         [combuf waitUntilCompleted];
     }
+}
+
+void T1_platform_gpu_delete_texture_array(
+    const int32_t array_i)
+{
+    log_assert(array_i != DEPTH_TEXTUREARRAYS_I);
+    
+    ags->metal_textures[array_i] = nil;
+}
+
+void T1_platform_gpu_delete_depth_tex(
+    const int32_t slice_i)
+{
+    log_assert(slice_i < T1_RENDER_VIEW_CAP);
+    
+    ags->depth_textures[slice_i] = nil;
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -1609,6 +1623,8 @@ static void set_defaults_for_encoder(
     id<MTLRenderCommandEncoder> encoder,
     const uint32_t cam_i)
 {
+    log_assert(cam_i < T1_RENDER_VIEW_CAP);
+    
     log_assert(ags->opaque_depth_stencil_state != nil);
     [encoder
         setDepthStencilState: ags->opaque_depth_stencil_state];
@@ -1764,7 +1780,7 @@ static void set_defaults_for_encoder(
 {
     ags->window_viewport.originX = 0;
     ags->window_viewport.originY = 0;
-    ags->window_viewport.width   =
+    ags->window_viewport.width =
         T1_global->window_width *
             ags->retina_scaling_factor;
     ags->window_viewport.height  =
@@ -1785,6 +1801,10 @@ static void set_defaults_for_encoder(
     ags->window_viewport.width /= T1_global->pixelation_div;
     ags->window_viewport.height /= T1_global->pixelation_div;
     
+    NSLog(@"Window viewport is now: %u/%u\n",
+        (uint32_t)ags->window_viewport.width,
+        (uint32_t)ags->window_viewport.height);
+    
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
@@ -1801,48 +1821,6 @@ static void set_defaults_for_encoder(
     ags->cam_depth_texture =
         [ags->device newTextureWithDescriptor:
             camera_depth_texture_descriptor];
-    
-    #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    for (
-        uint32_t i = 0;
-        i < DOWNSAMPLES_SIZE;
-        i++)
-    {
-        MTLTextureDescriptor * downsampled_rtt_desc =
-            [MTLTextureDescriptor new];
-        downsampled_rtt_desc.textureType =
-            MTLTextureType2D;
-        downsampled_rtt_desc.width =
-            (NSUInteger)get_ds_width(
-                i,
-                (uint32_t)ags->
-                    render_viewports[0].width);
-        downsampled_rtt_desc.height =
-            (NSUInteger)get_ds_height(
-                i,
-                (uint32_t)ags->
-                    render_viewports[0].height);
-        downsampled_rtt_desc.pixelFormat =
-            MTLPixelFormatRGBA8Unorm;
-        downsampled_rtt_desc.mipmapLevelCount = 1;
-        downsampled_rtt_desc.storageMode =
-            MTLStorageModePrivate;
-        downsampled_rtt_desc.usage =
-            MTLTextureUsageShaderWrite |
-            MTLTextureUsageShaderRead;
-        if (i == 0) {
-            downsampled_rtt_desc.usage |=
-                MTLTextureUsageRenderTarget;
-        }
-        ags->downsampled_rtts[i] =
-            [ags->device
-                newTextureWithDescriptor:
-                    downsampled_rtt_desc];
-    }
-    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
 }
 
 - (void) updateRenderViewSize: (int)at_i
@@ -1911,6 +1889,50 @@ static void set_defaults_for_encoder(
         ags->touch_id_buffer_all_zeros.contents,
         minus_one,
         (uint32_t)touch_buffer_size_bytes);
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    for (
+        uint32_t i = 0;
+        i < DOWNSAMPLES_SIZE;
+        i++)
+    {
+        ags->downsampled_rtts[i] = nil;
+        
+        MTLTextureDescriptor * downsampled_rtt_desc =
+            [MTLTextureDescriptor new];
+        downsampled_rtt_desc.textureType =
+            MTLTextureType2D;
+        downsampled_rtt_desc.width =
+            (NSUInteger)get_ds_width(
+                i,
+                (uint32_t)ags->
+                    render_viewports[0].width);
+        downsampled_rtt_desc.height =
+            (NSUInteger)get_ds_height(
+                i,
+                (uint32_t)ags->
+                    render_viewports[0].height);
+        downsampled_rtt_desc.pixelFormat =
+            MTLPixelFormatRGBA8Unorm;
+        downsampled_rtt_desc.mipmapLevelCount = 1;
+        downsampled_rtt_desc.storageMode =
+            MTLStorageModePrivate;
+        downsampled_rtt_desc.usage =
+            MTLTextureUsageShaderWrite |
+            MTLTextureUsageShaderRead;
+        if (i == 0) {
+            downsampled_rtt_desc.usage |=
+                MTLTextureUsageRenderTarget;
+        }
+        ags->downsampled_rtts[i] =
+            [ags->device
+                newTextureWithDescriptor:
+                    downsampled_rtt_desc];
+    }
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
 }
 
 -(void)renderViewToColor:(MTKView *)view
@@ -1991,8 +2013,8 @@ static void set_defaults_for_encoder(
     
     // Blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
-        [ags->touch_id_texture height] *
         [ags->touch_id_texture width] *
+        [ags->touch_id_texture height] *
         8);
     
     id <MTLBlitCommandEncoder>
@@ -2696,9 +2718,8 @@ int32_t T1_apple_gpu_make_depth_tex(
     int32_t slice_i = 0;
     while (ags->depth_textures[slice_i] != nil) {
         slice_i += 1;
+        log_assert(slice_i < T1_RENDER_VIEW_CAP);
     }
-    
-    log_assert(slice_i < T1_RENDER_VIEW_CAP);
     
     if (slice_i >= T1_RENDER_VIEW_CAP) {
         return -1;

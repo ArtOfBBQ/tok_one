@@ -715,7 +715,6 @@ struct PostProcessingFragment
     half4 bonus_rgb;
     half4 fog_rgb;
     float2 texcoord;
-    float2 screen_width_height;
     float blur_pct;
     float nonblur_pct;
     float color_quantization;
@@ -740,10 +739,6 @@ single_quad_vertex_shader(
     out.texcoord = vector_float2(
         vertices[vertexID].texcoord[0],
         vertices[vertexID].texcoord[1]);
-    
-    out.screen_width_height = vector_float2(
-        constants->screen_width * 2.0f,
-        constants->screen_height * 2.0f);
     
     out.curtime = constants->timestamp;
     
