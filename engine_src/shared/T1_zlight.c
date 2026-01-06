@@ -266,6 +266,11 @@ void T1_zlight_copy_all(
             lights[*lights_size].rgb[2] =
                 zlights_to_apply[i].RGBA[2];
             
+            lights[*lights_size].shadow_map_depth_tex_i =
+                zlights_to_apply[i].shadow_map_depth_texture_i;
+            lights[*lights_size].shadow_map_render_view_i =
+                zlights_to_apply[i].shadow_map_render_view_i;
+            
             *lights_size += 1;
         }
     }

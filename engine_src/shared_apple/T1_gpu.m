@@ -22,7 +22,7 @@ typedef struct AppleGPUState {
     id light_buffers [FRAMES_CAP];
     id vertex_buffers[FRAMES_CAP];
     id flat_quad_buffers[FRAMES_CAP];
-    id cam_buffers[FRAMES_CAP][T1_RENDER_VIEW_CAP];
+    id cam_buffers[FRAMES_CAP];
     id postprocessing_constants_buffers[FRAMES_CAP];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
@@ -614,6 +614,12 @@ bool32_t T1_apple_gpu_init(
         T1GPUFrame * f = &gpu_shared_data_collection->
             triple_buffers[frame_i];
         
+        log_assert(
+            gpu_shared_data_collection->
+                polygons_alloc_size >=
+            (sizeof(T1GPUzSprite) *
+                MAX_ZSPRITES_PER_BUFFER));
+        
         id<MTLBuffer> MTLBufferFramePolygons =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -697,29 +703,26 @@ bool32_t T1_apple_gpu_init(
         ags->light_buffers[frame_i] =
             MTLBufferFrameLights;
         
-        for (
-            uint32_t rv_i = 0;
-            rv_i < T1_RENDER_VIEW_CAP;
-            rv_i++)
-        {
-            id<MTLBuffer> MTLBufferFrameCamera =
-            [with_metal_device
-                /* needs to be page aligned */
-                    newBufferWithBytesNoCopy:
-                        f->render_views[rv_i]
-                /* also needs to be aligned */
-                    length:
-                        gpu_shared_data_collection->
-                            render_view_alloc_size
-                    options:
-                        MTLResourceStorageModeShared
-                /* deallocator = nil to opt out */
-                    deallocator:
-                        nil];
-            
-            ags->cam_buffers[frame_i][rv_i] =
-                MTLBufferFrameCamera;
-        }
+        log_assert(
+            gpu_shared_data_collection->
+                render_views_alloc_size >= (sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP));
+        id<MTLBuffer> MTLBufferFrameCamera =
+        [with_metal_device
+            /* needs to be page aligned */
+                newBufferWithBytesNoCopy:
+                    f->render_views
+            /* also needs to be aligned */
+                length:
+                    gpu_shared_data_collection->
+                        render_views_alloc_size
+                options:
+                    MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
+        
+        ags->cam_buffers[frame_i] =
+            MTLBufferFrameCamera;
     }
     
     id<MTLBuffer> MTLBufferLockedVerticesPopulator =
@@ -1662,23 +1665,20 @@ static void set_defaults_for_encoder(
     
     [encoder
         setVertexBuffer:
-            ags->cam_buffers[ags->frame_i][cam_i]
+            ags->cam_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
+    
+    [encoder
+        setVertexBytes: &cam_i
+        length: sizeof(uint32_t)
+        atIndex: 4];
     
     [encoder
         setVertexBuffer:
             ags->locked_vertex_buffer
         offset:
             0 
-        atIndex:
-            4];
-    
-    [encoder
-        setVertexBuffer:
-            ags->projection_constants_buffer
-        offset:
-            0
         atIndex:
             5];
     
@@ -1708,19 +1708,16 @@ static void set_defaults_for_encoder(
     
     [encoder
         setFragmentBuffer:
-            ags->cam_buffers[ags->frame_i][cam_i]
+            ags->cam_buffers[ags->frame_i]
         offset:
             0
         atIndex:
             3];
     
     [encoder
-        setFragmentBuffer:
-            ags->projection_constants_buffer
-        offset:
-            0
-        atIndex:
-            4];
+        setFragmentBytes: &cam_i
+        length: sizeof(uint32_t)
+        atIndex: 4];
     
     [encoder
         setFragmentBuffer:
@@ -1772,7 +1769,6 @@ static void set_defaults_for_encoder(
     #else
     #error
     #endif
-
 }
 
 @implementation MetalKitViewDelegate
@@ -1800,10 +1796,6 @@ static void set_defaults_for_encoder(
     
     ags->window_viewport.width /= T1_global->pixelation_div;
     ags->window_viewport.height /= T1_global->pixelation_div;
-    
-    NSLog(@"Window viewport is now: %u/%u\n",
-        (uint32_t)ags->window_viewport.width,
-        (uint32_t)ags->window_viewport.height);
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
@@ -2177,7 +2169,6 @@ static void set_defaults_for_encoder(
                 &z_buffer_cleared,
                 &rtt_cleared);
             
-            // TODO: stuff
             outlines_desc.colorAttachments[1].texture =
                 nil;
             
@@ -2185,6 +2176,10 @@ static void set_defaults_for_encoder(
                 [combuf
                     renderCommandEncoderWithDescriptor:
                         outlines_desc];
+            
+            set_defaults_for_encoder(
+                pass_1_outline_enc,
+                (uint32_t)cam_i);
             
             [pass_1_outline_enc
                 setViewport:
@@ -2200,39 +2195,6 @@ static void set_defaults_for_encoder(
             [pass_1_outline_enc
                 setDepthClipMode: MTLDepthClipModeClip];
             [pass_1_outline_enc setCullMode: MTLCullModeFront];
-            [pass_1_outline_enc
-                setFrontFacingWinding:
-                    MTLWindingCounterClockwise];
-            
-            [pass_1_outline_enc
-                setVertexBuffer:
-                    ags->vertex_buffers[ags->frame_i]
-                offset:
-                    0
-                atIndex:
-                    0];
-            
-            [pass_1_outline_enc
-                setVertexBuffer:
-                    ags->polygon_buffers[ags->frame_i]
-                offset:
-                    0
-                atIndex:
-                    1];
-            
-            [pass_1_outline_enc
-                setVertexBuffer:
-                    ags->cam_buffers[ags->frame_i][cam_i]
-                offset: 0
-                atIndex: 3];
-            
-            [pass_1_outline_enc
-                setVertexBuffer:
-                    ags->locked_vertex_buffer
-                offset:
-                    0
-                atIndex:
-                    4];
             
             if (
                 T1_global->draw_triangles &&
@@ -2402,7 +2364,7 @@ static void set_defaults_for_encoder(
             
             [pass_4_bb_enc
                 setVertexBuffer:
-                    ags->cam_buffers[ags->frame_i][cam_i]
+                    ags->cam_buffers[ags->frame_i]
                 offset: 0
                 atIndex: 3];
             

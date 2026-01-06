@@ -70,6 +70,7 @@ typedef struct {
     float    v_4x4[16];
     float    p_4x4[16];
     float    normv_3x3[9];
+    int      use_shadow_maps;
 } T1GPURenderView;
 
 typedef struct {
@@ -121,15 +122,14 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
-    float camview_to_lightview_4x4[16];
     float xyz[3];
-    float viewspace_xyz[3];
     float angle_xyz[3];
     float diffuse;
     float specular;
     float reach;
     float rgb[3];
     int   shadow_map_depth_tex_i;
+    int   shadow_map_render_view_i;
 } T1GPULight;
 
 typedef struct
@@ -166,11 +166,12 @@ typedef struct
     #else
     #error
     #endif
+    unsigned int cam_rv_i;
     unsigned int timestamp;
     unsigned int lights_size;
     int perlin_texturearray_i;
     int perlin_texture_i;
-    float padding[7];
+    float padding[6];
 } T1GPUPostProcConsts;
 
 typedef struct

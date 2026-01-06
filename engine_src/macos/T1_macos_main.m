@@ -435,7 +435,8 @@ int main(int argc, const char * argv[]) {
                 NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];
-    window.animationBehavior = NSWindowAnimationBehaviorNone;
+    window.animationBehavior =
+        NSWindowAnimationBehaviorNone;
     
     GameWindowDelegate * window_delegate = [[GameWindowDelegate alloc] init];
     
@@ -482,7 +483,10 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
-    T1_platform_get_resources_path(shader_lib_path_cstr, 2000);
+    T1_platform_get_resources_path(
+        shader_lib_path_cstr,
+        2000);
+    
     T1_std_strcat_cap(
         shader_lib_path_cstr,
         1000,

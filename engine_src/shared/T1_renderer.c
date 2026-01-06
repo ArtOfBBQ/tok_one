@@ -382,6 +382,7 @@ static void construct_view_matrix(void) {
     }
 }
 
+#if 0
 static void construct_light_matrices(
     T1GPUFrame * frame_data)
 {
@@ -408,72 +409,17 @@ static void construct_light_matrices(
         light_i++)
     {
         T1_linal_float4 light_world;
-        // reminder: frame data includes an offset
-        light_world.data[0] =
-            frame_data->lights[light_i].xyz[0];
-        light_world.data[1] =
-            frame_data->lights[light_i].xyz[1];
-        light_world.data[2] =
-            frame_data->lights[light_i].xyz[2];
-        light_world.data[3] = 1.0f;
-        
-        T1_linal_float4 view_pos =
-            T1_linal_float4x4_mul_float4(
-                &mat_view,
-                light_world);
-        
-        frame_data->lights[light_i].
-            viewspace_xyz[0] = view_pos.data[0];
-        frame_data->lights[light_i].
-            viewspace_xyz[1] = view_pos.data[1];
-        frame_data->lights[light_i].
-            viewspace_xyz[2] = view_pos.data[2];
-        
-        // Next, we want to transform from camera view to light view
-        T1_linal_float4x4_construct_xyz_rotation(
-            &a_4x4,
-            -frame_data->lights[light_i].
-                angle_xyz[0],
-            -frame_data->lights[light_i].
-                angle_xyz[1],
-            -frame_data->lights[light_i].
-                angle_xyz[2]);
-        
-        T1_linal_float4x4_construct(
-            &b_4x4,
-            1.0f, 0.0f, 0.0f, -frame_data->lights[light_i].xyz[0],
-            0.0f, 1.0f, 0.0f, -frame_data->lights[light_i].xyz[1],
-            0.0f, 0.0f, 1.0f, -frame_data->lights[light_i].xyz[2],
-            0.0f, 0.0f, 0.0f, 1.0f);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &a_4x4, &b_4x4);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &a_4x4, &inv_camview_4x4);
-        
-        T1_std_memcpy(
-            frame_data->lights[light_i].
-                camview_to_lightview_4x4 + 0,
-            a_4x4.rows[0].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            frame_data->lights[light_i].
-                camview_to_lightview_4x4 + 4,
-            a_4x4.rows[1].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            frame_data->lights[light_i].
-                camview_to_lightview_4x4 + 8,
-            a_4x4.rows[2].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            frame_data->lights[light_i].
-                camview_to_lightview_4x4 + 12,
-            a_4x4.rows[3].data,
-            sizeof(float) * 4);
+            // reminder: frame data includes an offset
+            light_world.data[0] =
+                frame_data->lights[light_i].xyz[0];
+            light_world.data[1] =
+                frame_data->lights[light_i].xyz[1];
+            light_world.data[2] =
+                frame_data->lights[light_i].xyz[2];
+            light_world.data[3] = 1.0f;
     }
 }
+#endif
 
 static void construct_model_and_normal_matrices(void)
 {
@@ -672,7 +618,8 @@ void T1_renderer_hardware_render(
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_particle_add_all_to_frame_data()");
+    T1_profiler_start(
+        "T1_particle_add_all_to_frame_data()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
@@ -696,7 +643,7 @@ void T1_renderer_hardware_render(
     #error
     #endif
     
-    construct_light_matrices(frame_data);
+    // construct_light_matrices(frame_data);
     
     #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
     T1_frame_anim_apply_all(frame_data);
@@ -707,16 +654,11 @@ void T1_renderer_hardware_render(
     
     frame_data->render_views_size =
         T1_render_views->size;
-    for (
-        uint32_t rv_i = 0;
-        rv_i < T1_RENDER_VIEW_CAP;
-        rv_i++)
-    {
-        log_assert(frame_data->render_views[rv_i] != NULL);
-        T1_std_memcpy(
-            frame_data->render_views[rv_i],
-            T1_render_views->gpu + rv_i,
-            sizeof(T1GPURenderView));
-        log_assert(frame_data->render_views[rv_i] != NULL);
-    }
+    
+    log_assert(frame_data->render_views != NULL);
+    T1_std_memcpy(
+        frame_data->render_views,
+        T1_render_views->gpu,
+        sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP);
+    log_assert(frame_data->render_views != NULL);
 }

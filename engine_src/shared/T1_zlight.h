@@ -79,7 +79,8 @@ typedef struct {
     float diffuse;     // how much diffuse light does this radiate?
     float specular;
     int32_t shadow_map_depth_texture_i;
-    float simd_padding[4];
+    int32_t shadow_map_render_view_i;
+    float simd_padding[3];
 } T1zLight; // 17 floats = 68 bytes
 
 // A buffer of zLightSources to light up your scene(s)

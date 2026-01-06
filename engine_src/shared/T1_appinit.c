@@ -494,8 +494,10 @@ void T1_appinit_before_gpu_init(
         pad_to_page_size(sizeof(T1GPULight) *
             MAX_LIGHTS_PER_BUFFER);
     
-    sd->render_view_alloc_size =
-        pad_to_page_size(sizeof(T1GPURenderView));
+    sd->render_views_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPURenderView) *
+                T1_RENDER_VIEW_CAP);
     
     sd->locked_vertices_alloc_size =
         pad_to_page_size(
@@ -542,21 +544,16 @@ void T1_appinit_before_gpu_init(
                 T1_mem_page_size);
         log_assert(f->lights != NULL);
         
-        for (
-            uint32_t cam_i = 0;
-            cam_i < T1_RENDER_VIEW_CAP;
-            cam_i++)
-        {
-            f->render_views[cam_i] = (T1GPURenderView *)
-                T1_mem_malloc_from_unmanaged_aligned(
-                    sd->render_view_alloc_size,
-                    T1_mem_page_size);
-            
-            T1_std_memset_f32(
-                f->render_views[cam_i],
-                0.0f,
-                sizeof(T1GPURenderView));
-        }
+        f->render_views = (T1GPURenderView *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->render_views_alloc_size,
+                T1_mem_page_size);
+        
+        T1_std_memset_f32(
+            f->render_views,
+            0.0f,
+            sizeof(T1GPURenderView) *
+                T1_RENDER_VIEW_CAP);
         
         f->postproc_consts = (T1GPUPostProcConsts *)
             T1_mem_malloc_from_unmanaged_aligned(

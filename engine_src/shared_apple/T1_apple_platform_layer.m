@@ -286,7 +286,6 @@ void T1_platform_get_filenames_in(
     // NSURL * url = [NSURL URLWithString: path];
     
     // log_assert(url != NULL);
-    // NSLog(@" url => %@ ", url);
     NSError * error = NULL;
     
     NSArray * results = [[NSFileManager defaultManager]

@@ -11,7 +11,7 @@ typedef struct
     T1GPUVertexIndices *  verts;
     T1GPUzSpriteList *    zsprite_list;
     T1GPULight *          lights;
-    T1GPURenderView *        render_views[T1_RENDER_VIEW_CAP];
+    T1GPURenderView *     render_views;
     T1GPUPostProcConsts * postproc_consts;
     T1GPUFlatQuad *       flat_billboard_quads;
     uint32_t              verts_size;
@@ -38,7 +38,7 @@ typedef struct
     uint32_t polygons_alloc_size;
     uint32_t polygon_mats_alloc_size;
     uint32_t lights_alloc_size;
-    uint32_t render_view_alloc_size;
+    uint32_t render_views_alloc_size;
     uint32_t postprocessing_constants_alloc_size;
     uint32_t frame_i;
 } T1GPUSharedDataCollection;
