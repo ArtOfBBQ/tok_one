@@ -119,6 +119,13 @@ vertex_shader(
     const device T1GPUzSprite * zs =
         &zsprites[out.polygon_i];
     
+    const device T1GPURenderView * c = rv + rv_i;
+    
+    if (!c->use_shadow_maps && zs->remove_shadow) {
+        out.projpos = vector_float4(0.0f, 0.0f, 100.0f, 1.0f);
+        return out;
+    }
+    
     float4 mesh_vertices = vector_float4(
         lv->xyz[0], lv->xyz[1], lv->xyz[2], 1.0f);
     
@@ -144,8 +151,6 @@ vertex_shader(
         zs->m_4x4[12], zs->m_4x4[13], zs->m_4x4[14], zs->m_4x4[15]);
     
     out.worldpos = mesh_vertices * model;
-    
-    const device T1GPURenderView * c = rv + rv_i;
     
     float4x4 view = matrix_float4x4(
         c->v_4x4[ 0], c->v_4x4[ 1], c->v_4x4[ 2], c->v_4x4[ 3],

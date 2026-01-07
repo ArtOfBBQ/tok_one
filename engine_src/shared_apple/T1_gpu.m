@@ -2,7 +2,7 @@
 
 #define T1_DRAWING_SEMAPHORE_ACTIVE T1_INACTIVE
 
-typedef struct AppleGPUState {
+typedef struct {
     MTLPixelFormat pixel_format_renderpass1;
     #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_t drawing_semaphore;
@@ -1794,8 +1794,10 @@ static void set_defaults_for_encoder(
     ags->window_viewport.znear = 0.001f;
     ags->window_viewport.zfar = 1.0f;
     
-    ags->window_viewport.width /= T1_global->pixelation_div;
-    ags->window_viewport.height /= T1_global->pixelation_div;
+    ags->window_viewport.width /=
+        T1_global->pixelation_div;
+    ags->window_viewport.height /=
+        T1_global->pixelation_div;
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
