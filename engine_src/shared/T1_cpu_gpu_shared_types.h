@@ -70,7 +70,8 @@ typedef struct {
     float    v_4x4[16];
     float    p_4x4[16];
     float    normv_3x3[9];
-    int      use_shadow_maps;
+    int      read_from_shadow_maps;
+    int      write_to_shadow_maps;
 } T1GPURenderView;
 
 typedef struct {

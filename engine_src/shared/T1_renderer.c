@@ -58,7 +58,9 @@ inline static void add_opaque_zpolygons_to_workload(
         We are free to overflow the vertices buffer, since its end is not
         in use yet anyway.
         */
-        int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
+        int32_t vert_i =
+            T1_objmodel_mesh_summaries[mesh_id].
+                vertices_head_i;
         cur_vals[0] = vert_i-2;
         cur_vals[1] = cpu_zp_i;
         cur_vals[2] = vert_i-1;
@@ -262,6 +264,15 @@ static void construct_projection_matrix(void) {
         i++)
     {
         T1GPURenderView * rv = &T1_render_views->gpu[i];
+        
+        rv->write_to_shadow_maps =
+            T1_render_views->cpu[i].write_type ==
+                T1RENDERVIEW_WRITE_DEPTH;
+        
+        rv->read_from_shadow_maps =
+            T1_render_views->cpu[i].write_type ==
+                T1RENDERVIEW_WRITE_RENDER_TARGET ||
+                T1RENDERVIEW_WRITE_RGBA;
         
         const float w =
             (float)T1_render_views->cpu[i].width;
