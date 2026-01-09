@@ -74,7 +74,7 @@ extern "C" {
 #include "T1_mem.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_uielement.h"
 
 void T1_platform_init(
@@ -226,7 +226,10 @@ float T1_platform_y_to_y(const float y);
 
 void T1_platform_enter_fullscreen(void);
 void T1_platform_toggle_fullscreen(void);
-void T1_platform_gpu_update_viewport(void);
+
+void T1_platform_gpu_update_internal_render_viewport(
+    const int32_t at_i);
+void T1_platform_gpu_update_window_viewport(void);
 
 void T1_platform_gpu_copy_locked_vertices(void);
 void T1_platform_gpu_copy_locked_materials(void);
@@ -235,11 +238,12 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
-void T1_platform_gpu_init_texture_array(
+void T1_platform_gpu_copy_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
     const uint32_t single_image_height,
+    const bool32_t is_render_target,
     const bool32_t use_bc1_compression);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
@@ -278,10 +282,21 @@ void T1_platform_gpu_fetch_rgba_at(
     uint32_t * recipient_height,
     const uint32_t recipient_cap,
     uint32_t * good);
+
+void T1_platform_gpu_delete_texture_array(
+    const int32_t array_i);
+
+void T1_platform_gpu_delete_depth_tex(
+    const int32_t slice_i);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
+
+int32_t
+T1_platform_gpu_make_depth_tex(
+    const uint32_t width,
+    const uint32_t height);
 
 void T1_platform_update_mouse_location(void);
 

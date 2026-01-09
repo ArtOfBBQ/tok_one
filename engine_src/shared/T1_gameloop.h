@@ -3,7 +3,7 @@
 
 #include "T1_terminal.h"
 #include "T1_logger.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_io.h"
 #include "T1_platform_layer.h"
@@ -11,7 +11,7 @@
 #include "T1_text.h"
 #include "T1_uielement.h"
 #include "T1_renderer.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_zsprite_anim.h"
 #include "T1_clientlogic.h"
 #include "T1_profiler.h"

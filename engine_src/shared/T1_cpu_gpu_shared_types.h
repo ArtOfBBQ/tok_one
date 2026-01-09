@@ -3,8 +3,11 @@
 
 #include "clientlogic_macro_settings.h"
 
-#define CAMERADEPTH_TEXTUREARRAY_I 30
-#define SHADOWMAP_TEXTUREARRAY_I 31
+#define CAM_DEPTH_FRAGARG_I 30
+#define SHADOW_MAPS_1ST_FRAGARG_I 31
+
+
+#define DEPTH_TEXTUREARRAYS_I 54321
 
 #ifndef TEXTUREARRAYS_SIZE
 #define TEXTUREARRAYS_SIZE 29
@@ -39,36 +42,44 @@ not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct {
-    float        xyz            [3];
+    float xyz            [3];
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    float        face_normal_xyz[3];
+    float face_normal_xyz[3];
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    float        normal_xyz     [3];
-    float        tangent_xyz    [3];
-    float        bitangent_xyz  [3];
-    float        uv             [2];
+    float        norm_xyz[3];
+    float        tan_xyz[3];
+    float        bitan_xyz[3];
+    float        uv[2];
     unsigned int locked_materials_head_i;
     unsigned int parent_material_i;
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
+typedef enum : uint8_t {
+    T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
+    T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
+    T1RENDERVIEW_WRITE_DEPTH = 2,
+    T1RENDERVIEW_WRITE_RGBA = 3,
+    T1RENDERVIEW_WRITE_ABOVEBOUNDS = 4,
+} T1RenderViewWriteType;
+
 typedef struct {
-    float view_4x4[16];
-    float projection_4x4[16];
-    float xyz[3];           // 12 bytes
-    float xyz_angle[3];     // 12 bytes
-    float xyz_cosangle[3];  // 12 bytes
-    float xyz_sinangle[3];  // 12 bytes
-    float padding[4];       //  8 bytes
-} T1GPUCamera;
+    // v = view, p = projection
+    float    v_4x4[16];
+    float    p_4x4[16];
+    float    normv_3x3[9];
+    float    cull_below_z;
+    float    cull_above_z;
+    int      read_from_shadow_maps;
+    int      write_to_shadow_maps;
+} T1GPURenderView;
 
 typedef struct {
     float ambient_rgb[3];
     float diffuse_rgb[3];
     float specular_rgb[3];
-    float rgb_cap[3];
     float uv_scroll[2];
     int   texturearray_i;
     int   texture_i;
@@ -83,14 +94,15 @@ typedef struct {
 } T1GPUConstMat;
 
 typedef struct {
+    // m = model matrix
     T1GPUConstMat base_mat;
-    float         model_4x4[16];
-    float         model_view_4x4[16];
-    float         normal_3x3[9];
+    float         m_4x4[16];
+    float         norm_3x3[9];
     float         bonus_rgb[3];
     float         base_mat_uv_offsets[2];
     float         alpha;
     float         ignore_lighting;
+    float         ignore_camera;
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     float         outline_alpha;
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
@@ -99,6 +111,9 @@ typedef struct {
     #endif
     unsigned int  remove_shadow;
     int           touch_id;
+    int           mix_project_rv_i;
+    int           mix_project_array_i;
+    int           mix_project_slice_i;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {
@@ -113,24 +128,15 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
-    float camview_to_lightview_4x4[16];
     float xyz[3];
-    float viewspace_xyz[3];
     float angle_xyz[3];
     float diffuse;
     float specular;
     float reach;
     float rgb[3];
+    int   shadow_map_depth_tex_i;
+    int   shadow_map_render_view_i;
 } T1GPULight;
-
-typedef struct {
-    float znear;
-    float zfar;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-    float x_multiplier;
-    float y_multiplier;
-} T1GPUProjectConsts;
 
 typedef struct
 {
@@ -149,8 +155,8 @@ typedef struct
     #else
     #error
     #endif
-    float screen_width;
-    float screen_height;
+    // float screen_width;
+    // float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;
@@ -166,12 +172,12 @@ typedef struct
     #else
     #error
     #endif
+    unsigned int cam_rv_i;
     unsigned int timestamp;
     unsigned int lights_size;
-    unsigned int shadowcaster_i;
     int perlin_texturearray_i;
     int perlin_texture_i;
-    float padding[7];
+    float padding[6];
 } T1GPUPostProcConsts;
 
 typedef struct

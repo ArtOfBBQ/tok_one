@@ -8,10 +8,10 @@
 #include "T1_simd.h"
 #include "T1_std.h"
 #include "T1_logger.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_material.h"
 #include "T1_mesh.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 
 typedef struct  {
     float xyz[3];
@@ -19,8 +19,7 @@ typedef struct  {
     float mul_xyz[3];
     float angle_xyz[3];
     float scale_factor;
-    float ignore_camera;
-    float padding[2];
+    float padding[3];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {
@@ -31,6 +30,7 @@ typedef struct {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     int32_t zsprite_id;
     
+    bool8_t bloom_on;
     bool8_t alpha_blending_on;
     bool8_t committed;
     bool8_t deleted;

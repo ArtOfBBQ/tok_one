@@ -20,7 +20,7 @@ extern "C" {
 #include "T1_texture_files.h"
 #include "T1_lines.h"
 #include "T1_zsprite.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_particle.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_decodedimage.h"
@@ -97,8 +97,8 @@ this will be called whenever your app's window resizes - you can react by
 updating your layout to match the new window
 */
 void T1_clientlogic_window_resize(
-    const uint32_t new_height,
-    const uint32_t new_width);
+    const uint32_t new_width,
+    const uint32_t new_height);
 
 #ifdef __cplusplus
 }

@@ -21,11 +21,13 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_LEFT   1650.0f
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
+#define T1_RENDER_VIEW_CAP 1
+
 #define T1_ACTIVE 1
 #define T1_INACTIVE 2
 
 #define T1_Z_PREPASS_ACTIVE 1
-#define T1_ALPHABLENDING_SHADER_ACTIVE 1
+#define T1_BLENDING_SHADER_ACTIVE 1
 
 #define T1_STD_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_LOGGER_ASSERTS_ACTIVE T1_ACTIVE
@@ -51,7 +53,7 @@ of the engine for your specific app.
 #define T1_MIPMAPS_ACTIVE 1
 #define T1_FOG_ACTIVE 1
 
-#define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
+#define FRAMES_CAP 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER 240000
 #define MAX_LIGHTS_PER_BUFFER 3

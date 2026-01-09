@@ -1,15 +1,10 @@
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 
-// The global camera
-// In a 2D game, move the x to the left to move all of your
-// sprites to the right
-T1GPUCamera camera;
-
-zLightSource * zlights_to_apply = NULL;
+T1zLight * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
-uint32_t shadowcaster_light_i = 0;
 
-static void construct_zlight(zLightSource * to_construct) {
+static void T1_zlight_construct(T1zLight * to_construct)
+{
     to_construct->xyz[0]        = 0.0f;
     to_construct->xyz[1]        = 0.0f;
     to_construct->xyz[2]        = 0.0f;
@@ -24,14 +19,16 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted       = false;
     to_construct->committed     = false;
+    
+    to_construct->shadow_map_depth_texture_i = -1;
 }
 
-zLightSource * next_zlight(void) {
-    zLightSource * return_value = NULL;
+T1zLight * T1_zlight_next(void) {
+    T1zLight * return_value = NULL;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].deleted) {
             return_value = &zlights_to_apply[i];
-            construct_zlight(return_value);
+            T1_zlight_construct(return_value);
             return return_value;
         }
     }
@@ -41,12 +38,12 @@ zLightSource * next_zlight(void) {
     return_value->committed = false;
     zlights_to_apply_size += 1;
     
-    construct_zlight(return_value);
+    T1_zlight_construct(return_value);
     
     return return_value;
 }
 
-void commit_zlight(zLightSource * to_request)
+void T1_zlight_commit(T1zLight * to_request)
 {
     log_assert(!to_request->deleted);
     to_request->committed = true;
@@ -198,7 +195,7 @@ void z_rotate_zvertices_inplace(
     *vec_to_rotate_x = rotated_x;
 }
 
-void clean_deleted_lights(void)
+void T1_zlight_clean_all_deleted(void)
 {
     while (
         zlights_to_apply_size > 0
@@ -208,15 +205,16 @@ void clean_deleted_lights(void)
     }
 }
 
-void project_float4_to_2d_inplace(
+#if 0
+void T1_zlight_project_float4_to_2d_inplace(
     float * position_x,
     float * position_y,
     float * position_z)
 {
-    T1GPUProjectConsts * pjc = &T1_engine_globals->project_consts;
+    T1GPUProjectConsts * pjc = &T1_global->project_consts;
     
     float x_multiplier =
-        T1_engine_globals->aspect_ratio * pjc->field_of_view_modifier;
+        T1_global->aspect_ratio * pjc->field_of_view_modifier;
     float y_multiplier = pjc->field_of_view_modifier;
     float z_multiplier = (pjc->zfar / (pjc->zfar - pjc->znear));
     float z_addition = (1.0f * (-pjc->zfar * pjc->znear) /
@@ -227,14 +225,13 @@ void project_float4_to_2d_inplace(
     *position_z *= z_multiplier;
     *position_z += z_addition;
 }
+#endif
 
-void copy_lights(
+void T1_zlight_copy_all(
     T1GPULight * lights,
-    uint32_t * lights_size,
-    uint32_t * shadowcaster_i)
+    uint32_t * lights_size)
 {
     *lights_size = 0;
-    *shadowcaster_i = shadowcaster_light_i;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         if (!zlights_to_apply[i].deleted) {
@@ -269,13 +266,18 @@ void copy_lights(
             lights[*lights_size].rgb[2] =
                 zlights_to_apply[i].RGBA[2];
             
+            lights[*lights_size].shadow_map_depth_tex_i =
+                zlights_to_apply[i].shadow_map_depth_texture_i;
+            lights[*lights_size].shadow_map_render_view_i =
+                zlights_to_apply[i].shadow_map_render_view_i;
+            
             *lights_size += 1;
         }
     }
 }
 
 // move each light so the camera becomes position 0,0,0
-void translate_lights(
+void T1_zlight_translate_all(
     T1GPULight * lights,
     uint32_t * lights_size)
 {
@@ -286,21 +288,21 @@ void translate_lights(
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         translated_light_pos[0] =
-            zlights_to_apply[i].xyz[0] - camera.xyz[0];
+            zlights_to_apply[i].xyz[0] - T1_camera->xyz[0];
         translated_light_pos[1] =
-            zlights_to_apply[i].xyz[1] - camera.xyz[1];
+            zlights_to_apply[i].xyz[1] - T1_camera->xyz[1];
         translated_light_pos[2] =
-            zlights_to_apply[i].xyz[2] - camera.xyz[2];
+            zlights_to_apply[i].xyz[2] - T1_camera->xyz[2];
         
         x_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[0]);
+            -T1_camera->xyz_angle[0]);
         y_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[1]);
+            -T1_camera->xyz_angle[1]);
         z_rotate_zvertex_f3(
             translated_light_pos,
-            -camera.xyz_angle[2]);
+            -T1_camera->xyz_angle[2]);
         
         lights[i].xyz[0] = translated_light_pos[0];
         lights[i].xyz[1] = translated_light_pos[1];
@@ -316,7 +318,7 @@ void translate_lights(
     *lights_size = zlights_to_apply_size;
 }
 
-void delete_zlight(const int32_t with_object_id) {
+void T1_zlight_delete(const int32_t with_object_id) {
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].object_id == with_object_id)
         {
@@ -333,7 +335,7 @@ to look at point_to_xyz instead
 
 from_pos_xyz is the current position of the light
 */
-void zlight_point_light_to_location(
+void T1_zlight_point_light_to_location(
     float * recipient_xyz_angle,
     const float * from_pos_xyz,
     const float * point_to_xyz)
@@ -375,4 +377,58 @@ void zlight_point_light_to_location(
     recipient_xyz_angle[0] = pitch; // X rotation (pitch)
     recipient_xyz_angle[1] = yaw;   // Y rotation (yaw)
     recipient_xyz_angle[2] = roll;  // Z rotation (roll)
+}
+
+void T1_zlight_update_all_attached_render_views(void)
+{
+    for (
+        uint32_t zl_i = 0;
+        zl_i < zlights_to_apply_size;
+        zl_i++)
+    {
+        int32_t depth_i = zlights_to_apply[zl_i].
+            shadow_map_depth_texture_i;
+        
+        if (depth_i < 0) { continue; }
+        
+        log_assert(depth_i < T1_RENDER_VIEW_CAP);
+        
+        int32_t rv_i = -1;
+        
+        for (
+            int32_t i = 0;
+            i < (int32_t)T1_render_views->size;
+            i++)
+        {
+            if (
+                T1_render_views->cpu[i].write_array_i ==
+                    DEPTH_TEXTUREARRAYS_I &&
+                T1_render_views->cpu[i].write_slice_i ==
+                    depth_i)
+            {
+                rv_i = i;
+            }
+        }
+        
+        if (rv_i < 0) {
+            continue;
+        }
+        
+        log_assert(rv_i <
+            (int32_t)T1_render_views->size);
+        log_assert(rv_i < T1_RENDER_VIEW_CAP);
+        
+        T1_render_views->cpu[rv_i].xyz[0] =
+            zlights_to_apply[zl_i].xyz[0];
+        T1_render_views->cpu[rv_i].xyz[1] =
+            zlights_to_apply[zl_i].xyz[1];
+        T1_render_views->cpu[rv_i].xyz[2] =
+            zlights_to_apply[zl_i].xyz[2];
+        T1_render_views->cpu[rv_i].xyz_angle[0] =
+            zlights_to_apply[zl_i].xyz_angle[0];
+        T1_render_views->cpu[rv_i].xyz_angle[1] =
+            zlights_to_apply[zl_i].xyz_angle[1];
+        T1_render_views->cpu[rv_i].xyz_angle[2] =
+            zlights_to_apply[zl_i].xyz_angle[2];
+    }
 }

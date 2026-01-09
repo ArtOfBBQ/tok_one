@@ -34,7 +34,7 @@ typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
-    log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
@@ -152,7 +152,7 @@ static void test_simd_functions_floats(void) {
 static uint32_t pad_to_page_size(uint32_t base_allocation) {
     uint32_t return_value = base_allocation +
         (T1_mem_page_size - (base_allocation % T1_mem_page_size));
-    assert(return_value % T1_mem_page_size == 0);
+    log_assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
@@ -284,9 +284,9 @@ void T1_appinit_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
     #endif
     
-    T1_engine_globals = (T1EngineGlobals *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1EngineGlobals));
-    T1_std_memset(T1_engine_globals, 0, sizeof(T1EngineGlobals));
+    T1_global = (T1Globals *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1Globals));
+    T1_std_memset(T1_global, 0, sizeof(T1Globals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
@@ -306,13 +306,15 @@ void T1_appinit_before_gpu_init(
         engine_save_file->window_width > 20 &&
         engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
     {
-        T1_engine_globals->window_height = engine_save_file->window_height;
-        T1_engine_globals->window_width  = engine_save_file->window_width;
-        T1_engine_globals->window_left   = engine_save_file->window_left;
-        T1_engine_globals->window_bottom = engine_save_file->window_bottom;
-        T1_engine_globals->fullscreen = engine_save_file->window_fullscreen;
-        T1_engine_globals->upcoming_fullscreen_request =
-            T1_engine_globals->fullscreen;
+        T1_global->window_height =
+            engine_save_file->window_height;
+        T1_global->window_width  =
+            engine_save_file->window_width;
+        T1_global->window_left   = engine_save_file->window_left;
+        T1_global->window_bottom = engine_save_file->window_bottom;
+        T1_global->fullscreen = engine_save_file->window_fullscreen;
+        T1_global->upcoming_fullscreen_request =
+            T1_global->fullscreen;
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         T1_audio_state->music_volume = engine_save_file->music_volume;
         T1_audio_state->sfx_volume = engine_save_file->sound_volume;
@@ -322,26 +324,27 @@ void T1_appinit_before_gpu_init(
         #error "T1_AUDIO_ACTIVE undefined!"
         #endif // T1_AUDIO_ACTIVE
     } else {
-        T1_engine_globals->fullscreen = false;
-        T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-        T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-        T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-        T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+        T1_global->fullscreen = false;
+        T1_global->window_height = INITIAL_WINDOW_HEIGHT;
+        T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+        T1_global->window_left   = INITIAL_WINDOW_LEFT;
+        T1_global->window_bottom =
+            INITIAL_WINDOW_BOTTOM;
     }
     
     if (engine_save.contents != NULL) {
         T1_mem_free_from_managed(engine_save.contents);
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    T1_engine_globals->fullscreen = false;
-    T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-    T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-    T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-    T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    T1_global->fullscreen = false;
+    T1_global->window_height = INITIAL_WINDOW_HEIGHT;
+    T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+    T1_global->window_left   = INITIAL_WINDOW_LEFT;
+    T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    sound_settings->music_volume  = 0.5f;
-    sound_settings->sfx_volume    = 0.5f;
+    T1_audio_state->music_volume  = 0.5f;
+    T1_audio_state->sfx_volume    = 0.5f;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -352,10 +355,7 @@ void T1_appinit_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
     #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
-    T1_engine_globals->aspect_ratio = T1_engine_globals->window_height /
-        T1_engine_globals->window_width;
-    
-    T1_engineglobals_init();
+    T1_global_init();
     
     T1_uielement_init();
     
@@ -366,12 +366,13 @@ void T1_appinit_before_gpu_init(
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
     T1_objmodel_init();
-    zlights_to_apply = (zLightSource *)T1_mem_malloc_from_unmanaged(
-        sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+    zlights_to_apply = (T1zLight *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1zLight) * MAX_LIGHTS_PER_BUFFER);
     T1_std_memset(
         zlights_to_apply,
         0,
-        sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+        sizeof(T1zLight) *
+            MAX_LIGHTS_PER_BUFFER);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #if 0
@@ -453,115 +454,121 @@ void T1_appinit_before_gpu_init(
         return;
     }
     
+    T1_render_view_init();
+        
     T1_io_init(T1_mem_malloc_from_unmanaged);
     
     T1_renderer_init();
     
     T1_clientlogic_init();
     
-    gpu_shared_data_collection = T1_mem_malloc_from_unmanaged(
-        sizeof(T1GPUSharedDataCollection));
+    gpu_shared_data_collection =
+        T1_mem_malloc_from_unmanaged(
+            sizeof(T1GPUSharedDataCollection));
+    log_assert(gpu_shared_data_collection != NULL);
+    
+    T1GPUSharedDataCollection * sd = gpu_shared_data_collection;
+    log_assert(sd != NULL);
+    
     T1_std_memset(
-        gpu_shared_data_collection,
+        sd,
         0,
         sizeof(T1GPUSharedDataCollection));
     
     // init the buffers that contain our vertices to send to the GPU
-    gpu_shared_data_collection->vertices_allocation_size =
-        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+    sd->vertices_alloc_size = pad_to_page_size(
+        sizeof(T1GPUVertexIndices) *
+            MAX_VERTICES_PER_BUFFER);
+    log_assert(sd->vertices_alloc_size > 0);
     
-    gpu_shared_data_collection->flat_quads_allocation_size =
-        pad_to_page_size(sizeof(T1GPUFlatQuad) * MAX_CIRCLES_PER_BUFFER);
+    sd->flat_quads_alloc_size =
+        pad_to_page_size(sizeof(T1GPUFlatQuad) *
+            MAX_CIRCLES_PER_BUFFER);
     
-    gpu_shared_data_collection->polygons_allocation_size =
-        pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
-    
-    gpu_shared_data_collection->lights_allocation_size =
-        pad_to_page_size(sizeof(T1GPULight) * MAX_LIGHTS_PER_BUFFER);
-    
-    gpu_shared_data_collection->camera_allocation_size =
-        pad_to_page_size(sizeof(T1GPUCamera));
-    
-    gpu_shared_data_collection->locked_vertices_allocation_size =
+    sd->polygons_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPUzSprite) *
+                MAX_ZSPRITES_PER_BUFFER);
     
-    gpu_shared_data_collection->const_mats_allocation_size =
+    sd->lights_alloc_size =
+        pad_to_page_size(sizeof(T1GPULight) *
+            MAX_LIGHTS_PER_BUFFER);
+    
+    sd->render_views_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPURenderView) *
+                T1_RENDER_VIEW_CAP);
     
-    gpu_shared_data_collection->projection_constants_allocation_size =
-        pad_to_page_size(sizeof(T1GPUProjectConsts));
+    sd->locked_vertices_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPULockedVertex) *
+                ALL_LOCKED_VERTICES_SIZE);
     
-    gpu_shared_data_collection->postprocessing_constants_allocation_size =
-        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+    sd->const_mats_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUConstMat) *
+                ALL_LOCKED_MATERIALS_SIZE);
+    
+    sd->postprocessing_constants_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUVertexIndices) *
+                MAX_VERTICES_PER_BUFFER);
     
     for (
         uint32_t cur_frame_i = 0;
-        cur_frame_i < MAX_RENDERING_FRAME_BUFFERS;
+        cur_frame_i < FRAMES_CAP;
         cur_frame_i++)
     {
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
-            (T1GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->vertices_allocation_size,
+        T1GPUFrame * f =
+            &sd->triple_buffers[cur_frame_i];
+        
+        f->verts = (T1GPUVertexIndices *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->vertices_alloc_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].flat_billboard_quads =
-            (T1GPUFlatQuad *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->flat_quads_allocation_size,
+        f->flat_billboard_quads = (T1GPUFlatQuad *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->flat_quads_alloc_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            zsprite_list =
-                (T1GPUzSpriteList *)T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->polygons_allocation_size,
-                    T1_mem_page_size);
-        
-        assert(gpu_shared_data_collection->
-            lights_allocation_size > 0);
-        gpu_shared_data_collection->
-            triple_buffers[cur_frame_i].lights =
-            (T1GPULight *)
-                T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        lights_allocation_size,
-                    T1_mem_page_size);
-        assert(gpu_shared_data_collection->
-            triple_buffers[cur_frame_i].
-                lights != NULL);
-        
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
-            (T1GPUCamera *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->camera_allocation_size,
+        f->zsprite_list = (T1GPUzSpriteList *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->polygons_alloc_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            postproc_consts =
-                (T1GPUPostProcConsts *)T1_mem_malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        postprocessing_constants_allocation_size,
-                    T1_mem_page_size);
+        log_assert(sd->lights_alloc_size > 0);
+        f->lights = (T1GPULight *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->lights_alloc_size,
+                T1_mem_page_size);
+        log_assert(f->lights != NULL);
+        
+        f->render_views = (T1GPURenderView *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->render_views_alloc_size,
+                T1_mem_page_size);
         
         T1_std_memset_f32(
-            gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
+            f->render_views,
             0.0f,
-            sizeof(T1GPUCamera));
+            sizeof(T1GPURenderView) *
+                T1_RENDER_VIEW_CAP);
+        
+        f->postproc_consts = (T1GPUPostProcConsts *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->postprocessing_constants_alloc_size,
+                T1_mem_page_size);
     }
     
-    gpu_shared_data_collection->locked_vertices =
+    sd->locked_vertices =
         (T1GPULockedVertex *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->locked_vertices_allocation_size,
+            sd->locked_vertices_alloc_size,
             T1_mem_page_size);
     
-    gpu_shared_data_collection->const_mats =
-        (T1GPUConstMat *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->const_mats_allocation_size,
-            T1_mem_page_size);
-    
-    gpu_shared_data_collection->locked_pjc =
-        (T1GPUProjectConsts *)T1_mem_malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->
-                projection_constants_allocation_size,
+    sd->const_mats = (T1GPUConstMat *)
+        T1_mem_malloc_from_unmanaged_aligned(
+            sd->const_mats_alloc_size,
             T1_mem_page_size);
     
     bool32_t initial_log_dump_succesful = false;
@@ -624,10 +631,25 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
+    uint32_t rv_width = (uint32_t)
+        T1_global->window_width;
+    uint32_t rv_height = (uint32_t)
+        T1_global->window_height;
+    
+    while (rv_width > 2048 || rv_height > 2048) {
+        rv_width  /= 2;
+        rv_height /= 2;
+    }
+    
+    T1_texture_array_create_new_render_view(
+        rv_width,
+        rv_height);
+    
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
-    T1_platform_gpu_update_viewport();
+    T1_platform_gpu_update_internal_render_viewport(0);
+    T1_platform_gpu_update_window_viewport();
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)
@@ -662,20 +684,20 @@ void T1_appinit_after_gpu_init_step2(
         log_dump_and_crash(
             "Missing engine file: "
             "perlin_noise.dds");
-        T1_engine_globals->postproc_consts.perlin_texturearray_i = 1;
-        T1_engine_globals->postproc_consts.perlin_texture_i = 0;
+        T1_global->postproc_consts.perlin_texturearray_i = 1;
+        T1_global->postproc_consts.perlin_texture_i = 0;
     } else {
         T1Tex perlin_tex = T1_texture_array_get_filename_location(
             "perlin_noise.dds");
-        T1_engine_globals->postproc_consts.perlin_texturearray_i =
+        T1_global->postproc_consts.perlin_texturearray_i =
             perlin_tex.array_i;
-        T1_engine_globals->postproc_consts.perlin_texture_i =
+        T1_global->postproc_consts.perlin_texture_i =
             perlin_tex.slice_i;
     }
     
     if (
-        T1_engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
-        T1_engine_globals->postproc_consts.perlin_texture_i != 0)
+        T1_global->postproc_consts.perlin_texturearray_i < 1 ||
+        T1_global->postproc_consts.perlin_texture_i != 0)
     {
         T1_gameloop_active = true;
         log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
@@ -683,9 +705,9 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
-    T1_engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[0] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[1] = 0.5f;
+    T1_global->postproc_consts.in_shadow_multipliers[2] = 0.5f;
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -711,7 +733,7 @@ void T1_appinit_after_gpu_init_step2(
             return;
         }
         
-        T1_engine_globals->
+        T1_global->
             clientlogic_early_startup_finished = 1;
         
         uint32_t core_count = T1_platform_get_cpu_logical_core_count();
@@ -724,8 +746,8 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
-        log_assert(T1_engine_globals->startup_bytes_to_load == 0);
-        log_assert(T1_engine_globals->startup_bytes_loaded == 0);
+        log_assert(T1_global->startup_bytes_to_load == 0);
+        log_assert(T1_global->startup_bytes_loaded == 0);
         
         if (!T1_app_running) {
             return;
@@ -858,14 +880,14 @@ void T1_appinit_after_gpu_init_step2(
         log_append("Slowest texture array: ");
         log_append_int(longest_ta_i);
         log_append("\nIncludes images: ");
-        log_append(T1_texture_arrays[longest_ta_i].images[0].filename);
+        log_append(T1_texture_arrays[longest_ta_i].images[0].name);
         for (
             int32_t t_i = 1;
             t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
             t_i++)
         {
             log_append(", ");
-            log_append(T1_texture_arrays[longest_ta_i].images[t_i].filename);
+            log_append(T1_texture_arrays[longest_ta_i].images[t_i].name);
         }
     }
     
@@ -917,7 +939,7 @@ void T1_appinit_after_gpu_init_step2(
 
 void T1_appinit_shutdown(void)
 {
-    #if T1_ENGINE_SAVEFILE_ACTIVE
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     engine_save_file->music_volume = T1_audio_state->music_volume;
@@ -928,19 +950,22 @@ void T1_appinit_shutdown(void)
     #endif
     
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    engine_save_file->music_volume = 0.5f;
-    engine_save_file->sound_volume = 0.5f;
     #else
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
     #endif
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     log_assert(engine_save_file != NULL);
-    engine_save_file->window_bottom = T1_engine_globals->window_bottom;
-    engine_save_file->window_height = T1_engine_globals->window_height;
-    engine_save_file->window_left = T1_engine_globals->window_left;
-    engine_save_file->window_width = T1_engine_globals->window_width;
-    engine_save_file->window_fullscreen = T1_engine_globals->fullscreen;
+    engine_save_file->window_bottom =
+        T1_global->window_bottom;
+    engine_save_file->window_height =
+        T1_global->window_height;
+    engine_save_file->window_left =
+        T1_global->window_left;
+    engine_save_file->window_width =
+        T1_global->window_width;
+    engine_save_file->window_fullscreen =
+        T1_global->fullscreen;
     
     uint32_t good = false;
     T1_platform_delete_writable("enginestate.dat");

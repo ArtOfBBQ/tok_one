@@ -51,25 +51,19 @@ static void show_dead_simple_text(
     T1_zsprite_list->size = 0;
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    T1_engine_globals->postproc_consts.fog_factor = 0.0f;
+    T1_global->postproc_consts.fog_factor = 0.0f;
     #elif T1_FOG_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error "T1_FOG_ACTIVE undefined"
     #endif
     
-    camera.xyz[0] = 0.0f;
-    camera.xyz[1] = 0.0f;
-    camera.xyz[2] = 0.0f;
-    camera.xyz_angle[0] = 0.0f;
-    camera.xyz_angle[1] = 0.0f;
-    camera.xyz_angle[2] = 0.0f;
-    camera.xyz_cosangle[0] = 0.0f;
-    camera.xyz_cosangle[1] = 0.0f;
-    camera.xyz_cosangle[2] = 0.0f;
-    camera.xyz_sinangle[0] = 0.0f;
-    camera.xyz_sinangle[1] = 0.0f;
-    camera.xyz_sinangle[2] = 0.0f;
+    T1_camera->xyz[0] = 0.0f;
+    T1_camera->xyz[1] = 0.0f;
+    T1_camera->xyz[2] = 0.0f;
+    T1_camera->xyz_angle[0] = 0.0f;
+    T1_camera->xyz_angle[1] = 0.0f;
+    T1_camera->xyz_angle[2] = 0.0f;
     
     font_settings->font_height          = 20.0f;
     font_settings->mat.ambient_rgb[0]   = 1.0f;
@@ -91,27 +85,25 @@ static void show_dead_simple_text(
         /* const float left_pixelspace: */
             30,
         /* const float top_pixelspace: */
-            T1_engine_globals->window_height - 30,
+            T1_global->window_height - 30,
         /* const float z: */
             1.0f,
         /* const float max_width: */
-            T1_engine_globals->window_width - 30);
+            T1_global->window_width - 30);
     
-    T1_engine_globals->draw_fps = 0;
-    T1_engine_globals->draw_triangles = true;
-    T1_engine_globals->draw_axes = 0;
-    T1_engine_globals->draw_fps = 0;
-    T1_engine_globals->show_profiler = false;
-    T1_engine_globals->postproc_consts.
+    T1_global->draw_fps = 0;
+    T1_global->draw_triangles = true;
+    T1_global->draw_axes = 0;
+    T1_global->draw_fps = 0;
+    T1_global->show_profiler = false;
+    T1_global->postproc_consts.
         perlin_texturearray_i = 0;
-    T1_engine_globals->postproc_consts.
+    T1_global->postproc_consts.
         perlin_texture_i = 0;
-    T1_engine_globals->postproc_consts.
+    T1_global->postproc_consts.
         color_quantization = 1;
-    T1_engine_globals->postproc_consts.
+    T1_global->postproc_consts.
         lights_size = 0;
-    T1_engine_globals->postproc_consts.
-        shadowcaster_i = UINT32_MAX;
     
     T1_renderer_hardware_render(
             frame_data,
@@ -129,21 +121,26 @@ void T1_gameloop_update_before_render_pass(
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    T1_engine_globals->elapsed = T1_engine_globals->this_frame_timestamp_us -
-        gameloop_previous_time;
+    T1_global->elapsed =
+        T1_global->this_frame_timestamp_us -
+            gameloop_previous_time;
     
-    // TODO: set the frame timestamp to an adjusted value also
-    T1_engine_globals->elapsed = (uint64_t)(
-        (double)T1_engine_globals->elapsed *
-        (double)T1_engine_globals->timedelta_mult);
+    // TODO: set frame timestamp to an adj value
+    T1_global->elapsed = (uint64_t)(
+        (double)T1_global->elapsed *
+        (double)T1_global->timedelta_mult);
     
-    gameloop_previous_time = T1_engine_globals->this_frame_timestamp_us;
+    gameloop_previous_time = T1_global->this_frame_timestamp_us;
     
     frame_data->postproc_consts->lights_size = 0;
-    frame_data->verts_size               = 0;
+    frame_data->opaq_verts_size = 0;
+    frame_data->bloom_verts_size = 0;
+    frame_data->alpha_verts_size = 0;
+    frame_data->verts_size = 0;
     frame_data->flat_billboard_quads_size             = 0;
-    frame_data->zsprite_list->size       = 0;
-    frame_data->first_alphablend_i       = 0;
+    frame_data->zsprite_list->size = 0;
+    frame_data->first_alpha_i = 0;
+    frame_data->first_bloom_i = 0;
     
     if (
         !T1_gameloop_active && T1_loading_textures)
@@ -154,8 +151,8 @@ void T1_gameloop_update_before_render_pass(
         }
         
         float pct_progress =
-            (float)T1_engine_globals->startup_bytes_loaded /
-            (float)T1_engine_globals->startup_bytes_to_load;
+            (float)T1_global->startup_bytes_loaded /
+            (float)T1_global->startup_bytes_to_load;
         pct_progress *= 100.0f;
         
         char loading_text[256];
@@ -194,13 +191,13 @@ void T1_gameloop_update_before_render_pass(
     }
     
     log_assert(frame_data->lights != NULL);
-    log_assert(frame_data->camera != NULL);
+    log_assert(frame_data->render_views != NULL);
     
-    T1_engine_globals->this_frame_timestamp_us =
+    T1_global->this_frame_timestamp_us =
         T1_platform_get_current_time_us();
     
     if (gameloop_previous_time < 1) {
-        gameloop_previous_time = T1_engine_globals->this_frame_timestamp_us;
+        gameloop_previous_time = T1_global->this_frame_timestamp_us;
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_gameloop_update_before_render_pass()");
@@ -222,7 +219,7 @@ void T1_gameloop_update_before_render_pass(
         show_dead_simple_text(
             frame_data,
             crashed_top_of_screen_msg,
-            T1_engine_globals->elapsed);
+            T1_global->elapsed);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_gameloop_update_before_render_pass()");
@@ -236,13 +233,13 @@ void T1_gameloop_update_before_render_pass(
     gameloop_frame_no++;
     
     if (
-        T1_engine_globals->this_frame_timestamp_us -
-            T1_engine_globals->last_resize_request_us < 2000000)
+        T1_global->this_frame_timestamp_us -
+            T1_global->last_resize_request_us < 2000000)
     {
         if (
-            T1_engine_globals->
+            T1_global->
                 this_frame_timestamp_us -
-            T1_engine_globals->
+            T1_global->
                 last_resize_request_us < 350000)
         {
             // possibly a request we already handled, or not the final
@@ -252,20 +249,62 @@ void T1_gameloop_update_before_render_pass(
             log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end("T1_gameloop_update_before_render_pass()");
+            T1_profiler_end(
+                "T1_gameloop_update_b4_render_pass()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
             #else
             #error "T1_PROFILER_ACTIVE undefined"
             #endif
             return;
         } else {
+            T1_global_init();
             
-            T1_engine_globals->last_resize_request_us = 0;
+            T1_global->last_resize_request_us = 0;
             log_append("\nOK, resize window\n");
             
-            T1_engineglobals_init();
+            log_assert(
+                (int32_t)T1_render_views->size <=
+                    T1_RENDER_VIEW_CAP);
+            for (
+                int32_t rv_i = 0;
+                rv_i < (int32_t)T1_render_views->size;
+                rv_i++)
+            {
+                if (
+                    !T1_render_views->cpu[rv_i].
+                        deleted &&
+                    T1_render_views->cpu[rv_i].
+                        write_array_i >= 0)
+                {
+                    T1_texture_array_delete_slice(
+                        T1_render_views->cpu[rv_i].
+                            write_array_i,
+                        T1_render_views->cpu[rv_i].
+                            write_slice_i);
+                }
+                
+                T1_render_view_delete(rv_i);
+            }
+            log_assert(T1_render_views->size == 0);
             
-            T1_platform_gpu_update_viewport();
+            // TODO:
+            // use an internal render size
+            // determined by settings, not window
+            int32_t rv_i =
+                T1_texture_array_create_new_render_view(
+                    (uint32_t)T1_global->window_width,
+                    (uint32_t)T1_global->window_height);
+            log_assert(rv_i == 0);
+            log_assert(
+                !T1_render_views->cpu[0].deleted);
+            log_assert(
+                T1_render_views->cpu[0].write_type ==
+                    T1RENDERVIEW_WRITE_RENDER_TARGET);
+            log_assert(
+                !T1_texture_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
+            
+            T1_platform_gpu_update_window_viewport();
+            T1_platform_gpu_update_internal_render_viewport(rv_i);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();
@@ -276,17 +315,24 @@ void T1_gameloop_update_before_render_pass(
             #endif
             
             T1_clientlogic_window_resize(
-                (uint32_t)T1_engine_globals->window_height,
-                (uint32_t)T1_engine_globals->window_width);
+                (uint32_t)T1_global->window_width,
+                (uint32_t)T1_global->window_height);
        }
     } else if (
         T1_app_running &&
-        T1_engine_globals->clientlogic_early_startup_finished)
+        T1_global->clientlogic_early_startup_finished)
     {
         
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
         T1_frame_anim_new_frame_starts();
         #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_render_view_validate();
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -301,13 +347,17 @@ void T1_gameloop_update_before_render_pass(
         T1_platform_update_mouse_location();
         
         // handle timed occlusions
-        for (uint32_t zs_i = 0; zs_i < T1_zsprite_list->size; zs_i++) {
+        for (
+            uint32_t zs_i = 0;
+            zs_i < T1_zsprite_list->size;
+            zs_i++)
+        {
             if (
                 T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us >
-                    T1_engine_globals->elapsed)
+                    T1_global->elapsed)
             {
                 T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us -=
-                    T1_engine_globals->elapsed;
+                    T1_global->elapsed;
             } else if (
                 T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us > 0)
             {
@@ -322,7 +372,7 @@ void T1_gameloop_update_before_render_pass(
         T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
-        T1_uielement_handle_touches(T1_engine_globals->elapsed);
+        T1_uielement_handle_touches(T1_global->elapsed);
         
         #if T1_TERMINAL_ACTIVE == T1_ACTIVE
         update_terminal();
@@ -339,7 +389,7 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         T1_clientlogic_update(
-            T1_engine_globals->elapsed);
+            T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_clientlogic_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
@@ -347,14 +397,13 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         
-        clean_deleted_lights();
+        T1_zlight_clean_all_deleted();
         
-        // engine_globals->postproc_consts will be copied to
-        // frame_data->postproc consts later inside hardware_render()
-        copy_lights(
+        T1_zlight_copy_all(
             frame_data->lights,
-            &T1_engine_globals->postproc_consts.lights_size,
-            &T1_engine_globals->postproc_consts.shadowcaster_i);
+            &T1_global->postproc_consts.lights_size);
+        
+        T1_render_view_update_positions();
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_renderer_hardware_render()");
@@ -365,9 +414,10 @@ void T1_gameloop_update_before_render_pass(
         T1_renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_us: */
-                T1_engine_globals->elapsed);
+                T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_renderer_hardware_render()");
+        T1_profiler_end(
+            "T1_renderer_hardware_render()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -377,20 +427,18 @@ void T1_gameloop_update_before_render_pass(
         frame_data->verts_size -= overflow_vertices;
     }
     
-    if (T1_engine_globals->draw_fps) {
+    if (T1_global->draw_fps) {
         text_request_fps_counter(
             /* uint64_t elapsed_us: */
-                T1_engine_globals->elapsed);
-    } else if (T1_engine_globals->draw_top_touchable_id) {
+                T1_global->elapsed);
+    } else if (T1_global->draw_top_touchable_id) {
         text_request_top_touchable_id(
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                 touch_id_top);
     }
     
     frame_data->postproc_consts->timestamp =
-        (uint32_t)T1_engine_globals->this_frame_timestamp_us;
-    frame_data->postproc_consts->shadowcaster_i =
-        shadowcaster_light_i;
+        (uint32_t)T1_global->this_frame_timestamp_us;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(
@@ -423,11 +471,14 @@ void T1_gameloop_update_after_render_pass(void) {
                 T1_io_events
                     [T1_IO_LAST_GPU_DATA].
                         screen_y);
-    T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_pierce =
-        T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_top;
     
-    if (T1_engine_globals->upcoming_fullscreen_request) {
-        T1_engine_globals->upcoming_fullscreen_request = false;
+    T1_io_events[T1_IO_LAST_GPU_DATA].
+        touch_id_pierce =
+            T1_io_events[T1_IO_LAST_GPU_DATA].
+                touch_id_top;
+    
+    if (T1_global->upcoming_fullscreen_request) {
+        T1_global->upcoming_fullscreen_request = false;
         T1_platform_enter_fullscreen();
     }
     

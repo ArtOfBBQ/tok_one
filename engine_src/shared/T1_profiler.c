@@ -106,11 +106,11 @@ void T1_profiler_init(
 }
 
 void T1_profiler_new_frame(void) {
-    if (profiler_paused && !T1_engine_globals->pause_profiler) {
+    if (profiler_paused && !T1_global->pause_profiler) {
         frames[frame_i].started_at = 0;
     }
     
-    profiler_paused = T1_engine_globals->pause_profiler;
+    profiler_paused = T1_global->pause_profiler;
     
     if (profiler_paused) {
         return;
@@ -143,7 +143,7 @@ void T1_profiler_new_frame(void) {
             GUI_TOP_MESSAGE_MAX,
             (uint32_t)frames[frame_i].elapsed);
         T1_std_strcat_cap(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
-        T1_engine_globals->pause_profiler = true;
+        T1_global->pause_profiler = true;
         return;
     }
     
@@ -326,7 +326,7 @@ void T1_profiler_handle_touches(void) {
 void T1_profiler_draw_labels(void) {
     T1_zsprite_delete(profiler_object_id);
     
-    if (T1_engine_globals->show_profiler) {
+    if (T1_global->show_profiler) {
         T1zSpriteRequest profiler_backdrop;
         T1_zsprite_request_next(&profiler_backdrop);
         T1_zsprite_construct_quad_around(
@@ -337,13 +337,13 @@ void T1_profiler_draw_labels(void) {
             /* const float z: */
                 PROFILER_Z,
             /* const float width: */
-                T1_engine_globals->window_width,
+                T1_global->window_width,
             /* const float height: */
-                T1_engine_globals->window_height,
+                T1_global->window_height,
             /* PolygonRequest *stack_recipient: */
                 &profiler_backdrop);
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
-        profiler_backdrop.cpu_data->simd_stats.ignore_camera = 1.0f;
+        profiler_backdrop.gpu_data->ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[0] = 0.50f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[1] = 0.50f;
@@ -368,20 +368,20 @@ void T1_profiler_draw_labels(void) {
             /* const float left_pixelspace: */
                 20,
             /* const float top_pixelspace: */
-                T1_engine_globals->window_height - 20,
+                T1_global->window_height - 20,
             /* const float z: */
                 PROFILER_Z - 0.02f,
             /* const float max_width: */
-                T1_engine_globals->window_width);
+                T1_global->window_width);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
             font_settings->mat.ambient_rgb[0] = 0.1f;
             float gui_frame_left = 20 +
-                (gui_frame_i * T1_engine_globals->window_width / 2);
+                (gui_frame_i * T1_global->window_width / 2);
             
             int32_t f_i = gui_selected_frames[gui_frame_i];
             
-            float cur_top = T1_engine_globals->window_height -
+            float cur_top = T1_global->window_height -
                 20 -
                 (font_settings->font_height + 2.0f);
             
@@ -407,7 +407,7 @@ void T1_profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    T1_engine_globals->window_width);
+                    T1_global->window_width);
             
             font_settings->touch_id = -1;
             
@@ -437,7 +437,7 @@ void T1_profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    T1_engine_globals->window_width);
+                    T1_global->window_width);
             
             if (frames[f_i].profiles_size > 0) {
                 gui_function_stack[0] = 0;
@@ -521,7 +521,7 @@ void T1_profiler_draw_labels(void) {
                     /* const float z: */
                         PROFILER_Z - 0.02f,
                     /* const float max_width: */
-                        T1_engine_globals->window_width);
+                        T1_global->window_width);
             }
         }
     }

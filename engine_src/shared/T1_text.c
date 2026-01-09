@@ -300,21 +300,21 @@ void text_request_label_offset_around(
             T1_zsprite_request_next(&letter);
             T1_zsprite_construct_quad_around(
                 /* const float left_x: */
-                    T1_engineglobals_screenspace_x_to_x(
+                    T1_render_view_screen_x_to_x(
                         mid_x_pixelspace,
                         z),
                 /* const float bottom_y */
-                    T1_engineglobals_screenspace_y_to_y(
+                    T1_render_view_screen_y_to_y(
                         mid_y_pixelspace,
                         z),
                 /* const float z: */
                     z,
                 /* const float width: */
-                    T1_engineglobals_screenspace_width_to_width(
+                    T1_render_view_screen_width_to_width(
                         font_settings->font_height,
                         z),
                 /* const float height: */
-                    T1_engineglobals_screenspace_height_to_height(
+                    T1_render_view_screen_height_to_height(
                         font_settings->font_height,
                         z),
                 /* recipient: */
@@ -322,7 +322,7 @@ void text_request_label_offset_around(
             
             letter.gpu_data->ignore_lighting =
                 font_settings->ignore_lighting;
-            letter.cpu_data->simd_stats.ignore_camera =
+            letter.gpu_data->ignore_camera =
                 font_settings->ignore_camera;
             letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
@@ -339,13 +339,13 @@ void text_request_label_offset_around(
             }
             
             letter.cpu_data->simd_stats.offset_xyz[0] =
-                T1_engineglobals_screenspace_width_to_width(
+                T1_render_view_screen_width_to_width(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])),
                     z);
             letter.cpu_data->simd_stats.offset_xyz[1] =
-                T1_engineglobals_screenspace_height_to_height(
+                T1_render_view_screen_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (font_settings->font_height * 0.5f)) +
@@ -445,9 +445,9 @@ void text_request_label_renderable(
     
     T1zSpriteRequest letter;
     
-    float letter_width = T1_engineglobals_screenspace_width_to_width(
+    float letter_width = T1_render_view_screen_width_to_width(
         font_settings->font_height, z);
-    float letter_height = T1_engineglobals_screenspace_height_to_height(
+    float letter_height = T1_render_view_screen_height_to_height(
         font_settings->font_height, z);
     
     while (text_to_draw[i] != '\0') {
@@ -482,11 +482,11 @@ void text_request_label_renderable(
         T1_zsprite_request_next(&letter);
         zsprite_construct_quad(
             /* const float left_x: */
-                T1_engineglobals_screenspace_x_to_x(
+                T1_render_view_screen_x_to_x(
                     left_pixelspace,
                     z),
             /* const float bottom_y: */
-                T1_engineglobals_screenspace_y_to_y(
+                T1_render_view_screen_y_to_y(
                     top_pixelspace - font_settings->font_height,
                     z),
             /* const flota z: */
@@ -503,7 +503,7 @@ void text_request_label_renderable(
         letter.cpu_data->alpha_blending_on =
             font_settings->alpha_blending_on;
         letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
-        letter.cpu_data->simd_stats.ignore_camera = font_settings->ignore_camera;
+        letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
         letter.gpu_data->base_mat = font_settings->mat;
@@ -519,11 +519,11 @@ void text_request_label_renderable(
         }
         
         letter.cpu_data->simd_stats.offset_xyz[0] =
-            T1_engineglobals_screenspace_width_to_width(
+            T1_render_view_screen_width_to_width(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]), z);
         letter.cpu_data->simd_stats.offset_xyz[1] =
-            T1_engineglobals_screenspace_height_to_height(
+            T1_render_view_screen_height_to_height(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]), z);
         
@@ -564,7 +564,7 @@ void text_request_debug_text(const char * text)
         /* z                     : */
             0.05f,
         /* float max_width       : */
-            T1_engine_globals->window_width);
+            T1_global->window_width);
 }
 
 #define FPS_FRAMES_MAX 10
@@ -636,9 +636,9 @@ void text_request_fps_counter(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            T1_engine_globals->project_consts.znear + 0.0001f,
+            T1_render_views->cpu[0].project.znear + 0.0001f,
         /* float max_width       : */
-            T1_engine_globals->window_width);
+            T1_global->window_width);
 }
 
 void text_request_top_touchable_id(
@@ -651,9 +651,9 @@ void text_request_top_touchable_id(
     T1_std_strcat_int_cap(fps_string, 512, top_touchable_id);
     
     T1_std_strcat_cap(fps_string, 512, ", camera xyz: [");
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[0]);
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[1]);
-    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[2]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[0]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[1]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[2]);
     T1_std_strcat_cap(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;
@@ -663,9 +663,6 @@ void text_request_top_touchable_id(
     font_settings->mat.diffuse_rgb[0] = 1.0f;
     font_settings->mat.diffuse_rgb[1] = 1.0f;
     font_settings->mat.diffuse_rgb[2] = 1.0f;
-    font_settings->mat.rgb_cap[0] = 1.0f;
-    font_settings->mat.rgb_cap[1] = 1.0f;
-    font_settings->mat.rgb_cap[2] = 1.0f;
     font_settings->mat.uv_scroll[0] = 0.0f;
     font_settings->mat.uv_scroll[1] = 0.0f;
     font_settings->mat.alpha = 1.0f;
@@ -684,7 +681,7 @@ void text_request_top_touchable_id(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            T1_engine_globals->project_consts.znear + 0.0001f,
+            T1_render_views->cpu[0].project.znear + 0.0001f,
         /* float max_width       : */
-            T1_engine_globals->window_width);
+            T1_global->window_width);
 }

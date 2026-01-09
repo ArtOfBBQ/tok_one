@@ -99,33 +99,42 @@ void terminal_redraw_backgrounds(void) {
     
     float current_input_height = (TERM_FONT_SIZE * 2);
     float command_history_height =
-        T1_engine_globals->window_height -
+        T1_global->window_height -
         current_input_height -
         (TERMINAL_WHITESPACE * 3);
     
     T1zSpriteRequest current_command_input;
     T1_zsprite_request_next(&current_command_input);
+    float mid_x = T1_render_view_screen_x_to_x(
+        T1_global->window_width / 2,
+        TERM_Z);
+    
+    float mid_y = T1_render_view_screen_y_to_y(
+        (TERMINAL_WHITESPACE * 1.5f) +
+        (TERM_FONT_SIZE / 2),
+        TERM_Z);
+    
+    float width = T1_render_view_screen_width_to_width(
+        T1_global->window_width -
+            (TERMINAL_WHITESPACE * 2),
+        TERM_Z);
+    
+    float height =
+        T1_render_view_screen_height_to_height(
+            current_input_height,
+            TERM_Z);
+    
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
-                T1_engine_globals->window_width / 2,
-                TERM_Z),
+            mid_x,
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
-                (TERMINAL_WHITESPACE * 1.5f) +
-                (TERM_FONT_SIZE / 2),
-                TERM_Z),
+            mid_y,
         /* const float z: */
             TERM_Z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
-                T1_engine_globals->window_width -
-                    (TERMINAL_WHITESPACE * 2),
-                TERM_Z),
+            width,
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
-                current_input_height,
-                TERM_Z),
+            height,
         /* zPolygon * recipien: */
             &current_command_input);
     
@@ -140,9 +149,10 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[2];
     current_command_input.gpu_data->base_mat.alpha =
         term_background_color[3];
-    current_command_input.cpu_data->simd_stats.ignore_camera = true;
+    current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->alpha_blending_on = true;
+    current_command_input.cpu_data->
+        alpha_blending_on = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
     current_command_input.gpu_data->touch_id = -1;
@@ -153,11 +163,11 @@ void terminal_redraw_backgrounds(void) {
     T1_zsprite_construct(&current_command_input);
     T1_zsprite_construct_quad_around(
        /* const float mid_x: */
-           T1_engineglobals_screenspace_x_to_x(
-               T1_engine_globals->window_width / 2,
+           T1_render_view_screen_x_to_x(
+               T1_global->window_width / 2,
                TERM_Z),
        /* const float mid_y: */
-           T1_engineglobals_screenspace_y_to_y(
+           T1_render_view_screen_y_to_y(
                (command_history_height / 2) +
                    current_input_height +
                    (TERMINAL_WHITESPACE * 2),
@@ -165,12 +175,12 @@ void terminal_redraw_backgrounds(void) {
        /* const float z: */
            TERM_Z,
        /* const float width: */
-           T1_engineglobals_screenspace_width_to_width(
-                T1_engine_globals->window_width -
+           T1_render_view_screen_width_to_width(
+                T1_global->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
        /* const float height: */
-           T1_engineglobals_screenspace_height_to_height(
+           T1_render_view_screen_height_to_height(
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
@@ -189,7 +199,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->alpha_blending_on = true;
-    current_command_input.cpu_data->simd_stats.ignore_camera = true;
+    current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
     current_command_input.gpu_data->touch_id = -1;
@@ -216,10 +226,10 @@ void terminal_render(void) {
         
         // draw the terminal's history as a label
         float history_label_top =
-            T1_engine_globals->window_height -
+            T1_global->window_height -
                 (TERMINAL_WHITESPACE * 2);
         float history_label_height =
-            T1_engine_globals->window_height -
+            T1_global->window_height -
                 TERM_FONT_SIZE -
                 (TERMINAL_WHITESPACE * 4.5f);
         
@@ -258,9 +268,6 @@ void terminal_render(void) {
         font_settings->mat.diffuse_rgb[1] = term_font_color[1];
         font_settings->mat.diffuse_rgb[2] = term_font_color[2];
         font_settings->mat.alpha = term_font_color[3];
-        font_settings->mat.rgb_cap[0] = term_font_rgb_cap[0];
-        font_settings->mat.rgb_cap[1] = term_font_rgb_cap[1];
-        font_settings->mat.rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
         font_settings->ignore_lighting = 1.0f;
         font_settings->touch_id = -1;
@@ -277,7 +284,7 @@ void terminal_render(void) {
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                T1_engine_globals->window_width -
+                T1_global->window_width -
                     (TERMINAL_WHITESPACE * 2));
         
         if (current_command[0] == '\0') {
@@ -301,7 +308,7 @@ void terminal_render(void) {
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                T1_engine_globals->window_width - (TERMINAL_WHITESPACE * 2));
+                T1_global->window_width - (TERMINAL_WHITESPACE * 2));
         
         font_settings->font_height = previous_font_height;
         
@@ -368,9 +375,9 @@ static bool32_t evaluate_terminal_command(
             command, "PROFILE TREE"))
     {
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_engine_globals->show_profiler = !T1_engine_globals->show_profiler;
+        T1_global->show_profiler = !T1_global->show_profiler;
         
-        if (T1_engine_globals->show_profiler) {
+        if (T1_global->show_profiler) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -394,10 +401,86 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        T1_std_string_starts_with(
+            command,
+            "UNBLOCK RENDER VIEW UPDATES"))
+    {
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Enabling render view position updates...");
+        T1_global->block_render_view_pos_updates = false;
+        
+        return true;
+    }
+    
+    if (
+        T1_std_string_starts_with(
+            command,
+            "BLOCK RENDER VIEW UPDATES"))
+    {
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Blocking render view position updates...");
+        T1_global->block_render_view_pos_updates = true;
+        
+        return true;
+    }
+    
+    if (
+        T1_std_string_starts_with(
+            command, "TO RENDER VIEW "))
+    {
+        uint32_t rv_good = 0;
+        int32_t jump_rv = T1_std_string_to_int32_validate(
+            command + 15,
+            &rv_good);
+        
+        if (!rv_good ||
+            jump_rv < 1 ||
+            jump_rv >= (int32_t)T1_render_views->size) {
+            T1_std_strcpy_cap(
+                response,
+                SINGLE_LINE_MAX,
+                "Couldn't parse to render view index: ");
+            T1_std_strcat_cap(
+                response,
+                SINGLE_LINE_MAX,
+                command + 15);
+            return true;
+        }
+        
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Jumping to render view: ");
+        T1_std_strcat_int_cap(
+            response,
+            SINGLE_LINE_MAX,
+            jump_rv);
+        T1_camera->xyz[0] = T1_render_views->
+            cpu[jump_rv].xyz[0];
+        T1_camera->xyz[1] = T1_render_views->
+            cpu[jump_rv].xyz[1];
+        T1_camera->xyz[2] = T1_render_views->
+            cpu[jump_rv].xyz[2];
+        
+        T1_camera->xyz_angle[0] = T1_render_views->
+            cpu[jump_rv].xyz_angle[0];
+        T1_camera->xyz_angle[1] = T1_render_views->
+            cpu[jump_rv].xyz_angle[1];
+        T1_camera->xyz_angle[2] = T1_render_views->
+            cpu[jump_rv].xyz_angle[2];
+        
+        return true;
+    }
+    
+    if (
         T1_std_are_equal_strings(command, "PAUSE PROFILER"))
     {
-        if (!T1_engine_globals->pause_profiler) {
-            T1_engine_globals->pause_profiler = true;
+        if (!T1_global->pause_profiler) {
+            T1_global->pause_profiler = true;
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -416,8 +499,8 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "RUN PROFILER") ||
         T1_std_are_equal_strings(command, "UNPAUSE PROFILER"))
     {
-        if (T1_engine_globals->pause_profiler) {
-            T1_engine_globals->pause_profiler = false;
+        if (T1_global->pause_profiler) {
+            T1_global->pause_profiler = false;
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -435,12 +518,12 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "RESET CAMERA") ||
         T1_std_are_equal_strings(command, "CENTER CAMERA"))
     {
-        camera.xyz[0] = 0.0f;
-        camera.xyz[1] = 0.0f;
-        camera.xyz[2] = 0.0f;
-        camera.xyz_angle[0] = 0.0f;
-        camera.xyz_angle[1] = 0.0f;
-        camera.xyz_angle[2] = 0.0f;
+        T1_camera->xyz[0] = 0.0f;
+        T1_camera->xyz[1] = 0.0f;
+        T1_camera->xyz[2] = 0.0f;
+        T1_camera->xyz_angle[0] = 0.0f;
+        T1_camera->xyz_angle[1] = 0.0f;
+        T1_camera->xyz_angle[2] = 0.0f;
         T1_std_strcpy_cap(
             response,
             SINGLE_LINE_MAX,
@@ -462,7 +545,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[0]);
+            T1_camera->xyz[0]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -470,7 +553,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[1]);
+            T1_camera->xyz[1]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -478,7 +561,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz[2]);
+            T1_camera->xyz[2]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -486,7 +569,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[0]);
+            T1_camera->xyz_angle[0]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -494,7 +577,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[1]);
+            T1_camera->xyz_angle[1]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -502,7 +585,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            camera.xyz_angle[2]);
+            T1_camera->xyz_angle[2]);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -543,9 +626,9 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "MOUSE") ||
         T1_std_are_equal_strings(command, "DRAW MOUSE"))
     {
-        T1_engine_globals->draw_mouseptr = !T1_engine_globals->draw_mouseptr;
+        T1_global->draw_mouseptr = !T1_global->draw_mouseptr;
         
-        if (T1_engine_globals->draw_mouseptr) {
+        if (T1_global->draw_mouseptr) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -628,8 +711,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
-        T1_engine_globals->postproc_consts.nonblur_pct = 0.02f;
-        T1_engine_globals->postproc_consts.blur_pct = 1.0f;
+        T1_global->postproc_consts.nonblur_pct = 0.02f;
+        T1_global->postproc_consts.blur_pct = 1.0f;
         return true;
     }
     
@@ -640,8 +723,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
-        T1_engine_globals->postproc_consts.nonblur_pct = 1.0f;
-        T1_engine_globals->postproc_consts.blur_pct = 0.0f;
+        T1_global->postproc_consts.nonblur_pct = 1.0f;
+        T1_global->postproc_consts.blur_pct = 0.0f;
         return true;
     }
     
@@ -653,8 +736,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Reverted to standard blur+non-blur composite...");
-        T1_engine_globals->postproc_consts.nonblur_pct = 1.0f;
-        T1_engine_globals->postproc_consts.blur_pct = 1.0f;
+        T1_global->postproc_consts.nonblur_pct = 1.0f;
+        T1_global->postproc_consts.blur_pct = 1.0f;
         return true;
     }
     
@@ -668,7 +751,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)T1_engine_globals->window_height);
+            (uint32_t)T1_global->window_height);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -676,7 +759,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)T1_engine_globals->window_width);
+            (uint32_t)T1_global->window_width);
         return true;
     }
     
@@ -704,7 +787,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "STOP MOUSE") ||
         T1_std_are_equal_strings(command, "TOGGLE MOUSE"))
     {
-        T1_engine_globals->block_mouse = !T1_engine_globals->block_mouse;
+        T1_global->block_mouse = !T1_global->block_mouse;
         
         T1_std_strcpy_cap(
             response,
@@ -714,70 +797,14 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        T1_std_are_equal_strings(command, "SET SHADOWCASTER 0"))
-    {
-        
-        shadowcaster_light_i = 0;
-        return true;
-    }
-    
-    if (
-        T1_std_are_equal_strings(command, "SHADOWCASTER OFF"))
-    {
-        
-        shadowcaster_light_i = UINT32_MAX;
-        return true;
-    }
-    
-    if (T1_std_are_equal_strings(command, "CAMERA TO SHADOWCASTER")) {
-        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-            if (
-                shadowcaster_light_i >= 0 &&
-                shadowcaster_light_i < zlights_to_apply_size)
-            {
-                T1_std_strcpy_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    "Setting camera to match shadowcaster (light ");
-                T1_std_strcat_uint_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    shadowcaster_light_i);
-                T1_std_strcat_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    ")");
-                
-                camera.xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
-                camera.xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
-                camera.xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
-                
-                camera.xyz_angle[0] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[0];
-                camera.xyz_angle[1] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[1];
-                camera.xyz_angle[2] =
-                    zlights_to_apply[shadowcaster_light_i].xyz_angle[2];
-            } else {
-                T1_std_strcpy_cap(
-                    response,
-                    SINGLE_LINE_MAX,
-                    "The shadowcaster light is not set...");
-            }
-        }
-        
-        return true;
-    }
-    
-    if (
         T1_std_are_equal_strings(command, "DRAW TOP TOUCHABLE") ||
         T1_std_are_equal_strings(command, "DRAW TOP") ||
         T1_std_are_equal_strings(command, "SHOW TOP"))
     {
-        T1_engine_globals->draw_top_touchable_id =
-            !T1_engine_globals->draw_top_touchable_id;
+        T1_global->draw_top_touchable_id =
+            !T1_global->draw_top_touchable_id;
         
-        if (T1_engine_globals->draw_top_touchable_id) {
+        if (T1_global->draw_top_touchable_id) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -797,9 +824,9 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "FPS") ||
         T1_std_are_equal_strings(command, "SHOW FPS"))
     {
-        T1_engine_globals->draw_fps = !T1_engine_globals->draw_fps;
+        T1_global->draw_fps = !T1_global->draw_fps;
         
-        if (T1_engine_globals->draw_fps) {
+        if (T1_global->draw_fps) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -821,10 +848,10 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "GUESS NORMALS") ||
         T1_std_are_equal_strings(command, "DEDUCE NORMALS"))
     {
-        T1_engine_globals->draw_imputed_normals =
-            !T1_engine_globals->draw_imputed_normals;
+        T1_global->draw_imputed_normals =
+            !T1_global->draw_imputed_normals;
         
-        if (T1_engine_globals->draw_imputed_normals) {
+        if (T1_global->draw_imputed_normals) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -919,9 +946,9 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "DRAW TRIANGLES") ||
         T1_std_are_equal_strings(command, "TRIANGLES"))
     {
-        T1_engine_globals->draw_triangles = !T1_engine_globals->draw_triangles;
+        T1_global->draw_triangles = !T1_global->draw_triangles;
         
-        if (T1_engine_globals->draw_triangles) {
+        if (T1_global->draw_triangles) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -995,13 +1022,13 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "SLOWER"))
     {
         if (command[0] == 'F') {
-            T1_engine_globals->timedelta_mult += 0.15f;
+            T1_global->timedelta_mult += 0.15f;
         } else {
-            T1_engine_globals->timedelta_mult -= 0.15f;
+            T1_global->timedelta_mult -= 0.15f;
         }
         
-        if (T1_engine_globals->timedelta_mult < 0.05f) {
-            T1_engine_globals->timedelta_mult = 0.01f;
+        if (T1_global->timedelta_mult < 0.05f) {
+            T1_global->timedelta_mult = 0.01f;
         }
         
         T1_std_strcpy_cap(
@@ -1011,7 +1038,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            T1_engine_globals->timedelta_mult);
+            T1_global->timedelta_mult);
         return true;
     }
     

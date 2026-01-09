@@ -45,7 +45,7 @@ T1ParticleEffect * T1_particle_get_next(void)
 
 void T1_particle_commit(T1ParticleEffect * to_request)
 {
-    if (!T1_engine_globals->clientlogic_early_startup_finished) {
+    if (!T1_global->clientlogic_early_startup_finished) {
         log_dump_and_crash(
             "You can't commit particle effects during early startup.");
         return;

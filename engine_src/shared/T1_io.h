@@ -2,7 +2,7 @@
 #define T1_IO_H
 
 #include "T1_std.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_platform_layer.h"
 
 #define T1_IO_KEYMAP_CAP 1000

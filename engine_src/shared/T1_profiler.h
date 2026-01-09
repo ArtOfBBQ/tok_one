@@ -8,7 +8,7 @@
 #include "T1_zspriteid.h"
 #include "T1_io.h"
 
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_zsprite.h"
 #include "T1_text.h"
 

@@ -5,7 +5,7 @@
 
 #include "T1_std.h"
 #include "T1_linalg3d.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_simd.h"
 #include "T1_platform_layer.h"
 #include "T1_cpu_gpu_shared_types.h"

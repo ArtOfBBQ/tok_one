@@ -247,6 +247,10 @@ void T1_zsprite_construct(
     #error
     #endif
     
+    to_construct->gpu_data->mix_project_rv_i = -1;
+    to_construct->gpu_data->mix_project_array_i = -1;
+    to_construct->gpu_data->mix_project_slice_i = -1;
+    
     T1_material_construct(
         &to_construct->gpu_data->base_mat);
 }
@@ -272,7 +276,7 @@ void zsprite_construct_quad(
     stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
     stack_recipient->cpu_data->simd_stats.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
-    stack_recipient->cpu_data->simd_stats.ignore_camera = false;
+    stack_recipient->gpu_data->ignore_camera = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     stack_recipient->cpu_data->mesh_id = 0;
@@ -315,17 +319,26 @@ void T1_zsprite_construct_quad_around(
         stack_recipient->cpu_data->simd_stats.mul_xyz[1] / 20.0f;
     
     #define THRESH 0.00001f
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[0] < THRESH) {
+    if (
+        stack_recipient->cpu_data->simd_stats.
+            mul_xyz[0] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[0] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[1] < THRESH) {
+    if (
+        stack_recipient->cpu_data->simd_stats.
+            mul_xyz[1] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[1] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd_stats.mul_xyz[2] < THRESH) {
+    if (stack_recipient->cpu_data->simd_stats.
+        mul_xyz[2] < THRESH)
+    {
         stack_recipient->cpu_data->simd_stats.mul_xyz[2] = THRESH;
     }
     
-    stack_recipient->cpu_data->mesh_id = BASIC_QUAD_MESH_ID;
+    stack_recipient->cpu_data->mesh_id =
+        BASIC_QUAD_MESH_ID;
 }
 
 void zsprite_construct_cube_around(

@@ -1,7 +1,7 @@
 #import "T1_apple_audio.h"
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-static void audio_callback(
+static void T1_apple_audio_callback(
     void * in_user_data,
     AudioQueueRef queue,
     AudioQueueBufferRef buffer)
@@ -57,7 +57,7 @@ void T1_apple_audio_start_loop(void) {
         /* const AudioStreamBasicDescription * _Nonnull inFormat: */
             &audio_stream_basic_description,
         /* AudioQueueOutputCallback  _Nonnull inCallbackProc: */
-            &audio_callback,
+            &T1_apple_audio_callback,
         /* void * _Nullable inUserData: */
             NULL,
         /* CFRunLoopRef  _Nullable inCallbackRunLoop: */
@@ -107,8 +107,14 @@ void T1_apple_audio_start_loop(void) {
     buf = audio_queue_buffer_refs[1];
     buf->mAudioDataByteSize = platform_buffer_size_bytes;
     
-    audio_callback(NULL, audio_queue_ref, audio_queue_buffer_refs[0]);
-    audio_callback(NULL, audio_queue_ref, audio_queue_buffer_refs[1]);
+    T1_apple_audio_callback(
+        NULL,
+        audio_queue_ref,
+        audio_queue_buffer_refs[0]);
+    T1_apple_audio_callback(
+        NULL,
+        audio_queue_ref,
+        audio_queue_buffer_refs[1]);
     
     // enqueue for playing
     AudioQueueEnqueueBuffer(

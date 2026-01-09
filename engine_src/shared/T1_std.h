@@ -29,8 +29,8 @@
 extern "C" {
 #endif
 
-#define T1_F32_MAX 2147483647
-#define T1_F32_MIN 1.1754943508222875e-38F
+#define T1_F32_MAX 3.402823466e+38f
+#define T1_F32_MIN -T1_F32_MAX
 
 #define T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
 #define T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))

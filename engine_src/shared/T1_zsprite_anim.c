@@ -237,8 +237,8 @@ static void apply_animation_effects_for_given_eased_t(
     }
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    log_assert(recip_cpu->ignore_camera >= -0.05f);
-    log_assert(recip_cpu->ignore_camera <= 1.05f);
+    log_assert(recip_gpu->ignore_camera >= -0.05f);
+    log_assert(recip_gpu->ignore_camera <= 1.05f);
     log_assert(recip_gpu->ignore_lighting >= -0.05f);
     log_assert(recip_gpu->ignore_lighting <= 1.05f);
     log_assert(recip_gpu->remove_shadow >= 0);
@@ -719,7 +719,7 @@ void T1_zsprite_anim_resolve(void)
             continue;
         }
         
-        uint64_t elapsed = T1_engine_globals->elapsed;
+        uint64_t elapsed = T1_global->elapsed;
         
         if (anim->remaining_pause_us > 0) {
             
@@ -890,59 +890,59 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         }
     }
     
-    if (zs_cpu->simd_stats.ignore_camera == new_ignore_camera)
+    if (zs->ignore_camera == new_ignore_camera)
     {
         return;
     }
     
     // For now we're only supporting the easy case of a full toggle
     bool32_t is_near_zero =
-        zs_cpu->simd_stats.ignore_camera > -0.01f &&
-        zs_cpu->simd_stats.ignore_camera <  0.01f;
+        zs->ignore_camera > -0.01f &&
+        zs->ignore_camera <  0.01f;
     #if T1_LOGGER_ASSERTS_ACTIVE
     bool32_t is_near_one =
-        zs_cpu->simd_stats.ignore_camera >  0.99f &&
-        zs_cpu->simd_stats.ignore_camera <  1.01f;
+        zs->ignore_camera >  0.99f &&
+        zs->ignore_camera <  1.01f;
     #endif
     log_assert(is_near_zero || is_near_one);
     
     if (is_near_zero) {
         log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->simd_stats.xyz[0] -= camera.xyz[0];
-        zs_cpu->simd_stats.xyz[1] -= camera.xyz[1];
-        zs_cpu->simd_stats.xyz[2] -= camera.xyz[2];
-        x_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[0]);
-        y_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[1]);
-        z_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[2]);
+        zs_cpu->simd_stats.xyz[0] -= T1_camera->xyz[0];
+        zs_cpu->simd_stats.xyz[1] -= T1_camera->xyz[1];
+        zs_cpu->simd_stats.xyz[2] -= T1_camera->xyz[2];
+        x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[0]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[1]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] -= camera.xyz_angle[0];
-        zs_cpu->simd_stats.angle_xyz[1] -= camera.xyz_angle[1];
-        zs_cpu->simd_stats.angle_xyz[2] -= camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] -= T1_camera->xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] -= T1_camera->xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] -= T1_camera->xyz_angle[2];
         #endif
         
-        zs_cpu->simd_stats.ignore_camera = 1.0f;
+        zs->ignore_camera = 1.0f;
     } else {
         log_assert(is_near_one);
         
-        z_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[2]);
-        y_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[1]);
-        x_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[0]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[2]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[1]);
+        x_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[0]);
         
-        zs_cpu->simd_stats.xyz[0] += camera.xyz[0];
-        zs_cpu->simd_stats.xyz[1] += camera.xyz[1];
-        zs_cpu->simd_stats.xyz[2] += camera.xyz[2];
+        zs_cpu->simd_stats.xyz[0] += T1_camera->xyz[0];
+        zs_cpu->simd_stats.xyz[1] += T1_camera->xyz[1];
+        zs_cpu->simd_stats.xyz[2] += T1_camera->xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] += camera.xyz_angle[0];
-        zs_cpu->simd_stats.angle_xyz[1] += camera.xyz_angle[1];
-        zs_cpu->simd_stats.angle_xyz[2] += camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] += T1_camera->xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] += T1_camera->xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] += T1_camera->xyz_angle[2];
         #endif
         
-        zs_cpu->simd_stats.ignore_camera = 0.0f;
+        zs->ignore_camera = 0.0f;
     }
 }
 

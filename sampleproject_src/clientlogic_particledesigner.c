@@ -3,82 +3,6 @@
 static int32_t base_mesh_id = 1;
 static int32_t example_particles_id = -1;
 
-#if 0
-static void load_obj_basemodel(
-    char error_message[128],
-    uint32_t * success)
-{
-    *success = 0;
-    
-    char writables_path[256];
-    writables_path[0] = '\0';
-    
-    T1_platform_get_writables_path(
-        /* char * recipient: */
-            writables_path,
-        /* const uint32_t recipient_size: */
-            256);
-    
-    T1_platform_open_folder_in_window_if_possible(writables_path);
-    
-    char dir_sep[4];
-    T1_platform_get_directory_separator(dir_sep);
-    
-    char writables_filepath[256];
-    T1_std_strcpy_cap(writables_filepath, 256, writables_path);
-    T1_std_strcat_cap(writables_filepath, 256, dir_sep);
-    T1_std_strcat_cap(writables_filepath, 256, "basemodel.obj");
-    
-    if (!T1_platform_file_exists(writables_filepath)) {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Couldn't load basemodel.obj from "
-            "writables folder. Type WRITABLES in "
-            "terminal to open the folder.");
-        return;
-    }
-    
-    T1FileBuffer buffer;
-    buffer.good = 0;
-    buffer.size_without_terminator = T1_platform_get_filesize(writables_filepath);
-    buffer.contents = T1_mem_malloc_from_managed(
-        buffer.size_without_terminator+1);
-    
-    T1_platform_read_file(
-        /* const char * filepath: */
-            writables_filepath,
-        /* FileBuffer *out_preallocatedbuffer: */
-            &buffer);
-    
-    if (buffer.good) {
-        T1_objmodel_new_mesh_id_from_obj_mtl_text(
-            /* const char * original_obj_filename: */
-                "basemodel.obj",
-            /* const char * obj_text: */
-                buffer.contents,
-            /* const char * mtl_text: */
-                NULL);
-        
-        T1_platform_gpu_copy_locked_vertices();
-        T1_particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
-    } else {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Couldn't read basemodel.obj from "
-            "writables folder. Type WRITABLES in "
-            "terminal to open the folder.");
-        return;
-    }
-    
-    T1_mem_free_from_managed(buffer.contents);
-    
-    *success = 1;
-    return;
-}
-#endif
-
 typedef struct {
     char property_name[128];
     char property_type_name[128];
@@ -118,11 +42,11 @@ void T1_clientlogic_init(void) {
 }
 
 static float get_whitespace_height(void) {
-    return T1_engine_globals->window_height / 200.0f;
+    return T1_global->window_height / 200.0f;
 }
 
 static float get_menu_element_height(void) {
-    return T1_engine_globals->window_height / 20.0f;
+    return T1_global->window_height / 20.0f;
 }
 
 static float get_slider_height_screenspace(void) {
@@ -134,7 +58,7 @@ static float get_slider_width_screenspace(void) {
 }
 
 static float get_slider_y_screenspace(int32_t i) {
-    return T1_engine_globals->window_height - 130 -
+    return T1_global->window_height - 130 -
             (pds->menu_element_height * i);
 }
 
@@ -155,7 +79,6 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_float_limits_for_last_field(-1.5f, 1.5f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 2.0f, &ok);
     T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
@@ -177,7 +100,6 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, angle_xyz, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, scale_factor, &ok);
-    T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     
     T1_meta_struct(T1CPUzSprite, &ok);
@@ -199,6 +121,7 @@ void T1_clientlogic_early_startup(
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
@@ -288,7 +211,7 @@ void T1_clientlogic_early_startup(
     //    }
     //    *success = 0;
     
-    T1_engine_globals->draw_axes = true;
+    T1_global->draw_axes = true;
     
     pds->whitespace_height   = get_whitespace_height();
     pds->menu_element_height = get_menu_element_height();
@@ -375,7 +298,7 @@ static void redraw_all_sliders(void) {
     uint32_t num_properties = internal_T1_meta_get_num_of_fields_in_struct(
         pds->inspecting_field);
     
-    float cur_x = T1_engine_globals->window_width -
+    float cur_x = T1_global->window_width -
         (pds->slider_width / 2) - 15.0f;
     float cur_y = get_slider_y_screenspace(-1);
     next_ui_element_settings->perm.screenspace_x = cur_x;
@@ -542,7 +465,7 @@ static void redraw_all_sliders(void) {
                         /* const float z: */
                             0.75f,
                         /* const float max_width: */
-                            T1_engine_globals->window_width * 2);
+                            T1_global->window_width * 2);
             }
             
             pds->regs_size += 1;
@@ -551,15 +474,15 @@ static void redraw_all_sliders(void) {
 }
 
 static void request_gfx_from_empty_scene(void) {
-    camera.xyz[0] =  0.0f;
-    camera.xyz[1] = -0.5f;
-    camera.xyz[2] =  0.0f;
+    T1_camera->xyz[0] =  0.0f;
+    T1_camera->xyz[1] = -0.5f;
+    T1_camera->xyz[2] =  0.0f;
     
-    camera.xyz_angle[0] =  -0.35f;
-    camera.xyz_angle[1] =   0.00f;
-    camera.xyz_angle[2] =   0.00f;
+    T1_camera->xyz_angle[0] =  -0.35f;
+    T1_camera->xyz_angle[1] =   0.00f;
+    T1_camera->xyz_angle[2] =   0.00f;
     
-    zLightSource * light = next_zlight();
+    T1zLight * light = T1_zlight_next();
     light->RGBA[0]       =  0.50f;
     light->RGBA[1]       =  0.15f;
     light->RGBA[2]       =  0.15f;
@@ -569,7 +492,7 @@ static void request_gfx_from_empty_scene(void) {
     light->xyz[0]        = -2.00f;
     light->xyz[1]        =  0.50f;
     light->xyz[2]        =  0.75f;
-    commit_zlight(light);
+    T1_zlight_commit(light);
     
     pds->regs_head_i = 0;
     pds->regs_size = 0;
@@ -639,55 +562,55 @@ static void client_handle_keypresses(
     
     if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
     {
-        camera.xyz[0] -= cam_speed;
+        T1_camera->xyz[0] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_RIGHTARROW] == true)
     {
-        camera.xyz[0] += cam_speed;
+        T1_camera->xyz[0] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_DOWNARROW] == true)
     {
-        camera.xyz[1] -= cam_speed;
+        T1_camera->xyz[1] -= cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_UPARROW] == true)
     {
-        camera.xyz[1] += cam_speed;
+        T1_camera->xyz[1] += cam_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_A] == true) {
-        camera.xyz_angle[0] += cam_rotation_speed;
+        T1_camera->xyz_angle[0] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_Z] == true) {
-        camera.xyz_angle[2] -= cam_rotation_speed;
+        T1_camera->xyz_angle[2] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_X] == true) {
-        camera.xyz_angle[2] += cam_rotation_speed;
+        T1_camera->xyz_angle[2] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_Q] == true) {
-        camera.xyz_angle[0] -= cam_rotation_speed;
+        T1_camera->xyz_angle[0] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_W] == true) {
-        camera.xyz_angle[1] -= cam_rotation_speed;
+        T1_camera->xyz_angle[1] -= cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_S] == true) {
-        camera.xyz_angle[1] += cam_rotation_speed;
+        T1_camera->xyz_angle[1] += cam_rotation_speed;
     }
     
     if (T1_io_keymap[T1_IO_KEY_BACKSLASH] == true) {
         // / key
-        camera.xyz[2] -= 0.01f;
+        T1_camera->xyz[2] -= 0.01f;
     }
     
     if (T1_io_keymap[T1_IO_KEY_UNDERSCORE] == true) {
-        camera.xyz[2] += 0.01f;
+        T1_camera->xyz[2] += 0.01f;
     }
 }
 
@@ -697,35 +620,61 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     
     #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
     float new_x =
-        T1_engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
+        T1_global->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
     
     int32_t target_zsprite_ids[3];
-    for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
-        target_zsprite_ids[0] = pds->regs[i].slider_zsprite_id;
-        target_zsprite_ids[1] = pds->regs[i].pin_zsprite_id;
-        target_zsprite_ids[2] = pds->regs[i].label_zsprite_id;
-        if (target_zsprite_ids[0] == target_zsprite_ids[1]) {
+    for (
+        uint32_t i = pds->regs_head_i;
+        i < pds->regs_size;
+        i++)
+    {
+        target_zsprite_ids[0] =
+            pds->regs[i].slider_zsprite_id;
+        target_zsprite_ids[1] =
+            pds->regs[i].pin_zsprite_id;
+        target_zsprite_ids[2] =
+            pds->regs[i].label_zsprite_id;
+        
+        if (
+            target_zsprite_ids[0] ==
+                target_zsprite_ids[1])
+        {
             continue;
         }
-        if (target_zsprite_ids[0] == target_zsprite_ids[2]) {
+        
+        if (
+            target_zsprite_ids[0] ==
+                target_zsprite_ids[2])
+        {
             continue;
         }
-        if (target_zsprite_ids[1] == target_zsprite_ids[2]) {
+        
+        if (
+            target_zsprite_ids[1] ==
+                target_zsprite_ids[2])
+        {
             continue;
         }
                 
-        float new_y = get_slider_y_screenspace((int32_t)i) -
+        float new_y =
+            get_slider_y_screenspace((int32_t)i) -
             (T1_io_mouse_scroll_pos * 30.0f);
         for (uint32_t j = 0; j < 3; j++) {
             T1zSpriteAnim * anim =
                 T1_zsprite_anim_request_next(true);
-            anim->affected_zsprite_id = target_zsprite_ids[j];
-            anim->delete_other_anims_targeting_zsprite = true;
+            anim->affected_zsprite_id =
+                target_zsprite_ids[j];
+            anim->delete_other_anims_targeting_zsprite =
+                true;
             anim->cpu_vals.xyz[0] =
-                T1_engineglobals_screenspace_x_to_x(new_x, new_z);
+                T1_render_view_screen_x_to_x(
+                    new_x,
+                    new_z);
             anim->cpu_vals.xyz[1] =
-                T1_engineglobals_screenspace_y_to_y(new_y, new_z);
+                T1_render_view_screen_y_to_y(
+                    new_y,
+                    new_z);
             anim->cpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_zsprite_anim_commit(anim);
@@ -734,17 +683,27 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     
     target_zsprite_ids[0] = pds->title_zsprite_id;
     target_zsprite_ids[1] = pds->title_label_zsprite_id;
-    float new_title_y = get_slider_y_screenspace(-1) -
+    float new_title_y =
+        get_slider_y_screenspace(-1) -
         (T1_io_mouse_scroll_pos * 30.0f);
-    for (uint32_t j = 0; j < 2; j++) {
+    
+    for (
+        uint32_t j = 0;
+        j < 2;
+        j++)
+    {
         T1zSpriteAnim * anim =
             T1_zsprite_anim_request_next(true);
-        anim->affected_zsprite_id = target_zsprite_ids[j];
-        anim->delete_other_anims_targeting_zsprite = true;
+        anim->affected_zsprite_id =
+            target_zsprite_ids[j];
+        anim->delete_other_anims_targeting_zsprite =
+            true;
         anim->cpu_vals.xyz[0] =
-            T1_engineglobals_screenspace_x_to_x(new_x, new_z);
+            T1_render_view_screen_x_to_x(
+                new_x, new_z);
         anim->cpu_vals.xyz[1] =
-            T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
+            T1_render_view_screen_y_to_y(
+                new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
         T1_zsprite_anim_commit(anim);

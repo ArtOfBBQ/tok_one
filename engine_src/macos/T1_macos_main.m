@@ -5,9 +5,9 @@
 #include "T1_appinit.h"
 #include "T1_logger.h"
 #include "T1_random.h"
-#include "T1_lightsource.h"
+#include "T1_zlight.h"
 #include "T1_io.h"
-#include "T1_engineglobals.h"
+#include "T1_global.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
 
@@ -216,7 +216,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -233,7 +233,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -250,7 +250,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDown:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -261,7 +261,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseUp:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -272,7 +272,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -281,7 +281,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    if (T1_engine_globals->block_mouse) {
+    if (T1_global->block_mouse) {
         return;
     }
     
@@ -354,7 +354,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     T1_uielement_delete_all();
     T1_zsprite_list->size = 0;
-    T1_engine_globals->fullscreen = true;
+    T1_global->fullscreen = true;
 }
 
 - (void)
@@ -368,12 +368,12 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     #else
     #error
     #endif
-    T1_engine_globals->fullscreen = false;
+    T1_global->fullscreen = false;
 }
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    T1_engineglobals_update_window_position(
+    T1_global_update_window_pos(
         (float)(((NSWindow *)[notification object]).frame.origin.x),
         (float)(((NSWindow *)[notification object]).frame.origin.y));
 }
@@ -391,9 +391,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     return frameSize;
 }
 
-- (void)windowDidResize:(NSNotification *)notification {
-    
-    T1_engineglobals_update_window_size(
+- (void)windowDidResize:
+    (NSNotification *)notification
+{
+    T1_global_update_window_size(
         /* float width: */
             [window getWidth],
         /* float height */
@@ -401,7 +402,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         /* uint64_t at_timestamp_us: */
             T1_platform_get_current_time_us());
     
-    [apple_gpu_delegate updateViewport];
+    [apple_gpu_delegate updateFinalWindowSize];
 }
 @end
 
@@ -420,10 +421,10 @@ int main(int argc, const char * argv[]) {
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
-        /* x: */ T1_engine_globals->window_left,
-        /* y: */ T1_engine_globals->window_bottom,
-        /* width: */ T1_engine_globals->window_width,
-        /* height: */ T1_engine_globals->window_height);
+        /* x: */ T1_global->window_left,
+        /* y: */ T1_global->window_bottom,
+        /* width: */ T1_global->window_width,
+        /* height: */ T1_global->window_height);
     
     window =
         [[NSWindowWithCustomResponder alloc]
@@ -434,7 +435,8 @@ int main(int argc, const char * argv[]) {
                 NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];
-    window.animationBehavior = NSWindowAnimationBehaviorNone;
+    window.animationBehavior =
+        NSWindowAnimationBehaviorNone;
     
     GameWindowDelegate * window_delegate = [[GameWindowDelegate alloc] init];
     
@@ -481,7 +483,10 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
-    T1_platform_get_resources_path(shader_lib_path_cstr, 2000);
+    T1_platform_get_resources_path(
+        shader_lib_path_cstr,
+        2000);
+    
     T1_std_strcat_cap(
         shader_lib_path_cstr,
         1000,
@@ -492,7 +497,7 @@ int main(int argc, const char * argv[]) {
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
     
-    bool32_t result = apple_gpu_init(
+    bool32_t result = T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,

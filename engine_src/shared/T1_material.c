@@ -32,9 +32,6 @@ void T1_material_construct(
     #else
     #error
     #endif
-    to_construct->rgb_cap[0] = 1.0f;
-    to_construct->rgb_cap[1] = 1.0f;
-    to_construct->rgb_cap[2] = 1.0f;
     to_construct->texturearray_i = -1;
     to_construct->texture_i = -1;
 }

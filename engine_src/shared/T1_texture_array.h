@@ -17,7 +17,8 @@
 #define TEXTUREARRAY_FILENAME_SIZE 128
 typedef struct {
     T1DecodedImage image;
-    char filename[TEXTUREARRAY_FILENAME_SIZE];
+    char name[TEXTUREARRAY_FILENAME_SIZE];
+    bool8_t deleted;
     bool8_t request_update;
     bool8_t prioritize_asset_load;
 } T1TextureArrayImage;
@@ -29,9 +30,11 @@ typedef struct {
     uint32_t images_size;
     uint32_t single_img_width;
     uint32_t single_img_height;
-    bool32_t gpu_initted;
-    bool32_t request_init;
-    bool32_t bc1_compressed;
+    uint32_t gpu_capacity;
+    bool8_t request_init;
+    bool8_t is_render_target;
+    bool8_t bc1_compressed;
+    bool8_t deleted;
 } T1TextureArray;
 
 extern T1TextureArray * T1_texture_arrays;
@@ -46,7 +49,25 @@ void T1_texture_array_preregister_null_image(
     const char * filename,
     const uint32_t height,
     const uint32_t width,
+    const uint32_t is_render_target,
     const uint32_t use_bc1_compression);
+void T1_texture_array_postregister_null_image(
+    const char * filename,
+    const uint32_t height,
+    const uint32_t width,
+    const uint32_t is_render_target,
+    const uint32_t use_bc1_compression);
+
+int32_t T1_texture_array_create_new_render_view(
+    const uint32_t width,
+    const uint32_t height);
+
+void T1_texture_array_delete_array(
+    const int32_t array_i);
+
+void T1_texture_array_delete_slice(
+    const int32_t array_i,
+    const int32_t slice_i);
 
 void T1_texture_array_register_new_by_splitting_image(
     T1DecodedImage * new_image,

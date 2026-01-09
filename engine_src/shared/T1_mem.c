@@ -138,7 +138,7 @@ void * T1_mem_malloc_from_unmanaged_aligned(
     }
     
     log_assert(unmanaged_memory != NULL);
-    log_assert(size > 0);
+    log_assert(size > 0); // don't malloc for 0
     
     uint32_t padding = aligned_to - ((uintptr_t)unmanaged_memory % aligned_to);
     if (padding == aligned_to) padding = 0;

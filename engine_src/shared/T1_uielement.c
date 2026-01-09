@@ -122,7 +122,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 {
                     // set slider value
                     float new_x_offset =
-                        T1_engineglobals_screenspace_x_to_x(
+                        T1_render_view_screen_x_to_x(
                             T1_io_events[
                                 T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
@@ -418,20 +418,20 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[i].label_zsprite_id)
                 {
                     xy_screenspace[0] =
-                        T1_engineglobals_x_to_screenspace_x(
+                        T1_render_view_x_to_screen_x(
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[0],
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[2]);
                     xy_screenspace[1] =
-                        T1_engineglobals_y_to_screenspace_y(
+                        T1_render_view_y_to_screen_y(
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[1],
                             T1_zsprite_list->cpu_data[zs_i].
                                 simd_stats.xyz[2]);
                     z = T1_zsprite_list->cpu_data[zs_i].simd_stats.xyz[2];
                     ignore_camera = (uint8_t)
-                        T1_zsprite_list->cpu_data[zs_i].simd_stats.
+                        T1_zsprite_list->gpu_data[zs_i].
                             ignore_camera;
                     T1_zsprite_list->cpu_data[zs_i].deleted = true;
                 }
@@ -445,9 +445,6 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             font_settings->mat.ambient_rgb[0] = 0.5f;
             font_settings->mat.ambient_rgb[1] = 1.0f;
             font_settings->mat.ambient_rgb[2] = 1.0f;
-            font_settings->mat.rgb_cap[0] = 1.0f;
-            font_settings->mat.rgb_cap[1] = 1.0f;
-            font_settings->mat.rgb_cap[2] = 1.0f;
             font_settings->mat.alpha = 1.0f;
             font_settings->ignore_lighting =
                 active_ui_elements[i].user_set.ignore_lighting;
@@ -715,7 +712,7 @@ void T1_uielement_request_slider(
         }
     }
     next_ae->slider_width =
-        T1_engineglobals_screenspace_width_to_width(
+        T1_render_view_screen_width_to_width(
             next_ui_element_settings->perm.slider_width_screenspace,
             next_ui_element_settings->perm.z);
     next_ae->slideable = true;
@@ -727,22 +724,22 @@ void T1_uielement_request_slider(
     T1_zsprite_request_next(&slider_back);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_render_view_screen_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_render_view_screen_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             next_ae->user_set.z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_render_view_screen_width_to_width(
                 next_ae->user_set.
                     slider_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_render_view_screen_height_to_height(
                 next_ae->user_set.slider_height_screenspace,
                 next_ae->user_set.z),
         /* zPolygon * recipient: */
@@ -754,7 +751,7 @@ void T1_uielement_request_slider(
     
     slider_back.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_lighting;
-    slider_back.cpu_data->simd_stats.ignore_camera =
+    slider_back.gpu_data->ignore_camera =
         next_ae->user_set.ignore_camera;
     log_assert(slider_back.cpu_data->visible);
     log_assert(!slider_back.cpu_data->committed);
@@ -766,21 +763,21 @@ void T1_uielement_request_slider(
     float pin_z = next_ae->user_set.z - 0.00001f;
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_render_view_screen_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_render_view_screen_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             pin_z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_render_view_screen_width_to_width(
                 next_ae->user_set.pin_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_render_view_screen_height_to_height(
                 next_ae->user_set.pin_height_screenspace,
                 next_ae->user_set.z),
         /* zPolygon * recipient: */
@@ -806,7 +803,7 @@ void T1_uielement_request_slider(
     
     slider_pin.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_lighting;
-    slider_pin.cpu_data->simd_stats.ignore_camera =
+    slider_pin.gpu_data->ignore_camera =
         next_ae->user_set.ignore_camera;
     slider_pin.gpu_data->touch_id =
         next_ae->touch_id;
@@ -847,7 +844,7 @@ void T1_uielement_request_button(
     next_ae->label_zsprite_id      = button_label_id;
     
     next_ae->slider_width =
-        T1_engineglobals_screenspace_width_to_width(
+        T1_render_view_screen_width_to_width(
             next_ui_element_settings->perm.slider_width_screenspace,
             next_ui_element_settings->perm.z);
     next_ae->deleted = false;
@@ -858,21 +855,21 @@ void T1_uielement_request_button(
     T1_zsprite_request_next(&button_request);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            T1_engineglobals_screenspace_x_to_x(
+            T1_render_view_screen_x_to_x(
                 next_ae->user_set.screenspace_x,
                 next_ae->user_set.z),
         /* const float mid_y: */
-            T1_engineglobals_screenspace_y_to_y(
+            T1_render_view_screen_y_to_y(
                 next_ae->user_set.screenspace_y,
                 next_ae->user_set.z),
         /* const float z: */
             next_ae->user_set.z,
         /* const float width: */
-            T1_engineglobals_screenspace_width_to_width(
+            T1_render_view_screen_width_to_width(
                 next_ae->user_set.button_width_screenspace,
                 next_ae->user_set.z),
         /* const float height: */
-            T1_engineglobals_screenspace_height_to_height(
+            T1_render_view_screen_height_to_height(
                 next_ae->user_set.button_height_screenspace,
                 next_ae->user_set.z),
         /* PolygonRequest * stack_recipient: */
@@ -880,7 +877,7 @@ void T1_uielement_request_button(
     
     button_request.cpu_data->zsprite_id = button_object_id;
     button_request.gpu_data->touch_id = next_ae->touch_id;
-    button_request.cpu_data->simd_stats.ignore_camera =
+    button_request.gpu_data->ignore_camera =
         next_ae->user_set.ignore_camera;
     button_request.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_camera;

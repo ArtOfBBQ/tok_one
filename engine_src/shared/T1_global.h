@@ -1,5 +1,5 @@
-#ifndef ENGINE_GLOBALS_H
-#define ENGINE_GLOBALS_H
+#ifndef T1_GLOBAL_H
+#define T1_GLOBAL_H
 
 /*
 Window sizes are a source of confusion because there are so many coordinate
@@ -39,7 +39,6 @@ platform layer doesn't need to do anything and can just record values directly
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
-    T1GPUProjectConsts project_consts;
     
     uint64_t elapsed;
     uint64_t this_frame_timestamp_us;
@@ -59,7 +58,6 @@ typedef struct {
     float window_width;
     float window_left;
     float window_bottom;
-    float aspect_ratio;
     
     bool8_t draw_mouseptr;
     bool8_t draw_imputed_normals;
@@ -70,49 +68,27 @@ typedef struct {
     bool8_t show_profiler;
     bool8_t pause_profiler;
     bool8_t block_mouse;
+    bool8_t block_render_view_pos_updates;
     bool8_t fullscreen;
     bool8_t clientlogic_early_startup_finished;
     bool8_t upcoming_fullscreen_request;
-} T1EngineGlobals;
+} T1Globals;
 
-extern T1EngineGlobals * T1_engine_globals;
+extern T1Globals * T1_global;
 
-void T1_engineglobals_register_transformed_imputed_normal_for_debugging(
+void T1_global_register_transformed_imputed_normal_for_debugging(
     const float origin[3],
     const float imputed_normal[3]);
 
-float T1_engineglobals_x_to_screenspace_x(
-    const float x,
-    const float given_z);
+void T1_global_init(void);
 
-// To convert from our screenspace system to 'world x' that is used for
-// the position of zpolygons
-float T1_engineglobals_screenspace_x_to_x(const float screenspace_x, const float given_z);
-
-float T1_engineglobals_y_to_screenspace_y(
-    const float y,
-    const float given_z);
-
-// To convert from our screenspace system to 'world y' that is used for
-// the position of zpolygons
-float T1_engineglobals_screenspace_y_to_y(
-    const float screenspace_y,
-    const float given_z);
-
-float T1_engineglobals_screenspace_height_to_height(
-    const float screenspace_height, const float given_z);
-float T1_engineglobals_screenspace_width_to_width(
-    const float screenspace_width, const float given_z);
-
-void T1_engineglobals_init(void);
-
-void T1_engineglobals_update_window_position(
+void T1_global_update_window_pos(
     float left,
     float bottom);
 
-void T1_engineglobals_update_window_size(
+void T1_global_update_window_size(
     float width,
     float height,
     uint64_t at_timestamp_us);
 
-#endif // ENGINE_GLOBALS_H
+#endif // T1_GLOBAL_H
