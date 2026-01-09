@@ -403,6 +403,8 @@ void T1_gameloop_update_before_render_pass(
             frame_data->lights,
             &T1_global->postproc_consts.lights_size);
         
+        T1_render_view_update_positions();
+        
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_renderer_hardware_render()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE

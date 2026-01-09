@@ -247,6 +247,10 @@ void T1_zsprite_construct(
     #error
     #endif
     
+    to_construct->gpu_data->mix_project_rv_i = -1;
+    to_construct->gpu_data->mix_project_array_i = -1;
+    to_construct->gpu_data->mix_project_slice_i = -1;
+    
     T1_material_construct(
         &to_construct->gpu_data->base_mat);
 }

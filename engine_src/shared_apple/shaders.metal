@@ -122,7 +122,7 @@ vertex_shader(
     const device T1GPURenderView * c = rv + rv_i;
     
     if (c->write_to_shadow_maps && zs->remove_shadow) {
-        out.projpos = vector_float4(0.0f, 0.0f, 100.0f, 1.0f);
+        out.projpos = vector_float4(0.0f, 0.0f, 500.0f, 1.0f);
         return out;
     }
     
@@ -271,6 +271,49 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     return out;
 }
 
+float4 worldspace_to_clipspace(
+    float4 worldpos,
+    const device T1GPURenderView * cam)
+{
+    float4x4 light_v = matrix_float4x4(
+        cam->v_4x4[ 0],
+        cam->v_4x4[ 1],
+        cam->v_4x4[ 2],
+        cam->v_4x4[ 3],
+        cam->v_4x4[ 4],
+        cam->v_4x4[ 5],
+        cam->v_4x4[ 6],
+        cam->v_4x4[ 7],
+        cam->v_4x4[ 8],
+        cam->v_4x4[ 9],
+        cam->v_4x4[10],
+        cam->v_4x4[11],
+        cam->v_4x4[12],
+        cam->v_4x4[13],
+        cam->v_4x4[14],
+        cam->v_4x4[15]);
+    
+    float4x4 light_p = matrix_float4x4(
+        cam->p_4x4[ 0],
+        cam->p_4x4[ 1],
+        cam->p_4x4[ 2],
+        cam->p_4x4[ 3],
+        cam->p_4x4[ 4],
+        cam->p_4x4[ 5],
+        cam->p_4x4[ 6],
+        cam->p_4x4[ 7],
+        cam->p_4x4[ 8],
+        cam->p_4x4[ 9],
+        cam->p_4x4[10],
+        cam->p_4x4[11],
+        cam->p_4x4[12],
+        cam->p_4x4[13],
+        cam->p_4x4[14],
+        cam->p_4x4[15]);
+    
+    return worldpos * light_v * light_p;
+}
+
 // Gets the color given a material and lighting setup
 float4 get_lit(
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
@@ -320,12 +363,15 @@ float4 get_lit(
     #error
     #endif
     
+    float2 uv_orig =
+        vector_float2(
+            zsprite->base_mat_uv_offsets[0],
+            zsprite->base_mat_uv_offsets[1]);
+    
     float2 uv_adjusted =
         in.texture_coordinate + (
         is_base_mtl *
-        vector_float2(
-            zsprite->base_mat_uv_offsets[0],
-            zsprite->base_mat_uv_offsets[1]));
+        uv_orig);
     
     float2 uv_scroll = vector_float2(
         material->uv_scroll[0],
@@ -367,6 +413,44 @@ float4 get_lit(
         texture_base = float4(color_sample);
     }
     
+    if (zsprite->mix_project_rv_i >= 0) {
+        
+        const device T1GPURenderView * rfv =
+            &render_views[zsprite->mix_project_rv_i];
+        
+        float4 refl_clipspace = worldspace_to_clipspace(
+            in.worldpos,
+            rfv);
+        
+        float2 refl_uv =
+                ((refl_clipspace.xy /
+                    refl_clipspace.w) * 0.5f) + 0.5f;
+        
+        refl_uv = clamp(refl_uv, 0.0f, 1.0f);
+        
+        refl_uv[1] = 1.0 - refl_uv[1];
+        
+        float mix_strength = 0.55f;
+        
+        float fade_x =
+            refl_uv.x * (1.0f - refl_uv.x) * 4.0f;
+        float fade_y =
+            refl_uv.y * (1.0f - refl_uv.y) * 4.0f;
+        float fade = min(fade_x, fade_y);
+        mix_strength *= fade;
+        
+        const half4 color_sample =
+            color_textures[zsprite->mix_project_array_i].
+                sample(
+                    texture_sampler,
+                    refl_uv,
+                    zsprite->mix_project_slice_i);
+        
+        texture_base =
+            (texture_base * (1.0h - mix_strength)) +
+            (float4(color_sample) * mix_strength);
+    }
+    
     float4 ignore_lighting_color =
         diffuse_base * texture_base;
     
@@ -389,61 +473,24 @@ float4 get_lit(
             // render_views[camera_i].use_shadow_maps &&
             lights[i].shadow_map_render_view_i >= 0)
         {
-            const device T1GPURenderView * light_rv =
-                &render_views[
-                    lights[i].shadow_map_render_view_i];
-            
-            float4x4 light_v = matrix_float4x4(
-                light_rv->v_4x4[ 0],
-                light_rv->v_4x4[ 1],
-                light_rv->v_4x4[ 2],
-                light_rv->v_4x4[ 3],
-                light_rv->v_4x4[ 4],
-                light_rv->v_4x4[ 5],
-                light_rv->v_4x4[ 6],
-                light_rv->v_4x4[ 7],
-                light_rv->v_4x4[ 8],
-                light_rv->v_4x4[ 9],
-                light_rv->v_4x4[10],
-                light_rv->v_4x4[11],
-                light_rv->v_4x4[12],
-                light_rv->v_4x4[13],
-                light_rv->v_4x4[14],
-                light_rv->v_4x4[15]);
-            
-            float4x4 light_p = matrix_float4x4(
-                light_rv->p_4x4[ 0],
-                light_rv->p_4x4[ 1],
-                light_rv->p_4x4[ 2],
-                light_rv->p_4x4[ 3],
-                light_rv->p_4x4[ 4],
-                light_rv->p_4x4[ 5],
-                light_rv->p_4x4[ 6],
-                light_rv->p_4x4[ 7],
-                light_rv->p_4x4[ 8],
-                light_rv->p_4x4[ 9],
-                light_rv->p_4x4[10],
-                light_rv->p_4x4[11],
-                light_rv->p_4x4[12],
-                light_rv->p_4x4[13],
-                light_rv->p_4x4[14],
-                light_rv->p_4x4[15]);
-            
             float4 light_clip_pos =
-                in.worldpos *
-                light_v *
-                light_p;
+                worldspace_to_clipspace(
+                    in.worldpos,
+                    &render_views[
+                        lights[i].
+                            shadow_map_render_view_i]);
             
             float2 shadow_uv =
                 ((light_clip_pos.xy /
                     light_clip_pos.w) * 0.5f) + 0.5f;
+            
+            shadow_uv[1] = 1.0f - shadow_uv[1];
             
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
                 min_filter::nearest,
                 address::clamp_to_edge);
             
-            shadow_uv[1] = 1.0f - shadow_uv[1];
             float shadow_depth =
                 shadow_maps[
                     lights[i].shadow_map_depth_tex_i].
@@ -469,7 +516,7 @@ float4 get_lit(
         #error
         #endif
         
-        float4 light_worldpos =
+        float4 light_pos_world =
             vector_float4(
                 lights[i].xyz[0],
                 lights[i].xyz[1],
@@ -495,7 +542,7 @@ float4 get_lit(
             render_views[camera_i].v_4x4[15]);
         
         float4 light_viewspace =
-            light_worldpos * cam_v_4x4;
+            light_pos_world * cam_v_4x4;
         
         float distance = get_distance_f3(
             (float3)light_viewspace,
@@ -648,6 +695,14 @@ fragment_shader(
     const device T1GPUConstMat * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
+    if (
+        in.worldpos.xyz[2] >= render_views[camera_i].cull_above_z ||
+        in.worldpos.xyz[2] <=
+            render_views[camera_i].cull_below_z)
+    {
+        discard_fragment();
+    }
+    
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     const device T1GPUConstMat * material =
@@ -726,6 +781,14 @@ alphablending_fragment_shader(
     const device T1GPUConstMat * locked_materials [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
+    if (
+        in.worldpos.xyz[2] >= render_views[camera_i].cull_above_z ||
+        in.worldpos.xyz[2] <=
+            render_views[camera_i].cull_below_z)
+    {
+        discard_fragment();
+    }
+    
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     

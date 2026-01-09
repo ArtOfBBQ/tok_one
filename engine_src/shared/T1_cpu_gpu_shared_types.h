@@ -70,6 +70,8 @@ typedef struct {
     float    v_4x4[16];
     float    p_4x4[16];
     float    normv_3x3[9];
+    float    cull_below_z;
+    float    cull_above_z;
     int      read_from_shadow_maps;
     int      write_to_shadow_maps;
 } T1GPURenderView;
@@ -109,6 +111,9 @@ typedef struct {
     #endif
     unsigned int  remove_shadow;
     int           touch_id;
+    int           mix_project_rv_i;
+    int           mix_project_array_i;
+    int           mix_project_slice_i;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {

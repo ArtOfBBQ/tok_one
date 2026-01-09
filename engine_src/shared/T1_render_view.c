@@ -49,6 +49,9 @@ static void T1_render_view_construct(
     cpu->height = height;
     cpu->width  = width;
     
+    gpu->cull_below_z = T1_F32_MIN;
+    gpu->cull_above_z = T1_F32_MAX;
+    
     T1GPUProjectConsts * pjc = &cpu->project;
     
     pjc->znear =  0.1f;
@@ -107,6 +110,129 @@ int32_t T1_render_view_fetch_next(
         width);
     
     return ret;
+}
+
+static void
+T1_render_view_pos_point_to_pos_to_angle3(
+    float * recip_xyz_angle,
+    const float * from_pos_xyz,
+    const float * point_to_xyz)
+{
+    float dir[3];
+    dir[0] =
+        point_to_xyz[0] - from_pos_xyz[0];
+    dir[1] =
+        point_to_xyz[1] - from_pos_xyz[1];
+    dir[2] =
+        point_to_xyz[2] - from_pos_xyz[2];
+    
+    float length = sqrtf(
+        dir[0] * dir[0] +
+        dir[1] * dir[1] +
+        dir[2] * dir[2]);
+    
+    if (length < 1e-6f) {
+        log_assert(0);
+        recip_xyz_angle[0] = 0.0f;
+        recip_xyz_angle[1] = 0.0f;
+        recip_xyz_angle[2] = 0.0f;
+        return;
+    }
+    
+    float inv_length = 1.0f / length;
+    dir[0] *= inv_length;
+    dir[1] *= inv_length;
+    dir[2] *= inv_length;
+    
+    recip_xyz_angle[0] = -atan2f(
+        dir[1],
+        sqrtf(dir[0]*dir[0] + dir[2]*dir[2]));;
+    recip_xyz_angle[1] = atan2f(
+        dir[0], dir[2]);
+    recip_xyz_angle[2] = 0.0f;
+}
+
+static void
+T1_render_view_angle3_to_direction(
+    float * recip_dir,
+    const float * angle_xyz)
+{
+    float pitch = angle_xyz[0]; // X
+    float yaw   = angle_xyz[1]; // Y
+    
+    float cp = cosf(pitch);
+    float sp = sinf(pitch);
+    float cy = cosf(yaw);
+    float sy = sinf(yaw);
+    
+    recip_dir[0] =  sy * cp;
+    recip_dir[1] = -sp;
+    recip_dir[2] =  cy * cp;
+}
+
+static void
+T1_render_view_get_arbitrary_lookat_point(
+    float * new_pos,
+    const float * angle_xyz,
+    const float * from_pos_xyz)
+{
+    // get an arbitrary look-at position
+    float look_at_dist = 1.0f; // arbitrary dist
+    
+    float forward[3];
+    T1_render_view_angle3_to_direction(
+        forward,
+        angle_xyz);
+    
+    new_pos[0] = from_pos_xyz[0] + forward[0] * look_at_dist;
+    new_pos[1] = from_pos_xyz[1] + forward[1] * look_at_dist;
+    new_pos[2] = from_pos_xyz[2] + forward[2] * look_at_dist;
+}
+
+void T1_render_view_update_positions(
+    void)
+{
+    if (T1_global->block_render_view_pos_updates) {
+        return;
+    }
+    
+    for (
+        uint32_t rv_i = 0;
+        rv_i < T1_render_views->size;
+        rv_i++)
+    {
+        if (
+            T1_render_views->cpu[rv_i].
+                reflect_around_plane)
+        {
+            // Assuming the main camera is always at 0
+            // Assuming the main camera can't be a
+            // reflection view
+            log_assert(rv_i != 0);
+            
+            // Supporting only z-planes for now:
+            float plane_z = T1_render_views->cpu[rv_i].
+                refl_cam_around_plane_xyz[2];
+            
+            // Reflect position (flip Z over the plane)
+            T1_render_views->cpu[rv_i].xyz[0] = T1_camera->xyz[0];
+            T1_render_views->cpu[rv_i].xyz[1] = T1_camera->xyz[1];
+            T1_render_views->cpu[rv_i].xyz[2] = 2.0f * plane_z - T1_camera->xyz[2];
+            
+            T1_render_views->cpu[rv_i].xyz_angle[0] =
+                -(3.14159265359f +
+                    T1_camera->xyz_angle[0]);
+            T1_render_views->cpu[rv_i].xyz_angle[1] =
+                T1_camera->xyz_angle[1];
+            T1_render_views->cpu[rv_i].xyz_angle[2] =
+                T1_camera->xyz_angle[2];
+            
+            T1_render_views->gpu[rv_i].
+                cull_above_z =
+                    T1_render_views->cpu[rv_i].
+                        refl_cam_around_plane_xyz[2];
+        }
+    }
 }
 
 void T1_render_view_delete(

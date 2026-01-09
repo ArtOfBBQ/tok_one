@@ -1630,10 +1630,11 @@ static void set_defaults_for_encoder(
     
     log_assert(ags->opaque_depth_stencil_state != nil);
     [encoder
-        setDepthStencilState: ags->opaque_depth_stencil_state];
+        setDepthStencilState:
+            ags->opaque_depth_stencil_state];
     
     [encoder setDepthClipMode: MTLDepthClipModeClip];
-    [encoder setCullMode: MTLCullModeBack];
+    [encoder setCullMode: MTLCullModeNone];
     [encoder setFrontFacingWinding:
         MTLWindingCounterClockwise];
     

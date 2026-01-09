@@ -68,6 +68,7 @@ typedef struct {
     bool8_t show_profiler;
     bool8_t pause_profiler;
     bool8_t block_mouse;
+    bool8_t block_render_view_pos_updates;
     bool8_t fullscreen;
     bool8_t clientlogic_early_startup_finished;
     bool8_t upcoming_fullscreen_request;

@@ -401,6 +401,82 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        T1_std_string_starts_with(
+            command,
+            "UNBLOCK RENDER VIEW UPDATES"))
+    {
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Enabling render view position updates...");
+        T1_global->block_render_view_pos_updates = false;
+        
+        return true;
+    }
+    
+    if (
+        T1_std_string_starts_with(
+            command,
+            "BLOCK RENDER VIEW UPDATES"))
+    {
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Blocking render view position updates...");
+        T1_global->block_render_view_pos_updates = true;
+        
+        return true;
+    }
+    
+    if (
+        T1_std_string_starts_with(
+            command, "TO RENDER VIEW "))
+    {
+        uint32_t rv_good = 0;
+        int32_t jump_rv = T1_std_string_to_int32_validate(
+            command + 15,
+            &rv_good);
+        
+        if (!rv_good ||
+            jump_rv < 1 ||
+            jump_rv >= (int32_t)T1_render_views->size) {
+            T1_std_strcpy_cap(
+                response,
+                SINGLE_LINE_MAX,
+                "Couldn't parse to render view index: ");
+            T1_std_strcat_cap(
+                response,
+                SINGLE_LINE_MAX,
+                command + 15);
+            return true;
+        }
+        
+        T1_std_strcpy_cap(
+            response,
+            SINGLE_LINE_MAX,
+            "Jumping to render view: ");
+        T1_std_strcat_int_cap(
+            response,
+            SINGLE_LINE_MAX,
+            jump_rv);
+        T1_camera->xyz[0] = T1_render_views->
+            cpu[jump_rv].xyz[0];
+        T1_camera->xyz[1] = T1_render_views->
+            cpu[jump_rv].xyz[1];
+        T1_camera->xyz[2] = T1_render_views->
+            cpu[jump_rv].xyz[2];
+        
+        T1_camera->xyz_angle[0] = T1_render_views->
+            cpu[jump_rv].xyz_angle[0];
+        T1_camera->xyz_angle[1] = T1_render_views->
+            cpu[jump_rv].xyz_angle[1];
+        T1_camera->xyz_angle[2] = T1_render_views->
+            cpu[jump_rv].xyz_angle[2];
+        
+        return true;
+    }
+    
+    if (
         T1_std_are_equal_strings(command, "PAUSE PROFILER"))
     {
         if (!T1_global->pause_profiler) {
