@@ -312,6 +312,7 @@ void T1_particle_add_all_to_frame_data(
             spawn_i < T1_particle_effects[i].spawns_per_loop;
             spawn_i++)
         {
+            #if 0
             uint64_t spawn_at = (spawn_i *
                 T1_particle_effects[i].
                     pause_per_spawn);
@@ -325,6 +326,7 @@ void T1_particle_add_all_to_frame_data(
                     (T1_particle_effects[i].elapsed <  spawn_at) *
                     ((T1_particle_effects[i].elapsed + T1_particle_effects[i].loop_duration) - spawn_at)
                 );
+            #endif
             
             T1_particle_add_single_to_frame_data(
                 frame_data,
@@ -349,7 +351,9 @@ void T1_particle_add_all_to_frame_data(
             next->diffuse =
                 T1_particle_effects[i].light_strength;
             next->specular =
-                T1_particle_effects[i].light_strength * 0.15f;
+                T1_particle_effects[i].light_strength *
+                    0.15f;
+            
             next->xyz[0] =
                 T1_particle_effects[i].base.xyz[0];
             next->xyz[1] =

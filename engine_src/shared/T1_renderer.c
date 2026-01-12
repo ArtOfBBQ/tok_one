@@ -211,7 +211,7 @@ inline static void add_alphablending_zpolygons_to_workload(
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
                         (int32_t)frame_data->
-                            verts_size;
+                            verts_size - first_alpha_i;
             }
         }
     }
@@ -237,13 +237,18 @@ inline static void
                 visible ||
             !T1_zsprite_list->cpu_data[cpu_zp_i].
                 committed ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
-                alpha_blending_on ||
             !T1_zsprite_list->cpu_data[cpu_zp_i].
                 bloom_on)
         {
             continue;
         }
+        
+        log_assert(
+            !T1_zsprite_list->cpu_data[cpu_zp_i].
+                alpha_blending_on);
+        log_assert(
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                bloom_on);
         
         int32_t mesh_id =
             T1_zsprite_list->cpu_data[cpu_zp_i].
@@ -252,12 +257,16 @@ inline static void
         log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
         
         int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
-                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
+            T1_objmodel_mesh_summaries[mesh_id].
+                vertices_head_i +
+                    T1_objmodel_mesh_summaries[mesh_id].
+                        vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         for (
-            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
+            int32_t vert_i =
+                T1_objmodel_mesh_summaries[mesh_id].
+                    vertices_head_i;
             vert_i < vert_tail_i;
             vert_i += 1)
         {
@@ -284,16 +293,20 @@ inline static void
             pass_i++)
         {
             if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].type ==
                         T1RENDERPASS_BLOOM)
             {
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].vert_i =
                         first_bloom_i;
+                log_assert(frame_data->
+                    verts_size < INT32_MAX);
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
                         (int32_t)frame_data->
-                            verts_size;
+                            verts_size -
+                                first_bloom_i;
             }
         }
     }
@@ -683,6 +696,31 @@ void T1_renderer_hardware_render(
     #error
     #endif
     
+    for (
+        uint32_t cam_i = 0;
+        cam_i < T1_render_views->size;
+        cam_i++)
+    {
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
+            pass_i++)
+        {
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_OUTLINES)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i = 0;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            verts_size;
+            }
+        }
+    }
+    
     add_bloom_zpolygons_to_workload(frame_data);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -712,6 +750,31 @@ void T1_renderer_hardware_render(
     #else
     #error
     #endif
+    
+    for (
+        uint32_t cam_i = 0;
+        cam_i < T1_render_views->size;
+        cam_i++)
+    {
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
+            pass_i++)
+        {
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_BILLBOARDS)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i = 0;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            flat_bb_quads_size;
+            }
+        }
+    }
     
     // construct_light_matrices(frame_data);
     

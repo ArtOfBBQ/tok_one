@@ -127,7 +127,10 @@ vertex_shader(
     }
     
     float4 mesh_vertices = vector_float4(
-        lv->xyz[0], lv->xyz[1], lv->xyz[2], 1.0f);
+        lv->xyz[0],
+        lv->xyz[1],
+        lv->xyz[2],
+        1.0f);
     
     float3 vertex_normal = vector_float3(
         lv->norm_xyz[0],
@@ -160,9 +163,11 @@ vertex_shader(
     
     out.viewpos = out.worldpos * view;
     
+    float ic = clamp(zs->ignore_camera, 0.0f, 1.0f);
+    
     out.viewpos =
-        (zs->ignore_camera * out.worldpos) +
-        (1.0f - zs->ignore_camera) * out.viewpos;
+        (ic * out.worldpos) +
+        (1.0f - ic) * out.viewpos;
     
     out.touchable_id = zs->touch_id;
     
@@ -696,9 +701,12 @@ fragment_shader(
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        in.worldpos.xyz[2] >= render_views[camera_i].cull_above_z ||
-        in.worldpos.xyz[2] <=
-            render_views[camera_i].cull_below_z)
+        polygons[in.polygon_i].ignore_camera < 0.05f &&
+        (
+            in.worldpos.xyz[2] >=
+                render_views[camera_i].cull_above_z ||
+            in.worldpos.xyz[2] <=
+                render_views[camera_i].cull_below_z))
     {
         discard_fragment();
     }
@@ -782,9 +790,12 @@ alphablending_fragment_shader(
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        in.worldpos.xyz[2] >= render_views[camera_i].cull_above_z ||
-        in.worldpos.xyz[2] <=
-            render_views[camera_i].cull_below_z)
+        polygons[in.polygon_i].ignore_camera < 0.05f &&
+        (
+            in.worldpos.xyz[2] >=
+                render_views[camera_i].cull_above_z ||
+            in.worldpos.xyz[2] <=
+                render_views[camera_i].cull_below_z))
     {
         discard_fragment();
     }

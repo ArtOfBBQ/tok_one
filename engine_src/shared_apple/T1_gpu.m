@@ -1645,7 +1645,7 @@ static void set_defaults_for_encoder(
             ags->opaque_depth_stencil_state];
     
     [encoder setDepthClipMode: MTLDepthClipModeClip];
-    [encoder setCullMode: MTLCullModeNone];
+    [encoder setCullMode: MTLCullModeBack];
     [encoder setFrontFacingWinding:
         MTLWindingCounterClockwise];
     
@@ -2134,7 +2134,7 @@ static void set_defaults_for_encoder(
         {
             if (
                 pass->verts_size < 1 ||
-                ags->cur_bb_pls != nil)
+                ags->cur_bb_pls == nil)
             {
                 break;
             }
@@ -2180,8 +2180,8 @@ static void set_defaults_for_encoder(
                 vertexStart:
                     0
                 vertexCount:
-                    (NSUInteger)pass->
-                        verts_size * 6
+                    (NSUInteger)
+                        pass->verts_size * 6
                 ];
             
             [bb_enc endEncoding];
