@@ -133,14 +133,9 @@ void T1_gameloop_update_before_render_pass(
     gameloop_previous_time = T1_global->this_frame_timestamp_us;
     
     frame_data->postproc_consts->lights_size = 0;
-    frame_data->opaq_verts_size = 0;
-    frame_data->bloom_verts_size = 0;
-    frame_data->alpha_verts_size = 0;
     frame_data->verts_size = 0;
-    frame_data->flat_billboard_quads_size             = 0;
+    frame_data->flat_bb_quads_size = 0;
     frame_data->zsprite_list->size = 0;
-    frame_data->first_alpha_i = 0;
-    frame_data->first_bloom_i = 0;
     
     if (
         !T1_gameloop_active && T1_loading_textures)

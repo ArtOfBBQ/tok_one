@@ -11,7 +11,11 @@ void T1_renderer_init(void) {
 inline static void add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
+    // for now we assume this always comes 1st
     log_assert(frame_data->verts_size == 0);
+    
+    int32_t first_opaq_i = (int32_t)frame_data->
+        verts_size;
     
     int32_t cur_vals[4];
     int32_t incr_vals[4];
@@ -111,17 +115,38 @@ inline static void add_opaque_zpolygons_to_workload(
         #endif
     }
     
-    frame_data->opaq_verts_size =
-        frame_data->verts_size;
+    for (
+        uint32_t cam_i = 0;
+        cam_i < T1_render_views->size;
+        cam_i++)
+    {
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
+            pass_i++)
+        {
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_DIAMOND_ALPHA)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i =
+                        first_opaq_i;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            verts_size;
+            }
+        }
+    }
 }
 
 inline static void add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
-    log_assert(frame_data->opaq_verts_size ==
-        frame_data->verts_size);
-    
-    frame_data->first_alpha_i = frame_data->verts_size;
+    int32_t first_alpha_i = (int32_t)frame_data->
+        verts_size;
     
     // Copy all vertices that do use alpha blending
     for (
@@ -165,26 +190,39 @@ inline static void add_alphablending_zpolygons_to_workload(
         }
     }
     
-    frame_data->alpha_verts_size =
-        frame_data->verts_size
-            - frame_data->first_alpha_i;
-    log_assert(
-        frame_data->alpha_verts_size +
-            frame_data->opaq_verts_size ==
-                frame_data->verts_size);
+    for (
+        uint32_t cam_i = 0;
+        cam_i < T1_render_views->size;
+        cam_i++)
+    {
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
+            pass_i++)
+        {
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_ALPHA_BLEND)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i =
+                        first_alpha_i;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            verts_size;
+            }
+        }
+    }
 }
 
 inline static void
     add_bloom_zpolygons_to_workload(
         T1GPUFrame * frame_data)
 {
-    log_assert(
-        frame_data->alpha_verts_size +
-        frame_data->opaq_verts_size ==
-        frame_data->verts_size);
-    
-    frame_data->first_bloom_i =
-        frame_data->verts_size;
+    int32_t first_bloom_i = (int32_t)frame_data->
+        verts_size;
     
     // Copy all vertices that do use bloom
     for (
@@ -234,15 +272,31 @@ inline static void
         }
     }
     
-    frame_data->bloom_verts_size =
-        frame_data->verts_size
-            - frame_data->first_bloom_i;
-    
-    log_assert(
-        frame_data->alpha_verts_size +
-            frame_data->opaq_verts_size +
-                frame_data->bloom_verts_size ==
-                frame_data->verts_size);
+    for (
+        uint32_t cam_i = 0;
+        cam_i < T1_render_views->size;
+        cam_i++)
+    {
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
+            pass_i++)
+        {
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_BLOOM)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i =
+                        first_bloom_i;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            verts_size;
+            }
+        }
+    }
 }
 
 static void construct_projection_matrix(void) {
@@ -603,14 +657,19 @@ void T1_renderer_hardware_render(
             T1_zsprite_list->gpu_data,
         /* size_t n: */
             sizeof(T1GPUzSprite) * T1_zsprite_list->size);
+    
     frame_data->zsprite_list->size = T1_zsprite_list->size;
     
     log_assert(
-        frame_data->zsprite_list->size <= T1_zsprite_list->size);
+        frame_data->zsprite_list->size <=
+            T1_zsprite_list->size);
+    
     log_assert(
-        T1_zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
+        T1_zsprite_list->size <
+            MAX_ZSPRITES_PER_BUFFER);
     log_assert(
-        frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
+        frame_data->zsprite_list->size <
+            MAX_ZSPRITES_PER_BUFFER);
     
     *frame_data->postproc_consts =
         T1_global->postproc_consts;

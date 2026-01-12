@@ -49,6 +49,12 @@ static void T1_render_view_construct(
     cpu->height = height;
     cpu->width  = width;
     
+    cpu->passes_size = 2;
+    cpu->passes[0].type =
+        T1RENDERPASS_DIAMOND_ALPHA;
+    cpu->passes[1].type =
+        T1RENDERPASS_ALPHA_BLEND;
+    
     gpu->cull_below_z = T1_F32_MIN;
     gpu->cull_above_z = T1_F32_MAX;
     
@@ -96,8 +102,6 @@ int32_t T1_render_view_fetch_next(
     {
         ret = (int32_t)T1_render_views->size;
         T1_render_views->size += 1;
-    } else {
-        return ret;
     }
     
     log_assert(ret >= 0);
@@ -271,6 +275,20 @@ void T1_render_view_validate(void) {
     {
         if (T1_render_views->cpu[i].deleted) {
             continue;
+        }
+        
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->cpu[i].
+                passes_size;
+            pass_i++)
+        {
+            log_assert(T1_render_views->cpu[i].
+                passes[pass_i].type >
+                    T1RENDERPASS_BELOWBOUNDS);
+            log_assert(T1_render_views->cpu[i].
+                passes[pass_i].type <
+                    T1RENDERPASS_ABOVEBOUNDS);
         }
         
         log_assert(

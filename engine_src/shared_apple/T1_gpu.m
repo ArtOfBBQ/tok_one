@@ -86,6 +86,17 @@ typedef struct {
     id<MTLTexture> touch_id_texture;
     id<MTLBuffer> touch_id_buffer;
     id<MTLBuffer> touch_id_buffer_all_zeros;
+    
+    // Rendering state
+    uint32_t z_buffer_cleared;
+    uint32_t rtt_cleared;
+    id<MTLTexture> cur_rtt;
+    id<MTLTexture> cur_depth;
+    id<MTLRenderPipelineState> cur_opq_pls;
+    id<MTLRenderPipelineState> cur_blnd_pls;
+    id<MTLRenderPipelineState> cur_bloom_pls;
+    id<MTLRenderPipelineState> cur_bb_pls;
+    
     T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
     bool32_t viewports_set[T1_RENDER_VIEW_CAP];
@@ -655,7 +666,7 @@ bool32_t T1_apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        f->flat_billboard_quads
+                        f->flat_bb_quads
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->flat_quads_alloc_size
@@ -1930,230 +1941,29 @@ static void set_defaults_for_encoder(
     #endif
 }
 
--(void)renderViewToColor:(MTKView *)view
-    renderView:(int)cam_i
+-(void)drawSinglePass:(int32_t)pass_i
+    forCamera: (int32_t)cam_i
+    withView: (MTKView *)view
+    withComBuf: (id<MTLCommandBuffer>)combuf
 {
+    T1RenderPass * pass =
+        &T1_render_views->cpu[cam_i].passes[pass_i];
     
-}
-
-- (void)drawInMTKView:(MTKView *)view
-{
-    if (
-        funcptr_gameloop_before_render == NULL ||
-        T1_render_views->size < 1 ||
-        T1_render_views->cpu[0].deleted)
+    switch (pass->type)
     {
-        return;
-    }
-    
-    log_assert(
-        T1_render_views->cpu[0].write_array_i >= 0);
-    log_assert(
-        T1_render_views->cpu[0].write_array_i <
-            (int)T1_texture_arrays_size);
-    
-    #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
-    dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
-    #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1GPUFrame * f =
-        &gpu_shared_data_collection->
-            triple_buffers[ags->frame_i];
-    
-    log_assert(f->opaq_verts_size <= f->verts_size);
-    log_assert(f->bloom_verts_size <= f->verts_size);
-    log_assert(f->alpha_verts_size <= f->verts_size);
-    
-    funcptr_gameloop_before_render(
-        gpu_shared_data_collection->
-            triple_buffers + ags->frame_i);
-    
-    if (
-        (f->postproc_consts->timestamp -
-            T1_global->last_resize_request_us)
-                < 250000)
-    {
-        return;
-    }
-    
-    log_assert(f->opaq_verts_size <= f->verts_size);
-    log_assert(f->bloom_verts_size <= f->verts_size);
-    log_assert(f->alpha_verts_size <= f->verts_size);
-    
-    if (
-        !ags ||
-        !ags->metal_active ||
-        !ags->viewports_set[0])
-    {
-        return;
-    }
-    
-    id<MTLCommandBuffer> combuf =
-        [ags->command_queue commandBuffer];
-    
-    if (combuf == nil) {
-        #if T1_LOGGER_ASSERTS_ACTIVE
-        log_dump_and_crash("error - can't get metal command buffer\n");
-        #endif
-        
-        return;
-    }
-    
-    log_assert(f->opaq_verts_size <= f->verts_size);
-    log_assert(f->bloom_verts_size <= f->verts_size);
-    log_assert(f->alpha_verts_size <= f->verts_size);
-    
-    // Blit to clear the touch id buffer
-    uint32_t size_bytes = (uint32_t)(
-        [ags->touch_id_texture width] *
-        [ags->touch_id_texture height] *
-        8);
-    
-    id <MTLBlitCommandEncoder>
-        clear_touch_tex_blit_enc =
-            [combuf blitCommandEncoder];
-    
-    [clear_touch_tex_blit_enc
-        copyFromBuffer:
-            ags->touch_id_buffer_all_zeros
-        sourceOffset: 0
-        sourceBytesPerRow:
-            [ags->touch_id_texture width] * 4
-        sourceBytesPerImage:
-            size_bytes
-        sourceSize:
-            MTLSizeMake(
-                [ags->touch_id_texture width],
-                [ags->touch_id_texture height],
-                1)
-        toTexture:
-            ags->touch_id_texture
-        destinationSlice:
-            0
-        destinationLevel:
-            0
-        destinationOrigin:
-            MTLOriginMake(0, 0, 0)];
-    
-    [clear_touch_tex_blit_enc endEncoding];
-    
-    for (
-        int32_t cam_i =
-            (int32_t)f->render_views_size - 1;
-        cam_i >= 0;
-        cam_i--)
-    {
-        if (T1_render_views->cpu[cam_i].deleted) {
-            continue;
-        }
-        
-        log_assert(ags->viewports_set[cam_i]);
-        
-        log_assert(
-            f->opaq_verts_size <=
-                f->verts_size);
-        
-        log_assert(T1_render_views->cpu[cam_i].
-            write_array_i >= 1);
-        log_assert(T1_render_views->cpu[cam_i].
-            write_slice_i >= 0);
-        
-        uint32_t z_buffer_cleared = false;
-        uint32_t rtt_cleared = false;
-        
-        id<MTLTexture> current_rtt = nil;
-        id<MTLTexture> current_depth = nil;
-        id<MTLRenderPipelineState> opq_pls = nil;
-        id<MTLRenderPipelineState> blnd_pls = nil;
-        id<MTLRenderPipelineState> bloom_pls = nil;
-        id<MTLRenderPipelineState> bb_pls = nil;
-        
-        switch (
-            T1_render_views->cpu[cam_i].write_type)
+        case T1RENDERPASS_DEPTH_PREPASS:
         {
-            case T1RENDERVIEW_WRITE_BELOWBOUNDS:
-                log_assert(0);
-            break;
-            case T1RENDERVIEW_WRITE_RENDER_TARGET:
-                current_rtt =
-                    get_texture_array_slice(
-                        T1_render_views->cpu[cam_i].
-                            write_array_i,
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i);
-                log_assert(current_rtt != NULL);
-                current_depth =
-                    ags->cam_depth_texture;
-                opq_pls =
-                    ags->diamond_touch_pls;
-                blnd_pls =
-                    ags->blend_touch_pls;
-                bloom_pls =
-                    ags->blend_touch_pls;
-                bb_pls = ags->bb_touch_pls;
-            break;
-            case T1RENDERVIEW_WRITE_RGBA:
-                current_rtt =
-                    get_texture_array_slice(
-                        T1_render_views->cpu[cam_i].
-                            write_array_i,
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i);
-                log_assert(current_rtt != NULL);
-                current_depth =
-                    ags->cam_depth_texture;
-                opq_pls =
-                    ags->diamond_notouch_pls;
-                blnd_pls =
-                    ags->blend_notouch_pls;
-                bloom_pls =
-                    ags->blend_notouch_pls;
-                bb_pls = ags->bb_notouch_pls;
-            break;
-            case T1RENDERVIEW_WRITE_DEPTH:
-                log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_array_i ==
-                            DEPTH_TEXTUREARRAYS_I);
-                log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_slice_i >= 0);
-                log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_slice_i <
-                            T1_RENDER_VIEW_CAP);
-                current_rtt = nil;
-                current_depth = ags->
-                    depth_textures[
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i];
-                
-                log_assert(current_depth != nil);
-                log_assert((current_depth.usage & MTLTextureUsageRenderTarget) > 0);
-                opq_pls = ags->depth_only_pls;
-                blnd_pls = ags->depth_only_pls;
-                bloom_pls = ags->depth_only_pls;
-                bb_pls = nil;
-            break;
-            case T1RENDERVIEW_WRITE_ABOVEBOUNDS:
-                log_assert(0);
-            break;
+            // TODO: reimplement z prepasses
+            #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+            #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
         }
-        
-        // TODO: reimplement z prepasses
-        #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
-        #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-        if (
-            T1_render_views->cpu[cam_i].draw_outlines)
+        break;
+        case T1RENDERPASS_OUTLINES:
         {
+            #if T1_OUTLINES_ACTIVE == T1_ACTIVE
             // Drawing outlines to a depth target
             // seems pointless, not supported
             log_assert(
@@ -2161,24 +1971,26 @@ static void set_defaults_for_encoder(
                     write_type !=
                         T1RENDERVIEW_WRITE_DEPTH);
             
-            MTLRenderPassDescriptor * outlines_desc =
-                [view currentRenderPassDescriptor];
+            MTLRenderPassDescriptor *
+                outlines_desc = [view
+                    currentRenderPassDescriptor];
             
             set_defaults_for_render_descriptor(
                 outlines_desc,
                 cam_i,
-                current_depth,
-                current_rtt,
-                &z_buffer_cleared,
-                &rtt_cleared);
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
             
             outlines_desc.colorAttachments[1].texture =
                 nil;
             
-            id<MTLRenderCommandEncoder> pass_1_outline_enc =
-                [combuf
-                    renderCommandEncoderWithDescriptor:
-                        outlines_desc];
+            id<MTLRenderCommandEncoder>
+                pass_1_outline_enc =
+                    [combuf
+                        renderCommandEncoderWithDescriptor:
+                            outlines_desc];
             
             set_defaults_for_encoder(
                 pass_1_outline_enc,
@@ -2201,251 +2013,247 @@ static void set_defaults_for_encoder(
             
             if (
                 T1_global->draw_triangles &&
-                f->opaq_verts_size > 0)
+                pass->verts_size > 0)
             {
-                log_assert(
-                    f->opaq_verts_size <
-                        MAX_VERTICES_PER_BUFFER);
-                log_assert(f->opaq_verts_size % 3 == 0);
                 [pass_1_outline_enc
                     drawPrimitives:
                         MTLPrimitiveTypeTriangle
                     vertexStart:
-                        0
+                        (NSUInteger)pass->vert_i
                     vertexCount:
-                        f->opaq_verts_size];
+                        (NSUInteger)pass->
+                            verts_size];
             }
             [pass_1_outline_enc endEncoding];
+            #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
         }
-        #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        // opaque triangles
-        MTLRenderPassDescriptor * opaque_tris_desc =
-            [view currentRenderPassDescriptor];
-        
-        set_defaults_for_render_descriptor(
-            opaque_tris_desc,
-            cam_i,
-            current_depth,
-            current_rtt,
-            &z_buffer_cleared,
-            &rtt_cleared);
-        id<MTLRenderCommandEncoder>
-            pass_2_opaque_tris_enc = [combuf
-                renderCommandEncoderWithDescriptor:
-                    opaque_tris_desc];
-        
-        [pass_2_opaque_tris_enc
-            setRenderPipelineState: opq_pls];
-        
-        set_defaults_for_encoder(
-            pass_2_opaque_tris_enc,
-            (uint32_t)cam_i);
-        
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        for (
-            uint32_t i = 0;
-            i < f->verts_size;
-            i++)
+        break;
+        case T1RENDERPASS_DIAMOND_ALPHA:
         {
-            log_assert(f->verts[i].locked_vertex_i <
-                ALL_LOCKED_VERTICES_SIZE);
-        }
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        if (
-            T1_global->draw_triangles &&
-            f->opaq_verts_size > 0)
-        {
-            log_assert(f->opaq_verts_size < MAX_VERTICES_PER_BUFFER);
-            log_assert(f->opaq_verts_size % 3 == 0);
+            if (
+                !T1_global->draw_triangles)
+            {
+                break;
+            }
+            
+            // opaque triangles
+            MTLRenderPassDescriptor * diamond_desc =
+                [view currentRenderPassDescriptor];
+            
+            set_defaults_for_render_descriptor(
+                diamond_desc,
+                cam_i,
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
+            
+            id<MTLRenderCommandEncoder> pass_2_opaque_tris_enc =
+                [combuf renderCommandEncoderWithDescriptor:
+                    diamond_desc];
+            
+            [pass_2_opaque_tris_enc
+                setRenderPipelineState:
+                    ags->cur_opq_pls];
+            
+            set_defaults_for_encoder(
+                pass_2_opaque_tris_enc,
+                (uint32_t)cam_i);
+            
+            log_assert((pass->verts_size + pass->vert_i) < MAX_VERTICES_PER_BUFFER);
+            log_assert(pass->verts_size % 3 == 0);
+            
             [pass_2_opaque_tris_enc
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
                 vertexStart:
-                    0
+                    (NSUInteger)pass->vert_i
                 vertexCount:
-                    f->opaq_verts_size];
+                    (NSUInteger)pass->verts_size];
+            
+            [pass_2_opaque_tris_enc endEncoding];
         }
-        [pass_2_opaque_tris_enc
-            endEncoding];
-        
-        log_assert(
-            f->first_alpha_i <=
-            f->verts_size);
-        
-        #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-        if (
-            T1_global->draw_triangles &&
-            f->alpha_verts_size > 0 &&
-            blnd_pls != nil)
+        break;
+        case T1RENDERPASS_ALPHA_BLEND:
         {
-            MTLRenderPassDescriptor *
-                alpha_tris_descriptor =
-                    [view
-                        currentRenderPassDescriptor];
+            #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
+            if (!T1_global->draw_triangles)
+            {
+                break;
+            }
+            
+            MTLRenderPassDescriptor * alpha_desc =
+                [view currentRenderPassDescriptor];
+            
             set_defaults_for_render_descriptor(
-                alpha_tris_descriptor,
+                alpha_desc,
                 cam_i,
-                current_depth,
-                current_rtt,
-                &z_buffer_cleared,
-                &rtt_cleared);
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
             
             id<MTLRenderCommandEncoder>
-                pass_3_alpha_tris_enc = [combuf
+                alpha_pass = [combuf
                     renderCommandEncoderWithDescriptor:
-                        alpha_tris_descriptor];
+                        alpha_desc];
             
-            [pass_3_alpha_tris_enc
+            [alpha_pass
                 setRenderPipelineState:
-                    blnd_pls];
+                    ags->cur_blnd_pls];
             set_defaults_for_encoder(
-                pass_3_alpha_tris_enc,
+                alpha_pass,
                 (uint32_t)cam_i);
             
-            [pass_3_alpha_tris_enc
+            [alpha_pass
                 setCullMode: MTLCullModeBack];
-            [pass_3_alpha_tris_enc
+            [alpha_pass
                 setFrontFacingWinding:
                     MTLWindingCounterClockwise];
             
-            [pass_3_alpha_tris_enc
+            [alpha_pass
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
                 vertexStart:
-                    f->first_alpha_i
+                    (NSUInteger)pass->vert_i
                 vertexCount:
-                    f->alpha_verts_size];
+                    (NSUInteger)pass->verts_size];
             
-            [pass_3_alpha_tris_enc
+            [alpha_pass
                 endEncoding];
+            #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
         }
-        #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        if (
-            // T1_global->draw_billboards &&
-            f->flat_billboard_quads_size > 0 &&
-            bb_pls != nil)
+        break;
+        case T1RENDERPASS_BILLBOARDS:
         {
+            if (
+                pass->verts_size < 1 ||
+                ags->cur_bb_pls != nil)
+            {
+                break;
+            }
+            
             MTLRenderPassDescriptor * bb_desc =
                 [view currentRenderPassDescriptor];
             
             set_defaults_for_render_descriptor(
                 bb_desc,
                 cam_i,
-                current_depth,
-                current_rtt,
-                &z_buffer_cleared,
-                &rtt_cleared);
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
             
             id<MTLRenderCommandEncoder>
-                pass_4_bb_enc = [combuf
-                    renderCommandEncoderWithDescriptor:
+                bb_enc = [combuf
+                renderCommandEncoderWithDescriptor:
                         bb_desc];
             
-            [pass_4_bb_enc
-                setRenderPipelineState: bb_pls];
-            [pass_4_bb_enc
+            [bb_enc
+                setRenderPipelineState:
+                    ags->cur_bb_pls];
+            [bb_enc
                 setDepthStencilState:
                     ags->opaque_depth_stencil_state];
             
-            [pass_4_bb_enc
+            [bb_enc
                 setVertexBuffer:
                     ags->flat_quad_buffers[ags->frame_i]
                 offset: 0
                 atIndex: 2];
             
-            [pass_4_bb_enc
+            [bb_enc
                 setVertexBuffer:
                     ags->cam_buffers[ags->frame_i]
                 offset: 0
                 atIndex: 3];
             
-            [pass_4_bb_enc
+            [bb_enc
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
                 vertexStart:
                     0
                 vertexCount:
-                    f->flat_billboard_quads_size * 6
+                    (NSUInteger)pass->
+                        verts_size * 6
                 ];
             
-            [pass_4_bb_enc endEncoding];
+            [bb_enc endEncoding];
         }
-        
-        #if T1_BLOOM_ACTIVE == T1_ACTIVE
-        log_assert(
-            f->first_bloom_i <=
-            f->verts_size);
-        
-        if (
-            T1_global->draw_triangles &&
-            f->bloom_verts_size > 0 &&
-            blnd_pls != nil &&
-            T1_render_views->cpu[cam_i].write_type ==
-                T1RENDERVIEW_WRITE_RENDER_TARGET)
+        break;
+        case T1RENDERPASS_BLOOM:
         {
+            log_assert(
+                T1_render_views->cpu[cam_i].
+                    write_type ==
+                        T1RENDERVIEW_WRITE_RENDER_TARGET);
+            log_assert(ags->cur_blnd_pls != nil);
+            
+            if (!T1_global->draw_triangles ||
+                pass->verts_size < 1)
+            {
+                break;
+            }
+            
+            #if T1_BLOOM_ACTIVE == T1_ACTIVE
             // only render target can bloom atm
             log_assert(cam_i == 0);
             
             MTLRenderPassDescriptor *
-                bloom_tris_desc = [view
+                bloom_desc = [view
                     currentRenderPassDescriptor];
             set_defaults_for_render_descriptor(
-                bloom_tris_desc,
+                bloom_desc,
                 cam_i,
-                current_depth,
-                current_rtt,
-                &z_buffer_cleared,
-                &rtt_cleared);
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
+            
             id<MTLTexture> bloom_rtt =
                 ags->downsampled_rtts[0];
-            bloom_tris_desc.colorAttachments[0].
+            bloom_desc.colorAttachments[0].
                 texture = bloom_rtt;
-            bloom_tris_desc.colorAttachments[0].
+            bloom_desc.colorAttachments[0].
                 clearColor = MTLClearColorMake(
                     0.0, 0.0, 0.0, 0.0);
-            bloom_tris_desc.colorAttachments[0].
+            bloom_desc.colorAttachments[0].
                 loadAction = MTLLoadActionClear;
             
             id<MTLRenderCommandEncoder>
-                pass_4_bloom_enc = [combuf
+                bloom_enc = [combuf
                     renderCommandEncoderWithDescriptor:
-                    bloom_tris_desc];
+                    bloom_desc];
             
-            [pass_4_bloom_enc
+            [bloom_enc
                 setRenderPipelineState:
-                    bloom_pls];
+                    ags->cur_bloom_pls];
             
             set_defaults_for_encoder(
-                pass_4_bloom_enc,
+                bloom_enc,
                 (uint32_t)cam_i);
             
-            [pass_4_bloom_enc
+            [bloom_enc
                 setCullMode: MTLCullModeBack];
-            [pass_4_bloom_enc
+            [bloom_enc
                 setFrontFacingWinding:
                     MTLWindingCounterClockwise];
             
-            [pass_4_bloom_enc
+            [bloom_enc
                 drawPrimitives:
                     MTLPrimitiveTypeTriangle
                 vertexStart:
-                    f->first_bloom_i
+                    (NSUInteger)pass->vert_i
                 vertexCount:
-                    f->bloom_verts_size];
+                    (NSUInteger)pass->verts_size];
             
-            [pass_4_bloom_enc endEncoding];
+            [bloom_enc endEncoding];
             
             for (
                 uint32_t ds_i = 1;
@@ -2502,12 +2310,235 @@ static void set_defaults_for_encoder(
                     threadsPerThreadgroup:threadgroup];
                 [boxblur_enc endEncoding];
             }
-            
+            #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
         }
-        #elif T1_BLOOM_ACTIVE == T1_INACTIVE
-        #else
-        #error
+        break;
+        default:
+            log_assert(0);
+    }
+    
+    pass->verts_size = 0;
+}
+
+- (void)drawInMTKView:(MTKView *)view
+{
+    if (
+        funcptr_gameloop_before_render == NULL ||
+        T1_render_views->size < 1 ||
+        T1_render_views->cpu[0].deleted)
+    {
+        return;
+    }
+    
+    log_assert(
+        T1_render_views->cpu[0].write_array_i >= 0);
+    log_assert(
+        T1_render_views->cpu[0].write_array_i <
+            (int)T1_texture_arrays_size);
+    
+    #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
+    dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
+    #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1GPUFrame * f =
+        &gpu_shared_data_collection->
+            triple_buffers[ags->frame_i];
+    
+    log_assert(f->verts_size % 3 == 0);
+    
+    funcptr_gameloop_before_render(
+        gpu_shared_data_collection->
+            triple_buffers + ags->frame_i);
+    
+    if (
+        (f->postproc_consts->timestamp -
+            T1_global->last_resize_request_us)
+                < 250000)
+    {
+        return;
+    }
+    
+    if (
+        !ags ||
+        !ags->metal_active ||
+        !ags->viewports_set[0])
+    {
+        return;
+    }
+    
+    id<MTLCommandBuffer> combuf =
+        [ags->command_queue commandBuffer];
+    
+    if (combuf == nil) {
+        #if T1_LOGGER_ASSERTS_ACTIVE
+        log_dump_and_crash("error - can't get metal command buffer\n");
         #endif
+        
+        return;
+    }
+    
+    // Blit to clear the touch id buffer
+    uint32_t size_bytes = (uint32_t)(
+        [ags->touch_id_texture width] *
+        [ags->touch_id_texture height] *
+        8);
+    
+    id <MTLBlitCommandEncoder>
+        clear_touch_tex_blit_enc =
+            [combuf blitCommandEncoder];
+    
+    [clear_touch_tex_blit_enc
+        copyFromBuffer:
+            ags->touch_id_buffer_all_zeros
+        sourceOffset: 0
+        sourceBytesPerRow:
+            [ags->touch_id_texture width] * 4
+        sourceBytesPerImage:
+            size_bytes
+        sourceSize:
+            MTLSizeMake(
+                [ags->touch_id_texture width],
+                [ags->touch_id_texture height],
+                1)
+        toTexture:
+            ags->touch_id_texture
+        destinationSlice:
+            0
+        destinationLevel:
+            0
+        destinationOrigin:
+            MTLOriginMake(0, 0, 0)];
+    
+    [clear_touch_tex_blit_enc endEncoding];
+    
+    for (
+        int32_t cam_i =
+            (int32_t)f->render_views_size - 1;
+        cam_i >= 0;
+        cam_i--)
+    {
+        if (T1_render_views->cpu[cam_i].deleted) {
+            continue;
+        }
+        
+        ags->cur_rtt = nil;
+        ags->cur_depth = nil;
+        ags->cur_opq_pls = nil;
+        ags->cur_blnd_pls = nil;
+        ags->cur_bloom_pls = nil;
+        ags->cur_bb_pls = nil;
+        
+        ags->rtt_cleared = false;
+        ags->z_buffer_cleared = false;
+        
+        switch (
+            T1_render_views->cpu[cam_i].write_type)
+        {
+            case T1RENDERVIEW_WRITE_BELOWBOUNDS:
+                log_assert(0);
+            break;
+            case T1RENDERVIEW_WRITE_RENDER_TARGET:
+                ags->cur_rtt =
+                    get_texture_array_slice(
+                        T1_render_views->cpu[cam_i].
+                            write_array_i,
+                        T1_render_views->cpu[cam_i].
+                            write_slice_i);
+                log_assert(ags->cur_rtt != NULL);
+                ags->cur_depth =
+                    ags->cam_depth_texture;
+                ags->cur_opq_pls =
+                    ags->diamond_touch_pls;
+                ags->cur_blnd_pls =
+                    ags->blend_touch_pls;
+                ags->cur_bloom_pls =
+                    ags->blend_touch_pls;
+                ags->cur_bb_pls =
+                    ags->bb_touch_pls;
+            break;
+            case T1RENDERVIEW_WRITE_RGBA:
+                ags->cur_rtt =
+                    get_texture_array_slice(
+                        T1_render_views->cpu[cam_i].
+                            write_array_i,
+                        T1_render_views->cpu[cam_i].
+                            write_slice_i);
+                log_assert(ags->cur_rtt != NULL);
+                ags->cur_depth =
+                    ags->cam_depth_texture;
+                ags->cur_opq_pls =
+                    ags->diamond_notouch_pls;
+                ags->cur_blnd_pls =
+                    ags->blend_notouch_pls;
+                ags->cur_bloom_pls =
+                    ags->blend_notouch_pls;
+                ags->cur_bb_pls =
+                    ags->bb_notouch_pls;
+            break;
+            case T1RENDERVIEW_WRITE_DEPTH:
+                log_assert(
+                    T1_render_views->cpu[cam_i].
+                        write_array_i ==
+                            DEPTH_TEXTUREARRAYS_I);
+                log_assert(
+                    T1_render_views->cpu[cam_i].
+                        write_slice_i >= 0);
+                log_assert(
+                    T1_render_views->cpu[cam_i].
+                        write_slice_i <
+                            T1_RENDER_VIEW_CAP);
+                ags->cur_rtt = nil;
+                ags->cur_depth = ags->
+                    depth_textures[
+                        T1_render_views->cpu[cam_i].
+                            write_slice_i];
+                
+                log_assert(ags->cur_depth != nil);
+                log_assert(
+                    (ags->cur_depth.usage &
+                        MTLTextureUsageRenderTarget)
+                            > 0);
+                ags->cur_opq_pls =
+                    ags->depth_only_pls;
+                ags->cur_blnd_pls =
+                    ags->depth_only_pls;
+                ags->cur_bloom_pls =
+                    ags->depth_only_pls;
+                ags->cur_bb_pls = nil;
+            break;
+            case T1RENDERVIEW_WRITE_ABOVEBOUNDS:
+                log_assert(0);
+            break;
+        }
+        
+        for (
+            int32_t pass_i = 0;
+            pass_i < T1_render_views->
+                cpu[cam_i].passes_size;
+            pass_i++)
+        {
+            [self
+                drawSinglePass: pass_i
+                forCamera: cam_i
+                withView: view
+                withComBuf: combuf];
+            
+            log_assert(ags->z_buffer_cleared);
+            log_assert(ags->rtt_cleared);
+        }
+        
+        log_assert(ags->viewports_set[cam_i]);
+        
+        log_assert(T1_render_views->cpu[cam_i].
+            write_array_i >= 1);
+        log_assert(T1_render_views->cpu[cam_i].
+            write_slice_i >= 0);
     }
     
     // copy the touch id buffer for CPU use

@@ -128,15 +128,16 @@ static void T1_particle_add_single_to_frame_data(
     const uint32_t spawn_i)
 {
     if (
-        frame_data->flat_billboard_quads_size + 1 >=
-            MAX_CIRCLES_PER_BUFFER)
+        frame_data->
+            flat_bb_quads_size + 1 >=
+                MAX_CIRCLES_PER_BUFFER)
     {
         log_assert(0);
         return;
     }
     
-    T1GPUFlatQuad * tgt = frame_data->flat_billboard_quads + frame_data->flat_billboard_quads_size;
-    frame_data->flat_billboard_quads_size += 1;
+    T1GPUFlatQuad * tgt = frame_data->flat_bb_quads + frame_data->flat_bb_quads_size;
+    frame_data->flat_bb_quads_size += 1;
     
     *tgt = pe->base;
     

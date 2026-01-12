@@ -527,7 +527,7 @@ void T1_appinit_before_gpu_init(
                 sd->vertices_alloc_size,
                 T1_mem_page_size);
         
-        f->flat_billboard_quads = (T1GPUFlatQuad *)
+        f->flat_bb_quads = (T1GPUFlatQuad *)
             T1_mem_malloc_from_unmanaged_aligned(
                 sd->flat_quads_alloc_size,
                 T1_mem_page_size);

@@ -18,8 +18,31 @@ typedef struct {
     float y_multiplier;
 } T1GPUProjectConsts;
 
+typedef enum : uint8_t {
+    T1RENDERPASS_BELOWBOUNDS = 0,
+    T1RENDERPASS_DEPTH_PREPASS = 1,
+    T1RENDERPASS_OUTLINES = 2,
+    T1RENDERPASS_DIAMOND_ALPHA = 3,
+    T1RENDERPASS_ALPHA_BLEND = 4,
+    T1RENDERPASS_BLOOM = 5,
+    T1RENDERPASS_BILLBOARDS = 6,
+    T1RENDERPASS_ABOVEBOUNDS = 7,
+} T1RenderPassType;
+
+// TODO: discover what architecture we need/want
+typedef struct {
+    // Stays the same over render view lifetime
+    T1RenderPassType type;
+    
+    // Set every frame
+    int32_t vert_i;
+    int32_t verts_size;
+} T1RenderPass;
+
+#define T1_RENDER_PASSES_MAX 6
 typedef struct {
     T1GPUProjectConsts project;
+    T1RenderPass passes[T1_RENDER_PASSES_MAX];
     float    xyz[3];           // 12 bytes
     float    xyz_angle[3];     // 12 bytes
     float    refl_cam_around_plane_xyz[3];
@@ -28,8 +51,8 @@ typedef struct {
     uint32_t width;
     uint32_t height;
     T1RenderViewWriteType write_type;
+    uint8_t  passes_size;
     uint8_t  reflect_around_plane;
-    uint8_t  draw_outlines;
     uint8_t  deleted;
 } T1CPURenderView;
 
