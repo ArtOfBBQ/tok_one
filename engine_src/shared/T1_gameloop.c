@@ -135,6 +135,7 @@ void T1_gameloop_update_before_render_pass(
     frame_data->postproc_consts->lights_size = 0;
     frame_data->verts_size = 0;
     frame_data->flat_bb_quads_size = 0;
+    frame_data->flat_tex_quads_size = 0;
     frame_data->zsprite_list->size = 0;
     
     if (

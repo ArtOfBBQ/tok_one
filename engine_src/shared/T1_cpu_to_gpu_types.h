@@ -14,10 +14,12 @@ typedef struct
     T1GPURenderView *     render_views;
     T1GPUPostProcConsts * postproc_consts;
     T1GPUFlatQuad *       flat_bb_quads;
+    T1GPUTexQuad *        flat_tex_quads;
     
     uint32_t              verts_size;
     uint32_t              render_views_size;
     uint32_t              flat_bb_quads_size;
+    uint32_t              flat_tex_quads_size;
 } T1GPUFrame;
 
 typedef struct
@@ -30,6 +32,7 @@ typedef struct
     uint32_t const_mats_alloc_size;
     uint32_t vertices_alloc_size;
     uint32_t flat_quads_alloc_size;
+    uint32_t flat_texquads_alloc_size;
     uint32_t locked_vertices_alloc_size;
     uint32_t polygons_alloc_size;
     uint32_t polygon_mats_alloc_size;

@@ -22,6 +22,7 @@ typedef struct {
     id light_buffers [FRAMES_CAP];
     id vertex_buffers[FRAMES_CAP];
     id flat_quad_buffers[FRAMES_CAP];
+    id flat_texquad_buffers[FRAMES_CAP];
     id cam_buffers[FRAMES_CAP];
     id postprocessing_constants_buffers[FRAMES_CAP];
     id locked_vertex_populator_buffer;
@@ -53,6 +54,7 @@ typedef struct {
     id<MTLRenderPipelineState> depth_only_pls;
     id<MTLRenderPipelineState> blend_notouch_pls;
     id<MTLRenderPipelineState> bb_notouch_pls;
+    id<MTLRenderPipelineState> flat_texquad_touch_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -96,6 +98,7 @@ typedef struct {
     id<MTLRenderPipelineState> cur_blnd_pls;
     id<MTLRenderPipelineState> cur_bloom_pls;
     id<MTLRenderPipelineState> cur_bb_pls;
+    id<MTLRenderPipelineState> cur_flat_texquad_pls;
     
     T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
@@ -440,7 +443,6 @@ bool32_t T1_apple_gpu_init(
                 &Error];
     
     log_assert(Error == nil);
-    
     flat_billboard_quad_pls_desc.
         colorAttachments[1] = nil;
     ags->bb_notouch_pls =
@@ -449,6 +451,75 @@ bool32_t T1_apple_gpu_init(
                 flat_billboard_quad_pls_desc
             error:
                 &Error];
+    
+    id<MTLFunction>
+        flat_texquad_vert_shader =
+            [ags->lib newFunctionWithName:
+                @"flat_texquad_vertex_shader"];
+    if (
+        flat_texquad_vert_shader == NULL)
+    {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: "
+            "flat_texquad_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> flat_texquad_frag_shader =
+        [ags->lib newFunctionWithName:
+            @"flat_texquad_fragment_shader"];
+    if (flat_texquad_frag_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: "
+            "flat_texquad_fragment_shader()");
+        return false;
+    }
+    
+    MTLRenderPipelineDescriptor *
+        flat_texquad_pls_desc =
+            [MTLRenderPipelineDescriptor new];
+    [flat_texquad_pls_desc
+        setVertexFunction: flat_texquad_vert_shader];
+    [flat_texquad_pls_desc
+        setFragmentFunction:
+            flat_texquad_frag_shader];
+    flat_texquad_pls_desc.label =
+        @"flat texquad pipeline state";
+    flat_texquad_pls_desc
+        .colorAttachments[0]
+        .pixelFormat = ags->pixel_format_renderpass1;
+    [flat_texquad_pls_desc
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    flat_texquad_pls_desc
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorSourceAlpha;
+    flat_texquad_pls_desc
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
+    flat_texquad_pls_desc
+        .colorAttachments[0].rgbBlendOperation =
+            MTLBlendOperationAdd;
+    flat_texquad_pls_desc.colorAttachments[1].
+        pixelFormat = ags->pixel_format_renderpass1;
+    flat_texquad_pls_desc.
+        depthAttachmentPixelFormat =
+            MTLPixelFormatDepth32Float;
+    
+    ags->flat_texquad_touch_pls =
+        [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                flat_texquad_pls_desc
+            error:
+                &Error];
+    
+    log_assert(Error == nil);
+    
+    
     
     // Setup pipeline that uses diamonds instead of alphablending
     MTLRenderPipelineDescriptor * diamond_pls_desc =
@@ -539,7 +610,8 @@ bool32_t T1_apple_gpu_init(
         pixelFormat = ags->pixel_format_renderpass1;
     alpha_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    alpha_pls_desc.label = @"Alphablending pipeline";
+    alpha_pls_desc.label =
+        @"Alphablending pipeline";
     ags->blend_touch_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
@@ -633,7 +705,7 @@ bool32_t T1_apple_gpu_init(
         
         id<MTLBuffer> MTLBufferFramePolygons =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* the ptr needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->zsprite_list->polygons
                 /* the length weirdly needs to be page aligned also */
@@ -648,7 +720,7 @@ bool32_t T1_apple_gpu_init(
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* the ptr needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->verts
                 /* the length weirdly needs to be page aligned also */
@@ -664,7 +736,7 @@ bool32_t T1_apple_gpu_init(
         
         id<MTLBuffer> MTLBufferFrameCircles =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* the ptr needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->flat_bb_quads
                 /* the length weirdly needs to be page aligned also */
@@ -676,11 +748,30 @@ bool32_t T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->flat_quad_buffers[frame_i] = MTLBufferFrameCircles;
+        ags->flat_quad_buffers[frame_i] =
+            MTLBufferFrameCircles;
+        
+        id<MTLBuffer> MTLBufferTexQuads =
+            [with_metal_device
+                /* the ptr needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        f->flat_tex_quads
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection->
+                            flat_texquads_alloc_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        
+        ags->flat_texquad_buffers[frame_i] =
+            MTLBufferTexQuads;
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* the ptr needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->postproc_consts
                 /* the length weirdly needs to be page aligned also */
@@ -699,7 +790,7 @@ bool32_t T1_apple_gpu_init(
         
         id<MTLBuffer> MTLBufferFrameLights =
             [with_metal_device
-                /* the pointer needs to be page aligned */
+                /* the ptr needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         f->lights
                 /* the length weirdly needs to be page aligned also */
@@ -738,7 +829,7 @@ bool32_t T1_apple_gpu_init(
     
     id<MTLBuffer> MTLBufferLockedVerticesPopulator =
         [with_metal_device
-            /* the pointer needs to be page aligned */
+            /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     gpu_shared_data_collection->locked_vertices
             /* the length weirdly needs to be page aligned also */
@@ -763,7 +854,7 @@ bool32_t T1_apple_gpu_init(
     
     id<MTLBuffer> MTLBufferLockedMaterialsPopulator =
         [with_metal_device
-            /* the pointer needs to be page aligned */
+            /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     gpu_shared_data_collection->const_mats
             /* the length weirdly needs to be page aligned also */
@@ -1351,7 +1442,7 @@ void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
     
     id<MTLBuffer> temp_buf =
         [ags->device
-            /* the pointer needs to be page aligned */
+            /* the ptr needs to be page aligned */
             newBufferWithBytesNoCopy:
                 rgba_values_page_aligned
             /* the length weirdly needs to be page aligned also */
@@ -1443,7 +1534,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     
     id<MTLBuffer> temp_buf =
         [ags->device
-            /* the pointer needs to be page aligned */
+            /* the ptr needs to be page aligned */
         newBufferWithBytesNoCopy:
             raw_bc1_file_page_aligned + 128
             /* the length weirdly needs to be page aligned also */
@@ -2316,6 +2407,83 @@ static void set_defaults_for_encoder(
             #endif
         }
         break;
+        case T1RENDERPASS_FLAT_TEXQUADS:
+        {
+            if (
+                pass->verts_size < 1 ||
+                ags->cur_flat_texquad_pls == nil)
+            {
+                break;
+            }
+            
+            MTLRenderPassDescriptor * flat_texq_desc =
+                [view currentRenderPassDescriptor];
+            
+            set_defaults_for_render_descriptor(
+                flat_texq_desc,
+                cam_i,
+                ags->cur_depth,
+                ags->cur_rtt,
+                &ags->z_buffer_cleared,
+                &ags->rtt_cleared);
+            
+            id<MTLRenderCommandEncoder>
+                flat_texq_enc = [combuf
+                renderCommandEncoderWithDescriptor:
+                        flat_texq_desc];
+            
+            [flat_texq_enc
+                setRenderPipelineState:
+                    ags->cur_flat_texquad_pls];
+            [flat_texq_enc
+                setDepthStencilState:
+                    ags->opaque_depth_stencil_state];
+            
+            [flat_texq_enc
+                setVertexBuffer:
+                    ags->flat_texquad_buffers[ags->frame_i]
+                offset: 0
+                atIndex: 2];
+            
+            [flat_texq_enc
+                setVertexBuffer:
+                    ags->cam_buffers[ags->frame_i]
+                offset: 0
+                atIndex: 3];
+            
+            #if T1_TEXTURES_ACTIVE == T1_ACTIVE
+            for (
+                uint32_t i = 0;
+                i < TEXTUREARRAYS_SIZE;
+                i++)
+            {
+                if (ags->metal_textures[i] != NULL) {
+                    [flat_texq_enc
+                        setFragmentTexture: ags->metal_textures[i]
+                        atIndex: i];
+                }
+            }
+            #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+            [flat_texq_enc
+                setFragmentTexture: ags->metal_textures[0]
+                atIndex: 0];
+            #else
+            #error
+            #endif
+            
+            [flat_texq_enc
+                drawPrimitives:
+                    MTLPrimitiveTypeTriangle
+                vertexStart:
+                    0
+                vertexCount:
+                    (NSUInteger)
+                        pass->verts_size * 6
+                ];
+            
+            [flat_texq_enc endEncoding];
+        }
+        break;
         default:
             log_assert(0);
     }
@@ -2433,6 +2601,7 @@ static void set_defaults_for_encoder(
         ags->cur_blnd_pls = nil;
         ags->cur_bloom_pls = nil;
         ags->cur_bb_pls = nil;
+        ags->cur_flat_texquad_pls = nil;
         
         ags->rtt_cleared = false;
         ags->z_buffer_cleared = false;
@@ -2461,6 +2630,8 @@ static void set_defaults_for_encoder(
                     ags->blend_touch_pls;
                 ags->cur_bb_pls =
                     ags->bb_touch_pls;
+                ags->cur_flat_texquad_pls =
+                    ags->flat_texquad_touch_pls;
             break;
             case T1RENDERVIEW_WRITE_RGBA:
                 ags->cur_rtt =

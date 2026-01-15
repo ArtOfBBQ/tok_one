@@ -26,7 +26,8 @@ typedef enum : uint8_t {
     T1RENDERPASS_ALPHA_BLEND = 4,
     T1RENDERPASS_BLOOM = 5,
     T1RENDERPASS_BILLBOARDS = 6,
-    T1RENDERPASS_ABOVEBOUNDS = 7,
+    T1RENDERPASS_FLAT_TEXQUADS = 7,
+    T1RENDERPASS_ABOVEBOUNDS = 8,
 } T1RenderPassType;
 
 // TODO: discover what architecture we need/want

@@ -11,6 +11,7 @@
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_cpu_to_gpu_types.h"
 #include "T1_lines.h"
+#include "T1_flat_texquad.h"
 #include "T1_zsprite.h"
 #include "T1_particle.h"
 #include "T1_io.h"

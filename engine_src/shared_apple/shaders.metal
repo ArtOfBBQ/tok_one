@@ -1161,6 +1161,87 @@ fragment float4 flat_billboard_quad_fragment_shader(
     return in.rgba * in.rgba[3];
 }
 
+typedef struct
+{
+    float4 screenpos [[ position ]];
+    float2 uv;
+    int array_i [[ flat ]];
+    int slice_i [[ flat ]];
+} FlatTexQuadPixel;
+
+vertex FlatTexQuadPixel
+flat_texquad_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device T1GPUTexQuad * quads [[ buffer(2) ]],
+    const device T1GPURenderView * camera [[ buffer(3) ]])
+{
+    uint quad_i = vertex_i / 6;
+    uint corner_id  = vertex_i % 6;
+    
+    float2 size_xy = vector_float2(
+        quads[quad_i].size_xy[0],
+        quads[quad_i].size_xy[1]);
+    
+    constexpr const float2 corners[6] = {
+        float2(-0.5f, -0.5f),
+        float2( 0.5f, -0.5f),
+        float2( 0.5f,  0.5f),
+        float2(-0.5f, -0.5f),
+        float2( 0.5f,  0.5f),
+        float2(-0.5f,  0.5f)
+    };
+    
+    constexpr float2 uvs[6] = {
+        float2(0.0f, 0.0f),   float2(1.0f, 0.0f),   float2(1.0f, 1.0f),
+        float2(0.0f, 0.0f),   float2(1.0f, 1.0f),   float2(0.0f, 1.0f),
+    };
+    
+    FlatTexQuadPixel out;
+    
+    out.screenpos = vector_float4(
+        quads[quad_i].pos_xyz[0],
+        quads[quad_i].pos_xyz[1],
+        quads[quad_i].pos_xyz[2],
+        1.0f);
+    
+    out.screenpos.xy +=
+        (corners[corner_id].xy * size_xy);
+    
+    out.uv = uvs[corner_id];
+    
+    out.array_i = quads[quad_i].tex_array_i;
+    out.slice_i = quads[quad_i].tex_slice_i;
+    
+    return out;
+}
+
+fragment float4 flat_texquad_fragment_shader(
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+        color_textures,
+    const FlatTexQuadPixel in [[stage_in]])
+{
+    constexpr sampler texture_sampler(
+        mag_filter::linear,
+        min_filter::linear);
+    
+    float4 color_sample =
+        vector_float4(0.0, 0.2f, 1.0f, 1.0f);
+    
+    if (
+        in.array_i >= 0 &&
+        in.array_i < TEXTUREARRAYS_SIZE)
+    {
+        color_sample = float4(
+            color_textures[in.array_i].
+                sample(
+                    texture_sampler,
+                    in.uv,
+                    in.slice_i));
+    }
+    
+    return color_sample;
+}
+
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE
 typedef struct
 {

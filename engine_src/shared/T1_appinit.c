@@ -359,6 +359,8 @@ void T1_appinit_before_gpu_init(
     
     T1_uielement_init();
     
+    T1_flat_texquad_init();
+    
     T1_zsprite_list = (T1zSpriteCollection *)T1_mem_malloc_from_unmanaged(
         sizeof(T1zSpriteCollection));
     T1_zsprite_list->size = 0;
@@ -483,7 +485,11 @@ void T1_appinit_before_gpu_init(
     
     sd->flat_quads_alloc_size =
         pad_to_page_size(sizeof(T1GPUFlatQuad) *
-            MAX_CIRCLES_PER_BUFFER);
+            MAX_FLATQUADS_PER_BUFFER);
+    
+    sd->flat_texquads_alloc_size =
+        pad_to_page_size(sizeof(T1GPUTexQuad) *
+            MAX_TEXQUADS_PER_BUFFER);
     
     sd->polygons_alloc_size =
         pad_to_page_size(
@@ -530,6 +536,11 @@ void T1_appinit_before_gpu_init(
         f->flat_bb_quads = (T1GPUFlatQuad *)
             T1_mem_malloc_from_unmanaged_aligned(
                 sd->flat_quads_alloc_size,
+                T1_mem_page_size);
+        
+        f->flat_tex_quads = (T1GPUTexQuad *)
+            T1_mem_malloc_from_unmanaged_aligned(
+                sd->flat_texquads_alloc_size,
                 T1_mem_page_size);
         
         f->zsprite_list = (T1GPUzSpriteList *)

@@ -128,6 +128,13 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
+    float pos_xyz[3];
+    float size_xy[2];
+    int   tex_array_i;
+    int   tex_slice_i;
+} T1GPUTexQuad;
+
+typedef struct {
     float xyz[3];
     float angle_xyz[3];
     float diffuse;

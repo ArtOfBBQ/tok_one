@@ -673,6 +673,10 @@ void T1_renderer_hardware_render(
     
     frame_data->zsprite_list->size = T1_zsprite_list->size;
     
+    T1_flat_texquad_copy_to_frame_data(
+        frame_data->flat_tex_quads,
+        &frame_data->flat_tex_quads_size);
+    
     log_assert(
         frame_data->zsprite_list->size <=
             T1_zsprite_list->size);
@@ -772,6 +776,18 @@ void T1_renderer_hardware_render(
                     passes[pass_i].verts_size =
                         (int32_t)frame_data->
                             flat_bb_quads_size;
+            }
+            
+            if (
+                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                        T1RENDERPASS_FLAT_TEXQUADS)
+            {
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].vert_i = 0;
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].verts_size =
+                        (int32_t)frame_data->
+                            flat_tex_quads_size;
             }
         }
     }
