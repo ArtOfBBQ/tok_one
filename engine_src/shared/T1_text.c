@@ -273,13 +273,18 @@ void text_request_label_offset_around(
         &lines_size);
     log_assert(lines_size < MAX_LINES);
     
-    T1zSpriteRequest letter;
+    T1FlatTexQuadRequest letter;
     
     float cur_y_offset_pixelspace =
         (font_settings->font_height * 0.42f) +
-        ((lines_size - 1) * font_settings->font_height * 0.5f);
+        ((lines_size - 1) *
+            font_settings->font_height * 0.5f);
     
-    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
+    for (
+        uint32_t line_i = 0;
+        line_i < lines_size;
+        line_i++)
+    {
         float cur_x_offset_pixelspace =
             (font_settings->font_height * 0.5f) -
             (lines[line_i].width * 0.5f);
@@ -297,40 +302,25 @@ void text_request_label_offset_around(
                 break;
             }
             
-            T1_zsprite_request_next(&letter);
-            T1_zsprite_construct_quad_around(
-                /* const float left_x: */
-                    T1_render_view_screen_x_to_x(
-                        mid_x_pixelspace,
-                        z),
-                /* const float bottom_y */
-                    T1_render_view_screen_y_to_y(
-                        mid_y_pixelspace,
-                        z),
-                /* const float z: */
-                    z,
-                /* const float width: */
-                    T1_render_view_screen_width_to_width(
-                        font_settings->font_height,
-                        z),
-                /* const float height: */
-                    T1_render_view_screen_height_to_height(
-                        font_settings->font_height,
-                        z),
-                /* recipient: */
-                    &letter);
+            T1_flat_texquad_fetch_next(&letter);
+            letter.gpu->pos_xyz[0] =
+                T1_render_view_screen_x_to_x_noz(
+                    mid_x_pixelspace);
+            letter.gpu->pos_xyz[1] =
+                T1_render_view_screen_y_to_y_noz(
+                    mid_y_pixelspace);
+            letter.gpu->pos_xyz[2] = z;
             
-            letter.gpu_data->ignore_lighting =
-                font_settings->ignore_lighting;
-            letter.gpu_data->ignore_camera =
-                font_settings->ignore_camera;
-            letter.cpu_data->simd_stats.scale_factor =
-                font_settings->scale_factor;
-            letter.cpu_data->zsprite_id = with_id;
-            letter.gpu_data->touch_id =
+            letter.gpu->size_xy[0] =
+                T1_render_view_screen_width_to_width_noz(
+                    font_settings->font_height);
+            letter.gpu->size_xy[1] =
+                T1_render_view_screen_height_to_height_noz(
+                    font_settings->font_height);
+            
+            letter.cpu->zsprite_id = with_id;
+            letter.cpu->touch_id =
                 font_settings->touch_id;
-            letter.cpu_data->alpha_blending_on =
-                font_settings->alpha_blending_on;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -338,34 +328,29 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.cpu_data->simd_stats.offset_xyz[0] =
-                T1_render_view_screen_width_to_width(
+            letter.gpu->pos_xyz[0] +=
+                T1_render_view_screen_width_to_width_noz(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
-                            get_left_side_bearing(text_to_draw[j])),
-                    z);
-            letter.cpu_data->simd_stats.offset_xyz[1] =
-                T1_render_view_screen_height_to_height(
+                            get_left_side_bearing(text_to_draw[j])));
+            letter.gpu->pos_xyz[1] +=
+                T1_render_view_screen_height_to_height_noz(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (font_settings->font_height * 0.5f)) +
-                            font_settings->extra_offset_xy[1],
-                    z);
+                            font_settings->extra_offset_xy[1]);
             
-            letter.gpu_data->remove_shadow = font_settings->remove_shadow;
-            
-            letter.gpu_data->base_mat = font_settings->mat;
-            letter.gpu_data->alpha = font_settings->alpha;
-            
-            letter.gpu_data->base_mat.texture_i      =
-                text_to_draw[j] - '!';
+            letter.gpu->tex_array_i = 0;
+            letter.gpu->tex_slice_i =
+                (int32_t)text_to_draw[j] - '!';
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            log_assert(letter.cpu_data->simd_stats.scale_factor > 0.0f);
-            T1_zsprite_commit(&letter);
+            T1_flat_texquad_commit(&letter);
         }
-        cur_y_offset_pixelspace -= get_newline_advance();
+        
+        cur_y_offset_pixelspace -=
+            get_newline_advance();
     }
     
     font_settings->extra_offset_xy[0] = 0.0f;
@@ -429,7 +414,7 @@ void text_request_label_renderable(
     const int32_t with_id,
     const char * text_to_draw,
     const float left_pixelspace,
-    const float top_pixelspace,
+    const float mid_y_pixelspace,
     const float z,
     const float max_width)
 {
@@ -443,20 +428,22 @@ void text_request_label_renderable(
         i++;
     }
     
-    T1zSpriteRequest letter;
+    T1FlatTexQuadRequest letter;
     
-    float letter_width = T1_render_view_screen_width_to_width(
-        font_settings->font_height, z);
-    float letter_height = T1_render_view_screen_height_to_height(
-        font_settings->font_height, z);
+    float letter_width = T1_render_view_screen_width_to_width_noz(
+        font_settings->font_height);
+    float letter_height = T1_render_view_screen_height_to_height_noz(
+        font_settings->font_height);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
-            cur_x_offset += font_settings->font_height / 2;
+            cur_x_offset +=
+                font_settings->font_height / 2;
             i++;
             
             float next_word_width = get_next_word_width(
-                /* const char * text: */ text_to_draw + i);
+                /* const char * text: */
+                    text_to_draw + i);
             
             if (
                 (left_pixelspace +
@@ -479,70 +466,62 @@ void text_request_label_renderable(
             continue;
         }
         
-        T1_zsprite_request_next(&letter);
-        zsprite_construct_quad(
-            /* const float left_x: */
-                T1_render_view_screen_x_to_x(
-                    left_pixelspace,
-                    z),
-            /* const float bottom_y: */
-                T1_render_view_screen_y_to_y(
-                    top_pixelspace - font_settings->font_height,
-                    z),
-            /* const flota z: */
-                z,
-            /* const float width: */
-                letter_width,
-            /* const float height: */
-                letter_height,
-            /* recipient: */
-                &letter);
+        T1_flat_texquad_fetch_next(&letter);
+        letter.gpu->pos_xyz[0] =
+            T1_render_view_screen_x_to_x_noz(
+                left_pixelspace);
+        letter.gpu->pos_xyz[1] =
+            T1_render_view_screen_y_to_y_noz(
+                mid_y_pixelspace);
+        letter.gpu->pos_xyz[2] = z;
         
-        letter.cpu_data->zsprite_id = with_id;
-        letter.gpu_data->touch_id = font_settings->touch_id;
-        letter.cpu_data->alpha_blending_on =
-            font_settings->alpha_blending_on;
-        letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
-        letter.gpu_data->ignore_camera = font_settings->ignore_camera;
-        letter.gpu_data->remove_shadow = font_settings->remove_shadow;
+        letter.gpu->size_xy[0] = letter_width;
+        letter.gpu->size_xy[1] = letter_height;
         
-        letter.gpu_data->base_mat = font_settings->mat;
-        letter.gpu_data->base_mat.texturearray_i = 0;
-        letter.gpu_data->base_mat.texture_i =
-            (int32_t)(text_to_draw[i] - '!');
+        letter.cpu->zsprite_id = with_id;
+        letter.cpu->touch_id = font_settings->touch_id;
+        
+        letter.gpu->tex_array_i = 0;
+        letter.gpu->tex_slice_i = (int32_t)(text_to_draw[i] - '!');
         
         if (
-            letter.gpu_data->base_mat.texture_i < 0 ||
-            letter.gpu_data->base_mat.texture_i > 100)
+            letter.gpu->tex_slice_i < 0 ||
+            letter.gpu->tex_slice_i > 100)
         {
             continue;
         }
         
-        letter.cpu_data->simd_stats.offset_xyz[0] =
-            T1_render_view_screen_width_to_width(
+        letter.gpu->pos_xyz[0] +=
+            T1_render_view_screen_width_to_width_noz(
                 cur_x_offset + get_left_side_bearing(
-                    text_to_draw[i]), z);
-        letter.cpu_data->simd_stats.offset_xyz[1] =
-            T1_render_view_screen_height_to_height(
+                    text_to_draw[i]));
+        float y_offset =
+            T1_render_view_screen_height_to_height_noz(
                 cur_y_offset - get_y_offset(
-                    text_to_draw[i]), z);
+                    text_to_draw[i]));
+        letter.gpu->pos_xyz[1] += y_offset;
         
-        cur_x_offset += get_advance_width(text_to_draw[i]);
-        if (cur_x_offset + get_advance_width('w') >= max_width)
+        cur_x_offset += get_advance_width(
+            text_to_draw[i]);
+        
+        if (
+            cur_x_offset + get_advance_width('w') >=
+                max_width)
         {
-            cur_x_offset   = 0;
-            cur_y_offset  -= get_newline_advance();
+            cur_x_offset = 0;
+            cur_y_offset -=
+                get_newline_advance();
         }
         
         i++;
-        log_assert(letter.gpu_data->base_mat.alpha > 0.99f);
-        T1_zsprite_commit(&letter);
+        T1_flat_texquad_commit(&letter);
     }
 }
 
 void text_request_debug_text(const char * text)
 {
-    T1_zsprite_delete(T1_DEBUG_TEXT_ZSPRITE_ID);
+    T1_flat_texquad_delete(
+        T1_DEBUG_TEXT_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -559,12 +538,12 @@ void text_request_debug_text(const char * text)
             text,
         /* float left_pixelspace : */
             20.0f,
-        /* float top_pixelspace  : */
+        /* float mid_y_pixelspace  : */
             40.0f + font_settings->font_height,
         /* z                     : */
             0.05f,
         /* float max_width       : */
-            T1_global->window_width);
+            T1_render_views->cpu[0].width);
 }
 
 #define FPS_FRAMES_MAX 10
@@ -612,7 +591,7 @@ void text_request_fps_counter(
         fps_string[12] = '9';
     }
     
-    T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+    T1_flat_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -633,18 +612,18 @@ void text_request_fps_counter(
             fps_string,
         /* float left_pixelspace : */
             20.0f,
-        /* float top_pixelspace  : */
+        /* float mid_y_pixelspace  : */
             30.0f,
         /* z                     : */
             T1_render_views->cpu[0].project.znear + 0.0001f,
         /* float max_width       : */
-            T1_global->window_width);
+            T1_render_views->cpu[0].width);
 }
 
 void text_request_top_touchable_id(
     int32_t top_touchable_id)
 {
-    T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+    T1_flat_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
@@ -678,10 +657,10 @@ void text_request_top_touchable_id(
             fps_string,
         /* float left_pixelspace : */
             20.0f,
-        /* float top_pixelspace  : */
+        /* float mid_y_pixelspace : */
             30.0f,
         /* z                     : */
             T1_render_views->cpu[0].project.znear + 0.0001f,
         /* float max_width       : */
-            T1_global->window_width);
+            T1_render_views->cpu[0].width);
 }

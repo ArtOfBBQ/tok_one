@@ -1,5 +1,7 @@
 #include "T1_frame_anim.h"
 
+#if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
+
 typedef enum : uint8_t {
     T1FRAMEANIMFILTER_ZSPRITE_ID,
     T1FRAMEANIMFILTER_TOUCH_ID,
@@ -173,3 +175,8 @@ void T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(
         &val_to_memcpy_32bit,
         4);
 }
+
+#elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif

@@ -4,7 +4,8 @@
 
 bool8_t terminal_active = false;
 
-static void (* terminal_enter_fullscreen_fnc)(void) = NULL;
+static void (* terminal_enter_fullscreen_fnc)(void) =
+    NULL;
 
 #define SINGLE_LINE_MAX 1024
 static char * current_command = NULL;
@@ -14,9 +15,12 @@ static char * current_command = NULL;
 
 #define TERM_FONT_SIZE        18.0f
 #define TERM_Z                0.111f
-#define TERM_LABELS_Z         0.110f
+#define TERM_LABELS_Z         0.109f
 static char * terminal_history = NULL;
 static uint32_t terminal_history_size = 0;
+
+#define TERM_INPUT_BOX_HEIGHT (TERM_FONT_SIZE + (TERMINAL_WHITESPACE * 4))
+#define TERM_INPUT_BOX_MID_Y ((TERM_INPUT_BOX_HEIGHT * 0.5f) + TERMINAL_WHITESPACE)
 
 static float term_font_color[4];
 static float term_font_rgb_cap[3];
@@ -45,11 +49,12 @@ static void describe_zpolygon(
 
 void destroy_terminal_objects(void) {
     if (terminal_back_object_id >= 0) {
-        T1_zsprite_delete(terminal_back_object_id);
+        T1_flat_texquad_delete(terminal_back_object_id);
     }
     
     if (terminal_labels_object_id >= 0) {
-        T1_zsprite_delete(terminal_labels_object_id);
+        T1_flat_texquad_delete(
+            terminal_labels_object_id);
     }
 }
 
@@ -97,114 +102,56 @@ void terminal_redraw_backgrounds(void) {
     
     terminal_back_object_id = INT32_MAX;
     
-    float current_input_height = (TERM_FONT_SIZE * 2);
     float command_history_height =
-        T1_global->window_height -
-        current_input_height -
+        T1_render_views->cpu[0].height -
+        TERM_INPUT_BOX_HEIGHT -
         (TERMINAL_WHITESPACE * 3);
     
-    T1zSpriteRequest current_command_input;
-    T1_zsprite_request_next(&current_command_input);
-    float mid_x = T1_render_view_screen_x_to_x(
-        T1_global->window_width / 2,
-        TERM_Z);
+    float width =
+        (float)T1_render_views->cpu[0].width -
+            (TERMINAL_WHITESPACE * 2.0f);
+        
+    T1FlatTexQuadRequest input_req;
+    T1_flat_texquad_fetch_next(
+        &input_req);
     
-    float mid_y = T1_render_view_screen_y_to_y(
-        (TERMINAL_WHITESPACE * 1.5f) +
-        (TERM_FONT_SIZE / 2),
-        TERM_Z);
+    input_req.cpu->zsprite_id =
+        terminal_back_object_id;
+    input_req.gpu->pos_xyz[0] = 0.0f;
+    input_req.gpu->pos_xyz[1] =
+        T1_render_view_screen_y_to_y_noz(
+            TERM_INPUT_BOX_MID_Y);
+    input_req.gpu->pos_xyz[2] = TERM_Z;
     
-    float width = T1_render_view_screen_width_to_width(
-        T1_global->window_width -
-            (TERMINAL_WHITESPACE * 2),
-        TERM_Z);
-    
-    float height =
-        T1_render_view_screen_height_to_height(
-            current_input_height,
-            TERM_Z);
-    
-    T1_zsprite_construct_quad_around(
-        /* const float mid_x: */
-            mid_x,
-        /* const float mid_y: */
-            mid_y,
-        /* const float z: */
-            TERM_Z,
-        /* const float width: */
-            width,
-        /* const float height: */
-            height,
-        /* zPolygon * recipien: */
-            &current_command_input);
-    
-    current_command_input.gpu_data->base_mat.ambient_rgb[0] = 0.0f;
-    current_command_input.gpu_data->base_mat.ambient_rgb[1] = 0.0f;
-    current_command_input.gpu_data->base_mat.ambient_rgb[2] = 0.0f;
-    current_command_input.gpu_data->base_mat.diffuse_rgb[0] =
-        term_background_color[0];
-    current_command_input.gpu_data->base_mat.diffuse_rgb[1] =
-        term_background_color[1];
-    current_command_input.gpu_data->base_mat.diffuse_rgb[2] =
-        term_background_color[2];
-    current_command_input.gpu_data->base_mat.alpha =
-        term_background_color[3];
-    current_command_input.gpu_data->ignore_camera = true;
-    current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->
-        alpha_blending_on = true;
-    current_command_input.cpu_data->visible = terminal_active;
-    current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
-    current_command_input.gpu_data->touch_id = -1;
-    T1_zsprite_commit(&current_command_input);
+    input_req.gpu->size_xy[0] =
+        T1_render_view_screen_width_to_width_noz(width);
+    input_req.gpu->size_xy[1] =
+        T1_render_view_screen_height_to_height_noz(
+            TERM_INPUT_BOX_HEIGHT);
+    input_req.gpu->tex_array_i = -1;
+    input_req.gpu->tex_slice_i = -1;
+    T1_flat_texquad_commit(&input_req);
     
     // The console history area
-    T1_zsprite_request_next(&current_command_input);
-    T1_zsprite_construct(&current_command_input);
-    T1_zsprite_construct_quad_around(
-       /* const float mid_x: */
-           T1_render_view_screen_x_to_x(
-               T1_global->window_width / 2,
-               TERM_Z),
-       /* const float mid_y: */
-           T1_render_view_screen_y_to_y(
-               (command_history_height / 2) +
-                   current_input_height +
-                   (TERMINAL_WHITESPACE * 2),
-               TERM_Z),
-       /* const float z: */
-           TERM_Z,
-       /* const float width: */
-           T1_render_view_screen_width_to_width(
-                T1_global->window_width -
-                    (TERMINAL_WHITESPACE * 2),
-                TERM_Z),
-       /* const float height: */
-           T1_render_view_screen_height_to_height(
-               command_history_height,
-               TERM_Z),
-       /* zPolygon * recipien: */
-           &current_command_input);
-    
-    current_command_input.gpu_data->base_mat.ambient_rgb[0] = 0.0f;
-    current_command_input.gpu_data->base_mat.ambient_rgb[1] = 0.0f;
-    current_command_input.gpu_data->base_mat.ambient_rgb[2] = 0.0f;
-    current_command_input.gpu_data->base_mat.diffuse_rgb[0] =
-        term_background_color[0];
-    current_command_input.gpu_data->base_mat.diffuse_rgb[1] =
-        term_background_color[1];
-    current_command_input.gpu_data->base_mat.diffuse_rgb[2] =
-        term_background_color[2];
-    current_command_input.gpu_data->base_mat.alpha =
-        term_background_color[3];
-    current_command_input.cpu_data->visible = terminal_active;
-    current_command_input.cpu_data->alpha_blending_on = true;
-    current_command_input.gpu_data->ignore_camera = true;
-    current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->zsprite_id = INT32_MAX;
-    current_command_input.gpu_data->touch_id = -1;
-    
-    T1_zsprite_commit(&current_command_input);
+    T1FlatTexQuadRequest history_req;
+    T1_flat_texquad_fetch_next(&history_req);
+    history_req.gpu->pos_xyz[0] = 0.0f;
+    history_req.gpu->pos_xyz[1] =
+        T1_render_view_screen_y_to_y_noz(
+           (command_history_height / 2) +
+               TERM_INPUT_BOX_HEIGHT +
+               (TERMINAL_WHITESPACE * 2.0f));
+    history_req.gpu->pos_xyz[2] = TERM_Z;
+    history_req.gpu->size_xy[0] =
+        T1_render_view_screen_width_to_width_noz(
+                T1_render_views->cpu[0].width -
+                    (TERMINAL_WHITESPACE * 2));
+    history_req.gpu->size_xy[1] =
+        T1_render_view_screen_height_to_height_noz(
+            command_history_height);
+    history_req.cpu->zsprite_id = INT32_MAX;
+    history_req.cpu->touch_id = -1;
+    T1_flat_texquad_commit(&history_req);
 }
 
 void terminal_render(void) {
@@ -217,19 +164,18 @@ void terminal_render(void) {
     }
     
     if (requesting_label_update) {
-        T1_zsprite_delete(
-            /* const int32_t with_object_id: */
-                terminal_labels_object_id);
+        T1_flat_texquad_delete(
+            terminal_labels_object_id);
         
         float previous_font_height = font_settings->font_height;
         font_settings->font_height = TERM_FONT_SIZE;
         
         // draw the terminal's history as a label
         float history_label_top =
-            T1_global->window_height -
+            T1_render_views->cpu[0].height -
                 (TERMINAL_WHITESPACE * 2);
         float history_label_height =
-            T1_global->window_height -
+            T1_render_views->cpu[0].height -
                 TERM_FONT_SIZE -
                 (TERMINAL_WHITESPACE * 4.5f);
         
@@ -278,17 +224,20 @@ void terminal_render(void) {
             /* const char * text_to_draw: */
                 terminal_history + char_offset,
             /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2.0f,
-            /* const float top_pixelspace: */
-                history_label_top,
+                TERMINAL_WHITESPACE * 2 +
+                    (TERM_FONT_SIZE * 0.5f),
+            /* const float mid_y_pixelspace: */
+                history_label_top -
+                    (TERM_FONT_SIZE * 0.5f),
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                T1_global->window_width -
+                T1_render_views->cpu[0].width -
                     (TERMINAL_WHITESPACE * 2));
         
         if (current_command[0] == '\0') {
-            font_settings->font_height = previous_font_height;
+            font_settings->font_height =
+                previous_font_height;
             requesting_label_update = false;
             return;
         }
@@ -302,13 +251,15 @@ void terminal_render(void) {
             /* const char * text_to_draw: */
                 current_command,
             /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2,
-            /* const float top_pixelspace: */
-                (TERMINAL_WHITESPACE * 2) + (TERM_FONT_SIZE * 0.7f),
+                TERMINAL_WHITESPACE * 2 +
+                    (TERM_FONT_SIZE * 0.5f),
+            /* const float mid_y_pixelspace: */
+                TERM_INPUT_BOX_MID_Y,
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                T1_global->window_width - (TERMINAL_WHITESPACE * 2));
+                T1_render_views->cpu[0].width -
+                    (TERMINAL_WHITESPACE * 2));
         
         font_settings->font_height = previous_font_height;
         
@@ -751,7 +702,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)T1_global->window_height);
+            (uint32_t)T1_render_views->cpu[0].height);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -759,7 +710,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)T1_global->window_width);
+            (uint32_t)T1_render_views->cpu[0].width);
         return true;
     }
     
@@ -810,7 +761,9 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+            T1_flat_texquad_delete(
+                T1_FPS_COUNTER_ZSPRITE_ID);
+            
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -832,7 +785,8 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
-            T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+            T1_flat_texquad_delete(
+                T1_FPS_COUNTER_ZSPRITE_ID);
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,

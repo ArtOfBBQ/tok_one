@@ -1192,8 +1192,12 @@ flat_texquad_vertex_shader(
     };
     
     constexpr float2 uvs[6] = {
-        float2(0.0f, 0.0f),   float2(1.0f, 0.0f),   float2(1.0f, 1.0f),
-        float2(0.0f, 0.0f),   float2(1.0f, 1.0f),   float2(0.0f, 1.0f),
+        float2(0.0f, 1.0f),
+        float2(1.0f, 1.0f),
+        float2(1.0f, 0.0f),
+        float2(0.0f, 1.0f),
+        float2(1.0f, 0.0f),
+        float2(0.0f, 0.0f),
     };
     
     FlatTexQuadPixel out;
@@ -1225,7 +1229,7 @@ fragment float4 flat_texquad_fragment_shader(
         min_filter::linear);
     
     float4 color_sample =
-        vector_float4(0.0, 0.2f, 1.0f, 1.0f);
+        vector_float4(0.2f, 0.2f, 0.2f, 1.0f);
     
     if (
         in.array_i >= 0 &&

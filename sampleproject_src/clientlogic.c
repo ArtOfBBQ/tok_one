@@ -226,9 +226,6 @@ void T1_clientlogic_late_startup(void) {
         /* const float max_width: */
             1500.0f);
     font_settings->touch_id = -1;
-    log_assert(
-        T1_zsprite_list->cpu_data[T1_zsprite_list->size-1].
-            zsprite_id == 21);
     
     for (uint32_t i = 0; i < 3; i++) {
         T1_zsprite_request_next(&quad);
@@ -524,6 +521,16 @@ void T1_clientlogic_window_resize(
     const uint32_t new_width)
 {
     // You're notified that the window is resized!
+    
+    #if 0
+    const float w =
+        T1_render_view_screen_width_to_width_noz(
+            T1_render_views->cpu[0].width) * 0.25f;
+    const float h =
+        T1_render_view_screen_height_to_height_noz(
+            T1_render_views->cpu[0].height) * 0.25f;
+    T1_flat_texquad_draw_test(w, h);
+    #endif
 }
 
 void T1_clientlogic_shutdown(void) {

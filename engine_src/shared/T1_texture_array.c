@@ -431,6 +431,13 @@ int32_t T1_texture_array_create_new_render_view(
         height);
     log_assert(T1_render_views->cpu[rv_i].width ==
         width);
+    T1_render_views->cpu[rv_i].passes_size = 3;
+    T1_render_views->cpu[rv_i].passes[0].type =
+        T1RENDERPASS_DIAMOND_ALPHA;
+    T1_render_views->cpu[rv_i].passes[1].type =
+        T1RENDERPASS_ALPHA_BLEND;
+    T1_render_views->cpu[rv_i].passes[2].type =
+        T1RENDERPASS_FLAT_TEXQUADS;
     
     char tex_name[64];
     T1_std_strcpy_cap(

@@ -97,6 +97,15 @@ float T1_render_view_screen_y_to_y(
     const float screenspace_y,
     const float given_z);
 
+float T1_render_view_screen_x_to_x_noz(
+    const float screenspace_width);
+float T1_render_view_screen_y_to_y_noz(
+    const float screenspace_height);
+float T1_render_view_screen_width_to_width_noz(
+    const float screenspace_width);
+float T1_render_view_screen_height_to_height_noz(
+    const float screenspace_height);
+
 float T1_render_view_screen_height_to_height(
     const float screenspace_height, const float given_z);
 float T1_render_view_screen_width_to_width(

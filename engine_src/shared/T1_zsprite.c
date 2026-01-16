@@ -75,10 +75,17 @@ void T1_zsprite_commit(
 
 void T1_zsprite_delete(const int32_t with_object_id)
 {
-    for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
-        if (T1_zsprite_list->cpu_data[i].zsprite_id == with_object_id)
+    for (
+        uint32_t i = 0;
+        i < T1_zsprite_list->size;
+        i++)
+    {
+        if (
+            T1_zsprite_list->cpu_data[i].
+                zsprite_id == with_object_id)
         {
-            T1_zsprite_list->cpu_data[i].deleted   = true;
+            T1_zsprite_list->cpu_data[i].
+                deleted = true;
             T1_zsprite_list->cpu_data[i].zsprite_id = -1;
         }
     }

@@ -4,6 +4,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_cpu_gpu_shared_types.h"
+#include "stdlib.h" // TODO: stop using qsort
 
 
 typedef struct {
@@ -21,6 +22,8 @@ typedef struct {
 
 void T1_flat_texquad_init(void);
 
+void T1_flat_texquad_delete(const int32_t zsprite_id);
+
 void T1_flat_texquad_delete_all(void);
 
 void T1_flat_texquad_fetch_next(
@@ -28,6 +31,10 @@ void T1_flat_texquad_fetch_next(
 
 void T1_flat_texquad_commit(
     T1FlatTexQuadRequest * request);
+
+void T1_flat_texquad_draw_test(
+    const float width,
+    const float height);
 
 void T1_flat_texquad_copy_to_frame_data(
     T1GPUTexQuad * recip_frame_data,

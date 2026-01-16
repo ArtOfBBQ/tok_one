@@ -2,8 +2,7 @@
 #define TEXT_H
 
 #include "T1_platform_layer.h"
-#include "T1_zspriteid.h"
-#include "T1_zsprite.h"
+#include "T1_flat_texquad.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,7 +64,7 @@ void text_request_label_renderable(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
-    const float top_pixelspace,
+    const float mid_y_pixelspace,
     const float z,
     const float max_width);
 

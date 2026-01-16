@@ -266,13 +266,9 @@ void T1_profiler_end(const char * function_name)
     }
     
     log_assert(function_stack_size > 0);
-    uint32_t prof_i = function_stack[function_stack_size - 1];
+    uint32_t prof_i =
+        function_stack[function_stack_size - 1];
     function_stack_size -= 1;
-    
-    log_assert(
-        T1_std_are_equal_strings(
-            frames[frame_i].profiles[prof_i].description,
-            function_name));
     
     uint64_t elapsed = __rdtsc() - frames[frame_i].profiles[prof_i].last_start;
     frames[frame_i].profiles[prof_i].elapsed_count += 1;
@@ -367,7 +363,7 @@ void T1_profiler_draw_labels(void) {
                 gui_top_message,
             /* const float left_pixelspace: */
                 20,
-            /* const float top_pixelspace: */
+            /* const float mid_y_pixelspace: */
                 T1_global->window_height - 20,
             /* const float z: */
                 PROFILER_Z - 0.02f,
@@ -432,7 +428,7 @@ void T1_profiler_draw_labels(void) {
                     line_text,
                 /* const float left_pixelspace: */
                     gui_frame_left,
-                /* const float top_pixelspace: */
+                /* const float mid_y_pixelspace: */
                     cur_top,
                 /* const float z: */
                     PROFILER_Z - 0.02f,

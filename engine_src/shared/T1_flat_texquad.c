@@ -42,6 +42,24 @@ void T1_flat_texquad_init(void) {
         sizeof(T1FlatTexQuadCollection));
 }
 
+void T1_flat_texquad_delete(const int32_t zsprite_id)
+{
+    for (
+        int32_t i = 0;
+        i < (int32_t)T1_flat_texquads->size;
+        i++)
+    {
+        if (
+            T1_flat_texquads->cpu[i].
+                zsprite_id == zsprite_id)
+        {
+            T1_flat_texquads->cpu[i].deleted =
+                true;
+            T1_flat_texquads->cpu[i].zsprite_id = -1;
+        }
+    }
+}
+
 void T1_flat_texquad_delete_all(void)
 {
     T1_flat_texquads->size = 0;
@@ -93,6 +111,38 @@ void T1_flat_texquad_commit(
     request->cpu->committed = 1;
 }
 
+void T1_flat_texquad_draw_test(
+    const float width,
+    const float height)
+{
+    T1FlatTexQuadRequest texq;
+    T1_flat_texquad_fetch_next(&texq);
+    texq.gpu->size_xy[0] = width;
+    texq.gpu->size_xy[1] = height;
+    texq.gpu->pos_xyz[0] = -0.75f;
+    texq.gpu->pos_xyz[1] = -0.75f;
+    texq.gpu->pos_xyz[2] = 0.05f;
+    texq.gpu->tex_array_i = 2;
+    texq.gpu->tex_slice_i = 0;
+    T1_flat_texquad_commit(&texq);
+}
+
+static int cmp_highest_z_texquad(
+    const void * a,
+    const void * b)
+{
+    float fa = ((T1GPUTexQuad *)a)->pos_xyz[2];
+    float fb = ((T1GPUTexQuad *)b)->pos_xyz[2];
+    
+    if (fb < fa) {
+        return -1;
+    } else if (fb > fa) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 void T1_flat_texquad_copy_to_frame_data(
     T1GPUTexQuad * recip_frame_data,
     uint32_t * recip_frame_data_size)
@@ -113,4 +163,26 @@ void T1_flat_texquad_copy_to_frame_data(
             *recip_frame_data_size += 1;
         }
     }
+    
+    qsort(
+        /* void *base: */
+            recip_frame_data,
+        /* size_t nel: */
+            *recip_frame_data_size,
+        /* size_t width: */
+            sizeof(T1GPUTexQuad),
+        /* int (* _Nonnull compar)(const void *, const void *): */
+            cmp_highest_z_texquad);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    for (
+        uint32_t i = 0;
+        i + 1 < *recip_frame_data_size;
+        i++)
+    {
+        log_assert(
+            recip_frame_data[i].pos_xyz[2] >=
+                recip_frame_data[i+1].pos_xyz[2]);
+    }
+    #endif
 }

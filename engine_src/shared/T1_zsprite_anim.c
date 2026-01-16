@@ -701,7 +701,8 @@ void T1_zsprite_anim_resolve(void)
                         delete_object_when_finished)
                 {
                     T1_zsprite_delete(
-                        anim->public.affected_zsprite_id);
+                        anim->public.
+                            affected_zsprite_id);
                 }
             } else {
                 anim->remaining_duration_us =

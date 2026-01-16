@@ -318,13 +318,6 @@ static void construct_projection_matrix(void) {
     
     T1_linal_float4x4 proj;
     
-    // Temporary: we get rendering working again
-    // by making sure we're handling the easy case first
-    log_assert(T1_render_views->cpu[0].width ==
-        T1_global->window_width);
-    log_assert(T1_render_views->cpu[0].height ==
-        T1_global->window_height);
-    
     for (
         uint32_t i = 0;
         i < T1_RENDER_VIEW_CAP;

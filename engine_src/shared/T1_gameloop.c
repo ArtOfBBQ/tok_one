@@ -84,7 +84,7 @@ static void show_dead_simple_text(
             text_message,
         /* const float left_pixelspace: */
             30,
-        /* const float top_pixelspace: */
+        /* const float mid_y_pixelspace: */
             T1_global->window_height - 30,
         /* const float z: */
             1.0f,
@@ -230,13 +230,14 @@ void T1_gameloop_update_before_render_pass(
     
     if (
         T1_global->this_frame_timestamp_us -
-            T1_global->last_resize_request_us < 2000000)
+            T1_global->last_resize_request_us <
+                750000)
     {
         if (
             T1_global->
                 this_frame_timestamp_us -
             T1_global->
-                last_resize_request_us < 350000)
+                last_resize_request_us < 200000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...

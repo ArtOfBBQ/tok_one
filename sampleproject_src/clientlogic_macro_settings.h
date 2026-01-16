@@ -38,7 +38,7 @@ of the engine for your specific app.
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_ZSPRITE_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 2
-#define T1_OUTLINES_ACTIVE 1
+#define T1_OUTLINES_ACTIVE 2
 #define T1_TERMINAL_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2
@@ -47,11 +47,11 @@ of the engine for your specific app.
 #define T1_NORMAL_MAPPING_ACTIVE 2
 #define T1_AUDIO_ACTIVE 2
 #define T1_ENGINE_SAVEFILE_ACTIVE 1
-#define T1_PROFILER_ACTIVE 1
+#define T1_PROFILER_ACTIVE 2
 #define T1_TONE_MAPPING_ACTIVE 1
 #define T1_COLOR_QUANTIZATION_ACTIVE 1
-#define T1_MIPMAPS_ACTIVE 1
-#define T1_FOG_ACTIVE 1
+#define T1_MIPMAPS_ACTIVE 2
+#define T1_FOG_ACTIVE 2
 
 #define FRAMES_CAP 3 // 3 for triple-buffering
 
@@ -66,9 +66,14 @@ The maximum number of sprites in your app.
 #define MAX_ZSPRITES_PER_BUFFER  100000
 
 /*
-The maximum number of circles (particles)
+The maximum number of 'flat quads' (particles)
 */
-#define MAX_CIRCLES_PER_BUFFER 300000
+#define MAX_FLATQUADS_PER_BUFFER 300000
+
+/*
+Flat textured quads, mostly for UI text
+*/
+#define MAX_TEXQUADS_PER_BUFFER 50000
 
 /*
 The maximum number of 'scheduled animations' simultaneously running

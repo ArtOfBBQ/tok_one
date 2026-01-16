@@ -382,9 +382,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender
     toSize:(NSSize)frameSize
 {
-    //    engineglobals_started_window_resize(
-    //        platform_get_current_time_microsecs());
-    
     T1_platform_layer_start_window_resize(
         T1_platform_get_current_time_us());
     
