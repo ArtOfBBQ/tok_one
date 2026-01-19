@@ -1374,25 +1374,55 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
     const char * mtl_filename,
     const bool32_t flip_uv_u,
-    const bool32_t flip_uv_v)
+    const bool32_t flip_uv_v,
+    bool32_t * success,
+    char * error_message)
 {
-    log_assert(T1_objmodel_mesh_summaries_size < ALL_MESHES_SIZE);
+    *success = 0;
+    
+    log_assert(
+        T1_objmodel_mesh_summaries_size <
+            ALL_MESHES_SIZE);
+    
     if (!T1_app_running) {
-        log_append("Early exit from objmodel_new_mesh_id_from_resources(), application not running...\n");
+        T1_std_strcpy_cap(
+            error_message,
+            128,
+            "Early exit from "
+            "objmodel_new_mesh_id_from_res()"
+            ", application not running...\n");
         return -1;
     }
     
     T1FileBuffer obj_file_buf;
     obj_file_buf.size_without_terminator =
-        T1_platform_get_resource_size(obj_filename);
-    if (obj_file_buf.size_without_terminator < 1) {
-        log_append("Early exit from objmodel_new_mesh_id_from_resources(), obj resource: ");
-        log_append(obj_filename);
-        log_append(" doesn't exist...\n");
+        T1_platform_get_resource_size(
+            obj_filename);
+    
+    if (
+        obj_file_buf.size_without_terminator < 1)
+    {
+        T1_std_strcpy_cap(
+            error_message,
+            128,
+            "Early exit from "
+            "objmodel_new_mesh_id_from_res(), "
+            "obj resource: ");
+        T1_std_strcat_cap(
+            error_message,
+            128,
+            obj_filename);
+        T1_std_strcat_cap(
+            error_message,
+            128,
+            " doesn't exist...\n");
         return -1;
     }
-    obj_file_buf.contents = (char *)T1_mem_malloc_from_managed(
-        obj_file_buf.size_without_terminator + 1);
+    
+    obj_file_buf.contents = (char *)
+        T1_mem_malloc_from_managed(
+            obj_file_buf.
+                size_without_terminator + 1);
     obj_file_buf.good = false;
     
     T1_platform_read_resource_file(
@@ -1403,9 +1433,19 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     
     if (!obj_file_buf.good) {
         T1_mem_free_from_managed(obj_file_buf.contents);
-        log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
-        log_append(obj_filename);
-        log_append(" exists but failed to read...\n");
+        
+        T1_std_strcpy_cap(
+            error_message,
+            128,
+            "Early exit from "
+            "objmodel_new_mesh_id_from_res(), "
+            "resource: ");
+        T1_std_strcat_cap(
+            error_message,
+            128,
+            obj_filename);
+        log_append(
+            " exists but failed to read...\n");
         return -1;
     }
     
@@ -1417,10 +1457,23 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         mtl_file_buf.size_without_terminator =
             T1_platform_get_resource_size(mtl_filename);
         
-        if (mtl_file_buf.size_without_terminator < 1) {
-            log_append("Early exit from objmodel_new_mesh_id_from_resources(), mtl resource: ");
-            log_append(mtl_filename);
-            log_append(" doesn't exist...\n");
+        if (mtl_file_buf.
+            size_without_terminator < 1)
+        {
+            T1_std_strcpy_cap(
+                error_message,
+                128,
+                "Early exit from "
+                "objmodel_new_mesh_id_from_res(), "
+                " mtl resource: ");
+            T1_std_strcat_cap(
+                error_message,
+                128,
+                mtl_filename);
+            T1_std_strcat_cap(
+                error_message,
+                128,
+                " doesn't exist...\n");
             return -1;
         }
         
@@ -1439,10 +1492,20 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             T1_mem_free_from_managed(obj_file_buf.contents);
             T1_mem_free_from_managed(mtl_file_buf.contents);
             
-            log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
-            log_append(mtl_filename);
-            log_append(" exists but failed to read...\n");
-            
+            T1_std_strcpy_cap(
+                error_message,
+                128,
+                "Early exit from "
+                "objmodel_new_mesh_id_from_res(),"
+                "resource: ");
+            T1_std_strcat_cap(
+                error_message,
+                128,
+                mtl_filename);
+            T1_std_strcat_cap(
+                error_message,
+                128,
+                " exists but failed to read...\n");
             return -1;
         }
     }
@@ -1455,6 +1518,11 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             mtl_file_buf.contents);
     
     if (return_value < 0) {
+        T1_std_strcpy_cap(
+            error_message,
+            128,
+            "objmodel_new_mesh_id_from_res() "
+            "failed (undocumented)");
         return -1;
     }
     
@@ -1487,6 +1555,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     T1_objmodel_deduce_tangents_and_bitangents(
         return_value);
     
+    *success = 1;
     return return_value;
 }
 

@@ -30,6 +30,7 @@ This is the same screenspace coordinate system as used on Mac OS, so the Mac
 platform layer doesn't need to do anything and can just record values directly
 */
 
+#define T1_WINDOW_RESIZE_TIMEOUT 2500000
 #define T1_CLEARDEPTH 1.0f
 
 #include <math.h>

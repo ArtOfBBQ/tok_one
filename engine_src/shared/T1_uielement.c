@@ -721,7 +721,7 @@ void T1_uielement_request_slider(
     next_ae->touch_id = T1_zspriteid_next_ui_element_touch_id();
     
     T1zSpriteRequest slider_back;
-    T1_zsprite_request_next(&slider_back);
+    T1_zsprite_fetch_next(&slider_back);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             T1_render_view_screen_x_to_x(
@@ -759,7 +759,7 @@ void T1_uielement_request_slider(
     T1_zsprite_commit(&slider_back);
     
     T1zSpriteRequest slider_pin;
-    T1_zsprite_request_next(&slider_pin);
+    T1_zsprite_fetch_next(&slider_pin);
     float pin_z = next_ae->user_set.z - 0.00001f;
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
@@ -852,7 +852,7 @@ void T1_uielement_request_button(
     next_ae->touch_id = T1_zspriteid_next_ui_element_touch_id();
     
     T1zSpriteRequest button_request;
-    T1_zsprite_request_next(&button_request);
+    T1_zsprite_fetch_next(&button_request);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             T1_render_view_screen_x_to_x(

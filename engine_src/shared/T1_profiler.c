@@ -292,7 +292,6 @@ void T1_profiler_handle_touches(void) {
         {
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 handled = true;
-            printf("profiler touched\n");
             return;
         }
         

@@ -665,7 +665,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 T1_zsprite_anim_request_next(true);
             anim->affected_zsprite_id =
                 target_zsprite_ids[j];
-            anim->delete_other_anims_targeting_zsprite =
+            anim->del_conflict_anims =
                 true;
             anim->cpu_vals.xyz[0] =
                 T1_render_view_screen_x_to_x(
@@ -696,7 +696,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_zsprite_anim_request_next(true);
         anim->affected_zsprite_id =
             target_zsprite_ids[j];
-        anim->delete_other_anims_targeting_zsprite =
+        anim->del_conflict_anims =
             true;
         anim->cpu_vals.xyz[0] =
             T1_render_view_screen_x_to_x(

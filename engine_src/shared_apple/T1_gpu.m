@@ -12,7 +12,8 @@ typedef struct {
     #endif
     NSUInteger frame_i;
     MTLViewport window_viewport;
-    MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
+    MTLViewport
+        render_viewports[T1_RENDER_VIEW_CAP];
     
     id<MTLDevice> device;
     id<MTLLibrary> lib;
@@ -32,7 +33,8 @@ typedef struct {
     id projection_constants_buffer;
     
     id<MTLTexture> cam_depth_texture;
-    id<MTLTexture> depth_textures[T1_RENDER_VIEW_CAP];
+    id<MTLTexture>
+        depth_textures[T1_RENDER_VIEW_CAP];
     
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> z_prepass_pls;
@@ -54,7 +56,8 @@ typedef struct {
     id<MTLRenderPipelineState> depth_only_pls;
     id<MTLRenderPipelineState> blend_notouch_pls;
     id<MTLRenderPipelineState> bb_notouch_pls;
-    id<MTLRenderPipelineState> flat_texquad_touch_pls;
+    id<MTLRenderPipelineState>
+        flat_texquad_touch_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -66,7 +69,8 @@ typedef struct {
     
     id<MTLRenderPipelineState> singlequad_pls;
     
-    id<MTLDepthStencilState> opaque_depth_stencil_state;
+    id<MTLDepthStencilState>
+        opaque_depth_stencil_state;
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
@@ -86,12 +90,13 @@ typedef struct {
     #endif
     
     id<MTLTexture> touch_id_texture;
-    id<MTLBuffer> touch_id_buffer;
-    id<MTLBuffer> touch_id_buffer_all_zeros;
+    id<MTLBuffer>  touch_id_buffer;
+    id<MTLBuffer>  touch_id_buffer_all_zeros;
     
     // Rendering state
-    uint32_t z_buffer_cleared;
+    uint32_t zbuf_cleared;
     uint32_t rtt_cleared;
+    
     id<MTLTexture> cur_rtt;
     id<MTLTexture> cur_depth;
     id<MTLRenderPipelineState> cur_opq_pls;
@@ -107,7 +112,6 @@ typedef struct {
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
-
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
@@ -1674,19 +1678,15 @@ static id<MTLTexture> get_texture_array_slice(
 static void
 set_defaults_for_render_descriptor(
     MTLRenderPassDescriptor * desc,
-    const int32_t cam_i,
-    id<MTLTexture> current_depth,
-    id<MTLTexture> current_rtt,
-    uint32_t * depth_cleared,
-    uint32_t * rtt_cleared)
+    const int32_t cam_i)
 {
-    if (!*depth_cleared) {
+    if (!ags->zbuf_cleared) {
         desc.depthAttachment.
             loadAction = MTLLoadActionClear;
         desc.depthAttachment.
             clearDepth = 1.0f;
         
-        *depth_cleared = true;
+        ags->zbuf_cleared = true;
     } else {
         desc.depthAttachment.
             loadAction = MTLLoadActionLoad;
@@ -1694,19 +1694,19 @@ set_defaults_for_render_descriptor(
     desc.depthAttachment.
         storeAction = MTLStoreActionStore;
     desc.depthAttachment.texture =
-        current_depth;
+        ags->cur_depth;
     
-    if (!*rtt_cleared) {
+    if (!ags->rtt_cleared) {
         desc.colorAttachments[0].loadAction = MTLLoadActionClear;
         desc.colorAttachments[0].clearColor =
             MTLClearColorMake(1.0f, 0.0f, 1.0f, 1.0f);
-        *rtt_cleared = true;
+        ags->rtt_cleared = true;
     } else {
         desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
     }
     
     desc.colorAttachments[0].
-        texture = current_rtt;
+        texture = ags->cur_rtt;
     desc.colorAttachments[0].storeAction =
         MTLStoreActionStore;
     
@@ -2051,6 +2051,7 @@ static void set_defaults_for_encoder(
             #error
             #endif
         }
+        log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_OUTLINES:
         {
@@ -2068,11 +2069,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 outlines_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             outlines_desc.colorAttachments[1].texture =
                 nil;
@@ -2136,11 +2133,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 diamond_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             id<MTLRenderCommandEncoder> pass_2_opaque_tris_enc =
                 [combuf renderCommandEncoderWithDescriptor:
@@ -2167,6 +2160,7 @@ static void set_defaults_for_encoder(
             
             [pass_2_opaque_tris_enc endEncoding];
         }
+        log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_ALPHA_BLEND:
         {
@@ -2181,11 +2175,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 alpha_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             id<MTLRenderCommandEncoder>
                 alpha_pass = [combuf
@@ -2220,6 +2210,7 @@ static void set_defaults_for_encoder(
             #error
             #endif
         }
+        log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_BILLBOARDS:
         {
@@ -2235,11 +2226,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 bb_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             id<MTLRenderCommandEncoder>
                 bb_enc = [combuf
@@ -2277,6 +2264,7 @@ static void set_defaults_for_encoder(
             
             [bb_enc endEncoding];
         }
+        log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_BLOOM:
         {
@@ -2301,11 +2289,7 @@ static void set_defaults_for_encoder(
                     currentRenderPassDescriptor];
             set_defaults_for_render_descriptor(
                 bloom_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             id<MTLTexture> bloom_rtt =
                 ags->downsampled_rtts[0];
@@ -2421,11 +2405,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_render_descriptor(
                 flat_texq_desc,
-                cam_i,
-                ags->cur_depth,
-                ags->cur_rtt,
-                &ags->z_buffer_cleared,
-                &ags->rtt_cleared);
+                cam_i);
             
             id<MTLRenderCommandEncoder>
                 flat_texq_enc = [combuf
@@ -2483,6 +2463,7 @@ static void set_defaults_for_encoder(
             
             [flat_texq_enc endEncoding];
         }
+        log_assert(ags->zbuf_cleared);
         break;
         default:
             log_assert(0);
@@ -2527,7 +2508,7 @@ static void set_defaults_for_encoder(
     if (
         (f->postproc_consts->timestamp -
             T1_global->last_resize_request_us)
-                < 250000)
+                < T1_WINDOW_RESIZE_TIMEOUT)
     {
         return;
     }
@@ -2591,7 +2572,12 @@ static void set_defaults_for_encoder(
         cam_i >= 0;
         cam_i--)
     {
-        if (T1_render_views->cpu[cam_i].deleted) {
+        if (
+            T1_render_views->cpu[cam_i].
+                deleted ||
+            T1_render_views->cpu[cam_i].
+                passes_size == 0)
+        {
             continue;
         }
         
@@ -2604,15 +2590,18 @@ static void set_defaults_for_encoder(
         ags->cur_flat_texquad_pls = nil;
         
         ags->rtt_cleared = false;
-        ags->z_buffer_cleared = false;
+        ags->zbuf_cleared = false;
         
         switch (
             T1_render_views->cpu[cam_i].write_type)
         {
             case T1RENDERVIEW_WRITE_BELOWBOUNDS:
+            {
                 log_assert(0);
+            }
             break;
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
+            {
                 ags->cur_rtt =
                     get_texture_array_slice(
                         T1_render_views->cpu[cam_i].
@@ -2632,8 +2621,10 @@ static void set_defaults_for_encoder(
                     ags->bb_touch_pls;
                 ags->cur_flat_texquad_pls =
                     ags->flat_texquad_touch_pls;
+            }
             break;
             case T1RENDERVIEW_WRITE_RGBA:
+            {
                 ags->cur_rtt =
                     get_texture_array_slice(
                         T1_render_views->cpu[cam_i].
@@ -2651,8 +2642,10 @@ static void set_defaults_for_encoder(
                     ags->blend_notouch_pls;
                 ags->cur_bb_pls =
                     ags->bb_notouch_pls;
+            }
             break;
             case T1RENDERVIEW_WRITE_DEPTH:
+            {
                 log_assert(
                     T1_render_views->cpu[cam_i].
                         write_array_i ==
@@ -2682,9 +2675,12 @@ static void set_defaults_for_encoder(
                 ags->cur_bloom_pls =
                     ags->depth_only_pls;
                 ags->cur_bb_pls = nil;
+            }
             break;
             case T1RENDERVIEW_WRITE_ABOVEBOUNDS:
+            {
                 log_assert(0);
+            }
             break;
         }
         
@@ -2699,9 +2695,6 @@ static void set_defaults_for_encoder(
                 forCamera: cam_i
                 withView: view
                 withComBuf: combuf];
-            
-            log_assert(ags->z_buffer_cleared);
-            log_assert(ags->rtt_cleared);
         }
         
         log_assert(ags->viewports_set[cam_i]);
@@ -2713,9 +2706,10 @@ static void set_defaults_for_encoder(
     }
     
     // copy the touch id buffer for CPU use
-    id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_enc =
-        [combuf blitCommandEncoder];
-    [blit_touch_texture_to_cpu_buffer_enc
+    id <MTLBlitCommandEncoder>
+        blit_touch_tex_to_cpu_enc =
+            [combuf blitCommandEncoder];
+    [blit_touch_tex_to_cpu_enc
         copyFromTexture: ags->touch_id_texture
         sourceSlice: 0
         sourceLevel: 0
@@ -2731,7 +2725,7 @@ static void set_defaults_for_encoder(
             [ags->touch_id_texture width] * 4
         destinationBytesPerImage:
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 4];
-    [blit_touch_texture_to_cpu_buffer_enc endEncoding];
+    [blit_touch_tex_to_cpu_enc endEncoding];
         
     // Render pass 4 puts a quad on the full screen
     MTLRenderPassDescriptor *

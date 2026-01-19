@@ -129,10 +129,11 @@ because I don't know much about how that works or how reliable it is
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether
-#define simd_and_floats(a, b)               (float32x4_t)(vandq_u32(a, b))
-#define simd_sqrt_floats(a)                 vsqrtq_f32(a)
-#define simd_cmpeq_floats(a, b)             vceq_f32(a, b)
-#define simd_cmplt_floats(a, b)             vcltq_f32(a, b)
+#define simd_and_floats(a, b)   (float32x4_t)(vandq_u32(a, b))
+#define simd_sqrt_floats(a)     vsqrtq_f32(a)
+#define simd_cmpeq_floats(a, b) vceqq_f32(a, b)
+#define simd_not_floats(a) vmvnq_u32(a)
+#define simd_cmplt_floats(a, b) vcltq_f32(a, b)
 
 #elif defined(__AVX__)
 

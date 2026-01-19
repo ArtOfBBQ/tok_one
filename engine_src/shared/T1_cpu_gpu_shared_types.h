@@ -57,7 +57,7 @@ typedef struct {
     unsigned int parent_material_i;
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
-typedef enum : uint8_t {
+typedef enum : unsigned int {
     T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
     T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
     T1RENDERVIEW_WRITE_DEPTH = 2,
@@ -130,6 +130,7 @@ typedef struct {
 typedef struct {
     float pos_xyz[3];
     float size_xy[2];
+    float rgba[4];
     int   tex_array_i;
     int   tex_slice_i;
 } T1GPUTexQuad;

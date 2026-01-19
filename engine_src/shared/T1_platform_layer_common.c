@@ -311,8 +311,3 @@ void T1_platform_layer_start_window_resize(
     #error
     #endif
 }
-
-void T1_platform_create_gpu_render_views(void)
-{
-    log_assert(0);
-}

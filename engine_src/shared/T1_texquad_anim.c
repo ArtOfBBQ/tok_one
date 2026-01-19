@@ -1,9 +1,9 @@
-#include "T1_zsprite_anim.h"
+#include "T1_texquad_anim.h"
 
-#if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+#if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
 
 typedef struct {
-    T1zSpriteAnim public;
+    T1TexQuadAnim public;
     
     /*
     If this flag is set, the target values represent endpoints, not deltas,
@@ -19,74 +19,72 @@ typedef struct {
     
     bool8_t deleted;
     bool8_t committed;
-} T1InternalzSpriteAnim;
+} T1InternalTexQuadAnim;
 
-T1InternalzSpriteAnim * T1_zsprite_anims;
-uint32_t zsprite_anims_size = 0;
+#define FLT_SCHEDULEDANIM_IGNORE 0xFFFF
+
+T1InternalTexQuadAnim * texquad_anims;
+uint32_t texquad_anims_size = 0;
 
 typedef struct {
-    T1GPUzSprite zsprite_final_pos_gpu;
-    T1GPUzSprite zsprite_deltas[2];
-    T1CPUzSpriteSimdStats zsprite_final_pos_cpu;
+    T1GPUTexQuad zsprite_final_pos_gpu;
+    T1GPUTexQuad zsprite_deltas[2];
     uint32_t (* init_mutex_and_return_id)(void);
     void (* mutex_lock)(const uint32_t);
     void (* mutex_unlock)(const uint32_t);
     uint32_t mutex_id;
-} T1FrameAnimState;
+} T1TexQuadAnimState;
 
-static T1FrameAnimState * fas = NULL;
+static T1TexQuadAnimState * tqas = NULL;
 
-void T1_zsprite_anim_init(
+void T1_texquad_anim_init(
     uint32_t (* funcptr_init_mutex_and_return_id)(void),
     void (* funcptr_mutex_lock)(const uint32_t),
     void (* funcptr_mutex_unlock)(const uint32_t))
 {
-    T1_zsprite_anims = (T1InternalzSpriteAnim *)
-        T1_mem_malloc_from_unmanaged(
-            sizeof(
-                T1InternalzSpriteAnim) *
-                    T1_ZSPRITE_ANIMS_CAP);
+    texquad_anims = (T1InternalTexQuadAnim *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1InternalTexQuadAnim) * TEXQUAD_ANIMS_CAP);
     T1_std_memset(
-        T1_zsprite_anims,
+        texquad_anims,
         0,
-        sizeof(T1InternalzSpriteAnim));
-    T1_zsprite_anims[0].deleted = true;
+        sizeof(T1InternalTexQuadAnim));
+    texquad_anims[0].deleted = true;
     
-    fas = (T1FrameAnimState *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1FrameAnimState));
+    tqas = (T1TexQuadAnimState *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1TexQuadAnimState));
     T1_std_memset(
-        fas,
+        tqas,
         0,
-        sizeof(T1FrameAnimState));
+        sizeof(T1TexQuadAnimState));
     
-    fas->init_mutex_and_return_id =
+    tqas->init_mutex_and_return_id =
         funcptr_init_mutex_and_return_id;
-    fas->mutex_lock = funcptr_mutex_lock;
-    fas->mutex_unlock = funcptr_mutex_unlock;
+    tqas->mutex_lock = funcptr_mutex_lock;
+    tqas->mutex_unlock = funcptr_mutex_unlock;
     
     for (
         uint32_t i = 1;
-        i < T1_ZSPRITE_ANIMS_CAP;
+        i < TEXQUAD_ANIMS_CAP;
         i++)
     {
         T1_std_memcpy(
-            &T1_zsprite_anims[i],
-            &T1_zsprite_anims[0],
-            sizeof(T1InternalzSpriteAnim));
-        log_assert(T1_zsprite_anims[i].deleted);
+            &texquad_anims[i],
+            &texquad_anims[0],
+            sizeof(T1InternalTexQuadAnim));
+        log_assert(texquad_anims[i].deleted);
     }
     
-    fas->mutex_id = fas->init_mutex_and_return_id();
+    tqas->mutex_id = tqas->init_mutex_and_return_id();
 }
 
 static
-T1InternalzSpriteAnim * T1_zsprite_anim_get_container(
-    const T1zSpriteAnim * public_ptr)
+T1InternalTexQuadAnim * T1_zsprite_anim_get_container(
+    const T1TexQuadAnim * public_ptr)
 {
     assert(
-        offsetof(T1InternalzSpriteAnim, public) == 0);
+        offsetof(T1InternalTexQuadAnim, public) == 0);
     
-    T1InternalzSpriteAnim * retval = (T1InternalzSpriteAnim *)public_ptr;
+    T1InternalTexQuadAnim * retval = (T1InternalTexQuadAnim *)public_ptr;
     
     log_assert(
         &retval->public == public_ptr);
@@ -95,48 +93,47 @@ T1InternalzSpriteAnim * T1_zsprite_anim_get_container(
 }
 
 static void construct_scheduled_animationA(
-    T1InternalzSpriteAnim * to_construct)
+    T1InternalTexQuadAnim * to_construct)
 {
     T1_std_memset(
         to_construct,
         0,
-        sizeof(T1InternalzSpriteAnim));
+        sizeof(T1InternalTexQuadAnim));
     log_assert(!to_construct->committed);
     
     to_construct->public.affected_zsprite_id = -1;
-    to_construct->public.affected_touch_id = -1;
+    to_construct->public.affected_touchable_id = -1;
     to_construct->public.runs = 1;
     
     log_assert(!to_construct->deleted);
     log_assert(!to_construct->committed);
 }
 
-T1zSpriteAnim * T1_zsprite_anim_request_next(
+T1TexQuadAnim * T1_texquad_anim_request_next(
     bool8_t endpoints_not_deltas)
 {
-    fas->mutex_lock(
-        fas->mutex_id);
-    log_assert(
-        zsprite_anims_size < T1_ZSPRITE_ANIMS_CAP);
-    T1InternalzSpriteAnim * return_value = NULL;
+    tqas->mutex_lock(
+        tqas->mutex_id);
+    log_assert(texquad_anims_size <
+        TEXQUAD_ANIMS_CAP);
+    T1InternalTexQuadAnim * return_value = NULL;
     
     for (
         uint32_t i = 0;
-        i < zsprite_anims_size;
+        i < texquad_anims_size;
         i++)
     {
-        if (T1_zsprite_anims[i].deleted)
+        if (texquad_anims[i].deleted)
         {
-            return_value = &T1_zsprite_anims[i];
+            return_value = &texquad_anims[i];
         }
     }
     
     if (return_value == NULL) {
-        log_assert(
-            zsprite_anims_size + 1 <
-                T1_ZSPRITE_ANIMS_CAP);
+        log_assert(texquad_anims_size + 1 <
+            TEXQUAD_ANIMS_CAP);
         return_value =
-            &T1_zsprite_anims[zsprite_anims_size++];
+            &texquad_anims[texquad_anims_size++];
         log_assert(return_value->deleted);
     }
     
@@ -149,82 +146,242 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
             &return_value->public.gpu_vals,
-            T1_ZSPRITEANIM_NO_EFFECT,
-            sizeof(T1GPUzSprite));
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(T1GPUTexQuad));
         T1_std_memset_f32(
             &return_value->public.cpu_vals,
-            T1_ZSPRITEANIM_NO_EFFECT,
-            sizeof(T1CPUzSpriteSimdStats));
-        return_value->endpoints_not_deltas = endpoints_not_deltas;
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(T1CPUTexQuad));
+        return_value->endpoints_not_deltas =
+            endpoints_not_deltas;
     }
     
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
     
     return &return_value->public;
 }
 
-void T1_zsprite_anim_commit(
-    T1zSpriteAnim * to_commit)
+static void
+apply_animation_effects_for_given_eased_t(
+    T1TPair t,
+    T1TexQuadAnim * anim,
+    T1GPUTexQuad * recip_gpu,
+    T1CPUTexQuad * recip_cpu)
 {
-    fas->mutex_lock(
-        fas->mutex_id);
+    float * anim_vals_ptr    = (float *)&anim->gpu_vals;
+    float * target_vals_ptr = (float *)recip_gpu;
     
-    T1InternalzSpriteAnim * parent =
-        T1_zsprite_anim_get_container(to_commit);
-    log_assert(&parent->public == to_commit);
+    SIMD_FLOAT simd_t_now = simd_set1_float(t.now);
+    SIMD_FLOAT simd_t_b4  = simd_set1_float(t.applied);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (parent->endpoints_not_deltas) {
-        uint32_t skips = 0;
+    log_assert((sizeof(T1GPUTexQuad) / 4) % SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1CPUTexQuad) / 4) % SIMD_FLOAT_LANES == 0);
+    
+    for (
+        uint32_t simd_step_i = 0;
+        (simd_step_i * sizeof(float)) < sizeof(T1GPUTexQuad);
+        simd_step_i += SIMD_FLOAT_LANES)
+    {
+        SIMD_FLOAT simd_anim_vals =
+            simd_load_floats((anim_vals_ptr + simd_step_i));
+        SIMD_FLOAT simd_target_vals =
+            simd_load_floats((target_vals_ptr + simd_step_i));
         
-        float * vals = (float *)(&parent->public.gpu_vals);
+        SIMD_FLOAT simd_t_now_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_now);
+        SIMD_FLOAT simd_t_previous_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_b4);
         
-        for (
-            uint32_t i = 0;
-            i < sizeof(T1GPUzSprite) / 4;
-            i += SIMD_FLOAT_LANES)
-        {
-            for (
-                uint32_t j = 0;
-                j < SIMD_FLOAT_LANES;
-                j++)
-            {
-                skips += vals[i+j] ==
-                    T1_ZSPRITEANIM_NO_EFFECT;
-            }
-        }
+        simd_t_now_deltas = simd_sub_floats(
+            simd_t_now_deltas,
+            simd_t_previous_deltas);
         
-        log_assert(skips > 0);
+        simd_store_floats(
+            (target_vals_ptr + simd_step_i),
+            simd_add_floats(
+                simd_target_vals,
+                simd_t_now_deltas));
     }
     
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    anim_vals_ptr = (float *)&anim->cpu_vals;
+    target_vals_ptr = (float *)recip_cpu;
     
+    for (
+        uint32_t simd_step_i = 0;
+        (simd_step_i * sizeof(float)) < sizeof(T1CPUTexQuad);
+        simd_step_i += SIMD_FLOAT_LANES)
+    {
+        SIMD_FLOAT simd_anim_vals =
+            simd_load_floats((anim_vals_ptr + simd_step_i));
+        SIMD_FLOAT simd_target_vals =
+            simd_load_floats((target_vals_ptr + simd_step_i));
+        
+        SIMD_FLOAT simd_t_now_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_now);
+        SIMD_FLOAT simd_t_previous_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_b4);
+        
+        simd_t_now_deltas = simd_sub_floats(
+            simd_t_now_deltas,
+            simd_t_previous_deltas);
+        
+        simd_store_floats(
+            (target_vals_ptr + simd_step_i),
+            simd_add_floats(
+                simd_target_vals,
+                simd_t_now_deltas));
+    }
+}
+
+static void T1_texquad_anims_get_projected_final_position_for(
+    const int32_t zp_i,
+    T1GPUTexQuad * recip_gpu,
+    T1CPUTexQuad * recip_cpu)
+{
+    log_assert(zp_i >= 0);
+    log_assert((uint32_t)zp_i < T1_zsprite_list->size);
     
-    log_assert(to_commit->duration_us > 0);
+    const int32_t zsprite_id = T1_zsprite_list->cpu_data[zp_i].zsprite_id;
+    *recip_gpu = T1_zsprite_list->gpu_data[zp_i];
+    *recip_cpu = T1_zsprite_list->cpu_data[zp_i].simd_stats;
     
-    if (to_commit->
-        del_conflict_anims)
+    for (
+        uint32_t sa_i = 0;
+        sa_i < texquad_anims_size;
+        sa_i++)
+    {
+        T1InternalTexQuadAnim * a =
+            &texquad_anims[sa_i];
+        
+        if (
+            a->public.affected_zsprite_id == zsprite_id &&
+            !a->deleted &&
+            a->committed &&
+            a->public.duration_us > 0)
+        {
+            T1TPair t;
+            t.now = 1.0f;
+            t.applied = a->already_applied_t;
+            
+            t.now = T1_easing_t_to_eased_t(
+                t.now,
+                a->public.easing_type);
+            t.applied = T1_easing_t_to_eased_t(
+                t.applied,
+                a->public.easing_type);
+            
+            apply_animation_effects_for_given_eased_t(
+                t,
+                &a->public,
+                recip_gpu,
+                recip_cpu);
+        }
+    }
+}
+
+void T1_zsprite_anim_commit(
+    T1TexQuadAnim * to_commit)
+{
+    tqas->mutex_lock(
+        tqas->mutex_id);
+    
+    T1InternalTexQuadAnim * parent = T1_zsprite_anim_get_container(to_commit);
+    log_assert(&parent->public == to_commit);
+    
+    log_assert(
+        to_commit->duration_us > 0);
+    
+    if (
+        to_commit->delete_other_anims_targeting_zsprite)
     {
         for (
             uint32_t anim_i = 0;
-            anim_i < zsprite_anims_size;
+            anim_i < texquad_anims_size;
             anim_i++)
         {
-            T1InternalzSpriteAnim * a =
-                &T1_zsprite_anims[anim_i];
+            T1InternalTexQuadAnim * a =
+                &texquad_anims[anim_i];
             
             if (
                 a->public.affected_zsprite_id ==
                     to_commit->affected_zsprite_id &&
-                a->public.affected_touch_id ==
-                    to_commit->affected_touch_id &&
+                a->public.affected_touchable_id ==
+                    to_commit->affected_touchable_id &&
                 a->committed &&
                 a->endpoints_not_deltas)
             {
-                T1_zsprite_anims[anim_i].deleted = true;
+                texquad_anims[anim_i].deleted = true;
+            }
+        }
+    }
+    
+    if (parent->endpoints_not_deltas) {
+        int32_t first_zp_i = -1;
+        for (
+            int32_t zp_i = 0;
+            zp_i < (int32_t)T1_zsprite_list->size;
+            zp_i++)
+        {
+            if (
+                T1_zsprite_list->cpu_data[zp_i].zsprite_id ==
+                    to_commit->affected_zsprite_id)
+            {
+                first_zp_i = zp_i;
+                break;
+            }
+        }
+        
+        if (first_zp_i < 0) {
+            parent->deleted = true;
+            tqas->mutex_unlock(tqas->mutex_id);
+            return;
+        }
+        log_assert(first_zp_i < (int32_t)T1_zsprite_list->size);
+        
+        
+        T1_texquad_anims_get_projected_final_position_for(
+            first_zp_i,
+            &tqas->zsprite_final_pos_gpu,
+            &tqas->zsprite_final_pos_cpu);
+        
+        float * anim_gpu_vals = (float *)&to_commit->gpu_vals;
+        float * orig_gpu_vals = (float *)&tqas->zsprite_final_pos_gpu;
+        
+        for (
+            uint32_t i = 0;
+            i < (sizeof(T1GPUTexQuad) / sizeof(float));
+            i++)
+        {
+            if (anim_gpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
+                anim_gpu_vals[i] = 0.0f; // delta 0 is the same as 'ignore'
+            } else {
+                // fetch the current value
+                float delta_to_target = anim_gpu_vals[i] - orig_gpu_vals[i];
+                anim_gpu_vals[i] = delta_to_target;
+            }
+        }
+        
+        float * anim_cpu_vals = (float *)&to_commit->cpu_vals;
+        float * orig_cpu_vals = (float *)&tqas->zsprite_final_pos_cpu;
+        for (
+            uint32_t i = 0;
+            i < (sizeof(T1CPUzSpriteSimdStats) / sizeof(float));
+            i++)
+        {
+            if (anim_cpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
+                anim_cpu_vals[i] = 0.0f; // delta 0 is the same as 'ignore'
+            } else {
+                // fetch the current value
+                float delta_to_target = anim_cpu_vals[i] - orig_cpu_vals[i];
+                anim_cpu_vals[i] = delta_to_target;
             }
         }
     }
@@ -233,18 +390,16 @@ void T1_zsprite_anim_commit(
     log_assert(!parent->committed);
     
     if (to_commit->affected_zsprite_id < 0) {
-        log_assert(to_commit->affected_touch_id >= 0);
+        log_assert(to_commit->affected_touchable_id >= 0);
     } else {
         log_assert(
-            to_commit->affected_touch_id == -1);
+            to_commit->affected_touchable_id == -1);
     }
     
-    if (to_commit->affected_touch_id < 0) {
-        log_assert(
-            to_commit->affected_zsprite_id >= 0);
+    if (to_commit->affected_touchable_id < 0) {
+        log_assert(to_commit->affected_zsprite_id >= 0);
     } else {
-        log_assert(
-            to_commit->affected_zsprite_id == -1);
+        log_assert(to_commit->affected_zsprite_id == -1);
     }
     
     log_assert(parent->already_applied_t == 0.0f);
@@ -259,7 +414,7 @@ void T1_zsprite_anim_commit(
     
     log_assert(parent->committed);
     log_assert(!parent->deleted);
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
 void T1_zsprite_anim_evaporate_and_destroy(
@@ -469,11 +624,11 @@ void T1_zsprite_anim_fade_and_destroy(
     log_assert(duration_us > 0);
     
     // register scheduled animation
-    T1zSpriteAnim * fade_destroy = T1_zsprite_anim_request_next(true);
+    T1TexQuadAnim * fade_destroy = T1_zsprite_anim_request_next(true);
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.alpha = 0.0f;
-    fade_destroy->del_obj_on_finish = true;
+    fade_destroy->delete_object_when_finished = true;
     T1_zsprite_anim_commit(fade_destroy);
 }
 
@@ -485,7 +640,7 @@ void T1_zsprite_anim_fade_to(
     log_assert(zsprite_id >= 0);
     
     // register scheduled animation
-    T1zSpriteAnim * modify_alpha = T1_zsprite_anim_request_next(true);
+    T1TexQuadAnim * modify_alpha = T1_zsprite_anim_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_vals.alpha = target_alpha;
@@ -494,15 +649,15 @@ void T1_zsprite_anim_fade_to(
 
 void T1_zsprite_anim_resolve(void)
 {
-    fas->mutex_lock(fas->mutex_id);
+    tqas->mutex_lock(tqas->mutex_id);
     
     for (
-        int32_t animation_i = (int32_t)zsprite_anims_size - 1;
+        int32_t animation_i = (int32_t)texquad_anims_size - 1;
         animation_i >= 0;
         animation_i--)
     {
-        T1InternalzSpriteAnim * anim =
-            &T1_zsprite_anims[animation_i];
+        T1InternalTexQuadAnim * anim =
+            &texquad_anims[animation_i];
         
         if (
             anim->deleted ||
@@ -519,13 +674,13 @@ void T1_zsprite_anim_resolve(void)
             
             if (delete) {
                 anim->deleted = true;
-                if (animation_i == (int32_t)zsprite_anims_size - 1) {
-                    zsprite_anims_size -= 1;
+                if (animation_i == (int32_t)texquad_anims_size - 1) {
+                    texquad_anims_size -= 1;
                 }
                 
                 if (
                     anim->public.
-                        del_obj_on_finish)
+                        delete_object_when_finished)
                 {
                     T1_zsprite_delete(
                         anim->public.
@@ -579,8 +734,7 @@ void T1_zsprite_anim_resolve(void)
         t.now = (float)elapsed_so_far / (float)anim->public.duration_us;
         log_assert(t.now <= 1.0f);
         log_assert(t.now >= 0.0f);
-        log_assert(
-            t.now >= anim->already_applied_t);
+        log_assert(t.now >= anim->already_applied_t);
         t.applied = anim->already_applied_t;
         
         log_assert(anim->already_applied_t <= t.now);
@@ -593,45 +747,41 @@ void T1_zsprite_anim_resolve(void)
             t.applied,
             anim->public.easing_type);
         
-        if (anim->endpoints_not_deltas) {
-            T1_zsprite_apply_endpoint_anim(
-                /* const int32_t zsprite_id: */
-                    anim->public.affected_zsprite_id,
-                /* const int32_t touch_id: */
-                    anim->public.affected_touch_id,
-                /* const float t_applied: */
-                    t.applied,
-                /* const float t_now: */
-                    t.now,
-                /* const float *goal_gpu_vals: */
-                    (float *)&anim->public.gpu_vals,
-                /* const float *goal_cpu_vals: */
-                    (float *)&anim->public.cpu_vals);
-        } else {
-            T1_zsprite_apply_anim_effects_to_id(
-                /* const int32_t zsprite_id: */
-                    anim->public.affected_zsprite_id,
-                /* const int32_t touch_id: */
-                    anim->public.affected_touch_id,
-                /* const float t_applied: */
-                    t.applied,
-                /* const float t_now: */
-                    t.now,
-                /* const float * anim_gpu_vals: */
-                    (float *)&anim->public.gpu_vals,
-                /* const float * anim_cpu_vals: */
-                    (float *)&anim->public.cpu_vals);
+        // Apply effects
+        for (
+            int32_t zp_i = 0;
+            zp_i < (int32_t)T1_zsprite_list->size;
+            zp_i++)
+        {
+            if (
+                (anim->public.affected_zsprite_id >= 0 &&
+                T1_zsprite_list->cpu_data[zp_i].zsprite_id !=
+                    anim->public.affected_zsprite_id) ||
+                (anim->public.affected_touchable_id >= 0 &&
+                T1_zsprite_list->gpu_data[zp_i].touch_id !=
+                    anim->public.affected_touchable_id)
+                ||
+                T1_zsprite_list->cpu_data[zp_i].deleted)
+            {
+                continue;
+            }
+            
+            apply_animation_effects_for_given_eased_t(
+                t,
+                &anim->public,
+                T1_zsprite_list->gpu_data + zp_i,
+                &T1_zsprite_list->cpu_data[zp_i].simd_stats);
         }
     }
     
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
 void T1_zsprite_anim_dud_dance(
     const int32_t object_id,
     const float magnitude)
 {
-    T1zSpriteAnim * move_request =
+    T1TexQuadAnim * move_request =
         T1_zsprite_anim_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
@@ -652,7 +802,7 @@ void T1_zsprite_anim_bump(
     (void)wait;
     #endif
     
-    T1zSpriteAnim * move_request =
+    T1TexQuadAnim * move_request =
         T1_zsprite_anim_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
@@ -664,51 +814,122 @@ void T1_zsprite_anim_bump(
 
 void T1_zsprite_anim_delete_all(void)
 {
-    fas->mutex_lock(fas->mutex_id);
-    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
-        T1_zsprite_anims[i].deleted = true;
+    tqas->mutex_lock(tqas->mutex_id);
+    for (uint32_t i = 0; i < texquad_anims_size; i++) {
+        texquad_anims[i].deleted = true;
     }
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
 void T1_zsprite_anim_delete_endpoint_anims_targeting(
     const int32_t object_id)
 {
-    fas->mutex_lock(fas->mutex_id);
-    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
+    tqas->mutex_lock(tqas->mutex_id);
+    for (uint32_t i = 0; i < texquad_anims_size; i++) {
         if (
-            !T1_zsprite_anims[i].deleted &&
-            T1_zsprite_anims[i].endpoints_not_deltas &&
-            T1_zsprite_anims[i].public.
+            !texquad_anims[i].deleted &&
+            texquad_anims[i].endpoints_not_deltas &&
+            texquad_anims[i].public.
                 affected_zsprite_id ==
                     (int32_t)object_id)
         {
-            T1_zsprite_anims[i].deleted = true;
+            texquad_anims[i].deleted = true;
         }
     }
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
 void T1_zsprite_anim_delete_all_anims_targeting(
     const int32_t object_id)
 {
-    fas->mutex_lock(fas->mutex_id);
-    for (uint32_t i = 0; i < zsprite_anims_size; i++) {
-        T1zSpriteAnim * a =
-            &T1_zsprite_anims[i].public;
+    tqas->mutex_lock(tqas->mutex_id);
+    for (uint32_t i = 0; i < texquad_anims_size; i++) {
+        T1TexQuadAnim * a =
+            &texquad_anims[i].public;
         
         if (
-            !T1_zsprite_anims[i].deleted &&
-            T1_zsprite_anims[i].committed &&
+            !texquad_anims[i].deleted &&
+            texquad_anims[i].committed &&
             a->affected_zsprite_id == object_id)
         {
-            T1_zsprite_anims[i].deleted = true;
+            texquad_anims[i].deleted = true;
         }
     }
-    fas->mutex_unlock(fas->mutex_id);
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
-#elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
+void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
+    const int32_t zsprite_id,
+    const float new_ignore_camera)
+{
+    T1GPUTexQuad * zs = NULL;
+    T1CPUzSprite * zs_cpu = NULL;
+    
+    for (uint32_t i = 0; i < T1_zsprite_list->size; i++)
+    {
+        if (T1_zsprite_list->cpu_data[i].zsprite_id == zsprite_id) {
+            zs = T1_zsprite_list->gpu_data + i;
+            zs_cpu = T1_zsprite_list->cpu_data + i;
+        }
+    }
+    
+    if (zs->ignore_camera == new_ignore_camera)
+    {
+        return;
+    }
+    
+    // For now we're only supporting the easy case of a full toggle
+    bool32_t is_near_zero =
+        zs->ignore_camera > -0.01f &&
+        zs->ignore_camera <  0.01f;
+    #if T1_LOGGER_ASSERTS_ACTIVE
+    bool32_t is_near_one =
+        zs->ignore_camera >  0.99f &&
+        zs->ignore_camera <  1.01f;
+    #endif
+    log_assert(is_near_zero || is_near_one);
+    
+    if (is_near_zero) {
+        log_assert(new_ignore_camera == 1.0f);
+        
+        zs_cpu->simd_stats.xyz[0] -= T1_camera->xyz[0];
+        zs_cpu->simd_stats.xyz[1] -= T1_camera->xyz[1];
+        zs_cpu->simd_stats.xyz[2] -= T1_camera->xyz[2];
+        x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[0]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[1]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[2]);
+        
+        #if 1
+        // This is a hack, an approximation
+        zs_cpu->simd_stats.angle_xyz[0] -= T1_camera->xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] -= T1_camera->xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] -= T1_camera->xyz_angle[2];
+        #endif
+        
+        zs->ignore_camera = 1.0f;
+    } else {
+        log_assert(is_near_one);
+        
+        z_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[2]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[1]);
+        x_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[0]);
+        
+        zs_cpu->simd_stats.xyz[0] += T1_camera->xyz[0];
+        zs_cpu->simd_stats.xyz[1] += T1_camera->xyz[1];
+        zs_cpu->simd_stats.xyz[2] += T1_camera->xyz[2];
+        
+        #if 1
+        // This is a hack, an approximation
+        zs_cpu->simd_stats.angle_xyz[0] += T1_camera->xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] += T1_camera->xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] += T1_camera->xyz_angle[2];
+        #endif
+        
+        zs->ignore_camera = 0.0f;
+    }
+}
+
+#elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif // T1_SCHEDULED_ANIMS_ACTIVE

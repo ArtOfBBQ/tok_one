@@ -48,7 +48,7 @@ static void show_dead_simple_text(
     #error "T1_PARTICLES_ACTIVE undefined"
     #endif
     zlights_to_apply_size = 0;
-    T1_zsprite_list->size = 0;
+    T1_zsprite_delete_all();
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     T1_global->postproc_consts.fog_factor = 0.0f;
@@ -231,7 +231,7 @@ void T1_gameloop_update_before_render_pass(
     if (
         T1_global->this_frame_timestamp_us -
             T1_global->last_resize_request_us <
-                750000)
+                T1_WINDOW_RESIZE_TIMEOUT)
     {
         if (
             T1_global->
@@ -289,8 +289,10 @@ void T1_gameloop_update_before_render_pass(
             // determined by settings, not window
             int32_t rv_i =
                 T1_texture_array_create_new_render_view(
-                    (uint32_t)T1_global->window_width,
-                    (uint32_t)T1_global->window_height);
+                    (uint32_t)T1_global->
+                        window_width,
+                    (uint32_t)T1_global->
+                        window_height);
             log_assert(rv_i == 0);
             log_assert(
                 !T1_render_views->cpu[0].deleted);
@@ -319,7 +321,6 @@ void T1_gameloop_update_before_render_pass(
         T1_app_running &&
         T1_global->clientlogic_early_startup_finished)
     {
-        
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
         T1_frame_anim_new_frame_starts();
         #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
@@ -343,25 +344,7 @@ void T1_gameloop_update_before_render_pass(
         
         T1_platform_update_mouse_location();
         
-        // handle timed occlusions
-        for (
-            uint32_t zs_i = 0;
-            zs_i < T1_zsprite_list->size;
-            zs_i++)
-        {
-            if (
-                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us >
-                    T1_global->elapsed)
-            {
-                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us -=
-                    T1_global->elapsed;
-            } else if (
-                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us > 0)
-            {
-                T1_zsprite_list->cpu_data[zs_i].next_occlusion_in_us = 0;
-                T1_zsprite_list->cpu_data[zs_i].visible = 0;
-            }
-        }
+        T1_zsprite_handle_timed_occlusion();
         
         // always copy
         T1_io_events[T1_IO_LAST_MOUSE_MOVE] =
@@ -369,7 +352,8 @@ void T1_gameloop_update_before_render_pass(
         T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
-        T1_uielement_handle_touches(T1_global->elapsed);
+        T1_uielement_handle_touches(
+            T1_global->elapsed);
         
         #if T1_TERMINAL_ACTIVE == T1_ACTIVE
         update_terminal();
@@ -380,7 +364,8 @@ void T1_gameloop_update_before_render_pass(
         #endif
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_start("T1_clientlogic_update()");
+        T1_profiler_start(
+            "T1_clientlogic_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -398,19 +383,20 @@ void T1_gameloop_update_before_render_pass(
         
         T1_zlight_copy_all(
             frame_data->lights,
-            &T1_global->postproc_consts.lights_size);
+            &T1_global->postproc_consts.
+                lights_size);
         
         T1_render_view_update_positions();
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_start("T1_renderer_hardware_render()");
+        T1_profiler_start(
+            "T1_renderer_hardware_render()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         T1_renderer_hardware_render(
                 frame_data,
-            /* uint64_t elapsed_us: */
                 T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end(

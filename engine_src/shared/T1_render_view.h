@@ -47,11 +47,11 @@ typedef struct {
     float    xyz[3];           // 12 bytes
     float    xyz_angle[3];     // 12 bytes
     float    refl_cam_around_plane_xyz[3];
+    T1RenderViewWriteType write_type;
     int32_t  write_array_i;
     int32_t  write_slice_i;
     uint32_t width;
     uint32_t height;
-    T1RenderViewWriteType write_type;
     uint8_t  passes_size;
     uint8_t  reflect_around_plane;
     uint8_t  deleted;

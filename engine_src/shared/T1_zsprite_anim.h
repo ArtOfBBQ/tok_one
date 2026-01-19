@@ -30,11 +30,11 @@ typedef struct {
     
     uint32_t runs;
     int32_t affected_zsprite_id;
-    int32_t affected_touchable_id;
+    int32_t affected_touch_id;
     
     T1EasingType easing_type; // u8
-    bool8_t delete_object_when_finished;
-    bool8_t delete_other_anims_targeting_zsprite;
+    bool8_t del_obj_on_finish;
+    bool8_t del_conflict_anims;
 } T1zSpriteAnim;
 
 T1zSpriteAnim * T1_zsprite_anim_request_next(

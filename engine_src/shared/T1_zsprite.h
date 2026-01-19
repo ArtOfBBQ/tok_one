@@ -13,6 +13,8 @@
 #include "T1_mesh.h"
 #include "T1_zlight.h"
 
+#define T1_ZSPRITEANIM_NO_EFFECT 0xFFFF
+
 typedef struct  {
     float xyz[3];
     float offset_xyz[3];
@@ -49,11 +51,13 @@ void T1_zsprite_construct_with_mesh_id(
 void T1_zsprite_construct(T1zSpriteRequest * to_construct);
 
 // Allocate a PolygonRequest on the stack, then call this
-void T1_zsprite_request_next(
+void T1_zsprite_fetch_next(
     T1zSpriteRequest * stack_recipient);
-void T1_zsprite_commit(T1zSpriteRequest * to_commit);
+void T1_zsprite_commit(
+    T1zSpriteRequest * to_commit);
 
-void T1_zsprite_delete(const int32_t with_zsprite_id);
+void T1_zsprite_delete(
+    const int32_t with_zsprite_id);
 void T1_zsprite_delete_all(void);
 
 float T1_zsprite_get_z_multiplier_for_depth(
@@ -100,15 +104,46 @@ void zsprite_construct_cube_around(
     const float depth,
     T1zSpriteRequest * stack_recipient);
 
-/*
-BELOW: stuff we want to encapsulate
-*/
+void T1_zsprite_apply_endpoint_anim(
+    const int32_t zsprite_id,
+    const int32_t touch_id,
+    const float t_applied,
+    const float t_now,
+    const float * goal_gpu_vals,
+    const float * goal_cpu_vals);
+
+void T1_zsprite_anim_apply_effects_at_t(
+    const float t_applied,
+    const float t_now,
+    const float * anim_gpu_vals,
+    const float * anim_cpu_vals,
+    T1GPUzSprite * recip_gpu,
+    T1CPUzSpriteSimdStats * recip_cpu);
+
+void T1_zsprite_apply_anim_effects_to_id(
+    const int32_t zsprite_id,
+    const int32_t touch_id,
+    const float t_applied,
+    const float t_now,
+    const float * anim_gpu_vals,
+    const float * anim_cpu_vals);
+
+void T1_zsprite_handle_timed_occlusion(void);
+
+// TODO: encapsulate collection instead of externing
 typedef struct {
     T1GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
     T1GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
     T1CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
     uint32_t size;
 } T1zSpriteCollection;
+
+void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
+    const int32_t zsprite_id,
+    const float new_ignore_camera);
+
+void add_opaque_zpolygons_to_workload(
+    T1GPUFrame * frame_data);
 
 extern T1zSpriteCollection * T1_zsprite_list;
 

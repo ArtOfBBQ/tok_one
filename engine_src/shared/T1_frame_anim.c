@@ -57,9 +57,14 @@ void T1_frame_anim_apply_all(
                                 touch_id;
                 break;
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
+                    #if 0
                     hit = T1_zsprite_list->cpu_data[zp_i].zsprite_id ==
                             T1_frame_anims[mod_i].
                                 zsprite_id;
+                    #else
+                    // TODO: fix me
+                    hit = 0;
+                    #endif
                 break;
                 default:
                     log_assert(0);

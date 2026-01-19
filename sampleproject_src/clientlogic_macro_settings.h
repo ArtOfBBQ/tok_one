@@ -55,7 +55,7 @@ of the engine for your specific app.
 
 #define FRAMES_CAP 3 // 3 for triple-buffering
 
-#define MAX_VERTICES_PER_BUFFER 240000
+#define MAX_VERTICES_PER_BUFFER 840000
 #define MAX_LIGHTS_PER_BUFFER 3
 
 #define SHADOW_BIAS 0.0001f
@@ -78,7 +78,7 @@ Flat textured quads, mostly for UI text
 /*
 The maximum number of 'scheduled animations' simultaneously running
 */
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 180
+#define T1_ZSPRITE_ANIMS_CAP 180
 
 
 #define ALL_MESHES_SIZE 20
