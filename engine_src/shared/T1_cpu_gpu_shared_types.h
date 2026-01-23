@@ -99,15 +99,15 @@ typedef struct {
 typedef struct {
     // m = model matrix
     T1GPUConstMatf32 base_mat_f32; // start f32 here
-    float            m_4x4[16];
-    float            norm_3x3[9];
     float            bonus_rgb[3];
     float            base_mat_uv_offsets[2];
     float            alpha;
     float            ignore_lighting;
     float            ignore_camera;
     float            outline_alpha;
-    float            f32_padding[7];
+    #if 0
+    float            f32_padding[0];
+    #endif
     T1GPUConstMati32 base_mat_i32; // start of i32
     int remove_shadow;
     int touch_id;
@@ -115,6 +115,11 @@ typedef struct {
     int mix_project_array_i;
     int mix_project_slice_i;
 } __attribute__((aligned(32))) T1GPUzSprite;
+
+typedef struct {
+    float m_4x4[16];
+    float norm_3x3[9];
+} T1GPUzSpriteMatrices;
 
 typedef struct {
     T1GPUzSprite polygons[MAX_ZSPRITES_PER_BUFFER];

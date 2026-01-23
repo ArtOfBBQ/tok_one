@@ -4,6 +4,7 @@
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_std.h"
 
+
 typedef struct {
     int32_t zsprite_id;
     int32_t touch_id;
@@ -22,9 +23,8 @@ typedef struct
     T1GPUPostProcConsts * postproc_consts;
     T1GPUFlatQuad *       flat_bb_quads;
     T1GPUTexQuad *        flat_tex_quads;
-    
-    IdPair                polygon_ids[MAX_ZSPRITES_PER_BUFFER];
-    
+    T1GPUzSpriteMatrices  matrices[MAX_ZSPRITES_PER_BUFFER];
+    IdPair                id_pairs[MAX_ZSPRITES_PER_BUFFER];
     uint32_t              verts_size;
     uint32_t              render_views_size;
     uint32_t              flat_bb_quads_size;
@@ -46,6 +46,7 @@ typedef struct
     uint32_t flat_texquads_alloc_size;
     uint32_t locked_vertices_alloc_size;
     uint32_t polygons_alloc_size;
+    uint32_t matrices_alloc_size;
     uint32_t polygon_mats_alloc_size;
     uint32_t lights_alloc_size;
     uint32_t render_views_alloc_size;

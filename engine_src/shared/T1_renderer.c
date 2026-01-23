@@ -207,31 +207,19 @@ void T1_renderer_hardware_render(
         return;
     }
     
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("construct render matrices");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     T1_zlight_update_all_attached_render_views();
     
     construct_view_matrix();
     
     construct_projection_matrix();
     
-    T1_zsprite_construct_model_and_normal_matrices();
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("construct render matrices");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     T1_zsprite_copy_to_frame_data(
         frame_data->zsprite_list->polygons,
-        frame_data->polygon_ids,
+        frame_data->id_pairs,
         &frame_data->zsprite_list->size);
+    
+    T1_zsprite_construct_model_and_normal_matrices(
+        frame_data);
     
     T1_flat_texquad_copy_to_frame_data(
         frame_data->flat_tex_quads,

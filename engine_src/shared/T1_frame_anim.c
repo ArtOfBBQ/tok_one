@@ -62,7 +62,7 @@ void T1_frame_anim_apply_all(
                 case T1FRAMEANIMFILTER_TOUCH_ID:
                 {
                     if (
-                        frame_data->polygon_ids[i].
+                        frame_data->id_pairs[i].
                             zsprite_id ==
                         T1_frame_anims[mod_i].
                             zsprite_id)
@@ -74,7 +74,7 @@ void T1_frame_anim_apply_all(
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
                 {
                     if (
-                        frame_data->polygon_ids[i].
+                        frame_data->id_pairs[i].
                             zsprite_id ==
                         T1_frame_anims[mod_i].
                             zsprite_id)

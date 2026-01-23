@@ -20,6 +20,7 @@ typedef struct {
     id<MTLCommandQueue> command_queue;
     
     id polygon_buffers[FRAMES_CAP];
+    id matrix_buffers[FRAMES_CAP];
     id light_buffers [FRAMES_CAP];
     id vertex_buffers[FRAMES_CAP];
     id flat_quad_buffers[FRAMES_CAP];
@@ -723,6 +724,21 @@ bool32_t T1_apple_gpu_init(
                     deallocator:
                         nil];
         ags->polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        
+        id<MTLBuffer> MTLBufferFrameMatrices =
+            [with_metal_device
+                /* the ptr needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        f->matrices
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection->matrices_alloc_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        ags->matrix_buffers[frame_i] = MTLBufferFrameMatrices;
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
@@ -1795,9 +1811,10 @@ static void set_defaults_for_encoder(
         atIndex:
             1];
     
+    log_assert(ags->matrix_buffers[ags->frame_i] != nil);
     [encoder
         setVertexBuffer:
-            ags->flat_quad_buffers[ags->frame_i]
+            ags->matrix_buffers[ags->frame_i]
         offset:
             0
         atIndex:

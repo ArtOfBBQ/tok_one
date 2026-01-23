@@ -494,6 +494,11 @@ void T1_appinit_before_gpu_init(
             sizeof(T1GPUzSprite) *
                 MAX_ZSPRITES_PER_BUFFER);
     
+    sd->matrices_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUzSpriteMatrices) *
+                MAX_ZSPRITES_PER_BUFFER);
+    
     sd->lights_alloc_size =
         pad_to_page_size(sizeof(T1GPULight) *
             MAX_LIGHTS_PER_BUFFER);

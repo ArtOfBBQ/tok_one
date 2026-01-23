@@ -105,6 +105,7 @@ vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * zsprites [[ buffer(1) ]],
+    const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
     const device T1GPURenderView * rv [[ buffer(3) ]],
     constant uint32_t &rv_i [[buffer(4)]],
     const device T1GPULockedVertex * lverts [[ buffer(5) ]])
@@ -118,6 +119,8 @@ vertex_shader(
         &lverts[out.locked_vertex_i];
     const device T1GPUzSprite * zs =
         &zsprites[out.polygon_i];
+    const device T1GPUzSpriteMatrices * m =
+        &matrices[out.polygon_i];
     
     const device T1GPURenderView * c = rv + rv_i;
     
@@ -148,10 +151,10 @@ vertex_shader(
         lv->bitan_xyz[2]);
     
     float4x4 model = matrix_float4x4(
-        zs->m_4x4[ 0], zs->m_4x4[ 1], zs->m_4x4[ 2], zs->m_4x4[ 3],
-        zs->m_4x4[ 4], zs->m_4x4[ 5], zs->m_4x4[ 6], zs->m_4x4[ 7],
-        zs->m_4x4[ 8], zs->m_4x4[ 9], zs->m_4x4[10], zs->m_4x4[11],
-        zs->m_4x4[12], zs->m_4x4[13], zs->m_4x4[14], zs->m_4x4[15]);
+        m->m_4x4[ 0], m->m_4x4[ 1], m->m_4x4[ 2], m->m_4x4[ 3],
+        m->m_4x4[ 4], m->m_4x4[ 5], m->m_4x4[ 6], m->m_4x4[ 7],
+        m->m_4x4[ 8], m->m_4x4[ 9], m->m_4x4[10], m->m_4x4[11],
+        m->m_4x4[12], m->m_4x4[13], m->m_4x4[14], m->m_4x4[15]);
     
     out.worldpos = mesh_vertices * model;
     
@@ -183,9 +186,9 @@ vertex_shader(
     out.projpos = out.viewpos * projection;
     
     float3x3 normalmodel3x3 = matrix_float3x3(
-        zs->norm_3x3[0], zs->norm_3x3[1], zs->norm_3x3[2],
-        zs->norm_3x3[3], zs->norm_3x3[4], zs->norm_3x3[5],
-        zs->norm_3x3[6], zs->norm_3x3[7], zs->norm_3x3[8]);
+        m->norm_3x3[0], m->norm_3x3[1], m->norm_3x3[2],
+        m->norm_3x3[3], m->norm_3x3[4], m->norm_3x3[5],
+        m->norm_3x3[6], m->norm_3x3[7], m->norm_3x3[8]);
     
     float3x3 normalview3x3 = matrix_float3x3(
         c->normv_3x3[0], c->normv_3x3[1], c->normv_3x3[2],
@@ -1272,6 +1275,7 @@ outlines_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
     constant uint &rv_i [[buffer(4)]],
     const device T1GPULockedVertex * lverts [[ buffer(5)]])
@@ -1297,22 +1301,22 @@ outlines_vertex_shader(
         polygons[polygon_i].outline_alpha;
     
     float4x4 m_4x4 = matrix_float4x4(
-        polygons[polygon_i].m_4x4[ 0],
-        polygons[polygon_i].m_4x4[ 1],
-        polygons[polygon_i].m_4x4[ 2],
-        polygons[polygon_i].m_4x4[ 3],
-        polygons[polygon_i].m_4x4[ 4],
-        polygons[polygon_i].m_4x4[ 5],
-        polygons[polygon_i].m_4x4[ 6],
-        polygons[polygon_i].m_4x4[ 7],
-        polygons[polygon_i].m_4x4[ 8],
-        polygons[polygon_i].m_4x4[ 9],
-        polygons[polygon_i].m_4x4[10],
-        polygons[polygon_i].m_4x4[11],
-        polygons[polygon_i].m_4x4[12],
-        polygons[polygon_i].m_4x4[13],
-        polygons[polygon_i].m_4x4[14],
-        polygons[polygon_i].m_4x4[15]);
+        matrices[polygon_i].m_4x4[ 0],
+        matrices[polygon_i].m_4x4[ 1],
+        matrices[polygon_i].m_4x4[ 2],
+        matrices[polygon_i].m_4x4[ 3],
+        matrices[polygon_i].m_4x4[ 4],
+        matrices[polygon_i].m_4x4[ 5],
+        matrices[polygon_i].m_4x4[ 6],
+        matrices[polygon_i].m_4x4[ 7],
+        matrices[polygon_i].m_4x4[ 8],
+        matrices[polygon_i].m_4x4[ 9],
+        matrices[polygon_i].m_4x4[10],
+        matrices[polygon_i].m_4x4[11],
+        matrices[polygon_i].m_4x4[12],
+        matrices[polygon_i].m_4x4[13],
+        matrices[polygon_i].m_4x4[14],
+        matrices[polygon_i].m_4x4[15]);
     
     float4x4 v_4x4 = matrix_float4x4(
         camera->v_4x4[ 0],
@@ -1353,15 +1357,15 @@ outlines_vertex_shader(
     out.pos = vert * m_4x4 * v_4x4;
     
     float3x3 n_3x3 = matrix_float3x3(
-        polygons[polygon_i].norm_3x3[ 0],
-        polygons[polygon_i].norm_3x3[ 1],
-        polygons[polygon_i].norm_3x3[ 2],
-        polygons[polygon_i].norm_3x3[ 3],
-        polygons[polygon_i].norm_3x3[ 4],
-        polygons[polygon_i].norm_3x3[ 5],
-        polygons[polygon_i].norm_3x3[ 6],
-        polygons[polygon_i].norm_3x3[ 7],
-        polygons[polygon_i].norm_3x3[ 8]);
+        matrices[polygon_i].norm_3x3[ 0],
+        matrices[polygon_i].norm_3x3[ 1],
+        matrices[polygon_i].norm_3x3[ 2],
+        matrices[polygon_i].norm_3x3[ 3],
+        matrices[polygon_i].norm_3x3[ 4],
+        matrices[polygon_i].norm_3x3[ 5],
+        matrices[polygon_i].norm_3x3[ 6],
+        matrices[polygon_i].norm_3x3[ 7],
+        matrices[polygon_i].norm_3x3[ 8]);
     
     normal = normalize(normal * n_3x3);
     

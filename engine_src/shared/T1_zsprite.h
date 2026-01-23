@@ -165,7 +165,8 @@ T1_add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
 void
-T1_zsprite_construct_model_and_normal_matrices(void);
+T1_zsprite_construct_model_and_normal_matrices(
+    T1GPUFrame * frame_data);
 
 extern T1zSpriteCollection * T1_zsprite_list;
 

@@ -1349,7 +1349,8 @@ void T1_add_opaque_zpolygons_to_workload(
 }
 
 void
-T1_zsprite_construct_model_and_normal_matrices(void)
+T1_zsprite_construct_model_and_normal_matrices(
+    T1GPUFrame * f)
 {
     T1_linal_float4x4 result;
     T1_linal_float4x4 next;
@@ -1362,7 +1363,6 @@ T1_zsprite_construct_model_and_normal_matrices(void)
         i < T1_zsprite_list->size;
         i++)
     {
-        
         T1CPUzSpriteSimdStats * s =
             &T1_zsprite_list->cpu_data[i].
                 simd_stats;
@@ -1410,23 +1410,19 @@ T1_zsprite_construct_model_and_normal_matrices(void)
             &result, &next);
         
         T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 0,
+            f->matrices[i].m_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 4,
+            f->matrices[i].m_4x4 + 4,
             result.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 8,
+            f->matrices[i].m_4x4 + 8,
             result.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 12,
+            f->matrices[i].m_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
         
@@ -1447,23 +1443,14 @@ T1_zsprite_construct_model_and_normal_matrices(void)
         T1_linal_float3x3_inverse_transpose_inplace(&model3x3);
         
         // store as the "normal to world" matrix
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[0] = model3x3.rows[0].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[1] = model3x3.rows[0].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[2] = model3x3.rows[0].data[2];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[3] = model3x3.rows[1].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[4] = model3x3.rows[1].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[5] = model3x3.rows[1].data[2];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[6] = model3x3.rows[2].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[7] = model3x3.rows[2].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[8] = model3x3.rows[2].data[2];
+        f->matrices[i].norm_3x3[0] = model3x3.rows[0].data[0];
+        f->matrices[i].norm_3x3[1] = model3x3.rows[0].data[1];
+        f->matrices[i].norm_3x3[2] = model3x3.rows[0].data[2];
+        f->matrices[i].norm_3x3[3] = model3x3.rows[1].data[0];
+        f->matrices[i].norm_3x3[4] = model3x3.rows[1].data[1];
+        f->matrices[i].norm_3x3[5] = model3x3.rows[1].data[2];
+        f->matrices[i].norm_3x3[6] = model3x3.rows[2].data[0];
+        f->matrices[i].norm_3x3[7] = model3x3.rows[2].data[1];
+        f->matrices[i].norm_3x3[8] = model3x3.rows[2].data[2];
     }
 }
