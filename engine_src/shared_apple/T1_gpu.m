@@ -28,8 +28,10 @@ typedef struct {
     id postprocessing_constants_buffers[FRAMES_CAP];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
-    id locked_materials_populator_buffer;
-    id locked_materials_buffer;
+    id locked_matf32_populator_buffer;
+    id locked_mati32_populator_buffer;
+    id locked_matf32_buffer;
+    id locked_mati32_buffer;
     id projection_constants_buffer;
     
     id<MTLTexture> cam_depth_texture;
@@ -856,29 +858,53 @@ bool32_t T1_apple_gpu_init(
                 MTLResourceStorageModePrivate];
     ags->locked_vertex_buffer = MTLBufferLockedVertices;
     
-    id<MTLBuffer> MTLBufferLockedMaterialsPopulator =
+    id<MTLBuffer> MTLBufferLockedMatf32Populator =
         [with_metal_device
             /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection->const_mats
+                    gpu_shared_data_collection->const_mats_f32
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection->const_mats_alloc_size
+                    gpu_shared_data_collection->const_matsf32_alloc_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
                 deallocator:
                     nil];
     
-    ags->locked_materials_populator_buffer = MTLBufferLockedMaterialsPopulator;
+    id<MTLBuffer> MTLBufferLockedMati32Populator =
+        [with_metal_device
+            /* the ptr needs to be page aligned */
+                newBufferWithBytesNoCopy:
+                    gpu_shared_data_collection->const_mats_i32
+            /* the length weirdly needs to be page aligned also */
+                length:
+                    gpu_shared_data_collection->const_matsi32_alloc_size
+                options:
+                    MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
     
-    id<MTLBuffer> MTLBufferLockedMaterials =
+    ags->locked_matf32_populator_buffer = MTLBufferLockedMatf32Populator;
+    
+    ags->locked_mati32_populator_buffer = MTLBufferLockedMati32Populator;
+    
+    id<MTLBuffer> MTLBufferLockedMatsf32 =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->const_mats_alloc_size
+                gpu_shared_data_collection->const_matsf32_alloc_size
             options:
                 MTLResourceStorageModePrivate];
-    ags->locked_materials_buffer = MTLBufferLockedMaterials;
+    ags->locked_matf32_buffer = MTLBufferLockedMatsf32;
+    
+    id<MTLBuffer> MTLBufferLockedMatsi32 =
+        [with_metal_device
+            newBufferWithLength:
+                gpu_shared_data_collection->const_matsi32_alloc_size
+            options:
+                MTLResourceStorageModePrivate];
+    ags->locked_mati32_buffer = MTLBufferLockedMatsi32;
     
     #define FLVERT 1.0f
     #define TEX_MAX 1.0f
@@ -1626,15 +1652,26 @@ void T1_platform_gpu_copy_locked_materials(void)
     id <MTLBlitCommandEncoder> blit_copy_encoder = [combuf blitCommandEncoder];
     [blit_copy_encoder
         copyFromBuffer:
-            ags->locked_materials_populator_buffer
+            ags->locked_matf32_populator_buffer
         sourceOffset:
             0
         toBuffer:
-            ags->locked_materials_buffer
+            ags->locked_matf32_buffer
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection->const_mats_alloc_size];
+            gpu_shared_data_collection->const_matsf32_alloc_size];
+    [blit_copy_encoder
+        copyFromBuffer:
+            ags->locked_mati32_populator_buffer
+        sourceOffset:
+            0
+        toBuffer:
+            ags->locked_mati32_buffer
+        destinationOffset:
+            0
+        size:
+            gpu_shared_data_collection->const_matsi32_alloc_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1699,7 +1736,7 @@ set_defaults_for_render_descriptor(
     if (!ags->rtt_cleared) {
         desc.colorAttachments[0].loadAction = MTLLoadActionClear;
         desc.colorAttachments[0].clearColor =
-            MTLClearColorMake(1.0f, 0.0f, 1.0f, 1.0f);
+            MTLClearColorMake(0.0f, 0.0f, 0.1f, 1.0f);
         ags->rtt_cleared = true;
     } else {
         desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
@@ -1824,11 +1861,19 @@ static void set_defaults_for_encoder(
     
     [encoder
         setFragmentBuffer:
-            ags->locked_materials_buffer
+            ags->locked_matf32_buffer
         offset:
             0
         atIndex:
             6];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->locked_mati32_buffer
+        offset:
+            0
+        atIndex:
+            8];
     
     [encoder
         setFragmentBuffer:
@@ -2733,7 +2778,7 @@ static void set_defaults_for_encoder(
             [view currentRenderPassDescriptor];
     pass_5_comp_desc.colorAttachments[0].
         clearColor =
-            MTLClearColorMake(1.0f, 0.0f, 1.0f, 1.0f);
+            MTLClearColorMake(0.0f, 0.0f, 0.1f, 1.0f);
     pass_5_comp_desc.
         depthAttachment.loadAction =
             MTLLoadActionClear;

@@ -81,39 +81,39 @@ typedef struct {
     float diffuse_rgb[3];
     float specular_rgb[3];
     float uv_scroll[2];
+    float specular_exponent;
+    float refraction;
+    float alpha;
+    float illum;
+} T1GPUConstMatf32;
+
+typedef struct {
     int   texturearray_i;
     int   texture_i;
     #if T1_NORMAL_MAPPING_ACTIVE
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
     #endif
-    float specular_exponent;
-    float refraction;
-    float alpha;
-    float illum;
-} T1GPUConstMat;
+} T1GPUConstMati32;
 
 typedef struct {
     // m = model matrix
-    T1GPUConstMat base_mat;
-    float         m_4x4[16];
-    float         norm_3x3[9];
-    float         bonus_rgb[3];
-    float         base_mat_uv_offsets[2];
-    float         alpha;
-    float         ignore_lighting;
-    float         ignore_camera;
-    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    float         outline_alpha;
-    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    unsigned int  remove_shadow;
-    int           touch_id;
-    int           mix_project_rv_i;
-    int           mix_project_array_i;
-    int           mix_project_slice_i;
+    T1GPUConstMatf32 base_mat_f32; // start f32 here
+    float            m_4x4[16];
+    float            norm_3x3[9];
+    float            bonus_rgb[3];
+    float            base_mat_uv_offsets[2];
+    float            alpha;
+    float            ignore_lighting;
+    float            ignore_camera;
+    float            outline_alpha;
+    float            f32_padding[7];
+    T1GPUConstMati32 base_mat_i32; // start of i32
+    int remove_shadow;
+    int touch_id;
+    int mix_project_rv_i;
+    int mix_project_array_i;
+    int mix_project_slice_i;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {

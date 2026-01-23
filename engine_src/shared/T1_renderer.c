@@ -8,179 +8,7 @@ void T1_renderer_init(void) {
     T1_std_memset(T1_camera, 0, sizeof(T1GPURenderView));
 }
 
-inline static void add_alphablending_zpolygons_to_workload(
-    T1GPUFrame * frame_data)
-{
-    int32_t first_alpha_i = (int32_t)frame_data->
-        verts_size;
-    
-    // Copy all vertices that do use alpha blending
-    for (
-        int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)T1_zsprite_list->size;
-        cpu_zp_i++)
-    {
-        if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].alpha_blending_on ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on)
-        {
-            continue;
-        }
-        
-        int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
-        log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
-        
-        int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
-                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
-        
-        for (
-            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
-            vert_i < vert_tail_i;
-            vert_i += 1)
-        {
-            frame_data->verts[frame_data->verts_size].locked_vertex_i =
-                vert_i;
-            frame_data->verts[frame_data->verts_size].polygon_i =
-                cpu_zp_i;
-            frame_data->verts_size += 1;
-            log_assert(
-                frame_data->verts_size <
-                    MAX_VERTICES_PER_BUFFER);
-        }
-    }
-    
-    for (
-        uint32_t cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            int32_t pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                        T1RENDERPASS_ALPHA_BLEND)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i =
-                        first_alpha_i;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (int32_t)frame_data->
-                            verts_size - first_alpha_i;
-            }
-        }
-    }
-}
-
-inline static void
-    add_bloom_zpolygons_to_workload(
-        T1GPUFrame * frame_data)
-{
-    int32_t first_bloom_i = (int32_t)frame_data->
-        verts_size;
-    
-    // Copy all vertices that do use bloom
-    for (
-        int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)T1_zsprite_list->size;
-        cpu_zp_i++)
-    {
-        if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].
-                deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                committed ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on)
-        {
-            continue;
-        }
-        
-        log_assert(
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                alpha_blending_on);
-        log_assert(
-            T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on);
-        
-        int32_t mesh_id =
-            T1_zsprite_list->cpu_data[cpu_zp_i].
-                mesh_id;
-        log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
-        
-        int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].
-                vertices_head_i +
-                    T1_objmodel_mesh_summaries[mesh_id].
-                        vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
-        
-        for (
-            int32_t vert_i =
-                T1_objmodel_mesh_summaries[mesh_id].
-                    vertices_head_i;
-            vert_i < vert_tail_i;
-            vert_i += 1)
-        {
-            frame_data->verts[frame_data->verts_size].
-                locked_vertex_i = vert_i;
-            frame_data->verts[frame_data->verts_size].
-                polygon_i = cpu_zp_i;
-            frame_data->verts_size += 1;
-            log_assert(
-                frame_data->verts_size <
-                    MAX_VERTICES_PER_BUFFER);
-        }
-    }
-    
-    for (
-        uint32_t cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            int32_t pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].type ==
-                        T1RENDERPASS_BLOOM)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i =
-                        first_bloom_i;
-                log_assert(frame_data->
-                    verts_size < INT32_MAX);
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (int32_t)frame_data->
-                            verts_size -
-                                first_bloom_i;
-            }
-        }
-    }
-}
-
 static void construct_projection_matrix(void) {
-    
-    T1GPUProjectConsts * p = NULL;
     
     T1_linal_float4x4 proj;
     
@@ -358,125 +186,6 @@ static void construct_light_matrices(
 }
 #endif
 
-static void construct_model_and_normal_matrices(void)
-{
-    T1_linal_float4x4 result;
-    T1_linal_float4x4 next;
-    
-    T1_linal_float3x3 model3x3;
-    // T1_linal_float3x3 view3x3;
-    
-    for (
-        uint32_t i = 0;
-        i < T1_zsprite_list->size;
-        i++)
-    {
-        
-        T1CPUzSpriteSimdStats * s =
-            &T1_zsprite_list->cpu_data[i].
-                simd_stats;
-        
-        T1_linal_float4x4_construct_identity(&result);
-        
-        // Translation
-        T1_linal_float4x4_construct(
-            &next,
-            1.0f, 0.0f, 0.0f, s->xyz[0],
-            0.0f, 1.0f, 0.0f, s->xyz[1],
-            0.0f, 0.0f, 1.0f, s->xyz[2],
-            0.0f, 0.0f, 0.0f, 1.0f);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &result, &next);
-        
-        T1_linal_float4x4_construct_xyz_rotation(
-            &next,
-            s->angle_xyz[0],
-            s->angle_xyz[1],
-            s->angle_xyz[2]);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &result,
-            &next);
-        
-        T1_linal_float4x4_construct(
-            &next,
-            1.0f, 0.0f, 0.0f, s->offset_xyz[0],
-            0.0f, 1.0f, 0.0f, s->offset_xyz[1],
-            0.0f, 0.0f, 1.0f, s->offset_xyz[2],
-            0.0f, 0.0f, 0.0f, 1.0f);
-        
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &result, &next);
-        
-        T1_linal_float4x4_construct(
-            &next,
-            s->mul_xyz[0], 0.0f, 0.0f, 0.0f,
-            0.0f, s->mul_xyz[1], 0.0f, 0.0f,
-            0.0f, 0.0f, s->mul_xyz[2], 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &result, &next);
-        
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 0,
-            result.rows[0].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 4,
-            result.rows[1].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 8,
-            result.rows[2].data,
-            sizeof(float) * 4);
-        T1_std_memcpy(
-            T1_zsprite_list->gpu_data[i].
-                m_4x4 + 12,
-            result.rows[3].data,
-            sizeof(float) * 4);
-        
-        // Next: transforming normals
-        // store topleft 3x3 of "model to world"
-        // matrix in model3x3
-        T1_linal_float4x4_extract_float3x3(
-            /* const T1_linal_float4x4 * in: */
-                &result,
-            /* const int omit_row_i: */
-                3,
-            /* const int omit_col_i: */
-                3,
-            /* T1_linal_float3x3 * out: */
-                &model3x3);
-        
-        // inverse transpose the topleft 3x3
-        T1_linal_float3x3_inverse_transpose_inplace(&model3x3);
-        
-        // store as the "normal to world" matrix
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[0] = model3x3.rows[0].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[1] = model3x3.rows[0].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[2] = model3x3.rows[0].data[2];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[3] = model3x3.rows[1].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[4] = model3x3.rows[1].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[5] = model3x3.rows[1].data[2];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[6] = model3x3.rows[2].data[0];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[7] = model3x3.rows[2].data[1];
-        T1_zsprite_list->gpu_data[i].
-            norm_3x3[8] = model3x3.rows[2].data[2];
-    }
-}
-
 void T1_renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
@@ -498,9 +207,6 @@ void T1_renderer_hardware_render(
         return;
     }
     
-    log_assert(T1_zsprite_list->size <
-        MAX_ZSPRITES_PER_BUFFER);
-    
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_start("construct render matrices");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
@@ -514,7 +220,7 @@ void T1_renderer_hardware_render(
     
     construct_projection_matrix();
     
-    construct_model_and_normal_matrices();
+    T1_zsprite_construct_model_and_normal_matrices();
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end("construct render matrices");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
@@ -522,38 +228,22 @@ void T1_renderer_hardware_render(
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    T1_std_memcpy(
-        /* void * dest: */
-            frame_data->zsprite_list->polygons,
-        /* const void * src: */
-            T1_zsprite_list->gpu_data,
-        /* size_t n: */
-            sizeof(T1GPUzSprite) * T1_zsprite_list->size);
-    
-    frame_data->zsprite_list->size = T1_zsprite_list->size;
+    T1_zsprite_copy_to_frame_data(
+        frame_data->zsprite_list->polygons,
+        frame_data->polygon_ids,
+        &frame_data->zsprite_list->size);
     
     T1_flat_texquad_copy_to_frame_data(
         frame_data->flat_tex_quads,
         &frame_data->flat_tex_quads_size);
-    
-    log_assert(
-        frame_data->zsprite_list->size <=
-            T1_zsprite_list->size);
-    
-    log_assert(
-        T1_zsprite_list->size <
-            MAX_ZSPRITES_PER_BUFFER);
-    log_assert(
-        frame_data->zsprite_list->size <
-            MAX_ZSPRITES_PER_BUFFER);
-    
+        
     *frame_data->postproc_consts =
         T1_global->postproc_consts;
     
-    add_opaque_zpolygons_to_workload(frame_data);
+    T1_add_opaque_zpolygons_to_workload(frame_data);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-    add_alphablending_zpolygons_to_workload(frame_data);
+    T1_add_alphablending_zpolygons_to_workload(frame_data);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -584,7 +274,8 @@ void T1_renderer_hardware_render(
         }
     }
     
-    add_bloom_zpolygons_to_workload(frame_data);
+    T1_zsprite_add_bloom_zpolygons_to_workload(
+        frame_data);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
@@ -626,7 +317,8 @@ void T1_renderer_hardware_render(
             pass_i++)
         {
             if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
+                T1_render_views->cpu[cam_i].
+                    passes[pass_i].type ==
                         T1RENDERPASS_BILLBOARDS)
             {
                 T1_render_views->cpu[cam_i].

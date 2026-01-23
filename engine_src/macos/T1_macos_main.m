@@ -353,7 +353,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillEnterFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    T1_zsprite_list->size = 0;
+    T1_zsprite_delete_all();
     T1_global->fullscreen = true;
 }
 
@@ -361,7 +361,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillExitFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    T1_zsprite_list->size = 0;
+    T1_zsprite_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE

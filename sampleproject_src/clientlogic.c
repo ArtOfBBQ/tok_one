@@ -161,9 +161,9 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->
         ignore_camera = 0.0f;
     lightcube_request.gpu_data->alpha = 1.0f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
+    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
+    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
+    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
     lightcube_request.cpu_data->bloom_on = true;
     lightcube_request.gpu_data->remove_shadow = true;
     T1_zsprite_commit(&lightcube_request);
@@ -201,8 +201,8 @@ void T1_clientlogic_late_startup(void) {
                 T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
-    quad.gpu_data->base_mat.texturearray_i = quad_texture_array_i;
-    quad.gpu_data->base_mat.texture_i = quad_texture_i;
+    quad.gpu_data->base_mat_i32.texturearray_i = quad_texture_array_i;
+    quad.gpu_data->base_mat_i32.texture_i = quad_texture_i;
     quad.cpu_data->zsprite_id = -1;
     quad.gpu_data->touch_id = -1;
     quad.cpu_data->alpha_blending_on = false;
@@ -217,22 +217,22 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->ignore_camera = 0.0f;
     quad.gpu_data->ignore_lighting = 0.0f;
     
-    quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
-    quad.gpu_data->base_mat.ambient_rgb[1] = 0.05f;
-    quad.gpu_data->base_mat.ambient_rgb[2] = 0.50f;
+    quad.gpu_data->base_mat_f32.ambient_rgb[0] = 0.05f;
+    quad.gpu_data->base_mat_f32.ambient_rgb[1] = 0.05f;
+    quad.gpu_data->base_mat_f32.ambient_rgb[2] = 0.50f;
     quad.gpu_data->alpha = 1.0f;
     
     T1_zsprite_commit(&quad);
     
     font_settings->font_height = 50;
     font_settings->touch_id = -1;
-    font_settings->mat.ambient_rgb[0] =  0.1f;
-    font_settings->mat.ambient_rgb[1] =  0.1f;
-    font_settings->mat.ambient_rgb[2] =  0.1f;
-    font_settings->mat.diffuse_rgb[0] =  2.2f;
-    font_settings->mat.diffuse_rgb[1] =  2.9f;
-    font_settings->mat.diffuse_rgb[2] =  0.8f;
-    font_settings->mat.alpha =  1.0f;
+    font_settings->matf32.ambient_rgb[0] =  0.1f;
+    font_settings->matf32.ambient_rgb[1] =  0.1f;
+    font_settings->matf32.ambient_rgb[2] =  0.1f;
+    font_settings->matf32.diffuse_rgb[0] =  2.2f;
+    font_settings->matf32.diffuse_rgb[1] =  2.9f;
+    font_settings->matf32.diffuse_rgb[2] =  0.8f;
+    font_settings->matf32.alpha =  1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_camera = false;
     font_settings->alpha_blending_on = false;
@@ -273,8 +273,8 @@ void T1_clientlogic_late_startup(void) {
         T1Tex phoebus_tex = T1_texture_array_get_filename_location(
             /* const char * for_filename: */
                 "phoebus.png");
-        quad.gpu_data->base_mat.texturearray_i = phoebus_tex.array_i;
-        quad.gpu_data->base_mat.texture_i = phoebus_tex.slice_i;
+        quad.gpu_data->base_mat_i32.texturearray_i = phoebus_tex.array_i;
+        quad.gpu_data->base_mat_i32.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id = -1;
         quad.gpu_data->touch_id = -1;
         quad.cpu_data->alpha_blending_on = true;
@@ -289,9 +289,9 @@ void T1_clientlogic_late_startup(void) {
         quad.gpu_data->ignore_camera = 0.0f;
         quad.gpu_data->ignore_lighting = 0.0f;
         
-        quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
-        quad.gpu_data->base_mat.ambient_rgb[1] = 0.05f;
-        quad.gpu_data->base_mat.ambient_rgb[2] = 0.50f;
+        quad.gpu_data->base_mat_f32.ambient_rgb[0] = 0.05f;
+        quad.gpu_data->base_mat_f32.ambient_rgb[1] = 0.05f;
+        quad.gpu_data->base_mat_f32.ambient_rgb[2] = 0.50f;
         quad.gpu_data->alpha = 0.25f;
         
         T1_zsprite_commit(&quad);
@@ -393,18 +393,19 @@ static void clientlogic_handle_keypresses(
         T1_io_keymap[T1_IO_KEY_M] = false;
         
         testswitch = !testswitch;
-        
-        T1zSpriteAnim * anim = T1_zsprite_anim_request_next(true);
+        T1zSpriteAnim * anim =
+            T1_zsprite_anim_request_next(true);
         anim->cpu_vals.xyz[0] =
-            testswitch ?
-                1.25f : -1.25f;
+            testswitch ? 1.25f : -1.25f;
         anim->cpu_vals.angle_xyz[2] =
-            testswitch ?
-                1.80f : 0.00f;
-        anim->affected_zsprite_id = teapot_object_ids[0];
+            testswitch ? 1.80f : 0.00f;
+        anim->gpu_vals.touch_id =
+            testswitch ? 12542209 : teapot_touch_ids[0];
+        anim->affected_zsprite_id =
+            teapot_object_ids[0];
         anim->easing_type = EASINGTYPE_NONE;
-        anim->duration_us = 200000;
-        T1_zsprite_anim_commit(anim);
+        anim->duration_us = 1;
+        T1_zsprite_anim_commit_and_instarun(anim);
     }
     
     if (T1_io_keymap[T1_IO_KEY_T] == true) {
@@ -444,6 +445,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     {
         T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
             handled = true;
+        
+        printf(
+            "Touched touch_id: %i\n",
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                touch_id_top);
         
         if (
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
@@ -493,14 +499,17 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     #if TEAPOT
     for (uint32_t i = 0; i < 2; i++) {
     if (
-        !T1_io_events[T1_IO_LAST_LCLICK_START].handled &&
-        T1_io_events[T1_IO_LAST_LCLICK_START].touch_id_top ==
-            teapot_touch_ids[i])
+        !T1_io_events[T1_IO_LAST_LCLICK_START].
+            handled &&
+        T1_io_events[T1_IO_LAST_LCLICK_START].
+            touch_id_top == teapot_touch_ids[i])
     {
         T1_io_events[T1_IO_LAST_LCLICK_START].handled = true;
         
         #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-        T1_zsprite_anim_bump(teapot_object_ids[0], 0.0f);
+        T1_zsprite_anim_bump(
+            teapot_object_ids[0],
+            0.0f);
         #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
         #else
         #error

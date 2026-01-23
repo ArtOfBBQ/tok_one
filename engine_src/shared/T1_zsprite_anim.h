@@ -40,6 +40,9 @@ typedef struct {
 T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool8_t endpoints_not_deltas);
 
+void T1_zsprite_anim_commit_and_instarun(
+    T1zSpriteAnim * to_commit);
+
 void T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit);
 

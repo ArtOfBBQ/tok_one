@@ -218,7 +218,7 @@ z_prepass_fragment_shader(
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
     constant uint32_t &camera_i [[buffer(4)]],
-    const device T1GPUConstMat * const_mats [[ buffer(6) ]],
+    const device T1GPUConstMatf32 * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     #if 0
@@ -332,16 +332,17 @@ float4 get_lit(
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
     const device T1GPUzSprite * zsprite,
-    const device T1GPUConstMat * material,
+    const device T1GPUConstMatf32 * matf32,
+    const device T1GPUConstMati32 * mati32,
     const device T1GPUPostProcConsts * globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
 {
     #if T1_AMBIENT_LIGHTING_ACTIVE == T1_ACTIVE
     float4 lit_color = vector_float4(
-        material->ambient_rgb[0],
-        material->ambient_rgb[1],
-        material->ambient_rgb[2],
+        matf32->ambient_rgb[0],
+        matf32->ambient_rgb[1],
+        matf32->ambient_rgb[2],
         10.0f);
     lit_color *= 0.10f;
     #elif T1_AMBIENT_LIGHTING_ACTIVE == T1_INACTIVE
@@ -352,16 +353,16 @@ float4 get_lit(
     #endif
     
     float4 diffuse_base = vector_float4(
-        material->diffuse_rgb[0],
-        material->diffuse_rgb[1],
-        material->diffuse_rgb[2],
+        matf32->diffuse_rgb[0],
+        matf32->diffuse_rgb[1],
+        matf32->diffuse_rgb[2],
         1.0f);
     
     #if T1_SPECULAR_LIGHTING_ACTIVE == T1_ACTIVE
     float4 specular_base = vector_float4(
-        material->specular_rgb[0],
-        material->specular_rgb[1],
-        material->specular_rgb[2],
+        matf32->specular_rgb[0],
+        matf32->specular_rgb[1],
+        matf32->specular_rgb[2],
         1.0f);
     #elif T1_SPECULAR_LIGHTING_ACTIVE == T1_INACTIVE
     #else
@@ -379,8 +380,8 @@ float4 get_lit(
         uv_orig);
     
     float2 uv_scroll = vector_float2(
-        material->uv_scroll[0],
-        material->uv_scroll[1]);
+        matf32->uv_scroll[0],
+        matf32->uv_scroll[1]);
     
     uv_adjusted += globals->timestamp * 0.000001f * uv_scroll;
     
@@ -400,21 +401,21 @@ float4 get_lit(
     float4 texture_base = vector_float4(
         1.0f, 1.0f, 1.0f, 1.0f);
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    if (material->texturearray_i >= 0)
+    if (mati32->texturearray_i >= 0)
     {
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    if (material->texturearray_i == 0)
+    if (mati32->texturearray_i == 0)
     {
     #else
     #error
     #endif
         // Sample the texture to obtain a color
         const half4 color_sample =
-            color_textures[material->texturearray_i].
+            color_textures[mati32->texturearray_i].
                 sample(
                     texture_sampler,
                     uv_adjusted,
-                    material->texture_i);
+                    mati32->texture_i);
         texture_base = float4(color_sample);
     }
     
@@ -641,7 +642,7 @@ float4 get_lit(
                     normal_viewspace,
                     half_lightdir_half_view),
                 0.0),
-            material->specular_exponent);
+            matf32->specular_exponent);
         
         lit_color += (
             shadow_factors *
@@ -664,7 +665,7 @@ float4 get_lit(
         (zsprite->ignore_lighting *
             ignore_lighting_color);
     
-    lit_color[3] *= zsprite->alpha * material->alpha;
+    lit_color[3] *= zsprite->alpha * matf32->alpha;
     
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],
@@ -697,7 +698,8 @@ fragment_shader(
     const device T1GPURenderView *
         render_views [[ buffer(3) ]],
     constant uint32_t &camera_i [[buffer(4)]],
-    const device T1GPUConstMat * const_mats [[ buffer(6) ]],
+    const device T1GPUConstMatf32 * const_mats_f32 [[ buffer(6) ]],
+    const device T1GPUConstMati32 * const_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -713,10 +715,15 @@ fragment_shader(
     
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
-    const device T1GPUConstMat * material =
+    const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat :
-            &const_mats[locked_vertices[in.locked_vertex_i].
+            &polygons[in.polygon_i].base_mat_f32 :
+            &const_mats_f32[locked_vertices[in.locked_vertex_i].
+                locked_materials_head_i + mat_i];
+    const device T1GPUConstMati32 * mati32 =
+        mat_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_mat_i32 :
+            &const_mats_i32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
@@ -734,8 +741,9 @@ fragment_shader(
             lights,
         /* const device zSprite * zsprite: */
             &polygons[in.polygon_i],
-        /* const device GPUPolygonMaterial * fragment_material: */
-            material,
+        /* const device GPUPolygonMaterialf32 * fragment_material: */
+            matf32,
+            mati32,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* const device RasterizerPixel * in: */
@@ -786,7 +794,8 @@ alphablending_fragment_shader(
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPURenderView * render_views [[ buffer(3) ]],
     constant uint &camera_i [[buffer(4)]],
-    const device T1GPUConstMat * locked_materials [[ buffer(6) ]],
+    const device T1GPUConstMatf32 * locked_mats_f32 [[ buffer(6) ]],
+    const device T1GPUConstMati32 * locked_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -803,10 +812,14 @@ alphablending_fragment_shader(
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     
-    const device T1GPUConstMat * material =
+    const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat :
-            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
+            &polygons[in.polygon_i].base_mat_f32 :
+            &locked_mats_f32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
+    const device T1GPUConstMati32 * mati32 =
+        mat_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_mat_i32 :
+            &locked_mats_i32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
@@ -825,7 +838,8 @@ alphablending_fragment_shader(
         /* const device GPUzSprite zsprite: */
             &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
-            material,
+            matf32,
+            mati32,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* const RasterizerPixel in: */
@@ -1279,8 +1293,8 @@ outlines_vertex_shader(
         lverts[locked_vertex_i].face_normal_xyz[1],
         lverts[locked_vertex_i].face_normal_xyz[2]);
     
-    out.outline_alpha = polygons[polygon_i].
-        outline_alpha;
+    out.outline_alpha =
+        polygons[polygon_i].outline_alpha;
     
     float4x4 m_4x4 = matrix_float4x4(
         polygons[polygon_i].m_4x4[ 0],

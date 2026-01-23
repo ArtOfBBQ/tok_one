@@ -287,7 +287,7 @@ static void T1_texquad_anims_get_projected_final_position_for(
     }
 }
 
-void T1_zsprite_anim_commit(
+void T1_texquad_anim_commit(
     T1TexQuadAnim * to_commit)
 {
     tqas->mutex_lock(

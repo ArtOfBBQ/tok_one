@@ -55,14 +55,16 @@ void text_init(
     
     if (!font_settings) {
         font_settings = arg_text_malloc_func(sizeof(FontSettings));
-        T1_material_construct(&font_settings->mat);
+        T1_material_construct(
+            &font_settings->matf32,
+            &font_settings->mati32);
         
         font_settings->touch_id = -1;
         font_settings->font_height = 30.0;
-        font_settings->mat.texturearray_i = 0;
+        font_settings->mati32.texturearray_i = 0;
         font_settings->ignore_lighting = 1.0f;
         font_settings->remove_shadow = true;
-        font_settings->mat.alpha = 1.0f;
+        font_settings->matf32.alpha = 1.0f;
         font_settings->scale_factor = 1.0f;
         font_settings->alpha = 1.0f;
     }
@@ -260,8 +262,8 @@ void text_request_label_offset_around(
 {
     log_assert(max_width > 0.0f);
     log_assert(font_settings->font_height > 0);
-    log_assert(font_settings->mat.alpha > -0.02f);
-    log_assert(font_settings->mat.alpha < 1.05f);
+    log_assert(font_settings->matf32.alpha > -0.02f);
+    log_assert(font_settings->matf32.alpha < 1.05f);
     
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -524,10 +526,10 @@ void text_request_debug_text(const char * text)
         T1_DEBUG_TEXT_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
-    font_settings->mat.ambient_rgb[0] = 1.0f;
-    font_settings->mat.ambient_rgb[1] = 1.0f;
-    font_settings->mat.ambient_rgb[2] = 1.0f;
-    font_settings->mat.alpha = 1.0f;
+    font_settings->matf32.ambient_rgb[0] = 1.0f;
+    font_settings->matf32.ambient_rgb[1] = 1.0f;
+    font_settings->matf32.ambient_rgb[2] = 1.0f;
+    font_settings->matf32.alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
     font_settings->touch_id = -1;
@@ -594,13 +596,13 @@ void text_request_fps_counter(
     T1_flat_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
-    font_settings->mat.ambient_rgb[0] = 1.0f;
-    font_settings->mat.ambient_rgb[1] = 1.0f;
-    font_settings->mat.ambient_rgb[2] = 1.0f;
-    font_settings->mat.diffuse_rgb[0] = 1.0f;
-    font_settings->mat.diffuse_rgb[1] = 1.0f;
-    font_settings->mat.diffuse_rgb[2] = 1.0f;
-    font_settings->mat.alpha = 1.0f;
+    font_settings->matf32.ambient_rgb[0] = 1.0f;
+    font_settings->matf32.ambient_rgb[1] = 1.0f;
+    font_settings->matf32.ambient_rgb[2] = 1.0f;
+    font_settings->matf32.diffuse_rgb[0] = 1.0f;
+    font_settings->matf32.diffuse_rgb[1] = 1.0f;
+    font_settings->matf32.diffuse_rgb[2] = 1.0f;
+    font_settings->matf32.alpha = 1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
@@ -636,15 +638,15 @@ void text_request_top_touchable_id(
     T1_std_strcat_cap(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;
-    font_settings->mat.ambient_rgb[0] = 1.0f;
-    font_settings->mat.ambient_rgb[1] = 1.0f;
-    font_settings->mat.ambient_rgb[2] = 1.0f;
-    font_settings->mat.diffuse_rgb[0] = 1.0f;
-    font_settings->mat.diffuse_rgb[1] = 1.0f;
-    font_settings->mat.diffuse_rgb[2] = 1.0f;
-    font_settings->mat.uv_scroll[0] = 0.0f;
-    font_settings->mat.uv_scroll[1] = 0.0f;
-    font_settings->mat.alpha = 1.0f;
+    font_settings->matf32.ambient_rgb[0] = 1.0f;
+    font_settings->matf32.ambient_rgb[1] = 1.0f;
+    font_settings->matf32.ambient_rgb[2] = 1.0f;
+    font_settings->matf32.diffuse_rgb[0] = 1.0f;
+    font_settings->matf32.diffuse_rgb[1] = 1.0f;
+    font_settings->matf32.diffuse_rgb[2] = 1.0f;
+    font_settings->matf32.uv_scroll[0] = 0.0f;
+    font_settings->matf32.uv_scroll[1] = 0.0f;
+    font_settings->matf32.alpha = 1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;

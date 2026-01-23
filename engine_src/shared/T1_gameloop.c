@@ -65,18 +65,18 @@ static void show_dead_simple_text(
     T1_camera->xyz_angle[1] = 0.0f;
     T1_camera->xyz_angle[2] = 0.0f;
     
-    font_settings->font_height          = 20.0f;
-    font_settings->mat.ambient_rgb[0]   = 1.0f;
-    font_settings->mat.ambient_rgb[1]   = 1.0f;
-    font_settings->mat.ambient_rgb[2]   = 1.0f;
-    font_settings->mat.diffuse_rgb[0]   = 1.0f;
-    font_settings->mat.diffuse_rgb[1]   = 1.0f;
-    font_settings->mat.diffuse_rgb[2]   = 1.0f;
-    font_settings->mat.alpha            = 1.0f;
-    font_settings->ignore_camera        = false; // we set camera to 0,0,0
-    font_settings->ignore_lighting      = true;
+    font_settings->font_height = 20.0f;
+    font_settings->matf32.ambient_rgb[0] = 1.0f;
+    font_settings->matf32.ambient_rgb[1] = 1.0f;
+    font_settings->matf32.ambient_rgb[2] = 1.0f;
+    font_settings->matf32.diffuse_rgb[0] = 1.0f;
+    font_settings->matf32.diffuse_rgb[1] = 1.0f;
+    font_settings->matf32.diffuse_rgb[2] = 1.0f;
+    font_settings->matf32.alpha = 1.0f;
+    font_settings->ignore_camera = false;
+    font_settings->ignore_lighting = true;
     
-    assert(font_settings->mat.texturearray_i == 0);
+    assert(font_settings->mati32.texturearray_i == 0);
     text_request_label_renderable(
         /* const uint32_t with_object_id: */
             0,

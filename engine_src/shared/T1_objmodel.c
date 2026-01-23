@@ -646,47 +646,51 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             log_assert(
                 matching_parsed_materials_i  < (int32_t)parsed_materials_size);
             
-            T1GPUConstMat * locked_mat = T1_material_fetch_ptr(
-                /* const uint32_t locked_material_i: */
-                    T1_objmodel_mesh_summaries[T1_objmodel_mesh_summaries_size].
-                        locked_material_head_i + i);
+            T1GPUConstMatf32 * locked_mat_f32 = NULL;
+            T1GPUConstMati32 * locked_mat_i32 = NULL;
+            T1_material_fetch_ptrs(
+                &locked_mat_f32,
+                &locked_mat_i32,
+                T1_objmodel_mesh_summaries[T1_objmodel_mesh_summaries_size].locked_material_head_i + i);
             
-            T1_material_construct(locked_mat);
+            T1_material_construct(
+                locked_mat_f32,
+                locked_mat_i32);
             
             if (matching_parsed_materials_i >= 0) {
-                locked_mat->ambient_rgb[0] =
+                locked_mat_f32->ambient_rgb[0] =
                     parsed_materials[matching_parsed_materials_i].ambient_rgb[0];
-                locked_mat->ambient_rgb[1] =
+                locked_mat_f32->ambient_rgb[1] =
                     parsed_materials[matching_parsed_materials_i].ambient_rgb[1];
-                locked_mat->ambient_rgb[2] =
+                locked_mat_f32->ambient_rgb[2] =
                     parsed_materials[matching_parsed_materials_i].ambient_rgb[2];
                 
-                locked_mat->alpha =
+                locked_mat_f32->alpha =
                     parsed_materials[matching_parsed_materials_i].alpha;
                 
-                locked_mat->diffuse_rgb[0] =
+                locked_mat_f32->diffuse_rgb[0] =
                     parsed_materials[matching_parsed_materials_i].diffuse_rgb[0];
-                locked_mat->diffuse_rgb[1] =
+                locked_mat_f32->diffuse_rgb[1] =
                     parsed_materials[matching_parsed_materials_i].diffuse_rgb[1];
-                locked_mat->diffuse_rgb[2] =
+                locked_mat_f32->diffuse_rgb[2] =
                     parsed_materials[matching_parsed_materials_i].diffuse_rgb[2];
                 
-                locked_mat->specular_rgb[0] =
+                locked_mat_f32->specular_rgb[0] =
                     parsed_materials[matching_parsed_materials_i].specular_rgb[0];
-                locked_mat->specular_rgb[1] =
+                locked_mat_f32->specular_rgb[1] =
                     parsed_materials[matching_parsed_materials_i].specular_rgb[1];
-                locked_mat->specular_rgb[2] =
+                locked_mat_f32->specular_rgb[2] =
                     parsed_materials[matching_parsed_materials_i].specular_rgb[2];
                 
-                locked_mat->specular_exponent =
+                locked_mat_f32->specular_exponent =
                     parsed_materials[matching_parsed_materials_i].
                         specular_exponent;
                 
-                locked_mat->illum = 1.0f;
+                locked_mat_f32->illum = 1.0f;
                 
-                locked_mat->uv_scroll[0] = parsed_materials[matching_parsed_materials_i].
+                locked_mat_f32->uv_scroll[0] = parsed_materials[matching_parsed_materials_i].
                         T1_uv_scroll[0];
-                locked_mat->uv_scroll[1] = parsed_materials[matching_parsed_materials_i].
+                locked_mat_f32->uv_scroll[1] = parsed_materials[matching_parsed_materials_i].
                         T1_uv_scroll[1];
                 
                 if (parsed_materials[matching_parsed_materials_i].
@@ -696,8 +700,10 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                    locked_mat->texturearray_i = lmat.array_i;
-                    locked_mat->texture_i = lmat.slice_i;
+                    locked_mat_i32->texturearray_i =
+                        lmat.array_i;
+                    locked_mat_i32->texture_i =
+                        lmat.slice_i;
                 }
                 
                 if (
@@ -711,8 +717,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     log_append("\n");
                     
                     if (
-                        locked_mat->texturearray_i < 0 ||
-                        locked_mat->texture_i < 0)
+                        locked_mat_i32->texturearray_i < 0 ||
+                        locked_mat_i32->texture_i < 0)
                     {
                         char errmsg[128];
                         T1_std_strcpy_cap(errmsg, 128, "Missing material texture: ");
@@ -725,8 +731,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         return -1;
                     }
                 } else {
-                    log_assert(locked_mat->texturearray_i < 0);
-                    log_assert(locked_mat->texture_i < 0);
+                    log_assert(locked_mat_i32->texturearray_i < 0);
+                    log_assert(locked_mat_i32->texture_i < 0);
                 }
                 
                 #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE

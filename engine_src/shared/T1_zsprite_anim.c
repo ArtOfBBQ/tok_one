@@ -21,7 +21,7 @@ typedef struct {
     bool8_t committed;
 } T1InternalzSpriteAnim;
 
-T1InternalzSpriteAnim * T1_zsprite_anims;
+T1InternalzSpriteAnim * T1_zsprite_anims = NULL;
 uint32_t zsprite_anims_size = 0;
 
 typedef struct {
@@ -132,12 +132,12 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
     }
     
     if (return_value == NULL) {
-        log_assert(
-            zsprite_anims_size + 1 <
-                T1_ZSPRITE_ANIMS_CAP);
         return_value =
-            &T1_zsprite_anims[zsprite_anims_size++];
-        log_assert(return_value->deleted);
+            &T1_zsprite_anims[zsprite_anims_size];
+        zsprite_anims_size += 1;
+        log_assert(
+            zsprite_anims_size <
+                T1_ZSPRITE_ANIMS_CAP);
     }
     
     log_assert(return_value->deleted);
@@ -158,16 +158,164 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
         return_value->endpoints_not_deltas = endpoints_not_deltas;
     }
     
+    log_assert(!return_value->committed);
+    log_assert(!return_value->deleted);
+    
     fas->mutex_unlock(fas->mutex_id);
     
     return &return_value->public;
 }
 
+static void T1_zsprite_anim_resolve_single(
+    T1InternalzSpriteAnim * anim)
+{
+    if (
+        anim->deleted ||
+        !anim->committed)
+    {
+        return;
+    }
+    
+    if (anim->already_applied_t >= 1.0f) {
+        bool32_t delete =
+            anim->public.runs == 1;
+        bool32_t reduce_runs =
+            anim->public.runs > 0;
+        
+        if (delete) {
+            anim->deleted = true;
+            
+            if (
+                anim->public.
+                    del_obj_on_finish)
+            {
+                T1_zsprite_delete(
+                    anim->public.
+                        affected_zsprite_id);
+            }
+        } else {
+            anim->remaining_duration_us =
+                anim->public.duration_us;
+            anim->remaining_pause_us =
+                anim->public.pause_us;
+        }
+        
+        if (reduce_runs) {
+            anim->public.runs -= 1;
+        }
+        
+        anim->already_applied_t = 0.0f;
+        
+        return;
+    }
+    
+    uint64_t elapsed = T1_global->elapsed;
+    
+    if (anim->remaining_pause_us > 0) {
+        
+        if (elapsed <= anim->remaining_pause_us) {
+            anim->remaining_pause_us -= elapsed;
+            return;
+        } else {
+            elapsed -= anim->remaining_pause_us;
+            anim->remaining_pause_us = 0;
+        }
+    }
+    
+    log_assert(anim->remaining_duration_us > 0);
+    
+    if (elapsed < anim->remaining_duration_us)
+    {
+        anim->remaining_duration_us -= elapsed;
+    } else {
+        anim->remaining_duration_us = 0;
+    }
+    
+    uint64_t elapsed_so_far =
+        anim->public.duration_us - anim->remaining_duration_us;
+    log_assert(
+        elapsed_so_far <=
+            anim->public.duration_us);
+    
+    T1TPair t;
+    t.now = (float)elapsed_so_far / (float)anim->public.duration_us;
+    log_assert(t.now <= 1.0f);
+    log_assert(t.now >= 0.0f);
+    log_assert(
+        t.now >= anim->already_applied_t);
+    t.applied = anim->already_applied_t;
+    
+    log_assert(anim->already_applied_t <= t.now);
+    anim->already_applied_t = t.now;
+    
+    t.now = T1_easing_t_to_eased_t(
+        t.now,
+        anim->public.easing_type);
+    t.applied = T1_easing_t_to_eased_t(
+        t.applied,
+        anim->public.easing_type);
+    
+    if (anim->endpoints_not_deltas) {
+        
+        T1_zsprite_apply_endpoint_anim(
+            /* const int32_t zsprite_id: */
+                anim->public.
+                    affected_zsprite_id,
+            /* const int32_t touch_id: */
+                anim->public.affected_touch_id,
+            /* const float t_applied: */
+                t.applied,
+            /* const float t_now: */
+                t.now,
+            /* const float *goal_gpu_vals: */
+                (float *)&anim->public.gpu_vals,
+            /* const float *goal_cpu_vals: */
+                (float *)&anim->public.cpu_vals);
+    } else {
+        T1_zsprite_apply_anim_effects_to_id(
+            /* const int32_t zsprite_id: */
+                anim->public.affected_zsprite_id,
+            /* const int32_t touch_id: */
+                anim->public.affected_touch_id,
+            /* const float t_applied: */
+                t.applied,
+            /* const float t_now: */
+                t.now,
+            /* const float * anim_gpu_vals: */
+                (float *)&anim->public.gpu_vals,
+            /* const float * anim_cpu_vals: */
+                (float *)&anim->public.cpu_vals);
+    }
+}
+
+void T1_zsprite_anim_commit_and_instarun(
+    T1zSpriteAnim * to_commit)
+{
+    fas->mutex_lock(fas->mutex_id);
+    
+    T1InternalzSpriteAnim * parent =
+        T1_zsprite_anim_get_container(to_commit);
+    log_assert(&parent->public == to_commit);
+    log_assert(to_commit->duration_us == 1);
+    
+    parent->remaining_pause_us =
+        to_commit->pause_us;
+    parent->remaining_duration_us =
+        to_commit->duration_us;
+    parent->committed = true;
+    
+    T1_zsprite_anim_resolve_single(parent);
+    parent->deleted = true;
+    parent->committed = false;
+    log_assert(parent->remaining_duration_us == 0);
+    
+    fas->mutex_unlock(fas->mutex_id);
+}
+
 void T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit)
 {
-    fas->mutex_lock(
-        fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
     
     T1InternalzSpriteAnim * parent =
         T1_zsprite_anim_get_container(to_commit);
@@ -205,8 +353,7 @@ void T1_zsprite_anim_commit(
     
     log_assert(to_commit->duration_us > 0);
     
-    if (to_commit->
-        del_conflict_anims)
+    if (to_commit->del_conflict_anims)
     {
         for (
             uint32_t anim_i = 0;
@@ -504,124 +651,7 @@ void T1_zsprite_anim_resolve(void)
         T1InternalzSpriteAnim * anim =
             &T1_zsprite_anims[animation_i];
         
-        if (
-            anim->deleted ||
-            !anim->committed)
-        {
-            continue;
-        }
-        
-        if (anim->already_applied_t >= 1.0f) {
-            bool32_t delete =
-                anim->public.runs == 1;
-            bool32_t reduce_runs =
-                anim->public.runs > 0;
-            
-            if (delete) {
-                anim->deleted = true;
-                if (animation_i == (int32_t)zsprite_anims_size - 1) {
-                    zsprite_anims_size -= 1;
-                }
-                
-                if (
-                    anim->public.
-                        del_obj_on_finish)
-                {
-                    T1_zsprite_delete(
-                        anim->public.
-                            affected_zsprite_id);
-                }
-            } else {
-                anim->remaining_duration_us =
-                    anim->public.duration_us;
-                anim->remaining_pause_us =
-                    anim->public.pause_us;
-            }
-            
-            if (reduce_runs) {
-                anim->public.runs -= 1;
-            }
-            
-            anim->already_applied_t = 0.0f;
-            
-            continue;
-        }
-        
-        uint64_t elapsed = T1_global->elapsed;
-        
-        if (anim->remaining_pause_us > 0) {
-            
-            if (elapsed <= anim->remaining_pause_us) {
-                anim->remaining_pause_us -= elapsed;
-                continue;
-            } else {
-                elapsed -= anim->remaining_pause_us;
-                anim->remaining_pause_us = 0;
-            }
-        }
-        
-        log_assert(anim->remaining_duration_us > 0);
-        
-        if (elapsed < anim->remaining_duration_us)
-        {
-            anim->remaining_duration_us -= elapsed;
-        } else {
-            anim->remaining_duration_us = 0;
-        }
-        
-        uint64_t elapsed_so_far =
-            anim->public.duration_us - anim->remaining_duration_us;
-        log_assert(
-            elapsed_so_far <=
-                anim->public.duration_us);
-        
-        T1TPair t;
-        t.now = (float)elapsed_so_far / (float)anim->public.duration_us;
-        log_assert(t.now <= 1.0f);
-        log_assert(t.now >= 0.0f);
-        log_assert(
-            t.now >= anim->already_applied_t);
-        t.applied = anim->already_applied_t;
-        
-        log_assert(anim->already_applied_t <= t.now);
-        anim->already_applied_t = t.now;
-        
-        t.now = T1_easing_t_to_eased_t(
-            t.now,
-            anim->public.easing_type);
-        t.applied = T1_easing_t_to_eased_t(
-            t.applied,
-            anim->public.easing_type);
-        
-        if (anim->endpoints_not_deltas) {
-            T1_zsprite_apply_endpoint_anim(
-                /* const int32_t zsprite_id: */
-                    anim->public.affected_zsprite_id,
-                /* const int32_t touch_id: */
-                    anim->public.affected_touch_id,
-                /* const float t_applied: */
-                    t.applied,
-                /* const float t_now: */
-                    t.now,
-                /* const float *goal_gpu_vals: */
-                    (float *)&anim->public.gpu_vals,
-                /* const float *goal_cpu_vals: */
-                    (float *)&anim->public.cpu_vals);
-        } else {
-            T1_zsprite_apply_anim_effects_to_id(
-                /* const int32_t zsprite_id: */
-                    anim->public.affected_zsprite_id,
-                /* const int32_t touch_id: */
-                    anim->public.affected_touch_id,
-                /* const float t_applied: */
-                    t.applied,
-                /* const float t_now: */
-                    t.now,
-                /* const float * anim_gpu_vals: */
-                    (float *)&anim->public.gpu_vals,
-                /* const float * anim_cpu_vals: */
-                    (float *)&anim->public.cpu_vals);
-        }
+        T1_zsprite_anim_resolve_single(anim);
     }
     
     fas->mutex_unlock(fas->mutex_id);
@@ -652,14 +682,15 @@ void T1_zsprite_anim_bump(
     (void)wait;
     #endif
     
-    T1zSpriteAnim * move_request =
+    T1zSpriteAnim * bump_request =
         T1_zsprite_anim_request_next(false);
-    move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->cpu_vals.scale_factor = 0.25f;
-    move_request->duration_us = 200000;
-    T1_zsprite_anim_commit(
-        move_request);
+    bump_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
+    bump_request->affected_zsprite_id = (int32_t)object_id;
+    bump_request->cpu_vals.mul_xyz[0] = 0.05f;
+    bump_request->cpu_vals.mul_xyz[1] = 0.05f;
+    bump_request->cpu_vals.mul_xyz[2] = 0.05f;
+    bump_request->duration_us = 200000;
+    T1_zsprite_anim_commit(bump_request);
 }
 
 void T1_zsprite_anim_delete_all(void)

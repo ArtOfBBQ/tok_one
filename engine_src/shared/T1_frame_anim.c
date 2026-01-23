@@ -43,61 +43,64 @@ void T1_frame_anim_apply_all(
         mod_i < T1_frame_anims_size;
         mod_i++)
     {
+        float * mod_ptr =
+            (float *)(
+                &T1_frame_anims[mod_i].
+                    gpu_stats);
+        
         for (
-            uint32_t zp_i = 0;
-            zp_i < frame_data->zsprite_list->size;
-            zp_i++)
+            int32_t i = 0;
+            i < (int32_t)frame_data->
+                zsprite_list->size;
+            i++)
         {
-            uint32_t hit = false;
-            switch (T1_frame_anims[mod_i].filter) {
+            uint32_t hit = 0;
+            
+            switch (
+                T1_frame_anims[mod_i].filter)
+            {
                 case T1FRAMEANIMFILTER_TOUCH_ID:
-                    hit = frame_data->zsprite_list->
-                        polygons[zp_i].touch_id ==
-                            T1_frame_anims[mod_i].
-                                touch_id;
+                {
+                    if (
+                        frame_data->polygon_ids[i].
+                            zsprite_id ==
+                        T1_frame_anims[mod_i].
+                            zsprite_id)
+                    {
+                        hit = 1;
+                    }
+                }
                 break;
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
-                    #if 0
-                    hit = T1_zsprite_list->cpu_data[zp_i].zsprite_id ==
-                            T1_frame_anims[mod_i].
-                                zsprite_id;
-                    #else
-                    // TODO: fix me
-                    hit = 0;
-                    #endif
+                {
+                    if (
+                        frame_data->polygon_ids[i].
+                            zsprite_id ==
+                        T1_frame_anims[mod_i].
+                            zsprite_id)
+                    {
+                        hit = 1;
+                    }
+                }
                 break;
                 default:
                     log_assert(0);
             }
             
             if (hit) {
-                float * recip_ptr =
-                    (float *)(
-                        frame_data->zsprite_list->
-                            polygons + zp_i);
-                float * mod_ptr =
-                    (float *)(
-                        &T1_frame_anims[mod_i].
-                            gpu_stats);
-                
-                for (
-                    uint32_t _ = 0;
-                    _ < (sizeof(T1GPUzSprite) / 4);
-                    _ += SIMD_FLOAT_LANES)
-                {
-                    SIMD_FLOAT simd_mod = simd_load_floats(mod_ptr);
-                    
-                    SIMD_FLOAT simd_recip = simd_load_floats(recip_ptr);
-                    
-                    simd_store_floats(
-                        recip_ptr,
-                        simd_add_floats(
-                            simd_recip,
-                            simd_mod));
-                    
-                    recip_ptr += SIMD_FLOAT_LANES;
-                    mod_ptr += SIMD_FLOAT_LANES;
-                }
+                T1_zsprite_anim_apply_effects_at_t(
+                    /* const float t_applied: */
+                        0.0f,
+                    /* const float t_now: */
+                        1.0f,
+                    /* const float * anim_gpu_vals: */
+                        mod_ptr,
+                    /* const float * anim_cpu_vals: */
+                        NULL,
+                    /* T1GPUzSprite * recip_gpu: */
+                        frame_data->zsprite_list->polygons + i,
+                    /* T1CPUzSpriteSimdStats * recip_cpu: */
+                        NULL);
             }
         }
     }
@@ -185,3 +188,4 @@ void T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(
 #else
 #error
 #endif
+

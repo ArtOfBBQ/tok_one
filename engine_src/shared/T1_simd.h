@@ -114,23 +114,33 @@ because I don't know much about how that works or how reliable it is
 #if defined(__ARM_NEON)
 
 #include "arm_neon.h"
-#define SIMD_FLOAT_LANES                    4
-#define SIMD_FLOAT                          float32x4_t
-#define simd_load_floats(floatsptr)         vld1q_f32(floatsptr)
-#define simd_set1_float(float)              vld1q_dup_f32(&float)
-#define simd_store_floats(to_ptr, from)     vst1q_f32(to_ptr, from)
-#define simd_mul_floats(a, b)               vmulq_f32(a, b)
-#define simd_div_floats(a, b)               vdivq_f32(a, b)
-#define simd_add_floats(a, b)               vaddq_f32(a, b)
-#define simd_sub_floats(a, b)               vsubq_f32(a, b)
-#define simd_max_floats(a, b)               vmaxq_f32(a, b)
+#define SIMD_FLOAT_LANES 4
+#define SIMD_INT32_LANES 4
+#define SIMD_INT32 int32x4_t
+#define simd_load_int32s(i32ptr) vld1q_s32(i32ptr)
+#define simd_cast_int32s_to_floats(i32vec) vcvtq_f32_s32((i32vec))
+#define simd_store_int32s(i32ptr, from) vst1q_s32(i32ptr, from)
+#define simd_add_int32s(a, b) vaddq_s32(a, b)
+#define simd_and_int32s(a, b) (int32x4_t)(vandq_s32(a, b))
+#define simd_not_int32s(a) vmvnq_s32(a)
+
+#define SIMD_FLOAT float32x4_t
+#define simd_load_floats(floatsptr) vld1q_f32(floatsptr)
+#define simd_set1_float(float) vld1q_dup_f32(&float)
+#define simd_cast_floats_to_int32s(i32vec) vcvtq_s32_f32(i32vec)
+#define simd_store_floats(to_ptr, from) vst1q_f32(to_ptr, from)
+#define simd_mul_floats(a, b) vmulq_f32(a, b)
+#define simd_div_floats(a, b) vdivq_f32(a, b)
+#define simd_add_floats(a, b) vaddq_f32(a, b)
+#define simd_sub_floats(a, b) vsubq_f32(a, b)
+#define simd_max_floats(a, b) vmaxq_f32(a, b)
 // The arm comparison functions (like cmpeq) all return unsigned ints
 // we don't use the bitwise and with floats except immediately after passing
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether
-#define simd_and_floats(a, b)   (float32x4_t)(vandq_u32(a, b))
-#define simd_sqrt_floats(a)     vsqrtq_f32(a)
+#define simd_and_floats(a, b) (float32x4_t)(vandq_u32(a, b))
+#define simd_sqrt_floats(a) vsqrtq_f32(a)
 #define simd_cmpeq_floats(a, b) vceqq_f32(a, b)
 #define simd_not_floats(a) vmvnq_u32(a)
 #define simd_cmplt_floats(a, b) vcltq_f32(a, b)
@@ -138,38 +148,38 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__AVX__)
 
 #include "immintrin.h"
-#define SIMD_FLOAT_LANES                    8
-#define SIMD_FLOAT                          __m256
-#define simd_load_floats(floatsptr)         _mm256_loadu_ps(floatsptr)
-#define simd_set1_float(float)              _mm256_set1_ps(float)
-#define simd_store_floats(floatsptr, from)  _mm256_storeu_ps(floatsptr, from)
-#define simd_mul_floats(a, b)               _mm256_mul_ps(a, b)
-#define simd_div_floats(a, b)               _mm256_div_ps(a, b)
-#define simd_add_floats(a, b)               _mm256_add_ps(a, b)
-#define simd_sub_floats(a, b)               _mm256_sub_ps(a, b)
-#define simd_max_floats(a, b)               _mm256_max_ps(a, b)
-#define simd_and_floats(a, b)               _mm256_and_ps(a, b)
-#define simd_sqrt_floats(a)                 _mm256_sqrt_ps(a)
-#define simd_cmpeq_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
-#define simd_cmplt_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_LT_OQ)
+#define SIMD_FLOAT_LANES 8
+#define SIMD_FLOAT __m256
+#define simd_load_floats(floatsptr) _mm256_loadu_ps(floatsptr)
+#define simd_set1_float(float) _mm256_set1_ps(float)
+#define simd_store_floats(floatsptr, from) _mm256_storeu_ps(floatsptr, from)
+#define simd_mul_floats(a, b) _mm256_mul_ps(a, b)
+#define simd_div_floats(a, b) _mm256_div_ps(a, b)
+#define simd_add_floats(a, b) _mm256_add_ps(a, b)
+#define simd_sub_floats(a, b) _mm256_sub_ps(a, b)
+#define simd_max_floats(a, b) _mm256_max_ps(a, b)
+#define simd_and_floats(a, b) _mm256_and_ps(a, b)
+#define simd_sqrt_floats(a) _mm256_sqrt_ps(a)
+#define simd_cmpeq_floats(a, b) _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_floats(a, b) _mm256_cmp_ps(a, b, _CMP_LT_OQ)
 
 #elif defined(__SSE__)
 
 #include "immintrin.h"
-#define SIMD_FLOAT_LANES                    4
-#define SIMD_FLOAT                          __m128
-#define simd_load_floats(floatsptr)         _mm_loadu_ps(floatsptr)
-#define simd_set1_float(float)              _mm_set1_ps(float)
+#define SIMD_FLOAT_LANES 4
+#define SIMD_FLOAT __m128
+#define simd_load_floats(floatsptr) _mm_loadu_ps(floatsptr)
+#define simd_set1_float(float) _mm_set1_ps(float)
 #define simd_store_floats(floatsptr, from)  _mm_storeu_ps(floatsptr, from)
-#define simd_mul_floats(a, b)               _mm_mul_ps(a, b)
-#define simd_div_floats(a, b)               _mm_div_ps(a, b)
-#define simd_add_floats(a, b)               _mm_add_ps(a, b)
-#define simd_sub_floats(a, b)               _mm_sub_ps(a, b)
-#define simd_max_floats(a, b)               _mm_max_ps(a, b)
-#define simd_and_floats(a, b)               _mm_and_ps(a, b)
-#define simd_sqrt_floats(a)                 _mm_sqrt_ps(a)
-#define simd_cmpeq_floats(a, b)             _mm_cmp_ps(a, b, _CMP_EQ_UQ)
-#define simd_cmplt_floats(a, b)             _mm_cmp_ps(a, b, _CMP_LT_OQ)
+#define simd_mul_floats(a, b) _mm_mul_ps(a, b)
+#define simd_div_floats(a, b) _mm_div_ps(a, b)
+#define simd_add_floats(a, b) _mm_add_ps(a, b)
+#define simd_sub_floats(a, b) _mm_sub_ps(a, b)
+#define simd_max_floats(a, b) _mm_max_ps(a, b)
+#define simd_and_floats(a, b) _mm_and_ps(a, b)
+#define simd_sqrt_floats(a) _mm_sqrt_ps(a)
+#define simd_cmpeq_floats(a, b) _mm_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_floats(a, b) _mm_cmp_ps(a, b, _CMP_LT_OQ)
 #else
 
 #define SIMD_FLOAT_LANES                    1

@@ -33,6 +33,7 @@ uint32_t active_ui_elements_size = 0;
 ActiveUIElement * active_ui_elements = NULL;
 
 static ActiveUIElement * next_active_ui_element(void) {
+    #if 0
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         if (active_ui_elements[i].deleted) {
             T1_std_memset(&active_ui_elements[i], 0, sizeof(ActiveUIElement));
@@ -45,9 +46,13 @@ static ActiveUIElement * next_active_ui_element(void) {
     active_ui_elements_size += 1;
     T1_std_memset(&active_ui_elements[active_ui_elements_size - 1], 0, sizeof(ActiveUIElement));
     return &active_ui_elements[active_ui_elements_size - 1];
+    #else
+    return NULL;
+    #endif
 }
 
 void T1_uielement_init(void) {
+    #if 0
     next_ui_element_settings = (T1NextUIElementSettings *)
         T1_mem_malloc_from_unmanaged(sizeof(T1NextUIElementSettings));
     T1_std_memset(next_ui_element_settings, 0, sizeof(T1NextUIElementSettings));
@@ -68,10 +73,12 @@ void T1_uielement_init(void) {
         active_ui_elements,
         0,
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
+    #endif
 }
 
 void T1_uielement_handle_touches(uint64_t ms_elapsed)
 {
+    #if 0
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_start("ui_elements_handle_touches()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
@@ -375,7 +382,11 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
         }
     }
     
-    for (uint32_t i = 0; i < active_ui_elements_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < active_ui_elements_size;
+        i++)
+    {
         if (
             active_ui_elements[i].has_label &&
             active_ui_elements[i].label_dirty)
@@ -410,7 +421,8 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             
             for (
                 int32_t zs_i = 0;
-                zs_i < (int32_t)T1_zsprite_list->size;
+                zs_i < (int32_t)
+                    T1_zsprite_list->size;
                 zs_i++)
             {
                 if (
@@ -549,6 +561,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
+    #endif
 }
 
 static void set_slider_pos_from_current_val(
@@ -556,6 +569,7 @@ static void set_slider_pos_from_current_val(
     T1GPUzSprite * pin_gpu_zsprite,
     T1CPUzSpriteSimdStats * pin_cpu_zsprite)
 {
+    #if 0
     log_assert(ae != NULL);
     log_assert(pin_gpu_zsprite != NULL);
     log_assert(pin_gpu_zsprite->touch_id == ae->touch_id);
@@ -645,6 +659,7 @@ static void set_slider_pos_from_current_val(
     log_assert(new_x_offset <= ae->slider_width);
     
     pin_cpu_zsprite->offset_xyz[0] = new_x_offset;
+    #endif
 }
 
 void T1_uielement_request_slider(
@@ -653,6 +668,7 @@ void T1_uielement_request_slider(
     const int32_t pin_zsprite_id,
     void * linked_value_ptr)
 {
+    #if 0
     log_assert(next_ui_element_settings != NULL);
     log_assert(background_zsprite_id != pin_zsprite_id);
     log_assert(background_zsprite_id != label_zsprite_id);
@@ -814,6 +830,7 @@ void T1_uielement_request_slider(
         &slider_pin.cpu_data->simd_stats);
     
     T1_zsprite_commit(&slider_pin);
+    #endif
 }
 
 void T1_uielement_request_button(
@@ -822,6 +839,7 @@ void T1_uielement_request_button(
     void (* onclick_funcptr)(int64_t),
     const int64_t clicked_arg)
 {
+    #if 0
     log_assert(next_ui_element_settings->perm.button_width_screenspace  > 5.0f);
     log_assert(next_ui_element_settings->perm.button_height_screenspace > 5.0f);
     
@@ -884,10 +902,12 @@ void T1_uielement_request_button(
     button_request.gpu_data->base_mat = next_ae->user_set.back_mat;
     button_request.gpu_data->alpha = 1.0f;
     T1_zsprite_commit(&button_request);
+    #endif
 }
 
 void T1_uielement_delete(const int32_t with_zsprite_id)
 {
+    #if 0
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         if (active_ui_elements[i].background_zsprite_id == with_zsprite_id) {
             active_ui_elements[i].slider_linked_value = NULL;
@@ -895,12 +915,15 @@ void T1_uielement_delete(const int32_t with_zsprite_id)
             active_ui_elements[i].deleted = true;
         }
     }
+    #endif
 }
 
 void T1_uielement_delete_all(void) {
+    #if 0
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         active_ui_elements[i].deleted = false;
     }
     T1_zspriteid_clear_ui_element_touch_ids();
     active_ui_elements_size = 0;
+    #endif
 }

@@ -361,9 +361,7 @@ void T1_appinit_before_gpu_init(
     
     T1_flat_texquad_init();
     
-    T1_zsprite_list = (T1zSpriteCollection *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1zSpriteCollection));
-    T1_zsprite_list->size = 0;
+    T1_zsprite_init();
     
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
@@ -510,9 +508,14 @@ void T1_appinit_before_gpu_init(
             sizeof(T1GPULockedVertex) *
                 ALL_LOCKED_VERTICES_SIZE);
     
-    sd->const_mats_alloc_size =
+    sd->const_matsf32_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMat) *
+            sizeof(T1GPUConstMatf32) *
+                ALL_LOCKED_MATERIALS_SIZE);
+    
+    sd->const_matsi32_alloc_size =
+        pad_to_page_size(
+            sizeof(T1GPUConstMati32) *
                 ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
@@ -577,9 +580,14 @@ void T1_appinit_before_gpu_init(
             sd->locked_vertices_alloc_size,
             T1_mem_page_size);
     
-    sd->const_mats = (T1GPUConstMat *)
+    sd->const_mats_f32 = (T1GPUConstMatf32 *)
         T1_mem_malloc_from_unmanaged_aligned(
-            sd->const_mats_alloc_size,
+            sd->const_matsf32_alloc_size,
+            T1_mem_page_size);
+    
+    sd->const_mats_i32 = (T1GPUConstMati32 *)
+        T1_mem_malloc_from_unmanaged_aligned(
+            sd->const_matsi32_alloc_size,
             T1_mem_page_size);
     
     bool32_t initial_log_dump_succesful = false;
@@ -842,11 +850,20 @@ void T1_appinit_after_gpu_init_step2(
     
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->const_mats,
+            gpu_shared_data_collection->
+                const_mats_f32,
         /* const void * src: */
-            all_mesh_materials->gpu_data,
+            all_mesh_materials->gpu_f32,
         /* size_t n: */
-            sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUConstMatf32) * ALL_LOCKED_MATERIALS_SIZE);
+    T1_std_memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection->
+                const_mats_i32,
+        /* const void * src: */
+            all_mesh_materials->gpu_i32,
+        /* size_t n: */
+            sizeof(T1GPUConstMati32) * ALL_LOCKED_MATERIALS_SIZE);
     T1_platform_gpu_copy_locked_materials();
     
     if (!T1_app_running) {

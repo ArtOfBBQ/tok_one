@@ -71,22 +71,22 @@ void T1_clientlogic_early_startup(
     T1_io_mouse_scroll_pos = 0.0f;
     
     uint32_t ok = 0;
-    T1_meta_struct(T1GPUConstMat, &ok);
+    T1_meta_struct(T1GPUConstMatf32, &ok);
     assert(ok);
-    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, ambient_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMatf32, T1_TYPE_F32, ambient_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, diffuse_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMatf32, T1_TYPE_F32, diffuse_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.5f, 1.5f, &ok);
-    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMatf32, T1_TYPE_F32, specular_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 2.0f, &ok);
-    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
+    T1_meta_field(T1GPUConstMatf32, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, refraction, &ok);
+    T1_meta_field(T1GPUConstMatf32, T1_TYPE_F32, refraction, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, alpha, &ok);
+    T1_meta_field(T1GPUConstMatf32, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, illum, &ok);
+    T1_meta_field(T1GPUConstMatf32, T1_TYPE_F32, illum, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     assert(ok);
     
@@ -113,7 +113,7 @@ void T1_clientlogic_early_startup(
     
     T1_meta_struct(T1GPUzSprite, &ok);
     assert(ok);
-    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat_f32, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(0.0f, 2.0f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
@@ -124,6 +124,7 @@ void T1_clientlogic_early_startup(
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat_i32, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
@@ -262,7 +263,10 @@ static void clicked_btn(int64_t arg) {
     redraw_all_sliders();
 }
 
-static void set_next_ui_element_state_for_sliders(void) {
+static void set_next_ui_element_state_for_sliders(void)
+{
+    if (!next_ui_element_settings) { return; }
+    
     next_ui_element_settings->perm.ignore_camera = true;
     next_ui_element_settings->perm.ignore_lighting = true;
     next_ui_element_settings->perm.pin_width_screenspace = 20;
@@ -280,17 +284,25 @@ static void set_next_ui_element_state_for_sliders(void) {
     next_ui_element_settings->slider_pin_rgba[1] = 0.5f;
     next_ui_element_settings->slider_pin_rgba[2] = 0.5f;
     next_ui_element_settings->slider_pin_rgba[3] = 1.0f;
-    T1_material_construct(&next_ui_element_settings->perm.back_mat);
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[0] = 0.2f;
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[1] = 0.2f;
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.3f;
-    next_ui_element_settings->perm.back_mat.alpha          = 1.0f;
+    T1_material_construct(
+        &next_ui_element_settings->perm.back_mat_f32,
+        &next_ui_element_settings->perm.back_mat_i32);
+    next_ui_element_settings->perm.back_mat_f32.
+        diffuse_rgb[0] = 0.2f;
+    next_ui_element_settings->perm.back_mat_f32.
+        diffuse_rgb[1] = 0.2f;
+    next_ui_element_settings->perm.back_mat_f32.
+        diffuse_rgb[2] = 0.3f;
+    next_ui_element_settings->perm.back_mat_f32.
+        alpha = 1.0f;
     next_ui_element_settings->perm.z = 0.75f;
     next_ui_element_settings->slider_label_shows_value = true;
     
 }
 
 static void redraw_all_sliders(void) {
+    if (!next_ui_element_settings) { return; }
+    
     set_next_ui_element_state_for_sliders();
     
     pds->regs_size = 0;
@@ -307,14 +319,16 @@ static void redraw_all_sliders(void) {
     // draw the title of the object we're inspecting which also serves as
     // an "up" button
     next_ui_element_settings->slider_label = pds->inspecting_field;
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.6f;
+    next_ui_element_settings->perm.back_mat_f32.
+        diffuse_rgb[2] = 0.6f;
     next_ui_element_settings->perm.ignore_camera = true;
     T1_uielement_request_button(
         pds->title_zsprite_id,
         pds->title_label_zsprite_id,
         clicked_btn,
         -1);
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.3f;
+    next_ui_element_settings->perm.back_mat_f32.
+        diffuse_rgb[2] = 0.3f;
     
     for (int32_t i = 0; i < (int32_t)num_properties; i++) {
         

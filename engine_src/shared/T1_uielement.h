@@ -22,7 +22,8 @@ If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
 typedef struct {
-    T1GPUConstMat back_mat;
+    T1GPUConstMatf32 back_mat_f32;
+    T1GPUConstMati32 back_mat_i32;
     char * meta_struct_name;
     union {
         uint64_t custom_uint_max;
