@@ -33,6 +33,9 @@ typedef struct {
     int32_t affected_touch_id;
     
     T1EasingType easing_type; // u8
+    bool8_t gpu_vals_f32_active;
+    bool8_t gpu_vals_i32_active;
+    bool8_t cpu_vals_active;
     bool8_t del_obj_on_finish;
     bool8_t del_conflict_anims;
 } T1zSpriteAnim;
@@ -42,6 +45,10 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
 
 void T1_zsprite_anim_commit_and_instarun(
     T1zSpriteAnim * to_commit);
+
+void
+T1_zsprite_anim_assert_anim_valid_before_commit(
+    T1zSpriteAnim * to_check);
 
 void T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit);

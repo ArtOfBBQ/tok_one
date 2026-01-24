@@ -43,10 +43,14 @@ void T1_frame_anim_apply_all(
         mod_i < T1_frame_anims_size;
         mod_i++)
     {
-        float * mod_ptr =
+        float * mod_ptr_f32 =
             (float *)(
                 &T1_frame_anims[mod_i].
-                    gpu_stats);
+                    gpu_stats.f32);
+        int32_t * mod_ptr_i32 =
+            (int32_t *)(
+                &T1_frame_anims[mod_i].
+                    gpu_stats.i32);
         
         for (
             int32_t i = 0;
@@ -94,7 +98,9 @@ void T1_frame_anim_apply_all(
                     /* const float t_now: */
                         1.0f,
                     /* const float * anim_gpu_vals: */
-                        mod_ptr,
+                        mod_ptr_f32,
+                    /* const int32_t * anim_gpu_i32s: */
+                        mod_ptr_i32,
                     /* const float * anim_cpu_vals: */
                         NULL,
                     /* T1GPUzSprite * recip_gpu: */

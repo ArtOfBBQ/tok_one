@@ -110,13 +110,15 @@ void T1_zsprite_apply_endpoint_anim(
     const int32_t touch_id,
     const float t_applied,
     const float t_now,
-    const float * goal_gpu_vals,
+    const float * goal_gpu_vals_f32,
+    const int32_t * goal_gpu_vals_i32,
     const float * goal_cpu_vals);
 
 void T1_zsprite_anim_apply_effects_at_t(
     const float t_applied,
     const float t_now,
     const float * anim_gpu_vals,
+    const int32_t * anim_gpu_i32s,
     const float * anim_cpu_vals,
     T1GPUzSprite * recip_gpu,
     T1CPUzSpriteSimdStats * recip_cpu);
@@ -126,7 +128,8 @@ void T1_zsprite_apply_anim_effects_to_id(
     const int32_t touch_id,
     const float t_applied,
     const float t_now,
-    const float * anim_gpu_vals,
+    const float * anim_gpu_vals_f32,
+    const int32_t * anim_gpu_vals_i32,
     const float * anim_cpu_vals);
 
 void T1_zsprite_set_occlusion(

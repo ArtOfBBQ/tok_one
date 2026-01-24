@@ -370,8 +370,7 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
-        T1_clientlogic_update(
-            T1_global->elapsed);
+        T1_clientlogic_update(T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_clientlogic_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE

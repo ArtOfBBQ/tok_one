@@ -124,7 +124,7 @@ vertex_shader(
     
     const device T1GPURenderView * c = rv + rv_i;
     
-    if (c->write_to_shadow_maps && zs->remove_shadow) {
+    if (c->write_to_shadow_maps && zs->i32.remove_shadow) {
         out.projpos = vector_float4(0.0f, 0.0f, 500.0f, 1.0f);
         return out;
     }
@@ -166,13 +166,13 @@ vertex_shader(
     
     out.viewpos = out.worldpos * view;
     
-    float ic = clamp(zs->ignore_camera, 0.0f, 1.0f);
+    float ic = clamp(zs->f32.ignore_camera, 0.0f, 1.0f);
     
     out.viewpos =
         (ic * out.worldpos) +
         (1.0f - ic) * out.viewpos;
     
-    out.touchable_id = zs->touch_id;
+    out.touchable_id = zs->i32.touch_id;
     
     out.texture_coordinate = vector_float2(lv->uv[0], lv->uv[1]);
     
@@ -374,8 +374,8 @@ float4 get_lit(
     
     float2 uv_orig =
         vector_float2(
-            zsprite->base_mat_uv_offsets[0],
-            zsprite->base_mat_uv_offsets[1]);
+            zsprite->f32.base_mat_uv_offsets[0],
+            zsprite->f32.base_mat_uv_offsets[1]);
     
     float2 uv_adjusted =
         in.texture_coordinate + (
@@ -422,10 +422,10 @@ float4 get_lit(
         texture_base = float4(color_sample);
     }
     
-    if (zsprite->mix_project_rv_i >= 0) {
+    if (zsprite->i32.mix_project_rv_i >= 0) {
         
         const device T1GPURenderView * rfv =
-            &render_views[zsprite->mix_project_rv_i];
+            &render_views[zsprite->i32.mix_project_rv_i];
         
         float4 refl_clipspace = worldspace_to_clipspace(
             in.worldpos,
@@ -449,11 +449,12 @@ float4 get_lit(
         mix_strength *= fade;
         
         const half4 color_sample =
-            color_textures[zsprite->mix_project_array_i].
+            color_textures[zsprite->i32.mix_project_array_i].
                 sample(
                     texture_sampler,
                     refl_uv,
-                    zsprite->mix_project_slice_i);
+                    zsprite->i32.
+                        mix_project_slice_i);
         
         texture_base =
             (texture_base * (1.0h - mix_strength)) +
@@ -663,17 +664,17 @@ float4 get_lit(
     lit_color *= texture_base;
     
     lit_color =
-        ((1.0f - zsprite->ignore_lighting) *
+        ((1.0f - zsprite->f32.ignore_lighting) *
             lit_color) +
-        (zsprite->ignore_lighting *
+        (zsprite->f32.ignore_lighting *
             ignore_lighting_color);
     
-    lit_color[3] *= zsprite->alpha * matf32->alpha;
+    lit_color[3] *= zsprite->f32.alpha * matf32->alpha;
     
     lit_color += vector_float4(
-        zsprite->bonus_rgb[0],
-        zsprite->bonus_rgb[1],
-        zsprite->bonus_rgb[2],
+        zsprite->f32.bonus_rgb[0],
+        zsprite->f32.bonus_rgb[1],
+        zsprite->f32.bonus_rgb[2],
         0.0f);
     
     lit_color = clamp(lit_color, 0.0f, 1.0f);
@@ -706,7 +707,7 @@ fragment_shader(
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].ignore_camera < 0.05f &&
+        polygons[in.polygon_i].f32.ignore_camera < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -720,12 +721,12 @@ fragment_shader(
         locked_vertices[in.locked_vertex_i].parent_material_i;
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_f32 :
+            &polygons[in.polygon_i].f32.base_mat_f32 :
             &const_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     const device T1GPUConstMati32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_i32 :
+            &polygons[in.polygon_i].i32.base_mat_i32 :
             &const_mats_i32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     
@@ -802,7 +803,7 @@ alphablending_fragment_shader(
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].ignore_camera < 0.05f &&
+        polygons[in.polygon_i].f32.ignore_camera < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -817,11 +818,11 @@ alphablending_fragment_shader(
     
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_f32 :
+            &polygons[in.polygon_i].f32.base_mat_f32 :
             &locked_mats_f32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     const device T1GPUConstMati32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_i32 :
+            &polygons[in.polygon_i].i32.base_mat_i32 :
             &locked_mats_i32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
@@ -1298,7 +1299,7 @@ outlines_vertex_shader(
         lverts[locked_vertex_i].face_normal_xyz[2]);
     
     out.outline_alpha =
-        polygons[polygon_i].outline_alpha;
+        polygons[polygon_i].f32.outline_alpha;
     
     float4x4 m_4x4 = matrix_float4x4(
         matrices[polygon_i].m_4x4[ 0],

@@ -114,8 +114,8 @@ static void construct_scheduled_animationA(
 T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool8_t endpoints_not_deltas)
 {
-    fas->mutex_lock(
-        fas->mutex_id);
+    fas->mutex_lock(fas->mutex_id);
+    
     log_assert(
         zsprite_anims_size < T1_ZSPRITE_ANIMS_CAP);
     T1InternalzSpriteAnim * return_value = NULL;
@@ -267,10 +267,17 @@ static void T1_zsprite_anim_resolve_single(
                 t.applied,
             /* const float t_now: */
                 t.now,
-            /* const float *goal_gpu_vals: */
-                (float *)&anim->public.gpu_vals,
-            /* const float *goal_cpu_vals: */
-                (float *)&anim->public.cpu_vals);
+            /* const float * goal_gpu_vals_f32: */
+                anim->public.gpu_vals_f32_active ?
+                    (float *)&anim->public.gpu_vals.f32 :
+                    NULL,
+            /* const int32_t *goal_gpu_vals_i32: */
+                anim->public.gpu_vals_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
+                NULL,
+            /* const float * goal_cpu_vals: */
+                anim->public.cpu_vals_active ?
+                    (float *)&anim->public.cpu_vals :
+                    NULL);
     } else {
         T1_zsprite_apply_anim_effects_to_id(
             /* const int32_t zsprite_id: */
@@ -281,10 +288,18 @@ static void T1_zsprite_anim_resolve_single(
                 t.applied,
             /* const float t_now: */
                 t.now,
-            /* const float * anim_gpu_vals: */
-                (float *)&anim->public.gpu_vals,
+            /* const float * anim_gpu_vals_f32: */
+                anim->public.gpu_vals_f32_active ?
+                    (float *)&anim->public.gpu_vals.f32 :
+                    NULL,
+            /* const int32_t * anim_gpu_vals_i32: */
+                anim->public.gpu_vals_i32_active ?
+                    (int32_t *)&anim->public.gpu_vals.i32 :
+                    NULL,
             /* const float * anim_cpu_vals: */
-                (float *)&anim->public.cpu_vals);
+                anim->public.cpu_vals_active ?
+                (float *)&anim->public.cpu_vals :
+                NULL);
     }
 }
 
@@ -312,20 +327,58 @@ void T1_zsprite_anim_commit_and_instarun(
     fas->mutex_unlock(fas->mutex_id);
 }
 
-void T1_zsprite_anim_commit(
-    T1zSpriteAnim * to_commit)
+void
+T1_zsprite_anim_assert_anim_valid_before_commit(
+    T1zSpriteAnim * to_check)
 {
-    fas->mutex_lock(fas->mutex_id);
-    
-    T1InternalzSpriteAnim * parent =
-        T1_zsprite_anim_get_container(to_commit);
-    log_assert(&parent->public == to_commit);
-    
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    T1InternalzSpriteAnim * parent =
+        T1_zsprite_anim_get_container(to_check);
+    log_assert(&parent->public == to_check);
+    
     if (parent->endpoints_not_deltas) {
+        
+        if (!parent->public.gpu_vals_f32_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1GPUzSpritef32) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((float *)&parent->
+                        public.gpu_vals.f32)[f_i] ==
+                    T1_ZSPRITEANIM_NO_EFFECT);
+            }
+        }
+        if (!parent->public.gpu_vals_i32_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1GPUzSpritei32) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((float *)&parent->
+                        public.gpu_vals.i32)[f_i] ==
+                    T1_ZSPRITEANIM_NO_EFFECT);
+            }
+        }
+        if (!parent->public.cpu_vals_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1CPUzSpriteSimdStats) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((float *)&parent->
+                        public.cpu_vals)[f_i] ==
+                    T1_ZSPRITEANIM_NO_EFFECT);
+            }
+        }
+        
         uint32_t skips = 0;
         
-        float * vals = (float *)(&parent->public.gpu_vals);
+        float * vals = (float *)
+            (&parent->public.gpu_vals);
         
         for (
             uint32_t i = 0;
@@ -343,15 +396,62 @@ void T1_zsprite_anim_commit(
         }
         
         log_assert(skips > 0);
+    } else {
+        if (!parent->public.gpu_vals_f32_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1GPUzSpritef32) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((float *)&parent->
+                        public.gpu_vals.f32)[f_i] ==
+                    0.0f);
+            }
+        }
+        if (!parent->public.gpu_vals_i32_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1GPUzSpritei32) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((int32_t *)&parent->
+                        public.gpu_vals.i32)[f_i] ==
+                    0);
+            }
+        }
+        if (!parent->public.cpu_vals_active) {
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1CPUzSpriteSimdStats) / 4);
+                f_i++)
+            {
+                log_assert(
+                    ((float *)&parent->
+                        public.cpu_vals)[f_i] ==
+                    0.0f);
+            }
+        }
     }
-    
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
+    log_assert(to_check->duration_us > 0);
+}
+
+void T1_zsprite_anim_commit(
+    T1zSpriteAnim * to_commit)
+{
+    fas->mutex_lock(fas->mutex_id);
     
-    log_assert(to_commit->duration_us > 0);
+    T1_zsprite_anim_assert_anim_valid_before_commit(to_commit);
+    
+    T1InternalzSpriteAnim * parent =
+        T1_zsprite_anim_get_container(to_commit);
+    log_assert(&parent->public == to_commit);
     
     if (to_commit->del_conflict_anims)
     {
@@ -545,12 +645,14 @@ void T1_zsprite_anim_shatter_and_destroy(
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
         log_assert(shattered_verts_size > 0);
-        shatter_effect->spawns_per_loop = (uint32_t)(
+        shatter_effect->spawns_per_loop =
+            (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
         shatter_effect->pause_per_spawn = 0;
         shatter_effect->verts_per_particle = 6;
-        shatter_effect->spawn_lifespan = duration_us;
+        shatter_effect->spawn_lifespan =
+            duration_us;
         shatter_effect->shattered = true;
         
         float xyz_dist = 0.02f;
@@ -619,8 +721,9 @@ void T1_zsprite_anim_fade_and_destroy(
     T1zSpriteAnim * fade_destroy = T1_zsprite_anim_request_next(true);
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
-    fade_destroy->gpu_vals.alpha = 0.0f;
+    fade_destroy->gpu_vals.f32.alpha = 0.0f;
     fade_destroy->del_obj_on_finish = true;
+    fade_destroy->gpu_vals_f32_active = true;
     T1_zsprite_anim_commit(fade_destroy);
 }
 
@@ -635,7 +738,8 @@ void T1_zsprite_anim_fade_to(
     T1zSpriteAnim * modify_alpha = T1_zsprite_anim_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
-    modify_alpha->gpu_vals.alpha = target_alpha;
+    modify_alpha->gpu_vals.f32.alpha = target_alpha;
+    modify_alpha->gpu_vals_f32_active = true;
     T1_zsprite_anim_commit(modify_alpha);
 }
 

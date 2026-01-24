@@ -32,7 +32,9 @@ T1NextUIElementSettings * next_ui_element_settings = NULL;
 uint32_t active_ui_elements_size = 0;
 ActiveUIElement * active_ui_elements = NULL;
 
-static ActiveUIElement * next_active_ui_element(void) {
+static ActiveUIElement *
+next_active_ui_element(void)
+{
     #if 0
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         if (active_ui_elements[i].deleted) {

@@ -6,17 +6,23 @@ static void assert_sanity_check_zsprite_vals(
     T1CPUzSpriteSimdStats * recip_cpu)
 {
     if (recip_gpu) {
-        log_assert(recip_gpu->ignore_camera >= -0.05f);
-        log_assert(recip_gpu->ignore_camera <= 1.05f);
-        log_assert(recip_gpu->ignore_lighting >= -0.05f);
-        log_assert(recip_gpu->ignore_lighting <= 1.05f);
-        log_assert(recip_gpu->remove_shadow >= 0);
-        log_assert(recip_gpu->remove_shadow <= 1);
-        log_assert(recip_gpu->alpha >= -0.1f);
-        log_assert(recip_gpu->alpha <=  1.1f);
-        log_assert(recip_gpu->bonus_rgb[0] < 3.0f);
-        log_assert(recip_gpu->bonus_rgb[1] < 3.0f);
-        log_assert(recip_gpu->bonus_rgb[2] < 3.0f);
+        log_assert(recip_gpu->f32.
+            ignore_camera >= -0.05f);
+        log_assert(recip_gpu->f32.
+            ignore_camera <= 1.05f);
+        log_assert(recip_gpu->f32.
+            ignore_lighting >= -0.05f);
+        log_assert(recip_gpu->f32.
+            ignore_lighting <= 1.05f);
+        log_assert(recip_gpu->i32.
+            remove_shadow >= 0);
+        log_assert(recip_gpu->i32.
+            remove_shadow <= 1);
+        log_assert(recip_gpu->f32.alpha >= -0.1f);
+        log_assert(recip_gpu->f32.alpha <=  1.1f);
+        log_assert(recip_gpu->f32.bonus_rgb[0] < 3.0f);
+        log_assert(recip_gpu->f32.bonus_rgb[1] < 3.0f);
+        log_assert(recip_gpu->f32.bonus_rgb[2] < 3.0f);
     }
     
     if (recip_cpu) {
@@ -50,27 +56,6 @@ void T1_zsprite_init(void) {
         T1_mem_malloc_from_unmanaged(
             sizeof(T1zSpriteCollection));
     T1_zsprite_list->size = 0;
-    
-    
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    // This should be the first int32 attribute
-    int32_t i32_props_start = offsetof(T1GPUzSprite, base_mat_i32);
-    // we expect this to be next
-    int32_t next_i32 = offsetof(T1GPUzSprite, remove_shadow);
-    log_assert(next_i32 == i32_props_start + (int32_t)sizeof(T1GPUConstMati32));
-    // ...and the float values before that
-    // should be simd-padded, I think for 8 floats
-    log_assert(((i32_props_start / 4) % 8) == 0);
-    
-    int32_t i32_size =
-        (int32_t)sizeof(T1GPUzSprite) - i32_props_start;
-    
-    // again should be simd-padded, again for 8
-    log_assert(((i32_size / 4) % 8) == 0);
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
 }
 
 void T1_zsprite_fetch_next(
@@ -285,14 +270,14 @@ void T1_zsprite_construct_with_mesh_id(
             T1_objmodel_mesh_summaries[mesh_id].locked_material_head_i +
             T1_objmodel_mesh_summaries[mesh_id].locked_material_base_offset;
         
-        to_construct->gpu_data->base_mat_f32 =
+        to_construct->gpu_data->f32.base_mat_f32 =
             all_mesh_materials->gpu_f32[base_mat_i];
-        to_construct->gpu_data->base_mat_i32 =
+        to_construct->gpu_data->i32.base_mat_i32 =
             all_mesh_materials->gpu_i32[base_mat_i];
         
         T1_material_construct(
-            &to_construct->gpu_data->base_mat_f32,
-            &to_construct->gpu_data->base_mat_i32);
+            &to_construct->gpu_data->f32.base_mat_f32,
+            &to_construct->gpu_data->i32.base_mat_i32);
     }
 }
 
@@ -314,8 +299,8 @@ void T1_zsprite_construct(
     to_construct->cpu_data->simd_stats.mul_xyz[0] = 1.0f;
     to_construct->cpu_data->simd_stats.mul_xyz[1] = 1.0f;
     to_construct->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
-    to_construct->gpu_data->touch_id = -1;
-    to_construct->gpu_data->alpha = 1.0f;
+    to_construct->gpu_data->i32.touch_id = -1;
+    to_construct->gpu_data->f32.alpha = 1.0f;
     
     to_construct->cpu_data->simd_stats.scale_factor = 1.0f;
     to_construct->cpu_data->mesh_id = -1;
@@ -323,19 +308,19 @@ void T1_zsprite_construct(
     to_construct->cpu_data->visible = true;
     
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    to_construct->gpu_data->outline_alpha = -1.0f;
+    to_construct->gpu_data->f32.outline_alpha = -1.0f;
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    to_construct->gpu_data->mix_project_rv_i = -1;
-    to_construct->gpu_data->mix_project_array_i = -1;
-    to_construct->gpu_data->mix_project_slice_i = -1;
+    to_construct->gpu_data->i32.mix_project_rv_i = -1;
+    to_construct->gpu_data->i32.mix_project_array_i = -1;
+    to_construct->gpu_data->i32.mix_project_slice_i = -1;
     
     T1_material_construct(
-        &to_construct->gpu_data->base_mat_f32,
-        &to_construct->gpu_data->base_mat_i32);
+        &to_construct->gpu_data->f32.base_mat_f32,
+        &to_construct->gpu_data->i32.base_mat_i32);
 }
 
 void zsprite_construct_quad(
@@ -359,7 +344,7 @@ void zsprite_construct_quad(
     stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
     stack_recipient->cpu_data->simd_stats.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
-    stack_recipient->gpu_data->ignore_camera = false;
+    stack_recipient->gpu_data->f32.ignore_camera = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     stack_recipient->cpu_data->mesh_id = 0;
@@ -458,110 +443,120 @@ void T1_zsprite_anim_apply_effects_at_t(
     const float t_applied,
     const float t_now,
     const float * anim_gpu_f32s,
+    const int32_t * anim_gpu_i32s,
     const float * anim_cpu_vals,
     T1GPUzSprite * recip_gpu,
     T1CPUzSpriteSimdStats * recip_cpu)
 {
     SIMD_FLOAT simd_t_now = simd_set1_float(t_now);
-    SIMD_FLOAT simd_t_b4  = simd_set1_float(t_applied);
+    SIMD_FLOAT simd_t_b4  =
+        simd_set1_float(t_applied);
     
-    log_assert((offsetof(T1GPUzSprite, base_mat_i32) / 4) % SIMD_FLOAT_LANES == 0);
-    log_assert((sizeof(T1CPUzSpriteSimdStats) / 4) % SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1GPUzSpritef32) / 4) %
+        SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1GPUzSpritei32) / 4) %
+        SIMD_INT32_LANES == 0);
+    log_assert((sizeof(T1CPUzSpriteSimdStats) / 4) %
+        SIMD_INT32_LANES == 0);
     
     assert_sanity_check_zsprite_vals(
         recip_gpu,
         recip_cpu);
     
-    float * target_vals_ptr = (float *)recip_gpu;
-    
-    // Float values
-    for (
-        uint32_t simd_step_i = 0;
-        (simd_step_i * sizeof(float)) < offsetof(T1GPUzSprite, base_mat_i32);
-        simd_step_i += SIMD_FLOAT_LANES)
-    {
-        SIMD_FLOAT simd_anim_vals =
-            simd_load_floats(
-                (anim_gpu_f32s + simd_step_i));
-        SIMD_FLOAT simd_target_vals =
-            simd_load_floats(
-                (target_vals_ptr + simd_step_i));
+    if (anim_gpu_f32s) {
+        float * target_vals_ptr =
+            (float *)(&recip_gpu->f32);
         
-        SIMD_FLOAT simd_t_now_deltas =
-            simd_mul_floats(
-                simd_anim_vals,
-                simd_t_now);
-        SIMD_FLOAT simd_t_previous_deltas =
-            simd_mul_floats(
-                simd_anim_vals,
-                simd_t_b4);
+        for (
+            uint32_t simd_step_i = 0;
+            (simd_step_i * sizeof(float)) < sizeof(T1GPUzSpritef32);
+            simd_step_i += SIMD_FLOAT_LANES)
+        {
+            SIMD_FLOAT simd_anim_vals =
+                simd_load_floats(
+                    (anim_gpu_f32s + simd_step_i));
+            SIMD_FLOAT simd_target_vals =
+                simd_load_floats(
+                    (target_vals_ptr + simd_step_i));
+            
+            SIMD_FLOAT simd_t_now_deltas =
+                simd_mul_floats(
+                    simd_anim_vals,
+                    simd_t_now);
+            SIMD_FLOAT simd_t_previous_deltas =
+                simd_mul_floats(
+                    simd_anim_vals,
+                    simd_t_b4);
+            
+            simd_t_now_deltas = simd_sub_floats(
+                simd_t_now_deltas,
+                simd_t_previous_deltas);
+            
+            simd_store_floats(
+                (target_vals_ptr + simd_step_i),
+                simd_add_floats(
+                    simd_target_vals,
+                    simd_t_now_deltas));
+        }
         
-        simd_t_now_deltas = simd_sub_floats(
-            simd_t_now_deltas,
-            simd_t_previous_deltas);
-        
-        simd_store_floats(
-            (target_vals_ptr + simd_step_i),
-            simd_add_floats(
-                simd_target_vals,
-                simd_t_now_deltas));
+        assert_sanity_check_zsprite_vals(
+            recip_gpu,
+            recip_cpu);
     }
     
-    assert_sanity_check_zsprite_vals(
-        recip_gpu,
-        recip_cpu);
-    
-    int32_t * anim_gpu_i32s = (int32_t *)((char *)anim_gpu_f32s + offsetof(T1GPUzSprite, base_mat_i32));
-    int32_t * target_i32s_ptr = (int32_t *)(&recip_gpu->base_mat_i32);
-    
-    // Int32 values
-    for (
-        uint32_t simd_step_i = 0;
-        (simd_step_i * sizeof(int32_t)) < (sizeof(T1GPUzSprite) - offsetof(T1GPUzSprite, base_mat_i32));
-        simd_step_i += SIMD_INT32_LANES)
-    {
-        SIMD_FLOAT simd_anim_vals_f32 =
-            simd_cast_int32s_to_floats(
-                simd_load_int32s(
-                (anim_gpu_i32s + simd_step_i)));
+    if (anim_gpu_i32s) {
+        int32_t * target_i32s_ptr = (int32_t *)
+            (&recip_gpu->i32);
         
-        SIMD_FLOAT simd_target_vals_f32 =
-            simd_cast_int32s_to_floats(
-                simd_load_int32s(
-                (target_i32s_ptr + simd_step_i)));
+        // Int32 values
+        for (
+            uint32_t simd_step_i = 0;
+            (simd_step_i * sizeof(int32_t)) < sizeof(T1GPUzSpritei32);
+            simd_step_i += SIMD_INT32_LANES)
+        {
+            SIMD_FLOAT simd_anim_vals_f32 =
+                simd_cast_int32s_to_floats(
+                    simd_load_int32s(
+                    (anim_gpu_i32s + simd_step_i)));
+            
+            SIMD_FLOAT simd_target_vals_f32 =
+                simd_cast_int32s_to_floats(
+                    simd_load_int32s(
+                    (target_i32s_ptr + simd_step_i)));
+            
+            SIMD_FLOAT simd_t_now_deltas =
+                simd_mul_floats(
+                    simd_anim_vals_f32,
+                    simd_t_now);
+            SIMD_FLOAT simd_t_previous_deltas =
+                simd_mul_floats(
+                    simd_anim_vals_f32,
+                    simd_t_b4);
+            
+            simd_t_now_deltas = simd_sub_floats(
+                simd_t_now_deltas,
+                simd_t_previous_deltas);
+            
+            SIMD_FLOAT result = simd_add_floats(
+                simd_target_vals_f32,
+                simd_t_now_deltas);
+            
+            SIMD_INT32 result_i32 =
+                simd_cast_floats_to_int32s(result);
+            
+            simd_store_int32s(
+                target_i32s_ptr + simd_step_i,
+                result_i32);
+        }
         
-        SIMD_FLOAT simd_t_now_deltas =
-            simd_mul_floats(
-                simd_anim_vals_f32,
-                simd_t_now);
-        SIMD_FLOAT simd_t_previous_deltas =
-            simd_mul_floats(
-                simd_anim_vals_f32,
-                simd_t_b4);
-        
-        simd_t_now_deltas = simd_sub_floats(
-            simd_t_now_deltas,
-            simd_t_previous_deltas);
-        
-        SIMD_FLOAT result = simd_add_floats(
-            simd_target_vals_f32,
-            simd_t_now_deltas);
-        
-        SIMD_INT32 result_i32 =
-            simd_cast_floats_to_int32s(result);
-        
-        simd_store_int32s(
-            anim_gpu_i32s + simd_step_i,
-            result_i32);
+        assert_sanity_check_zsprite_vals(
+            recip_gpu,
+            recip_cpu);
     }
     
-    target_vals_ptr = (float *)recip_cpu;
+    if (!anim_cpu_vals) { return; }
     
-    assert_sanity_check_zsprite_vals(
-        recip_gpu,
-        recip_cpu);
-    
-    if (!target_vals_ptr) { return; }
+    float * target_vals_ptr = (float *)recip_cpu;
     
     for (
         uint32_t simd_step_i = 0;
@@ -604,7 +599,8 @@ void T1_zsprite_apply_anim_effects_to_id(
     const int32_t touch_id,
     const float t_applied,
     const float t_now,
-    const float * anim_gpu_vals,
+    const float * anim_gpu_vals_f32,
+    const int32_t * anim_gpu_vals_i32,
     const float * anim_cpu_vals)
 {
     for (
@@ -617,7 +613,7 @@ void T1_zsprite_apply_anim_effects_to_id(
             T1_zsprite_list->cpu_data[zp_i].
                 zsprite_id != zsprite_id) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu_data[zp_i].
+            T1_zsprite_list->gpu_data[zp_i].i32.
                 touch_id != touch_id) ||
             T1_zsprite_list->cpu_data[zp_i].deleted)
         {
@@ -629,8 +625,10 @@ void T1_zsprite_apply_anim_effects_to_id(
                 t_applied,
             /* const float t_now: */
                 t_now,
-            /* const float * anim_gpu_vals: */
-                anim_gpu_vals,
+            /* const float * anim_gpu_f32s: */
+                anim_gpu_vals_f32,
+            /* const int32_t * anim_gpu_i32s: */
+                anim_gpu_vals_i32,
             /* const float * anim_cpu_vals: */
                 anim_cpu_vals,
             /* T1GPUzSprite * recip_gpu: */
@@ -646,7 +644,8 @@ void T1_zsprite_apply_endpoint_anim(
     const int32_t touch_id,
     const float t_applied,
     const float t_now,
-    const float * goal_gpu_vals,
+    const float * goal_gpu_vals_f32,
+    const int32_t * goal_gpu_vals_i32,
     const float * goal_cpu_vals)
 {
     // When t is 1.0f, all of our stats will
@@ -670,7 +669,7 @@ void T1_zsprite_apply_endpoint_anim(
             T1_zsprite_list->cpu_data[zp_i].
                 zsprite_id != zsprite_id) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu_data[zp_i].
+            T1_zsprite_list->gpu_data[zp_i].i32.
                 touch_id != touch_id) ||
             T1_zsprite_list->cpu_data[zp_i].deleted)
         {
@@ -679,195 +678,190 @@ void T1_zsprite_apply_endpoint_anim(
         
         assert_sanity_check_zsprite_vals_by_id(zp_i);
         
-        float * recip_vals_cpu = (float *)
+        if (goal_cpu_vals) {
+            float * recip_vals_cpu = (float *)
             &T1_zsprite_list->cpu_data[zp_i].
                 simd_stats;
-        
-        for (
-            uint32_t simd_step_i = 0;
-            (simd_step_i * sizeof(float)) <
-                sizeof(T1CPUzSpriteSimdStats);
-            simd_step_i += SIMD_FLOAT_LANES)
-        {
-            SIMD_FLOAT simd_goal_vals =
-                simd_load_floats((goal_cpu_vals +
-                    simd_step_i));
             
-            SIMD_FLOAT simd_cur_vals =
-                simd_load_floats((recip_vals_cpu +
-                    simd_step_i));
-            
-            SIMD_FLOAT delta_to_goal =
-                simd_sub_floats(
-                    simd_goal_vals,
-                    simd_cur_vals);
-            
-            delta_to_goal = simd_mul_floats(delta_to_goal, simd_t);
-            
-            SIMD_FLOAT flags = simd_not_floats(
-                simd_cmpeq_floats(
-                    simd_goal_vals,
-                    simd_noeffect));
-            
-            delta_to_goal = simd_and_floats(
-                delta_to_goal, flags);
-            
-            simd_cur_vals = simd_add_floats(
-                simd_cur_vals,
-                delta_to_goal);
-            
-            simd_store_floats(
-                recip_vals_cpu + simd_step_i,
-                simd_cur_vals);
-        }
-        
-        float * recip_vals_gpu = (float *)
-            &T1_zsprite_list->gpu_data[zp_i];
-        
-        for (
-            uint32_t simd_step_i = 0;
-            (simd_step_i * sizeof(float)) < offsetof(T1GPUzSprite, base_mat_i32);
-            simd_step_i += SIMD_FLOAT_LANES)
-        {
-            SIMD_FLOAT simd_goal_vals =
-                simd_load_floats(
-                    (goal_gpu_vals + simd_step_i));
-            
-            SIMD_FLOAT simd_cur_vals =
-                simd_load_floats(
-                    (recip_vals_gpu + simd_step_i));
-            
-            SIMD_FLOAT delta_to_goal =
-                simd_sub_floats(
-                    simd_goal_vals, simd_cur_vals);
-            
-            delta_to_goal = simd_mul_floats(
-                delta_to_goal,
-                simd_t);
-            
-            SIMD_FLOAT flags = simd_not_floats(
-                simd_cmpeq_floats(
-                    simd_goal_vals,
-                    simd_noeffect));
-            
-            delta_to_goal = simd_and_floats(
-                delta_to_goal, flags);
-            
-            simd_cur_vals = simd_add_floats(
-                simd_cur_vals,
-                delta_to_goal);
-            
-            simd_store_floats(
-                recip_vals_gpu + simd_step_i,
-                simd_cur_vals);
-        }
-        
-        assert_sanity_check_zsprite_vals_by_id(zp_i);
-        
-        int32_t * recip_vals_i32 = (int32_t *)
-            (((void *)
-                &T1_zsprite_list->gpu_data[zp_i]) +
-                    offsetof(
-                        T1GPUzSprite,
-                        base_mat_i32));
-        log_assert(recip_vals_i32[0] ==
-            T1_zsprite_list->gpu_data[zp_i].base_mat_i32.texturearray_i);
-        int32_t * goal_gpu_i32s = (int32_t *)
-            (((void *)goal_gpu_vals) +
-                offsetof(
-                    T1GPUzSprite,
-                    base_mat_i32));
-        
-        log_assert(goal_gpu_i32s[0] ==
-            ((T1GPUzSprite *)goal_gpu_vals)->
-                base_mat_i32.texturearray_i);
-        
-        for (
-            uint32_t simd_step_i = 0;
-            (simd_step_i * sizeof(float)) <
-                (sizeof(T1GPUzSprite) -
-                    offsetof(
-                        T1GPUzSprite,
-                        base_mat_i32));
-            simd_step_i += SIMD_FLOAT_LANES)
-        {
-            SIMD_INT32 simd_goal_i32s =
-                simd_load_int32s(
-                    (goal_gpu_i32s + simd_step_i));
-            
-            SIMD_INT32 results_i32;
-            
-            SIMD_FLOAT simd_flags_f32 =
-                simd_load_floats(
-                    ((float *)goal_gpu_i32s + simd_step_i));
-            
-            simd_flags_f32 = simd_cmpeq_floats(
-                simd_flags_f32,
-                simd_noeffect);
-            
-            SIMD_INT32 simd_cur_i32s =
-                    simd_load_int32s(
-                        (recip_vals_i32 + simd_step_i));
-            
-            if (t_mult != 1.0f) {
+            for (
+                uint32_t simd_step_i = 0;
+                (simd_step_i * sizeof(float)) <
+                    sizeof(T1CPUzSpriteSimdStats);
+                simd_step_i += SIMD_FLOAT_LANES)
+            {
+                SIMD_FLOAT simd_goal_vals =
+                    simd_load_floats((goal_cpu_vals +
+                        simd_step_i));
                 
-                // Not every int32 is representable
-                // by floats, so this code path
-                // only works for very small values
-                // use at own risk
-                return;
-                log_assert(0);
-                
-                SIMD_FLOAT simd_goal_f32s =
-                    simd_cast_int32s_to_floats(
-                        simd_goal_i32s);
-                
-                SIMD_FLOAT simd_cur_f32s =
-                    simd_cast_int32s_to_floats(
-                        simd_cur_i32s);
+                SIMD_FLOAT simd_cur_vals =
+                    simd_load_floats((recip_vals_cpu +
+                        simd_step_i));
                 
                 SIMD_FLOAT delta_to_goal =
-                simd_sub_floats(
-                    simd_goal_f32s,
-                    simd_cur_f32s);
+                    simd_sub_floats(
+                        simd_goal_vals,
+                        simd_cur_vals);
+                
+                delta_to_goal = simd_mul_floats(delta_to_goal, simd_t);
+                
+                SIMD_FLOAT flags = simd_not_floats(
+                    simd_cmpeq_floats(
+                        simd_goal_vals,
+                        simd_noeffect));
+                
+                delta_to_goal = simd_and_floats(
+                    delta_to_goal, flags);
+                
+                simd_cur_vals = simd_add_floats(
+                    simd_cur_vals,
+                    delta_to_goal);
+                
+                simd_store_floats(
+                    recip_vals_cpu + simd_step_i,
+                    simd_cur_vals);
+            }
+        }
+        
+        if (goal_gpu_vals_f32) {
+            float * recip_vals_gpu = (float *)
+                &T1_zsprite_list->gpu_data[zp_i].
+                    f32;
+            
+            for (
+                uint32_t simd_step_i = 0;
+                (simd_step_i * sizeof(float)) < sizeof(T1GPUzSpritef32);
+                simd_step_i += SIMD_FLOAT_LANES)
+            {
+                SIMD_FLOAT simd_goal_vals =
+                    simd_load_floats(
+                        (goal_gpu_vals_f32 +
+                            simd_step_i));
+                
+                SIMD_FLOAT simd_cur_vals =
+                    simd_load_floats(
+                        (recip_vals_gpu +
+                            simd_step_i));
+                
+                SIMD_FLOAT delta_to_goal =
+                    simd_sub_floats(
+                        simd_goal_vals,
+                            simd_cur_vals);
                 
                 delta_to_goal = simd_mul_floats(
                     delta_to_goal,
                     simd_t);
                 
-                delta_to_goal = simd_and_floats(
-                    delta_to_goal,
-                    simd_not_floats(simd_flags_f32));
+                SIMD_FLOAT flags = simd_not_floats(
+                    simd_cmpeq_floats(
+                        simd_goal_vals,
+                        simd_noeffect));
                 
-                simd_cur_f32s = simd_add_floats(
-                    simd_cur_f32s,
+                delta_to_goal = simd_and_floats(
+                    delta_to_goal, flags);
+                
+                simd_cur_vals = simd_add_floats(
+                    simd_cur_vals,
                     delta_to_goal);
                 
-                results_i32 =
-                    simd_cast_floats_to_int32s(
-                        simd_cur_f32s);
-            } else {
-                SIMD_INT32 simd_flags_i32s;
-                T1_std_memcpy(
-                    &simd_flags_i32s,
-                    &simd_flags_f32,
-                    sizeof(SIMD_FLOAT));
-                
-                results_i32 = simd_add_int32s(
-                    simd_and_int32s(
-                        simd_goal_i32s,
-                        simd_not_int32s(simd_flags_i32s)),
-                    simd_and_int32s(
-                        simd_cur_i32s,
-                        simd_flags_i32s));
+                simd_store_floats(
+                    recip_vals_gpu + simd_step_i,
+                    simd_cur_vals);
             }
             
-            simd_store_int32s(
-                recip_vals_i32 + simd_step_i,
-                results_i32);
+            assert_sanity_check_zsprite_vals_by_id(zp_i);
         }
         
-        assert_sanity_check_zsprite_vals_by_id(zp_i);
+        if (goal_gpu_vals_i32) {
+            int32_t * recip_vals_i32 = (int32_t *)
+                &T1_zsprite_list->gpu_data[zp_i].i32;
+            log_assert(recip_vals_i32[0] ==
+                T1_zsprite_list->gpu_data[zp_i].i32.base_mat_i32.texturearray_i);
+            
+            for (
+                uint32_t simd_step_i = 0;
+                (simd_step_i * sizeof(int32_t)) <
+                    sizeof(T1GPUzSpritei32);
+                simd_step_i += SIMD_FLOAT_LANES)
+            {
+                SIMD_INT32 simd_goal_i32s =
+                    simd_load_int32s(
+                        (goal_gpu_vals_i32 +
+                            simd_step_i));
+                
+                SIMD_INT32 results_i32;
+                
+                SIMD_FLOAT simd_flags_f32 =
+                    simd_load_floats(
+                        ((float *)goal_gpu_vals_i32 + simd_step_i));
+                
+                simd_flags_f32 = simd_cmpeq_floats(
+                    simd_flags_f32,
+                    simd_noeffect);
+                
+                SIMD_INT32 simd_cur_i32s =
+                    simd_load_int32s(
+                        (recip_vals_i32 + simd_step_i));
+                
+                if (t_mult != 1.0f) {
+                    
+                    // Not every int32 is representable
+                    // by floats, so this code path
+                    // only works for very small values
+                    // use at own risk
+                    return;
+                    log_assert(0);
+                    
+                    SIMD_FLOAT simd_goal_f32s =
+                        simd_cast_int32s_to_floats(
+                            simd_goal_i32s);
+                    
+                    SIMD_FLOAT simd_cur_f32s =
+                        simd_cast_int32s_to_floats(
+                            simd_cur_i32s);
+                    
+                    SIMD_FLOAT delta_to_goal =
+                    simd_sub_floats(
+                        simd_goal_f32s,
+                        simd_cur_f32s);
+                    
+                    delta_to_goal = simd_mul_floats(
+                        delta_to_goal,
+                        simd_t);
+                    
+                    delta_to_goal = simd_and_floats(
+                        delta_to_goal,
+                        simd_not_floats(simd_flags_f32));
+                    
+                    simd_cur_f32s = simd_add_floats(
+                        simd_cur_f32s,
+                        delta_to_goal);
+                    
+                    results_i32 =
+                        simd_cast_floats_to_int32s(
+                            simd_cur_f32s);
+                } else {
+                    SIMD_INT32 simd_flags_i32s;
+                    T1_std_memcpy(
+                        &simd_flags_i32s,
+                        &simd_flags_f32,
+                        sizeof(SIMD_FLOAT));
+                    
+                    results_i32 = simd_add_int32s(
+                        simd_and_int32s(
+                            simd_goal_i32s,
+                            simd_not_int32s(simd_flags_i32s)),
+                        simd_and_int32s(
+                            simd_cur_i32s,
+                            simd_flags_i32s));
+                }
+                
+                simd_store_int32s(
+                    recip_vals_i32 + simd_step_i,
+                    results_i32);
+            }
+            
+            assert_sanity_check_zsprite_vals_by_id(zp_i);
+        }
     }
 }
 
@@ -881,6 +875,13 @@ void T1_zsprite_set_occlusion(
         zp_i < (int32_t)T1_zsprite_list->size;
         zp_i++)
     {
+        if (
+            T1_zsprite_list->cpu_data[zp_i].
+                zsprite_id != zsprite_id)
+        {
+            continue;
+        }
+        
         if (!new_visible_stat)
         {
             if (wait_before_invis_us > 0)
@@ -953,19 +954,19 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         }
     }
     
-    if (zs->ignore_camera == new_ignore_camera)
+    if (zs->f32.ignore_camera == new_ignore_camera)
     {
         return;
     }
     
     // For now we're only supporting the easy case of a full toggle
     bool32_t is_near_zero =
-        zs->ignore_camera > -0.01f &&
-        zs->ignore_camera <  0.01f;
+        zs->f32.ignore_camera > -0.01f &&
+        zs->f32.ignore_camera <  0.01f;
     #if T1_LOGGER_ASSERTS_ACTIVE
     bool32_t is_near_one =
-        zs->ignore_camera >  0.99f &&
-        zs->ignore_camera <  1.01f;
+        zs->f32.ignore_camera >  0.99f &&
+        zs->f32.ignore_camera <  1.01f;
     #endif
     log_assert(is_near_zero || is_near_one);
     
@@ -986,7 +987,7 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         zs_cpu->simd_stats.angle_xyz[2] -= T1_camera->xyz_angle[2];
         #endif
         
-        zs->ignore_camera = 1.0f;
+        zs->f32.ignore_camera = 1.0f;
     } else {
         log_assert(is_near_one);
         
@@ -1005,7 +1006,7 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         zs_cpu->simd_stats.angle_xyz[2] += T1_camera->xyz_angle[2];
         #endif
         
-        zs->ignore_camera = 0.0f;
+        zs->f32.ignore_camera = 0.0f;
     }
 }
 
@@ -1029,7 +1030,36 @@ void T1_zsprite_copy_to_frame_data(
         i++)
     {
         recip_ids[i].zsprite_id = T1_zsprite_list->cpu_data[i].zsprite_id;
-        recip_ids[i].touch_id = T1_zsprite_list->gpu_data[i].touch_id;
+        recip_ids[i].touch_id = T1_zsprite_list->gpu_data[i].i32.
+                touch_id;
+        
+        // TODO:
+        // remove client specific debug code
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        for (
+            int32_t zp_i = 0;
+            zp_i < (int32_t)T1_zsprite_list->size;
+            zp_i++)
+        {
+            int32_t touch_id = T1_zsprite_list->
+                gpu_data[zp_i].i32.touch_id;
+            
+            if (touch_id > 500000) {
+                // zp_i 575
+                // zsprite_id 1125
+                // touch_id	int32_t	1074135040
+                int16_t x = ((touch_id >> 16) & ((1 << 13)-1));
+                int16_t y = ((touch_id >>  3) & ((1 << 13)-1));
+                int16_t z = (touch_id & ((1 << 3)-1));
+                log_assert(x >= 1);
+                log_assert(y >= 1);
+                log_assert(z >= 0);
+            }
+        }
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
     }
     
     *recip_size = T1_zsprite_list->size;

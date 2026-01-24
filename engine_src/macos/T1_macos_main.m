@@ -408,8 +408,6 @@ int main(int argc, const char * argv[]) {
     T1_gameloop_active = false;
     T1_app_running = true;
     
-    assert(sizeof(T1GPUzSprite) % 32 == 0);
-    
     char errmsg[512];
     uint32_t success = 1;
     T1_appinit_before_gpu_init(

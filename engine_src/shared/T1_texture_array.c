@@ -651,7 +651,8 @@ void T1_texture_array_preregister_null_image(
         T1_texture_arrays[new_texturearray_i].
             is_render_target = is_render_target;
         T1_texture_arrays[new_texturearray_i].
-            bc1_compressed = use_bc1_compression;
+            bc1_compressed =
+                use_bc1_compression;
     }
     
     T1_std_strcpy_cap(
@@ -763,7 +764,8 @@ void T1_texture_array_postregister_null_image(
         T1_texture_arrays[new_array_i].
             is_render_target = is_render_target;
         T1_texture_arrays[new_array_i].
-            bc1_compressed = use_bc1_compression;
+            bc1_compressed =
+                use_bc1_compression;
     }
     
     T1_std_strcpy_cap(
