@@ -132,10 +132,16 @@ void T1_zsprite_apply_anim_effects_to_id(
     const int32_t * anim_gpu_vals_i32,
     const float * anim_cpu_vals);
 
+#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
 void T1_zsprite_set_occlusion(
     const int32_t zsprite_id,
     const int32_t new_visible_stat,
     const uint64_t wait_before_invis_us);
+#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
+#define T1_zsprite_set_occlusion(a, b, c)
+#else
+#error
+#endif
 
 void T1_zsprite_handle_timed_occlusion(void);
 

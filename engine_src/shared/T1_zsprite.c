@@ -505,6 +505,8 @@ void T1_zsprite_anim_apply_effects_at_t(
     }
     
     if (anim_gpu_i32s) {
+        log_assert(t_now == 1.0f);
+        
         int32_t * target_i32s_ptr = (int32_t *)
             (&recip_gpu->i32);
         
@@ -514,39 +516,22 @@ void T1_zsprite_anim_apply_effects_at_t(
             (simd_step_i * sizeof(int32_t)) < sizeof(T1GPUzSpritei32);
             simd_step_i += SIMD_INT32_LANES)
         {
-            SIMD_FLOAT simd_anim_vals_f32 =
-                simd_cast_int32s_to_floats(
-                    simd_load_int32s(
-                    (anim_gpu_i32s + simd_step_i)));
+            SIMD_INT32 simd_add_i32s =
+                simd_load_int32s(
+                    (anim_gpu_i32s + simd_step_i));
             
-            SIMD_FLOAT simd_target_vals_f32 =
-                simd_cast_int32s_to_floats(
-                    simd_load_int32s(
-                    (target_i32s_ptr + simd_step_i)));
-            
-            SIMD_FLOAT simd_t_now_deltas =
-                simd_mul_floats(
-                    simd_anim_vals_f32,
-                    simd_t_now);
-            SIMD_FLOAT simd_t_previous_deltas =
-                simd_mul_floats(
-                    simd_anim_vals_f32,
-                    simd_t_b4);
-            
-            simd_t_now_deltas = simd_sub_floats(
-                simd_t_now_deltas,
-                simd_t_previous_deltas);
-            
-            SIMD_FLOAT result = simd_add_floats(
-                simd_target_vals_f32,
-                simd_t_now_deltas);
-            
-            SIMD_INT32 result_i32 =
-                simd_cast_floats_to_int32s(result);
+            SIMD_INT32 simd_cur_i32s =
+                simd_load_int32s(
+                    (target_i32s_ptr +
+                        simd_step_i));
+                        
+            SIMD_INT32 result = simd_add_int32s(
+                simd_cur_i32s,
+                simd_add_i32s);
             
             simd_store_int32s(
                 target_i32s_ptr + simd_step_i,
-                result_i32);
+                result);
         }
         
         assert_sanity_check_zsprite_vals(
@@ -772,10 +757,17 @@ void T1_zsprite_apply_endpoint_anim(
         }
         
         if (goal_gpu_vals_i32) {
+            int32_t zero_i32 = 0;
+            SIMD_INT32 simd_all_zeros =
+                simd_set1_int32s(zero_i32);
+            
             int32_t * recip_vals_i32 = (int32_t *)
                 &T1_zsprite_list->gpu_data[zp_i].i32;
             log_assert(recip_vals_i32[0] ==
                 T1_zsprite_list->gpu_data[zp_i].i32.base_mat_i32.texturearray_i);
+            
+            log_assert(t_applied == 0.0f);
+            log_assert(t_now == 1.0f);
             
             for (
                 uint32_t simd_step_i = 0;
@@ -788,7 +780,9 @@ void T1_zsprite_apply_endpoint_anim(
                         (goal_gpu_vals_i32 +
                             simd_step_i));
                 
-                SIMD_INT32 results_i32;
+                SIMD_INT32 simd_cur_i32s =
+                    simd_load_int32s(
+                        (recip_vals_i32 + simd_step_i));
                 
                 SIMD_FLOAT simd_flags_f32 =
                     simd_load_floats(
@@ -797,63 +791,31 @@ void T1_zsprite_apply_endpoint_anim(
                 simd_flags_f32 = simd_cmpeq_floats(
                     simd_flags_f32,
                     simd_noeffect);
+                SIMD_INT32 simd_flags_i32;
+                T1_std_memcpy(
+                    &simd_flags_i32,
+                    &simd_flags_f32,
+                    sizeof(SIMD_INT32));
                 
-                SIMD_INT32 simd_cur_i32s =
-                    simd_load_int32s(
-                        (recip_vals_i32 + simd_step_i));
+                int32_t t_now_i32 = (int32_t)t_now;
+                SIMD_INT32 simd_t_now_i32 = simd_set1_int32s(t_now_i32);
                 
-                if (t_mult != 1.0f) {
-                    
-                    // Not every int32 is representable
-                    // by floats, so this code path
-                    // only works for very small values
-                    // use at own risk
-                    return;
-                    log_assert(0);
-                    
-                    SIMD_FLOAT simd_goal_f32s =
-                        simd_cast_int32s_to_floats(
-                            simd_goal_i32s);
-                    
-                    SIMD_FLOAT simd_cur_f32s =
-                        simd_cast_int32s_to_floats(
-                            simd_cur_i32s);
-                    
-                    SIMD_FLOAT delta_to_goal =
-                    simd_sub_floats(
-                        simd_goal_f32s,
-                        simd_cur_f32s);
-                    
-                    delta_to_goal = simd_mul_floats(
-                        delta_to_goal,
-                        simd_t);
-                    
-                    delta_to_goal = simd_and_floats(
-                        delta_to_goal,
-                        simd_not_floats(simd_flags_f32));
-                    
-                    simd_cur_f32s = simd_add_floats(
-                        simd_cur_f32s,
-                        delta_to_goal);
-                    
-                    results_i32 =
-                        simd_cast_floats_to_int32s(
-                            simd_cur_f32s);
-                } else {
-                    SIMD_INT32 simd_flags_i32s;
-                    T1_std_memcpy(
-                        &simd_flags_i32s,
-                        &simd_flags_f32,
-                        sizeof(SIMD_FLOAT));
-                    
-                    results_i32 = simd_add_int32s(
+                simd_t_now_i32 = simd_cmpgt_int32s(
+                        simd_t_now_i32,
+                        simd_all_zeros);
+                
+                simd_flags_i32 = simd_and_int32s(
+                    simd_flags_i32,
+                    simd_t_now_i32);
+                
+                SIMD_INT32 results_i32 = simd_add_int32s(
                         simd_and_int32s(
                             simd_goal_i32s,
-                            simd_not_int32s(simd_flags_i32s)),
+                            simd_not_int32s(
+                                simd_flags_i32)),
                         simd_and_int32s(
                             simd_cur_i32s,
-                            simd_flags_i32s));
-                }
+                            simd_flags_i32));
                 
                 simd_store_int32s(
                     recip_vals_i32 + simd_step_i,
@@ -865,6 +827,7 @@ void T1_zsprite_apply_endpoint_anim(
     }
 }
 
+#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
 void T1_zsprite_set_occlusion(
     const int32_t zsprite_id,
     const int32_t new_visible_stat,
@@ -911,6 +874,10 @@ void T1_zsprite_set_occlusion(
         }
     }
 }
+#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 void T1_zsprite_handle_timed_occlusion(void)
 {
@@ -1032,34 +999,6 @@ void T1_zsprite_copy_to_frame_data(
         recip_ids[i].zsprite_id = T1_zsprite_list->cpu_data[i].zsprite_id;
         recip_ids[i].touch_id = T1_zsprite_list->gpu_data[i].i32.
                 touch_id;
-        
-        // TODO:
-        // remove client specific debug code
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        for (
-            int32_t zp_i = 0;
-            zp_i < (int32_t)T1_zsprite_list->size;
-            zp_i++)
-        {
-            int32_t touch_id = T1_zsprite_list->
-                gpu_data[zp_i].i32.touch_id;
-            
-            if (touch_id > 500000) {
-                // zp_i 575
-                // zsprite_id 1125
-                // touch_id	int32_t	1074135040
-                int16_t x = ((touch_id >> 16) & ((1 << 13)-1));
-                int16_t y = ((touch_id >>  3) & ((1 << 13)-1));
-                int16_t z = (touch_id & ((1 << 3)-1));
-                log_assert(x >= 1);
-                log_assert(y >= 1);
-                log_assert(z >= 0);
-            }
-        }
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
     }
     
     *recip_size = T1_zsprite_list->size;

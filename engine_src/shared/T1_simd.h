@@ -118,11 +118,13 @@ because I don't know much about how that works or how reliable it is
 #define SIMD_INT32_LANES 4
 #define SIMD_INT32 int32x4_t
 #define simd_load_int32s(i32ptr) vld1q_s32(i32ptr)
+#define simd_set1_int32s(i32) vld1q_dup_s32(&i32)
 #define simd_cast_int32s_to_floats(i32vec) vcvtq_f32_s32((i32vec))
 #define simd_store_int32s(i32ptr, from) vst1q_s32(i32ptr, from)
 #define simd_add_int32s(a, b) vaddq_s32(a, b)
 #define simd_and_int32s(a, b) (int32x4_t)(vandq_s32(a, b))
 #define simd_not_int32s(a) vmvnq_s32(a)
+#define simd_cmpgt_int32s(a, b)             vcgtq_s32(a, b)
 
 #define SIMD_FLOAT float32x4_t
 #define simd_load_floats(floatsptr) vld1q_f32(floatsptr)

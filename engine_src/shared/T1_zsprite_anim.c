@@ -361,6 +361,33 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
                         public.gpu_vals.i32)[f_i] ==
                     T1_ZSPRITEANIM_NO_EFFECT);
             }
+        } else {
+            uint32_t nonskips = 0;
+            for (
+                uint32_t f_i = 0;
+                f_i < (sizeof(T1GPUzSpritei32) / 4);
+                f_i++)
+            {
+                if (
+                    ((float *)&parent->
+                        public.gpu_vals.i32)[f_i] !=
+                    T1_ZSPRITEANIM_NO_EFFECT)
+                {
+                    nonskips += 1;
+                }
+            }
+            
+            // gpu_vals_i32_active but useless
+            log_assert(nonskips > 0);
+            
+            switch (parent->public.easing_type) {
+                case EASINGTYPE_ALWAYS_1:
+                    // this is always fine
+                break;
+                default:
+                    // avoid int->float casting issues
+                    log_assert(parent->public.duration_us == 1);
+            }
         }
         if (!parent->public.cpu_vals_active) {
             for (
