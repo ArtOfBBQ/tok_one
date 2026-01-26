@@ -10,7 +10,7 @@
 #include "T1_logger.h"
 #include "T1_global.h"
 #include "T1_material.h"
-#include "T1_mesh.h"
+#include "T1_mesh_summary.h"
 #include "T1_zlight.h"
 
 #define T1_ZSPRITEANIM_NO_EFFECT 0xFFFF
@@ -21,7 +21,9 @@ typedef struct  {
     float mul_xyz[3];
     float angle_xyz[3];
     float scale_factor;
-    float padding[3];
+    float bloom_on;
+    float alpha_blending_on;
+    float padding[1];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {
@@ -31,8 +33,6 @@ typedef struct {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     int32_t zsprite_id;
     
-    bool8_t bloom_on;
-    bool8_t alpha_blending_on;
     bool8_t committed;
     bool8_t deleted;
     bool8_t visible;
@@ -176,6 +176,12 @@ T1_add_opaque_zpolygons_to_workload(
 void
 T1_zsprite_construct_model_and_normal_matrices(
     T1GPUFrame * frame_data);
+    
+void
+T1_zsprite_copy_data_for_shatter_effect(
+    const int32_t zsprite_id,
+    T1GPUzSprite * gpu_recip,
+    T1CPUzSprite * cpu_recip);
 
 extern T1zSpriteCollection * T1_zsprite_list;
 

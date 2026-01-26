@@ -39,7 +39,7 @@ of the engine for your specific app.
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_ZSPRITE_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 1
-#define T1_OUTLINES_ACTIVE 2
+#define T1_OUTLINES_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2
@@ -96,11 +96,11 @@ The maximum number of 'scheduled animations' simultaneously running
 /*
 The max # of simultaneously active particle effects in your app
 */
-#define PARTICLE_EFFECTS_SIZE 10
+#define T1_PARTICLE_EFFECTS_SIZE 10
 
 /*
 The max # of simultaneously 'shatter' style particle effects in your app
 */
-#define SHATTER_EFFECTS_SIZE 120
+#define T1_SHATTER_EFFECTS_SIZE 120
 
 #endif // CLIENTLOGIC_MACRO_SETTINGS

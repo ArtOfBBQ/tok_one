@@ -106,21 +106,21 @@ void T1_zsprite_commit(
 {
     log_assert(to_commit->cpu_data->mesh_id >= 0);
     log_assert(to_commit->cpu_data->mesh_id <
-        (int32_t)T1_objmodel_mesh_summaries_size);
+        (int32_t)T1_mesh_summary_list_size);
     log_assert(to_commit->cpu_data->mesh_id < ALL_MESHES_SIZE);
     log_assert(
-        T1_objmodel_mesh_summaries[to_commit->cpu_data->mesh_id].
+        T1_mesh_summary_list[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t all_mesh_vertices_tail_i =
         (uint32_t)(
-            T1_objmodel_mesh_summaries
+            T1_mesh_summary_list
                 [to_commit->cpu_data->mesh_id].vertices_head_i +
-            T1_objmodel_mesh_summaries
+            T1_mesh_summary_list
                 [to_commit->cpu_data->mesh_id].vertices_size -
             1);
-    log_assert(all_mesh_vertices_tail_i < T1_objmodel_all_vertices->size);
+    log_assert(all_mesh_vertices_tail_i < T1_mesh_summary_all_vertices->size);
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -166,13 +166,13 @@ float T1_zsprite_get_x_multiplier_for_width(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
     
     float return_value =
-        for_width / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_width;
+        for_width / T1_mesh_summary_list[for_poly->mesh_id].base_width;
     
     return return_value;
 }
@@ -192,10 +192,10 @@ float T1_zsprite_get_z_multiplier_for_depth(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
     
     float return_value =
-        for_depth / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_depth;
+        for_depth / T1_mesh_summary_list[for_poly->mesh_id].base_depth;
     
     return return_value;
 }
@@ -215,10 +215,10 @@ float T1_zsprite_get_y_multiplier_for_height(
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+    log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
     
     float return_value =
-        for_height / T1_objmodel_mesh_summaries[for_poly->mesh_id].base_height;
+        for_height / T1_mesh_summary_list[for_poly->mesh_id].base_height;
     
     return return_value;
 }
@@ -264,11 +264,11 @@ void T1_zsprite_construct_with_mesh_id(
     to_construct->cpu_data->mesh_id = mesh_id;
     
     if (mesh_id >= 0 &&
-        T1_objmodel_mesh_summaries[mesh_id].locked_material_base_offset != UINT32_MAX)
+        T1_mesh_summary_list[mesh_id].locked_material_base_offset != UINT32_MAX)
     {
         uint32_t base_mat_i =
-            T1_objmodel_mesh_summaries[mesh_id].locked_material_head_i +
-            T1_objmodel_mesh_summaries[mesh_id].locked_material_base_offset;
+            T1_mesh_summary_list[mesh_id].locked_material_head_i +
+            T1_mesh_summary_list[mesh_id].locked_material_base_offset;
         
         to_construct->gpu_data->f32.base_mat_f32 =
             all_mesh_materials->gpu_f32[base_mat_i];
@@ -1022,25 +1022,25 @@ void T1_add_alphablending_zpolygons_to_workload(
             !T1_zsprite_list->cpu_data[cpu_zp_i].
                 visible ||
             !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                alpha_blending_on ||
             T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on)
+                simd_stats.alpha_blending_on < 0.5f ||
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                simd_stats.bloom_on > 0.5f)
         {
             continue;
         }
         
         int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+        log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
         
         int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].vertices_head_i +
-                T1_objmodel_mesh_summaries[mesh_id].vertices_size;
+            T1_mesh_summary_list[mesh_id].vertices_head_i +
+                T1_mesh_summary_list[mesh_id].vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         for (
-            int32_t vert_i = T1_objmodel_mesh_summaries[mesh_id].vertices_head_i;
+            int32_t vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
             vert_i < vert_tail_i;
             vert_i += 1)
         {
@@ -1101,35 +1101,35 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
                 visible ||
             !T1_zsprite_list->cpu_data[cpu_zp_i].
                 committed ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on)
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                simd_stats.bloom_on < 0.5f)
         {
             continue;
         }
         
         log_assert(
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
-                alpha_blending_on);
+            T1_zsprite_list->cpu_data[cpu_zp_i].
+                simd_stats.alpha_blending_on < 0.5f);
         log_assert(
             T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on);
+                simd_stats.bloom_on > 0.5f);
         
         int32_t mesh_id =
             T1_zsprite_list->cpu_data[cpu_zp_i].
                 mesh_id;
         log_assert(mesh_id >= 0);
-        log_assert(mesh_id < (int32_t)T1_objmodel_mesh_summaries_size);
+        log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
         
         int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].
+            T1_mesh_summary_list[mesh_id].
                 vertices_head_i +
-                    T1_objmodel_mesh_summaries[mesh_id].
+                    T1_mesh_summary_list[mesh_id].
                         vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         for (
             int32_t vert_i =
-                T1_objmodel_mesh_summaries[mesh_id].
+                T1_mesh_summary_list[mesh_id].
                     vertices_head_i;
             vert_i < vert_tail_i;
             vert_i += 1)
@@ -1207,9 +1207,9 @@ void T1_add_opaque_zpolygons_to_workload(
             !T1_zsprite_list->cpu_data[cpu_zp_i].
                 committed ||
             T1_zsprite_list->cpu_data[cpu_zp_i].
-                alpha_blending_on ||
+                simd_stats.alpha_blending_on > 0.5f ||
             T1_zsprite_list->cpu_data[cpu_zp_i].
-                bloom_on)
+                simd_stats.bloom_on > 0.5f)
         {
             continue;
         }
@@ -1218,12 +1218,12 @@ void T1_add_opaque_zpolygons_to_workload(
             cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)
-            T1_objmodel_mesh_summaries_size);
+            T1_mesh_summary_list_size);
         
         int32_t vert_tail_i =
-            T1_objmodel_mesh_summaries[mesh_id].
+            T1_mesh_summary_list[mesh_id].
                 vertices_head_i +
-                    T1_objmodel_mesh_summaries
+                    T1_mesh_summary_list
                         [mesh_id].vertices_size;
         log_assert(
             vert_tail_i < MAX_VERTICES_PER_BUFFER);
@@ -1233,7 +1233,7 @@ void T1_add_opaque_zpolygons_to_workload(
         in use yet anyway.
         */
         int32_t vert_i =
-            T1_objmodel_mesh_summaries[mesh_id].
+            T1_mesh_summary_list[mesh_id].
                 vertices_head_i;
         cur_vals[0] = vert_i-2;
         cur_vals[1] = cpu_zp_i;
@@ -1423,3 +1423,37 @@ T1_zsprite_construct_model_and_normal_matrices(
         f->matrices[i].norm_3x3[8] = model3x3.rows[2].data[2];
     }
 }
+void
+T1_zsprite_copy_data_for_shatter_effect(
+    const int32_t zsprite_id,
+    T1GPUzSprite * gpu_recip,
+    T1CPUzSprite * cpu_recip)
+{
+    bool8_t found = false;
+    
+    for (
+        int32_t zp_i = 0;
+        zp_i < (int32_t)T1_zsprite_list->size;
+        zp_i++)
+    {
+        if (T1_zsprite_list->cpu_data[zp_i].zsprite_id != zsprite_id)
+        {
+            continue;
+        }
+        
+        if (!found) {
+            found = true;
+            T1_std_memcpy(
+                gpu_recip,
+                T1_zsprite_list->gpu_data + zp_i,
+                sizeof(T1GPUzSprite));
+            T1_std_memcpy(
+                gpu_recip,
+                T1_zsprite_list->cpu_data + zp_i,
+                sizeof(T1CPUzSprite));
+        }
+        
+        T1_zsprite_list->cpu_data[zp_i].deleted = true;
+    }
+}
+

@@ -98,15 +98,14 @@ typedef struct {
 
 typedef struct {
     T1GPUConstMatf32 base_mat_f32; // start f32 here
+    float            explode;
     float            bonus_rgb[3];
     float            base_mat_uv_offsets[2];
     float            alpha;
     float            ignore_lighting;
     float            ignore_camera;
     float            outline_alpha;
-    #if 0
-    float            f32_padding[0];
-    #endif
+    float            f32_padding[7];
 } T1GPUzSpritef32;
 
 typedef struct {

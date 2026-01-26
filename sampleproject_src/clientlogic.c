@@ -165,7 +165,7 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
     lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
     lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
-    lightcube_request.cpu_data->bloom_on = true;
+    lightcube_request.cpu_data->simd_stats.bloom_on = true;
     lightcube_request.gpu_data->i32.remove_shadow = true;
     T1_zsprite_commit(&lightcube_request);
     
@@ -206,8 +206,8 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->i32.base_mat_i32.texture_i = quad_texture_i;
     quad.cpu_data->zsprite_id = -1;
     quad.gpu_data->i32.touch_id = -1;
-    quad.cpu_data->alpha_blending_on = false;
     
+    quad.cpu_data->simd_stats.alpha_blending_on = 1.0f;
     quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
     quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;
     quad.cpu_data->simd_stats.mul_xyz[2] = 0.0f;
@@ -278,7 +278,7 @@ void T1_clientlogic_late_startup(void) {
         quad.gpu_data->i32.base_mat_i32.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id = -1;
         quad.gpu_data->i32.touch_id = -1;
-        quad.cpu_data->alpha_blending_on = true;
+        quad.cpu_data->simd_stats.alpha_blending_on = true;
         
         quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
         quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;

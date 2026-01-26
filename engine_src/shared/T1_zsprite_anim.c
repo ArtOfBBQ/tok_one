@@ -538,204 +538,68 @@ void T1_zsprite_anim_commit(
     fas->mutex_unlock(fas->mutex_id);
 }
 
-void T1_zsprite_anim_evaporate_and_destroy(
+void T1_zsprite_anim_shatter_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us)
 {
-    assert(0); // TODO: reimplement
-    
-    #if 0
     #if T1_LOGGER_ASSERTS_ACTIVE
     #else
     (void)duration_us;
     #endif
     
     log_assert(duration_us > 0);
-    log_assert(object_id >= 0);
+    log_assert(zsprite_id >= 0);
     
-    for (
-        uint32_t zp_i = 0;
-        zp_i < T1_zsprites_to_render->size;
-        zp_i++)
-    {
-        if (
-            T1_zsprites_to_render->cpu_data[zp_i].deleted ||
-            !T1_zsprites_to_render->cpu_data[zp_i].committed ||
-            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
-        {
-            continue;
-        }
-        
-        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-        float duration_mod = (20000000.0f / (float)duration_us);
-        
-        T1ParticleEffect * vaporize_effect = T1_particle_get_next();
-        vaporize_effect->zpolygon_cpu = T1_zsprites_to_render->cpu_data[zp_i];
-        vaporize_effect->zpolygon_gpu = T1_zsprites_to_render->gpu_data[zp_i];
-        
-        uint64_t shattered_verts_size =
-            (uint64_t)all_mesh_summaries[vaporize_effect->zpolygon_cpu.mesh_id].
-                shattered_vertices_size;
-        vaporize_effect->spawns_per_loop = (uint32_t)(
-            (shattered_verts_size * 1000000) /
-                (uint64_t)(duration_us + 1));
-        vaporize_effect->pause_per_spawn = 10;
-        vaporize_effect->verts_per_particle = 3;
-        vaporize_effect->spawn_lifespan = duration_us;
-        vaporize_effect->shattered = true;
-
-        #if 0
-        float xy_dist   =  0.0065f;
-        float z_dist    = -0.0130f;
-        float xyz_angle =  0.0100f;
-        float rgb_delta =  0.00005f;
-        
-        vaporize_effect->pertime_rand_add[0].xyz[0] = -xy_dist *
-            duration_mod;
-        vaporize_effect->pertime_rand_add[0].xyz[1] = -xy_dist *
-            duration_mod;
-        vaporize_effect->pertime_rand_add[0].xyz[2] = z_dist *
-            duration_mod;
-        vaporize_effect->pertime_rand_add[0].xyz_angle[0] =
-            xyz_angle * duration_mod;
-        vaporize_effect->pertime_rand_add[0].xyz_angle[1] =
-            xyz_angle * duration_mod;
-        vaporize_effect->pertime_rand_add[0].xyz_angle[2] =
-            xyz_angle * duration_mod;
-        vaporize_effect->pertime_rand_add[0].bonus_rgb[0] =
-            rgb_delta * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz[0] =
-            xy_dist * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz[1] =
-            xy_dist * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz[2] =
-            z_dist * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz_angle[0] =
-            -xyz_angle * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz_angle[1] =
-            -xyz_angle * duration_mod;
-        vaporize_effect->pertime_rand_add[1].xyz_angle[2] =
-            -xyz_angle * duration_mod;
-        vaporize_effect->perexptime_add.scale_factor = -1.5f;
-        #endif
-        
-        vaporize_effect->loops = 1;
-        vaporize_effect->cast_light = false;
-        
-        T1_particle_commit(vaporize_effect);
-        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
-    }
-    #endif
+    T1zSpriteAnim * set_scatter_mesh =
+        T1_zsprite_anim_request_next(true);
+    set_scatter_mesh->affected_zsprite_id = zsprite_id;
+    set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
+    set_scatter_mesh->cpu_vals_active = true;
+    set_scatter_mesh->duration_us = 1;
+    T1_zsprite_anim_commit_and_instarun(set_scatter_mesh);
+    
+    T1zSpriteAnim * scatter = T1_zsprite_anim_request_next(true);
+    scatter->gpu_vals.f32.explode = 1.25f;
+    scatter->gpu_vals.f32.alpha = 0.0f;
+    scatter->affected_zsprite_id = zsprite_id;
+    scatter->duration_us = duration_us;
+    scatter->easing_type = EASINGTYPE_NONE;
+    scatter->runs = 1;
+    scatter->del_obj_on_finish = true;
+    scatter->gpu_vals_f32_active = true;
+    T1_zsprite_anim_commit(scatter);
 }
 
-void T1_zsprite_anim_shatter_and_destroy(
-    const int32_t object_id,
+void T1_zsprite_anim_evaporate_and_destroy(
+    const int32_t zsprite_id,
     const uint64_t duration_us)
 {
-    #if 0
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    (void)duration_us;
+    #if T1_LOGGER_ASSERTS_ACTIVE
     #else
-    #error
+    (void)duration_us;
     #endif
     
     log_assert(duration_us > 0);
-    log_assert(duration_us < 1000000000);
-    log_assert(object_id >= 0);
+    log_assert(zsprite_id >= 0);
     
-    for (
-        uint32_t zp_i = 0;
-        zp_i < T1_zsprites_to_render->size;
-        zp_i++)
-    {
-        if (T1_zsprites_to_render->cpu_data[zp_i].deleted ||
-            !T1_zsprites_to_render->cpu_data[zp_i].committed ||
-            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
-        {
-            continue;
-        }
-        
-        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-        float duration_mod = (20000000.0f / (float)duration_us);
-        
-        T1ParticleEffect * shatter_effect = T1_particle_get_next();
-        shatter_effect->zpolygon_cpu = T1_zsprites_to_render->cpu_data[zp_i];
-        shatter_effect->zpolygon_gpu = T1_zsprites_to_render->gpu_data[zp_i];
-        
-        uint64_t shattered_verts_size =
-            (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
-                shattered_vertices_size;
-        log_assert(shattered_verts_size > 0);
-        shatter_effect->spawns_per_loop =
-            (uint32_t)(
-            (shattered_verts_size * 1000000) /
-                (uint64_t)(duration_us + 1));
-        shatter_effect->pause_per_spawn = 0;
-        shatter_effect->verts_per_particle = 6;
-        shatter_effect->spawn_lifespan =
-            duration_us;
-        shatter_effect->shattered = true;
-        
-        float xyz_dist = 0.02f;
-        float xyz_angle = 0.05f;
-        float rgb_delta = 0.05f;
-        
-        #if 0
-        shatter_effect->pertime_rand_add[0].xyz[0] = -xyz_dist *
-            duration_mod;
-        shatter_effect->pertime_rand_add[0].xyz[1] = -xyz_dist *
-            duration_mod;
-        shatter_effect->pertime_rand_add[0].xyz[2] = -xyz_dist *
-            duration_mod;
-        shatter_effect->pertime_rand_add[0].xyz_angle[0] =
-            xyz_angle * duration_mod;
-        shatter_effect->pertime_rand_add[0].xyz_angle[1] =
-            xyz_angle * duration_mod;
-        shatter_effect->pertime_rand_add[0].xyz_angle[2] =
-            xyz_angle * duration_mod;
-        shatter_effect->pertime_rand_add[0].bonus_rgb[0] =
-            rgb_delta * duration_mod;
-        shatter_effect->pertime_rand_add[0].bonus_rgb[1] =
-            rgb_delta * duration_mod;
-        shatter_effect->pertime_rand_add[0].bonus_rgb[2] =
-            rgb_delta * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz[0] =
-            xyz_dist * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz[1] =
-            xyz_dist * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz[2] =
-            xyz_dist * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz_angle[0] =
-            -xyz_angle * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz_angle[1] =
-            -xyz_angle * duration_mod;
-        shatter_effect->pertime_rand_add[1].xyz_angle[2] =
-            -xyz_angle * duration_mod;
-        shatter_effect->perexptime_add.scale_factor = -0.07f *
-            duration_mod;
-        #endif
-        
-        shatter_effect->loops = 1;
-        shatter_effect->cast_light = false;
-        
-        log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
-        
-        T1_particle_commit(shatter_effect);
-        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        T1_zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
-        T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
-    }
-    #endif
+    T1zSpriteAnim * set_scatter_mesh =
+        T1_zsprite_anim_request_next(true);
+    set_scatter_mesh->affected_zsprite_id = zsprite_id;
+    set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
+    set_scatter_mesh->cpu_vals_active = true;
+    set_scatter_mesh->duration_us = 1;
+    T1_zsprite_anim_commit_and_instarun(set_scatter_mesh);
+    
+    T1zSpriteAnim * evap = T1_zsprite_anim_request_next(true);
+    evap->gpu_vals.f32.explode = 1.5f;
+    evap->gpu_vals.f32.alpha = 0.0f;
+    evap->affected_zsprite_id = zsprite_id;
+    evap->duration_us = duration_us;
+    evap->easing_type = EASINGTYPE_NONE;
+    evap->runs = 1;
+    evap->del_obj_on_finish = true;
+    evap->gpu_vals_f32_active = true;
+    T1_zsprite_anim_commit(evap);
 }
 
 void T1_zsprite_anim_fade_and_destroy(
@@ -745,7 +609,8 @@ void T1_zsprite_anim_fade_and_destroy(
     log_assert(duration_us > 0);
     
     // register scheduled animation
-    T1zSpriteAnim * fade_destroy = T1_zsprite_anim_request_next(true);
+    T1zSpriteAnim * fade_destroy =
+        T1_zsprite_anim_request_next(true);
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.f32.alpha = 0.0f;
@@ -874,4 +739,4 @@ void T1_zsprite_anim_delete_all_anims_targeting(
 #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
 #else
 #error
-#endif // T1_SCHEDULED_ANIMS_ACTIVE
+#endif // T1_ZSPRITE_ANIM_ACTIVE

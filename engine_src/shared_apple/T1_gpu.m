@@ -1632,7 +1632,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 
 void T1_platform_gpu_copy_locked_vertices(void)
 {
-    gpu_shared_data_collection->locked_vertices_size = T1_objmodel_all_vertices->size;
+    gpu_shared_data_collection->locked_vertices_size = T1_mesh_summary_all_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     

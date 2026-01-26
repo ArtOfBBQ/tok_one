@@ -40,8 +40,7 @@ static void show_dead_simple_text(
 {
     T1_uielement_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    T1_particle_effects_size = 0;
-    // T1_particle_lineparticle_effects_size = 0;
+    T1_particle_effects_delete_all();
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -395,8 +394,8 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         T1_renderer_hardware_render(
-                frame_data,
-                T1_global->elapsed);
+            frame_data,
+            T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end(
             "T1_renderer_hardware_render()");

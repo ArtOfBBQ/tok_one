@@ -363,7 +363,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     T1_uielement_delete_all();
     T1_zsprite_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    T1_particle_effects_size = 0;
+    T1_particle_effects_delete_all();
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     #else
     #error

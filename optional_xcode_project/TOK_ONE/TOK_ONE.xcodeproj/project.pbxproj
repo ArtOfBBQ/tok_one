@@ -132,7 +132,7 @@
 		EC914B8D2B94B193007FCBFC /* T1_linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */; };
 		EC914B8E2B94B1EF007FCBFC /* T1_terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* T1_terminal.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
-		EC9F971F2EEF6B86008D8481 /* T1_mesh.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971C2EEF6B86008D8481 /* T1_mesh.c */; };
+		EC9F971F2EEF6B86008D8481 /* T1_mesh_summary.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */; };
 		EC9F97202EEF6B86008D8481 /* T1_tex.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971E2EEF6B86008D8481 /* T1_tex.c */; };
 		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECB05E4E2950864000050BD4 /* T1_gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* T1_gpu.m */; };
@@ -277,8 +277,8 @@
 		EC914B892B9199A1007FCBFC /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
-		EC9F971B2EEF6B86008D8481 /* T1_mesh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_mesh.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh.h; sourceTree = "<absolute>"; };
-		EC9F971C2EEF6B86008D8481 /* T1_mesh.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_mesh.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh.c; sourceTree = "<absolute>"; };
+		EC9F971B2EEF6B86008D8481 /* T1_mesh_summary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_mesh_summary.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh_summary.h; sourceTree = "<absolute>"; };
+		EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_mesh_summary.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh_summary.c; sourceTree = "<absolute>"; };
 		EC9F971D2EEF6B86008D8481 /* T1_tex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_tex.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_tex.h; sourceTree = "<absolute>"; };
 		EC9F971E2EEF6B86008D8481 /* T1_tex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_tex.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_tex.c; sourceTree = "<absolute>"; };
 		ECB05E46294F8AC200050BD4 /* T1_simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_simd.h; path = ../../engine_src/shared/T1_simd.h; sourceTree = "<group>"; };
@@ -523,8 +523,8 @@
 				ECDD9C222DE2157500721A48 /* T1_texture_files.h */,
 				ECDD9C212DE2157400721A48 /* T1_texture_files.c */,
 				ECDCFF4E2DDE0F52002AA399 /* T1_tokenizer.h */,
-				EC9F971B2EEF6B86008D8481 /* T1_mesh.h */,
-				EC9F971C2EEF6B86008D8481 /* T1_mesh.c */,
+				EC9F971B2EEF6B86008D8481 /* T1_mesh_summary.h */,
+				EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */,
 				EC9F971D2EEF6B86008D8481 /* T1_tex.h */,
 				EC9F971E2EEF6B86008D8481 /* T1_tex.c */,
 				EC2914A22EEE211300D3873E /* T1_clientlogic.h */,
@@ -749,7 +749,7 @@
 				60A99901287BD4C3003F7159 /* T1_text.h in Sources */,
 				60A9991C287BD4C4003F7159 /* inflate.c in Sources */,
 				ECDAFF6A2EFBDCB000AE4CA1 /* T1_render_view.c in Sources */,
-				EC9F971F2EEF6B86008D8481 /* T1_mesh.c in Sources */,
+				EC9F971F2EEF6B86008D8481 /* T1_mesh_summary.c in Sources */,
 				EC9F97202EEF6B86008D8481 /* T1_tex.c in Sources */,
 				60A9991D287BD4C4003F7159 /* T1_std.c in Sources */,
 				60A99904287BD4C3003F7159 /* T1_random.c in Sources */,

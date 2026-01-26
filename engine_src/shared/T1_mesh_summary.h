@@ -26,14 +26,14 @@ typedef struct MeshSummary {
     uint32_t materials_size;
 } MeshSummary;
 
-extern MeshSummary * T1_objmodel_mesh_summaries;
-extern uint32_t T1_objmodel_mesh_summaries_size;
+extern MeshSummary * T1_mesh_summary_list;
+extern uint32_t T1_mesh_summary_list_size;
 
 typedef struct LockedVertexWithMaterialCollection {
     T1GPULockedVertex gpu_data[ALL_LOCKED_VERTICES_SIZE];
     uint32_t size;
 } LockedVertexWithMaterialCollection;
 
-extern LockedVertexWithMaterialCollection * T1_objmodel_all_vertices;
+extern LockedVertexWithMaterialCollection * T1_mesh_summary_all_vertices;
 
 #endif // T1_MESH_H

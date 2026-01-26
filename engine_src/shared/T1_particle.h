@@ -16,6 +16,7 @@ extern "C" {
 #include "T1_random.h"
 #include "T1_zsprite.h"
 #include "T1_easing.h"
+#include "T1_mesh_summary.h"
 
 /*
 If "randomize" is set:
@@ -54,36 +55,48 @@ typedef struct {
     float light_rgb[3];
     
     uint8_t modifiers_size;
-    bool8_t shattered;
     bool8_t cast_light;
     bool8_t deleted;
     bool8_t committed;
 } T1ParticleEffect;
 
-extern T1ParticleEffect * T1_particle_effects;
-extern uint32_t T1_particle_effects_size;
+void T1_particle_init(void);
 
-void T1_particle_effect_construct(T1ParticleEffect * to_construct);
+void
+T1_particle_effect_construct(
+    T1ParticleEffect * to_construct);
 
-T1ParticleEffect * T1_particle_get_next(void);
-void T1_particle_commit(T1ParticleEffect * to_commit);
+T1ParticleEffect *
+T1_particle_get_next(void);
 
-void T1_particle_delete(int32_t with_object_id);
+void
+T1_particle_commit(T1ParticleEffect * to_commit);
 
-void T1_particle_resize_to_effect_height(
+void
+T1_particle_delete(
+    int32_t with_object_id);
+
+void
+T1_particle_effects_delete_all(void);
+
+void
+T1_particle_resize_to_effect_height(
     T1ParticleEffect * to_resize,
     const float new_height);
 
-void T1_particle_add_all_to_frame_data(
+void
+T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us);
 
-void T1_particle_serialize(
+void
+T1_particle_serialize(
     T1ParticleEffect * to_serialize,
     uint8_t * buffer,
     uint32_t * buffer_size);
 
-void T1_particle_deserialize(
+void
+T1_particle_deserialize(
     T1ParticleEffect * recipient,
     uint8_t * buffer,
     uint32_t * buffer_size);

@@ -18,7 +18,7 @@
 #include "T1_mtlparser.h"
 // #include "T1_platform_layer.h"
 #include "T1_material.h"
-#include "T1_mesh.h"
+#include "T1_mesh_summary.h"
 
 // **********************************************************************
 // **                    Client functions                              **

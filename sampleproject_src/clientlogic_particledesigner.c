@@ -111,22 +111,33 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
+    T1_meta_struct(T1GPUzSpritef32, &ok);
+    assert(ok);
+    T1_meta_struct_field(T1GPUzSpritef32, T1GPUConstMat,
+        base_mat_f32, &ok);
+    T1_meta_array(T1GPUzSpritef32, T1_TYPE_F32,
+        bonus_rgb, 3, &ok);
+    T1_meta_reg_float_limits_for_last_field(0.0f, 2.0f, &ok);
+    T1_meta_array(T1GPUzSpritef32, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
+    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_field(T1GPUzSpritef32, T1_TYPE_F32, alpha, &ok);
+    T1_meta_reg_float_limits_for_last_field(-2.0f, 2.0f, &ok);
+    T1_meta_field(T1GPUzSpritef32, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_field(T1GPUzSpritef32, T1_TYPE_F32, ignore_camera, &ok);
+    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    
+    T1_meta_struct(T1GPUzSpritei32, &ok);
+    assert(ok);
+    T1_meta_struct_field(T1GPUzSpritei32, T1GPUConstMat, base_mat_i32, &ok);
+    T1_meta_field(T1GPUzSpritei32, T1_TYPE_I32, remove_shadow, &ok);
+    T1_meta_reg_int_limits_for_last_field(0, 1, &ok);
+    assert(ok);
+    
     T1_meta_struct(T1GPUzSprite, &ok);
     assert(ok);
-    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat_f32, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
-    T1_meta_reg_float_limits_for_last_field(0.0f, 2.0f, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
-    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, alpha, &ok);
-    T1_meta_reg_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
-    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat_i32, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
-    T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUzSpritef32, f32, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUzSpritei32, i32, &ok);
     assert(ok);
     
     T1_meta_enum(T1EasingType, T1_TYPE_U8, &ok);
@@ -670,7 +681,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         {
             continue;
         }
-                
+        
         float new_y =
             get_slider_y_screenspace((int32_t)i) -
             (T1_io_mouse_scroll_pos * 30.0f);
@@ -720,6 +731,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 new_title_y, new_z);
         anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
+        anim->cpu_vals_active = true;
         T1_zsprite_anim_commit(anim);
     }
     #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE

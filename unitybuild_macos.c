@@ -66,7 +66,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_apple_platform_layer.m"
 // 3. Files that are dependent on the platform layer
 #include "T1_mem.c"
-#include "T1_mesh.c"
+#include "T1_mesh_summary.c"
 #include "T1_tex.c"
 #include "T1_objmodel.c"
 #include "T1_io.c"

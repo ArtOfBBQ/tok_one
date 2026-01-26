@@ -53,11 +53,12 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
 void T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit);
 
-void T1_zsprite_anim_evaporate_and_destroy(
+void T1_zsprite_anim_shatter_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 
-void T1_zsprite_anim_shatter_and_destroy(
+void
+T1_zsprite_anim_evaporate_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 

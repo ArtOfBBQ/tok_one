@@ -125,7 +125,8 @@ vertex_shader(
     const device T1GPURenderView * c = rv + rv_i;
     
     if (c->write_to_shadow_maps && zs->i32.remove_shadow) {
-        out.projpos = vector_float4(0.0f, 0.0f, 500.0f, 1.0f);
+        out.projpos = vector_float4(
+            0.0f, 0.0f, 500.0f, 1.0f);
         return out;
     }
     
@@ -139,6 +140,11 @@ vertex_shader(
         lv->norm_xyz[0],
         lv->norm_xyz[1],
         lv->norm_xyz[2]);
+    
+    float3 face_normal = vector_float3(
+        lv->face_normal_xyz[0],
+        lv->face_normal_xyz[1],
+        lv->face_normal_xyz[2]);
     
     float3 vertex_tangent = vector_float3(
         lv->tan_xyz[0],
@@ -157,6 +163,14 @@ vertex_shader(
         m->m_4x4[12], m->m_4x4[13], m->m_4x4[14], m->m_4x4[15]);
     
     out.worldpos = mesh_vertices * model;
+    
+    float dist = distance(
+        mesh_vertices,
+        vector_float4(0.0f, 0.0f, 0.0f, 1.0f));
+    
+    out.worldpos += (
+        zs->f32.explode *
+        vector_float4(face_normal, 0.0f));
     
     float4x4 view = matrix_float4x4(
         c->v_4x4[ 0], c->v_4x4[ 1], c->v_4x4[ 2], c->v_4x4[ 3],

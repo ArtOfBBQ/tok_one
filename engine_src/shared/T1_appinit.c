@@ -374,26 +374,7 @@ void T1_appinit_before_gpu_init(
         sizeof(T1zLight) *
             MAX_LIGHTS_PER_BUFFER);
     
-    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    #if 0
-    T1_particle_lineparticle_effects = (T1LineParticle *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
-    T1_std_memset(
-        T1_particle_lineparticle_effects,
-        0,
-        sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
-    #endif
-    T1_particle_effects = (T1ParticleEffect *)T1_mem_malloc_from_unmanaged(
-        sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
-    T1_std_memset(
-        T1_particle_effects,
-        0,
-        sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
-    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_PARTICLES_ACTIVE undefined!"
-    #endif
+    T1_particle_init();
     
     T1_gameloop_init();
     #if T1_TERMINAL_ACTIVE == T1_ACTIVE
@@ -681,7 +662,7 @@ void T1_appinit_after_gpu_init_step1(
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
-            T1_objmodel_all_vertices->gpu_data,
+            T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     T1_platform_gpu_copy_locked_vertices();
@@ -810,25 +791,25 @@ void T1_appinit_after_gpu_init_step2(
     */
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
-    for (uint32_t i = 0; i < T1_objmodel_mesh_summaries_size; i++) {
-        if (T1_objmodel_mesh_summaries[i].shattered_vertices_head_i < 0) {
+    for (uint32_t i = 0; i < T1_mesh_summary_list_size; i++) {
+        if (T1_mesh_summary_list[i].shattered_vertices_head_i < 0) {
             if (
-                T1_objmodel_mesh_summaries[i].shattered_vertices_size <
+                T1_mesh_summary_list[i].shattered_vertices_size <
                     MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
                 T1_objmodel_create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
-                        T1_objmodel_mesh_summaries[i].mesh_id,
+                        T1_mesh_summary_list[i].mesh_id,
                     /* const uint32_t triangles_mulfiplier: */
                         (MIN_VERTICES_FOR_SHATTER_EFFECT /
-                            (uint32_t)T1_objmodel_mesh_summaries[i].vertices_size) + 1);
+                            (uint32_t)T1_mesh_summary_list[i].vertices_size) + 1);
                 log_assert(
-                    T1_objmodel_mesh_summaries[i].shattered_vertices_head_i >= 0);
+                    T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
             } else {
-                T1_objmodel_mesh_summaries[i].shattered_vertices_head_i =
-                    T1_objmodel_mesh_summaries[i].vertices_head_i;
-                T1_objmodel_mesh_summaries[i].shattered_vertices_size =
-                    T1_objmodel_mesh_summaries[i].vertices_size;
+                T1_mesh_summary_list[i].shattered_vertices_head_i =
+                    T1_mesh_summary_list[i].vertices_head_i;
+                T1_mesh_summary_list[i].shattered_vertices_size =
+                    T1_mesh_summary_list[i].vertices_size;
             }
         }
     }
@@ -848,7 +829,7 @@ void T1_appinit_after_gpu_init_step2(
             gpu_shared_data_collection->
                 locked_vertices,
         /* const void * src: */
-            T1_objmodel_all_vertices->gpu_data,
+            T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     T1_platform_gpu_copy_locked_vertices();
