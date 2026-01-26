@@ -308,6 +308,8 @@ void T1_zsprite_anim_commit_and_instarun(
 {
     fas->mutex_lock(fas->mutex_id);
     
+    T1_zsprite_anim_assert_anim_valid_before_commit(to_commit);
+    
     T1InternalzSpriteAnim * parent =
         T1_zsprite_anim_get_container(to_commit);
     log_assert(&parent->public == to_commit);
@@ -635,8 +637,6 @@ void T1_zsprite_anim_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
-    assert(0); // TODO: reimplement
-    
     #if 0
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
@@ -821,6 +821,7 @@ void T1_zsprite_anim_bump(
     bump_request->cpu_vals.mul_xyz[1] = 0.05f;
     bump_request->cpu_vals.mul_xyz[2] = 0.05f;
     bump_request->duration_us = 200000;
+    bump_request->cpu_vals_active = true;
     T1_zsprite_anim_commit(bump_request);
 }
 

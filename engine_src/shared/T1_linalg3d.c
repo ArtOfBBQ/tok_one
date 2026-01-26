@@ -222,13 +222,7 @@ static void T1_linal_float4_set_w_only(
     T1_linal_float4 * to_edit,
     float new_value)
 {
-    #if defined(__ARM_NEON)
-    assert(0);
-    #elif defined(__SSE2__)
-    assert(0);
-    #else
     to_edit->data[3] = new_value;
-    #endif
 }
 
 void T1_linal_float3x3_construct_from_ptr(
@@ -404,6 +398,7 @@ float T1_linal_float4x4_get_determinant(
     return return_value;
 }
 
+#if 0
 void T1_linal_float3x3_get_inverse(
     T1_linal_float3x3 * in,
     T1_linal_float3x3 * out)
@@ -414,13 +409,7 @@ void T1_linal_float3x3_get_inverse(
     
     T1_linal_float3x3_transpose_inplace(out);
 }
-
-void T1_linal_float3x3_get_inverse_transpose(
-    const T1_linal_float3x3 * in,
-    T1_linal_float3x3 * out)
-{
-    assert(0);
-}
+#endif
 
 void T1_linal_float3x3_inverse_transpose_inplace(
     T1_linal_float3x3 * m)
@@ -481,6 +470,7 @@ void T1_linal_float3x3_inverse_transpose_inplace(
     #endif
 }
 
+#if 0
 void T1_linal_float4x4_get_inverse(
     T1_linal_float4x4 * in,
     T1_linal_float4x4 * out)
@@ -491,6 +481,7 @@ void T1_linal_float4x4_get_inverse(
     
     T1_linal_float4x4_transpose_inplace(out);
 }
+#endif
 
 void T1_linal_float4x4_inverse_inplace(
     T1_linal_float4x4 * m)
@@ -498,13 +489,6 @@ void T1_linal_float4x4_inverse_inplace(
     T1_linal_float4x4_inverse_transpose_inplace(m);
     
     T1_linal_float4x4_transpose_inplace(m);
-}
-
-void T1_linal_float4x4_get_inverse_transpose(
-    const T1_linal_float4x4 * in,
-    T1_linal_float4x4 * out)
-{
-    assert(0);
 }
 
 void T1_linal_float4x4_inverse_transpose_inplace(

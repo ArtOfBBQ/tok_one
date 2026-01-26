@@ -101,13 +101,11 @@ float T1_linal_float3x3_get_determinant(
 float T1_linal_float4x4_get_determinant(
     const T1_linal_float4x4 * a);
 
+#if 0
 void T1_linal_float3x3_get_inverse(
     T1_linal_float3x3 * in,
     T1_linal_float3x3 * out);
-
-void T1_linal_float3x3_get_inverse_transpose(
-    const T1_linal_float3x3 * in,
-    T1_linal_float3x3 * out);
+#endif
 
 void T1_linal_float3x3_inverse_transpose_inplace(
     T1_linal_float3x3 * m);
@@ -118,10 +116,6 @@ void T1_linal_float4x4_get_inverse(
 
 void T1_linal_float4x4_inverse_inplace(
     T1_linal_float4x4 * m);
-
-void T1_linal_float4x4_get_inverse_transpose(
-    const T1_linal_float4x4 * in,
-    T1_linal_float4x4 * out);
 
 void T1_linal_float4x4_inverse_transpose_inplace(
     T1_linal_float4x4 * m);

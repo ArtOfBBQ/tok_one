@@ -107,11 +107,11 @@ static void request_teapots(void) {
         teapot_request.cpu_data->visible = true;
         teapot_touch_ids[i] =
             T1_zspriteid_next_nonui_id();
-        teapot_request.gpu_data->touch_id =
+        teapot_request.gpu_data->i32.touch_id =
             teapot_touch_ids[i];
-        teapot_request.gpu_data->
+        teapot_request.gpu_data->f32.
             ignore_lighting = 0.0f;
-        teapot_request.gpu_data->
+        teapot_request.gpu_data->f32.
             ignore_camera =  0.0f;
         T1_zsprite_commit(&teapot_request);
     }
@@ -157,15 +157,16 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
     lightcube_request.cpu_data->zsprite_id = light->object_id;
     lightcube_request.cpu_data->visible = true;
-    lightcube_request.gpu_data->ignore_lighting = 1.0f;
-    lightcube_request.gpu_data->
+    lightcube_request.gpu_data->f32.
+        ignore_lighting = 1.0f;
+    lightcube_request.gpu_data->f32.
         ignore_camera = 0.0f;
-    lightcube_request.gpu_data->alpha = 1.0f;
-    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
-    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
-    lightcube_request.gpu_data->base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
+    lightcube_request.gpu_data->f32.alpha = 1.0f;
+    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
+    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
+    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
     lightcube_request.cpu_data->bloom_on = true;
-    lightcube_request.gpu_data->remove_shadow = true;
+    lightcube_request.gpu_data->i32.remove_shadow = true;
     T1_zsprite_commit(&lightcube_request);
     
     T1_camera->xyz[0] =  0.00f;
@@ -201,10 +202,10 @@ void T1_clientlogic_late_startup(void) {
                 T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
-    quad.gpu_data->base_mat_i32.texturearray_i = quad_texture_array_i;
-    quad.gpu_data->base_mat_i32.texture_i = quad_texture_i;
+    quad.gpu_data->i32.base_mat_i32.texturearray_i = quad_texture_array_i;
+    quad.gpu_data->i32.base_mat_i32.texture_i = quad_texture_i;
     quad.cpu_data->zsprite_id = -1;
-    quad.gpu_data->touch_id = -1;
+    quad.gpu_data->i32.touch_id = -1;
     quad.cpu_data->alpha_blending_on = false;
     
     quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
@@ -214,13 +215,13 @@ void T1_clientlogic_late_startup(void) {
     quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
     quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
     quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-    quad.gpu_data->ignore_camera = 0.0f;
-    quad.gpu_data->ignore_lighting = 0.0f;
+    quad.gpu_data->f32.ignore_camera = 0.0f;
+    quad.gpu_data->f32.ignore_lighting = 0.0f;
     
-    quad.gpu_data->base_mat_f32.ambient_rgb[0] = 0.05f;
-    quad.gpu_data->base_mat_f32.ambient_rgb[1] = 0.05f;
-    quad.gpu_data->base_mat_f32.ambient_rgb[2] = 0.50f;
-    quad.gpu_data->alpha = 1.0f;
+    quad.gpu_data->f32.base_mat_f32.ambient_rgb[0] = 0.05f;
+    quad.gpu_data->f32.base_mat_f32.ambient_rgb[1] = 0.05f;
+    quad.gpu_data->f32.base_mat_f32.ambient_rgb[2] = 0.50f;
+    quad.gpu_data->f32.alpha = 1.0f;
     
     T1_zsprite_commit(&quad);
     
@@ -273,10 +274,10 @@ void T1_clientlogic_late_startup(void) {
         T1Tex phoebus_tex = T1_texture_array_get_filename_location(
             /* const char * for_filename: */
                 "phoebus.png");
-        quad.gpu_data->base_mat_i32.texturearray_i = phoebus_tex.array_i;
-        quad.gpu_data->base_mat_i32.texture_i = phoebus_tex.slice_i;
+        quad.gpu_data->i32.base_mat_i32.texturearray_i = phoebus_tex.array_i;
+        quad.gpu_data->i32.base_mat_i32.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id = -1;
-        quad.gpu_data->touch_id = -1;
+        quad.gpu_data->i32.touch_id = -1;
         quad.cpu_data->alpha_blending_on = true;
         
         quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
@@ -286,13 +287,13 @@ void T1_clientlogic_late_startup(void) {
         quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
         quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
         quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-        quad.gpu_data->ignore_camera = 0.0f;
-        quad.gpu_data->ignore_lighting = 0.0f;
+        quad.gpu_data->f32.ignore_camera = 0.0f;
+        quad.gpu_data->f32.ignore_lighting = 0.0f;
         
-        quad.gpu_data->base_mat_f32.ambient_rgb[0] = 0.05f;
-        quad.gpu_data->base_mat_f32.ambient_rgb[1] = 0.05f;
-        quad.gpu_data->base_mat_f32.ambient_rgb[2] = 0.50f;
-        quad.gpu_data->alpha = 0.25f;
+        quad.gpu_data->f32.base_mat_f32.ambient_rgb[0] = 0.05f;
+        quad.gpu_data->f32.base_mat_f32.ambient_rgb[1] = 0.05f;
+        quad.gpu_data->f32.base_mat_f32.ambient_rgb[2] = 0.50f;
+        quad.gpu_data->f32.alpha = 0.25f;
         
         T1_zsprite_commit(&quad);
     }
@@ -399,12 +400,14 @@ static void clientlogic_handle_keypresses(
             testswitch ? 1.25f : -1.25f;
         anim->cpu_vals.angle_xyz[2] =
             testswitch ? 1.80f : 0.00f;
-        anim->gpu_vals.touch_id =
+        anim->gpu_vals.i32.touch_id =
             testswitch ? 12542209 : teapot_touch_ids[0];
         anim->affected_zsprite_id =
             teapot_object_ids[0];
         anim->easing_type = EASINGTYPE_NONE;
         anim->duration_us = 1;
+        anim->cpu_vals_active = true;
+        anim->gpu_vals_i32_active = true;
         T1_zsprite_anim_commit_and_instarun(anim);
     }
     
