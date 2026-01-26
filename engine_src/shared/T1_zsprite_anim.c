@@ -493,8 +493,10 @@ void T1_zsprite_anim_commit(
                 &T1_zsprite_anims[anim_i];
             
             if (
+                (a->public.affected_zsprite_id ==
+                    to_commit->affected_zsprite_id ||
                 a->public.affected_zsprite_id ==
-                    to_commit->affected_zsprite_id &&
+                    T1_ZSPRITE_ID_HIT_EVERYTHING) &&
                 a->public.affected_touch_id ==
                     to_commit->affected_touch_id &&
                 a->committed &&
@@ -619,6 +621,15 @@ void T1_zsprite_anim_fade_and_destroy(
     T1_zsprite_anim_commit(fade_destroy);
 }
 
+void T1_zsprite_anim_fade_destroy_all(void)
+{
+    T1_zsprite_anim_fade_and_destroy(
+        /* const int32_t  object_id: */
+            T1_ZSPRITE_ID_HIT_EVERYTHING,
+        /* const uint64_t duration_us: */
+            200000);
+}
+
 void T1_zsprite_anim_fade_to(
     const int32_t zsprite_id,
     const uint64_t duration_us,
@@ -707,9 +718,12 @@ void T1_zsprite_anim_delete_endpoint_anims_targeting(
         if (
             !T1_zsprite_anims[i].deleted &&
             T1_zsprite_anims[i].endpoints_not_deltas &&
-            T1_zsprite_anims[i].public.
+            (T1_zsprite_anims[i].public.
                 affected_zsprite_id ==
-                    (int32_t)object_id)
+                    (int32_t)object_id ||
+            T1_zsprite_anims[i].
+                public.affected_zsprite_id ==
+                    T1_ZSPRITE_ID_HIT_EVERYTHING))
         {
             T1_zsprite_anims[i].deleted = true;
         }
@@ -728,7 +742,8 @@ void T1_zsprite_anim_delete_all_anims_targeting(
         if (
             !T1_zsprite_anims[i].deleted &&
             T1_zsprite_anims[i].committed &&
-            a->affected_zsprite_id == object_id)
+            (a->affected_zsprite_id == object_id ||
+            a->affected_zsprite_id == T1_ZSPRITE_ID_HIT_EVERYTHING))
         {
             T1_zsprite_anims[i].deleted = true;
         }

@@ -34,14 +34,6 @@ static void assert_sanity_check_zsprite_vals(
     }
 }
 
-static void assert_sanity_check_zsprite_vals_by_id(
-    const int32_t zp_i)
-{
-    assert_sanity_check_zsprite_vals(
-        &T1_zsprite_list->gpu_data[zp_i],
-        &T1_zsprite_list->cpu_data[zp_i].
-            simd_stats);
-}
 #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x)
 #define assert_sanity_check_zsprite_vals_by_id(x)
@@ -50,6 +42,15 @@ static void assert_sanity_check_zsprite_vals_by_id(
 #endif
 
 T1zSpriteCollection * T1_zsprite_list = NULL;
+
+static void assert_sanity_check_zsprite_vals_by_id(
+    const int32_t zp_i)
+{
+    assert_sanity_check_zsprite_vals(
+        &T1_zsprite_list->gpu_data[zp_i],
+        &T1_zsprite_list->cpu_data[zp_i].
+            simd_stats);
+}
 
 void T1_zsprite_init(void) {
     T1_zsprite_list = (T1zSpriteCollection *)
@@ -129,6 +130,47 @@ void T1_zsprite_commit(
     to_commit->cpu_data->committed = true;
 }
 
+void T1_zsprite_get_pos_xyz(
+    const int32_t zsprite_id,
+    float * recip_x,
+    float * recip_y,
+    float * recip_z)
+{
+    float count = 0.0f;
+    *recip_x = 0.0f;
+    *recip_y = 0.0f;
+    *recip_z = 0.0f;
+    
+    for (
+        int32_t zs_i = 0;
+        zs_i < T1_zsprite_list->size;
+        zs_i++)
+    {
+        if (
+            T1_zsprite_list->cpu_data[zs_i].mesh_id ==
+                zsprite_id)
+        {
+            count += 1.0f;
+            
+            *recip_x +=
+                T1_zsprite_list->cpu_data[zs_i].
+                    simd_stats.xyz[0];
+            *recip_y +=
+                T1_zsprite_list->cpu_data[zs_i].
+                    simd_stats.xyz[1];
+            *recip_z +=
+                T1_zsprite_list->cpu_data[zs_i].
+                    simd_stats.xyz[2];
+        }
+    }
+    
+    if (count >= 0.0f) {
+        *recip_x /= count;
+        *recip_y /= count;
+        *recip_z /= count;
+    }
+}
+
 void T1_zsprite_delete(const int32_t with_object_id)
 {
     for (
@@ -200,29 +242,6 @@ float T1_zsprite_get_z_multiplier_for_depth(
     return return_value;
 }
 
-float T1_zsprite_get_y_multiplier_for_height(
-    T1CPUzSprite * for_poly,
-    const float for_height)
-{
-    log_assert(for_poly != NULL);
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (for_poly == NULL) {
-        return 0.0f;
-    }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    log_assert(for_poly->mesh_id >= 0);
-    log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
-    
-    float return_value =
-        for_height / T1_mesh_summary_list[for_poly->mesh_id].base_height;
-    
-    return return_value;
-}
-
 void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
@@ -244,9 +263,9 @@ void T1_zsprite_scale_multipliers_to_height(
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
-    float new_multiplier = T1_zsprite_get_y_multiplier_for_height(
+    float new_multiplier = T1_global_get_y_mul_for_height(
         /* zPolygonCPU * for_poly: */
-            cpu_data,
+            cpu_data->mesh_id,
         /* const float for_height: */
             new_height);
     
@@ -596,7 +615,8 @@ void T1_zsprite_apply_anim_effects_to_id(
         if (
             (zsprite_id >= 0 &&
             T1_zsprite_list->cpu_data[zp_i].
-                zsprite_id != zsprite_id) ||
+                zsprite_id != zsprite_id &&
+            zsprite_id != T1_ZSPRITE_ID_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
             T1_zsprite_list->gpu_data[zp_i].i32.
                 touch_id != touch_id) ||
@@ -650,6 +670,7 @@ void T1_zsprite_apply_endpoint_anim(
         zp_i++)
     {
         if (
+            zsprite_id == T1_ZSPRITE_ID_HIT_EVERYTHING ||
             (zsprite_id >= 0 &&
             T1_zsprite_list->cpu_data[zp_i].
                 zsprite_id != zsprite_id) ||

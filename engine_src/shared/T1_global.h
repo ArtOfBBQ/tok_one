@@ -37,6 +37,8 @@ platform layer doesn't need to do anything and can just record values directly
 
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
+#include "T1_logger.h"
+#include "T1_mesh_summary.h"
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
@@ -91,5 +93,17 @@ void T1_global_update_window_size(
     float width,
     float height,
     uint64_t at_timestamp_us);
+
+float T1_global_get_z_mul_for_depth(
+    const int32_t for_mesh_id,
+    const float for_depth);
+
+float T1_global_get_y_mul_for_height(
+    const int32_t for_mesh_id,
+    const float for_height);
+
+float T1_global_get_x_mul_for_width(
+    const int32_t for_mesh_id,
+    const float for_width);
 
 #endif // T1_GLOBAL_H

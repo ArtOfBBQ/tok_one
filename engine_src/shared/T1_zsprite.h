@@ -1,6 +1,8 @@
 #ifndef ZSPRITE_H
 #define ZSPRITE_H
 
+#define T1_ZSPRITE_ID_HIT_EVERYTHING INT32_MAX
+
 #include <math.h>
 #include <inttypes.h>
 
@@ -57,19 +59,15 @@ void T1_zsprite_fetch_next(
 void T1_zsprite_commit(
     T1zSpriteRequest * to_commit);
 
+void T1_zsprite_get_pos_xyz(
+    const int32_t zsprite_id,
+    float * recip_x,
+    float * recip_y,
+    float * recip_z);
+
 void T1_zsprite_delete(
     const int32_t with_zsprite_id);
 void T1_zsprite_delete_all(void);
-
-float T1_zsprite_get_z_multiplier_for_depth(
-    T1CPUzSprite * for_poly,
-    const float for_depth);
-float T1_zsprite_get_y_multiplier_for_height(
-    T1CPUzSprite * for_poly,
-    const float for_height);
-float T1_zsprite_get_x_multiplier_for_width(
-    T1CPUzSprite * for_poly,
-    const float for_width);
 
 void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
@@ -183,6 +181,6 @@ T1_zsprite_copy_data_for_shatter_effect(
     T1GPUzSprite * gpu_recip,
     T1CPUzSprite * cpu_recip);
 
-extern T1zSpriteCollection * T1_zsprite_list;
+// extern T1zSpriteCollection * T1_zsprite_list;
 
 #endif // ZSPRITE_H

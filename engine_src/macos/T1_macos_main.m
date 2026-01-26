@@ -331,7 +331,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
 
 @implementation GameWindowDelegate
-
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
     
@@ -343,7 +342,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     log_dump(&write_succesful);
     
     if (!write_succesful) {
-        log_append("ERROR - failed to store the log file on app close..\n");
+        log_append(
+            "ERROR - failed to store "
+            " the log file on app "
+            " close..\n");
     }
     
     T1_platform_close_app();
