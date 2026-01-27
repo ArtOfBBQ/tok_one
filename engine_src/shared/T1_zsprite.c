@@ -143,12 +143,12 @@ void T1_zsprite_get_pos_xyz(
     
     for (
         int32_t zs_i = 0;
-        zs_i < T1_zsprite_list->size;
+        zs_i < (int32_t)T1_zsprite_list->size;
         zs_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[zs_i].mesh_id ==
-                zsprite_id)
+            T1_zsprite_list->cpu_data[zs_i].
+                zsprite_id == zsprite_id)
         {
             count += 1.0f;
             
