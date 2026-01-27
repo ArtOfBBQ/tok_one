@@ -593,8 +593,9 @@ void T1_zsprite_anim_evaporate_and_destroy(
     set_scatter_mesh->duration_us = 1;
     T1_zsprite_anim_commit_and_instarun(set_scatter_mesh);
     
-    T1zSpriteAnim * evap = T1_zsprite_anim_request_next(true);
-    evap->gpu_vals.f32.explode = 1.5f;
+    T1zSpriteAnim * evap =
+        T1_zsprite_anim_request_next(true);
+    evap->gpu_vals.f32.explode = 0.04f;
     evap->gpu_vals.f32.alpha = 0.0f;
     evap->affected_zsprite_id = zsprite_id;
     evap->duration_us = duration_us;
