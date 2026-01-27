@@ -124,7 +124,10 @@ vertex_shader(
     
     const device T1GPURenderView * c = rv + rv_i;
     
-    if (c->write_to_shadow_maps && zs->i32.remove_shadow) {
+    if (
+        c->write_to_shadow_maps &&
+        zs->f32.shadow_strength < 0.1f)
+    {
         out.projpos = vector_float4(
             0.0f, 0.0f, 500.0f, 1.0f);
         return out;

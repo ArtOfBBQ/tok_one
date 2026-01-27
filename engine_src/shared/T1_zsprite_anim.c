@@ -80,7 +80,8 @@ void T1_zsprite_anim_init(
 }
 
 static
-T1InternalzSpriteAnim * T1_zsprite_anim_get_container(
+T1InternalzSpriteAnim *
+T1_zsprite_anim_get_container(
     const T1zSpriteAnim * public_ptr)
 {
     assert(

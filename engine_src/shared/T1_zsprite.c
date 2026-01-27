@@ -14,10 +14,10 @@ static void assert_sanity_check_zsprite_vals(
             ignore_lighting >= -0.05f);
         log_assert(recip_gpu->f32.
             ignore_lighting <= 1.05f);
-        log_assert(recip_gpu->i32.
-            remove_shadow >= 0);
-        log_assert(recip_gpu->i32.
-            remove_shadow <= 1);
+        log_assert(recip_gpu->f32.
+            shadow_strength >= -0.1f);
+        log_assert(recip_gpu->f32.
+            shadow_strength <= 1.1f);
         log_assert(recip_gpu->f32.alpha >= -0.1f);
         log_assert(recip_gpu->f32.alpha <=  1.1f);
         log_assert(recip_gpu->f32.bonus_rgb[0] < 3.0f);
@@ -670,14 +670,15 @@ void T1_zsprite_apply_endpoint_anim(
         zp_i++)
     {
         if (
-            zsprite_id == T1_ZSPRITE_ID_HIT_EVERYTHING ||
-            (zsprite_id >= 0 &&
+            zsprite_id !=
+                T1_ZSPRITE_ID_HIT_EVERYTHING &&
+            ((zsprite_id >= 0 &&
             T1_zsprite_list->cpu_data[zp_i].
                 zsprite_id != zsprite_id) ||
             (touch_id >= 0 &&
             T1_zsprite_list->gpu_data[zp_i].i32.
                 touch_id != touch_id) ||
-            T1_zsprite_list->cpu_data[zp_i].deleted)
+            T1_zsprite_list->cpu_data[zp_i].deleted))
         {
             continue;
         }

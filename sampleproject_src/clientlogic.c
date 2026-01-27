@@ -166,7 +166,7 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
     lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
     lightcube_request.cpu_data->simd_stats.bloom_on = true;
-    lightcube_request.gpu_data->i32.remove_shadow = true;
+    lightcube_request.gpu_data->f32.shadow_strength = 0.0f;
     T1_zsprite_commit(&lightcube_request);
     
     T1_camera->xyz[0] =  0.00f;

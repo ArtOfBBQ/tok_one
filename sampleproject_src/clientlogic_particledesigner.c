@@ -101,12 +101,12 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, scale_factor, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, alpha_blending_on, &ok);
+    T1_meta_reg_float_limits_for_last_field(0.0f, 1.0f, &ok);
     
     T1_meta_struct(T1CPUzSprite, &ok);
     assert(ok);
     T1_meta_struct_field(T1CPUzSprite, T1CPUzSpriteSimdStats, simd_stats, &ok);
-    T1_meta_field(T1CPUzSprite, T1_TYPE_U8, alpha_blending_on, &ok);
-    T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
     T1_meta_field(T1CPUzSprite, T1_TYPE_U8, visible, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
@@ -126,12 +126,12 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSpritef32, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_field(T1GPUzSpritef32, T1_TYPE_F32, shadow_strength, &ok);
+    T1_meta_reg_float_limits_for_last_field(0.0f, 1.0f, &ok);
     
     T1_meta_struct(T1GPUzSpritei32, &ok);
     assert(ok);
     T1_meta_struct_field(T1GPUzSpritei32, T1GPUConstMat, base_mat_i32, &ok);
-    T1_meta_field(T1GPUzSpritei32, T1_TYPE_I32, remove_shadow, &ok);
-    T1_meta_reg_int_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
     T1_meta_struct(T1GPUzSprite, &ok);
@@ -940,7 +940,7 @@ void T1_clientlogic_window_resize(
     #error
     #endif
     
-    T1_zsprite_list->size = 0;
+    T1_zsprite_delete_all();
     T1_zspriteid_clear_ui_element_touch_ids();
     
     pds->whitespace_height = get_whitespace_height();

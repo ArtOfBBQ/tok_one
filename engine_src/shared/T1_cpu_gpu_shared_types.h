@@ -105,12 +105,12 @@ typedef struct {
     float            ignore_lighting;
     float            ignore_camera;
     float            outline_alpha;
-    float            f32_padding[7];
+    float            shadow_strength;
+    float            f32_padding[6];
 } T1GPUzSpritef32;
 
 typedef struct {
     T1GPUConstMati32 base_mat_i32; // start of i32
-    int remove_shadow;
     int touch_id;
     int mix_project_rv_i;
     int mix_project_array_i;
