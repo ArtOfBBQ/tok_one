@@ -38,6 +38,7 @@ of the engine for your specific app.
 #define T1_DIFFUSE_LIGHTING_ACTIVE 1
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_ZSPRITE_ANIM_ACTIVE 1
+#define T1_TEXQUAD_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 1
 #define T1_OUTLINES_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
@@ -80,6 +81,7 @@ Flat textured quads, mostly for UI text
 The maximum number of 'scheduled animations' simultaneously running
 */
 #define T1_ZSPRITE_ANIMS_CAP 180
+#define T1_TEXQUAD_ANIMS_CAP 50
 
 
 #define ALL_MESHES_SIZE 20

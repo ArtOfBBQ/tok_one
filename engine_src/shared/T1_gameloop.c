@@ -341,6 +341,13 @@ void T1_gameloop_update_before_render_pass(
         #error
         #endif
         
+        #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
+        T1_texquad_anim_resolve();
+        #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
         T1_platform_update_mouse_location();
         
         T1_zsprite_handle_timed_occlusion();

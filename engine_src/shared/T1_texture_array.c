@@ -427,10 +427,10 @@ int32_t T1_texture_array_create_new_render_view(
     
     T1_render_views->cpu[rv_i].write_type =
         T1RENDERVIEW_WRITE_RENDER_TARGET;
-    log_assert(T1_render_views->cpu[rv_i].height ==
-        height);
     log_assert(T1_render_views->cpu[rv_i].width ==
         width);
+    log_assert(T1_render_views->cpu[rv_i].height ==
+        height);
     T1_render_views->cpu[rv_i].passes_size = 3;
     T1_render_views->cpu[rv_i].passes[0].type =
         T1RENDERPASS_DIAMOND_ALPHA;
@@ -459,10 +459,10 @@ int32_t T1_texture_array_create_new_render_view(
     T1_texture_array_postregister_null_image(
         /* const char * filename: */
             tex_name,
-        /* const uint32_t height: */
-            T1_render_views->cpu[rv_i].height,
         /* const uint32_t width: */
             T1_render_views->cpu[rv_i].width,
+        /* const uint32_t height: */
+            T1_render_views->cpu[rv_i].height,
         /* const uint32_t is_render_target: */
             true,
         /* const uint32_t use_bc1_compression: */
@@ -589,8 +589,8 @@ void T1_texture_array_register_new_by_splitting_image(
 
 void T1_texture_array_preregister_null_image(
     const char * filename,
-    const uint32_t height,
     const uint32_t width,
+    const uint32_t height,
     const uint32_t is_render_target,
     const uint32_t use_bc1_compression)
 {
@@ -600,15 +600,22 @@ void T1_texture_array_preregister_null_image(
     // *****************
     // find out if same width/height was already used
     // set new_texturearray_i and new_texture_i if so
-    for (uint32_t i = 0; i < T1_texture_arrays_size; i++)
+    for (
+        uint32_t i = 0;
+        i < T1_texture_arrays_size;
+        i++)
     {
         log_assert(i < TEXTUREARRAYS_SIZE);
         if (
             T1_texture_arrays[i].images_size > 0 &&
-            T1_texture_arrays[i].single_img_width  == width &&
-            T1_texture_arrays[i].single_img_height == height &&
-            T1_texture_arrays[i].is_render_target == is_render_target &&
-            T1_texture_arrays[i].bc1_compressed == use_bc1_compression)
+            T1_texture_arrays[i].
+                single_img_width  == width &&
+            T1_texture_arrays[i].
+                single_img_height == height &&
+            T1_texture_arrays[i].
+                is_render_target == is_render_target &&
+            T1_texture_arrays[i].bc1_compressed ==
+                use_bc1_compression)
         {
             new_texturearray_i = (int)i;
             new_texture_i = (int32_t)T1_texture_arrays[i].images_size;
@@ -663,8 +670,8 @@ void T1_texture_array_preregister_null_image(
 
 void T1_texture_array_postregister_null_image(
     const char * filename,
-    const uint32_t height,
     const uint32_t width,
+    const uint32_t height,
     const uint32_t is_render_target,
     const uint32_t use_bc1_compression)
 {

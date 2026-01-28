@@ -82,6 +82,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_particle.c"
 #include "T1_easing.c"
 #include "T1_zsprite_anim.c"
+#include "T1_texquad_anim.c"
 #include "T1_text.c"
 #include "T1_uielement.c"
 #include "T1_profiler.c"

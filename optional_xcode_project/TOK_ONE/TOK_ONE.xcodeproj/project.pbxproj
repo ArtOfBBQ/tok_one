@@ -132,6 +132,7 @@
 		EC914B8D2B94B193007FCBFC /* T1_linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */; };
 		EC914B8E2B94B1EF007FCBFC /* T1_terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* T1_terminal.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
+		EC9B70BF2F2A8A8E00EB3E02 /* T1_texquad_anim.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9B70BE2F2A8A8E00EB3E02 /* T1_texquad_anim.c */; };
 		EC9F971F2EEF6B86008D8481 /* T1_mesh_summary.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */; };
 		EC9F97202EEF6B86008D8481 /* T1_tex.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971E2EEF6B86008D8481 /* T1_tex.c */; };
 		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
@@ -277,6 +278,8 @@
 		EC914B892B9199A1007FCBFC /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
+		EC9B70BD2F2A8A8E00EB3E02 /* T1_texquad_anim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_texquad_anim.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad_anim.h; sourceTree = "<absolute>"; };
+		EC9B70BE2F2A8A8E00EB3E02 /* T1_texquad_anim.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_texquad_anim.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad_anim.c; sourceTree = "<absolute>"; };
 		EC9F971B2EEF6B86008D8481 /* T1_mesh_summary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_mesh_summary.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh_summary.h; sourceTree = "<absolute>"; };
 		EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_mesh_summary.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_mesh_summary.c; sourceTree = "<absolute>"; };
 		EC9F971D2EEF6B86008D8481 /* T1_tex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_tex.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_tex.h; sourceTree = "<absolute>"; };
@@ -527,6 +530,8 @@
 				EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */,
 				EC9F971D2EEF6B86008D8481 /* T1_tex.h */,
 				EC9F971E2EEF6B86008D8481 /* T1_tex.c */,
+				EC9B70BD2F2A8A8E00EB3E02 /* T1_texquad_anim.h */,
+				EC9B70BE2F2A8A8E00EB3E02 /* T1_texquad_anim.c */,
 				EC2914A22EEE211300D3873E /* T1_clientlogic.h */,
 				ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */,
 				EC78509C29E639F900E6882A /* T1_triangle.h */,
@@ -781,6 +786,7 @@
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
 				EC2914A12EEE200B00D3873E /* T1_frame_anim.c in Sources */,
 				60A998F7287BD4C3003F7159 /* T1_logger.c in Sources */,
+				EC9B70BF2F2A8A8E00EB3E02 /* T1_texquad_anim.c in Sources */,
 				60A998FD287BD4C3003F7159 /* T1_decodedimage.c in Sources */,
 				60A998F5287BD4C3003F7159 /* T1_texture_array.h in Sources */,
 				EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */,

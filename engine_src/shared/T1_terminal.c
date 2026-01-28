@@ -117,36 +117,36 @@ void terminal_redraw_backgrounds(void) {
     
     input_req.cpu->zsprite_id =
         terminal_back_object_id;
-    input_req.gpu->pos_xyz[0] = 0.0f;
-    input_req.gpu->pos_xyz[1] =
+    input_req.gpu->f32.pos_xyz[0] = 0.0f;
+    input_req.gpu->f32.pos_xyz[1] =
         T1_render_view_screen_y_to_y_noz(
             TERM_INPUT_BOX_MID_Y);
-    input_req.gpu->pos_xyz[2] = TERM_Z;
+    input_req.gpu->f32.pos_xyz[2] = TERM_Z;
     
-    input_req.gpu->size_xy[0] =
+    input_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(width);
-    input_req.gpu->size_xy[1] =
+    input_req.gpu->f32.size_xy[1] =
         T1_render_view_screen_height_to_height_noz(
             TERM_INPUT_BOX_HEIGHT);
-    input_req.gpu->tex_array_i = -1;
-    input_req.gpu->tex_slice_i = -1;
+    input_req.gpu->i32.tex_array_i = -1;
+    input_req.gpu->i32.tex_slice_i = -1;
     T1_flat_texquad_commit(&input_req);
     
     // The console history area
     T1FlatTexQuadRequest history_req;
     T1_flat_texquad_fetch_next(&history_req);
-    history_req.gpu->pos_xyz[0] = 0.0f;
-    history_req.gpu->pos_xyz[1] =
+    history_req.gpu->f32.pos_xyz[0] = 0.0f;
+    history_req.gpu->f32.pos_xyz[1] =
         T1_render_view_screen_y_to_y_noz(
            (command_history_height / 2) +
                TERM_INPUT_BOX_HEIGHT +
                (TERMINAL_WHITESPACE * 2.0f));
-    history_req.gpu->pos_xyz[2] = TERM_Z;
-    history_req.gpu->size_xy[0] =
+    history_req.gpu->f32.pos_xyz[2] = TERM_Z;
+    history_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(
                 T1_render_views->cpu[0].width -
                     (TERMINAL_WHITESPACE * 2));
-    history_req.gpu->size_xy[1] =
+    history_req.gpu->f32.size_xy[1] =
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
     history_req.cpu->zsprite_id = INT32_MAX;

@@ -32,6 +32,7 @@ extern "C" {
 #include "T1_text.h"
 #include "T1_uielement.h"
 #include "T1_zsprite_anim.h"
+#include "T1_texquad_anim.h"
 #include "T1_logger.h"
 #include "T1_terminal.h"
 

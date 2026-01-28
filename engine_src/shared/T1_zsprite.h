@@ -43,7 +43,7 @@ typedef struct {
 typedef struct {
     T1GPUzSprite * gpu_data;
     T1CPUzSprite * cpu_data;
-    uint32_t gpu_data_size;
+    uint32_t       gpu_data_size;
 } T1zSpriteRequest;
 
 void T1_zsprite_init(void);

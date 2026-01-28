@@ -396,6 +396,17 @@ void T1_appinit_before_gpu_init(
     #error "T1_ZSPRITE_ANIM_ACTIVE undefined!"
     #endif
     
+    #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
+    T1_texquad_anim_init(
+        T1_platform_init_mutex_and_return_id,
+        T1_platform_mutex_lock,
+        T1_platform_mutex_unlock);
+    #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_TEXQUAD_ANIM_ACTIVE undefined!"
+    #endif
+    
     T1_texture_array_init();
     
     // initialize font with fontmetrics.dat

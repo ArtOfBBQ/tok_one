@@ -47,14 +47,14 @@ void T1_texture_array_push_all_predecoded(void);
 
 void T1_texture_array_preregister_null_image(
     const char * filename,
-    const uint32_t height,
     const uint32_t width,
+    const uint32_t height,
     const uint32_t is_render_target,
     const uint32_t use_bc1_compression);
 void T1_texture_array_postregister_null_image(
     const char * filename,
-    const uint32_t height,
     const uint32_t width,
+    const uint32_t height,
     const uint32_t is_render_target,
     const uint32_t use_bc1_compression);
 

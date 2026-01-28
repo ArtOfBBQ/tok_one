@@ -305,18 +305,18 @@ void text_request_label_offset_around(
             }
             
             T1_flat_texquad_fetch_next(&letter);
-            letter.gpu->pos_xyz[0] =
+            letter.gpu->f32.pos_xyz[0] =
                 T1_render_view_screen_x_to_x_noz(
                     mid_x_pixelspace);
-            letter.gpu->pos_xyz[1] =
+            letter.gpu->f32.pos_xyz[1] =
                 T1_render_view_screen_y_to_y_noz(
                     mid_y_pixelspace);
-            letter.gpu->pos_xyz[2] = z;
+            letter.gpu->f32.pos_xyz[2] = z;
             
-            letter.gpu->size_xy[0] =
+            letter.gpu->f32.size_xy[0] =
                 T1_render_view_screen_width_to_width_noz(
                     font_settings->font_height);
-            letter.gpu->size_xy[1] =
+            letter.gpu->f32.size_xy[1] =
                 T1_render_view_screen_height_to_height_noz(
                     font_settings->font_height);
             
@@ -330,20 +330,20 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.gpu->pos_xyz[0] +=
+            letter.gpu->f32.pos_xyz[0] +=
                 T1_render_view_screen_width_to_width_noz(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])));
-            letter.gpu->pos_xyz[1] +=
+            letter.gpu->f32.pos_xyz[1] +=
                 T1_render_view_screen_height_to_height_noz(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (font_settings->font_height * 0.5f)) +
                             font_settings->extra_offset_xy[1]);
             
-            letter.gpu->tex_array_i = 0;
-            letter.gpu->tex_slice_i =
+            letter.gpu->i32.tex_array_i = 0;
+            letter.gpu->i32.tex_slice_i =
                 (int32_t)text_to_draw[j] - '!';
             
             cur_x_offset_pixelspace +=
@@ -420,6 +420,9 @@ void text_request_label_renderable(
     const float z,
     const float max_width)
 {
+    log_assert(z >= 0.0f);
+    log_assert(z <= 1.0f);
+    
     log_assert(text_to_draw[0] != '\0');
     float cur_x_offset = 0;
     float cur_y_offset = 0;
@@ -469,31 +472,31 @@ void text_request_label_renderable(
         }
         
         T1_flat_texquad_fetch_next(&letter);
-        letter.gpu->pos_xyz[0] =
+        letter.gpu->f32.pos_xyz[0] =
             T1_render_view_screen_x_to_x_noz(
                 left_pixelspace);
-        letter.gpu->pos_xyz[1] =
+        letter.gpu->f32.pos_xyz[1] =
             T1_render_view_screen_y_to_y_noz(
                 mid_y_pixelspace);
-        letter.gpu->pos_xyz[2] = z;
+        letter.gpu->f32.pos_xyz[2] = z;
         
-        letter.gpu->size_xy[0] = letter_width;
-        letter.gpu->size_xy[1] = letter_height;
+        letter.gpu->f32.size_xy[0] = letter_width;
+        letter.gpu->f32.size_xy[1] = letter_height;
         
         letter.cpu->zsprite_id = with_id;
         letter.cpu->touch_id = font_settings->touch_id;
         
-        letter.gpu->tex_array_i = 0;
-        letter.gpu->tex_slice_i = (int32_t)(text_to_draw[i] - '!');
+        letter.gpu->i32.tex_array_i = 0;
+        letter.gpu->i32.tex_slice_i = (int32_t)(text_to_draw[i] - '!');
         
         if (
-            letter.gpu->tex_slice_i < 0 ||
-            letter.gpu->tex_slice_i > 100)
+            letter.gpu->i32.tex_slice_i < 0 ||
+            letter.gpu->i32.tex_slice_i > 100)
         {
             continue;
         }
         
-        letter.gpu->pos_xyz[0] +=
+        letter.gpu->f32.pos_xyz[0] +=
             T1_render_view_screen_width_to_width_noz(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]));
@@ -501,7 +504,7 @@ void text_request_label_renderable(
             T1_render_view_screen_height_to_height_noz(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]));
-        letter.gpu->pos_xyz[1] += y_offset;
+        letter.gpu->f32.pos_xyz[1] += y_offset;
         
         cur_x_offset += get_advance_width(
             text_to_draw[i]);

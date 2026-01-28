@@ -6,6 +6,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_cpu_to_gpu_types.h"
+#include "T1_global.h"
 #include "T1_easing.h"
 #include "T1_flat_texquad.h"
 
@@ -24,41 +25,26 @@ typedef struct {
     uint64_t pause_us;
     
     uint32_t runs;
-    int32_t affected_zsprite_id;
-    int32_t affected_touchable_id;
+    int32_t affect_zsprite_id;
+    int32_t affect_touch_id;
     
     T1EasingType easing_type; // u8
-    bool8_t delete_on_finish;
-    bool8_t delete_other_anims_targeting_id;
+    bool8_t gpu_vals_f32_active;
+    bool8_t gpu_vals_i32_active;
+    bool8_t cpu_vals_active;
+    bool8_t del_obj_on_finish;
+    bool8_t del_conflict_anims;
 } T1TexQuadAnim;
 
 T1TexQuadAnim * T1_texquad_anim_request_next(
     bool8_t endpoints_not_deltas);
 
 void T1_texquad_anim_commit(
-    T1zSpriteAnim * to_commit);
-
-void T1_texquad_anim_evaporate_and_destroy(
-    const int32_t zsprite_id,
-    const uint64_t duration_us);
-
-void T1_texquad_anim_shatter_and_destroy(
-    const int32_t zsprite_id,
-    const uint64_t duration_us);
+    T1TexQuadAnim * to_commit);
 
 void T1_texquad_anim_fade_and_destroy(
-    const int32_t zsprite_id,
+    const int32_t  object_id,
     const uint64_t duration_us);
-
-void T1_texquad_anim_fade_to(
-    const int32_t zsprite_id,
-    const uint64_t duration_us,
-    const float target_alpha);
-
-void T1_texquad_anim_delete_all(void);
-void T1_texquad_anim_delete_endpoint_anims_targeting(
-    const int32_t zsprite_id);
-void T1_texquad_anim_delete_all_anims_targeting(const int32_t zsprite_id);
 
 #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
 #else

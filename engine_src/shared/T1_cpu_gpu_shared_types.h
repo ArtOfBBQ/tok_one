@@ -139,11 +139,21 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
+    int tex_array_i;
+    int tex_slice_i;
+    int padding[6];
+} T1GPUTexQuadi32;
+
+typedef struct {
     float pos_xyz[3];
     float size_xy[2];
     float rgba[4];
-    int   tex_array_i;
-    int   tex_slice_i;
+    float padding[7];
+} T1GPUTexQuadf32;
+
+typedef struct {
+    T1GPUTexQuadf32 f32;
+    T1GPUTexQuadi32 i32;
 } T1GPUTexQuad;
 
 typedef struct {

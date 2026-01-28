@@ -2528,6 +2528,7 @@ static void set_defaults_for_encoder(
         log_assert(ags->zbuf_cleared);
         break;
         default:
+            // render pass type not set
             log_assert(0);
     }
     

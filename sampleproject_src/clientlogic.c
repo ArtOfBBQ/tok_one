@@ -1,6 +1,6 @@
 #include "T1_clientlogic.h"
 
-#define TEAPOT 1
+#define TEAPOT 0
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -63,17 +63,17 @@ void T1_clientlogic_early_startup(
 }
 
 static void request_teapots(void) {
-        
-    if (teapot_mesh_id < 0) { return; }
-    
-    T1_zsprite_delete(teapot_object_ids[0]);
-    T1_zsprite_delete(teapot_object_ids[1]);
     
     #define TEAPOT_X  0.0f
     #define TEAPOT_Y  0.00f
     #define TEAPOT_Z  2.0f
     
     #if TEAPOT
+    if (teapot_mesh_id < 0) { return; }
+    
+    T1_zsprite_delete(teapot_object_ids[0]);
+    T1_zsprite_delete(teapot_object_ids[1]);
+    
     teapot_object_ids[0] = T1_zspriteid_next_nonui_id();
     teapot_object_ids[1] = T1_zspriteid_next_nonui_id();
     
@@ -178,20 +178,18 @@ void T1_clientlogic_late_startup(void) {
     
     request_teapots();
     
-    int32_t quad_texture_array_i = -1;
-    int32_t quad_texture_i = -1;
-    //    T1_texture_array_get_filename_location(
-    //        "structuredart1.png",
-    //        &quad_texture_array_i,
-    //        &quad_texture_i);
+    T1Tex quad_tex =
+        T1_texture_array_get_filename_location(
+            "structuredart1.png");
+    
     
     T1zSpriteRequest quad;
     T1_zsprite_fetch_next(&quad);
     zsprite_construct_quad(
         /* const float left_x: */
-            TEAPOT_X + 0.75f,
+            TEAPOT_X + 0.50f,
         /* const float bottom_y: */
-            TEAPOT_Y - 1.25f,
+            TEAPOT_Y - 0.75f,
         /* const float z: */
             TEAPOT_Z + 0.2f,
         /* const float width: */
@@ -202,8 +200,8 @@ void T1_clientlogic_late_startup(void) {
                 T1_global->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
-    quad.gpu_data->i32.base_mat_i32.texturearray_i = quad_texture_array_i;
-    quad.gpu_data->i32.base_mat_i32.texture_i = quad_texture_i;
+    quad.gpu_data->i32.base_mat_i32.texturearray_i = quad_tex.array_i;
+    quad.gpu_data->i32.base_mat_i32.texture_i = quad_tex.slice_i;
     quad.cpu_data->zsprite_id = -1;
     quad.gpu_data->i32.touch_id = -1;
     
@@ -225,7 +223,7 @@ void T1_clientlogic_late_startup(void) {
     
     T1_zsprite_commit(&quad);
     
-    font_settings->font_height = 50;
+    font_settings->font_height = 75;
     font_settings->touch_id = -1;
     font_settings->matf32.ambient_rgb[0] =  0.1f;
     font_settings->matf32.ambient_rgb[1] =  0.1f;
@@ -233,6 +231,7 @@ void T1_clientlogic_late_startup(void) {
     font_settings->matf32.diffuse_rgb[0] =  2.2f;
     font_settings->matf32.diffuse_rgb[1] =  2.9f;
     font_settings->matf32.diffuse_rgb[2] =  0.8f;
+    font_settings->matf32.alpha = 1.0f;
     font_settings->matf32.alpha =  1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_camera = false;
@@ -248,7 +247,7 @@ void T1_clientlogic_late_startup(void) {
         /* const float top_pixelspace: */
             300.0f,
         /* const float z: */
-            3.5f,
+            0.75f,
         /* const float max_width: */
             1500.0f);
     font_settings->touch_id = -1;
@@ -390,6 +389,7 @@ static void clientlogic_handle_keypresses(
             cam_rotation_speed;
     }
     
+    #if TEAPOT
     if (T1_io_keymap[T1_IO_KEY_M] == true) {
         T1_io_keymap[T1_IO_KEY_M] = false;
         
@@ -410,7 +410,27 @@ static void clientlogic_handle_keypresses(
         anim->gpu_vals_i32_active = true;
         T1_zsprite_anim_commit_and_instarun(anim);
     }
+    #else
+    if (T1_io_keymap[T1_IO_KEY_M] == true) {
+        T1_io_keymap[T1_IO_KEY_M] = false;
+        
+        testswitch = !testswitch;
+        
+        T1TexQuadAnim * anim =
+            T1_texquad_anim_request_next(true);
+        anim->gpu_vals.f32.pos_xyz[0] =
+            testswitch ? 1.25f : -1.25f;
+        anim->affect_zsprite_id = 21;
+        anim->easing_type = EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
+        anim->duration_us = 400000;
+        anim->gpu_vals_f32_active = false;
+        anim->gpu_vals_i32_active = false;
+        anim->cpu_vals_active = false;
+        T1_texquad_anim_commit(anim);
+    }
+    #endif
     
+    #if TEAPOT
     if (T1_io_keymap[T1_IO_KEY_T] == true) {
         T1_io_keymap[T1_IO_KEY_T] = false;
         
@@ -428,6 +448,7 @@ static void clientlogic_handle_keypresses(
         }
         testswitch = !testswitch;
     }
+    #endif
     
     if (
         T1_io_keymap[T1_IO_KEY_BACKSLASH] == true)
@@ -572,9 +593,39 @@ void T1_clientlogic_evaluate_terminal_command(
 }
 
 void T1_clientlogic_window_resize(
-    const uint32_t new_height,
-    const uint32_t new_width)
+    const uint32_t new_width,
+    const uint32_t new_height)
 {
+    T1_texture_array_delete_slice(
+        T1_render_views->cpu[0].write_array_i,
+        T1_render_views->cpu[0].write_slice_i);
+    T1_render_views->cpu[0].write_array_i = -1;
+    T1_render_views->cpu[0].write_slice_i = -1;
+    
+    T1_render_view_delete(0);
+    
+    int32_t rv_i =
+        T1_texture_array_create_new_render_view(
+            new_width,
+            new_height);
+    
+    T1_render_views->cpu[rv_i].passes_size = 6;
+    log_assert(
+        T1_render_views->cpu[rv_i].write_type ==
+            T1RENDERVIEW_WRITE_RENDER_TARGET);
+    T1_render_views->cpu[rv_i].passes[0].type =
+        T1RENDERPASS_DIAMOND_ALPHA;
+    T1_render_views->cpu[rv_i].passes[1].type =
+        T1RENDERPASS_ALPHA_BLEND;
+    T1_render_views->cpu[rv_i].passes[2].type =
+        T1RENDERPASS_OUTLINES;
+    T1_render_views->cpu[rv_i].passes[3].type =
+        T1RENDERPASS_BLOOM;
+    T1_render_views->cpu[rv_i].passes[4].type =
+        T1RENDERPASS_FLAT_TEXQUADS;
+    T1_render_views->cpu[rv_i].passes[5].type =
+        T1RENDERPASS_BILLBOARDS;
+    
     // You're notified that the window is resized!
     request_teapots();
 }

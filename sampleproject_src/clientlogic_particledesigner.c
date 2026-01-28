@@ -926,8 +926,8 @@ void T1_clientlogic_evaluate_terminal_command(
 }
 
 void T1_clientlogic_window_resize(
-    const uint32_t new_height,
-    const uint32_t new_width)
+    const uint32_t new_width,
+    const uint32_t new_height)
 {
     T1_io_mouse_scroll_pos = 0.0f;
     

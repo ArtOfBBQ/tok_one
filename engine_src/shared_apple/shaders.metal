@@ -1214,8 +1214,8 @@ flat_texquad_vertex_shader(
     uint corner_id  = vertex_i % 6;
     
     float2 size_xy = vector_float2(
-        quads[quad_i].size_xy[0],
-        quads[quad_i].size_xy[1]);
+        quads[quad_i].f32.size_xy[0],
+        quads[quad_i].f32.size_xy[1]);
     
     constexpr const float2 corners[6] = {
         float2(-0.5f, -0.5f),
@@ -1238,9 +1238,9 @@ flat_texquad_vertex_shader(
     FlatTexQuadPixel out;
     
     out.screenpos = vector_float4(
-        quads[quad_i].pos_xyz[0],
-        quads[quad_i].pos_xyz[1],
-        quads[quad_i].pos_xyz[2],
+        quads[quad_i].f32.pos_xyz[0],
+        quads[quad_i].f32.pos_xyz[1],
+        quads[quad_i].f32.pos_xyz[2],
         1.0f);
     
     out.screenpos.xy +=
@@ -1248,8 +1248,8 @@ flat_texquad_vertex_shader(
     
     out.uv = uvs[corner_id];
     
-    out.array_i = quads[quad_i].tex_array_i;
-    out.slice_i = quads[quad_i].tex_slice_i;
+    out.array_i = quads[quad_i].i32.tex_array_i;
+    out.slice_i = quads[quad_i].i32.tex_slice_i;
     
     return out;
 }
