@@ -419,13 +419,13 @@ static void clientlogic_handle_keypresses(
         T1TexQuadAnim * anim =
             T1_texquad_anim_request_next(true);
         anim->gpu_vals.f32.pos_xyz[0] =
-            testswitch ? 1.25f : -1.25f;
+            testswitch ? 0.25f : -0.25f;
         anim->affect_zsprite_id = 21;
         anim->easing_type = EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
         anim->duration_us = 400000;
-        anim->gpu_vals_f32_active = false;
-        anim->gpu_vals_i32_active = false;
-        anim->cpu_vals_active = false;
+        anim->gpu_f32_active = true;
+        anim->gpu_i32_active = false;
+        anim->cpu_active = false;
         T1_texquad_anim_commit(anim);
     }
     #endif

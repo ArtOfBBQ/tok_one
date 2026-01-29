@@ -8,7 +8,7 @@
 #include "T1_cpu_to_gpu_types.h"
 #include "T1_global.h"
 #include "T1_easing.h"
-#include "T1_flat_texquad.h"
+#include "T1_texquad.h"
 
 void T1_texquad_anim_init(
     uint32_t (* funcptr_init_mutex_and_return_id)(void),
@@ -29,9 +29,9 @@ typedef struct {
     int32_t affect_touch_id;
     
     T1EasingType easing_type; // u8
-    bool8_t gpu_vals_f32_active;
-    bool8_t gpu_vals_i32_active;
-    bool8_t cpu_vals_active;
+    bool8_t gpu_f32_active;
+    bool8_t gpu_i32_active;
+    bool8_t cpu_active;
     bool8_t del_obj_on_finish;
     bool8_t del_conflict_anims;
 } T1TexQuadAnim;

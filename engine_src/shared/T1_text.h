@@ -2,7 +2,7 @@
 #define TEXT_H
 
 #include "T1_platform_layer.h"
-#include "T1_flat_texquad.h"
+#include "T1_texquad.h"
 
 #ifdef __cplusplus
 extern "C" {

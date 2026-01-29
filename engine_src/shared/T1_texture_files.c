@@ -437,10 +437,10 @@ void T1_texture_files_preregister_png_resource(
     T1_texture_array_preregister_null_image(
         /* const char * filename: */
             filename,
-        /* const uint32_t height: */
-            height,
         /* const uint32_t width: */
             width,
+        /* const uint32_t height: */
+            height,
         /* const uint32_t is_render_target: */
             false,
         /* const uint32_t is_dds_image: */
@@ -507,10 +507,10 @@ void T1_texture_files_preregister_dds_resource(
     T1_texture_array_preregister_null_image(
         /* const char * filename: */
             filename,
-        /* const uint32_t height: */
-            header->height,
         /* const uint32_t width: */
             header->width,
+        /* const uint32_t height: */
+            header->height,
         /* const uint32_t is_render_target: */
             false,
         /* const uint32_t is_dds_image: */

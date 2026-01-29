@@ -49,11 +49,11 @@ static void describe_zpolygon(
 
 void destroy_terminal_objects(void) {
     if (terminal_back_object_id >= 0) {
-        T1_flat_texquad_delete(terminal_back_object_id);
+        T1_texquad_delete(terminal_back_object_id);
     }
     
     if (terminal_labels_object_id >= 0) {
-        T1_flat_texquad_delete(
+        T1_texquad_delete(
             terminal_labels_object_id);
     }
 }
@@ -112,7 +112,7 @@ void terminal_redraw_backgrounds(void) {
             (TERMINAL_WHITESPACE * 2.0f);
         
     T1FlatTexQuadRequest input_req;
-    T1_flat_texquad_fetch_next(
+    T1_texquad_fetch_next(
         &input_req);
     
     input_req.cpu->zsprite_id =
@@ -130,11 +130,11 @@ void terminal_redraw_backgrounds(void) {
             TERM_INPUT_BOX_HEIGHT);
     input_req.gpu->i32.tex_array_i = -1;
     input_req.gpu->i32.tex_slice_i = -1;
-    T1_flat_texquad_commit(&input_req);
+    T1_texquad_commit(&input_req);
     
     // The console history area
     T1FlatTexQuadRequest history_req;
-    T1_flat_texquad_fetch_next(&history_req);
+    T1_texquad_fetch_next(&history_req);
     history_req.gpu->f32.pos_xyz[0] = 0.0f;
     history_req.gpu->f32.pos_xyz[1] =
         T1_render_view_screen_y_to_y_noz(
@@ -150,8 +150,8 @@ void terminal_redraw_backgrounds(void) {
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
     history_req.cpu->zsprite_id = INT32_MAX;
-    history_req.cpu->touch_id = -1;
-    T1_flat_texquad_commit(&history_req);
+    history_req.gpu->i32.touch_id = -1;
+    T1_texquad_commit(&history_req);
 }
 
 void terminal_render(void) {
@@ -164,7 +164,7 @@ void terminal_render(void) {
     }
     
     if (requesting_label_update) {
-        T1_flat_texquad_delete(
+        T1_texquad_delete(
             terminal_labels_object_id);
         
         float previous_font_height = font_settings->font_height;
@@ -761,7 +761,7 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            T1_flat_texquad_delete(
+            T1_texquad_delete(
                 T1_FPS_COUNTER_ZSPRITE_ID);
             
             T1_std_strcpy_cap(
@@ -785,7 +785,7 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
-            T1_flat_texquad_delete(
+            T1_texquad_delete(
                 T1_FPS_COUNTER_ZSPRITE_ID);
             T1_std_strcpy_cap(
                 response,

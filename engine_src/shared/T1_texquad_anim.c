@@ -15,7 +15,7 @@ typedef struct {
     uint64_t remaining_pause_us;
     float already_applied_t;
     
-    bool8_t endpoints_not_deltas;
+    bool8_t endpoints;
     
     bool8_t deleted;
     bool8_t committed;
@@ -66,7 +66,8 @@ void T1_texquad_anim_init(
         log_assert(tqas->anims[i].deleted);
     }
     
-    tqas->mutex_id = tqas->init_mutex_and_return_id();
+    tqas->mutex_id = tqas->
+        init_mutex_and_return_id();
 }
 
 static
@@ -79,9 +80,11 @@ T1InternalTexQuadAnim * T1_texquad_anim_get_container(
             public) == 0);
     
     T1InternalTexQuadAnim * retval =
-        (T1InternalTexQuadAnim *)public_ptr;
+        (T1InternalTexQuadAnim *)
+            public_ptr;
     
-    log_assert(&retval->public == public_ptr);
+    log_assert(
+        &retval->public == public_ptr);
     
     return retval;
 }
@@ -93,14 +96,19 @@ static void T1_texquad_anim_construct(
         to_construct,
         0,
         sizeof(T1InternalTexQuadAnim));
-    log_assert(!to_construct->committed);
+    log_assert(
+        !to_construct->committed);
     
-    to_construct->public.affect_zsprite_id = -1;
-    to_construct->public.affect_touch_id = -1;
+    to_construct->public.
+        affect_zsprite_id = -1;
+    to_construct->public.
+        affect_touch_id = -1;
     to_construct->public.runs = 1;
     
-    log_assert(!to_construct->deleted);
-    log_assert(!to_construct->committed);
+    log_assert(
+        !to_construct->deleted);
+    log_assert(
+        !to_construct->committed);
 }
 
 T1TexQuadAnim * T1_texquad_anim_request_next(
@@ -109,7 +117,8 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
     tqas->mutex_lock(tqas->mutex_id);
     
     log_assert(
-        tqas->anims_size < T1_TEXQUAD_ANIMS_CAP);
+        tqas->anims_size <
+            T1_TEXQUAD_ANIMS_CAP);
     T1InternalTexQuadAnim * return_value = NULL;
     
     for (
@@ -148,7 +157,7 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
             &return_value->public.cpu_vals,
             T1_TEXQUADANIM_NO_EFFECT,
             sizeof(T1CPUTexQuad));
-        return_value->endpoints_not_deltas = endpoints_not_deltas;
+        return_value->endpoints = endpoints_not_deltas;
     }
     
     log_assert(!return_value->committed);
@@ -182,7 +191,7 @@ static void T1_texquad_anim_resolve_single(
                 anim->public.
                     del_obj_on_finish)
             {
-                T1_flat_texquad_delete(
+                T1_texquad_delete(
                     anim->public.
                         affect_zsprite_id);
             }
@@ -247,9 +256,9 @@ static void T1_texquad_anim_resolve_single(
         t.applied,
         anim->public.easing_type);
     
-    if (anim->endpoints_not_deltas) {
+    if (anim->endpoints) {
         
-        T1_flat_texquad_apply_endpoint_anim(
+        T1_texquad_apply_endpoint_anim(
             /* const int32_t zsprite_id: */
                 anim->public.
                     affect_zsprite_id,
@@ -260,19 +269,19 @@ static void T1_texquad_anim_resolve_single(
             /* const float t_now: */
                 t.now,
             /* const float * goal_gpu_vals_f32: */
-                anim->public.gpu_vals_f32_active ?
+                anim->public.gpu_f32_active ?
                     (float *)
                         &anim->public.gpu_vals.f32 :
                     NULL,
             /* const int32_t *goal_gpu_vals_i32: */
-                anim->public.gpu_vals_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
+                anim->public.gpu_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
                 NULL,
             /* const float * goal_cpu_vals: */
-                anim->public.cpu_vals_active ?
+                anim->public.cpu_active ?
                     (float *)&anim->public.cpu_vals :
                     NULL);
     } else {
-        T1_flat_texquad_apply_anim_effects_to_id(
+        T1_texquad_apply_anim_effects_to_id(
             /* const int32_t zsprite_id: */
                 anim->public.affect_zsprite_id,
             /* const int32_t touch_id: */
@@ -282,15 +291,15 @@ static void T1_texquad_anim_resolve_single(
             /* const float t_now: */
                 t.now,
             /* const float * anim_gpu_vals_f32: */
-                anim->public.gpu_vals_f32_active ?
+                anim->public.gpu_f32_active ?
                     (float *)&anim->public.gpu_vals.f32 :
                     NULL,
             /* const int32_t * anim_gpu_vals_i32: */
-                anim->public.gpu_vals_i32_active ?
+                anim->public.gpu_i32_active ?
                     (int32_t *)&anim->public.gpu_vals.i32 :
                     NULL,
             /* const float * anim_cpu_vals: */
-                anim->public.cpu_vals_active ?
+                anim->public.cpu_active ?
                     (float *)&anim->public.cpu_vals :
                     NULL);
     }
@@ -321,7 +330,7 @@ void T1_texquad_anim_commit(
                 a->public.affect_touch_id ==
                     to_commit->affect_touch_id &&
                 a->committed &&
-                a->endpoints_not_deltas)
+                a->endpoints)
             {
                 tqas->anims[anim_i].
                     deleted = true;
@@ -375,7 +384,7 @@ void T1_texquad_anim_fade_and_destroy(
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.f32.rgba[3] = 0.0f;
     fade_destroy->del_obj_on_finish = true;
-    fade_destroy->gpu_vals_f32_active = true;
+    fade_destroy->gpu_f32_active = true;
     T1_texquad_anim_commit(fade_destroy);
 }
 

@@ -19,7 +19,7 @@ extern "C" {
 #include "T1_texture_array.h"
 #include "T1_texture_files.h"
 #include "T1_lines.h"
-#include "T1_flat_texquad.h"
+#include "T1_texquad.h"
 #include "T1_zsprite.h"
 #include "T1_zlight.h"
 #include "T1_particle.h"

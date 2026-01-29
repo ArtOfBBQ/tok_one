@@ -359,7 +359,7 @@ void T1_appinit_before_gpu_init(
     
     T1_uielement_init();
     
-    T1_flat_texquad_init();
+    T1_texquad_init();
     
     T1_zsprite_init();
     

@@ -221,7 +221,7 @@ void T1_renderer_hardware_render(
     T1_zsprite_construct_model_and_normal_matrices(
         frame_data);
     
-    T1_flat_texquad_copy_to_frame_data(
+    T1_texquad_copy_to_frame_data(
         frame_data->flat_tex_quads,
         &frame_data->flat_tex_quads_size);
         

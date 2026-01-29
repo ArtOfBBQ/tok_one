@@ -299,7 +299,7 @@ void T1_platform_layer_start_window_resize(
     
     T1_uielement_delete_all();
     T1_zsprite_delete_all();
-    T1_flat_texquad_delete_all();
+    T1_texquad_delete_all();
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     T1_global->postproc_consts.fog_factor = 0.0f;

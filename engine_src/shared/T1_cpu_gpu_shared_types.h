@@ -141,7 +141,8 @@ typedef struct {
 typedef struct {
     int tex_array_i;
     int tex_slice_i;
-    int padding[6];
+    int touch_id;
+    int padding[5];
 } T1GPUTexQuadi32;
 
 typedef struct {

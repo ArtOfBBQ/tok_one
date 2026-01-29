@@ -304,7 +304,7 @@ void text_request_label_offset_around(
                 break;
             }
             
-            T1_flat_texquad_fetch_next(&letter);
+            T1_texquad_fetch_next(&letter);
             letter.gpu->f32.pos_xyz[0] =
                 T1_render_view_screen_x_to_x_noz(
                     mid_x_pixelspace);
@@ -321,7 +321,7 @@ void text_request_label_offset_around(
                     font_settings->font_height);
             
             letter.cpu->zsprite_id = with_id;
-            letter.cpu->touch_id =
+            letter.gpu->i32.touch_id =
                 font_settings->touch_id;
             
             if ((text_to_draw[j] - '!') < 0) {
@@ -348,7 +348,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            T1_flat_texquad_commit(&letter);
+            T1_texquad_commit(&letter);
         }
         
         cur_y_offset_pixelspace -=
@@ -471,7 +471,7 @@ void text_request_label_renderable(
             continue;
         }
         
-        T1_flat_texquad_fetch_next(&letter);
+        T1_texquad_fetch_next(&letter);
         letter.gpu->f32.pos_xyz[0] =
             T1_render_view_screen_x_to_x_noz(
                 left_pixelspace);
@@ -484,7 +484,7 @@ void text_request_label_renderable(
         letter.gpu->f32.size_xy[1] = letter_height;
         
         letter.cpu->zsprite_id = with_id;
-        letter.cpu->touch_id = font_settings->touch_id;
+        letter.gpu->i32.touch_id = font_settings->touch_id;
         
         letter.gpu->i32.tex_array_i = 0;
         letter.gpu->i32.tex_slice_i = (int32_t)(text_to_draw[i] - '!');
@@ -519,13 +519,13 @@ void text_request_label_renderable(
         }
         
         i++;
-        T1_flat_texquad_commit(&letter);
+        T1_texquad_commit(&letter);
     }
 }
 
 void text_request_debug_text(const char * text)
 {
-    T1_flat_texquad_delete(
+    T1_texquad_delete(
         T1_DEBUG_TEXT_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
@@ -596,7 +596,7 @@ void text_request_fps_counter(
         fps_string[12] = '9';
     }
     
-    T1_flat_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+    T1_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->matf32.ambient_rgb[0] = 1.0f;
@@ -628,7 +628,7 @@ void text_request_fps_counter(
 void text_request_top_touchable_id(
     int32_t top_touchable_id)
 {
-    T1_flat_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
+    T1_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
