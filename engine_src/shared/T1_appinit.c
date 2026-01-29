@@ -37,6 +37,9 @@ static void test_simd_functions_floats(void) {
     log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
+    log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(T1GPUTexQuadi32)   % (SIMD_INT32_LANES * 4) == 0);
+    
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);

@@ -81,7 +81,7 @@
 		EC29149E2EEE1FFB00D3873E /* T1_io.c in Sources */ = {isa = PBXBuildFile; fileRef = EC29149D2EEE1FFB00D3873E /* T1_io.c */; };
 		EC2914A12EEE200B00D3873E /* T1_frame_anim.c in Sources */ = {isa = PBXBuildFile; fileRef = EC2914A02EEE200B00D3873E /* T1_frame_anim.c */; };
 		EC31932529DFAAFB00E320CD /* T1_particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* T1_particle.c */; };
-		EC3DF27A2F197AE40049AA47 /* T1_flat_texquad.c in Sources */ = {isa = PBXBuildFile; fileRef = EC3DF2792F197AE40049AA47 /* T1_flat_texquad.c */; };
+		EC3DF27A2F197AE40049AA47 /* T1_texquad.c in Sources */ = {isa = PBXBuildFile; fileRef = EC3DF2792F197AE40049AA47 /* T1_texquad.c */; };
 		EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */; };
 		EC4186E82E8F0739007FF019 /* T1_easing.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4186E72E8F0739007FF019 /* T1_easing.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
@@ -223,8 +223,8 @@
 		EC2914A22EEE211300D3873E /* T1_clientlogic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_clientlogic.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_clientlogic.h; sourceTree = "<absolute>"; };
 		EC31932229DFAAFB00E320CD /* T1_particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_particle.h; path = ../../engine_src/shared/T1_particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* T1_particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_particle.c; path = ../../engine_src/shared/T1_particle.c; sourceTree = "<group>"; };
-		EC3DF2782F197AE40049AA47 /* T1_flat_texquad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_flat_texquad.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_flat_texquad.h; sourceTree = "<absolute>"; };
-		EC3DF2792F197AE40049AA47 /* T1_flat_texquad.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_flat_texquad.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_flat_texquad.c; sourceTree = "<absolute>"; };
+		EC3DF2782F197AE40049AA47 /* T1_texquad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_texquad.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad.h; sourceTree = "<absolute>"; };
+		EC3DF2792F197AE40049AA47 /* T1_texquad.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_texquad.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad.c; sourceTree = "<absolute>"; };
 		EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<absolute>"; };
 		EC4186E62E8F0739007FF019 /* T1_easing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_easing.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_easing.h; sourceTree = "<absolute>"; };
 		EC4186E72E8F0739007FF019 /* T1_easing.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_easing.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_easing.c; sourceTree = "<absolute>"; };
@@ -495,8 +495,8 @@
 				ECDCFF4C2DDE0F2A002AA399 /* T1_mtlparser.h */,
 				ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */,
 				EC78509829E62CA800E6882A /* T1_objmodel.h */,
-				EC3DF2782F197AE40049AA47 /* T1_flat_texquad.h */,
-				EC3DF2792F197AE40049AA47 /* T1_flat_texquad.c */,
+				EC3DF2782F197AE40049AA47 /* T1_texquad.h */,
+				EC3DF2792F197AE40049AA47 /* T1_texquad.c */,
 				EC78509929E62CA800E6882A /* T1_objmodel.c */,
 				EC083A382AFF727900234FE3 /* T1_objparser.h */,
 				ECE530FF2EB229900035DC98 /* T1_linalg3d.h */,
@@ -793,7 +793,7 @@
 				60A99911287BD4C4003F7159 /* T1_zsprite.c in Sources */,
 				EC6E121B2A04CE13004E7BD1 /* T1_zspriteid.c in Sources */,
 				60A9990C287BD4C3003F7159 /* decode_png.c in Sources */,
-				EC3DF27A2F197AE40049AA47 /* T1_flat_texquad.c in Sources */,
+				EC3DF27A2F197AE40049AA47 /* T1_texquad.c in Sources */,
 				60A99913287BD4C4003F7159 /* inflate.h in Sources */,
 				EC914B8D2B94B193007FCBFC /* T1_linux_apple_platform_layer.c in Sources */,
 				6028DD332886EE54000E1E98 /* T1_appinit.h in Sources */,

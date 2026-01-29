@@ -8,6 +8,7 @@
 #include "T1_logger.h"
 #include "T1_profiler.h"
 #include "T1_random.h"
+#include "T1_objmodel.h"
 #include "T1_audio.h"
 #include "T1_zlight.h"
 #include "T1_text.h"

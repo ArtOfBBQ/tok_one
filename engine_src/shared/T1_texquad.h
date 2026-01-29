@@ -1,6 +1,13 @@
 #ifndef T1_TEXQUAD_H
 #define T1_TEXQUAD_H
 
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#include <math.h> // isnan check
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_cpu_gpu_shared_types.h"
@@ -21,6 +28,10 @@ typedef struct {
     T1GPUTexQuad * gpu;
 } T1FlatTexQuadRequest;
 
+void T1_texquad_construct(
+    T1GPUTexQuadf32 * f32,
+    T1GPUTexQuadi32 * i32);
+
 void T1_texquad_init(void);
 
 void T1_texquad_delete(const int32_t zsprite_id);
@@ -39,8 +50,7 @@ void T1_texquad_apply_endpoint_anim(
     const float t_applied,
     const float t_now,
     const float * goal_gpu_vals_f32,
-    const int32_t * goal_gpu_vals_i32,
-    const float * goal_cpu_vals);
+    const int32_t * goal_gpu_vals_i32);
 
 void T1_texquad_anim_apply_effects_at_t(
     const float t_applied,
@@ -57,8 +67,7 @@ void T1_texquad_apply_anim_effects_to_id(
     const float t_applied,
     const float t_now,
     const float * anim_gpu_vals_f32,
-    const int32_t * anim_gpu_vals_i32,
-    const float * anim_cpu_vals);
+    const int32_t * anim_gpu_vals_i32);
 
 void T1_texquad_draw_test(
     const float width,

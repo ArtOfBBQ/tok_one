@@ -1,5 +1,35 @@
 #include "T1_texquad.h"
 
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+static void assert_sanity_check_texquad_vals(
+    T1GPUTexQuadf32 * gpu_f32,
+    T1GPUTexQuadi32 * gpu_i32)
+{
+    if (gpu_f32) {
+        log_assert(!isnan(gpu_f32->xyz[0]));
+        log_assert(!isnan(gpu_f32->xyz[1]));
+        log_assert(!isnan(gpu_f32->xyz[2]));
+        log_assert(!isnan(gpu_f32->rgba[0]));
+        log_assert(!isnan(gpu_f32->rgba[1]));
+        log_assert(!isnan(gpu_f32->rgba[2]));
+        log_assert(!isnan(gpu_f32->rgba[3]));
+        log_assert(!isnan(gpu_f32->size_xy[0]));
+        log_assert(!isnan(gpu_f32->size_xy[1]));
+    }
+    
+    if (gpu_i32) {
+        log_assert(gpu_i32->tex_array_i < TEXTUREARRAYS_SIZE);
+        log_assert(gpu_i32->tex_slice_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+    }
+}
+
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#define assert_sanity_check_zsprite_vals(x)
+#define assert_sanity_check_zsprite_vals_by_id(x)
+#else
+#error
+#endif
+
 typedef struct {
     T1CPUTexQuad cpu[MAX_FLATQUADS_PER_BUFFER];
     T1GPUTexQuad gpu[MAX_FLATQUADS_PER_BUFFER];
@@ -7,37 +37,52 @@ typedef struct {
 } T1FlatTexQuadCollection;
 
 static T1FlatTexQuadCollection *
-    T1_flat_texquads = NULL;
+    T1_texquads = NULL;
 
-static void T1_flat_texquads_construct_at_i(
+void T1_texquad_construct(
+    T1GPUTexQuadf32 * f32,
+    T1GPUTexQuadi32 * i32)
+{
+    T1_std_memset(
+        f32,
+        0,
+        sizeof(T1GPUTexQuadf32));
+    T1_std_memset(
+        i32,
+        0,
+        sizeof(T1GPUTexQuadi32));
+    
+    
+    f32->size_xy[0] = 0.25f;
+    f32->size_xy[1] = 0.25f;
+    i32->tex_array_i = -1;
+    i32->tex_slice_i = -1;
+    i32->touch_id = -1;
+}
+
+static void T1_texquad_construct_at_i(
     const int32_t i)
 {
     T1_std_memset(
-        &T1_flat_texquads->cpu[i],
+        &T1_texquads->cpu[i],
         0,
         sizeof(T1CPUTexQuad));
-    T1_std_memset(
-        &T1_flat_texquads->gpu[i],
-        0,
-        sizeof(T1GPUTexQuad));
     
-    T1_flat_texquads->cpu[i].zsprite_id = -1;
-    T1_flat_texquads->cpu[i].visible = 1;
+    T1_texquads->cpu[i].zsprite_id = -1;
+    T1_texquads->cpu[i].visible = 1;
     
-    T1_flat_texquads->gpu[i].f32.size_xy[0] = 0.25f;
-    T1_flat_texquads->gpu[i].f32.size_xy[1] = 0.25f;
-    T1_flat_texquads->gpu[i].i32.tex_array_i = -1;
-    T1_flat_texquads->gpu[i].i32.tex_slice_i = -1;
-    T1_flat_texquads->gpu[i].i32.touch_id = -1;
+    T1_texquad_construct(
+        &T1_texquads->gpu[i].f32,
+        &T1_texquads->gpu[i].i32);
 }
 
 void T1_texquad_init(void) {
-    T1_flat_texquads =
+    T1_texquads =
         T1_mem_malloc_from_unmanaged(
             sizeof(T1FlatTexQuadCollection));
     
     T1_std_memset(
-        T1_flat_texquads,
+        T1_texquads,
         0,
         sizeof(T1FlatTexQuadCollection));
 }
@@ -46,23 +91,23 @@ void T1_texquad_delete(const int32_t zsprite_id)
 {
     for (
         int32_t i = 0;
-        i < (int32_t)T1_flat_texquads->size;
+        i < (int32_t)T1_texquads->size;
         i++)
     {
         if (
-            T1_flat_texquads->cpu[i].
+            T1_texquads->cpu[i].
                 zsprite_id == zsprite_id)
         {
-            T1_flat_texquads->cpu[i].deleted =
+            T1_texquads->cpu[i].deleted =
                 true;
-            T1_flat_texquads->cpu[i].zsprite_id = -1;
+            T1_texquads->cpu[i].zsprite_id = -1;
         }
     }
 }
 
 void T1_texquad_delete_all(void)
 {
-    T1_flat_texquads->size = 0;
+    T1_texquads->size = 0;
 }
 
 void T1_texquad_fetch_next(
@@ -72,29 +117,29 @@ void T1_texquad_fetch_next(
     
     for (
         int32_t i = 0;
-        i < (int32_t)T1_flat_texquads->size;
+        i < (int32_t)T1_texquads->size;
         i++)
     {
         if (
-            T1_flat_texquads->cpu[i].deleted)
+            T1_texquads->cpu[i].deleted)
         {
             ret_i = i;
         }
     }
     
     if (ret_i < 0) {
-        ret_i = (int32_t)T1_flat_texquads->size;
-        T1_flat_texquads->size += 1;
+        ret_i = (int32_t)T1_texquads->size;
+        T1_texquads->size += 1;
         
         log_assert(
-            T1_flat_texquads->size <
+            T1_texquads->size <
                 MAX_FLATQUADS_PER_BUFFER);
     }
     
-    T1_flat_texquads_construct_at_i(ret_i);
+    T1_texquad_construct_at_i(ret_i);
     
-    request->cpu = T1_flat_texquads->cpu + ret_i;
-    request->gpu = T1_flat_texquads->gpu + ret_i;
+    request->cpu = T1_texquads->cpu + ret_i;
+    request->gpu = T1_texquads->gpu + ret_i;
 }
 
 void T1_texquad_commit(
@@ -109,6 +154,12 @@ void T1_texquad_commit(
         request->gpu->i32.tex_array_i <
             TEXTUREARRAYS_SIZE);
     
+    assert_sanity_check_texquad_vals(
+        /* T1GPUTexQuadf32 * gpu_f32: */
+            &request->gpu->f32,
+        /* T1GPUTexQuadi32 * gpu_i32: */
+            &request->gpu->i32);
+    
     request->cpu->committed = 1;
 }
 
@@ -118,8 +169,7 @@ void T1_texquad_apply_endpoint_anim(
     const float t_applied,
     const float t_now,
     const float * goal_gpu_vals_f32,
-    const int32_t * goal_gpu_vals_i32,
-    const float * goal_cpu_vals)
+    const int32_t * goal_gpu_vals_i32)
 {
     // When t is 1.0f, all of our stats will
     // be exactly equal to target_delta
@@ -134,73 +184,30 @@ void T1_texquad_apply_endpoint_anim(
     
     for (
         int32_t zp_i = 0;
-        zp_i < (int32_t)T1_flat_texquads->size;
+        zp_i < (int32_t)T1_texquads->size;
         zp_i++)
     {
         if (
             zsprite_id !=
                 T1_TEXQUAD_ID_HIT_EVERYTHING &&
             ((zsprite_id >= 0 &&
-            T1_flat_texquads->cpu[zp_i].
+            T1_texquads->cpu[zp_i].
                 zsprite_id != zsprite_id) ||
             (touch_id >= 0 &&
-            T1_flat_texquads->gpu[zp_i].i32.
+            T1_texquads->gpu[zp_i].i32.
                 touch_id != touch_id) ||
-            T1_flat_texquads->cpu[zp_i].deleted))
+            T1_texquads->cpu[zp_i].deleted))
         {
             continue;
         }
         
-        if (goal_cpu_vals) {
-            float * recip_vals_cpu = (float *)
-            &T1_flat_texquads->cpu[zp_i];
-            
-            for (
-                uint32_t simd_step_i = 0;
-                (simd_step_i * sizeof(float)) <
-                    sizeof(T1CPUTexQuad);
-                simd_step_i += SIMD_FLOAT_LANES)
-            {
-                SIMD_FLOAT simd_goal_vals =
-                    simd_load_floats((goal_cpu_vals +
-                        simd_step_i));
-                
-                SIMD_FLOAT simd_cur_vals =
-                    simd_load_floats((recip_vals_cpu +
-                        simd_step_i));
-                
-                SIMD_FLOAT delta_to_goal =
-                    simd_sub_floats(
-                        simd_goal_vals,
-                        simd_cur_vals);
-                
-                delta_to_goal = simd_mul_floats(delta_to_goal, simd_t);
-                
-                SIMD_FLOAT flags = simd_not_floats(
-                    simd_cmpeq_floats(
-                        simd_goal_vals,
-                        simd_noeffect));
-                
-                delta_to_goal = simd_and_floats(
-                    delta_to_goal, flags);
-                
-                simd_cur_vals = simd_add_floats(
-                    simd_cur_vals,
-                    delta_to_goal);
-                
-                simd_store_floats(
-                    recip_vals_cpu + simd_step_i,
-                    simd_cur_vals);
-            }
-        }
-        
         if (goal_gpu_vals_f32) {
             float * recip_vals_gpu = (float *)
-                &T1_flat_texquads->gpu[zp_i].f32;
+                &T1_texquads->gpu[zp_i].f32;
             
             for (
                 uint32_t simd_step_i = 0;
-                (simd_step_i * sizeof(float)) < sizeof(T1GPUzSpritef32);
+                (simd_step_i * sizeof(float)) < sizeof(T1GPUTexQuadf32);
                 simd_step_i += SIMD_FLOAT_LANES)
             {
                 SIMD_FLOAT simd_goal_vals =
@@ -216,7 +223,7 @@ void T1_texquad_apply_endpoint_anim(
                 SIMD_FLOAT delta_to_goal =
                     simd_sub_floats(
                         simd_goal_vals,
-                            simd_cur_vals);
+                        simd_cur_vals);
                 
                 delta_to_goal = simd_mul_floats(
                     delta_to_goal,
@@ -234,9 +241,17 @@ void T1_texquad_apply_endpoint_anim(
                     simd_cur_vals,
                     delta_to_goal);
                 
+                assert_sanity_check_texquad_vals(
+                    &T1_texquads->gpu[zp_i].f32,
+                    &T1_texquads->gpu[zp_i].i32);
+                
                 simd_store_floats(
                     recip_vals_gpu + simd_step_i,
                     simd_cur_vals);
+                
+                assert_sanity_check_texquad_vals(
+                    &T1_texquads->gpu[zp_i].f32,
+                    &T1_texquads->gpu[zp_i].i32);
             }
         }
         
@@ -246,9 +261,9 @@ void T1_texquad_apply_endpoint_anim(
                 simd_set1_int32s(zero_i32);
             
             int32_t * recip_vals_i32 = (int32_t *)
-                &T1_flat_texquads->gpu[zp_i].i32;
+                &T1_texquads->gpu[zp_i].i32;
             log_assert(recip_vals_i32[0] ==
-                T1_flat_texquads->gpu[zp_i].i32.tex_array_i);
+                T1_texquads->gpu[zp_i].i32.tex_array_i);
             
             log_assert(t_applied == 0.0f);
             log_assert(t_now == 1.0f);
@@ -328,8 +343,7 @@ void T1_texquad_apply_anim_effects_to_id(
     const float t_applied,
     const float t_now,
     const float * anim_gpu_vals_f32,
-    const int32_t * anim_gpu_vals_i32,
-    const float * anim_cpu_vals)
+    const int32_t * anim_gpu_vals_i32)
 {
     // TODO: implement me
     log_assert(0);
@@ -343,9 +357,9 @@ void T1_texquad_draw_test(
     T1_texquad_fetch_next(&texq);
     texq.gpu->f32.size_xy[0] = width;
     texq.gpu->f32.size_xy[1] = height;
-    texq.gpu->f32.pos_xyz[0] = -0.75f;
-    texq.gpu->f32.pos_xyz[1] = -0.75f;
-    texq.gpu->f32.pos_xyz[2] = 0.05f;
+    texq.gpu->f32.xyz[0] = -0.75f;
+    texq.gpu->f32.xyz[1] = -0.75f;
+    texq.gpu->f32.xyz[2] = 0.05f;
     texq.gpu->i32.tex_array_i = 2;
     texq.gpu->i32.tex_slice_i = 0;
     T1_texquad_commit(&texq);
@@ -355,8 +369,8 @@ static int cmp_highest_z_texquad(
     const void * a,
     const void * b)
 {
-    float fa = ((T1GPUTexQuad *)a)->f32.pos_xyz[2];
-    float fb = ((T1GPUTexQuad *)b)->f32.pos_xyz[2];
+    float fa = ((T1GPUTexQuad *)a)->f32.xyz[2];
+    float fb = ((T1GPUTexQuad *)b)->f32.xyz[2];
     
     if (fb < fa) {
         return -1;
@@ -374,16 +388,16 @@ void T1_texquad_copy_to_frame_data(
     *recip_frame_data_size = 0;
     for (
         uint32_t i = 0;
-        i < T1_flat_texquads->size;
+        i < T1_texquads->size;
         i++)
     {
         if (
-            T1_flat_texquads->cpu[i].visible &&
-            !T1_flat_texquads->cpu[i].deleted &&
-            T1_flat_texquads->cpu[i].committed)
+            T1_texquads->cpu[i].visible &&
+            !T1_texquads->cpu[i].deleted &&
+            T1_texquads->cpu[i].committed)
         {
             recip_frame_data[*recip_frame_data_size] =
-                T1_flat_texquads->gpu[i];
+                T1_texquads->gpu[i];
             *recip_frame_data_size += 1;
         }
     }
@@ -398,16 +412,19 @@ void T1_texquad_copy_to_frame_data(
         /* int (* _Nonnull compar)(const void *, const void *): */
             cmp_highest_z_texquad);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
         i + 1 < *recip_frame_data_size;
         i++)
     {
         log_assert(
-            recip_frame_data[i].f32.pos_xyz[2]
+            recip_frame_data[i].f32.xyz[2]
                 >= recip_frame_data[i+1].f32.
-                    pos_xyz[2]);
+                    xyz[2]);
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }

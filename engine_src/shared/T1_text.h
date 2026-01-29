@@ -9,17 +9,9 @@ extern "C" {
 #endif
 
 typedef struct FontSettings {
-    T1GPUConstMatf32 matf32;
-    T1GPUConstMati32 mati32;
-    int32_t touch_id;
-    uint32_t remove_shadow;
-    float extra_offset_xy[2];
-    float scale_factor;
-    float ignore_lighting;
-    float ignore_camera;
-    float font_height; // = 30.0;
-    float alpha;
-    bool8_t alpha_blending_on;
+    T1GPUTexQuadf32 f32;
+    T1GPUTexQuadi32 i32;
+    float font_height;
 } FontSettings;
 
 extern FontSettings * font_settings;

@@ -31,7 +31,6 @@ typedef struct {
     T1EasingType easing_type; // u8
     bool8_t gpu_f32_active;
     bool8_t gpu_i32_active;
-    bool8_t cpu_active;
     bool8_t del_obj_on_finish;
     bool8_t del_conflict_anims;
 } T1TexQuadAnim;

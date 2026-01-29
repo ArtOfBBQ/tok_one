@@ -151,7 +151,7 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
             &return_value->public.gpu_vals,
-            T1_TEXQUAD_ANIMS_CAP,
+            T1_TEXQUADANIM_NO_EFFECT,
             sizeof(T1GPUTexQuad));
         T1_std_memset_f32(
             &return_value->public.cpu_vals,
@@ -275,11 +275,7 @@ static void T1_texquad_anim_resolve_single(
                     NULL,
             /* const int32_t *goal_gpu_vals_i32: */
                 anim->public.gpu_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
-                NULL,
-            /* const float * goal_cpu_vals: */
-                anim->public.cpu_active ?
-                    (float *)&anim->public.cpu_vals :
-                    NULL);
+                NULL);
     } else {
         T1_texquad_apply_anim_effects_to_id(
             /* const int32_t zsprite_id: */
@@ -297,10 +293,6 @@ static void T1_texquad_anim_resolve_single(
             /* const int32_t * anim_gpu_vals_i32: */
                 anim->public.gpu_i32_active ?
                     (int32_t *)&anim->public.gpu_vals.i32 :
-                    NULL,
-            /* const float * anim_cpu_vals: */
-                anim->public.cpu_active ?
-                    (float *)&anim->public.cpu_vals :
                     NULL);
     }
 }

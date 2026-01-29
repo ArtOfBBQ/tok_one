@@ -1199,6 +1199,7 @@ fragment float4 flat_billboard_quad_fragment_shader(
 typedef struct
 {
     float4 screenpos [[ position ]];
+    float4 rgba [[ flat ]];
     float2 uv;
     int array_i [[ flat ]];
     int slice_i [[ flat ]];
@@ -1238,13 +1239,19 @@ flat_texquad_vertex_shader(
     FlatTexQuadPixel out;
     
     out.screenpos = vector_float4(
-        quads[quad_i].f32.pos_xyz[0],
-        quads[quad_i].f32.pos_xyz[1],
-        quads[quad_i].f32.pos_xyz[2],
+        quads[quad_i].f32.xyz[0],
+        quads[quad_i].f32.xyz[1],
+        quads[quad_i].f32.xyz[2],
         1.0f);
     
     out.screenpos.xy +=
         (corners[corner_id].xy * size_xy);
+    
+    out.rgba = vector_float4(
+        quads[quad_i].f32.rgba[0],
+        quads[quad_i].f32.rgba[1],
+        quads[quad_i].f32.rgba[2],
+        quads[quad_i].f32.rgba[3]);
     
     out.uv = uvs[corner_id];
     
@@ -1263,9 +1270,7 @@ fragment float4 flat_texquad_fragment_shader(
         mag_filter::linear,
         min_filter::linear);
     
-    float4 color_sample =
-        vector_float4(0.2f, 0.2f, 0.2f, 1.0f);
-    
+    float4 color_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
     if (
         in.array_i >= 0 &&
         in.array_i < TEXTUREARRAYS_SIZE)
@@ -1278,7 +1283,7 @@ fragment float4 flat_texquad_fragment_shader(
                     in.slice_i));
     }
     
-    return color_sample;
+    return color_sample * in.rgba;
 }
 
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE

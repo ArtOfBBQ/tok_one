@@ -116,6 +116,27 @@ static void request_teapots(void) {
         T1_zsprite_commit(&teapot_request);
     }
     #endif
+    
+    font_settings->font_height = 75;
+    font_settings->i32.touch_id = -1;
+    font_settings->f32.rgba[0] = 0.7f;
+    font_settings->f32.rgba[1] = 1.0f;
+    font_settings->f32.rgba[2] = 1.0f;
+    font_settings->f32.rgba[3] = 1.0f;
+    text_request_label_renderable(
+        /* int32_t with_object_id: */
+            21,
+        /* char * text_to_draw: */
+            "Welcome",
+        /* float left_pixelspace: */
+            100.0f,
+        /* float top_pixelspace: */
+            100.0f,
+        /* float z: */
+            0.75f,
+        /* float max_width: */
+            1500.0f);
+    font_settings->i32.touch_id = -1;
 }
 
 void T1_clientlogic_late_startup(void) {
@@ -222,35 +243,6 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->f32.alpha = 1.0f;
     
     T1_zsprite_commit(&quad);
-    
-    font_settings->font_height = 75;
-    font_settings->touch_id = -1;
-    font_settings->matf32.ambient_rgb[0] =  0.1f;
-    font_settings->matf32.ambient_rgb[1] =  0.1f;
-    font_settings->matf32.ambient_rgb[2] =  0.1f;
-    font_settings->matf32.diffuse_rgb[0] =  2.2f;
-    font_settings->matf32.diffuse_rgb[1] =  2.9f;
-    font_settings->matf32.diffuse_rgb[2] =  0.8f;
-    font_settings->matf32.alpha = 1.0f;
-    font_settings->matf32.alpha =  1.0f;
-    font_settings->alpha = 1.0f;
-    font_settings->ignore_camera = false;
-    font_settings->alpha_blending_on = false;
-    font_settings->ignore_lighting = 1.0f;
-    text_request_label_renderable(
-        /* const int32_t with_object_id: */
-            21,
-        /* const char * text_to_draw: */
-            "Welcome",
-        /* const float left_pixelspace: */
-            250.0f,
-        /* const float top_pixelspace: */
-            300.0f,
-        /* const float z: */
-            0.75f,
-        /* const float max_width: */
-            1500.0f);
-    font_settings->touch_id = -1;
     
     for (uint32_t i = 0; i < 3; i++) {
         T1_zsprite_fetch_next(&quad);
@@ -418,14 +410,21 @@ static void clientlogic_handle_keypresses(
         
         T1TexQuadAnim * anim =
             T1_texquad_anim_request_next(true);
-        anim->gpu_vals.f32.pos_xyz[0] =
-            testswitch ? 0.25f : -0.25f;
+        anim->gpu_vals.f32.xyz[0] =
+            testswitch ? -0.50f : 0.5f;
+        anim->gpu_vals.f32.rgba[0] =
+            testswitch ? 1.0f : 0.25f;
+        anim->gpu_vals.f32.rgba[1] =
+            testswitch ? 0.0f : 0.25f;
+        anim->gpu_vals.f32.rgba[2] =
+            testswitch ? 0.25f : 1.0f;
         anim->affect_zsprite_id = 21;
-        anim->easing_type = EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
-        anim->duration_us = 400000;
+        anim->easing_type =
+            EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
+        anim->duration_us = 250000;
         anim->gpu_f32_active = true;
         anim->gpu_i32_active = false;
-        anim->cpu_active = false;
+        anim->del_conflict_anims = true;
         T1_texquad_anim_commit(anim);
     }
     #endif

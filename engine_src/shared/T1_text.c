@@ -55,18 +55,17 @@ void text_init(
     
     if (!font_settings) {
         font_settings = arg_text_malloc_func(sizeof(FontSettings));
-        T1_material_construct(
-            &font_settings->matf32,
-            &font_settings->mati32);
+        T1_texquad_construct(
+            &font_settings->f32,
+            &font_settings->i32);
         
-        font_settings->touch_id = -1;
-        font_settings->font_height = 30.0;
-        font_settings->mati32.texturearray_i = 0;
-        font_settings->ignore_lighting = 1.0f;
-        font_settings->remove_shadow = true;
-        font_settings->matf32.alpha = 1.0f;
-        font_settings->scale_factor = 1.0f;
-        font_settings->alpha = 1.0f;
+        font_settings->font_height = 30.0f;
+        
+        font_settings->i32.tex_array_i = 0;
+        font_settings->f32.rgba[0] = 1.0f;
+        font_settings->f32.rgba[1] = 1.0f;
+        font_settings->f32.rgba[2] = 1.0f;
+        font_settings->f32.rgba[3] = 1.0f;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -262,8 +261,8 @@ void text_request_label_offset_around(
 {
     log_assert(max_width > 0.0f);
     log_assert(font_settings->font_height > 0);
-    log_assert(font_settings->matf32.alpha > -0.02f);
-    log_assert(font_settings->matf32.alpha < 1.05f);
+    log_assert(font_settings->f32.rgba[3] > -0.02f);
+    log_assert(font_settings->f32.rgba[3] < 1.05f);
     
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -305,13 +304,19 @@ void text_request_label_offset_around(
             }
             
             T1_texquad_fetch_next(&letter);
-            letter.gpu->f32.pos_xyz[0] =
+            
+            letter.gpu->i32 =
+                font_settings->i32;
+            letter.gpu->f32 =
+                font_settings->f32;
+            
+            letter.gpu->f32.xyz[0] =
                 T1_render_view_screen_x_to_x_noz(
                     mid_x_pixelspace);
-            letter.gpu->f32.pos_xyz[1] =
+            letter.gpu->f32.xyz[1] =
                 T1_render_view_screen_y_to_y_noz(
                     mid_y_pixelspace);
-            letter.gpu->f32.pos_xyz[2] = z;
+            letter.gpu->f32.xyz[2] = z;
             
             letter.gpu->f32.size_xy[0] =
                 T1_render_view_screen_width_to_width_noz(
@@ -321,8 +326,6 @@ void text_request_label_offset_around(
                     font_settings->font_height);
             
             letter.cpu->zsprite_id = with_id;
-            letter.gpu->i32.touch_id =
-                font_settings->touch_id;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -330,17 +333,15 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.gpu->f32.pos_xyz[0] +=
+            letter.gpu->f32.xyz[0] +=
                 T1_render_view_screen_width_to_width_noz(
                     (cur_x_offset_pixelspace +
-                        font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])));
-            letter.gpu->f32.pos_xyz[1] +=
+            letter.gpu->f32.xyz[1] +=
                 T1_render_view_screen_height_to_height_noz(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
-                        (font_settings->font_height * 0.5f)) +
-                            font_settings->extra_offset_xy[1]);
+                        (font_settings->font_height * 0.5f)));
             
             letter.gpu->i32.tex_array_i = 0;
             letter.gpu->i32.tex_slice_i =
@@ -354,12 +355,10 @@ void text_request_label_offset_around(
         cur_y_offset_pixelspace -=
             get_newline_advance();
     }
-    
-    font_settings->extra_offset_xy[0] = 0.0f;
-    font_settings->extra_offset_xy[1] = 0.0f;
 }
 
-void text_request_label_around_x_at_top_y(
+void
+text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -472,21 +471,23 @@ void text_request_label_renderable(
         }
         
         T1_texquad_fetch_next(&letter);
-        letter.gpu->f32.pos_xyz[0] =
+        
+        letter.gpu->i32 = font_settings->i32;
+        letter.gpu->f32 = font_settings->f32;
+        
+        letter.gpu->f32.xyz[0] =
             T1_render_view_screen_x_to_x_noz(
                 left_pixelspace);
-        letter.gpu->f32.pos_xyz[1] =
+        letter.gpu->f32.xyz[1] =
             T1_render_view_screen_y_to_y_noz(
                 mid_y_pixelspace);
-        letter.gpu->f32.pos_xyz[2] = z;
+        letter.gpu->f32.xyz[2] = z;
         
         letter.gpu->f32.size_xy[0] = letter_width;
         letter.gpu->f32.size_xy[1] = letter_height;
         
         letter.cpu->zsprite_id = with_id;
-        letter.gpu->i32.touch_id = font_settings->touch_id;
         
-        letter.gpu->i32.tex_array_i = 0;
         letter.gpu->i32.tex_slice_i = (int32_t)(text_to_draw[i] - '!');
         
         if (
@@ -496,7 +497,7 @@ void text_request_label_renderable(
             continue;
         }
         
-        letter.gpu->f32.pos_xyz[0] +=
+        letter.gpu->f32.xyz[0] +=
             T1_render_view_screen_width_to_width_noz(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]));
@@ -504,7 +505,7 @@ void text_request_label_renderable(
             T1_render_view_screen_height_to_height_noz(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]));
-        letter.gpu->f32.pos_xyz[1] += y_offset;
+        letter.gpu->f32.xyz[1] += y_offset;
         
         cur_x_offset += get_advance_width(
             text_to_draw[i]);
@@ -529,13 +530,11 @@ void text_request_debug_text(const char * text)
         T1_DEBUG_TEXT_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
-    font_settings->matf32.ambient_rgb[0] = 1.0f;
-    font_settings->matf32.ambient_rgb[1] = 1.0f;
-    font_settings->matf32.ambient_rgb[2] = 1.0f;
-    font_settings->matf32.alpha = 1.0f;
-    font_settings->ignore_lighting = true;
-    font_settings->ignore_camera = true;
-    font_settings->touch_id = -1;
+    font_settings->f32.rgba[0] = 1.0f;
+    font_settings->f32.rgba[1] = 1.0f;
+    font_settings->f32.rgba[2] = 1.0f;
+    font_settings->f32.rgba[3] = 1.0f;
+    font_settings->i32.touch_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             T1_DEBUG_TEXT_ZSPRITE_ID,
@@ -599,17 +598,12 @@ void text_request_fps_counter(
     T1_texquad_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
-    font_settings->matf32.ambient_rgb[0] = 1.0f;
-    font_settings->matf32.ambient_rgb[1] = 1.0f;
-    font_settings->matf32.ambient_rgb[2] = 1.0f;
-    font_settings->matf32.diffuse_rgb[0] = 1.0f;
-    font_settings->matf32.diffuse_rgb[1] = 1.0f;
-    font_settings->matf32.diffuse_rgb[2] = 1.0f;
-    font_settings->matf32.alpha = 1.0f;
-    font_settings->alpha = 1.0f;
-    font_settings->ignore_lighting = true;
-    font_settings->ignore_camera = true;
-    font_settings->touch_id = -1;
+    font_settings->f32.rgba[0] = 1.0f;
+    font_settings->f32.rgba[1] = 1.0f;
+    font_settings->f32.rgba[2] = 1.0f;
+    font_settings->f32.rgba[3] = 1.0f;
+    font_settings->i32.touch_id = -1;
+    
     text_request_label_renderable(
         /* with_id               : */
             T1_FPS_COUNTER_ZSPRITE_ID,
@@ -641,19 +635,11 @@ void text_request_top_touchable_id(
     T1_std_strcat_cap(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;
-    font_settings->matf32.ambient_rgb[0] = 1.0f;
-    font_settings->matf32.ambient_rgb[1] = 1.0f;
-    font_settings->matf32.ambient_rgb[2] = 1.0f;
-    font_settings->matf32.diffuse_rgb[0] = 1.0f;
-    font_settings->matf32.diffuse_rgb[1] = 1.0f;
-    font_settings->matf32.diffuse_rgb[2] = 1.0f;
-    font_settings->matf32.uv_scroll[0] = 0.0f;
-    font_settings->matf32.uv_scroll[1] = 0.0f;
-    font_settings->matf32.alpha = 1.0f;
-    font_settings->alpha = 1.0f;
-    font_settings->ignore_lighting = true;
-    font_settings->ignore_camera = true;
-    font_settings->touch_id = -1;
+    font_settings->f32.rgba[0] = 1.0f;
+    font_settings->f32.rgba[1] = 1.0f;
+    font_settings->f32.rgba[2] = 1.0f;
+    font_settings->f32.rgba[3] = 1.0f;
+    font_settings->i32.touch_id = -1;
     
     text_request_label_renderable(
         /* with_id               : */

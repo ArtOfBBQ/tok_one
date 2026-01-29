@@ -146,7 +146,7 @@ typedef struct {
 } T1GPUTexQuadi32;
 
 typedef struct {
-    float pos_xyz[3];
+    float xyz[3];
     float size_xy[2];
     float rgba[4];
     float padding[7];

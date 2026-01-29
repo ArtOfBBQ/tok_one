@@ -99,7 +99,6 @@ void terminal_init(
 }
 
 void terminal_redraw_backgrounds(void) {
-    
     terminal_back_object_id = INT32_MAX;
     
     float command_history_height =
@@ -108,20 +107,21 @@ void terminal_redraw_backgrounds(void) {
         (TERMINAL_WHITESPACE * 3);
     
     float width =
-        (float)T1_render_views->cpu[0].width -
-            (TERMINAL_WHITESPACE * 2.0f);
-        
+        (float)T1_render_views->cpu[0].
+            width - (TERMINAL_WHITESPACE
+                * 2.0f);
+    
     T1FlatTexQuadRequest input_req;
     T1_texquad_fetch_next(
         &input_req);
     
     input_req.cpu->zsprite_id =
         terminal_back_object_id;
-    input_req.gpu->f32.pos_xyz[0] = 0.0f;
-    input_req.gpu->f32.pos_xyz[1] =
+    input_req.gpu->f32.xyz[0] = 0.0f;
+    input_req.gpu->f32.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
             TERM_INPUT_BOX_MID_Y);
-    input_req.gpu->f32.pos_xyz[2] = TERM_Z;
+    input_req.gpu->f32.xyz[2] = TERM_Z;
     
     input_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(width);
@@ -130,18 +130,26 @@ void terminal_redraw_backgrounds(void) {
             TERM_INPUT_BOX_HEIGHT);
     input_req.gpu->i32.tex_array_i = -1;
     input_req.gpu->i32.tex_slice_i = -1;
+    input_req.gpu->f32.rgba[0] =
+        term_background_color[0];
+    input_req.gpu->f32.rgba[1] =
+        term_background_color[1];
+    input_req.gpu->f32.rgba[2] =
+        term_background_color[2];
+    input_req.gpu->f32.rgba[3] =
+        term_background_color[3];
     T1_texquad_commit(&input_req);
     
     // The console history area
     T1FlatTexQuadRequest history_req;
     T1_texquad_fetch_next(&history_req);
-    history_req.gpu->f32.pos_xyz[0] = 0.0f;
-    history_req.gpu->f32.pos_xyz[1] =
+    history_req.gpu->f32.xyz[0] = 0.0f;
+    history_req.gpu->f32.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
            (command_history_height / 2) +
                TERM_INPUT_BOX_HEIGHT +
                (TERMINAL_WHITESPACE * 2.0f));
-    history_req.gpu->f32.pos_xyz[2] = TERM_Z;
+    history_req.gpu->f32.xyz[2] = TERM_Z;
     history_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(
                 T1_render_views->cpu[0].width -
@@ -151,6 +159,14 @@ void terminal_redraw_backgrounds(void) {
             command_history_height);
     history_req.cpu->zsprite_id = INT32_MAX;
     history_req.gpu->i32.touch_id = -1;
+    history_req.gpu->f32.rgba[0] =
+        term_background_color[0];
+    history_req.gpu->f32.rgba[1] =
+        term_background_color[1];
+    history_req.gpu->f32.rgba[2] =
+        term_background_color[2];
+    history_req.gpu->f32.rgba[3] =
+        term_background_color[3];
     T1_texquad_commit(&history_req);
 }
 
@@ -210,13 +226,11 @@ void terminal_render(void) {
         log_append(terminal_history + char_offset);
         log_append_char('\n');
         
-        font_settings->matf32.diffuse_rgb[0] = term_font_color[0];
-        font_settings->matf32.diffuse_rgb[1] = term_font_color[1];
-        font_settings->matf32.diffuse_rgb[2] = term_font_color[2];
-        font_settings->matf32.alpha = term_font_color[3];
-        font_settings->ignore_camera = true;
-        font_settings->ignore_lighting = 1.0f;
-        font_settings->touch_id = -1;
+        font_settings->f32.rgba[0] = term_font_color[0];
+        font_settings->f32.rgba[1] = term_font_color[1];
+        font_settings->f32.rgba[2] = term_font_color[2];
+        font_settings->f32.rgba[3] = term_font_color[3];
+        font_settings->i32.touch_id = -1;
         
         text_request_label_renderable(
             /* const int32_t with_object_id: */
@@ -242,8 +256,7 @@ void terminal_render(void) {
             return;
         }
         
-        font_settings->ignore_camera = true;
-        font_settings->touch_id = -1;
+        font_settings->i32.touch_id = -1;
         // the terminal's current input as a label
         text_request_label_renderable(
             /* with_object_id: */
