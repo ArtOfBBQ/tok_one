@@ -7,8 +7,8 @@
 
 // Basic quads and cubes are predefined, they can be used without registering
 // an .obj file.
-#define BASIC_QUAD_MESH_ID 0
-#define BASIC_CUBE_MESH_ID 1
+#define T1_BASIC_QUAD_MESH_ID 0
+#define T1_BASIC_CUBE_MESH_ID 1
 
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {

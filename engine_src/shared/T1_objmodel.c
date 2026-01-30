@@ -95,7 +95,7 @@ void T1_objmodel_init(void) {
         T1_mesh_summary_list[0].resource_name,
         OBJ_STRING_SIZE,
         "basic_quad");
-    T1_mesh_summary_list[0].mesh_id = BASIC_QUAD_MESH_ID;
+    T1_mesh_summary_list[0].mesh_id = T1_BASIC_QUAD_MESH_ID;
     T1_mesh_summary_list[0].vertices_head_i = 0;
     T1_mesh_summary_list[0].vertices_size = 6;
     T1_mesh_summary_list[0].base_width = 2.0f;
@@ -189,7 +189,7 @@ void T1_objmodel_init(void) {
         "basic_cube");
     T1_mesh_summary_list[1].vertices_head_i = 6;
     T1_mesh_summary_list[1].vertices_size = 36;
-    T1_mesh_summary_list[1].mesh_id = BASIC_CUBE_MESH_ID;
+    T1_mesh_summary_list[1].mesh_id = T1_BASIC_CUBE_MESH_ID;
     T1_mesh_summary_list[1].materials_size = 1;
     T1_mesh_summary_list[1].base_width = 1.0f;
     T1_mesh_summary_list[1].base_height = 1.0f;

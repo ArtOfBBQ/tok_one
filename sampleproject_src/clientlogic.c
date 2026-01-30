@@ -166,7 +166,7 @@ void T1_clientlogic_late_startup(void) {
     T1zSpriteRequest lightcube_request;
     T1_zsprite_fetch_next(&lightcube_request);
     T1_zsprite_construct(&lightcube_request);
-    lightcube_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
+    lightcube_request.cpu_data->mesh_id = T1_BASIC_CUBE_MESH_ID;
     lightcube_request.cpu_data->simd_stats.mul_xyz[0] = 0.05f;
     lightcube_request.cpu_data->simd_stats.mul_xyz[1] = 0.05f;
     lightcube_request.cpu_data->simd_stats.mul_xyz[2] = 0.05f;

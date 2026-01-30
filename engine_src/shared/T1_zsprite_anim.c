@@ -438,6 +438,10 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
                         public.gpu_vals.f32)[f_i] ==
                     0.0f);
             }
+        } else {
+            // don't reduce alpha by 1 to fade out, use
+            // an endpoint anim
+            log_assert(parent->public.gpu_vals.f32.alpha > -0.9f);
         }
         if (!parent->public.gpu_vals_i32_active) {
             for (

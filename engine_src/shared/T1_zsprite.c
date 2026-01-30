@@ -425,7 +425,7 @@ void T1_zsprite_construct_quad_around(
     }
     
     stack_recipient->cpu_data->mesh_id =
-        BASIC_QUAD_MESH_ID;
+        T1_BASIC_QUAD_MESH_ID;
 }
 
 void zsprite_construct_cube_around(

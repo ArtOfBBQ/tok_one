@@ -476,8 +476,6 @@ static void redraw_all_sliders(void) {
                 break;
                 default:
                     font_settings->font_height = 20;
-                    font_settings->ignore_camera = true;
-                    font_settings->ignore_lighting = true;
                     text_request_label_around(
                         /* const int32_t with_object_id: */
                             pds->regs[pds->regs_size].label_zsprite_id,
