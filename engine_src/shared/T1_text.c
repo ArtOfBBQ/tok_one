@@ -497,6 +497,9 @@ void text_request_label_renderable(
             continue;
         }
         
+        letter.gpu->i32.touch_id =
+            font_settings->i32.touch_id;
+        
         letter.gpu->f32.xyz[0] +=
             T1_render_view_screen_width_to_width_noz(
                 cur_x_offset + get_left_side_bearing(

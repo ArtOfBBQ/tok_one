@@ -71,7 +71,7 @@ typedef struct
     float4 bitangent_viewspace;
     unsigned int locked_vertex_i [[ flat ]];
     unsigned int polygon_i [[ flat ]];
-    int32_t touchable_id [[ flat ]];
+    int touchable_id [[ flat ]];
 } RasterizerPixel;
 
 float get_distance_f3(
@@ -1203,12 +1203,14 @@ typedef struct
     float2 uv;
     int array_i [[ flat ]];
     int slice_i [[ flat ]];
+    int touch_id [[ flat ]];
 } FlatTexQuadPixel;
 
 vertex FlatTexQuadPixel
 flat_texquad_vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device T1GPUTexQuad * quads [[ buffer(2) ]],
+    const device T1GPUTexQuad * quads [[ buffer(0) ]],
+    const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]])
 {
     uint quad_i = vertex_i / 6;
@@ -1236,13 +1238,15 @@ flat_texquad_vertex_shader(
         float2(0.0f, 0.0f),
     };
     
-    FlatTexQuadPixel out;
-    
-    out.screenpos = vector_float4(
+    float4 worldpos = vector_float4(
         quads[quad_i].f32.xyz[0],
         quads[quad_i].f32.xyz[1],
         quads[quad_i].f32.xyz[2],
         1.0f);
+    
+    FlatTexQuadPixel out;
+    
+    out.screenpos = worldpos; // * view * projection;
     
     out.screenpos.xy +=
         (corners[corner_id].xy * size_xy);
@@ -1257,11 +1261,12 @@ flat_texquad_vertex_shader(
     
     out.array_i = quads[quad_i].i32.tex_array_i;
     out.slice_i = quads[quad_i].i32.tex_slice_i;
+    out.touch_id = quads[quad_i].i32.touch_id;
     
     return out;
 }
 
-fragment float4 flat_texquad_fragment_shader(
+fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures,
     const FlatTexQuadPixel in [[stage_in]])
@@ -1283,7 +1288,12 @@ fragment float4 flat_texquad_fragment_shader(
                     in.slice_i));
     }
     
-    return color_sample * in.rgba;
+    FragmentAndTouchableOut packed_out =
+        pack_color_and_touchable_id(
+            color_sample * in.rgba,
+            in.touch_id);
+    
+    return packed_out;
 }
 
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE

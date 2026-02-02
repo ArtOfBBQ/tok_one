@@ -604,7 +604,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i =
         new_mesh_head_id;
     
-    log_assert(T1_mesh_summary_all_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+    log_assert(T1_mesh_summary_all_vertices->size <
+        ALL_LOCKED_VERTICES_SIZE);
     
     T1_mesh_summary_list[T1_mesh_summary_list_size].materials_size =
         arg_parsed_obj->materials_count;

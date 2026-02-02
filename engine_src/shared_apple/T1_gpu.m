@@ -2485,6 +2485,12 @@ static void set_defaults_for_encoder(
                 setVertexBuffer:
                     ags->flat_texquad_buffers[ags->frame_i]
                 offset: 0
+                atIndex: 0];
+            
+            [flat_texq_enc
+                setVertexBuffer:
+                    ags->matrix_buffers[ags->frame_i]
+                offset: 0
                 atIndex: 2];
             
             [flat_texq_enc
