@@ -112,9 +112,7 @@ void terminal_redraw_backgrounds(void) {
                 * 2.0f);
     
     T1FlatTexQuadRequest input_req;
-    T1_texquad_fetch_next(
-        &input_req);
-    
+    T1_texquad_fetch_next(&input_req);
     input_req.cpu->zsprite_id =
         terminal_back_object_id;
     input_req.gpu->f32.xyz[0] = 0.0f;
@@ -175,109 +173,107 @@ void terminal_render(void) {
         return;
     }
     
-    if (terminal_back_object_id < 0) {
-        terminal_redraw_backgrounds();
+    T1_texquad_delete(terminal_back_object_id);
+    
+    terminal_redraw_backgrounds();
+    
+    T1_texquad_delete(
+        terminal_labels_object_id);
+    
+    float previous_font_height = font_settings->font_height;
+    font_settings->font_height = TERM_FONT_SIZE;
+    
+    // draw the terminal's history as a label
+    float history_label_top =
+        T1_render_views->cpu[0].height -
+            (TERMINAL_WHITESPACE * 2);
+    float history_label_height =
+        T1_render_views->cpu[0].height -
+            TERM_FONT_SIZE -
+            (TERMINAL_WHITESPACE * 4.5f);
+    
+    uint32_t max_lines_in_history =
+        (uint32_t)(history_label_height / (TERM_FONT_SIZE * 1.0f));
+    
+    uint32_t char_offset = terminal_history_size;
+    uint32_t lines_taken = 0;
+    uint32_t chars_in_current_line = 0;
+    
+    while (
+        lines_taken <= max_lines_in_history &&
+        char_offset > 0)
+    {
+        char_offset--;
+        
+        if (terminal_history[char_offset] == '\n') {
+            chars_in_current_line = 0;
+            lines_taken += 1;
+        } else if (chars_in_current_line >= SINGLE_LINE_MAX) {
+            chars_in_current_line = 0;
+            lines_taken += 1;
+        } else {
+            chars_in_current_line += 1;
+        }
+    }
+    if (terminal_history[char_offset] == '\n') {
+        char_offset += 1;
     }
     
-    if (requesting_label_update) {
-        T1_texquad_delete(
-            terminal_labels_object_id);
-        
-        float previous_font_height = font_settings->font_height;
-        font_settings->font_height = TERM_FONT_SIZE;
-        
-        // draw the terminal's history as a label
-        float history_label_top =
-            T1_render_views->cpu[0].height -
-                (TERMINAL_WHITESPACE * 2);
-        float history_label_height =
-            T1_render_views->cpu[0].height -
-                TERM_FONT_SIZE -
-                (TERMINAL_WHITESPACE * 4.5f);
-        
-        uint32_t max_lines_in_history =
-            (uint32_t)(history_label_height / (TERM_FONT_SIZE * 1.0f));
-        
-        uint32_t char_offset = terminal_history_size;
-        uint32_t lines_taken = 0;
-        uint32_t chars_in_current_line = 0;
-        
-        while (
-            lines_taken <= max_lines_in_history &&
-            char_offset > 0)
-        {
-            char_offset--;
-            
-            if (terminal_history[char_offset] == '\n') {
-                chars_in_current_line = 0;
-                lines_taken += 1;
-            } else if (chars_in_current_line >= SINGLE_LINE_MAX) {
-                chars_in_current_line = 0;
-                lines_taken += 1;
-            } else {
-                chars_in_current_line += 1;
-            }
-        }
-        if (terminal_history[char_offset] == '\n') {
-            char_offset += 1;
-        }
-        
-        log_append("terminal history: ");
-        log_append(terminal_history + char_offset);
-        log_append_char('\n');
-        
-        font_settings->f32.rgba[0] = term_font_color[0];
-        font_settings->f32.rgba[1] = term_font_color[1];
-        font_settings->f32.rgba[2] = term_font_color[2];
-        font_settings->f32.rgba[3] = term_font_color[3];
-        font_settings->i32.touch_id = -1;
-        
-        text_request_label_renderable(
-            /* const int32_t with_object_id: */
-                terminal_labels_object_id,
-            /* const char * text_to_draw: */
-                terminal_history + char_offset,
-            /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2 +
-                    (TERM_FONT_SIZE * 0.5f),
-            /* const float mid_y_pixelspace: */
-                history_label_top -
-                    (TERM_FONT_SIZE * 0.5f),
-            /* const float z: */
-                TERM_LABELS_Z,
-            /* const float max_width: */
-                T1_render_views->cpu[0].width -
-                    (TERMINAL_WHITESPACE * 2));
-        
-        if (current_command[0] == '\0') {
-            font_settings->font_height =
-                previous_font_height;
-            requesting_label_update = false;
-            return;
-        }
-        
-        font_settings->i32.touch_id = -1;
-        // the terminal's current input as a label
-        text_request_label_renderable(
-            /* with_object_id: */
-                terminal_labels_object_id,
-            /* const char * text_to_draw: */
-                current_command,
-            /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2 +
-                    (TERM_FONT_SIZE * 0.5f),
-            /* const float mid_y_pixelspace: */
-                TERM_INPUT_BOX_MID_Y,
-            /* const float z: */
-                TERM_LABELS_Z,
-            /* const float max_width: */
-                T1_render_views->cpu[0].width -
-                    (TERMINAL_WHITESPACE * 2));
-        
-        font_settings->font_height = previous_font_height;
-        
+    log_append("terminal history: ");
+    log_append(terminal_history + char_offset);
+    log_append_char('\n');
+    
+    font_settings->f32.rgba[0] = term_font_color[0];
+    font_settings->f32.rgba[1] = term_font_color[1];
+    font_settings->f32.rgba[2] = term_font_color[2];
+    font_settings->f32.rgba[3] = term_font_color[3];
+    font_settings->i32.touch_id = -1;
+    
+    text_request_label_renderable(
+        /* const int32_t with_object_id: */
+            terminal_labels_object_id,
+        /* const char * text_to_draw: */
+            terminal_history + char_offset,
+        /* const float left_pixelspace: */
+            TERMINAL_WHITESPACE * 2 +
+                (TERM_FONT_SIZE * 0.5f),
+        /* const float mid_y_pixelspace: */
+            history_label_top -
+                (TERM_FONT_SIZE * 0.5f),
+        /* const float z: */
+            TERM_LABELS_Z,
+        /* const float max_width: */
+            T1_render_views->cpu[0].width -
+                (TERMINAL_WHITESPACE * 2));
+    
+    if (current_command[0] == '\0') {
+        font_settings->font_height =
+            previous_font_height;
         requesting_label_update = false;
+        return;
     }
+    
+    font_settings->i32.touch_id = -1;
+    // the terminal's current input as a label
+    text_request_label_renderable(
+        /* with_object_id: */
+            terminal_labels_object_id,
+        /* const char * text_to_draw: */
+            current_command,
+        /* const float left_pixelspace: */
+            TERMINAL_WHITESPACE * 2 +
+                (TERM_FONT_SIZE * 0.5f),
+        /* const float mid_y_pixelspace: */
+            TERM_INPUT_BOX_MID_Y,
+        /* const float z: */
+            TERM_LABELS_Z,
+        /* const float max_width: */
+            T1_render_views->cpu[0].width -
+                (TERMINAL_WHITESPACE * 2));
+    
+    font_settings->font_height = previous_font_height;
+    
+    requesting_label_update = false;
 }
 
 void terminal_sendchar(uint32_t to_send) {

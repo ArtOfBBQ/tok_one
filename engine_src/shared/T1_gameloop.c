@@ -301,7 +301,7 @@ void T1_gameloop_update_before_render_pass(
             T1_platform_gpu_update_internal_render_viewport(rv_i);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-            terminal_redraw_backgrounds();
+            terminal_render();
             #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
             // Pass
             #else
