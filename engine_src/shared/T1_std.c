@@ -218,7 +218,7 @@ float T1_std_minf(const float x, const float y)
 
 float T1_std_maxf(const float x, const float y)
 {
-    return ((x >  y) * x) + ((y <= x) * y);
+    return ((x >  y) * x) + ((x <= y) * y);
 }
 
 int T1_std_mini(const int x, const int y)
@@ -230,9 +230,7 @@ int T1_std_mini(const int x, const int y)
 
 int T1_std_maxi(const int x, const int y)
 {
-    return
-        ((x <= y) * y) +
-        ((x > y) * x);
+    return ((x >  y) * x) + ((x <= y) * y);
 }
 
 void

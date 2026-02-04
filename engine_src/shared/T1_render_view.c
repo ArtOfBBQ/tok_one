@@ -341,6 +341,12 @@ float T1_render_view_x_to_screen_x(
     return screen_x;
 }
 
+float T1_render_view_x_to_screen_x_noz(
+    const float x)
+{
+    return ((x * 2.0f) - 1.0f) * (float)T1_render_views->cpu[0].width;
+}
+
 float T1_render_view_screen_x_to_x(
     const float screenspace_x,
     const float given_z)
@@ -395,6 +401,12 @@ float T1_render_view_y_to_screen_y(
     float screen_y = (1.0f - ndc_y) * 0.5f * viewport_height;
     
     return screen_y;
+}
+
+float T1_render_view_y_to_screen_y_noz(
+    const float y)
+{
+    return ((y * 2.0f) - 1.0f) * (float)T1_render_views->cpu[0].height;
 }
 
 float T1_render_view_screen_y_to_y(

@@ -182,6 +182,9 @@ static void prefetch_label_lines(
     PrefetchedLine * recipient,
     uint32_t * recipient_size)
 {
+    log_assert(text_to_draw != NULL);
+    log_assert(text_to_draw[0] != '\0');
+    
     float widest_line_width = 0.0f;
     *recipient_size = 1;
     
@@ -263,6 +266,9 @@ void text_request_label_offset_around(
     log_assert(font_settings->font_height > 0);
     log_assert(font_settings->f32.rgba[3] > -0.02f);
     log_assert(font_settings->f32.rgba[3] < 1.05f);
+    log_assert(font_settings->font_height > 0.05f);
+    log_assert(text_to_draw != NULL);
+    log_assert(text_to_draw[0] != '\0');
     
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -305,10 +311,8 @@ void text_request_label_offset_around(
             
             T1_texquad_fetch_next(&letter);
             
-            letter.gpu->i32 =
-                font_settings->i32;
-            letter.gpu->f32 =
-                font_settings->f32;
+            letter.gpu->i32 = font_settings->i32;
+            letter.gpu->f32 = font_settings->f32;
             
             letter.gpu->f32.xyz[0] =
                 T1_render_view_screen_x_to_x_noz(
@@ -333,11 +337,11 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.gpu->f32.xyz[0] +=
+            letter.cpu->offset_xyz[0] =
                 T1_render_view_screen_width_to_width_noz(
                     (cur_x_offset_pixelspace +
-                            get_left_side_bearing(text_to_draw[j])));
-            letter.gpu->f32.xyz[1] +=
+                        get_left_side_bearing(text_to_draw[j])));
+            letter.cpu->offset_xyz[1] =
                 T1_render_view_screen_height_to_height_noz(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
@@ -396,6 +400,9 @@ void text_request_label_around(
     const float z,
     const float max_width)
 {
+    log_assert(text_to_draw != NULL);
+    log_assert(text_to_draw[0] != '\0');
+    
     text_request_label_offset_around(
         /* const int32_t with_id: */
             with_id,
@@ -500,7 +507,7 @@ void text_request_label_renderable(
         letter.gpu->i32.touch_id =
             font_settings->i32.touch_id;
         
-        letter.gpu->f32.xyz[0] +=
+        letter.cpu->offset_xyz[0] =
             T1_render_view_screen_width_to_width_noz(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]));
@@ -508,7 +515,7 @@ void text_request_label_renderable(
             T1_render_view_screen_height_to_height_noz(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]));
-        letter.gpu->f32.xyz[1] += y_offset;
+        letter.cpu->offset_xyz[1] = y_offset;
         
         cur_x_offset += get_advance_width(
             text_to_draw[i]);

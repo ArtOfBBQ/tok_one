@@ -153,10 +153,6 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
             &return_value->public.gpu_vals,
             T1_TEXQUADANIM_NO_EFFECT,
             sizeof(T1GPUTexQuad));
-        T1_std_memset_f32(
-            &return_value->public.cpu_vals,
-            T1_TEXQUADANIM_NO_EFFECT,
-            sizeof(T1CPUTexQuad));
         return_value->endpoints = endpoints_not_deltas;
     }
     
@@ -273,7 +269,7 @@ static void T1_texquad_anim_resolve_single(
                     (float *)
                         &anim->public.gpu_vals.f32 :
                     NULL,
-            /* const int32_t *goal_gpu_vals_i32: */
+            /* const int32_t * goal_gpu_vals_i32: */
                 anim->public.gpu_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
                 NULL);
     } else {
@@ -288,11 +284,13 @@ static void T1_texquad_anim_resolve_single(
                 t.now,
             /* const float * anim_gpu_vals_f32: */
                 anim->public.gpu_f32_active ?
-                    (float *)&anim->public.gpu_vals.f32 :
+                    (float *)&anim->
+                        public.gpu_vals.f32 :
                     NULL,
             /* const int32_t * anim_gpu_vals_i32: */
                 anim->public.gpu_i32_active ?
-                    (int32_t *)&anim->public.gpu_vals.i32 :
+                    (int32_t *)&anim->
+                        public.gpu_vals.i32 :
                     NULL);
     }
 }
@@ -378,6 +376,16 @@ void T1_texquad_anim_fade_and_destroy(
     fade_destroy->del_obj_on_finish = true;
     fade_destroy->gpu_f32_active = true;
     T1_texquad_anim_commit(fade_destroy);
+}
+
+void T1_texquad_anim_delete_all(void)
+{
+    tqas->mutex_lock(tqas->mutex_id);
+    for (uint32_t i = 0; i < tqas->anims_size; i++)
+    {
+        tqas->anims[i].deleted = true;
+    }
+    tqas->mutex_unlock(tqas->mutex_id);
 }
 
 void T1_texquad_anim_resolve(void)

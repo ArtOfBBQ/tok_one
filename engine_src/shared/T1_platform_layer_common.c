@@ -297,7 +297,7 @@ void T1_platform_layer_start_window_resize(
 {
     T1_global->last_resize_request_us = timestamp;
     
-    T1_uielement_delete_all();
+    T1_ui_widget_delete_all();
     T1_zsprite_delete_all();
     T1_texquad_delete_all();
     

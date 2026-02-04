@@ -38,7 +38,7 @@ static void show_dead_simple_text(
     const char * text_message,
     const uint64_t elapsed)
 {
-    T1_uielement_delete_all();
+    T1_ui_widget_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_delete_all();
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
@@ -354,7 +354,7 @@ void T1_gameloop_update_before_render_pass(
         T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
-        T1_uielement_handle_touches(
+        T1_ui_widget_handle_touches(
             T1_global->elapsed);
         
         #if T1_TERMINAL_ACTIVE == T1_ACTIVE

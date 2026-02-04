@@ -14,8 +14,8 @@ extern "C" {
 
 #define T1_FIRST_NONUI_ZSPRITE_ID 1011
 
-#define T1_LAST_UI_TOUCHABLE_ID 1000
-#define FIRST_NONUI_TOUCHABLE_ID 1001
+#define T1_LAST_UI_TOUCH_ID 1000
+#define FIRST_NONUI_TOUCH_ID 1001
 
 // retired objects are unaffected by animations
 #define RETIRED_BUT_NOT_DELETED_ID 20501

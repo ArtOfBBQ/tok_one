@@ -81,12 +81,12 @@ Flat textured quads, mostly for UI text
 The maximum number of 'scheduled animations' simultaneously running
 */
 #define T1_ZSPRITE_ANIMS_CAP 180
-#define T1_TEXQUAD_ANIMS_CAP 50
+#define T1_TEXQUAD_ANIMS_CAP 500
 
 
-#define ALL_MESHES_SIZE 20
+#define T1_MESH_CAP 20
 // the max # of triangles in all of your meshes/models combined
-#define ALL_LOCKED_VERTICES_SIZE 240000
+#define T1_LOCKED_VERTEX_CAP 240000
 
 // The max number of materials in all of your meshes/models combined
 #define MATERIAL_NAME_CAP 256

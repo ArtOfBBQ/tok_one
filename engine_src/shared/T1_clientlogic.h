@@ -30,7 +30,7 @@ extern "C" {
 #include "debigulator/src/decode_bmp.h"
 #include "T1_io.h"
 #include "T1_text.h"
-#include "T1_uielement.h"
+#include "T1_ui_widget.h"
 #include "T1_zsprite_anim.h"
 #include "T1_texquad_anim.h"
 #include "T1_logger.h"

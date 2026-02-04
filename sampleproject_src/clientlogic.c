@@ -1,6 +1,6 @@
 #include "T1_clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -468,11 +468,6 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     {
         T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
             handled = true;
-        
-        printf(
-            "Touched touch_id: %i\n",
-            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                touch_id_top);
         
         if (
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].

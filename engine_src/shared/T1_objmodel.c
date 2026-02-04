@@ -75,13 +75,13 @@ void T1_objmodel_init(void) {
     T1_std_memset(parsed_obj, 0, sizeof(ParsedObj));
     
     T1_mesh_summary_list = (MeshSummary *)T1_mem_malloc_from_unmanaged(
-        sizeof(MeshSummary) * ALL_MESHES_SIZE);
+        sizeof(MeshSummary) * T1_MESH_CAP);
     
-    for (uint32_t i = 0; i < ALL_MESHES_SIZE; i++) {
+    for (uint32_t i = 0; i < T1_MESH_CAP; i++) {
         construct_mesh_summary(&T1_mesh_summary_list[i], (int32_t)i);
     }
     
-    assert(ALL_LOCKED_VERTICES_SIZE > 0);
+    assert(T1_LOCKED_VERTEX_CAP > 0);
     T1_mesh_summary_all_vertices = (LockedVertexWithMaterialCollection *)
         T1_mem_malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
     T1_std_memset(
@@ -580,7 +580,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
     log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
     log_assert(T1_mesh_summary_list[mesh_id].vertices_head_i >= 0);
     log_assert(
-        T1_mesh_summary_list[mesh_id].vertices_size < ALL_LOCKED_VERTICES_SIZE);
+        T1_mesh_summary_list[mesh_id].vertices_size < T1_LOCKED_VERTEX_CAP);
     int32_t all_vertices_tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
         T1_mesh_summary_list[mesh_id].vertices_size;
@@ -605,7 +605,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         new_mesh_head_id;
     
     log_assert(T1_mesh_summary_all_vertices->size <
-        ALL_LOCKED_VERTICES_SIZE);
+        T1_LOCKED_VERTEX_CAP);
     
     T1_mesh_summary_list[T1_mesh_summary_list_size].materials_size =
         arg_parsed_obj->materials_count;
@@ -797,7 +797,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             log_assert(vert_i >= 1);
             log_assert(vert_i <= arg_parsed_obj->vertices_count);
             log_assert(
-                locked_vert_i < ALL_LOCKED_VERTICES_SIZE);
+                locked_vert_i < T1_LOCKED_VERTEX_CAP);
             
             T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].xyz[0] =
                 arg_parsed_obj->vertices[vert_i - 1][0];
@@ -965,39 +965,55 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             textr_2_i -= 1;
             textr_3_i -= 1;
             
-            log_assert(T1_mesh_summary_all_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+            log_assert(
+                T1_mesh_summary_all_vertices->
+                    size < T1_LOCKED_VERTEX_CAP);
             
-            if (T1_mesh_summary_all_vertices->size >= ALL_LOCKED_VERTICES_SIZE) {
+            if (
+                T1_mesh_summary_all_vertices->
+                    size >= T1_LOCKED_VERTEX_CAP)
+            {
                 return -1;
             }
             
-            V1->xyz[0] = arg_parsed_obj->vertices[vert_1_i][0];
-            V1->xyz[1] = arg_parsed_obj->vertices[vert_1_i][1];
-            V1->xyz[2] =
-                arg_parsed_obj->vertices[vert_1_i][2] *
-                invert_z_axis_modifier;
-            V2->xyz[0] = arg_parsed_obj->vertices[vert_2_i][0];
-            V2->xyz[1] = arg_parsed_obj->vertices[vert_2_i][1];
-            V2->xyz[2] =
-                arg_parsed_obj->vertices[vert_2_i][2] *
-                invert_z_axis_modifier;
-            V3->xyz[0] = arg_parsed_obj->vertices[vert_3_i][0];
-            V3->xyz[1] = arg_parsed_obj->vertices[vert_3_i][1];
-            V3->xyz[2] =
-                arg_parsed_obj->vertices[vert_3_i][2] *
+            V1->xyz[0] = arg_parsed_obj->
+                vertices[vert_1_i][0];
+            V1->xyz[1] = arg_parsed_obj->
+                vertices[vert_1_i][1];
+            V1->xyz[2] = arg_parsed_obj->
+                vertices[vert_1_i][2] *
+                    invert_z_axis_modifier;
+            V2->xyz[0] = arg_parsed_obj->
+                vertices[vert_2_i][0];
+            V2->xyz[1] = arg_parsed_obj->
+                vertices[vert_2_i][1];
+            V2->xyz[2] = arg_parsed_obj->
+                vertices[vert_2_i][2] *
+                    invert_z_axis_modifier;
+            V3->xyz[0] = arg_parsed_obj->
+                vertices[vert_3_i][0];
+            V3->xyz[1] = arg_parsed_obj->
+                vertices[vert_3_i][1];
+            V3->xyz[2] = arg_parsed_obj->
+                vertices[vert_3_i][2] *
                 invert_z_axis_modifier;
             
-            V1->parent_material_i       = cur_material_i;
-            V1->locked_materials_head_i = first_material_head_i;
-            V2->parent_material_i       = cur_material_i;
-            V2->locked_materials_head_i = first_material_head_i;
-            V3->parent_material_i       = cur_material_i;
-            V3->locked_materials_head_i = first_material_head_i;
+            V1->parent_material_i = cur_material_i;
+            V1->locked_materials_head_i =
+                first_material_head_i;
+            V2->parent_material_i = cur_material_i;
+            V2->locked_materials_head_i =
+                first_material_head_i;
+            V3->parent_material_i =
+                cur_material_i;
+            V3->locked_materials_head_i =
+                first_material_head_i;
             
-            if (arg_parsed_obj->normals_count > 0) {
+            if (arg_parsed_obj->normals_count > 0)
+            {
                 #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-                uint32_t norm_i = arg_parsed_obj->quad_normals[quad_i]
-                    [quad_tri_i];
+                uint32_t norm_i = arg_parsed_obj->
+                    quad_normals[quad_i][quad_tri_i];
                 
                 log_assert(norm_i >= 1);
                 log_assert(norm_i <= arg_parsed_obj->normals_count);
@@ -1006,11 +1022,15 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 #error
                 #endif
                 
-                V1->norm_xyz[0] = arg_parsed_obj->normals_vn[norm_1_i][0];
-                V1->norm_xyz[1] = arg_parsed_obj->normals_vn[norm_1_i][1];
-                V1->norm_xyz[2] = arg_parsed_obj->normals_vn[norm_1_i][2] *
-                    invert_z_axis_modifier;
-                V2->norm_xyz[0] = arg_parsed_obj->normals_vn[norm_2_i][0];
+                V1->norm_xyz[0] = arg_parsed_obj->
+                    normals_vn[norm_1_i][0];
+                V1->norm_xyz[1] = arg_parsed_obj->
+                    normals_vn[norm_1_i][1];
+                V1->norm_xyz[2] = arg_parsed_obj->
+                    normals_vn[norm_1_i][2] *
+                        invert_z_axis_modifier;
+                V2->norm_xyz[0] = arg_parsed_obj->
+                    normals_vn[norm_2_i][0];
                 V2->norm_xyz[1] = arg_parsed_obj->normals_vn[norm_2_i][1];
                 V2->norm_xyz[2] = arg_parsed_obj->normals_vn[norm_2_i][2] *
                     invert_z_axis_modifier;
@@ -1113,7 +1133,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         max_z - min_z;
     
     T1_mesh_summary_list_size += 1;
-    log_assert(T1_mesh_summary_list_size <= ALL_MESHES_SIZE);
+    log_assert(T1_mesh_summary_list_size <= T1_MESH_CAP);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     assert_objmodel_validity((int32_t)T1_mesh_summary_list_size - 1);
@@ -1389,7 +1409,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     
     log_assert(
         T1_mesh_summary_list_size <
-            ALL_MESHES_SIZE);
+            T1_MESH_CAP);
     
     if (!T1_app_running) {
         T1_std_strcpy_cap(

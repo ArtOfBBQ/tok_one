@@ -12,7 +12,7 @@
 #include "T1_audio.h"
 #include "T1_zlight.h"
 #include "T1_text.h"
-#include "T1_uielement.h"
+#include "T1_ui_widget.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_zsprite_anim.h"

@@ -108,7 +108,7 @@ void T1_zsprite_commit(
     log_assert(to_commit->cpu_data->mesh_id >= 0);
     log_assert(to_commit->cpu_data->mesh_id <
         (int32_t)T1_mesh_summary_list_size);
-    log_assert(to_commit->cpu_data->mesh_id < ALL_MESHES_SIZE);
+    log_assert(to_commit->cpu_data->mesh_id < T1_MESH_CAP);
     log_assert(
         T1_mesh_summary_list[to_commit->cpu_data->mesh_id].
             vertices_size > 0);

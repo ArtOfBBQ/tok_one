@@ -99,7 +99,7 @@
 		EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4A293CA04800837369 /* Foundation.framework */; };
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
-		EC6E12172A03BD90004E7BD1 /* T1_uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* T1_uielement.c */; };
+		EC6E12172A03BD90004E7BD1 /* T1_ui_widget.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */; };
 		EC6E121B2A04CE13004E7BD1 /* T1_zspriteid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */; };
 		EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
@@ -246,8 +246,8 @@
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6E12132A03BD8F004E7BD1 /* T1_clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_clientlogic.h; path = ../../engine_src/shared/T1_clientlogic.h; sourceTree = "<group>"; };
-		EC6E12142A03BD8F004E7BD1 /* T1_uielement.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_uielement.c; path = ../../engine_src/shared/T1_uielement.c; sourceTree = "<group>"; };
-		EC6E12152A03BD8F004E7BD1 /* T1_uielement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_uielement.h; path = ../../engine_src/shared/T1_uielement.h; sourceTree = "<group>"; };
+		EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_ui_widget.c; path = ../../engine_src/shared/T1_ui_widget.c; sourceTree = "<group>"; };
+		EC6E12152A03BD8F004E7BD1 /* T1_ui_widget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_ui_widget.h; path = ../../engine_src/shared/T1_ui_widget.h; sourceTree = "<group>"; };
 		EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_zspriteid.c; path = ../../engine_src/shared/T1_zspriteid.c; sourceTree = "<group>"; };
 		EC6E12192A04CE13004E7BD1 /* T1_zspriteid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_zspriteid.h; path = ../../engine_src/shared/T1_zspriteid.h; sourceTree = "<group>"; };
 		EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = guitar_simplified.mtl; path = ../../resources/guitar_simplified.mtl; sourceTree = "<group>"; };
@@ -536,8 +536,8 @@
 				ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */,
 				EC78509C29E639F900E6882A /* T1_triangle.h */,
 				EC6A301A29EFA1440071C58F /* T1_triangle.c */,
-				EC6E12152A03BD8F004E7BD1 /* T1_uielement.h */,
-				EC6E12142A03BD8F004E7BD1 /* T1_uielement.c */,
+				EC6E12152A03BD8F004E7BD1 /* T1_ui_widget.h */,
+				EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */,
 				EC914B7C2B8AD447007FCBFC /* T1_wav.h */,
 				EC914B7B2B8AD447007FCBFC /* T1_wav.c */,
 				601128842862511700F92967 /* T1_zsprite.h */,
@@ -775,7 +775,7 @@
 				EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */,
 				60A99910287BD4C4003F7159 /* T1_texture_array.c in Sources */,
 				ECDCFF4D2DDE0F2B002AA399 /* T1_mtlparser.c in Sources */,
-				EC6E12172A03BD90004E7BD1 /* T1_uielement.c in Sources */,
+				EC6E12172A03BD90004E7BD1 /* T1_ui_widget.c in Sources */,
 				6064C0C22892505000E8B3AD /* T1_gameloop.c in Sources */,
 				EC29149E2EEE1FFB00D3873E /* T1_io.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,

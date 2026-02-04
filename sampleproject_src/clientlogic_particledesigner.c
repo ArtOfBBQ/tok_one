@@ -234,14 +234,14 @@ void T1_clientlogic_early_startup(
 }
 
 static void destroy_all_sliders(void) {
-    T1_zsprite_delete(pds->title_zsprite_id);
-    T1_zsprite_delete(pds->title_label_zsprite_id);
+    T1_texquad_delete(pds->title_zsprite_id);
+    T1_texquad_delete(pds->title_label_zsprite_id);
     
     log_assert(pds->regs_size < MAX_SLIDER_PARTICLE_PROPS);
     for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
-        T1_zsprite_delete(pds->regs[i].label_zsprite_id);
-        T1_zsprite_delete(pds->regs[i].pin_zsprite_id);
-        T1_zsprite_delete(pds->regs[i].slider_zsprite_id);
+        T1_texquad_delete(pds->regs[i].label_zsprite_id);
+        T1_texquad_delete(pds->regs[i].pin_zsprite_id);
+        T1_texquad_delete(pds->regs[i].slider_zsprite_id);
     }
 }
 
@@ -252,8 +252,8 @@ static void clicked_btn(int64_t arg) {
         T1_zspriteid_clear_ui_element_touch_ids();
         
         for (uint32_t i = 0; i < pds->regs_size; i++) {
-            T1_uielement_delete(pds->regs[i].slider_zsprite_id);
-            T1_uielement_delete(pds->regs[i].label_zsprite_id);
+            T1_ui_widget_delete(pds->regs[i].slider_zsprite_id);
+            T1_ui_widget_delete(pds->regs[i].label_zsprite_id);
         }
         
         pds->inspecting_field_extra_offset = 0;
@@ -274,45 +274,28 @@ static void clicked_btn(int64_t arg) {
     redraw_all_sliders();
 }
 
-static void set_next_ui_element_state_for_sliders(void)
+static void
+set_next_ui_element_state_for_sliders(void)
 {
-    if (!next_ui_element_settings) { return; }
+    if (!T1_ui_widget_next_props) { return; }
     
-    next_ui_element_settings->perm.ignore_camera = true;
-    next_ui_element_settings->perm.ignore_lighting = true;
-    next_ui_element_settings->perm.pin_width_screenspace = 20;
-    next_ui_element_settings->perm.pin_height_screenspace =
+    T1_ui_widget_next_props->pin_width_screen = 20;
+    T1_ui_widget_next_props->pin_height_screen =
         pds->slider_height;
-    next_ui_element_settings->perm.slider_width_screenspace =
+    T1_ui_widget_next_props->width_screen =
         pds->slider_width;
-    next_ui_element_settings->perm.slider_height_screenspace =
+    T1_ui_widget_next_props->height_screen =
         pds->slider_height;
-    next_ui_element_settings->perm.button_width_screenspace =
-        pds->slider_width;
-    next_ui_element_settings->perm.button_height_screenspace =
-        pds->slider_height;
-    next_ui_element_settings->slider_pin_rgba[0] = 0.7f;
-    next_ui_element_settings->slider_pin_rgba[1] = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[2] = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[3] = 1.0f;
-    T1_material_construct(
-        &next_ui_element_settings->perm.back_mat_f32,
-        &next_ui_element_settings->perm.back_mat_i32);
-    next_ui_element_settings->perm.back_mat_f32.
-        diffuse_rgb[0] = 0.2f;
-    next_ui_element_settings->perm.back_mat_f32.
-        diffuse_rgb[1] = 0.2f;
-    next_ui_element_settings->perm.back_mat_f32.
-        diffuse_rgb[2] = 0.3f;
-    next_ui_element_settings->perm.back_mat_f32.
-        alpha = 1.0f;
-    next_ui_element_settings->perm.z = 0.75f;
-    next_ui_element_settings->slider_label_shows_value = true;
-    
+    T1_ui_widget_next_props->pin_rgba[0] = 0.7f;
+    T1_ui_widget_next_props->pin_rgba[1] = 0.5f;
+    T1_ui_widget_next_props->pin_rgba[2] = 0.5f;
+    T1_ui_widget_next_props->pin_rgba[3] = 1.0f;
+    T1_ui_widget_next_props->z = 0.75f;
+    T1_ui_widget_next_props->label_shows_value = true;
 }
 
 static void redraw_all_sliders(void) {
-    if (!next_ui_element_settings) { return; }
+    if (!T1_ui_widget_next_props) { return; }
     
     set_next_ui_element_state_for_sliders();
     
@@ -324,22 +307,29 @@ static void redraw_all_sliders(void) {
     float cur_x = T1_global->window_width -
         (pds->slider_width / 2) - 15.0f;
     float cur_y = get_slider_y_screenspace(-1);
-    next_ui_element_settings->perm.screenspace_x = cur_x;
-    next_ui_element_settings->perm.screenspace_y = cur_y;
+    float z = 0.75f;
+    
+    T1_ui_widget_next_props->screen_x = cur_x;
+    T1_ui_widget_next_props->screen_y = cur_y;
     
     // draw the title of the object we're inspecting which also serves as
     // an "up" button
-    next_ui_element_settings->slider_label = pds->inspecting_field;
-    next_ui_element_settings->perm.back_mat_f32.
-        diffuse_rgb[2] = 0.6f;
-    next_ui_element_settings->perm.ignore_camera = true;
-    T1_uielement_request_button(
+    T1_std_memcpy(
+        T1_ui_widget_next_props->label_prefix,
+        pds->inspecting_field,
+        128);
+    
+    T1_ui_widget_next_props->width_screen =
+        get_slider_width_screenspace();
+    T1_ui_widget_next_props->height_screen =
+        get_slider_height_screenspace();
+    T1_ui_widget_next_props->z = z;
+    
+    T1_ui_widget_request_button(
         pds->title_zsprite_id,
         pds->title_label_zsprite_id,
         clicked_btn,
         -1);
-    next_ui_element_settings->perm.back_mat_f32.
-        diffuse_rgb[2] = 0.3f;
     
     for (int32_t i = 0; i < (int32_t)num_properties; i++) {
         
@@ -347,15 +337,19 @@ static void redraw_all_sliders(void) {
             pds->inspecting_field,
             (uint32_t)i);
         
-        next_ui_element_settings->perm.is_meta_enum = field.is_enum;
-        if (next_ui_element_settings->perm.is_meta_enum) {
-            next_ui_element_settings->perm.meta_struct_name =
+        T1_ui_widget_next_props->
+            is_meta_enum = field.is_enum;
+        
+        if (T1_ui_widget_next_props->
+            is_meta_enum)
+        {
+            T1_ui_widget_next_props->meta_struct_name =
                 field.enum_type_name;
             log_assert(
-                next_ui_element_settings->perm.
+                T1_ui_widget_next_props->
                     meta_struct_name != NULL);
             log_assert(
-                next_ui_element_settings->perm.
+                T1_ui_widget_next_props->
                     meta_struct_name[0] != '\0');
         }
         
@@ -370,7 +364,8 @@ static void redraw_all_sliders(void) {
             
             cur_y = get_slider_y_screenspace(i);
             
-            next_ui_element_settings->perm.screenspace_y = cur_y;
+            T1_ui_widget_next_props->screen_y =
+                cur_y;
             char expanded_field_name[256];
             T1_std_strcpy_cap(expanded_field_name, 256, field.name);
             if (field.array_sizes[0] > 1) {
@@ -378,13 +373,18 @@ static void redraw_all_sliders(void) {
                 T1_std_strcat_uint_cap(expanded_field_name, 256, array_i);
                 T1_std_strcat_cap(expanded_field_name, 256, "]");
             }
-            next_ui_element_settings->slider_label = expanded_field_name;
+            
+            T1_std_memcpy(
+                T1_ui_widget_next_props->label_prefix,
+                expanded_field_name,
+                T1_UI_WIDGET_STR_CAP);
             
             uint32_t good = 0;
-            T1MetaField indexed_field = T1_meta_get_field_from_strings(
-                pds->inspecting_field,
-                expanded_field_name,
-                &good);
+            T1MetaField indexed_field =
+                T1_meta_get_field_from_strings(
+                    pds->inspecting_field,
+                    expanded_field_name,
+                    &good);
             log_assert(good);
             log_assert(indexed_field.data_type != T1_TYPE_NOTSET);
             
@@ -403,15 +403,23 @@ static void redraw_all_sliders(void) {
                     field.struct_type_name);
             }
             
-            pds->regs[pds->regs_size].property_offset =
-                (size_t)indexed_field.offset;
-            if (pds->regs[pds->regs_size].slider_zsprite_id == 0) {
-                pds->regs[pds->regs_size].slider_zsprite_id =
-                    T1_zspriteid_next_ui_element_id();
-                pds->regs[pds->regs_size].label_zsprite_id =
-                    T1_zspriteid_next_ui_element_id();
-                pds->regs[pds->regs_size].pin_zsprite_id =
-                    T1_zspriteid_next_ui_element_id();
+            pds->regs[pds->regs_size].
+                property_offset =
+                    (size_t)indexed_field.offset;
+            
+            if (
+                pds->regs[pds->regs_size].
+                    slider_zsprite_id == 0)
+            {
+                pds->regs[pds->regs_size].
+                    slider_zsprite_id =
+                        T1_zspriteid_next_ui_element_id();
+                pds->regs[pds->regs_size].
+                    label_zsprite_id =
+                        T1_zspriteid_next_ui_element_id();
+                pds->regs[pds->regs_size].
+                    pin_zsprite_id =
+                        T1_zspriteid_next_ui_element_id();
             }
             
             switch (field.data_type) {
@@ -419,38 +427,50 @@ static void redraw_all_sliders(void) {
                 case T1_TYPE_U32:
                 case T1_TYPE_U16:
                 case T1_TYPE_U8:
-                    next_ui_element_settings->perm.custom_min_max_vals = true;
-                    next_ui_element_settings->perm.custom_uint_max =
-                        field.custom_uint_max;
-                    next_ui_element_settings->perm.custom_uint_min =
-                        field.custom_uint_min;
+                    T1_ui_widget_next_props->
+                        custom_min_max_vals = true;
+                    T1_ui_widget_next_props->
+                        custom_uint_max =
+                            field.custom_uint_max;
+                    T1_ui_widget_next_props->
+                        custom_uint_min =
+                            field.custom_uint_min;
                 break;
                 case T1_TYPE_I64:
                 case T1_TYPE_I32:
                 case T1_TYPE_I16:
                 case T1_TYPE_I8:
-                    next_ui_element_settings->perm.custom_min_max_vals = true;
-                    next_ui_element_settings->perm.custom_int_max =
-                        field.custom_int_max;
-                    next_ui_element_settings->perm.custom_int_min =
-                        field.custom_int_min;
+                    T1_ui_widget_next_props->
+                        custom_min_max_vals = true;
+                    T1_ui_widget_next_props->
+                        custom_int_max =
+                            field.custom_int_max;
+                    T1_ui_widget_next_props->
+                        custom_int_min =
+                            field.custom_int_min;
                 break;
                 case T1_TYPE_F32:
-                    next_ui_element_settings->perm.custom_min_max_vals = true;
-                    next_ui_element_settings->perm.custom_float_max =
-                        field.custom_float_max;
-                    next_ui_element_settings->perm.custom_float_min =
-                        field.custom_float_min;
+                    T1_ui_widget_next_props->
+                        custom_min_max_vals = true;
+                    T1_ui_widget_next_props->
+                        custom_float_max =
+                            field.custom_float_max;
+                    T1_ui_widget_next_props->
+                        custom_float_min =
+                            field.custom_float_min;
                 break;
                 default:
-                    next_ui_element_settings->perm.custom_min_max_vals = false;
+                    T1_ui_widget_next_props->
+                        custom_min_max_vals = false;
             }
             
             switch (field.data_type) {
                 case T1_TYPE_STRUCT:
-                    T1_uielement_request_button(
-                        pds->regs[pds->regs_size].slider_zsprite_id,
-                        pds->regs[pds->regs_size].label_zsprite_id,
+                    T1_ui_widget_request_button(
+                        pds->regs[pds->regs_size].
+                            slider_zsprite_id,
+                        pds->regs[pds->regs_size].
+                            label_zsprite_id,
                         clicked_btn,
                         (int64_t)pds->regs_size);
                 break;
@@ -463,13 +483,17 @@ static void redraw_all_sliders(void) {
                 case T1_TYPE_U16:
                 case T1_TYPE_U8:
                 case T1_TYPE_F32:
-                    next_ui_element_settings->perm.linked_type =
-                        field.data_type;
+                    T1_ui_widget_next_props->
+                        linked_type =
+                            field.data_type;
                     
-                    T1_uielement_request_slider(
-                        pds->regs[pds->regs_size].slider_zsprite_id,
-                        pds->regs[pds->regs_size].pin_zsprite_id,
-                        pds->regs[pds->regs_size].label_zsprite_id,
+                    T1_ui_widget_request_slider(
+                        pds->regs[pds->regs_size].
+                            slider_zsprite_id,
+                        pds->regs[pds->regs_size].
+                            pin_zsprite_id,
+                        pds->regs[pds->regs_size].
+                            label_zsprite_id,
                         ((char *)pds->editing +
                             pds->inspecting_field_extra_offset +
                             indexed_field.offset));
@@ -486,7 +510,7 @@ static void redraw_all_sliders(void) {
                         /* const float mid_y_pixelspace: */
                             cur_y,
                         /* const float z: */
-                            0.75f,
+                            z,
                         /* const float max_width: */
                             T1_global->window_width * 2);
             }
@@ -641,7 +665,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
     
-    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
+    #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
     float new_x =
         T1_global->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
@@ -684,28 +708,28 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             get_slider_y_screenspace((int32_t)i) -
             (T1_io_mouse_scroll_pos * 30.0f);
         for (uint32_t j = 0; j < 3; j++) {
-            T1zSpriteAnim * anim =
-                T1_zsprite_anim_request_next(true);
-            anim->affected_zsprite_id =
+            T1TexQuadAnim * anim =
+                T1_texquad_anim_request_next(true);
+            anim->affect_zsprite_id =
                 target_zsprite_ids[j];
-            anim->del_conflict_anims =
-                true;
-            anim->cpu_vals.xyz[0] =
-                T1_render_view_screen_x_to_x(
-                    new_x,
-                    new_z);
-            anim->cpu_vals.xyz[1] =
-                T1_render_view_screen_y_to_y(
-                    new_y,
-                    new_z);
-            anim->cpu_vals.xyz[2] = new_z;
+            anim->del_conflict_anims = true;
+            anim->gpu_vals.f32.xyz[0] =
+                T1_render_view_screen_x_to_x_noz(
+                    new_x);
+            anim->gpu_vals.f32.xyz[1] =
+                T1_render_view_screen_y_to_y_noz(
+                    new_y);
+            anim->gpu_vals.f32.xyz[2] = new_z;
             anim->duration_us = 60000;
-            T1_zsprite_anim_commit(anim);
+            anim->gpu_f32_active = true;
+            T1_texquad_anim_commit(anim);
         }
     }
     
-    target_zsprite_ids[0] = pds->title_zsprite_id;
-    target_zsprite_ids[1] = pds->title_label_zsprite_id;
+    target_zsprite_ids[0] =
+        pds->title_zsprite_id;
+    target_zsprite_ids[1] =
+        pds->title_label_zsprite_id;
     float new_title_y =
         get_slider_y_screenspace(-1) -
         (T1_io_mouse_scroll_pos * 30.0f);
@@ -715,27 +739,24 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         j < 2;
         j++)
     {
-        T1zSpriteAnim * anim =
-            T1_zsprite_anim_request_next(true);
-        anim->affected_zsprite_id =
+        T1TexQuadAnim * anim =
+            T1_texquad_anim_request_next(true);
+        anim->affect_zsprite_id =
             target_zsprite_ids[j];
         anim->del_conflict_anims =
             true;
-        anim->cpu_vals.xyz[0] =
-            T1_render_view_screen_x_to_x(
-                new_x, new_z);
-        anim->cpu_vals.xyz[1] =
-            T1_render_view_screen_y_to_y(
-                new_title_y, new_z);
-        anim->cpu_vals.xyz[2] = new_z;
+        anim->gpu_vals.f32.xyz[1] =
+            T1_render_view_screen_y_to_y_noz(
+                new_title_y);
+        anim->gpu_vals.f32.xyz[2] = new_z;
         anim->duration_us = 60000;
-        anim->cpu_vals_active = true;
-        T1_zsprite_anim_commit(anim);
+        anim->gpu_f32_active = true;
+        T1_texquad_anim_commit(anim);
     }
-    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
+    #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
     #else
     #error
-    #endif // T1_ZSPRITE_ANIM_ACTIVE
+    #endif // T1_TEXQUAD_ANIM_ACTIVE
 }
 
 void T1_clientlogic_update_after_render_pass(void) {
@@ -919,7 +940,8 @@ void T1_clientlogic_evaluate_terminal_command(
     T1_std_strcpy_cap(
         response,
         response_cap,
-        "Unrecognized command - see client_logic_evaluate_terminal_command() "
+        "Unrecognized command - see "
+        "client_logic_evaluate_terminal_command() "
         "in clientlogic.c");
 }
 
@@ -930,21 +952,26 @@ void T1_clientlogic_window_resize(
     T1_io_mouse_scroll_pos = 0.0f;
     
     zlights_to_apply_size = 0;
-    T1_uielement_delete_all();
-    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-    T1_zsprite_anim_delete_all();
-    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
+    T1_ui_widget_delete_all();
+    #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
+    T1_texquad_anim_delete_all();
+    #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     T1_zsprite_delete_all();
+    T1_texquad_delete_all();
     T1_zspriteid_clear_ui_element_touch_ids();
     
-    pds->whitespace_height = get_whitespace_height();
-    pds->menu_element_height = get_menu_element_height();
-    pds->slider_height = get_slider_height_screenspace();
-    pds->slider_width = get_slider_width_screenspace();
+    pds->whitespace_height =
+        get_whitespace_height();
+    pds->menu_element_height =
+        get_menu_element_height();
+    pds->slider_height =
+        get_slider_height_screenspace();
+    pds->slider_width =
+        get_slider_width_screenspace();
     
     request_gfx_from_empty_scene();
 }

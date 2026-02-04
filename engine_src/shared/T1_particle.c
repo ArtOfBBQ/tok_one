@@ -237,7 +237,7 @@ static void T1_particle_add_single_to_frame_data(
 {
     if (
         frame_data->flat_bb_quads_size + 1 >=
-            MAX_TEXQUADS_PER_BUFFER)
+            MAX_FLATQUADS_PER_BUFFER)
     {
         log_assert(0);
         return;

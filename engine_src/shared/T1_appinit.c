@@ -360,7 +360,7 @@ void T1_appinit_before_gpu_init(
     
     T1_global_init();
     
-    T1_uielement_init();
+    T1_ui_widget_init();
     
     T1_texquad_init();
     
@@ -506,7 +506,7 @@ void T1_appinit_before_gpu_init(
     sd->locked_vertices_alloc_size =
         pad_to_page_size(
             sizeof(T1GPULockedVertex) *
-                ALL_LOCKED_VERTICES_SIZE);
+                T1_LOCKED_VERTEX_CAP);
     
     sd->const_matsf32_alloc_size =
         pad_to_page_size(
@@ -678,7 +678,7 @@ void T1_appinit_after_gpu_init_step1(
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
-            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
     T1_platform_gpu_copy_locked_vertices();
     
     T1_gameloop_active = true;
@@ -845,7 +845,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
-            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
     T1_platform_gpu_copy_locked_vertices();
     
     T1_std_memcpy(

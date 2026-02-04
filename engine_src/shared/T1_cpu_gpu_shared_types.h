@@ -147,9 +147,10 @@ typedef struct {
 
 typedef struct {
     float xyz[3];
+    float offset_xy[2];
     float size_xy[2];
     float rgba[4];
-    float padding[7];
+    float padding[5];
 } T1GPUTexQuadf32;
 
 typedef struct {

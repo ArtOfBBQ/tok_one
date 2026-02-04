@@ -75,7 +75,7 @@ extern "C" {
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
 #include "T1_global.h"
-#include "T1_uielement.h"
+#include "T1_ui_widget.h"
 
 void T1_platform_init(
     void ** unmanaged_memory_store,

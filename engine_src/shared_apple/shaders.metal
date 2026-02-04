@@ -1239,8 +1239,10 @@ flat_texquad_vertex_shader(
     };
     
     float4 worldpos = vector_float4(
-        quads[quad_i].f32.xyz[0],
-        quads[quad_i].f32.xyz[1],
+        quads[quad_i].f32.xyz[0] +
+            quads[quad_i].f32.offset_xy[0],
+        quads[quad_i].f32.xyz[1] +
+            quads[quad_i].f32.offset_xy[1],
         quads[quad_i].f32.xyz[2],
         1.0f);
     

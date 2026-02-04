@@ -105,6 +105,43 @@ void T1_texquad_delete(const int32_t zsprite_id)
     }
 }
 
+void T1_texquad_get_avg_xyz(
+    float * recip_xyz,
+    const int32_t zsprite_id,
+    bool8_t * found)
+{
+    *found = 0;
+    float count = 0.0f;
+    recip_xyz[0] = 0.0f;
+    recip_xyz[1] = 0.0f;
+    recip_xyz[2] = 0.0f;
+    
+    for (
+        int32_t tq_i = 0;
+        tq_i < (int32_t)T1_texquads->size;
+        tq_i++)
+    {
+        if (
+            T1_texquads->cpu[tq_i].zsprite_id ==
+                zsprite_id)
+        {
+            count += 1.0f;
+            recip_xyz[0] +=
+                T1_texquads->gpu[tq_i].f32.xyz[0];
+            recip_xyz[1] +=
+                T1_texquads->gpu[tq_i].f32.xyz[1];
+            recip_xyz[2] +=
+                T1_texquads->gpu[tq_i].f32.xyz[2];
+        }
+    }
+    
+    if (count > 0.0f) {
+        recip_xyz[0] /= count;
+        recip_xyz[1] /= count;
+        recip_xyz[2] /= count;
+    }
+}
+
 void T1_texquad_delete_all(void)
 {
     T1_texquads->size = 0;
@@ -382,10 +419,10 @@ static int cmp_highest_z_texquad(
 }
 
 void T1_texquad_copy_to_frame_data(
-    T1GPUTexQuad * recip_frame_data,
-    uint32_t * recip_frame_data_size)
+    T1GPUTexQuad * recip_fd,
+    uint32_t * recip_fd_size)
 {
-    *recip_frame_data_size = 0;
+    *recip_fd_size = 0;
     for (
         uint32_t i = 0;
         i < T1_texquads->size;
@@ -396,17 +433,24 @@ void T1_texquad_copy_to_frame_data(
             !T1_texquads->cpu[i].deleted &&
             T1_texquads->cpu[i].committed)
         {
-            recip_frame_data[*recip_frame_data_size] =
-                T1_texquads->gpu[i];
-            *recip_frame_data_size += 1;
+            recip_fd[*recip_fd_size] =
+                    T1_texquads->gpu[i];
+            recip_fd[*recip_fd_size].f32.xyz[0] +=
+                T1_texquads->cpu[i].offset_xyz[0];
+            recip_fd[*recip_fd_size].f32.xyz[1] +=
+                T1_texquads->cpu[i].offset_xyz[1];
+            recip_fd[*recip_fd_size].f32.xyz[2] +=
+                T1_texquads->cpu[i].offset_xyz[2];
+            
+            *recip_fd_size += 1;
         }
     }
     
     qsort(
         /* void *base: */
-            recip_frame_data,
+            recip_fd,
         /* size_t nel: */
-            *recip_frame_data_size,
+            *recip_fd_size,
         /* size_t width: */
             sizeof(T1GPUTexQuad),
         /* int (* _Nonnull compar)(const void *, const void *): */
@@ -415,12 +459,12 @@ void T1_texquad_copy_to_frame_data(
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
-        i + 1 < *recip_frame_data_size;
+        i + 1 < *recip_fd_size;
         i++)
     {
         log_assert(
-            recip_frame_data[i].f32.xyz[2]
-                >= recip_frame_data[i+1].f32.
+            recip_fd[i].f32.xyz[2]
+                >= recip_fd[i+1].f32.
                     xyz[2]);
     }
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE

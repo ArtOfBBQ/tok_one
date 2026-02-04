@@ -7,7 +7,7 @@ int32_t T1_zspriteid_retired_zsprite_id = RETIRED_BUT_NOT_DELETED_ID + 1;
 static int32_t latest_nonui_object_id = T1_FIRST_NONUI_ZSPRITE_ID;
 static int32_t latest_ui_element_object_id = 2;
 
-static int32_t latest_nonui_touch_id = FIRST_NONUI_TOUCHABLE_ID;
+static int32_t latest_nonui_touch_id = FIRST_NONUI_TOUCH_ID;
 static int32_t latest_ui_element_touch_id = 2;
 
 int32_t T1_zspriteid_next_ui_element_id(void) {
@@ -24,7 +24,7 @@ int32_t T1_zspriteid_next_nonui_id(void) {
 
 int32_t T1_zspriteid_next_ui_element_touch_id(void) {
     log_assert(latest_ui_element_touch_id >= 0);
-    log_assert(latest_ui_element_touch_id < FIRST_NONUI_TOUCHABLE_ID);
+    log_assert(latest_ui_element_touch_id < FIRST_NONUI_TOUCH_ID);
     return latest_ui_element_touch_id++;
 }
 
@@ -33,7 +33,7 @@ void T1_zspriteid_clear_ui_element_touch_ids(void) {
 }
 
 int32_t T1_zspriteid_next_nonui_touch_id(void) {
-    log_assert(latest_nonui_touch_id >= FIRST_NONUI_TOUCHABLE_ID);
+    log_assert(latest_nonui_touch_id >= FIRST_NONUI_TOUCH_ID);
     log_assert(latest_nonui_touch_id < INT32_MAX);
     return latest_nonui_touch_id++;
 }

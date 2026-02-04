@@ -272,12 +272,15 @@ static void T1_zsprite_anim_resolve_single(
                 anim->public.gpu_vals_f32_active ?
                     (float *)&anim->public.gpu_vals.f32 :
                     NULL,
-            /* const int32_t *goal_gpu_vals_i32: */
-                anim->public.gpu_vals_i32_active ? (int32_t *)&anim->public.gpu_vals.i32 :
+            /* const int32_t * goal_gpu_vals_i32: */
+                anim->public.gpu_vals_i32_active ?
+                    (int32_t *)&anim->
+                        public.gpu_vals.i32 :
                 NULL,
             /* const float * goal_cpu_vals: */
                 anim->public.cpu_vals_active ?
-                    (float *)&anim->public.cpu_vals :
+                    (float *)&anim->
+                        public.cpu_vals :
                     NULL);
     } else {
         T1_zsprite_apply_anim_effects_to_id(

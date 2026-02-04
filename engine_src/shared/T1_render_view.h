@@ -82,6 +82,8 @@ void T1_render_view_validate(void);
 float T1_render_view_x_to_screen_x(
     const float x,
     const float given_z);
+float T1_render_view_x_to_screen_x_noz(
+    const float x);
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
@@ -90,6 +92,9 @@ float T1_render_view_screen_x_to_x(const float screenspace_x, const float given_
 float T1_render_view_y_to_screen_y(
     const float y,
     const float given_z);
+
+float T1_render_view_y_to_screen_y_noz(
+    const float y);
 
 // To convert from our screenspace system to 'world y' that is used for
 // the position of zpolygons

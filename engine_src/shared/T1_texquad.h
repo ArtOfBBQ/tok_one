@@ -17,6 +17,7 @@
 #define T1_TEXQUAD_ID_HIT_EVERYTHING INT32_MAX
 
 typedef struct {
+    float offset_xyz[3];
     int32_t zsprite_id;
     bool8_t committed;
     bool8_t visible;
@@ -35,6 +36,11 @@ void T1_texquad_construct(
 void T1_texquad_init(void);
 
 void T1_texquad_delete(const int32_t zsprite_id);
+
+void T1_texquad_get_avg_xyz(
+    float * recip_xyz,
+    const int32_t zsprite_id,
+    bool8_t * found);
 
 void T1_texquad_delete_all(void);
 

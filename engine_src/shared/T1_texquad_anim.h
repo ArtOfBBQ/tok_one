@@ -19,7 +19,6 @@ void T1_texquad_anim_resolve(void);
 
 typedef struct {
     T1GPUTexQuad gpu_vals;
-    T1CPUTexQuad cpu_vals;
     
     uint64_t duration_us;
     uint64_t pause_us;
@@ -44,6 +43,8 @@ void T1_texquad_anim_commit(
 void T1_texquad_anim_fade_and_destroy(
     const int32_t  object_id,
     const uint64_t duration_us);
+
+void T1_texquad_anim_delete_all(void);
 
 #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
 #else

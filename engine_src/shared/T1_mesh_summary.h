@@ -30,7 +30,7 @@ extern MeshSummary * T1_mesh_summary_list;
 extern uint32_t T1_mesh_summary_list_size;
 
 typedef struct LockedVertexWithMaterialCollection {
-    T1GPULockedVertex gpu_data[ALL_LOCKED_VERTICES_SIZE];
+    T1GPULockedVertex gpu_data[T1_LOCKED_VERTEX_CAP];
     uint32_t size;
 } LockedVertexWithMaterialCollection;
 
