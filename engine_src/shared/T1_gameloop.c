@@ -7,27 +7,27 @@ static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
 static int32_t  loading_text_sprite_id = -1;
 
-#if T1_TERMINAL_ACTIVE == T1_ACTIVE
+#if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
     if (T1_io_keymap[T1_IO_KEY_ENTER] && !T1_io_keymap[T1_IO_KEY_CONTROL]) {
         T1_io_keymap[T1_IO_KEY_ENTER] = false;
-        T1_terminal_commit_or_activate();
+        T1_term_commit_or_activate();
     }
     
-    if (T1_terminal_active) {
+    if (T1_term_active) {
         for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
             if (T1_io_keymap[i]) {
-                T1_terminal_sendchar(i);
+                T1_term_sendchar(i);
                 T1_io_keymap[i] = false;
             }
         }
     }
     
-    T1_terminal_render();
+    T1_term_render();
 }
-#elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+#elif T1_TERM_ACTIVE == T1_INACTIVE
 #else
-#error "T1_TERMINAL_ACTIVE undefined"
+#error "T1_TERM_ACTIVE undefined"
 #endif
 
 void T1_gameloop_init(void) {
@@ -300,12 +300,12 @@ void T1_gameloop_update_before_render_pass(
             T1_platform_gpu_update_window_viewport();
             T1_platform_gpu_update_internal_render_viewport(rv_i);
             
-            #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-            T1_terminal_render();
-            #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+            #if T1_TERM_ACTIVE == T1_ACTIVE
+            T1_term_render();
+            #elif T1_TERM_ACTIVE == T1_INACTIVE
             // Pass
             #else
-            #error "T1_TERMINAL_ACTIVE undefined"
+            #error "T1_TERM_ACTIVE undefined"
             #endif
             
             T1_clientlogic_window_resize(
@@ -356,12 +356,12 @@ void T1_gameloop_update_before_render_pass(
         
         T1_ui_widget_handle_touches(T1_global->elapsed);
         
-        #if T1_TERMINAL_ACTIVE == T1_ACTIVE
+        #if T1_TERM_ACTIVE == T1_ACTIVE
         update_terminal();
-        #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+        #elif T1_TERM_ACTIVE == T1_INACTIVE
         // Pass
         #else
-        #error "T1_TERMINAL_ACTIVE undefined"
+        #error "T1_TERM_ACTIVE undefined"
         #endif
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE

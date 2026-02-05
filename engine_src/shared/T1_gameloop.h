@@ -1,7 +1,7 @@
 #ifndef T1_GAMELOOP_H
 #define T1_GAMELOOP_H
 
-#include "T1_terminal.h"
+#include "T1_term.h"
 #include "T1_logger.h"
 #include "T1_global.h"
 #include "T1_cpu_gpu_shared_types.h"

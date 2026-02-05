@@ -1,22 +1,23 @@
-#include "T1_terminal.h"
+#include "T1_term.h"
 
-#if T1_TERMINAL_ACTIVE == T1_ACTIVE
-
-bool8_t T1_terminal_active = false;
-
-static void (* terminal_enter_fullscreen_fnc)(void) =
-    NULL;
-
-#define SINGLE_LINE_MAX 1024
-static char * current_command = NULL;
+#if T1_TERM_ACTIVE == T1_ACTIVE
 
 #define TERMINAL_HISTORY_MAX 500000
+#define SINGLE_LINE_MAX 1024
+typedef struct {
+    void (* to_fullscreen_fncptr)(void);
+    char cur_command[SINGLE_LINE_MAX];
+    char history[TERMINAL_HISTORY_MAX];
+} T1TerminalState;
+
+bool8_t T1_term_active = false;
+static T1TerminalState * T1trms = NULL;
+
 #define TERMINAL_WHITESPACE    7.0f
 
 #define TERM_FONT_SIZE        18.0f
 #define TERM_Z                0.111f
 #define TERM_LABELS_Z         0.109f
-static char * terminal_history = NULL;
 static uint32_t terminal_history_size = 0;
 
 #define TERM_INPUT_BOX_HEIGHT (TERM_FONT_SIZE + (TERMINAL_WHITESPACE * 4))
@@ -31,7 +32,7 @@ static int32_t terminal_labels_object_id = INT32_MAX - 1;
 
 static bool32_t requesting_label_update = false;
 
-static void describe_zpolygon(
+static void T1_term_describe_zpolygon(
     char * append_to,
     uint32_t cap,
     uint32_t zp_i)
@@ -47,7 +48,7 @@ static void describe_zpolygon(
     T1_std_strcat_uint_cap(append_to, cap, zp_i);
 }
 
-void T1_terminal_destroy_all(void) {
+void T1_term_destroy_all(void) {
     if (terminal_back_object_id >= 0) {
         T1_texquad_delete(terminal_back_object_id);
     }
@@ -58,30 +59,28 @@ void T1_terminal_destroy_all(void) {
     }
 }
 
-static void update_terminal_history_size(void) {
+static void T1_term_update_history_size(void) {
     terminal_history_size = 0;
-    while (terminal_history[terminal_history_size] != '\0') {
+    while (T1trms->history[terminal_history_size] != '\0') {
         terminal_history_size++;
     }
 }
 
-void T1_terminal_init(
+void T1_term_init(
     void (* terminal_enter_fullscreen_fncptr)(void))
 {
-    terminal_enter_fullscreen_fnc = terminal_enter_fullscreen_fncptr;
+    T1trms = T1_mem_malloc_from_unmanaged(
+        sizeof(T1TerminalState));
+    T1_std_memset(T1trms, 0, sizeof(T1TerminalState));
     
-    current_command = (char *)T1_mem_malloc_from_unmanaged(
-        SINGLE_LINE_MAX);
-    current_command[0] = '\0';
+    T1trms->to_fullscreen_fncptr = terminal_enter_fullscreen_fncptr;
     
-    terminal_history = (char *)T1_mem_malloc_from_unmanaged(
-        TERMINAL_HISTORY_MAX);
     T1_std_strcpy_cap(
-        terminal_history,
+        T1trms->history,
         TERMINAL_HISTORY_MAX,
         "TOK ONE embedded debugging terminal v1.0\n");
     
-    update_terminal_history_size();
+    T1_term_update_history_size();
     
     term_font_color[0] = 10.0f;
     term_font_color[1] = 10.0f;
@@ -98,7 +97,7 @@ void T1_terminal_init(
     term_background_color[3] = 0.5f;
 }
 
-void T1_terminal_redraw_backgrounds(void) {
+void T1_term_redraw_backgrounds(void) {
     terminal_back_object_id = INT32_MAX;
     
     float command_history_height =
@@ -168,14 +167,14 @@ void T1_terminal_redraw_backgrounds(void) {
     T1_texquad_commit(&history_req);
 }
 
-void T1_terminal_render(void) {
-    if (!T1_terminal_active) {
+void T1_term_render(void) {
+    if (!T1_term_active) {
         return;
     }
     
     T1_texquad_delete(terminal_back_object_id);
     
-    T1_terminal_redraw_backgrounds();
+    T1_term_redraw_backgrounds();
     
     T1_texquad_delete(
         terminal_labels_object_id);
@@ -205,7 +204,7 @@ void T1_terminal_render(void) {
     {
         char_offset--;
         
-        if (terminal_history[char_offset] == '\n') {
+        if (T1trms->history[char_offset] == '\n') {
             chars_in_current_line = 0;
             lines_taken += 1;
         } else if (chars_in_current_line >= SINGLE_LINE_MAX) {
@@ -215,12 +214,12 @@ void T1_terminal_render(void) {
             chars_in_current_line += 1;
         }
     }
-    if (terminal_history[char_offset] == '\n') {
+    if (T1trms->history[char_offset] == '\n') {
         char_offset += 1;
     }
     
     log_append("terminal history: ");
-    log_append(terminal_history + char_offset);
+    log_append(T1trms->history + char_offset);
     log_append_char('\n');
     
     font_settings->f32.rgba[0] = term_font_color[0];
@@ -233,7 +232,7 @@ void T1_terminal_render(void) {
         /* const int32_t with_object_id: */
             terminal_labels_object_id,
         /* const char * text_to_draw: */
-            terminal_history + char_offset,
+            T1trms->history + char_offset,
         /* const float left_pixelspace: */
             TERMINAL_WHITESPACE * 2 +
                 (TERM_FONT_SIZE * 0.5f),
@@ -246,7 +245,7 @@ void T1_terminal_render(void) {
             T1_render_views->cpu[0].width -
                 (TERMINAL_WHITESPACE * 2));
     
-    if (current_command[0] == '\0') {
+    if (T1trms->cur_command[0] == '\0') {
         font_settings->font_height =
             previous_font_height;
         requesting_label_update = false;
@@ -259,7 +258,7 @@ void T1_terminal_render(void) {
         /* with_object_id: */
             terminal_labels_object_id,
         /* const char * text_to_draw: */
-            current_command,
+            T1trms->cur_command,
         /* const float left_pixelspace: */
             TERMINAL_WHITESPACE * 2 +
                 (TERM_FONT_SIZE * 0.5f),
@@ -276,20 +275,20 @@ void T1_terminal_render(void) {
     requesting_label_update = false;
 }
 
-void T1_terminal_sendchar(uint32_t to_send) {
+void T1_term_sendchar(uint32_t to_send) {
     
     if (to_send == T1_IO_KEY_ESCAPE) {
         // ESC key
-        current_command[0] = '\0';
-        T1_terminal_active = false;
-        T1_terminal_destroy_all();
+        T1trms->cur_command[0] = '\0';
+        T1_term_active = false;
+        T1_term_destroy_all();
         requesting_label_update = true;
         return;
     }
     
     uint32_t last_i = 0;
     while (
-        current_command[last_i] != '\0')
+        T1trms->cur_command[last_i] != '\0')
     {
         last_i++;
     }
@@ -297,9 +296,9 @@ void T1_terminal_sendchar(uint32_t to_send) {
     if (
         to_send == T1_IO_KEY_SPACEBAR)
     {
-        current_command[last_i] = ' ';
+        T1trms->cur_command[last_i] = ' ';
         last_i++;
-        current_command[last_i] = '\0';
+        T1trms->cur_command[last_i] = '\0';
         return;
     }
     
@@ -307,7 +306,7 @@ void T1_terminal_sendchar(uint32_t to_send) {
         to_send == T1_IO_KEY_BACKSPACE &&
         last_i > 0)
     {
-        current_command[last_i - 1] = '\0';
+        T1trms->cur_command[last_i - 1] = '\0';
         requesting_label_update = true;
     }
     
@@ -316,13 +315,13 @@ void T1_terminal_sendchar(uint32_t to_send) {
         to_send <= '}' &&
         last_i < SINGLE_LINE_MAX)
     {
-        current_command[last_i] = (char)to_send;
-        current_command[last_i + 1] = '\0';
+        T1trms->cur_command[last_i] = (char)to_send;
+        T1trms->cur_command[last_i + 1] = '\0';
         requesting_label_update = true;
     }
 }
 
-static bool32_t evaluate_terminal_command(
+static bool32_t T1_term_evaluate(
     char * command,
     char * response)
 {
@@ -738,7 +737,7 @@ static bool32_t evaluate_terminal_command(
         uint32_t zp_i = T1_std_string_to_uint32(command + 9);
         
         response[0] = '\0';
-        describe_zpolygon(response, SINGLE_LINE_MAX, zp_i);
+        T1_term_describe_zpolygon(response, SINGLE_LINE_MAX, zp_i);
         return true;
     }
     
@@ -932,7 +931,7 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Entering full screen...");
-        terminal_enter_fullscreen_fnc();
+        T1trms->to_fullscreen_fncptr();
         return true;
     }
     
@@ -1008,67 +1007,67 @@ static bool32_t evaluate_terminal_command(
     return false;
 }
 
-void T1_terminal_commit_or_activate(void) {
-    T1_terminal_destroy_all();
+void T1_term_commit_or_activate(void) {
+    T1_term_destroy_all();
     
     if (
-        T1_terminal_active &&
-        current_command[0] != '\0')
+        T1_term_active &&
+        T1trms->cur_command[0] != '\0')
     {
         T1_std_strcat_cap(
-            terminal_history,
+            T1trms->history,
             TERMINAL_HISTORY_MAX,
-            current_command);
+            T1trms->cur_command);
         T1_std_strcat_cap(
-            terminal_history,
+            T1trms->history,
             TERMINAL_HISTORY_MAX,
             "\n");
         char client_response[SINGLE_LINE_MAX];
         client_response[0] = '\0';
         
         if (
-            evaluate_terminal_command(
-                current_command,
+            T1_term_evaluate(
+                T1trms->cur_command,
                 client_response))
         {
             T1_std_strcat_cap(
-                terminal_history,
+                T1trms->history,
                 TERMINAL_HISTORY_MAX,
                 client_response);
             T1_std_strcat_cap(
-                terminal_history,
+                T1trms->history,
                 TERMINAL_HISTORY_MAX,
                 "\n");
         } else {
             T1_clientlogic_evaluate_terminal_command(
-                current_command,
+                T1trms->cur_command,
                 client_response,
                 SINGLE_LINE_MAX);
             T1_std_strcat_cap(
-                terminal_history,
+                T1trms->history,
                 TERMINAL_HISTORY_MAX,
                 client_response);
             T1_std_strcat_cap(
-                terminal_history,
+                T1trms->history,
                 TERMINAL_HISTORY_MAX,
                 "\n");
         }
         
-        current_command[0] = '\0';
-        update_terminal_history_size();
-        T1_terminal_redraw_backgrounds();
+        T1trms->cur_command[0] = '\0';
+        T1_term_update_history_size();
+        T1_term_redraw_backgrounds();
         requesting_label_update = true;
         return;
     }
     
-    T1_terminal_active = !T1_terminal_active;
+    T1_term_active = !T1_term_active;
     
-    if (T1_terminal_active) {
-        T1_terminal_redraw_backgrounds();
+    if (T1_term_active) {
+        T1_term_redraw_backgrounds();
         requesting_label_update = true;
     }
 }
-#elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+#elif T1_TERM_ACTIVE == T1_INACTIVE
 #else
 #error
-#endif // T1_TERMINAL_ACTIVE
+#endif // T1_TERM_ACTIVE

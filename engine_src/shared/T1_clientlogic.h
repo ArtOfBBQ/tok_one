@@ -34,7 +34,7 @@ extern "C" {
 #include "T1_zsprite_anim.h"
 #include "T1_texquad_anim.h"
 #include "T1_logger.h"
-#include "T1_terminal.h"
+#include "T1_term.h"
 
 #include "clientlogic_additional_defs.h"
 

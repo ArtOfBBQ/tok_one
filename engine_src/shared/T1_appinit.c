@@ -376,12 +376,12 @@ void T1_appinit_before_gpu_init(
     T1_particle_init();
     
     T1_gameloop_init();
-    #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-    T1_terminal_init(T1_platform_enter_fullscreen);
-    #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+    #if T1_TERM_ACTIVE == T1_ACTIVE
+    T1_term_init(T1_platform_enter_fullscreen);
+    #elif T1_TERM_ACTIVE == T1_INACTIVE
     // Pass
     #else
-    #error "T1_TERMINAL_ACTIVE undefined!"
+    #error "T1_TERM_ACTIVE undefined!"
     #endif
     
     #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
