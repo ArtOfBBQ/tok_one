@@ -354,8 +354,7 @@ void T1_gameloop_update_before_render_pass(
         T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
-        T1_ui_widget_handle_touches(
-            T1_global->elapsed);
+        T1_ui_widget_handle_touches(T1_global->elapsed);
         
         #if T1_TERMINAL_ACTIVE == T1_ACTIVE
         update_terminal();

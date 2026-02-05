@@ -373,8 +373,8 @@ static void redraw_dirty_labels(void) {
             T1_ui_widget_list[i].label_dirty =
                 false;
             
-            T1_texquad_delete(T1_ui_widget_list[i].
-                label_zsprite_id);
+            T1_texquad_delete(
+                T1_ui_widget_list[i].label_zsprite_id);
             
             char full_label[T1_UI_WIDGET_STR_CAP];
             T1_std_memset(
@@ -387,15 +387,14 @@ static void redraw_dirty_labels(void) {
                 T1_UI_WIDGET_STR_CAP,
                 T1_ui_widget_list + i);
             
+            T1_ui_widget_update_pos_if_needed(
+                T1_ui_widget_list + i);
+            
             float xy_screen[3];
             float z;
             
-            xy_screen[0] =
-                T1_ui_widget_list[i].
-                    props.screen_x;
-            xy_screen[1] =
-                T1_ui_widget_list[i].
-                    props.screen_y;
+            xy_screen[0] = T1_ui_widget_list[i].props.screen_x;
+            xy_screen[1] = T1_ui_widget_list[i].props.screen_y;
             z = T1_ui_widget_list[i].props.z - 0.01f;
             
             font_settings->font_height = (T1_ui_widget_list[i].
@@ -489,7 +488,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                 pin_offset_x;
             slide->duration_us = 1;
             slide->gpu_f32_active = true;
-            T1_texquad_anim_commit(slide);
+            T1_texquad_anim_commit_and_instarun(slide);
             
             log_assert(
                 T1_ui_widget_list[ui_elem_i].

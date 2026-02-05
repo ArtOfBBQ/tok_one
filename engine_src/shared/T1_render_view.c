@@ -458,7 +458,9 @@ float T1_render_view_screen_height_to_height(
 float T1_render_view_screen_x_to_x_noz(
     const float screen_x)
 {
-    return -1.0f + (screen_x / ((float)T1_render_views->cpu[0].width) * 2.0f);
+    return -1.0f + (screen_x /
+        ((float)T1_render_views->cpu[0].width) *
+            2.0f);
 }
 
 float T1_render_view_screen_y_to_y_noz(
@@ -481,7 +483,8 @@ float T1_render_view_screen_height_to_height_noz(
     const float screenspace_height)
 {
     return (screenspace_height /
-        (float)T1_render_views->cpu[0].height) * 2.0f;
+        (float)T1_render_views->cpu[0].height) *
+            2.0f;
 }
 
 float T1_render_view_screen_width_to_width(

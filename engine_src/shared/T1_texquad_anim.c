@@ -361,6 +361,30 @@ void T1_texquad_anim_commit(
     tqas->mutex_unlock(tqas->mutex_id);
 }
 
+void T1_texquad_anim_commit_and_instarun(
+    T1TexQuadAnim * to_commit)
+{
+    tqas->mutex_lock(tqas->mutex_id);
+    
+    T1InternalTexQuadAnim * parent =
+        T1_texquad_anim_get_container(to_commit);
+    log_assert(&parent->public == to_commit);
+    log_assert(to_commit->duration_us == 1);
+    
+    parent->remaining_pause_us =
+        to_commit->pause_us;
+    parent->remaining_duration_us =
+        to_commit->duration_us;
+    parent->committed = true;
+    
+    T1_texquad_anim_resolve_single(parent);
+    parent->deleted = true;
+    parent->committed = false;
+    log_assert(parent->remaining_duration_us == 0);
+    
+    tqas->mutex_unlock(tqas->mutex_id);
+}
+
 void T1_texquad_anim_fade_and_destroy(
     const int32_t  object_id,
     const uint64_t duration_us)

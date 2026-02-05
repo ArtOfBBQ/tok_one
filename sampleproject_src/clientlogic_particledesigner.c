@@ -331,6 +331,7 @@ static void redraw_all_sliders(void) {
         clicked_btn,
         -1);
     
+    int32_t y_spot = 0;
     for (int32_t i = 0; i < (int32_t)num_properties; i++) {
         
         T1MetaField field = T1_meta_get_field_at_index(
@@ -340,8 +341,7 @@ static void redraw_all_sliders(void) {
         T1_ui_widget_next_props->
             is_meta_enum = field.is_enum;
         
-        if (T1_ui_widget_next_props->
-            is_meta_enum)
+        if (T1_ui_widget_next_props->is_meta_enum)
         {
             T1_ui_widget_next_props->meta_struct_name =
                 field.enum_type_name;
@@ -362,7 +362,7 @@ static void redraw_all_sliders(void) {
                 log_assert(field.struct_type_name != NULL);
             }
             
-            cur_y = get_slider_y_screenspace(i);
+            cur_y = get_slider_y_screenspace(y_spot);
             
             T1_ui_widget_next_props->screen_y =
                 cur_y;
@@ -389,11 +389,13 @@ static void redraw_all_sliders(void) {
             log_assert(indexed_field.data_type != T1_TYPE_NOTSET);
             
             if (array_i > 0) {
-                log_assert(indexed_field.offset != field.offset);
+                log_assert(indexed_field.offset !=
+                    field.offset);
             }
             
             T1_std_strcpy_cap(
-                pds->regs[pds->regs_size].property_name,
+                pds->regs[pds->regs_size].
+                    property_name,
                 128,
                 field.name);
             if (field.data_type == T1_TYPE_STRUCT) {
@@ -516,6 +518,7 @@ static void redraw_all_sliders(void) {
             }
             
             pds->regs_size += 1;
+            y_spot += 1;
         }
     }
 }
@@ -720,9 +723,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 T1_render_view_screen_y_to_y_noz(
                     new_y);
             anim->gpu_vals.f32.xyz[2] = new_z;
-            anim->duration_us = 60000;
+            anim->duration_us = 1;
             anim->gpu_f32_active = true;
-            T1_texquad_anim_commit(anim);
+            T1_texquad_anim_commit_and_instarun(anim);
         }
     }
     
@@ -749,9 +752,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_render_view_screen_y_to_y_noz(
                 new_title_y);
         anim->gpu_vals.f32.xyz[2] = new_z;
-        anim->duration_us = 60000;
+        anim->duration_us = 1;
         anim->gpu_f32_active = true;
-        T1_texquad_anim_commit(anim);
+        T1_texquad_anim_commit_and_instarun(anim);
     }
     #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
     #else
