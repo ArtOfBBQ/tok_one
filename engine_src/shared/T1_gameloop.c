@@ -11,19 +11,19 @@ static int32_t  loading_text_sprite_id = -1;
 static void update_terminal(void) {
     if (T1_io_keymap[T1_IO_KEY_ENTER] && !T1_io_keymap[T1_IO_KEY_CONTROL]) {
         T1_io_keymap[T1_IO_KEY_ENTER] = false;
-        terminal_commit_or_activate();
+        T1_terminal_commit_or_activate();
     }
     
-    if (terminal_active) {
+    if (T1_terminal_active) {
         for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
             if (T1_io_keymap[i]) {
-                terminal_sendchar(i);
+                T1_terminal_sendchar(i);
                 T1_io_keymap[i] = false;
             }
         }
     }
     
-    terminal_render();
+    T1_terminal_render();
 }
 #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
 #else
@@ -301,7 +301,7 @@ void T1_gameloop_update_before_render_pass(
             T1_platform_gpu_update_internal_render_viewport(rv_i);
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-            terminal_render();
+            T1_terminal_render();
             #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
             // Pass
             #else

@@ -2,7 +2,7 @@
 
 #if T1_TERMINAL_ACTIVE == T1_ACTIVE
 
-bool8_t terminal_active = false;
+bool8_t T1_terminal_active = false;
 
 static void (* terminal_enter_fullscreen_fnc)(void) =
     NULL;
@@ -47,7 +47,7 @@ static void describe_zpolygon(
     T1_std_strcat_uint_cap(append_to, cap, zp_i);
 }
 
-void destroy_terminal_objects(void) {
+void T1_terminal_destroy_all(void) {
     if (terminal_back_object_id >= 0) {
         T1_texquad_delete(terminal_back_object_id);
     }
@@ -65,7 +65,7 @@ static void update_terminal_history_size(void) {
     }
 }
 
-void terminal_init(
+void T1_terminal_init(
     void (* terminal_enter_fullscreen_fncptr)(void))
 {
     terminal_enter_fullscreen_fnc = terminal_enter_fullscreen_fncptr;
@@ -98,7 +98,7 @@ void terminal_init(
     term_background_color[3] = 0.5f;
 }
 
-void terminal_redraw_backgrounds(void) {
+void T1_terminal_redraw_backgrounds(void) {
     terminal_back_object_id = INT32_MAX;
     
     float command_history_height =
@@ -168,14 +168,14 @@ void terminal_redraw_backgrounds(void) {
     T1_texquad_commit(&history_req);
 }
 
-void terminal_render(void) {
-    if (!terminal_active) {
+void T1_terminal_render(void) {
+    if (!T1_terminal_active) {
         return;
     }
     
     T1_texquad_delete(terminal_back_object_id);
     
-    terminal_redraw_backgrounds();
+    T1_terminal_redraw_backgrounds();
     
     T1_texquad_delete(
         terminal_labels_object_id);
@@ -276,13 +276,13 @@ void terminal_render(void) {
     requesting_label_update = false;
 }
 
-void terminal_sendchar(uint32_t to_send) {
+void T1_terminal_sendchar(uint32_t to_send) {
     
     if (to_send == T1_IO_KEY_ESCAPE) {
         // ESC key
         current_command[0] = '\0';
-        terminal_active = false;
-        destroy_terminal_objects();
+        T1_terminal_active = false;
+        T1_terminal_destroy_all();
         requesting_label_update = true;
         return;
     }
@@ -1008,11 +1008,11 @@ static bool32_t evaluate_terminal_command(
     return false;
 }
 
-void terminal_commit_or_activate(void) {
-    destroy_terminal_objects();
+void T1_terminal_commit_or_activate(void) {
+    T1_terminal_destroy_all();
     
     if (
-        terminal_active &&
+        T1_terminal_active &&
         current_command[0] != '\0')
     {
         T1_std_strcat_cap(
@@ -1056,15 +1056,15 @@ void terminal_commit_or_activate(void) {
         
         current_command[0] = '\0';
         update_terminal_history_size();
-        terminal_redraw_backgrounds();
+        T1_terminal_redraw_backgrounds();
         requesting_label_update = true;
         return;
     }
     
-    terminal_active = !terminal_active;
+    T1_terminal_active = !T1_terminal_active;
     
-    if (terminal_active) {
-        terminal_redraw_backgrounds();
+    if (T1_terminal_active) {
+        T1_terminal_redraw_backgrounds();
         requesting_label_update = true;
     }
 }

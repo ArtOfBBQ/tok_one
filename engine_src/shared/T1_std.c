@@ -1,7 +1,5 @@
-
 #include "T1_std.h"
 
-// void *(*)(void *, int, size_t
 void * T1_std_memset(
     void * in,
     int value,
@@ -47,7 +45,8 @@ void * T1_std_memset(
     return in;
 }
 
-void T1_std_memset_i16(
+void
+T1_std_memset_i16(
     void * in,
     int16_t value,
     unsigned int size_bytes)
@@ -88,7 +87,8 @@ void T1_std_memset_i16(
     }
 }
 
-void T1_std_memset_i32(
+void
+T1_std_memset_i32(
     void * in,
     int32_t value,
     unsigned int size_bytes)
@@ -129,7 +129,8 @@ void T1_std_memset_i32(
     }
 }
 
-void T1_std_memset_f32(
+void
+T1_std_memset_f32(
     void * in,
     float value,
     unsigned int size_bytes)
@@ -170,7 +171,8 @@ void T1_std_memset_f32(
     }
 }
 
-void * T1_std_memcpy(
+void *
+T1_std_memcpy(
     void * dest,
     const void * src,
     size_t n_bytes)
@@ -211,24 +213,28 @@ void * T1_std_memcpy(
     return dest;
 }
 
-float T1_std_minf(const float x, const float y)
+float
+T1_std_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-float T1_std_maxf(const float x, const float y)
+float
+T1_std_maxf(const float x, const float y)
 {
     return ((x >  y) * x) + ((x <= y) * y);
 }
 
-int T1_std_mini(const int x, const int y)
+int
+T1_std_mini(const int x, const int y)
 {
     return
         ((x <= y) * x) +
         ((y < x) * y);
 }
 
-int T1_std_maxi(const int x, const int y)
+int
+T1_std_maxi(const int x, const int y)
 {
     return ((x >  y) * x) + ((x <= y) * y);
 }
@@ -264,7 +270,8 @@ T1_std_internal_strcat_cap(
     recipient[i] = '\0';
 }
 
-void T1_std_strcat_char_cap(
+void
+T1_std_strcat_char_cap(
     char * recipient,
     char to_append)
 {
@@ -402,7 +409,8 @@ T1_std_internal_strcat_float_cap(
     #endif
 }
 
-void T1_std_internal_strcpy_cap(
+void
+T1_std_internal_strcpy_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const uint32_t recipient_size,
@@ -459,7 +467,8 @@ T1_std_copy_strings(
 }
 
 __attribute__((no_sanitize("address")))
-size_t T1_std_strlen( const char * null_terminated_string)
+size_t
+T1_std_strlen(const char * null_terminated_string)
 {
     uint32_t return_value = 0;
     
@@ -488,7 +497,9 @@ size_t T1_std_strlen( const char * null_terminated_string)
     return return_value;
 }
 
-void T1_std_strtolower(char * in) {
+void
+T1_std_strtolower(char * in)
+{
     int8_t offset = ('A' - 'a');
     while (in[0] != '\0') {
         if (in[0] >= 'A' && in[0] <= 'Z') {

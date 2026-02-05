@@ -377,7 +377,7 @@ void T1_appinit_before_gpu_init(
     
     T1_gameloop_init();
     #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-    terminal_init(T1_platform_enter_fullscreen);
+    T1_terminal_init(T1_platform_enter_fullscreen);
     #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
     // Pass
     #else

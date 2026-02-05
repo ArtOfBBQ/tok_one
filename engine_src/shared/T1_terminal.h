@@ -16,16 +16,26 @@
 extern "C" {
 #endif
 
-extern bool8_t terminal_active;
+extern bool8_t T1_terminal_active;
 
-void terminal_init(
+void
+T1_terminal_init(
     void (* terminal_enter_fullscreen_fncptr)(void));
 
-void destroy_terminal_objects(void);
-void terminal_redraw_backgrounds(void);
-void terminal_render(void);
-void terminal_sendchar(uint32_t to_send);
-void terminal_commit_or_activate(void);
+void
+T1_terminal_destroy_all(void);
+
+void
+T1_terminal_redraw_backgrounds(void);
+
+void
+T1_terminal_render(void);
+
+void
+T1_terminal_sendchar(uint32_t to_send);
+
+void
+T1_terminal_commit_or_activate(void);
 
 #ifdef __cplusplus
 }
