@@ -41,7 +41,7 @@ of the engine for your specific app.
 #define T1_TEXQUAD_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 1
 #define T1_OUTLINES_ACTIVE 1
-#define T1_TERMINAL_ACTIVE 1
+#define T1_TERM_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2
 #define T1_PARTICLES_ACTIVE 1
@@ -65,7 +65,7 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_ZSPRITES_PER_BUFFER  100000
+#define T1_ZSPRITES_CAP  100000
 
 /*
 The maximum number of 'flat quads' (particles)
@@ -89,8 +89,8 @@ The maximum number of 'scheduled animations' simultaneously running
 #define T1_LOCKED_VERTEX_CAP 240000
 
 // The max number of materials in all of your meshes/models combined
-#define MATERIAL_NAME_CAP 256
-#define ALL_LOCKED_MATERIALS_SIZE 10000
+#define T1_MATERIAL_NAME_CAP 256
+#define T1_ALL_LOCKED_MATERIALS_SIZE 10000
 
 // the max # of permanently stored sounds in your app
 #define ALL_PERMASOUNDS_SIZE 100

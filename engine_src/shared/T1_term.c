@@ -2,12 +2,12 @@
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 
-#define TERMINAL_HISTORY_MAX 500000
+#define T1_TERM_HIST_CAP 500000
 #define SINGLE_LINE_MAX 1024
 typedef struct {
     void (* to_fullscreen_fncptr)(void);
     char cur_command[SINGLE_LINE_MAX];
-    char history[TERMINAL_HISTORY_MAX];
+    char history[T1_TERM_HIST_CAP];
 } T1TerminalState;
 
 bool8_t T1_term_active = false;
@@ -77,7 +77,7 @@ void T1_term_init(
     
     T1_std_strcpy_cap(
         T1trms->history,
-        TERMINAL_HISTORY_MAX,
+        T1_TERM_HIST_CAP,
         "TOK ONE embedded debugging terminal v1.0\n");
     
     T1_term_update_history_size();
@@ -1016,11 +1016,11 @@ void T1_term_commit_or_activate(void) {
     {
         T1_std_strcat_cap(
             T1trms->history,
-            TERMINAL_HISTORY_MAX,
+            T1_TERM_HIST_CAP,
             T1trms->cur_command);
         T1_std_strcat_cap(
             T1trms->history,
-            TERMINAL_HISTORY_MAX,
+            T1_TERM_HIST_CAP,
             "\n");
         char client_response[SINGLE_LINE_MAX];
         client_response[0] = '\0';
@@ -1032,11 +1032,11 @@ void T1_term_commit_or_activate(void) {
         {
             T1_std_strcat_cap(
                 T1trms->history,
-                TERMINAL_HISTORY_MAX,
+                T1_TERM_HIST_CAP,
                 client_response);
             T1_std_strcat_cap(
                 T1trms->history,
-                TERMINAL_HISTORY_MAX,
+                T1_TERM_HIST_CAP,
                 "\n");
         } else {
             T1_clientlogic_evaluate_terminal_command(
@@ -1045,11 +1045,11 @@ void T1_term_commit_or_activate(void) {
                 SINGLE_LINE_MAX);
             T1_std_strcat_cap(
                 T1trms->history,
-                TERMINAL_HISTORY_MAX,
+                T1_TERM_HIST_CAP,
                 client_response);
             T1_std_strcat_cap(
                 T1trms->history,
-                TERMINAL_HISTORY_MAX,
+                T1_TERM_HIST_CAP,
                 "\n");
         }
         
