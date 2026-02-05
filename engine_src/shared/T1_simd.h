@@ -127,7 +127,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmpgt_int32s(a, b)             vcgtq_s32(a, b)
 
 #define SIMD_FLOAT float32x4_t
-#define simd_load_floats(floatsptr) vld1q_f32(floatsptr)
+#define simd_load_floats(floatsptr) vld1q_f32((floatsptr))
 #define simd_set1_float(float) vld1q_dup_f32(&float)
 #define simd_cast_floats_to_int32s(i32vec) vcvtq_s32_f32(i32vec)
 #define simd_store_floats(to_ptr, from) vst1q_f32(to_ptr, from)
@@ -152,7 +152,7 @@ because I don't know much about how that works or how reliable it is
 #include "immintrin.h"
 #define SIMD_FLOAT_LANES 8
 #define SIMD_FLOAT __m256
-#define simd_load_floats(floatsptr) _mm256_loadu_ps(floatsptr)
+#define simd_load_floats(floatsptr) _mm256_loadu_ps((floatsptr))
 #define simd_set1_float(float) _mm256_set1_ps(float)
 #define simd_store_floats(floatsptr, from) _mm256_storeu_ps(floatsptr, from)
 #define simd_mul_floats(a, b) _mm256_mul_ps(a, b)

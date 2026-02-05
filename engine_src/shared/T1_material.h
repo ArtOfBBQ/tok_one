@@ -8,9 +8,9 @@
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct LockedMaterialCollection {
-    T1GPUConstMatf32 gpu_f32[ALL_LOCKED_MATERIALS_SIZE];
-    T1GPUConstMati32 gpu_i32[ALL_LOCKED_MATERIALS_SIZE];
-    char material_names[ALL_LOCKED_MATERIALS_SIZE][MATERIAL_NAME_CAP];
+    T1GPUConstMatf32 gpu_f32[T1_ALL_LOCKED_MATERIALS_SIZE];
+    T1GPUConstMati32 gpu_i32[T1_ALL_LOCKED_MATERIALS_SIZE];
+    char material_names[T1_ALL_LOCKED_MATERIALS_SIZE][T1_MATERIAL_NAME_CAP];
     uint32_t size;
 } LockedMaterialCollection;
 

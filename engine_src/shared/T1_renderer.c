@@ -207,6 +207,8 @@ void T1_renderer_hardware_render(
         return;
     }
     
+    frame_data->zsprite_list->size = 0;
+    
     T1_zlight_update_all_attached_render_views();
     
     construct_view_matrix();
@@ -229,9 +231,13 @@ void T1_renderer_hardware_render(
         T1_global->postproc_consts;
     
     T1_add_opaque_zpolygons_to_workload(frame_data);
+    log_assert(frame_data->zsprite_list->size <
+        T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     T1_add_alphablending_zpolygons_to_workload(frame_data);
+    log_assert(frame_data->zsprite_list->size <
+        T1_ZSPRITES_CAP);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -264,6 +270,8 @@ void T1_renderer_hardware_render(
     
     T1_zsprite_add_bloom_zpolygons_to_workload(
         frame_data);
+    log_assert(frame_data->zsprite_list->size <
+        T1_ZSPRITES_CAP);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
@@ -279,6 +287,8 @@ void T1_renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_us: */
             elapsed_us);
+    log_assert(frame_data->zsprite_list->size <
+        T1_ZSPRITES_CAP);
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(
         "T1_particle_add_all_to_frame_data()");

@@ -187,9 +187,16 @@ static void T1_texquad_anim_resolve_single(
                 anim->public.
                     del_obj_on_finish)
             {
-                T1_texquad_delete(
-                    anim->public.
-                        affect_zsprite_id);
+                if (
+                    anim->public.affect_zsprite_id ==
+                    T1_TEXQUAD_ID_HIT_EVERYTHING)
+                {
+                    T1_texquad_delete_all();
+                } else {
+                    T1_texquad_delete(
+                        anim->public.
+                            affect_zsprite_id);
+                }
             }
         } else {
             anim->remaining_duration_us =
@@ -320,6 +327,7 @@ void T1_texquad_anim_commit(
                 a->public.affect_touch_id ==
                     to_commit->affect_touch_id &&
                 a->committed &&
+                !a->public.del_obj_on_finish &&
                 a->endpoints)
             {
                 tqas->anims[anim_i].
@@ -386,7 +394,7 @@ void T1_texquad_anim_commit_and_instarun(
 }
 
 void T1_texquad_anim_fade_and_destroy(
-    const int32_t  object_id,
+    const int32_t  zsprite_id,
     const uint64_t duration_us)
 {
     log_assert(duration_us > 0);
@@ -394,12 +402,22 @@ void T1_texquad_anim_fade_and_destroy(
     // register scheduled animation
     T1TexQuadAnim * fade_destroy =
         T1_texquad_anim_request_next(true);
-    fade_destroy->affect_zsprite_id = object_id;
+    fade_destroy->affect_zsprite_id = zsprite_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.f32.rgba[3] = 0.0f;
     fade_destroy->del_obj_on_finish = true;
     fade_destroy->gpu_f32_active = true;
     T1_texquad_anim_commit(fade_destroy);
+}
+
+void T1_texquad_anim_fade_destroy_all(
+    const uint64_t duration_us)
+{
+    T1_texquad_anim_fade_and_destroy(
+        /* const int32_t  object_id: */
+            T1_TEXQUAD_ID_HIT_EVERYTHING,
+        /* const uint64_t duration_us: */
+            duration_us);
 }
 
 void T1_texquad_anim_delete_all(void)

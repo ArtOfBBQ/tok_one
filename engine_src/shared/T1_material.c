@@ -77,18 +77,18 @@ uint32_t T1_material_preappend_locked_material_i(
     
     T1_std_strcpy_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
-        MATERIAL_NAME_CAP,
+        T1_MATERIAL_NAME_CAP,
         obj_resource_name);
     T1_std_strcat_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
-        MATERIAL_NAME_CAP,
+        T1_MATERIAL_NAME_CAP,
         "_");
     T1_std_strcat_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
-        MATERIAL_NAME_CAP,
+        T1_MATERIAL_NAME_CAP,
         material_name);
     
-    log_assert(all_mesh_materials->size < ALL_LOCKED_MATERIALS_SIZE);
+    log_assert(all_mesh_materials->size < T1_ALL_LOCKED_MATERIALS_SIZE);
     
     all_mesh_materials->size += 1;
     return all_mesh_materials->size - 1;

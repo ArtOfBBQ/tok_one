@@ -96,7 +96,7 @@ void T1_zsprite_fetch_next(
         stack_recipient->cpu_data->committed = false;
         
         T1_zsprite_list->size += 1;
-        log_assert(T1_zsprite_list->size + 1 < MAX_ZSPRITES_PER_BUFFER);
+        log_assert(T1_zsprite_list->size + 1 < T1_ZSPRITES_CAP);
     }
     
     return;
@@ -697,8 +697,9 @@ void T1_zsprite_apply_endpoint_anim(
                 simd_step_i += SIMD_FLOAT_LANES)
             {
                 SIMD_FLOAT simd_goal_vals =
-                    simd_load_floats((goal_cpu_vals +
-                        simd_step_i));
+                    simd_load_floats(
+                        goal_cpu_vals +
+                            simd_step_i);
                 
                 SIMD_FLOAT simd_cur_vals =
                     simd_load_floats((recip_vals_cpu +
@@ -1205,8 +1206,8 @@ void T1_add_opaque_zpolygons_to_workload(
     // for now we assume this always comes 1st
     log_assert(frame_data->verts_size == 0);
     
-    int32_t first_opaq_i = (int32_t)frame_data->
-        verts_size;
+    int32_t first_opaq_i =
+        (int32_t)frame_data->verts_size;
     
     int32_t cur_vals[4];
     int32_t incr_vals[4];
@@ -1216,6 +1217,7 @@ void T1_add_opaque_zpolygons_to_workload(
     incr_vals[3] = 0;
     SIMD_VEC4I incr = simd_load_vec4i(incr_vals);
     
+    log_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
     for (
         int32_t cpu_zp_i = 0;
         cpu_zp_i < (int32_t)T1_zsprite_list->size;

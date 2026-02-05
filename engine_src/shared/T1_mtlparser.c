@@ -186,7 +186,7 @@ static void parse_single_string_stat(
     mtlparser_state->mtlparser_strlcat(
          string_stat,
          token->string_value,
-         MATERIAL_NAME_CAP);
+         T1_MATERIAL_NAME_CAP);
     *good = 1;
 }
 
@@ -741,7 +741,7 @@ void mtlparser_parse(
                 mtlparser_state->mtlparser_strlcat(
                     current_material->name,
                     token->string_value,
-                    MATERIAL_NAME_CAP);
+                    T1_MATERIAL_NAME_CAP);
                 
                 token = T1_token_get_token_at(i + 1);
                 

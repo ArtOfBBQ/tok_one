@@ -66,7 +66,8 @@ void T1_zsprite_anim_fade_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 
-void T1_zsprite_anim_fade_destroy_all(void);
+void T1_zsprite_anim_fade_destroy_all(
+    const uint64_t duration_us);
 
 void T1_zsprite_anim_fade_to(
     const int32_t zsprite_id,

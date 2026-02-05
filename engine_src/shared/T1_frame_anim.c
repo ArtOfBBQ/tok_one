@@ -52,12 +52,15 @@ void T1_frame_anim_apply_all(
                 &T1_frame_anims[mod_i].
                     gpu_stats.i32);
         
+        log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
         for (
             int32_t i = 0;
             i < (int32_t)frame_data->
                 zsprite_list->size;
             i++)
         {
+            log_assert(i < T1_ZSPRITES_CAP);
+            
             uint32_t hit = 0;
             
             switch (

@@ -5,12 +5,12 @@
 #include "T1_tokenizer.h"
 
 typedef struct ParsedMaterial {
-    char name[MATERIAL_NAME_CAP];
-    char ambient_map[MATERIAL_NAME_CAP];
-    char diffuse_map[MATERIAL_NAME_CAP];
-    char specular_map[MATERIAL_NAME_CAP];
-    char specular_exponent_map[MATERIAL_NAME_CAP];
-    char bump_or_normal_map[MATERIAL_NAME_CAP];
+    char name[T1_MATERIAL_NAME_CAP];
+    char ambient_map[T1_MATERIAL_NAME_CAP];
+    char diffuse_map[T1_MATERIAL_NAME_CAP];
+    char specular_map[T1_MATERIAL_NAME_CAP];
+    char specular_exponent_map[T1_MATERIAL_NAME_CAP];
+    char bump_or_normal_map[T1_MATERIAL_NAME_CAP];
     float bump_map_intensity;
     float specular_exponent;
     float refraction;

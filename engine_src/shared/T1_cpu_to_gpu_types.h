@@ -23,8 +23,8 @@ typedef struct
     T1GPUPostProcConsts * postproc_consts;
     T1GPUFlatQuad *       flat_bb_quads;
     T1GPUTexQuad *        flat_tex_quads;
-    T1GPUzSpriteMatrices  matrices[MAX_ZSPRITES_PER_BUFFER];
-    IdPair                id_pairs[MAX_ZSPRITES_PER_BUFFER];
+    T1GPUzSpriteMatrices matrices[T1_ZSPRITES_CAP];
+    IdPair                id_pairs[T1_ZSPRITES_CAP];
     uint32_t              verts_size;
     uint32_t              render_views_size;
     uint32_t              flat_bb_quads_size;

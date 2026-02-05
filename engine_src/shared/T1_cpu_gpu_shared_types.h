@@ -128,7 +128,7 @@ typedef struct {
 } T1GPUzSpriteMatrices;
 
 typedef struct {
-    T1GPUzSprite polygons[MAX_ZSPRITES_PER_BUFFER];
+    T1GPUzSprite polygons[T1_ZSPRITES_CAP];
     unsigned int size;
 } T1GPUzSpriteList;
 

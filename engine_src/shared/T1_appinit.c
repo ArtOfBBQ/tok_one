@@ -87,10 +87,6 @@ static void test_simd_functions_floats(void) {
                 double_checks[j].imafloat[i] > maxs[j].imafloat[i] ?
                     double_checks[j].imafloat[i] :
                     maxs[j].imafloat[i];
-            //            float equals_bonus = double_checks[j].imafloat[i] ==
-            //                equals[j].imafloat[i];
-            //            printf("equals_bonus: %f\n", equals_bonus);
-            //            double_checks[j].imafloat[i] += equals_bonus;
         }
     }
     
@@ -487,12 +483,12 @@ void T1_appinit_before_gpu_init(
     sd->polygons_alloc_size =
         pad_to_page_size(
             sizeof(T1GPUzSprite) *
-                MAX_ZSPRITES_PER_BUFFER);
+                T1_ZSPRITES_CAP);
     
     sd->matrices_alloc_size =
         pad_to_page_size(
             sizeof(T1GPUzSpriteMatrices) *
-                MAX_ZSPRITES_PER_BUFFER);
+                T1_ZSPRITES_CAP);
     
     sd->lights_alloc_size =
         pad_to_page_size(sizeof(T1GPULight) *
@@ -511,12 +507,12 @@ void T1_appinit_before_gpu_init(
     sd->const_matsf32_alloc_size =
         pad_to_page_size(
             sizeof(T1GPUConstMatf32) *
-                ALL_LOCKED_MATERIALS_SIZE);
+                T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->const_matsi32_alloc_size =
         pad_to_page_size(
             sizeof(T1GPUConstMati32) *
-                ALL_LOCKED_MATERIALS_SIZE);
+                T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
         pad_to_page_size(
@@ -855,7 +851,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             all_mesh_materials->gpu_f32,
         /* size_t n: */
-            sizeof(T1GPUConstMatf32) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUConstMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_std_memcpy(
         /* void * dst: */
             gpu_shared_data_collection->
@@ -863,7 +859,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             all_mesh_materials->gpu_i32,
         /* size_t n: */
-            sizeof(T1GPUConstMati32) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUConstMati32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_platform_gpu_copy_locked_materials();
     
     if (!T1_app_running) {

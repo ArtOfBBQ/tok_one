@@ -708,7 +708,7 @@ bool32_t T1_apple_gpu_init(
             gpu_shared_data_collection->
                 polygons_alloc_size >=
             (sizeof(T1GPUzSprite) *
-                MAX_ZSPRITES_PER_BUFFER));
+                T1_ZSPRITES_CAP));
         
         id<MTLBuffer> MTLBufferFramePolygons =
             [with_metal_device

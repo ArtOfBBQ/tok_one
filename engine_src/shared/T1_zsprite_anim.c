@@ -178,21 +178,26 @@ static void T1_zsprite_anim_resolve_single(
     }
     
     if (anim->already_applied_t >= 1.0f) {
-        bool32_t delete =
-            anim->public.runs == 1;
+        bool32_t delete = anim->public.runs == 1;
         bool32_t reduce_runs =
             anim->public.runs > 0;
         
         if (delete) {
             anim->deleted = true;
             
-            if (
-                anim->public.
-                    del_obj_on_finish)
+            if (anim->public.del_obj_on_finish)
             {
-                T1_zsprite_delete(
+                if (
                     anim->public.
-                        affected_zsprite_id);
+                        affected_zsprite_id ==
+                    T1_ZSPRITE_ID_HIT_EVERYTHING)
+                {
+                    T1_zsprite_delete_all();
+                } else {
+                    T1_zsprite_delete(
+                        anim->public.
+                            affected_zsprite_id);
+                }
             }
         } else {
             anim->remaining_duration_us =
@@ -630,13 +635,14 @@ void T1_zsprite_anim_fade_and_destroy(
     T1_zsprite_anim_commit(fade_destroy);
 }
 
-void T1_zsprite_anim_fade_destroy_all(void)
+void T1_zsprite_anim_fade_destroy_all(
+    const uint64_t duration_us)
 {
     T1_zsprite_anim_fade_and_destroy(
         /* const int32_t  object_id: */
             T1_ZSPRITE_ID_HIT_EVERYTHING,
         /* const uint64_t duration_us: */
-            200000);
+            duration_us);
 }
 
 void T1_zsprite_anim_fade_to(
