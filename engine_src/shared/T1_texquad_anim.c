@@ -40,7 +40,7 @@ void T1_texquad_anim_init(
     void (* funcptr_mutex_unlock)(const uint32_t))
 {
     tqas = (T1TexQuadAnimState *)
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1TexQuadAnimState));
     T1_std_memset(
         tqas,

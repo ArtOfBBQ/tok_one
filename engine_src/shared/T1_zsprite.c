@@ -54,7 +54,7 @@ static void assert_sanity_check_zsprite_vals_by_id(
 
 void T1_zsprite_init(void) {
     T1_zsprite_list = (T1zSpriteCollection *)
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1zSpriteCollection));
     T1_zsprite_list->size = 0;
 }
@@ -342,7 +342,7 @@ void T1_zsprite_construct(
         &to_construct->gpu_data->i32.base_mat_i32);
 }
 
-void zsprite_construct_quad(
+void T1_zsprite_construct_quad(
     const float left_x,
     const float bottom_y,
     const float z,
@@ -428,7 +428,8 @@ void T1_zsprite_construct_quad_around(
         T1_BASIC_QUAD_MESH_ID;
 }
 
-void zsprite_construct_cube_around(
+void
+T1_zsprite_construct_cube_around(
     const float mid_x,
     const float mid_y,
     const float z,
@@ -966,9 +967,9 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         zs_cpu->simd_stats.xyz[0] -= T1_camera->xyz[0];
         zs_cpu->simd_stats.xyz[1] -= T1_camera->xyz[1];
         zs_cpu->simd_stats.xyz[2] -= T1_camera->xyz[2];
-        x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[0]);
-        y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[1]);
-        z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[2]);
+        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[2]);
         
         #if 1
         // This is a hack, an approximation
@@ -981,9 +982,9 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     } else {
         log_assert(is_near_one);
         
-        z_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[2]);
-        y_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[1]);
-        x_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[0]);
         
         zs_cpu->simd_stats.xyz[0] += T1_camera->xyz[0];
         zs_cpu->simd_stats.xyz[1] += T1_camera->xyz[1];
@@ -1027,7 +1028,7 @@ void T1_zsprite_copy_to_frame_data(
     *recip_size = T1_zsprite_list->size;
 }
 
-void T1_add_alphablending_zpolygons_to_workload(
+void T1_zsprite_add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
     int32_t first_alpha_i =
@@ -1200,7 +1201,7 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
 }
 
 
-void T1_add_opaque_zpolygons_to_workload(
+void T1_zsprite_add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
     // for now we assume this always comes 1st

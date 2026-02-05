@@ -46,39 +46,55 @@ typedef struct {
     uint32_t       gpu_data_size;
 } T1zSpriteRequest;
 
-void T1_zsprite_init(void);
+void
+T1_zsprite_init(void);
 
-void T1_zsprite_construct_with_mesh_id(
+void
+T1_zsprite_construct_with_mesh_id(
     T1zSpriteRequest * to_construct,
     const int32_t mesh_id);
-void T1_zsprite_construct(T1zSpriteRequest * to_construct);
+
+void
+T1_zsprite_construct(T1zSpriteRequest * to_construct);
 
 // Allocate a PolygonRequest on the stack, then call this
-void T1_zsprite_fetch_next(
+
+void
+T1_zsprite_fetch_next(
     T1zSpriteRequest * stack_recipient);
-void T1_zsprite_commit(
+
+void
+T1_zsprite_commit(
     T1zSpriteRequest * to_commit);
 
-void T1_zsprite_get_pos_xyz(
+void
+T1_zsprite_get_pos_xyz(
     const int32_t zsprite_id,
     float * recip_x,
     float * recip_y,
     float * recip_z);
 
-void T1_zsprite_delete(
+void
+T1_zsprite_delete(
     const int32_t with_zsprite_id);
-void T1_zsprite_delete_all(void);
 
-void T1_zsprite_scale_multipliers_to_width(
+void
+T1_zsprite_delete_all(void);
+
+void
+T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_width);
-void T1_zsprite_scale_multipliers_to_height(
+
+void
+T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height);
 
-void T1_zsprite_construct_quad_around(
+void
+T1_zsprite_construct_quad_around(
     const float mid_x,
     const float mid_y,
     const float z,
@@ -86,7 +102,8 @@ void T1_zsprite_construct_quad_around(
     const float height,
     T1zSpriteRequest * stack_recipient);
 
-void zsprite_construct_quad(
+void
+T1_zsprite_construct_quad(
     const float left_x,
     const float bottom_y,
     const float z,
@@ -94,7 +111,8 @@ void zsprite_construct_quad(
     const float height,
     T1zSpriteRequest * stack_recipient);
 
-void zsprite_construct_cube_around(
+void
+T1_zsprite_construct_cube_around(
     const float mid_x,
     const float mid_y,
     const float z,
@@ -103,7 +121,8 @@ void zsprite_construct_cube_around(
     const float depth,
     T1zSpriteRequest * stack_recipient);
 
-void T1_zsprite_apply_endpoint_anim(
+void
+T1_zsprite_apply_endpoint_anim(
     const int32_t zsprite_id,
     const int32_t touch_id,
     const float t_applied,
@@ -112,7 +131,8 @@ void T1_zsprite_apply_endpoint_anim(
     const int32_t * goal_gpu_vals_i32,
     const float * goal_cpu_vals);
 
-void T1_zsprite_anim_apply_effects_at_t(
+void
+T1_zsprite_anim_apply_effects_at_t(
     const float t_applied,
     const float t_now,
     const float * anim_gpu_vals,
@@ -121,7 +141,8 @@ void T1_zsprite_anim_apply_effects_at_t(
     T1GPUzSprite * recip_gpu,
     T1CPUzSpriteSimdStats * recip_cpu);
 
-void T1_zsprite_apply_anim_effects_to_id(
+void
+T1_zsprite_apply_anim_effects_to_id(
     const int32_t zsprite_id,
     const int32_t touch_id,
     const float t_applied,
@@ -131,7 +152,8 @@ void T1_zsprite_apply_anim_effects_to_id(
     const float * anim_cpu_vals);
 
 #if T1_OCCLUSION_ACTIVE == T1_ACTIVE
-void T1_zsprite_set_occlusion(
+void
+T1_zsprite_set_occlusion(
     const int32_t zsprite_id,
     const int32_t new_visible_stat,
     const uint64_t wait_before_invis_us);
@@ -141,7 +163,8 @@ void T1_zsprite_set_occlusion(
 #error
 #endif
 
-void T1_zsprite_handle_timed_occlusion(void);
+void
+T1_zsprite_handle_timed_occlusion(void);
 
 // TODO: encapsulate collection instead of externing
 typedef struct {
@@ -152,23 +175,27 @@ typedef struct {
     uint32_t size;
 } T1zSpriteCollection;
 
-void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
+void
+T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     const int32_t zsprite_id,
     const float new_ignore_camera);
 
-void T1_zsprite_copy_to_frame_data(
+void
+T1_zsprite_copy_to_frame_data(
     T1GPUzSprite * recip,
     IdPair * recip_ids,
     uint32_t * recip_size);
 
-void T1_add_alphablending_zpolygons_to_workload(
-    T1GPUFrame * frame_data);
-
-void T1_zsprite_add_bloom_zpolygons_to_workload(
+void
+T1_zsprite_add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
 void
-T1_add_opaque_zpolygons_to_workload(
+T1_zsprite_add_bloom_zpolygons_to_workload(
+    T1GPUFrame * frame_data);
+
+void
+T1_zsprite_add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
 void
@@ -180,7 +207,5 @@ T1_zsprite_copy_data_for_shatter_effect(
     const int32_t zsprite_id,
     T1GPUzSprite * gpu_recip,
     T1CPUzSprite * cpu_recip);
-
-// extern T1zSpriteCollection * T1_zsprite_list;
 
 #endif // ZSPRITE_H

@@ -42,7 +42,7 @@ void T1_zsprite_anim_init(
     void (* funcptr_mutex_unlock)(const uint32_t))
 {
     T1_zsprite_anims = (T1InternalzSpriteAnim *)
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(
                 T1InternalzSpriteAnim) *
                     T1_ZSPRITE_ANIMS_CAP);
@@ -52,7 +52,7 @@ void T1_zsprite_anim_init(
         sizeof(T1InternalzSpriteAnim));
     T1_zsprite_anims[0].deleted = true;
     
-    fas = (T1FrameAnimState *)T1_mem_malloc_from_unmanaged(
+    fas = (T1FrameAnimState *)T1_mem_malloc_unmanaged(
         sizeof(T1FrameAnimState));
     T1_std_memset(
         fas,

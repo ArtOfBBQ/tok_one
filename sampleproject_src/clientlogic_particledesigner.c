@@ -34,7 +34,7 @@ typedef struct ParticleDesignerState {
 static ParticleDesignerState * pds = NULL;
 
 void T1_clientlogic_init(void) {
-    pds = T1_mem_malloc_from_unmanaged(sizeof(ParticleDesignerState));
+    pds = T1_mem_malloc_unmanaged(sizeof(ParticleDesignerState));
     T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
     
     pds->title_zsprite_id = T1_zspriteid_next_ui_element_id();
@@ -805,7 +805,7 @@ void T1_clientlogic_evaluate_terminal_command(
             savefile_filename);
         
         uint32_t savefile_cap = 1000000;
-        char * savefile_bin = T1_mem_malloc_from_managed(savefile_cap);
+        char * savefile_bin = T1_mem_malloc_managed(savefile_cap);
         uint32_t savefile_size = 0;
         uint32_t savefile_good = 0;
         
@@ -837,7 +837,7 @@ void T1_clientlogic_evaluate_terminal_command(
             savefile_size,
             &savefile_good);
         
-        T1_mem_free_from_managed(savefile_bin);
+        T1_mem_free_managed(savefile_bin);
         
         if (!savefile_good) {
             T1_std_strcat_cap(
@@ -889,7 +889,7 @@ void T1_clientlogic_evaluate_terminal_command(
             return;
         }
         
-        char * savefile_bin = T1_mem_malloc_from_managed(savefile_size + 1);
+        char * savefile_bin = T1_mem_malloc_managed(savefile_size + 1);
         T1_std_memset(savefile_bin, 0, savefile_size + 1);
         
         T1_platform_read_file_from_writables(
@@ -906,7 +906,7 @@ void T1_clientlogic_evaluate_terminal_command(
                 response,
                 response_cap,
                 "File exists, but couldn't read it from writables...");
-            T1_mem_free_from_managed(savefile_bin);
+            T1_mem_free_managed(savefile_bin);
             return;
         }
         
@@ -927,11 +927,11 @@ void T1_clientlogic_evaluate_terminal_command(
                 response,
                 response_cap,
                 "Read file, but couldn't deserialize it...");
-            T1_mem_free_from_managed(savefile_bin);
+            T1_mem_free_managed(savefile_bin);
             return;
         }
         
-        T1_mem_free_from_managed(savefile_bin);
+        T1_mem_free_managed(savefile_bin);
         
         T1_std_strcat_cap(
             response,
@@ -954,7 +954,7 @@ void T1_clientlogic_window_resize(
 {
     T1_io_mouse_scroll_pos = 0.0f;
     
-    zlights_to_apply_size = 0;
+    T1_zlights_size = 0;
     T1_ui_widget_delete_all();
     #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
     T1_texquad_anim_delete_all();

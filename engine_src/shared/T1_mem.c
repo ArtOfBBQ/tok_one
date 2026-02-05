@@ -16,7 +16,7 @@
 uint32_t T1_mem_page_size = 4096;
 
 static void * unmanaged_memory = NULL;
-static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
+static uint64_t unmanaged_memory_size = T1_UNMANAGED_MEM_CAP;
 // static void * managed_memory = NULL;
 // static void * managed_memory_end = NULL;
 
@@ -53,7 +53,7 @@ void T1_mem_get_usage_summary_string(
     T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
-        UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size);
+        T1_UNMANAGED_MEM_CAP - (uint32_t)unmanaged_memory_size);
     T1_std_strcat_cap(
         recipient,
         recipient_cap,
@@ -61,7 +61,7 @@ void T1_mem_get_usage_summary_string(
     T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
-        UNMANAGED_MEMORY_SIZE);
+        T1_UNMANAGED_MEM_CAP);
     T1_std_strcat_cap(
         recipient,
         recipient_cap,
@@ -70,8 +70,8 @@ void T1_mem_get_usage_summary_string(
         recipient,
         recipient_cap,
         (uint32_t)(
-            (float)(UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size)
-                / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
+            (float)(T1_UNMANAGED_MEM_CAP - (uint32_t)unmanaged_memory_size)
+                / (float)T1_UNMANAGED_MEM_CAP * 100.0f));
 }
 
 static void T1_mem_align_pointer(void ** to_align) {
@@ -98,7 +98,7 @@ void T1_mem_init(
     
     unmanaged_memory = ptr_unmanaged_memory_block;
     T1_mem_align_pointer(&unmanaged_memory);
-    T1_std_memset(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
+    T1_std_memset(unmanaged_memory, 0, T1_UNMANAGED_MEM_CAP);
     
     T1_mem_set_pagesize();
 }
@@ -123,7 +123,7 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
     return return_value;
 }
 
-void * T1_mem_malloc_from_unmanaged_aligned(
+void * T1_mem_malloc_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to)
 {
@@ -159,24 +159,24 @@ void * T1_mem_malloc_from_unmanaged_aligned(
 }
 
 // __attribute__((used, noinline))
-void * T1_mem_malloc_from_unmanaged(size_t size) {
+void * T1_mem_malloc_unmanaged(size_t size) {
     log_assert(size > 0);
     
-    void * return_value = T1_mem_malloc_from_unmanaged_aligned(
+    void * return_value = T1_mem_malloc_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
     
     return return_value;
 }
 
-void T1_mem_malloc_from_managed_page_aligned(
+void T1_mem_malloc_managed_page_aligned(
     void ** base_pointer_for_freeing,
     void ** aligned_subptr,
     const size_t subptr_size)
 {
     uint32_t aligned_to = T1_mem_page_size;
     
-    *base_pointer_for_freeing = T1_mem_malloc_from_managed(
+    *base_pointer_for_freeing = T1_mem_malloc_managed(
         subptr_size + aligned_to);
     
     uint32_t padding = aligned_to -
@@ -199,11 +199,11 @@ void T1_mem_malloc_from_managed_page_aligned(
     #endif
 }
 
-void * T1_mem_malloc_from_managed_infoless(size_t size) {
-    return T1_mem_malloc_from_managed_internal(size, "", "");
+void * T1_mem_malloc_managed_infoless(size_t size) {
+    return T1_mem_malloc_managed_internal(size, "", "");
 }
 
-void * T1_mem_malloc_from_managed_internal(
+void * T1_mem_malloc_managed_internal(
     size_t size,
     char * called_from_file,
     char * called_from_func)
@@ -264,7 +264,7 @@ void * T1_mem_malloc_from_managed_internal(
     #endif
 }
 
-void T1_mem_free_from_managed(void * to_free) {
+void T1_mem_free_managed(void * to_free) {
     
     #if 1
     free(to_free);

@@ -78,7 +78,7 @@ static void T1_texquad_construct_at_i(
 
 void T1_texquad_init(void) {
     T1_texquads =
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1FlatTexQuadCollection));
     
     T1_std_memset(

@@ -338,7 +338,7 @@ next_active_ui_element(void)
 
 void T1_ui_widget_init(void) {
     T1_ui_widget_next_props =
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1UIWidgetProps));
     T1_std_memset(T1_ui_widget_next_props, 0, sizeof(T1UIWidgetProps));
     
@@ -349,7 +349,7 @@ void T1_ui_widget_init(void) {
     T1_ui_widget_next_props->slider_pin_tex.array_i = -1;
     T1_ui_widget_next_props->slider_pin_tex.slice_i = -1;
     
-    T1_ui_widget_list = (ActiveUIElement *)T1_mem_malloc_from_unmanaged(
+    T1_ui_widget_list = (ActiveUIElement *)T1_mem_malloc_unmanaged(
         sizeof(ActiveUIElement) *
             ACTIVE_UI_ELEMENTS_SIZE);
     T1_std_memset(

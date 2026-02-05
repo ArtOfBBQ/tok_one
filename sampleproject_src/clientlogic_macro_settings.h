@@ -5,13 +5,13 @@
 This header should only contain macro definitions that modify the behavior
 of the engine for your specific app.
 */
-#ifndef APPLICATION_NAME
-#define APPLICATION_NAME "PARTICLE EDITOR"
+#ifndef T1_APP_NAME
+#define T1_APP_NAME "TOK ONE EXAMPLE"
 #endif
 
 // The 2 pools of memory your app allocates on startup
-// 55 mb ->                      650...000
-#define UNMANAGED_MEMORY_SIZE    650000000
+// 55 mb ->                  650...000
+#define T1_UNMANAGED_MEM_CAP 650000000
 
 
 // these will be ignored on platforms where window size/position
@@ -55,10 +55,10 @@ of the engine for your specific app.
 #define T1_MIPMAPS_ACTIVE 2
 #define T1_FOG_ACTIVE 2
 
-#define FRAMES_CAP 3 // 3 for triple-buffering
+#define T1_FRAMES_CAP 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER 840000
-#define MAX_LIGHTS_PER_BUFFER 3
+#define T1_ZLIGHTS_CAP 3
 
 #define SHADOW_BIAS 0.0001f
 

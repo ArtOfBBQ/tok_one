@@ -14,7 +14,7 @@ static void malloc_img_from_resource_name(
     }
     
     file_buffer.contents =
-        (char *)T1_mem_malloc_from_managed(sizeof(char) *
+        (char *)T1_mem_malloc_managed(sizeof(char) *
             file_buffer.size_without_terminator + 1);
     T1_std_memset(
         file_buffer.contents,
@@ -26,7 +26,7 @@ static void malloc_img_from_resource_name(
         &file_buffer);
     
     if (!file_buffer.good) {
-        T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
+        T1_mem_free_managed((uint8_t *)file_buffer.contents);
         return;
     }
     
@@ -49,14 +49,14 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             log_assert(0);
-            T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_managed((uint8_t *)file_buffer.contents);
             return;
         }
         
         recipient->good = false;
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size = recipient->pixel_count * 4;
-        T1_mem_malloc_from_managed_page_aligned(
+        T1_mem_malloc_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
@@ -100,14 +100,14 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             log_assert(0);
-            T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_managed((uint8_t *)file_buffer.contents);
             return;
         }
         
         recipient->good = false;
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size = recipient->pixel_count * 4;
-        T1_mem_malloc_from_managed_page_aligned(
+        T1_mem_malloc_managed_page_aligned(
             /* void * base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void * aligned_subptr: */
@@ -134,7 +134,7 @@ static void malloc_img_from_resource_name(
         recipient->good = false;
         recipient->rgba_values_size =
             (uint32_t)file_buffer.size_without_terminator + 1;
-        T1_mem_malloc_from_managed_page_aligned(
+        T1_mem_malloc_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
@@ -162,7 +162,7 @@ static void malloc_img_from_resource_name(
         log_append_char('\n');
         recipient->good = false;
     }
-    T1_mem_free_from_managed(file_buffer.contents);
+    T1_mem_free_managed(file_buffer.contents);
     
     if (!recipient->good) {
         return;
@@ -286,7 +286,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         return;
     }
     buf.contents =
-        T1_mem_malloc_from_managed(buf.size_without_terminator+1);
+        T1_mem_malloc_managed(buf.size_without_terminator+1);
     buf.good = 0;
     
     T1_platform_read_file(filepath, &buf);
@@ -304,7 +304,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* uint32_t *out_good: */
             &buf.good);
     if (!buf.good) {
-        T1_mem_free_from_managed(buf.contents);
+        T1_mem_free_managed(buf.contents);
         return;
     }
     
@@ -330,7 +330,7 @@ void T1_texture_files_runtime_register_png_from_writables(
     recipient->height = height;
     recipient->pixel_count = recipient->width * recipient->height;
     recipient->rgba_values_size = recipient->pixel_count * 4;
-    T1_mem_malloc_from_managed_page_aligned(
+    T1_mem_malloc_managed_page_aligned(
         /* void *base_pointer_for_freeing: */
             (void *)&recipient->rgba_values_freeable,
         /* void *aligned_subptr: */
@@ -391,7 +391,7 @@ void T1_texture_files_runtime_register_png_from_writables(
             T1_texture_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_page_aligned);
     
-    T1_mem_free_from_managed(buf.contents);
+    T1_mem_free_managed(buf.contents);
     *good = 1;
 }
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
@@ -412,7 +412,7 @@ void T1_texture_files_preregister_png_resource(
     } else {
         return;
     }
-    buf.contents = T1_mem_malloc_from_managed(
+    buf.contents = T1_mem_malloc_managed(
        buf.size_without_terminator+1);
     buf.good = 0;
     
@@ -431,7 +431,7 @@ void T1_texture_files_preregister_png_resource(
         /* uint32_t *out_good: */
             &buf.good);
     if (!buf.good) {
-        T1_mem_free_from_managed(buf.contents);
+        T1_mem_free_managed(buf.contents);
         return;
     }
     T1_texture_array_preregister_null_image(
@@ -446,7 +446,7 @@ void T1_texture_files_preregister_png_resource(
         /* const uint32_t is_dds_image: */
             false);
     
-    T1_mem_free_from_managed(buf.contents);
+    T1_mem_free_managed(buf.contents);
     *good = 1;
 }
 
@@ -476,7 +476,7 @@ void T1_texture_files_preregister_dds_resource(
     } else {
         return;
     }
-    buf.contents = T1_mem_malloc_from_managed(
+    buf.contents = T1_mem_malloc_managed(
         buf.size_without_terminator+1);
     buf.good = 0;
     
@@ -516,7 +516,7 @@ void T1_texture_files_preregister_dds_resource(
         /* const uint32_t is_dds_image: */
             true);
     
-    T1_mem_free_from_managed(buf.contents);
+    T1_mem_free_managed(buf.contents);
     *good = 1;
 }
 

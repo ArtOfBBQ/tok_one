@@ -18,7 +18,7 @@
 #include "T1_zsprite_anim.h"
 #include "T1_renderer.h"
 #include "T1_gameloop.h"
-#include "T1_tokenizer.h"
+#include "T1_token.h"
 #include "T1_mtlparser.h"
 #include "T1_objparser.h"
 

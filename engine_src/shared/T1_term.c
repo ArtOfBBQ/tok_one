@@ -69,7 +69,7 @@ static void T1_term_update_history_size(void) {
 void T1_term_init(
     void (* terminal_enter_fullscreen_fncptr)(void))
 {
-    T1trms = T1_mem_malloc_from_unmanaged(
+    T1trms = T1_mem_malloc_unmanaged(
         sizeof(T1TerminalState));
     T1_std_memset(T1trms, 0, sizeof(T1TerminalState));
     
@@ -971,7 +971,7 @@ static bool32_t T1_term_evaluate(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            zlights_to_apply_size);
+            T1_zlights_size);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,

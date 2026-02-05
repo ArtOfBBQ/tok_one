@@ -206,7 +206,7 @@ void T1_clientlogic_late_startup(void) {
     
     T1zSpriteRequest quad;
     T1_zsprite_fetch_next(&quad);
-    zsprite_construct_quad(
+    T1_zsprite_construct_quad(
         /* const float left_x: */
             TEAPOT_X + 0.50f,
         /* const float bottom_y: */
@@ -246,7 +246,7 @@ void T1_clientlogic_late_startup(void) {
     
     for (uint32_t i = 0; i < 3; i++) {
         T1_zsprite_fetch_next(&quad);
-        zsprite_construct_quad(
+        T1_zsprite_construct_quad(
             /* const float left_x: */
                 TEAPOT_X - 1.0f,
             /* const float bottom_y: */

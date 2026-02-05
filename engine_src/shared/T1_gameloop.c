@@ -46,7 +46,7 @@ static void show_dead_simple_text(
     #else
     #error "T1_PARTICLES_ACTIVE undefined"
     #endif
-    zlights_to_apply_size = 0;
+    T1_zlights_size = 0;
     T1_zsprite_delete_all();
     
     #if T1_FOG_ACTIVE == T1_ACTIVE

@@ -33,7 +33,7 @@ typedef struct
 
 typedef struct
 {
-    T1GPUFrame triple_buffers[FRAMES_CAP];
+    T1GPUFrame triple_buffers[T1_FRAMES_CAP];
     T1GPULockedVertex * locked_vertices;
     T1GPUConstMatf32 * const_mats_f32;
     T1GPUConstMati32 * const_mats_i32;

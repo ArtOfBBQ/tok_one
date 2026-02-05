@@ -71,10 +71,10 @@ static void guess_gpu_triangle_normal(T1GPULockedVertex * to_change) {
 static ParsedObj * parsed_obj = NULL;
 
 void T1_objmodel_init(void) {
-    parsed_obj = T1_mem_malloc_from_unmanaged(sizeof(ParsedObj));
+    parsed_obj = T1_mem_malloc_unmanaged(sizeof(ParsedObj));
     T1_std_memset(parsed_obj, 0, sizeof(ParsedObj));
     
-    T1_mesh_summary_list = (MeshSummary *)T1_mem_malloc_from_unmanaged(
+    T1_mesh_summary_list = (MeshSummary *)T1_mem_malloc_unmanaged(
         sizeof(MeshSummary) * T1_MESH_CAP);
     
     for (uint32_t i = 0; i < T1_MESH_CAP; i++) {
@@ -83,7 +83,7 @@ void T1_objmodel_init(void) {
     
     assert(T1_LOCKED_VERTEX_CAP > 0);
     T1_mesh_summary_all_vertices = (LockedVertexWithMaterialCollection *)
-        T1_mem_malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
+        T1_mem_malloc_unmanaged(sizeof(LockedVertexWithMaterialCollection));
     T1_std_memset(
         T1_mesh_summary_all_vertices,
         0,
@@ -852,7 +852,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     sizeof(float) * 3);
             }
             
-            normalize_zvertex_f3(
+            T1_triangle_normalize_zvertex_f3(
                 T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].
                     norm_xyz);
             
@@ -1185,7 +1185,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     good = 0;
     
     uint32_t parsed_materials_cap = 20;
-    ParsedMaterial * parsed_materials = T1_mem_malloc_from_managed(
+    ParsedMaterial * parsed_materials = T1_mem_malloc_managed(
         sizeof(ParsedMaterial) * parsed_materials_cap);
     T1_std_memset(
         parsed_materials,
@@ -1264,7 +1264,7 @@ static void
         edge2[1] = v3->xyz[1] - v1->xyz[1];
         edge2[2] = v3->xyz[2] - v1->xyz[2];
         
-        cross_vertices(
+        T1_triangle_cross_vertices(
             /* float * a: */
                 edge1,
             /* float * b: */
@@ -1272,7 +1272,7 @@ static void
             /* float * recip: */
                 face_normal_xyz);
         
-        normalize_vertex(face_normal_xyz);
+        T1_triangle_normalize_vertex(face_normal_xyz);
         
         T1_std_memcpy(
             v1->face_normal_xyz,
@@ -1365,7 +1365,7 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         T[1] -= dot_TN * N[1];
         T[2] -= dot_TN * N[2];
         
-        normalize_zvertex_f3(T);
+        T1_triangle_normalize_zvertex_f3(T);
         v1->tan_xyz[0] = T[0];
         v1->tan_xyz[1] = T[1];
         v1->tan_xyz[2] = T[2];
@@ -1375,7 +1375,7 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
             N[2] * T[0] - N[0] * T[2],
             N[0] * T[1] - N[1] * T[0]
         };
-        normalize_zvertex_f3(B);
+        T1_triangle_normalize_zvertex_f3(B);
         v1->bitan_xyz[0] = B[0];
         v1->bitan_xyz[1] = B[1];
         v1->bitan_xyz[2] = B[2];
@@ -1447,7 +1447,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     }
     
     obj_file_buf.contents = (char *)
-        T1_mem_malloc_from_managed(
+        T1_mem_malloc_managed(
             obj_file_buf.
                 size_without_terminator + 1);
     obj_file_buf.good = false;
@@ -1459,7 +1459,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             &obj_file_buf);
     
     if (!obj_file_buf.good) {
-        T1_mem_free_from_managed(obj_file_buf.contents);
+        T1_mem_free_managed(obj_file_buf.contents);
         
         T1_std_strcpy_cap(
             error_message,
@@ -1505,7 +1505,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         }
         
         mtl_file_buf.contents = (char *)
-            T1_mem_malloc_from_managed(
+            T1_mem_malloc_managed(
                 mtl_file_buf.size_without_terminator + 1);
         mtl_file_buf.good = false;
         
@@ -1516,8 +1516,8 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
                 &mtl_file_buf);
         
         if (!mtl_file_buf.good) {
-            T1_mem_free_from_managed(obj_file_buf.contents);
-            T1_mem_free_from_managed(mtl_file_buf.contents);
+            T1_mem_free_managed(obj_file_buf.contents);
+            T1_mem_free_managed(mtl_file_buf.contents);
             
             T1_std_strcpy_cap(
                 error_message,
@@ -1558,9 +1558,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         OBJ_STRING_SIZE,
         obj_filename);
     
-    T1_mem_free_from_managed(obj_file_buf.contents);
+    T1_mem_free_managed(obj_file_buf.contents);
     if (mtl_file_buf.contents != NULL) {
-       T1_mem_free_from_managed(mtl_file_buf.contents);
+       T1_mem_free_managed(mtl_file_buf.contents);
     }
     
     if (flip_uv_v) {

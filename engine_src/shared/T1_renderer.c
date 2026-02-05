@@ -230,12 +230,12 @@ void T1_renderer_hardware_render(
     *frame_data->postproc_consts =
         T1_global->postproc_consts;
     
-    T1_add_opaque_zpolygons_to_workload(frame_data);
+    T1_zsprite_add_opaque_zpolygons_to_workload(frame_data);
     log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-    T1_add_alphablending_zpolygons_to_workload(frame_data);
+    T1_zsprite_add_alphablending_zpolygons_to_workload(frame_data);
     log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE

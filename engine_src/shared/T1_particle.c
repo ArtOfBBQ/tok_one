@@ -14,7 +14,7 @@ uint32_t T1_shatter_effects_size = 0;
 
 void T1_particle_init(void) {
     T1_particle_effects = (T1ParticleEffect *)
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1ParticleEffect) *
                 T1_PARTICLE_EFFECTS_SIZE);
     T1_std_memset(

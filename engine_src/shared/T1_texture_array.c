@@ -56,7 +56,7 @@ void T1_texture_array_push_all_predecoded(void)
                 uint32_t rgba_size =
                     T1_texture_arrays[ta_i].single_img_width *
                         T1_texture_arrays[ta_i].single_img_height * 4;
-                T1_mem_malloc_from_managed_page_aligned(
+                T1_mem_malloc_managed_page_aligned(
                     /* void ** base_pointer_for_freeing: */
                        (void **)&rgba_values_freeable,
                     /* void ** aligned_subptr: */
@@ -191,7 +191,7 @@ static T1DecodedImage * extract_image(
     log_assert(y <= sprite_rows);
     if (!T1_app_running) { return NULL; }
     
-    T1DecodedImage * new_image = T1_mem_malloc_from_unmanaged(sizeof(T1DecodedImage));
+    T1DecodedImage * new_image = T1_mem_malloc_unmanaged(sizeof(T1DecodedImage));
     log_assert(new_image != NULL);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
@@ -220,7 +220,7 @@ static T1DecodedImage * extract_image(
                 original->rgba_values_size);
     
     new_image->rgba_values_size = slice_size_bytes;
-    T1_mem_malloc_from_managed_page_aligned(
+    T1_mem_malloc_managed_page_aligned(
         /* void * base_pointer_for_freeing: */
             (void *)&new_image->rgba_values_freeable,
         /* void * aligned_subptr: */
@@ -277,7 +277,7 @@ void T1_texture_array_init(void) {
     
     // initialize texture arrays
     T1_texture_arrays = (T1TextureArray *)
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1TextureArray) *
                 TEXTUREARRAYS_SIZE);
     
@@ -311,7 +311,7 @@ static void
         
     char * filenames[256];
     for (uint32_t i = 0; i < 256; i++) {
-        filenames[i] = T1_mem_malloc_from_managed(256);
+        filenames[i] = T1_mem_malloc_managed(256);
         T1_std_memset(filenames[i], 0, sizeof(rows * columns * 256));
     }
     
@@ -826,7 +826,7 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
         uint32_t fetched = 0;
         
         uint32_t rgba_cap = 30000000;
-        uint8_t * rgba = T1_mem_malloc_from_managed(rgba_cap);
+        uint8_t * rgba = T1_mem_malloc_managed(rgba_cap);
         uint32_t rgba_size = 0;
         uint32_t width = 0;
         uint32_t height = 0;
@@ -884,7 +884,7 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
             /* uint32_t * good: */
                 &write_good);
         
-        T1_mem_free_from_managed(rgba);
+        T1_mem_free_managed(rgba);
         
         if (!write_good) {
             *success = false;

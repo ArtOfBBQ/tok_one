@@ -120,7 +120,7 @@ mtlparser_uint_to_string(
 
 static void parse_single_string_stat(
     uint32_t * i,
-    TokToken * token,
+    T1Token * token,
     const char * material_name,
     char * string_stat,
     uint32_t * good)
@@ -192,7 +192,7 @@ static void parse_single_string_stat(
 
 static void parse_single_float_stat(
     uint32_t * i,
-    TokToken * token,
+    T1Token * token,
     const char * material_name,
     float * float_stat,
     uint32_t * good)
@@ -241,8 +241,8 @@ static void parse_single_float_stat(
     
     if (
         token->enum_value != MTLTOKEN_STRINGLITERAL ||
-        !toktoken_is_number(token) ||
-        !toktoken_fits_double(token) ||
+        !T1_token_is_number(token) ||
+        !T1_token_fits_double(token) ||
         !token->number_value)
     {
         *good = 0;
@@ -267,7 +267,7 @@ static void parse_single_float_stat(
 
 static void parse_rgb_token(
     uint32_t * i,
-    TokToken * token,
+    T1Token * token,
     const char * material_name,
     float * rgb_stat,
     uint32_t * already_set_flag,
@@ -358,8 +358,8 @@ static void parse_rgb_token(
         
         if (
             token->enum_value != MTLTOKEN_STRINGLITERAL ||
-            !toktoken_is_number(token) ||
-            !toktoken_fits_double(token))
+            !T1_token_is_number(token) ||
+            !T1_token_fits_double(token))
         {
             *good = 0;
             stack_string_64bytes[0] = (char)('0' + rgb_i);
@@ -667,7 +667,7 @@ void mtlparser_parse(
     
     uint32_t tokens_count = T1_token_get_token_count();
     for (uint32_t i = 0; i < tokens_count; i++) {
-        TokToken * token = T1_token_get_token_at(i);
+        T1Token * token = T1_token_get_token_at(i);
         mtlparser_state->last_error_msg[0] = '\0';
         char stack_string_64bytes[64];
         mtlparser_uint_to_string(
@@ -684,7 +684,7 @@ void mtlparser_parse(
         
         switch (token->enum_value) {
             case MTLTOKEN_COMMENT: {
-                TokToken * ignored = NULL;
+                T1Token * ignored = NULL;
                 while (
                     !ignored ||
                     ignored->enum_value != MTLTOKEN_NEWLINE)
@@ -1119,7 +1119,7 @@ void mtlparser_parse(
             case MTLTOKEN_ALPHA_MAP: {
                 // We use the alpha in textures as our alpha and ignore this
                 i++;
-                TokToken * ignored = T1_token_get_token_at(i);
+                T1Token * ignored = T1_token_get_token_at(i);
                 
                 if (ignored->enum_value != MTLTOKEN_STRINGLITERAL) {
                     mtlparser_state->mtlparser_strlcat(
@@ -1137,7 +1137,7 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_BUMP_OR_NORMAL_MAP: {
-                TokToken * peek = T1_token_get_token_at(i+1);
+                T1Token * peek = T1_token_get_token_at(i+1);
                 if (peek->enum_value == MTLTOKEN_BUMP_MAP_ARG_INTENSITY) {
                     i++;
                     

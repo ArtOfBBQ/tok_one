@@ -26,7 +26,7 @@ void T1_platform_get_writables_path(
     
     T1_std_strcpy_cap(recipient, recipient_size, library_dir);
     T1_std_strcat_cap(recipient, recipient_size, "/");
-    T1_std_strcat_cap(recipient, recipient_size, APPLICATION_NAME);
+    T1_std_strcat_cap(recipient, recipient_size, T1_APP_NAME);
     
     T1_platform_mkdir_if_not_exist(recipient);
 }

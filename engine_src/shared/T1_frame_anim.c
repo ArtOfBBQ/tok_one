@@ -20,7 +20,7 @@ static uint32_t T1_frame_anims_size = 0;
 
 void T1_frame_anim_init(void) {
     T1_frame_anims =
-        T1_mem_malloc_from_unmanaged(
+        T1_mem_malloc_unmanaged(
             sizeof(T1FrameAnim) *
                 T1_FRAME_ANIMS_CAP);
 }

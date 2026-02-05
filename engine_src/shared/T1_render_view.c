@@ -18,7 +18,7 @@ T1CPURenderView * T1_camera = NULL;
 
 void T1_render_view_init(void) {
     log_assert(T1_RENDER_VIEW_CAP > 0);
-    T1_render_views = T1_mem_malloc_from_unmanaged(
+    T1_render_views = T1_mem_malloc_unmanaged(
         sizeof(T1RenderViewCollection));
     
     T1_camera = T1_render_views->cpu; // convenience

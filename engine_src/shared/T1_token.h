@@ -100,33 +100,33 @@ if (toktoken_is_u16(token)) {
 the toktoken_is_number(TokToken*) macro will return 0 if a number is too
 big for a uint64, even if it's composed of all numbers
 */
-typedef struct TokTokenNumber {
+typedef struct {
     uint64_t unsigned_int;
     int64_t signed_int;
     double double_precision;
-} TokTokenNumber;
-#define toktoken_is_number(tokenptr) ((tokenptr)->castable_flags & 1)
-#define toktoken_fits_double(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
-#define toktoken_fits_float(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
-#define toktoken_fits_u8(tokenptr) (((tokenptr)->castable_flags & 8) > 0)
-#define toktoken_fits_u16(tokenptr) (((tokenptr)->castable_flags & 16) > 0)
-#define toktoken_fits_u32(tokenptr) (((tokenptr)->castable_flags & 32) > 0)
-#define toktoken_fits_u64(tokenptr) (((tokenptr)->castable_flags & 64) > 0)
-#define toktoken_fits_i8(tokenptr) (((tokenptr)->castable_flags & 128) > 0)
-#define toktoken_fits_i16(tokenptr) (((tokenptr)->castable_flags & 256) > 0)
-#define toktoken_fits_i32(tokenptr) (((tokenptr)->castable_flags & 512) > 0)
-#define toktoken_fits_i64(tokenptr) (((tokenptr)->castable_flags & 1024) > 0)
-typedef struct TokToken {
-    TokTokenNumber * number_value;
+} T1TokenNumber;
+#define T1_token_is_number(tokenptr) ((tokenptr)->castable_flags & 1)
+#define T1_token_fits_double(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
+#define T1_token_fits_float(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
+#define T1_token_fits_u8(tokenptr) (((tokenptr)->castable_flags & 8) > 0)
+#define T1_token_fits_u16(tokenptr) (((tokenptr)->castable_flags & 16) > 0)
+#define T1_token_fits_u32(tokenptr) (((tokenptr)->castable_flags & 32) > 0)
+#define T1_token_fits_u64(tokenptr) (((tokenptr)->castable_flags & 64) > 0)
+#define T1_token_fits_i8(tokenptr) (((tokenptr)->castable_flags & 128) > 0)
+#define T1_token_fits_i16(tokenptr) (((tokenptr)->castable_flags & 256) > 0)
+#define T1_token_fits_i32(tokenptr) (((tokenptr)->castable_flags & 512) > 0)
+#define T1_token_fits_i64(tokenptr) (((tokenptr)->castable_flags & 1024) > 0)
+typedef struct {
+    T1TokenNumber * number_value;
     uint32_t enum_value;
     uint32_t line_number;
     char * string_value;
     uint16_t string_value_size; // size in bytes
     uint16_t castable_flags;
-} TokToken;
+} T1Token;
 
 uint32_t T1_token_get_token_count(void);
-TokToken * T1_token_get_token_at(const uint32_t token_i);
+T1Token * T1_token_get_token_at(const uint32_t token_i);
 
 
 #endif // T1_TOKEN_H

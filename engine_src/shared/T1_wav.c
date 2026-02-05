@@ -32,7 +32,8 @@ typedef struct FormatChunkBody {
 
 #define consume_struct(from_ptr, StructName) *(StructName *)from_ptr; from_ptr += sizeof(StructName);
 
-static uint32_t strings_are_equal(
+static uint32_t
+strings_are_equal(
     const char * string_1,
     const char * string_2)
 {
@@ -48,7 +49,8 @@ static uint32_t strings_are_equal(
     return string_2[i] == '\0';
 }
 
-static void check_strings_equal(
+static void
+check_strings_equal(
     char * actual,
     char * expected_nullterm,
     char * field_description,
@@ -82,7 +84,8 @@ static void check_strings_equal(
     }
 }
 
-void T1_wav_samples_to_wav(
+void
+T1_wav_samples_to_wav(
     unsigned char * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
@@ -165,7 +168,8 @@ void T1_wav_samples_to_wav(
     *recipient_size += (samples_size * sizeof(int16_t)) + 44;
 }
 
-void T1_wav_parse(
+void
+T1_wav_parse(
     int16_t * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
@@ -502,4 +506,3 @@ void T1_wav_parse(
     *good = 1;
     return;
 }
-

@@ -1,9 +1,10 @@
 #include "T1_zlight.h"
 
-T1zLight * zlights_to_apply = NULL;
-uint32_t zlights_to_apply_size = 0;
+T1zLight * T1_zlights = NULL;
+uint32_t T1_zlights_size = 0;
 
-static void T1_zlight_construct(T1zLight * to_construct)
+static void
+T1_zlight_construct(T1zLight * to_construct)
 {
     to_construct->xyz[0]        = 0.0f;
     to_construct->xyz[1]        = 0.0f;
@@ -23,33 +24,38 @@ static void T1_zlight_construct(T1zLight * to_construct)
     to_construct->shadow_map_depth_texture_i = -1;
 }
 
-T1zLight * T1_zlight_next(void) {
+T1zLight *
+T1_zlight_next(void)
+{
     T1zLight * return_value = NULL;
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-        if (zlights_to_apply[i].deleted) {
-            return_value = &zlights_to_apply[i];
+    for (uint32_t i = 0; i < T1_zlights_size; i++) {
+        if (T1_zlights[i].deleted) {
+            return_value = &T1_zlights[i];
             T1_zlight_construct(return_value);
             return return_value;
         }
     }
     
-    log_assert(zlights_to_apply_size + 1 < MAX_LIGHTS_PER_BUFFER);
-    return_value = &zlights_to_apply[zlights_to_apply_size];
+    log_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
+    return_value = &T1_zlights[T1_zlights_size];
     return_value->committed = false;
-    zlights_to_apply_size += 1;
+    T1_zlights_size += 1;
     
     T1_zlight_construct(return_value);
     
     return return_value;
 }
 
-void T1_zlight_commit(T1zLight * to_request)
+void
+T1_zlight_commit(T1zLight * to_request)
 {
     log_assert(!to_request->deleted);
     to_request->committed = true;
 }
 
-void x_rotate_zvertex_f3_known_cossin(
+#if 0
+void
+x_rotate_zvertex_f3_known_cossin(
     float inout_xyz[3],
     const float cosf_angle,
     const float sinf_angle)
@@ -65,7 +71,8 @@ void x_rotate_zvertex_f3_known_cossin(
     inout_xyz[1] = y;
 }
 
-void x_rotate_zvertex_f3(
+void
+x_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle)
 {
@@ -80,7 +87,8 @@ void x_rotate_zvertex_f3(
     return;
 }
 
-void x_rotate_zvertices_inplace(
+void
+x_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_y,
     SIMD_FLOAT * vec_to_rotate_z,
     const SIMD_FLOAT cos_angles,
@@ -97,7 +105,8 @@ void x_rotate_zvertices_inplace(
     *vec_to_rotate_y = rotated_y;
 }
 
-void y_rotate_zvertex_known_cossin(
+void
+y_rotate_zvertex_known_cossin(
     float inout_xyz[3],
     const float cos_angle,
     const float sin_angle)
@@ -115,7 +124,8 @@ void y_rotate_zvertex_known_cossin(
     return;
 }
 
-void y_rotate_zvertex_f3(
+void
+y_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle)
 {
@@ -128,7 +138,8 @@ void y_rotate_zvertex_f3(
             sinf(angle));
 }
 
-void y_rotate_zvertices_inplace(
+void
+y_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_x,
     SIMD_FLOAT * vec_to_rotate_z,
     const SIMD_FLOAT cos_angles,
@@ -145,7 +156,8 @@ void y_rotate_zvertices_inplace(
     *vec_to_rotate_x = rotated_x;
 }
 
-void z_rotate_zvertex_f3_known_cossin(
+void
+z_rotate_zvertex_f3_known_cossin(
     float inout_xyz[3],
     const float angle_cos,
     const float angle_sin)
@@ -163,7 +175,8 @@ void z_rotate_zvertex_f3_known_cossin(
     return;
 }
 
-void z_rotate_zvertex_f3(
+void
+z_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle)
 {
@@ -178,7 +191,8 @@ void z_rotate_zvertex_f3(
     return;
 }
 
-void z_rotate_zvertices_inplace(
+void
+z_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_x,
     SIMD_FLOAT * vec_to_rotate_y,
     const SIMD_FLOAT cos_angles,
@@ -194,105 +208,87 @@ void z_rotate_zvertices_inplace(
     
     *vec_to_rotate_x = rotated_x;
 }
+#endif
 
-void T1_zlight_clean_all_deleted(void)
+void
+T1_zlight_clean_all_deleted(void)
 {
     while (
-        zlights_to_apply_size > 0
-        && zlights_to_apply[zlights_to_apply_size - 1].deleted)
+        T1_zlights_size > 0
+        && T1_zlights[T1_zlights_size - 1].deleted)
     {
-        zlights_to_apply_size--;
+        T1_zlights_size--;
     }
 }
 
-#if 0
-void T1_zlight_project_float4_to_2d_inplace(
-    float * position_x,
-    float * position_y,
-    float * position_z)
-{
-    T1GPUProjectConsts * pjc = &T1_global->project_consts;
-    
-    float x_multiplier =
-        T1_global->aspect_ratio * pjc->field_of_view_modifier;
-    float y_multiplier = pjc->field_of_view_modifier;
-    float z_multiplier = (pjc->zfar / (pjc->zfar - pjc->znear));
-    float z_addition = (1.0f * (-pjc->zfar * pjc->znear) /
-        (pjc->zfar - pjc->znear));
-    
-    *position_x *= x_multiplier;
-    *position_y *= y_multiplier;
-    *position_z *= z_multiplier;
-    *position_z += z_addition;
-}
-#endif
-
-void T1_zlight_copy_all(
+void
+T1_zlight_copy_all(
     T1GPULight * lights,
     uint32_t * lights_size)
 {
     *lights_size = 0;
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++)
+    for (uint32_t i = 0; i < T1_zlights_size; i++)
     {
-        if (!zlights_to_apply[i].deleted) {
+        if (!T1_zlights[i].deleted) {
             lights[*lights_size].xyz[0] =
-                zlights_to_apply[i].xyz[0] +
-                zlights_to_apply[i].xyz_offset[0];
+                T1_zlights[i].xyz[0] +
+                T1_zlights[i].xyz_offset[0];
             lights[*lights_size].xyz[1] =
-                zlights_to_apply[i].xyz[1] +
-                zlights_to_apply[i].xyz_offset[1];
+                T1_zlights[i].xyz[1] +
+                T1_zlights[i].xyz_offset[1];
             lights[*lights_size].xyz[2] =
-                zlights_to_apply[i].xyz[2] +
-                zlights_to_apply[i].xyz_offset[2];
+                T1_zlights[i].xyz[2] +
+                T1_zlights[i].xyz_offset[2];
             
             lights[*lights_size].angle_xyz[0] =
-                zlights_to_apply[i].xyz_angle[0];
+                T1_zlights[i].xyz_angle[0];
             lights[*lights_size].angle_xyz[1] =
-                zlights_to_apply[i].xyz_angle[1];
+                T1_zlights[i].xyz_angle[1];
             lights[*lights_size].angle_xyz[2] =
-                zlights_to_apply[i].xyz_angle[2];
+                T1_zlights[i].xyz_angle[2];
             
             lights[*lights_size].diffuse =
-                zlights_to_apply[i].diffuse;
+                T1_zlights[i].diffuse;
             lights[*lights_size].specular =
-                zlights_to_apply[i].specular;
+                T1_zlights[i].specular;
             lights[*lights_size].reach =
-                zlights_to_apply[i].reach;
+                T1_zlights[i].reach;
             
             lights[*lights_size].rgb[0] =
-                zlights_to_apply[i].RGBA[0];
+                T1_zlights[i].RGBA[0];
             lights[*lights_size].rgb[1] =
-                zlights_to_apply[i].RGBA[1];
+                T1_zlights[i].RGBA[1];
             lights[*lights_size].rgb[2] =
-                zlights_to_apply[i].RGBA[2];
+                T1_zlights[i].RGBA[2];
             
             lights[*lights_size].shadow_map_depth_tex_i =
-                zlights_to_apply[i].shadow_map_depth_texture_i;
+                T1_zlights[i].shadow_map_depth_texture_i;
             lights[*lights_size].shadow_map_render_view_i =
-                zlights_to_apply[i].shadow_map_render_view_i;
+                T1_zlights[i].shadow_map_render_view_i;
             
             *lights_size += 1;
         }
     }
 }
 
-// move each light so the camera becomes position 0,0,0
-void T1_zlight_translate_all(
+#if 0
+void
+T1_zlight_translate_all(
     T1GPULight * lights,
     uint32_t * lights_size)
 {
-    assert(zlights_to_apply_size < MAX_LIGHTS_PER_BUFFER);
+    assert(T1_zlights_size < T1_ZLIGHTS_CAP);
     
     float translated_light_pos[3];
     
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++)
+    for (uint32_t i = 0; i < T1_zlights_size; i++)
     {
         translated_light_pos[0] =
-            zlights_to_apply[i].xyz[0] - T1_camera->xyz[0];
+            T1_zlights[i].xyz[0] - T1_camera->xyz[0];
         translated_light_pos[1] =
-            zlights_to_apply[i].xyz[1] - T1_camera->xyz[1];
+            T1_zlights[i].xyz[1] - T1_camera->xyz[1];
         translated_light_pos[2] =
-            zlights_to_apply[i].xyz[2] - T1_camera->xyz[2];
+            T1_zlights[i].xyz[2] - T1_camera->xyz[2];
         
         x_rotate_zvertex_f3(
             translated_light_pos,
@@ -308,22 +304,32 @@ void T1_zlight_translate_all(
         lights[i].xyz[1] = translated_light_pos[1];
         lights[i].xyz[2] = translated_light_pos[2];
         
-        lights[i].rgb[0] = zlights_to_apply[i].RGBA[0];
-        lights[i].rgb[1] = zlights_to_apply[i].RGBA[1];
-        lights[i].rgb[2] = zlights_to_apply[i].RGBA[2];
+        lights[i].rgb[0] = T1_zlights[i].RGBA[0];
+        lights[i].rgb[1] = T1_zlights[i].RGBA[1];
+        lights[i].rgb[2] = T1_zlights[i].RGBA[2];
         
-        lights[i].diffuse = zlights_to_apply[i].diffuse;
-        lights[i].reach = zlights_to_apply[i].reach;
+        lights[i].diffuse = T1_zlights[i].diffuse;
+        lights[i].reach = T1_zlights[i].reach;
     }
-    *lights_size = zlights_to_apply_size;
+    *lights_size = T1_zlights_size;
 }
+#endif
 
-void T1_zlight_delete(const int32_t with_object_id) {
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-        if (zlights_to_apply[i].object_id == with_object_id)
+void
+T1_zlight_delete(
+    const int32_t with_object_id)
+{
+    for (
+        uint32_t i = 0;
+        i < T1_zlights_size;
+        i++)
+    {
+        if (
+            T1_zlights[i].object_id ==
+                with_object_id)
         {
-            zlights_to_apply[i].deleted     = true;
-            zlights_to_apply[i].object_id   = -1;
+            T1_zlights[i].deleted   = true;
+            T1_zlights[i].object_id = -1;
         }
     }
 }
@@ -335,7 +341,8 @@ to look at point_to_xyz instead
 
 from_pos_xyz is the current position of the light
 */
-void T1_zlight_point_light_to_location(
+void
+T1_zlight_point_light_to_location(
     float * recipient_xyz_angle,
     const float * from_pos_xyz,
     const float * point_to_xyz)
@@ -379,14 +386,15 @@ void T1_zlight_point_light_to_location(
     recipient_xyz_angle[2] = roll;  // Z rotation (roll)
 }
 
-void T1_zlight_update_all_attached_render_views(void)
+void
+T1_zlight_update_all_attached_render_views(void)
 {
     for (
         uint32_t zl_i = 0;
-        zl_i < zlights_to_apply_size;
+        zl_i < T1_zlights_size;
         zl_i++)
     {
-        int32_t depth_i = zlights_to_apply[zl_i].
+        int32_t depth_i = T1_zlights[zl_i].
             shadow_map_depth_texture_i;
         
         if (depth_i < 0) { continue; }
@@ -419,16 +427,16 @@ void T1_zlight_update_all_attached_render_views(void)
         log_assert(rv_i < T1_RENDER_VIEW_CAP);
         
         T1_render_views->cpu[rv_i].xyz[0] =
-            zlights_to_apply[zl_i].xyz[0];
+            T1_zlights[zl_i].xyz[0];
         T1_render_views->cpu[rv_i].xyz[1] =
-            zlights_to_apply[zl_i].xyz[1];
+            T1_zlights[zl_i].xyz[1];
         T1_render_views->cpu[rv_i].xyz[2] =
-            zlights_to_apply[zl_i].xyz[2];
+            T1_zlights[zl_i].xyz[2];
         T1_render_views->cpu[rv_i].xyz_angle[0] =
-            zlights_to_apply[zl_i].xyz_angle[0];
+            T1_zlights[zl_i].xyz_angle[0];
         T1_render_views->cpu[rv_i].xyz_angle[1] =
-            zlights_to_apply[zl_i].xyz_angle[1];
+            T1_zlights[zl_i].xyz_angle[1];
         T1_render_views->cpu[rv_i].xyz_angle[2] =
-            zlights_to_apply[zl_i].xyz_angle[2];
+            T1_zlights[zl_i].xyz_angle[2];
     }
 }

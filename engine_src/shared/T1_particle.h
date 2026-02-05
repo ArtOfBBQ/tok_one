@@ -60,7 +60,8 @@ typedef struct {
     bool8_t committed;
 } T1ParticleEffect;
 
-void T1_particle_init(void);
+void
+T1_particle_init(void);
 
 void
 T1_particle_effect_construct(

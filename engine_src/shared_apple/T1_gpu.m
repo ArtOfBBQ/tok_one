@@ -19,14 +19,14 @@ typedef struct {
     id<MTLLibrary> lib;
     id<MTLCommandQueue> command_queue;
     
-    id polygon_buffers[FRAMES_CAP];
-    id matrix_buffers[FRAMES_CAP];
-    id light_buffers [FRAMES_CAP];
-    id vertex_buffers[FRAMES_CAP];
-    id flat_quad_buffers[FRAMES_CAP];
-    id flat_texquad_buffers[FRAMES_CAP];
-    id cam_buffers[FRAMES_CAP];
-    id postprocessing_constants_buffers[FRAMES_CAP];
+    id polygon_buffers[T1_FRAMES_CAP];
+    id matrix_buffers[T1_FRAMES_CAP];
+    id light_buffers [T1_FRAMES_CAP];
+    id vertex_buffers[T1_FRAMES_CAP];
+    id flat_quad_buffers[T1_FRAMES_CAP];
+    id flat_texquad_buffers[T1_FRAMES_CAP];
+    id cam_buffers[T1_FRAMES_CAP];
+    id postprocessing_constants_buffers[T1_FRAMES_CAP];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
     id locked_matf32_populator_buffer;
@@ -134,7 +134,7 @@ bool32_t T1_apple_gpu_init(
         return false;
     }
     
-    ags = T1_mem_malloc_from_unmanaged(
+    ags = T1_mem_malloc_unmanaged(
         sizeof(AppleGPUState));
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
@@ -698,7 +698,7 @@ bool32_t T1_apple_gpu_init(
     
     for (
         uint32_t frame_i = 0;
-        frame_i < FRAMES_CAP;
+        frame_i < T1_FRAMES_CAP;
         frame_i++)
     {
         T1GPUFrame * f = &gpu_shared_data_collection->
@@ -1539,7 +1539,7 @@ void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
     [combuf commit];
     [combuf waitUntilCompleted];
     
-    T1_mem_free_from_managed(rgba_values_freeable);
+    T1_mem_free_managed(rgba_values_freeable);
 }
 
 #if T1_TEXTURES_ACTIVE
@@ -1626,7 +1626,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     }];
     [combuf commit];
     
-    T1_mem_free_from_managed(raw_bc1_file_freeable);
+    T1_mem_free_managed(raw_bc1_file_freeable);
 }
 #endif
 
@@ -2901,8 +2901,8 @@ static void set_defaults_for_encoder(
     [combuf presentDrawable: [view currentDrawable]];
     
     ags->frame_i += 1;
-    ags->frame_i %= FRAMES_CAP;
-    log_assert(ags->frame_i < FRAMES_CAP);
+    ags->frame_i %= T1_FRAMES_CAP;
+    log_assert(ags->frame_i < T1_FRAMES_CAP);
     
     [combuf addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

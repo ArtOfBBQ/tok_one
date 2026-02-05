@@ -1,4 +1,4 @@
-#include "T1_tokenizer.h"
+#include "T1_token.h"
 
 static void T1_tokenizer_strcat(
     char * recipient,
@@ -56,8 +56,8 @@ typedef struct TokTokenState {
     char * ascii_store;
     T1TokenNextReg next_reg;
     RegisteredToken regs[REGISTERED_TOKENS_CAP];
-    TokToken tokens[TOKENS_CAP];
-    TokTokenNumber numbers[NUMBERS_CAP];
+    T1Token tokens[TOKENS_CAP];
+    T1TokenNumber numbers[NUMBERS_CAP];
     uint32_t string_literal_enum_value;
     uint32_t regs_size;
     uint32_t tokens_size;
@@ -510,7 +510,7 @@ static void toktoken_string_match_tokens(
 }
 
 static void T1_token_set_number_flags(
-    TokToken * token)
+    T1Token * token)
 {
     //    const uint8_t scientific_ok =
     //        (bitflags & T1_TOKEN_FLAG_SCIENTIFIC_OK) > 0;
@@ -821,7 +821,7 @@ void T1_token_run(
     uint32_t matching_token_i = UINT32_MAX;
     uint32_t line_number = 1;
     
-    TokToken * previous_lit_token = NULL;
+    T1Token * previous_lit_token = NULL;
     uint32_t previous_lit_ascii_i = 0;
     uint32_t start_sz = 0;
     uint32_t mid_sz = 0;
@@ -882,7 +882,7 @@ void T1_token_run(
                 continue;
             }
             
-            TokToken * new = &tts->tokens[tts->tokens_size];
+            T1Token * new = &tts->tokens[tts->tokens_size];
             if (tts->tokens_size + 1 >= TOKENS_CAP) {
                 *good = 0;
                 tts->good = 0;
@@ -1000,7 +1000,7 @@ uint32_t T1_token_get_token_count(void) {
     return tts->tokens_size;
 }
 
-TokToken * T1_token_get_token_at(
+T1Token * T1_token_get_token_at(
     const uint32_t token_i)
 {
     return &tts->tokens[token_i];

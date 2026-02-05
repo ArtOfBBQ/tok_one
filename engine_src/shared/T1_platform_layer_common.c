@@ -95,7 +95,7 @@ T1_platform_write_rgba_to_writables(
     bool32_t * good)
 {
     uint32_t bmp_cap = rgba_size + 10000;
-    uint8_t * bmp = T1_mem_malloc_from_managed(bmp_cap);
+    uint8_t * bmp = T1_mem_malloc_managed(bmp_cap);
     uint32_t bmp_size = 0;
     
     for (

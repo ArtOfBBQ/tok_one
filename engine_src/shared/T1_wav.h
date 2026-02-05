@@ -16,14 +16,16 @@
 #include <assert.h>
 #endif
 
-void T1_wav_samples_to_wav(
+void
+T1_wav_samples_to_wav(
     unsigned char * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
     int16_t * samples,
     const uint32_t samples_size);
 
-void T1_wav_parse(
+void
+T1_wav_parse(
     int16_t * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,

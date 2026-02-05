@@ -30,26 +30,26 @@ void T1_mem_get_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap);
 
-void * T1_mem_malloc_from_unmanaged_aligned(
+void * T1_mem_malloc_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to);
 
 // __attribute__((used, noinline))
-void * T1_mem_malloc_from_unmanaged(size_t size);
+void * T1_mem_malloc_unmanaged(size_t size);
 
-void T1_mem_malloc_from_managed_page_aligned(
+void T1_mem_malloc_managed_page_aligned(
     void ** base_pointer_for_freeing,
     void ** aligned_subptr,
     const size_t subptr_size);
 
-#define T1_mem_malloc_from_managed(size) T1_mem_malloc_from_managed_internal(size, (char *)__FILE__, (char *)__func__);
-void * T1_mem_malloc_from_managed_internal(
+#define T1_mem_malloc_managed(size) T1_mem_malloc_managed_internal(size, (char *)__FILE__, (char *)__func__);
+void * T1_mem_malloc_managed_internal(
     size_t size,
     char * called_from_file,
     char * called_from_func);
-void * T1_mem_malloc_from_managed_infoless(size_t size);
+void * T1_mem_malloc_managed_infoless(size_t size);
 
-void T1_mem_free_from_managed(void * to_free);
+void T1_mem_free_managed(void * to_free);
 
 #ifdef __cplusplus
 }

@@ -438,7 +438,8 @@ int main(int argc, const char * argv[]) {
     GameWindowDelegate * window_delegate = [[GameWindowDelegate alloc] init];
     
     NSString * nsstring_app_name =
-        [NSString stringWithUTF8String:APPLICATION_NAME];
+        [NSString stringWithUTF8String:
+            T1_APP_NAME];
     [window setDelegate: window_delegate];
     [window setTitle: nsstring_app_name];
     [window makeMainWindow];
