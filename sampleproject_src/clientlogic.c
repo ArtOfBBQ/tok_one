@@ -126,13 +126,13 @@ static void request_teapots(void) {
     }
     #endif
     
-    font_settings->font_height = 75;
-    font_settings->i32.touch_id = -1;
-    font_settings->f32.rgba[0] = 0.7f;
-    font_settings->f32.rgba[1] = 1.0f;
-    font_settings->f32.rgba[2] = 1.0f;
-    font_settings->f32.rgba[3] = 1.0f;
-    text_request_label_renderable(
+    T1_text_props->font_height = 75;
+    T1_text_props->i32.touch_id = -1;
+    T1_text_props->f32.rgba[0] = 0.7f;
+    T1_text_props->f32.rgba[1] = 1.0f;
+    T1_text_props->f32.rgba[2] = 1.0f;
+    T1_text_props->f32.rgba[3] = 1.0f;
+    T1_text_request_label_renderable(
         /* int32_t with_object_id: */
             21,
         /* char * text_to_draw: */
@@ -145,7 +145,7 @@ static void request_teapots(void) {
             0.75f,
         /* float max_width: */
             1500.0f);
-    font_settings->i32.touch_id = -1;
+    T1_text_props->i32.touch_id = -1;
 }
 
 void T1_clientlogic_late_startup(void) {

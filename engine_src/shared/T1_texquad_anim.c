@@ -242,21 +242,20 @@ static void T1_texquad_anim_resolve_single(
         elapsed_so_far <=
             anim->public.duration_us);
     
-    T1TPair t;
-    t.now = (float)elapsed_so_far / (float)anim->public.duration_us;
-    log_assert(t.now <= 1.0f);
-    log_assert(t.now >= 0.0f);
-    log_assert(t.now >= anim->already_applied_t);
-    t.applied = anim->already_applied_t;
+    float t_now = (float)elapsed_so_far / (float)anim->public.duration_us;
+    log_assert(t_now <= 1.0f);
+    log_assert(t_now >= 0.0f);
+    log_assert(t_now >= anim->already_applied_t);
+    float t_applied = anim->already_applied_t;
     
-    log_assert(anim->already_applied_t <= t.now);
-    anim->already_applied_t = t.now;
+    log_assert(anim->already_applied_t <= t_now);
+    anim->already_applied_t = t_now;
     
-    t.now = T1_easing_t_to_eased_t(
-        t.now,
+    t_now = T1_easing_t_to_eased_t(
+        t_now,
         anim->public.easing_type);
-    t.applied = T1_easing_t_to_eased_t(
-        t.applied,
+    t_applied = T1_easing_t_to_eased_t(
+        t_applied,
         anim->public.easing_type);
     
     if (anim->endpoints) {
@@ -268,9 +267,9 @@ static void T1_texquad_anim_resolve_single(
             /* const int32_t touch_id: */
                 anim->public.affect_touch_id,
             /* const float t_applied: */
-                t.applied,
+                t_applied,
             /* const float t_now: */
-                t.now,
+                t_now,
             /* const float * goal_gpu_vals_f32: */
                 anim->public.gpu_f32_active ?
                     (float *)
@@ -286,9 +285,9 @@ static void T1_texquad_anim_resolve_single(
             /* const int32_t touch_id: */
                 anim->public.affect_touch_id,
             /* const float t_applied: */
-                t.applied,
+                t_applied,
             /* const float t_now: */
-                t.now,
+                t_now,
             /* const float * anim_gpu_vals_f32: */
                 anim->public.gpu_f32_active ?
                     (float *)&anim->

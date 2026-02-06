@@ -76,7 +76,6 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 // 5. Files that are dependent on the GPU platform layer
 #include "T1_tex_array.c"
 #include "T1_tex_files.c"
-#include "T1_lines.c"
 #include "T1_zsprite.c"
 #include "T1_frame_anim.c"
 #include "T1_particle.c"
@@ -86,7 +85,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_text.c"
 #include "T1_ui_widget.c"
 #include "T1_profiler.c"
-#if 0
+#if 1
 #include "clientlogic.c" // requires text and uielement
 #else
 #include "clientlogic_particledesigner.c" // requires text and uielement

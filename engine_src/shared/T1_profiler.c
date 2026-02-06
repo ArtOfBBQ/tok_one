@@ -354,7 +354,7 @@ void T1_profiler_draw_labels(void) {
         font_settings->mat.alpha = 1.0f;
         font_settings->font_height = 18.0f;
         
-        font_settings->ignore_camera = true;
+        T1_text_props->ignore_camera = true;
         text_request_label_renderable(
             /* const int32_t with_object_id: */
                 profiler_object_id,

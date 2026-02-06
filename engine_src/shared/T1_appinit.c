@@ -430,7 +430,7 @@ void T1_appinit_before_gpu_init(
             return;
         }
         
-        text_init(
+        T1_text_init(
                 T1_mem_malloc_unmanaged,
             /* raw_fontmetrics_file_contents: */
                 font_metrics_file.contents,

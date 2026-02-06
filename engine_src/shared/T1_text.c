@@ -39,9 +39,9 @@ typedef struct PrefetchedLine {
     int32_t end_i;
 } PrefetchedLine;
 
-FontSettings * font_settings = NULL;
+T1TextFontSettings * T1_text_props = NULL;
 
-void text_init(
+void T1_text_init(
     void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size)
@@ -53,19 +53,19 @@ void text_init(
     #error
     #endif
     
-    if (!font_settings) {
-        font_settings = arg_text_malloc_func(sizeof(FontSettings));
+    if (!T1_text_props) {
+        T1_text_props = arg_text_malloc_func(sizeof(T1TextFontSettings));
         T1_texquad_construct(
-            &font_settings->f32,
-            &font_settings->i32);
+            &T1_text_props->f32,
+            &T1_text_props->i32);
         
-        font_settings->font_height = 30.0f;
+        T1_text_props->font_height = 30.0f;
         
-        font_settings->i32.tex_array_i = 0;
-        font_settings->f32.rgba[0] = 1.0f;
-        font_settings->f32.rgba[1] = 1.0f;
-        font_settings->f32.rgba[2] = 1.0f;
-        font_settings->f32.rgba[3] = 1.0f;
+        T1_text_props->i32.tex_array_i = 0;
+        T1_text_props->f32.rgba[0] = 1.0f;
+        T1_text_props->f32.rgba[1] = 1.0f;
+        T1_text_props->f32.rgba[2] = 1.0f;
+        T1_text_props->f32.rgba[3] = 1.0f;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -92,12 +92,12 @@ void text_init(
 }
 
 static float get_newline_advance(void) {
-    return font_settings->font_height * 1.1f;
+    return T1_text_props->font_height * 1.1f;
 }
 
 static float get_advance_width(const char input) {
     if (input == ' ') {
-        return font_settings->font_height * 0.5f;
+        return T1_text_props->font_height * 0.5f;
     }
     
     if (input == '\0' || input == '\n') { return 0.0f; }
@@ -113,7 +113,7 @@ static float get_advance_width(const char input) {
     return
         (codepoint_metrics[i].advance_width *
             global_font_metrics->scale_factor *
-                font_settings->font_height) /
+                T1_text_props->font_height) /
                     global_font_metrics->font_size;
 }
 
@@ -131,7 +131,7 @@ static float get_left_side_bearing(const char input) {
     return
         (codepoint_metrics[i].left_side_bearing *
             global_font_metrics->scale_factor *
-                font_settings->font_height) /
+                T1_text_props->font_height) /
                     global_font_metrics->font_size;
 }
 
@@ -151,9 +151,9 @@ static float get_y_offset(const char input) {
     return
         ((-codepoint_metrics[i].y1 *
             global_font_metrics->scale_factor *
-                font_settings->font_height) /
+                T1_text_props->font_height) /
                     global_font_metrics->font_size) +
-        (font_settings->font_height * 0.75f);
+        (T1_text_props->font_height * 0.75f);
 }
 
 static float get_next_word_width(
@@ -254,7 +254,7 @@ static void prefetch_label_lines(
     log_assert(widest_line_width > 0.0f);
 }
 
-void text_request_label_offset_around(
+void T1_text_request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -263,10 +263,10 @@ void text_request_label_offset_around(
     const float max_width)
 {
     log_assert(max_width > 0.0f);
-    log_assert(font_settings->font_height > 0);
-    log_assert(font_settings->f32.rgba[3] > -0.02f);
-    log_assert(font_settings->f32.rgba[3] < 1.05f);
-    log_assert(font_settings->font_height > 0.05f);
+    log_assert(T1_text_props->font_height > 0);
+    log_assert(T1_text_props->f32.rgba[3] > -0.02f);
+    log_assert(T1_text_props->f32.rgba[3] < 1.05f);
+    log_assert(T1_text_props->font_height > 0.05f);
     log_assert(text_to_draw != NULL);
     log_assert(text_to_draw[0] != '\0');
     
@@ -283,9 +283,9 @@ void text_request_label_offset_around(
     T1FlatTexQuadRequest letter;
     
     float cur_y_offset_pixelspace =
-        (font_settings->font_height * 0.42f) +
+        (T1_text_props->font_height * 0.42f) +
         ((lines_size - 1) *
-            font_settings->font_height * 0.5f);
+            T1_text_props->font_height * 0.5f);
     
     for (
         uint32_t line_i = 0;
@@ -293,7 +293,7 @@ void text_request_label_offset_around(
         line_i++)
     {
         float cur_x_offset_pixelspace =
-            (font_settings->font_height * 0.5f) -
+            (T1_text_props->font_height * 0.5f) -
             (lines[line_i].width * 0.5f);
         
         for (
@@ -311,8 +311,8 @@ void text_request_label_offset_around(
             
             T1_texquad_fetch_next(&letter);
             
-            letter.gpu->i32 = font_settings->i32;
-            letter.gpu->f32 = font_settings->f32;
+            letter.gpu->i32 = T1_text_props->i32;
+            letter.gpu->f32 = T1_text_props->f32;
             
             letter.gpu->f32.xyz[0] =
                 T1_render_view_screen_x_to_x_noz(
@@ -324,10 +324,10 @@ void text_request_label_offset_around(
             
             letter.gpu->f32.size_xy[0] =
                 T1_render_view_screen_width_to_width_noz(
-                    font_settings->font_height);
+                    T1_text_props->font_height);
             letter.gpu->f32.size_xy[1] =
                 T1_render_view_screen_height_to_height_noz(
-                    font_settings->font_height);
+                    T1_text_props->font_height);
             
             letter.cpu->zsprite_id = with_id;
             
@@ -345,7 +345,7 @@ void text_request_label_offset_around(
                 T1_render_view_screen_height_to_height_noz(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
-                        (font_settings->font_height * 0.5f)));
+                        (T1_text_props->font_height * 0.5f)));
             
             letter.gpu->i32.tex_array_i = 0;
             letter.gpu->i32.tex_slice_i =
@@ -362,7 +362,7 @@ void text_request_label_offset_around(
 }
 
 void
-text_request_label_around_x_at_top_y(
+T1_text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -376,7 +376,7 @@ text_request_label_around_x_at_top_y(
     prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
     log_assert(lines_size < MAX_LINES);
     
-    text_request_label_offset_around(
+    T1_text_request_label_offset_around(
         /* const int32_t with_id: */
             with_object_id,
         /* const char * text_to_draw: */
@@ -392,7 +392,7 @@ text_request_label_around_x_at_top_y(
             max_width);
 }
 
-void text_request_label_around(
+void T1_text_request_label_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -403,7 +403,7 @@ void text_request_label_around(
     log_assert(text_to_draw != NULL);
     log_assert(text_to_draw[0] != '\0');
     
-    text_request_label_offset_around(
+    T1_text_request_label_offset_around(
         /* const int32_t with_id: */
             with_id,
         /* const char * text_to_draw: */
@@ -418,7 +418,7 @@ void text_request_label_around(
             max_width);
 }
 
-void text_request_label_renderable(
+void T1_text_request_label_renderable(
     const int32_t with_id,
     const char * text_to_draw,
     const float left_pixelspace,
@@ -442,14 +442,14 @@ void text_request_label_renderable(
     T1FlatTexQuadRequest letter;
     
     float letter_width = T1_render_view_screen_width_to_width_noz(
-        font_settings->font_height);
+        T1_text_props->font_height);
     float letter_height = T1_render_view_screen_height_to_height_noz(
-        font_settings->font_height);
+        T1_text_props->font_height);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
             cur_x_offset +=
-                font_settings->font_height / 2;
+                T1_text_props->font_height / 2;
             i++;
             
             float next_word_width = get_next_word_width(
@@ -479,8 +479,8 @@ void text_request_label_renderable(
         
         T1_texquad_fetch_next(&letter);
         
-        letter.gpu->i32 = font_settings->i32;
-        letter.gpu->f32 = font_settings->f32;
+        letter.gpu->i32 = T1_text_props->i32;
+        letter.gpu->f32 = T1_text_props->f32;
         
         letter.gpu->f32.xyz[0] =
             T1_render_view_screen_x_to_x_noz(
@@ -505,7 +505,7 @@ void text_request_label_renderable(
         }
         
         letter.gpu->i32.touch_id =
-            font_settings->i32.touch_id;
+            T1_text_props->i32.touch_id;
         
         letter.cpu->offset_xyz[0] =
             T1_render_view_screen_width_to_width_noz(
@@ -534,18 +534,18 @@ void text_request_label_renderable(
     }
 }
 
-void text_request_debug_text(const char * text)
+void T1_text_request_debug_text(const char * text)
 {
     T1_texquad_delete(
         T1_ZSPRITEID_DEBUG_TEXT);
     
-    font_settings->font_height = 16.0f;
-    font_settings->f32.rgba[0] = 1.0f;
-    font_settings->f32.rgba[1] = 1.0f;
-    font_settings->f32.rgba[2] = 1.0f;
-    font_settings->f32.rgba[3] = 1.0f;
-    font_settings->i32.touch_id = -1;
-    text_request_label_renderable(
+    T1_text_props->font_height = 16.0f;
+    T1_text_props->f32.rgba[0] = 1.0f;
+    T1_text_props->f32.rgba[1] = 1.0f;
+    T1_text_props->f32.rgba[2] = 1.0f;
+    T1_text_props->f32.rgba[3] = 1.0f;
+    T1_text_props->i32.touch_id = -1;
+    T1_text_request_label_renderable(
         /* with_id               : */
             T1_ZSPRITEID_DEBUG_TEXT,
         /* char * text_to_draw   : */
@@ -553,7 +553,7 @@ void text_request_debug_text(const char * text)
         /* float left_pixelspace : */
             20.0f,
         /* float mid_y_pixelspace  : */
-            40.0f + font_settings->font_height,
+            40.0f + T1_text_props->font_height,
         /* z                     : */
             0.05f,
         /* float max_width       : */
@@ -562,7 +562,7 @@ void text_request_debug_text(const char * text)
 
 #define FPS_FRAMES_MAX 10
 uint64_t ms_last_n_frames[FPS_FRAMES_MAX];
-void text_request_fps_counter(
+void T1_text_request_fps(
     uint64_t elapsed_us)
 {
     #ifdef __ARM_NEON
@@ -607,14 +607,14 @@ void text_request_fps_counter(
     
     T1_texquad_delete(T1_ZSPRITEID_FPS_COUNTER);
     
-    font_settings->font_height = 16.0f;
-    font_settings->f32.rgba[0] = 1.0f;
-    font_settings->f32.rgba[1] = 1.0f;
-    font_settings->f32.rgba[2] = 1.0f;
-    font_settings->f32.rgba[3] = 1.0f;
-    font_settings->i32.touch_id = -1;
+    T1_text_props->font_height = 16.0f;
+    T1_text_props->f32.rgba[0] = 1.0f;
+    T1_text_props->f32.rgba[1] = 1.0f;
+    T1_text_props->f32.rgba[2] = 1.0f;
+    T1_text_props->f32.rgba[3] = 1.0f;
+    T1_text_props->i32.touch_id = -1;
     
-    text_request_label_renderable(
+    T1_text_request_label_renderable(
         /* with_id               : */
             T1_ZSPRITEID_FPS_COUNTER,
         /* char * text_to_draw   : */
@@ -629,7 +629,7 @@ void text_request_fps_counter(
             T1_render_views->cpu[0].width);
 }
 
-void text_request_top_touchable_id(
+void T1_text_request_top_touch_id(
     int32_t top_touchable_id)
 {
     T1_texquad_delete(T1_ZSPRITEID_FPS_COUNTER);
@@ -644,14 +644,14 @@ void text_request_top_touchable_id(
     T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[2]);
     T1_std_strcat_cap(fps_string, 512, "]");
     
-    font_settings->font_height = 16.0f;
-    font_settings->f32.rgba[0] = 1.0f;
-    font_settings->f32.rgba[1] = 1.0f;
-    font_settings->f32.rgba[2] = 1.0f;
-    font_settings->f32.rgba[3] = 1.0f;
-    font_settings->i32.touch_id = -1;
+    T1_text_props->font_height = 16.0f;
+    T1_text_props->f32.rgba[0] = 1.0f;
+    T1_text_props->f32.rgba[1] = 1.0f;
+    T1_text_props->f32.rgba[2] = 1.0f;
+    T1_text_props->f32.rgba[3] = 1.0f;
+    T1_text_props->i32.touch_id = -1;
     
-    text_request_label_renderable(
+    T1_text_request_label_renderable(
         /* with_id               : */
             T1_ZSPRITEID_FPS_COUNTER,
         /* char * text_to_draw   : */

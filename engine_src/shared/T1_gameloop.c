@@ -64,15 +64,15 @@ static void show_dead_simple_text(
     T1_camera->xyz_angle[1] = 0.0f;
     T1_camera->xyz_angle[2] = 0.0f;
     
-    font_settings->font_height = 20.0f;
-    font_settings->f32.rgba[0] = 1.0f;
-    font_settings->f32.rgba[1] = 1.0f;
-    font_settings->f32.rgba[2] = 1.0f;
-    font_settings->f32.rgba[3] = 1.0f;
+    T1_text_props->font_height = 20.0f;
+    T1_text_props->f32.rgba[0] = 1.0f;
+    T1_text_props->f32.rgba[1] = 1.0f;
+    T1_text_props->f32.rgba[2] = 1.0f;
+    T1_text_props->f32.rgba[3] = 1.0f;
     
-    log_assert(font_settings->i32.tex_array_i == 0);
+    log_assert(T1_text_props->i32.tex_array_i == 0);
     
-    text_request_label_renderable(
+    T1_text_request_label_renderable(
         /* const uint32_t with_object_id: */
             0,
         /* const char * text_to_draw: */
@@ -411,11 +411,11 @@ void T1_gameloop_update_before_render_pass(
     }
     
     if (T1_global->draw_fps) {
-        text_request_fps_counter(
+        T1_text_request_fps(
             /* uint64_t elapsed_us: */
                 T1_global->elapsed);
     } else if (T1_global->draw_top_touchable_id) {
-        text_request_top_touchable_id(
+        T1_text_request_top_touch_id(
             T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                 touch_id_top);
     }

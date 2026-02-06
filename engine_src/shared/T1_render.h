@@ -10,7 +10,6 @@
 #include "T1_platform_layer.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_cpu_to_gpu.h"
-#include "T1_lines.h"
 #include "T1_texquad.h"
 #include "T1_zsprite.h"
 #include "T1_particle.h"

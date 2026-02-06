@@ -181,8 +181,8 @@ void T1_term_render(void) {
     T1_texquad_delete(T1_trms->labels_object_id);
     
     float previous_font_height =
-        font_settings->font_height;
-    font_settings->font_height =
+        T1_text_props->font_height;
+    T1_text_props->font_height =
         T1_TERM_FONT_SIZE;
     
     // draw the terminal's history as a label
@@ -225,17 +225,17 @@ void T1_term_render(void) {
     log_append(T1_trms->history + char_offset);
     log_append_char('\n');
     
-    font_settings->f32.rgba[0] =
+    T1_text_props->f32.rgba[0] =
         T1_trms->font_color[0];
-    font_settings->f32.rgba[1] =
+    T1_text_props->f32.rgba[1] =
         T1_trms->font_color[1];
-    font_settings->f32.rgba[2] =
+    T1_text_props->f32.rgba[2] =
         T1_trms->font_color[2];
-    font_settings->f32.rgba[3] =
+    T1_text_props->f32.rgba[3] =
         T1_trms->font_color[3];
-    font_settings->i32.touch_id = -1;
+    T1_text_props->i32.touch_id = -1;
     
-    text_request_label_renderable(
+    T1_text_request_label_renderable(
         /* const int32_t with_object_id: */
             T1_trms->labels_object_id,
         /* const char * text_to_draw: */
@@ -253,15 +253,15 @@ void T1_term_render(void) {
                 (T1_TERM_WHITESPACE * 2));
     
     if (T1_trms->cur_command[0] == '\0') {
-        font_settings->font_height =
+        T1_text_props->font_height =
             previous_font_height;
         requesting_label_update = false;
         return;
     }
     
-    font_settings->i32.touch_id = -1;
+    T1_text_props->i32.touch_id = -1;
     // the terminal's current input as a label
-    text_request_label_renderable(
+    T1_text_request_label_renderable(
         /* with_object_id: */
             T1_trms->labels_object_id,
         /* const char * text_to_draw: */
@@ -277,7 +277,7 @@ void T1_term_render(void) {
             T1_render_views->cpu[0].width -
                 (T1_TERM_WHITESPACE * 2));
     
-    font_settings->font_height =
+    T1_text_props->font_height =
         previous_font_height;
     
     requesting_label_update = false;

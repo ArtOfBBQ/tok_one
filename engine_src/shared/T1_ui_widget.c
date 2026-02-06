@@ -397,15 +397,15 @@ static void redraw_dirty_labels(void) {
             xy_screen[1] = T1_ui_widget_list[i].props.screen_y;
             z = T1_ui_widget_list[i].props.z - 0.01f;
             
-            font_settings->font_height = (T1_ui_widget_list[i].
+            T1_text_props->font_height = (T1_ui_widget_list[i].
                 props.height_screen * 2) / 3;
-            font_settings->f32.rgba[0] = 0.5f;
-            font_settings->f32.rgba[1] = 1.0f;
-            font_settings->f32.rgba[2] = 0.5f;
-            font_settings->f32.rgba[3] = 1.0f;
+            T1_text_props->f32.rgba[0] = 0.5f;
+            T1_text_props->f32.rgba[1] = 1.0f;
+            T1_text_props->f32.rgba[2] = 0.5f;
+            T1_text_props->f32.rgba[3] = 1.0f;
             
             if (full_label[0] != '\0') {
-                text_request_label_around(
+                T1_text_request_label_around(
                     /* const int32_t with_object_id: */
                         T1_ui_widget_list[i].
                             label_zsprite_id,

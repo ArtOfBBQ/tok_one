@@ -1,5 +1,5 @@
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef T1_TEXT_H
+#define T1_TEXT_H
 
 #include "T1_platform_layer.h"
 #include "T1_texquad.h"
@@ -12,24 +12,16 @@ typedef struct FontSettings {
     T1GPUTexQuadf32 f32;
     T1GPUTexQuadi32 i32;
     float font_height;
-} FontSettings;
+} T1TextFontSettings;
 
-extern FontSettings * font_settings;
+extern T1TextFontSettings * T1_text_props;
 
-void text_init(
+void T1_text_init(
     void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size);
 
-/*
-This function includes offsets, which is only useful if you
-are setting up your label as part of a group of objects and
-you're intending to move the object (that includes this label)
-to a new location later with a ScheduledAnimation. It will then
-retain the offsets. If you don't care about this just use the
-function below which keeps all offsets at 0
-*/
-void text_request_label_offset_around(
+void T1_text_request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -37,7 +29,7 @@ void text_request_label_offset_around(
     const float z,
     const float max_width);
 
-void text_request_label_around_x_at_top_y(
+void T1_text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -45,7 +37,7 @@ void text_request_label_around_x_at_top_y(
     const float z,
     const float max_width);
 
-void text_request_label_around(
+void T1_text_request_label_around(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -53,7 +45,7 @@ void text_request_label_around(
     const float z,
     const float max_width);
 
-void text_request_label_renderable(
+void T1_text_request_label_renderable(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
@@ -61,14 +53,14 @@ void text_request_label_renderable(
     const float z,
     const float max_width);
 
-void text_request_debug_text(const char * text);
-void text_request_fps_counter(uint64_t elapsed_us);
+void T1_text_request_debug_text(const char * text);
+void T1_text_request_fps(uint64_t elapsed_us);
 
-void text_request_top_touchable_id(
+void T1_text_request_top_touch_id(
     int32_t top_touchable_id);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // T1_TEXT_H

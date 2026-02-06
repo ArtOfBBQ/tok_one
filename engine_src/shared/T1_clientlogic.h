@@ -18,7 +18,6 @@ extern "C" {
 #include "T1_collision.h"
 #include "T1_tex_array.h"
 #include "T1_tex_files.h"
-#include "T1_lines.h"
 #include "T1_texquad.h"
 #include "T1_zsprite.h"
 #include "T1_zlight.h"

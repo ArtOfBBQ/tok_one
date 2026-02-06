@@ -501,8 +501,8 @@ static void redraw_all_sliders(void) {
                             indexed_field.offset));
                 break;
                 default:
-                    font_settings->font_height = 20;
-                    text_request_label_around(
+                    T1_text_props->font_height = 20;
+                    T1_text_request_label_around(
                         /* const int32_t with_object_id: */
                             pds->regs[pds->regs_size].label_zsprite_id,
                         /* const char * text_to_draw: */
