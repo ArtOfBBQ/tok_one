@@ -1,5 +1,7 @@
 #include "T1_zsprite.h"
 
+T1zSpriteCollection * T1_zsprite_list = NULL;
+
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_sanity_check_zsprite_vals(
     T1GPUzSprite * recip_gpu,
@@ -34,15 +36,6 @@ static void assert_sanity_check_zsprite_vals(
     }
 }
 
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#define assert_sanity_check_zsprite_vals(x)
-#define assert_sanity_check_zsprite_vals_by_id(x)
-#else
-#error
-#endif
-
-T1zSpriteCollection * T1_zsprite_list = NULL;
-
 static void assert_sanity_check_zsprite_vals_by_id(
     const int32_t zp_i)
 {
@@ -51,6 +44,13 @@ static void assert_sanity_check_zsprite_vals_by_id(
         &T1_zsprite_list->cpu_data[zp_i].
             simd_stats);
 }
+
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#define assert_sanity_check_zsprite_vals(x, y)
+#define assert_sanity_check_zsprite_vals_by_id(id)
+#else
+#error
+#endif
 
 void T1_zsprite_init(void) {
     T1_zsprite_list = (T1zSpriteCollection *)

@@ -24,8 +24,8 @@ static void assert_sanity_check_texquad_vals(
 }
 
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#define assert_sanity_check_zsprite_vals(x)
-#define assert_sanity_check_zsprite_vals_by_id(x)
+#define assert_sanity_check_texquad_vals(x, y)
+#define assert_sanity_check_texquad_vals_by_id(id)
 #else
 #error
 #endif
