@@ -6,12 +6,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// #define WAV_SILENCE
 #ifndef T1_WAV_SILENCE
 #include <stdio.h>
 #endif
 
-// #define WAV_IGNORE_ASSERTS
 #ifndef T1_WAV_IGNORE_ASSERTS
 #include <assert.h>
 #endif

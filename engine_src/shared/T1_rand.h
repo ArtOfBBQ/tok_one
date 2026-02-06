@@ -1,5 +1,5 @@
-#ifndef TOK_RANDOM_H
-#define TOK_RANDOM_H
+#ifndef T1_RAND_H
+#define T1_RAND_H
 
 #include "T1_simd.h"
 #include "T1_std.h"
@@ -16,14 +16,14 @@ extern "C" {
 #define FLOAT_SEQUENCE_SIZE  4760
 #define RANDOM_SEQUENCE_SIZE  999
 
-extern uint32_t random_seed;
+extern uint32_t T1_rand_seed;
 
 int32_t T1_rand(void);
 int32_t T1_rand_at_i(const uint64_t index);
 
 SIMD_FLOAT T1_rand_simd_at_i(const uint64_t index);
 
-void T1_rand_shuffle_array(
+void T1_rand_shuf_array(
     void * array,
     const uint32_t array_size,
     const uint32_t element_size);
@@ -32,4 +32,4 @@ void T1_rand_shuffle_array(
 }
 #endif
 
-#endif // TOK_RANDOM_H
+#endif // T1_RANDOM_H

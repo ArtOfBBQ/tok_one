@@ -100,7 +100,7 @@ static void show_dead_simple_text(
     T1_global->postproc_consts.
         lights_size = 0;
     
-    T1_renderer_hardware_render(
+    T1_render_update(
             frame_data,
         /* uint64_t elapsed_us: */
             elapsed);
@@ -268,7 +268,7 @@ void T1_gameloop_update_before_render_pass(
                     T1_render_views->cpu[rv_i].
                         write_array_i >= 0)
                 {
-                    T1_texture_array_delete_slice(
+                    T1_tex_array_delete_slice(
                         T1_render_views->cpu[rv_i].
                             write_array_i,
                         T1_render_views->cpu[rv_i].
@@ -283,7 +283,7 @@ void T1_gameloop_update_before_render_pass(
             // use an internal render size
             // determined by settings, not window
             int32_t rv_i =
-                T1_texture_array_create_new_render_view(
+                T1_tex_array_create_new_render_view(
                     (uint32_t)T1_global->
                         window_width,
                     (uint32_t)T1_global->
@@ -295,7 +295,7 @@ void T1_gameloop_update_before_render_pass(
                 T1_render_views->cpu[0].write_type ==
                     T1RENDERVIEW_WRITE_RENDER_TARGET);
             log_assert(
-                !T1_texture_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
+                !T1_tex_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
             
             T1_platform_gpu_update_window_viewport();
             T1_platform_gpu_update_internal_render_viewport(rv_i);
@@ -395,7 +395,7 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
-        T1_renderer_hardware_render(
+        T1_render_update(
             frame_data,
             T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE

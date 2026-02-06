@@ -16,15 +16,24 @@ void T1_clientlogic_early_startup(
     char * error_message)
 {
     uint32_t good;
-    T1_texture_files_preregister_png_resource("1001_normal.png", &good);
-    T1_texture_files_preregister_png_resource("1001_albedo.png", &good);
-    T1_texture_files_preregister_png_resource("blob1.png", &good);
-    T1_texture_files_preregister_png_resource("blob2.png", &good);
-    T1_texture_files_preregister_png_resource("blob3.png", &good);
-    T1_texture_files_preregister_png_resource("phoebus.png", &good);
-    T1_texture_files_preregister_png_resource("structuredart1.png", &good);
-    T1_texture_files_preregister_png_resource("structuredart2.png", &good);
-    T1_texture_files_preregister_png_resource("normalmap_rectangles.png", &good);
+    T1_tex_files_prereg_png_res(
+        "1001_normal.png", &good);
+    T1_tex_files_prereg_png_res(
+        "1001_albedo.png", &good);
+    T1_tex_files_prereg_png_res(
+        "blob1.png", &good);
+    T1_tex_files_prereg_png_res(
+        "blob2.png", &good);
+    T1_tex_files_prereg_png_res(
+        "blob3.png", &good);
+    T1_tex_files_prereg_png_res(
+        "phoebus.png", &good);
+    T1_tex_files_prereg_png_res(
+        "structuredart1.png", &good);
+    T1_tex_files_prereg_png_res(
+        "structuredart2.png", &good);
+    T1_tex_files_prereg_png_res(
+        "normalmap_rectangles.png", &good);
     
     assert(good);
     
@@ -200,7 +209,7 @@ void T1_clientlogic_late_startup(void) {
     request_teapots();
     
     T1Tex quad_tex =
-        T1_texture_array_get_filename_location(
+        T1_tex_array_get_filename_loc(
             "structuredart1.png");
     
     
@@ -262,7 +271,7 @@ void T1_clientlogic_late_startup(void) {
             /* PolygonRequest * stack_recipient: */
                 &quad);
         
-        T1Tex phoebus_tex = T1_texture_array_get_filename_location(
+        T1Tex phoebus_tex = T1_tex_array_get_filename_loc(
             /* const char * for_filename: */
                 "phoebus.png");
         quad.gpu_data->i32.base_mat_i32.texturearray_i = phoebus_tex.array_i;
@@ -590,7 +599,7 @@ void T1_clientlogic_window_resize(
     const uint32_t new_width,
     const uint32_t new_height)
 {
-    T1_texture_array_delete_slice(
+    T1_tex_array_delete_slice(
         T1_render_views->cpu[0].write_array_i,
         T1_render_views->cpu[0].write_slice_i);
     T1_render_views->cpu[0].write_array_i = -1;
@@ -599,7 +608,7 @@ void T1_clientlogic_window_resize(
     T1_render_view_delete(0);
     
     int32_t rv_i =
-        T1_texture_array_create_new_render_view(
+        T1_tex_array_create_new_render_view(
             new_width,
             new_height);
     

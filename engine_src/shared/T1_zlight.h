@@ -14,47 +14,6 @@
 extern "C" {
 #endif
 
-#if 0
-void x_rotate_zvertex_f3_known_cossin(
-    float inout_xyz[3],
-    const float cosf_angle,
-    const float sinf_angle);
-void x_rotate_zvertex_f3(
-    float inout_xyz[3],
-    const float angle);
-void x_rotate_zvertices_inplace(
-    SIMD_FLOAT * vec_to_rotate_y,
-    SIMD_FLOAT * vec_to_rotate_z,
-    const SIMD_FLOAT cos_angles,
-    const SIMD_FLOAT sin_angles);
-
-void y_rotate_zvertex_known_cossin(
-    float inout_xyz[3],
-    const float cos_angle,
-    const float sin_angle);
-void y_rotate_zvertex_f3(
-    float inout_xyz[3],
-    const float angle);
-void y_rotate_zvertices_inplace(
-    SIMD_FLOAT * vec_to_rotate_x,
-    SIMD_FLOAT * vec_to_rotate_z,
-    const SIMD_FLOAT cos_angles,
-    const SIMD_FLOAT sin_angles);
-
-void z_rotate_zvertex_f3_known_cossin(
-    float inout_xyz[3],
-    const float angle_cos,
-    const float angle_sin);
-void z_rotate_zvertex_f3(
-    float inout_xyz[3],
-    const float angle);
-void z_rotate_zvertices_inplace(
-    SIMD_FLOAT * vec_to_rotate_x,
-    SIMD_FLOAT * vec_to_rotate_y,
-    const SIMD_FLOAT cos_angles,
-    const SIMD_FLOAT sin_angles);
-#endif
-
 typedef struct {
     // you can make a group of lights and/or texquads by
     // giving them the same positive object_id, then make

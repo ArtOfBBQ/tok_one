@@ -19,6 +19,7 @@
 typedef struct {
     float offset_xyz[3];
     int32_t zsprite_id;
+    bool8_t one_frame_only;
     bool8_t committed;
     bool8_t visible;
     bool8_t deleted;

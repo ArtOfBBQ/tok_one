@@ -12,7 +12,7 @@ the resources directory
 uint64_t T1_platform_get_resource_size(const char * filename)
 {
     char pathfile[512];
-    T1_platform_resource_filename_to_pathfile(
+    T1_platform_res_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
         /* assert_capacity: */ 512);
@@ -141,9 +141,9 @@ T1_platform_write_rgba_to_writables(
 }
 
 
-bool32_t T1_platform_resource_exists(const char * resource_name) {
+bool32_t T1_platform_res_exists(const char * resource_name) {
     char pathfile[500];
-    T1_platform_resource_filename_to_pathfile(
+    T1_platform_res_filename_to_pathfile(
         resource_name,
         /* recipient: */ pathfile,
         /* capacity: */ 500);
@@ -157,7 +157,7 @@ void T1_platform_read_resource_file(
     T1FileBuffer * out_preallocatedbuffer)
 {
     char pathfile[500];
-    T1_platform_resource_filename_to_pathfile(
+    T1_platform_res_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
         /* capacity: */ 500);
@@ -169,7 +169,7 @@ void T1_platform_read_resource_file(
             out_preallocatedbuffer);
 }
 
-void T1_platform_resource_filename_to_pathfile(
+void T1_platform_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t assert_capacity)
@@ -186,14 +186,14 @@ void T1_platform_resource_filename_to_pathfile(
     assert(recipient != NULL);
     
     char resource_path[256];
-    T1_platform_get_resources_path(resource_path, 256);
+    T1_platform_get_res_dir(resource_path, 256);
     T1_std_strcpy_cap(
         recipient,
         assert_capacity,
         resource_path);
     // uint32_t separator_size = platform_get_directory_separator_size();
     char separator[MAX_SEPARATOR_SIZE];
-    T1_platform_get_directory_separator(
+    T1_platform_get_dir_separator(
         /* recipient: */ separator);
     T1_std_strcat_cap(
         recipient,
@@ -224,7 +224,7 @@ void T1_platform_writable_filename_to_pathfile(
     assert(recipient != NULL);
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t separator_size = T1_platform_get_directory_separator_size();
+    uint32_t separator_size = T1_platform_get_dir_separator_size();
     uint32_t filename_length = (uint32_t)T1_std_strlen(filename);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
@@ -232,7 +232,7 @@ void T1_platform_writable_filename_to_pathfile(
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];
-    T1_platform_get_directory_separator(/* recipient: */ separator);
+    T1_platform_get_dir_separator(/* recipient: */ separator);
     
     char separator_and_filename[MAX_FILENAME_SIZE];
     T1_std_strcpy_cap(
@@ -245,7 +245,7 @@ void T1_platform_writable_filename_to_pathfile(
         filename);
     
     char writables_path[256];
-    T1_platform_get_writables_path(writables_path, 256);
+    T1_platform_get_writables_dir(writables_path, 256);
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t writables_path_length =
@@ -276,7 +276,7 @@ void T1_platform_writable_filename_to_pathfile(
     log_assert(recipient[0] != '\0');
 }
 
-void T1_platform_delete_writable(
+void T1_platform_del_writable(
     const char * writable_filename)
 {
     char filepath[500];
@@ -289,7 +289,7 @@ void T1_platform_delete_writable(
         /* const uint32_t assert_capacity: */
             500);
     
-    T1_platform_delete_file(writable_filename);
+    T1_platform_del_file(writable_filename);
 }
 
 void T1_platform_layer_start_window_resize(

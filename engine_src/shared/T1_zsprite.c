@@ -70,11 +70,13 @@ void T1_zsprite_fetch_next(
         zp_i < T1_zsprite_list->size;
         zp_i++)
     {
-        if (T1_zsprite_list->cpu_data[zp_i].deleted)
+        if (
+            T1_zsprite_list->cpu_data[zp_i].
+                deleted)
         {
-            stack_recipient->cpu_data     =
+            stack_recipient->cpu_data =
                 &T1_zsprite_list->cpu_data[zp_i];
-            stack_recipient->gpu_data     =
+            stack_recipient->gpu_data =
                 &T1_zsprite_list->gpu_data[zp_i];
             stack_recipient->cpu_data->committed = false;
             break;
@@ -93,10 +95,12 @@ void T1_zsprite_fetch_next(
                 gpu_data[T1_zsprite_list->size];
         stack_recipient->cpu_data[T1_zsprite_list->size].
             deleted = false;
-        stack_recipient->cpu_data->committed = false;
+        stack_recipient->cpu_data->
+            committed = false;
         
         T1_zsprite_list->size += 1;
-        log_assert(T1_zsprite_list->size + 1 < T1_ZSPRITES_CAP);
+        log_assert(T1_zsprite_list->size + 1 <
+            T1_ZSPRITES_CAP);
     }
     
     return;
@@ -193,7 +197,7 @@ void T1_zsprite_delete_all(void) {
     T1_zsprite_list->size = 0;
 }
 
-float T1_zsprite_get_x_multiplier_for_width(
+static float T1_zsprite_get_x_multiplier_for_width(
     T1CPUzSprite * for_poly,
     const float for_width)
 {
@@ -219,7 +223,8 @@ float T1_zsprite_get_x_multiplier_for_width(
     return return_value;
 }
 
-float T1_zsprite_get_z_multiplier_for_depth(
+#if 0
+static float T1_zsprite_get_z_multiplier_for_depth(
     T1CPUzSprite * for_poly,
     const float for_depth)
 {
@@ -241,6 +246,7 @@ float T1_zsprite_get_z_multiplier_for_depth(
     
     return return_value;
 }
+#endif
 
 void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
@@ -1006,6 +1012,10 @@ void T1_zsprite_copy_to_frame_data(
     IdPair * recip_ids,
     uint32_t * recip_size)
 {
+    log_assert(*recip_size == 0);
+    
+    log_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
+    
     T1_std_memcpy(
         /* void * dest: */
             recip,

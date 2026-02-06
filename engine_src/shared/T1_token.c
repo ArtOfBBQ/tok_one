@@ -1,22 +1,24 @@
 #include "T1_token.h"
 
-static void T1_tokenizer_strcat(
-    char * recipient,
-    const char * to_append)
+static void T1_token_strcat(
+    char * recip,
+    const uint32_t cap,
+    const char * to_cat)
 {
     uint32_t i = 0;
-    while (recipient[i] != '\0') {
+    while (recip[i] != '\0') {
+        if (i >= cap) { break; }
         i++;
     }
     
     uint32_t j = 0;
-    while (to_append[j] != '\0') {
-        recipient[i++] = to_append[j++];
+    while (to_cat[j] != '\0') {
+        if (i >= cap) { break; }
+        recip[i++] = to_cat[j++];
     }
     
-    recipient[i] = '\0';
+    recip[i] = '\0';
 }
-
 
 /*
 These options apply to the next token you register.
@@ -198,9 +200,10 @@ void T1_token_set_reg_start_pattern(
     }
     
     tts->next_reg.start_pattern.ascii[0] = '\0';
-    T1_tokenizer_strcat(
+    T1_token_strcat(
         /* char * recipient: */
             tts->next_reg.start_pattern.ascii,
+            PATTERN_ASCII_CAP,
         /* const char * to_append: */
             start_pattern);
     tts->next_reg.start_pattern.active = 1;
@@ -238,11 +241,10 @@ void T1_token_set_reg_stop_pattern(
     }
     
     tts->next_reg.stop_patterns[pattern_index].ascii[0] = '\0';
-    T1_tokenizer_strcat(
-        /* char * recipient: */
-            tts->next_reg.stop_patterns[pattern_index].ascii,
-        /* const char * to_append: */
-            stop_pattern);
+    T1_token_strcat(
+        tts->next_reg.stop_patterns[pattern_index].ascii,
+        PATTERN_ASCII_CAP,
+        stop_pattern);
     tts->next_reg.stop_patterns[pattern_index].active = 1;
 }
 
@@ -296,26 +298,6 @@ void T1_token_set_string_literal(
     
     tts->string_literal_enum_value = enum_value;
     *good = 1;
-}
-
-static void T1_token_strcat(
-    char * recip,
-    const uint32_t cap,
-    const char * to_cat)
-{
-    uint32_t i = 0;
-    while (recip[i] != '\0') {
-        if (i >= cap) { break; }
-        i++;
-    }
-    
-    uint32_t j = 0;
-    while (to_cat[j] != '\0') {
-        if (i >= cap) { break; }
-        recip[i++] = to_cat[j++];
-    }
-    
-    recip[i] = '\0';
 }
 
 static char * copy_string_to_ascii_store(

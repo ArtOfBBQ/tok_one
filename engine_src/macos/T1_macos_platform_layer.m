@@ -2,7 +2,7 @@
 
 #include "T1_platform_layer.h"
 
-void T1_platform_get_writables_path(
+void T1_platform_get_writables_dir(
     char * recipient,
     const uint32_t recipient_size)
 {
@@ -83,7 +83,7 @@ float T1_platform_y_to_y(const float y) {
     return y;
 }
 
-void T1_platform_open_folder_in_window_if_possible(
+void T1_platform_open_dir_in_window_if_possible(
     const char * folderpath)
 {
     log_append("Trying to open folder: ");

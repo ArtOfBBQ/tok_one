@@ -16,24 +16,24 @@ All chunks have the following format:
 variable-sized field: the chunk data itself, of the size given in the previous field.
 a pad byte, if the chunk's length is not even
 */
-typedef struct WavChunkHeader {
+typedef struct {
     char ascii_id[4];
     uint32_t data_size;
-} WavChunkHeader;
+} T1WAVChunkHeader;
 
-typedef struct FormatChunkBody {
+typedef struct {
     uint16_t type; // Type of format (1 is PCM) - 2 byte integer
     uint16_t channels; // Number of Channels - 2 byte integer
     uint32_t sample_rate; // Sample Rate - u32. 44100 (CD), 48000 (DAT).
     uint32_t idontgetit; // (Sample Rate * BitsPerSample * Channels) / 8
     uint16_t must_be_four; // don't get this one either
     uint16_t bits_per_sample;
-} FormatChunkBody;
+} T1WAVFormatChunkBody;
 
 #define consume_struct(from_ptr, StructName) *(StructName *)from_ptr; from_ptr += sizeof(StructName);
 
 static uint32_t
-strings_are_equal(
+T1_wav_strings_are_equal(
     const char * string_1,
     const char * string_2)
 {
@@ -50,7 +50,7 @@ strings_are_equal(
 }
 
 static void
-check_strings_equal(
+T1_wav_check_strings_equal(
     char * actual,
     char * expected_nullterm,
     char * field_description,
@@ -110,39 +110,39 @@ T1_wav_samples_to_wav(
     T1_std_memcpy(recipient, &riff_header, sizeof(T1WAVFileHeader));
     recipient += sizeof(T1WAVFileHeader);
     
-    WavChunkHeader format_header;
+    T1WAVChunkHeader format_header;
     format_header.ascii_id[0] = 'f';
     format_header.ascii_id[1] = 'm';
     format_header.ascii_id[2] = 't';
     format_header.ascii_id[3] = ' ';
-    format_header.data_size = sizeof(FormatChunkBody);
+    format_header.data_size = sizeof(T1WAVFormatChunkBody);
     assert(format_header.data_size == 16);
     
-    T1_std_memcpy(recipient, &format_header, sizeof(WavChunkHeader));
-    recipient += sizeof(WavChunkHeader);
+    T1_std_memcpy(recipient, &format_header, sizeof(T1WAVChunkHeader));
+    recipient += sizeof(T1WAVChunkHeader);
     
-    FormatChunkBody format_body;
+    T1WAVFormatChunkBody format_body;
     format_body.type = 1;
     format_body.channels = 2;
     format_body.sample_rate = 44100;
     format_body.idontgetit = 176400;
     format_body.must_be_four = 4;
     format_body.bits_per_sample = 16;
-    assert(sizeof(FormatChunkBody) % 2 == 0); // no padding needed
+    assert(sizeof(T1WAVFormatChunkBody) % 2 == 0); // no padding needed
     
-    T1_std_memcpy(recipient, &format_body, sizeof(FormatChunkBody));
-    recipient += sizeof(FormatChunkBody);
+    T1_std_memcpy(recipient, &format_body, sizeof(T1WAVFormatChunkBody));
+    recipient += sizeof(T1WAVFormatChunkBody);
     
-    WavChunkHeader data_header;
+    T1WAVChunkHeader data_header;
     data_header.ascii_id[0] = 'd';
     data_header.ascii_id[1] = 'a';
     data_header.ascii_id[2] = 't';
     data_header.ascii_id[3] = 'a';
     data_header.data_size = samples_size * sizeof(int16_t);
-    assert(sizeof(WavChunkHeader) % 2 == 0); // no padding needed
+    assert(sizeof(T1WAVChunkHeader) % 2 == 0); // no padding needed
     
-    T1_std_memcpy(recipient, &data_header, sizeof(WavChunkHeader));
-    recipient += sizeof(WavChunkHeader);
+    T1_std_memcpy(recipient, &data_header, sizeof(T1WAVChunkHeader));
+    recipient += sizeof(T1WAVChunkHeader);
     
     if (samples_size % 2 == 1) {
         // add padding byte
@@ -158,10 +158,10 @@ T1_wav_samples_to_wav(
     
     #ifndef NDEBUG
     uint32_t before_sample_data_size_bytes =
-        sizeof(WavChunkHeader) +
-        sizeof(WavChunkHeader) +
+        sizeof(T1WAVChunkHeader) +
+        sizeof(T1WAVChunkHeader) +
         sizeof(T1WAVFileHeader) +
-        sizeof(FormatChunkBody);
+        sizeof(T1WAVFormatChunkBody);
     #endif
     assert(before_sample_data_size_bytes == 44);
     
@@ -182,7 +182,7 @@ T1_wav_parse(
     unsigned char * raw_file_at = raw_file;
     T1WAVFileHeader file_header = consume_struct(raw_file_at, T1WAVFileHeader);
     
-    check_strings_equal(
+    T1_wav_check_strings_equal(
         /* char * actual: */
             file_header.riff,
         /* char * expected_nullterm: */
@@ -204,7 +204,7 @@ T1_wav_parse(
         return;
     }
     
-    check_strings_equal(
+    T1_wav_check_strings_equal(
         /* char * actual: */
             file_header.wave,
         /* char * expected_nullterm: */
@@ -215,19 +215,19 @@ T1_wav_parse(
             good);
     if (!*good) { return; }
     
-    FormatChunkBody format_data = {0};
+    T1WAVFormatChunkBody format_data = {0};
     
     while (
         *good &&
         file_header.file_size > (((ptrdiff_t)raw_file_at - (ptrdiff_t)raw_file) +
-            (ptrdiff_t)(sizeof(WavChunkHeader) + 2)))
+            (ptrdiff_t)(sizeof(T1WAVChunkHeader) + 2)))
     {
         // assert((ptrdiff_t)(void *)raw_file_at % 32 == 0);
-        WavChunkHeader chunk_header =
-            consume_struct(raw_file_at, WavChunkHeader);
+        T1WAVChunkHeader chunk_header =
+            consume_struct(raw_file_at, T1WAVChunkHeader);
         
         if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "JUNK"))
         {
@@ -249,7 +249,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "bext"))
         {
@@ -264,7 +264,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "LGWV"))
         {
@@ -274,7 +274,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "ResU"))
         {
@@ -284,10 +284,10 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "ID3 ") ||
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "id3 "))
         {
@@ -296,7 +296,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "SMED"))
         {
@@ -305,7 +305,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "iXML"))
         {
@@ -314,7 +314,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "LIST"))
         {
@@ -323,7 +323,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "_PMX"))
         {
@@ -332,7 +332,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "FLLR"))
         {
@@ -341,7 +341,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "smpl"))
         {
@@ -350,7 +350,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "splp"))
         {
@@ -359,7 +359,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "sprg"))
         {
@@ -368,7 +368,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "spcl"))
         {
@@ -377,7 +377,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "spcc"))
         {
@@ -386,7 +386,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "srtn"))
         {
@@ -395,7 +395,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "spca"))
         {
@@ -404,7 +404,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "acid"))
         {
@@ -413,7 +413,7 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "inst"))
         {
@@ -422,11 +422,11 @@ T1_wav_parse(
                 raw_file_at += 1;
             }
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "fmt"))
         {
-            format_data = *(FormatChunkBody *)raw_file_at;
+            format_data = *(T1WAVFormatChunkBody *)raw_file_at;
             raw_file_at += chunk_header.data_size;
             
             #ifndef T1_WAV_IGNORE_ASSERTS
@@ -453,7 +453,7 @@ T1_wav_parse(
             assert(format_data.idontgetit == 176400);
             #endif
         } else if (
-            strings_are_equal(
+            T1_wav_strings_are_equal(
                 chunk_header.ascii_id,
                 "data"))
         {

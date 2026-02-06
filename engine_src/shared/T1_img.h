@@ -3,8 +3,8 @@ This file contains an image structure and some methods
 to play with it.
 */
 
-#ifndef DECODED_IMAGE_H
-#define DECODED_IMAGE_H
+#ifndef T1_IMG_H
+#define T1_IMG_H
 
 #define bool32_t uint32_t
 
@@ -27,14 +27,14 @@ typedef struct {
     uint32_t height;
     uint32_t pixel_count; // rgba_values_size / 4
     bool32_t good;
-} T1DecodedImage;
+} T1Img;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint64_t T1_decodedimage_get_sum_rgba(const T1DecodedImage * input);
-uint32_t T1_decodedimage_get_avg_rgba(const T1DecodedImage * input);
+uint64_t T1_img_get_sum_rgba(const T1Img * input);
+uint32_t T1_img_get_avg_rgba(const T1Img * input);
 
 /*
 you would overwrite the right half of the image by setting:
@@ -43,9 +43,9 @@ column_count=2
 at_column=2,
 at_row=1
 */
-void overwrite_subregion(
-    T1DecodedImage * whole_image,
-    const T1DecodedImage * new_image,
+void T1_img_overwrite_subregion(
+    T1Img * whole_image,
+    const T1Img * new_image,
     const uint32_t column_count,
     const uint32_t row_count,
     const uint32_t at_column,
@@ -55,4 +55,4 @@ void overwrite_subregion(
 }
 #endif
 
-#endif // DECODED_IMAGE_H
+#endif // T1_IMG_H

@@ -1,9 +1,8 @@
-#ifndef CPU_TO_GPU_TYPES_H
-#define CPU_TO_GPU_TYPES_H
+#ifndef T1_CPU_TO_GPU_H
+#define T1_CPU_TO_GPU_H
 
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_std.h"
-
 
 typedef struct {
     int32_t zsprite_id;
@@ -52,8 +51,8 @@ typedef struct
     uint32_t render_views_alloc_size;
     uint32_t postprocessing_constants_alloc_size;
     uint32_t frame_i;
-} T1GPUSharedDataCollection;
+} T1CPUToGPUData;
 
-extern T1GPUSharedDataCollection * gpu_shared_data_collection;
+extern T1CPUToGPUData * T1_cpu_to_gpu_data;
 
-#endif // CPU_TO_GPU_TYPES_H
+#endif // T1_CPU_TO_GPU_H

@@ -17,13 +17,15 @@ THE API FOR TRANSFORMING TEXT TO TOKENS (below)
 The tokenizer uses memory, so you need to initialize it (with malloc or your
 own malloc function) before doing anything else.
 */
-void T1_token_init(
+void
+T1_token_init(
     void * (* arg_memset_func)(void *, int, size_t),
     size_t (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(size_t),
     uint32_t * good);
 
-void T1_token_deinit(
+void
+T1_token_deinit(
     void (* arg_free_func)(void *));
 
 /*
@@ -32,7 +34,8 @@ reset() function in between each run to clear all registered tokens.
 
 You don't need to do this the 1st time, the init() also does a reset().
 */
-void T1_token_reset(uint32_t * good);
+void
+T1_token_reset(uint32_t * good);
 
 /*
 Before running the tokenizer, register your enums with some ascii values that
@@ -52,23 +55,39 @@ typedef enum : uint8_t {
     T1_TOKEN_STOREMODE_MIDDLE_STRING     // Register token, save string
 } T1TokenStoreMode;
 
-void T1_token_set_store_mode(const T1TokenStoreMode mode);
-void T1_token_set_reg_bitflags(
+void
+T1_token_set_store_mode(const T1TokenStoreMode mode);
+
+void
+T1_token_set_reg_bitflags(
     const uint8_t bitflags);
-void T1_token_clear_start_pattern(void);
-void T1_token_set_reg_start_pattern(
+
+void
+T1_token_clear_start_pattern(void);
+
+void
+T1_token_set_reg_start_pattern(
     const char * start_pattern);
-void T1_token_clear_stop_patterns(void);
-void T1_token_set_reg_stop_pattern(
+
+void
+T1_token_clear_stop_patterns(void);
+
+void
+T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
     const uint32_t pattern_index);
-void T1_token_set_reg_middle_cap(
+
+void
+T1_token_set_reg_middle_cap(
     const uint32_t middle_cap);
 
-void T1_token_set_string_literal(
+void
+T1_token_set_string_literal(
     const uint32_t enum_value,
     uint32_t * good);
-void T1_token_register(
+
+void
+T1_token_register(
     const uint32_t enum_value,
     uint32_t * good);
 
@@ -76,7 +95,8 @@ void T1_token_register(
 After setting everything up, run this function to actually do the work of
 transforming text into the tokens you specified
 */
-void T1_token_run(
+void
+T1_token_run(
     const char * input,
     uint32_t * good);
 
@@ -93,11 +113,11 @@ reset(), so use the data immediately or copy it if you need it permanently.
 If you need to know if a token representing a string literal is a number, or
 if it could be cast to a u16 without losing data, use the castable flags
 directly or use these convenience macros. For example:
-if (toktoken_is_u16(token)) {
+if (T1_token_is_u16(token)) {
     // your logic...
 }
 
-the toktoken_is_number(TokToken*) macro will return 0 if a number is too
+the T1_token_is_number(T1Token*) macro will return 0 if a number is too
 big for a uint64, even if it's composed of all numbers
 */
 typedef struct {
@@ -105,6 +125,7 @@ typedef struct {
     int64_t signed_int;
     double double_precision;
 } T1TokenNumber;
+
 #define T1_token_is_number(tokenptr) ((tokenptr)->castable_flags & 1)
 #define T1_token_fits_double(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
 #define T1_token_fits_float(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
@@ -125,8 +146,11 @@ typedef struct {
     uint16_t castable_flags;
 } T1Token;
 
-uint32_t T1_token_get_token_count(void);
-T1Token * T1_token_get_token_at(const uint32_t token_i);
+uint32_t
+T1_token_get_token_count(void);
 
+T1Token *
+T1_token_get_token_at(
+    const uint32_t token_i);
 
 #endif // T1_TOKEN_H

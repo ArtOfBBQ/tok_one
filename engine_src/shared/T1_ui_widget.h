@@ -7,7 +7,7 @@
 #include "T1_meta.h"
 #include "T1_io.h"
 #include "T1_zsprite.h"
-#include "T1_texture_array.h"
+#include "T1_tex_array.h"
 #include "T1_zsprite_anim.h"
 #include "T1_texquad_anim.h"
 #include "T1_text.h"

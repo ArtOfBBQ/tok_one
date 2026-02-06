@@ -3,32 +3,31 @@
 #if T1_TERM_ACTIVE == T1_ACTIVE
 
 #define T1_TERM_HIST_CAP 500000
-#define SINGLE_LINE_MAX 1024
+#define T1_TERM_SINGLE_LINE_MAX 1024
 typedef struct {
     void (* to_fullscreen_fncptr)(void);
-    char cur_command[SINGLE_LINE_MAX];
+    uint32_t history_size;
+    float font_color[4];
+    float font_rgb_cap[3];
+    float background_color[4];
+    int32_t back_object_id;
+    int32_t labels_object_id; // INT32_MAX - 1;
+    char cur_command[T1_TERM_SINGLE_LINE_MAX];
     char history[T1_TERM_HIST_CAP];
-} T1TerminalState;
+} T1TermState;
 
 bool8_t T1_term_active = false;
-static T1TerminalState * T1trms = NULL;
+static T1TermState * T1_trms = NULL;
 
-#define TERMINAL_WHITESPACE    7.0f
+#define T1_TERM_WHITESPACE    7.0f
 
-#define TERM_FONT_SIZE        18.0f
-#define TERM_Z                0.111f
-#define TERM_LABELS_Z         0.109f
-static uint32_t terminal_history_size = 0;
+#define T1_TERM_FONT_SIZE        18.0f
+#define T1_TERM_Z                0.111f
+#define T1_TERM_LABELS_Z         0.109f
 
-#define TERM_INPUT_BOX_HEIGHT (TERM_FONT_SIZE + (TERMINAL_WHITESPACE * 4))
-#define TERM_INPUT_BOX_MID_Y ((TERM_INPUT_BOX_HEIGHT * 0.5f) + TERMINAL_WHITESPACE)
+#define T1_TERM_INPUT_BOX_HEIGHT (T1_TERM_FONT_SIZE + (T1_TERM_WHITESPACE * 4))
+#define T1_TERM_INPUT_BOX_MID_Y ((T1_TERM_INPUT_BOX_HEIGHT * 0.5f) + T1_TERM_WHITESPACE)
 
-static float term_font_color[4];
-static float term_font_rgb_cap[3];
-static float term_background_color[4];
-
-static int32_t terminal_back_object_id = -1;
-static int32_t terminal_labels_object_id = INT32_MAX - 1;
 
 static bool32_t requesting_label_update = false;
 
@@ -49,92 +48,95 @@ static void T1_term_describe_zpolygon(
 }
 
 void T1_term_destroy_all(void) {
-    if (terminal_back_object_id >= 0) {
-        T1_texquad_delete(terminal_back_object_id);
+    if (T1_trms->back_object_id >= 0) {
+        T1_texquad_delete(
+            T1_trms->back_object_id);
     }
     
-    if (terminal_labels_object_id >= 0) {
+    if (T1_trms->labels_object_id >= 0) {
         T1_texquad_delete(
-            terminal_labels_object_id);
+            T1_trms->labels_object_id);
     }
 }
 
 static void T1_term_update_history_size(void) {
-    terminal_history_size = 0;
-    while (T1trms->history[terminal_history_size] != '\0') {
-        terminal_history_size++;
+    T1_trms->history_size = 0;
+    while (
+        T1_trms->history[T1_trms->history_size] != '\0')
+    {
+        T1_trms->history_size++;
     }
 }
 
 void T1_term_init(
-    void (* terminal_enter_fullscreen_fncptr)(void))
+    void (* enter_fullscreen_fncptr)(void))
 {
-    T1trms = T1_mem_malloc_unmanaged(
-        sizeof(T1TerminalState));
-    T1_std_memset(T1trms, 0, sizeof(T1TerminalState));
+    T1_trms = T1_mem_malloc_unmanaged(
+        sizeof(T1TermState));
+    T1_std_memset(T1_trms, 0, sizeof(T1TermState));
     
-    T1trms->to_fullscreen_fncptr = terminal_enter_fullscreen_fncptr;
+    T1_trms->to_fullscreen_fncptr = enter_fullscreen_fncptr;
     
     T1_std_strcpy_cap(
-        T1trms->history,
+        T1_trms->history,
         T1_TERM_HIST_CAP,
-        "TOK ONE embedded debugging terminal v1.0\n");
+        "T1 debugging terminal\n");
     
     T1_term_update_history_size();
     
-    term_font_color[0] = 10.0f;
-    term_font_color[1] = 10.0f;
-    term_font_color[2] = 10.0f;
-    term_font_color[3] = 1.0f;
+    T1_trms->font_color[0] = 10.0f;
+    T1_trms->font_color[1] = 10.0f;
+    T1_trms->font_color[2] = 10.0f;
+    T1_trms->font_color[3] = 1.0f;
     
-    term_font_rgb_cap[0] = 1.0f;
-    term_font_rgb_cap[1] = 1.0f;
-    term_font_rgb_cap[2] = 1.0f;
+    T1_trms->font_rgb_cap[0] = 1.0f;
+    T1_trms->font_rgb_cap[1] = 1.0f;
+    T1_trms->font_rgb_cap[2] = 1.0f;
     
-    term_background_color[0] = 0.0f;
-    term_background_color[1] = 0.0f;
-    term_background_color[2] = 1.0f;
-    term_background_color[3] = 0.5f;
+    T1_trms->background_color[0] = 0.0f;
+    T1_trms->background_color[1] = 0.0f;
+    T1_trms->background_color[2] = 1.0f;
+    T1_trms->background_color[3] = 0.5f;
 }
 
 void T1_term_redraw_backgrounds(void) {
-    terminal_back_object_id = INT32_MAX;
+    T1_trms->back_object_id = INT32_MAX;
     
     float command_history_height =
         T1_render_views->cpu[0].height -
-        TERM_INPUT_BOX_HEIGHT -
-        (TERMINAL_WHITESPACE * 3);
+        T1_TERM_INPUT_BOX_HEIGHT -
+        (T1_TERM_WHITESPACE * 3);
     
     float width =
         (float)T1_render_views->cpu[0].
-            width - (TERMINAL_WHITESPACE
+            width - (T1_TERM_WHITESPACE
                 * 2.0f);
     
     T1FlatTexQuadRequest input_req;
     T1_texquad_fetch_next(&input_req);
     input_req.cpu->zsprite_id =
-        terminal_back_object_id;
+        T1_trms->back_object_id;
     input_req.gpu->f32.xyz[0] = 0.0f;
     input_req.gpu->f32.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
-            TERM_INPUT_BOX_MID_Y);
-    input_req.gpu->f32.xyz[2] = TERM_Z;
+            T1_TERM_INPUT_BOX_MID_Y);
+    input_req.gpu->f32.xyz[2] = T1_TERM_Z;
     
     input_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(width);
     input_req.gpu->f32.size_xy[1] =
         T1_render_view_screen_height_to_height_noz(
-            TERM_INPUT_BOX_HEIGHT);
+            T1_TERM_INPUT_BOX_HEIGHT);
     input_req.gpu->i32.tex_array_i = -1;
     input_req.gpu->i32.tex_slice_i = -1;
     input_req.gpu->f32.rgba[0] =
-        term_background_color[0];
+        T1_trms->background_color[0];
     input_req.gpu->f32.rgba[1] =
-        term_background_color[1];
+        T1_trms->background_color[1];
     input_req.gpu->f32.rgba[2] =
-        term_background_color[2];
+        T1_trms->background_color[2];
     input_req.gpu->f32.rgba[3] =
-        term_background_color[3];
+        T1_trms->background_color[3];
     T1_texquad_commit(&input_req);
     
     // The console history area
@@ -144,26 +146,26 @@ void T1_term_redraw_backgrounds(void) {
     history_req.gpu->f32.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
            (command_history_height / 2) +
-               TERM_INPUT_BOX_HEIGHT +
-               (TERMINAL_WHITESPACE * 2.0f));
-    history_req.gpu->f32.xyz[2] = TERM_Z;
+               T1_TERM_INPUT_BOX_HEIGHT +
+               (T1_TERM_WHITESPACE * 2.0f));
+    history_req.gpu->f32.xyz[2] = T1_TERM_Z;
     history_req.gpu->f32.size_xy[0] =
         T1_render_view_screen_width_to_width_noz(
                 T1_render_views->cpu[0].width -
-                    (TERMINAL_WHITESPACE * 2));
+                    (T1_TERM_WHITESPACE * 2));
     history_req.gpu->f32.size_xy[1] =
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
     history_req.cpu->zsprite_id = INT32_MAX;
     history_req.gpu->i32.touch_id = -1;
     history_req.gpu->f32.rgba[0] =
-        term_background_color[0];
+        T1_trms->background_color[0];
     history_req.gpu->f32.rgba[1] =
-        term_background_color[1];
+        T1_trms->background_color[1];
     history_req.gpu->f32.rgba[2] =
-        term_background_color[2];
+        T1_trms->background_color[2];
     history_req.gpu->f32.rgba[3] =
-        term_background_color[3];
+        T1_trms->background_color[3];
     T1_texquad_commit(&history_req);
 }
 
@@ -172,29 +174,30 @@ void T1_term_render(void) {
         return;
     }
     
-    T1_texquad_delete(terminal_back_object_id);
+    T1_texquad_delete(T1_trms->back_object_id);
     
     T1_term_redraw_backgrounds();
     
-    T1_texquad_delete(
-        terminal_labels_object_id);
+    T1_texquad_delete(T1_trms->labels_object_id);
     
-    float previous_font_height = font_settings->font_height;
-    font_settings->font_height = TERM_FONT_SIZE;
+    float previous_font_height =
+        font_settings->font_height;
+    font_settings->font_height =
+        T1_TERM_FONT_SIZE;
     
     // draw the terminal's history as a label
     float history_label_top =
         T1_render_views->cpu[0].height -
-            (TERMINAL_WHITESPACE * 2);
+            (T1_TERM_WHITESPACE * 2);
     float history_label_height =
         T1_render_views->cpu[0].height -
-            TERM_FONT_SIZE -
-            (TERMINAL_WHITESPACE * 4.5f);
+            T1_TERM_FONT_SIZE -
+            (T1_TERM_WHITESPACE * 4.5f);
     
     uint32_t max_lines_in_history =
-        (uint32_t)(history_label_height / (TERM_FONT_SIZE * 1.0f));
+        (uint32_t)(history_label_height / (T1_TERM_FONT_SIZE * 1.0f));
     
-    uint32_t char_offset = terminal_history_size;
+    uint32_t char_offset = T1_trms->history_size;
     uint32_t lines_taken = 0;
     uint32_t chars_in_current_line = 0;
     
@@ -204,48 +207,52 @@ void T1_term_render(void) {
     {
         char_offset--;
         
-        if (T1trms->history[char_offset] == '\n') {
+        if (T1_trms->history[char_offset] == '\n') {
             chars_in_current_line = 0;
             lines_taken += 1;
-        } else if (chars_in_current_line >= SINGLE_LINE_MAX) {
+        } else if (chars_in_current_line >= T1_TERM_SINGLE_LINE_MAX) {
             chars_in_current_line = 0;
             lines_taken += 1;
         } else {
             chars_in_current_line += 1;
         }
     }
-    if (T1trms->history[char_offset] == '\n') {
+    if (T1_trms->history[char_offset] == '\n') {
         char_offset += 1;
     }
     
     log_append("terminal history: ");
-    log_append(T1trms->history + char_offset);
+    log_append(T1_trms->history + char_offset);
     log_append_char('\n');
     
-    font_settings->f32.rgba[0] = term_font_color[0];
-    font_settings->f32.rgba[1] = term_font_color[1];
-    font_settings->f32.rgba[2] = term_font_color[2];
-    font_settings->f32.rgba[3] = term_font_color[3];
+    font_settings->f32.rgba[0] =
+        T1_trms->font_color[0];
+    font_settings->f32.rgba[1] =
+        T1_trms->font_color[1];
+    font_settings->f32.rgba[2] =
+        T1_trms->font_color[2];
+    font_settings->f32.rgba[3] =
+        T1_trms->font_color[3];
     font_settings->i32.touch_id = -1;
     
     text_request_label_renderable(
         /* const int32_t with_object_id: */
-            terminal_labels_object_id,
+            T1_trms->labels_object_id,
         /* const char * text_to_draw: */
-            T1trms->history + char_offset,
+            T1_trms->history + char_offset,
         /* const float left_pixelspace: */
-            TERMINAL_WHITESPACE * 2 +
-                (TERM_FONT_SIZE * 0.5f),
+            T1_TERM_WHITESPACE * 2 +
+                (T1_TERM_FONT_SIZE * 0.5f),
         /* const float mid_y_pixelspace: */
             history_label_top -
-                (TERM_FONT_SIZE * 0.5f),
+                (T1_TERM_FONT_SIZE * 0.5f),
         /* const float z: */
-            TERM_LABELS_Z,
+            T1_TERM_LABELS_Z,
         /* const float max_width: */
             T1_render_views->cpu[0].width -
-                (TERMINAL_WHITESPACE * 2));
+                (T1_TERM_WHITESPACE * 2));
     
-    if (T1trms->cur_command[0] == '\0') {
+    if (T1_trms->cur_command[0] == '\0') {
         font_settings->font_height =
             previous_font_height;
         requesting_label_update = false;
@@ -256,21 +263,22 @@ void T1_term_render(void) {
     // the terminal's current input as a label
     text_request_label_renderable(
         /* with_object_id: */
-            terminal_labels_object_id,
+            T1_trms->labels_object_id,
         /* const char * text_to_draw: */
-            T1trms->cur_command,
+            T1_trms->cur_command,
         /* const float left_pixelspace: */
-            TERMINAL_WHITESPACE * 2 +
-                (TERM_FONT_SIZE * 0.5f),
+            T1_TERM_WHITESPACE * 2 +
+                (T1_TERM_FONT_SIZE * 0.5f),
         /* const float mid_y_pixelspace: */
-            TERM_INPUT_BOX_MID_Y,
+            T1_TERM_INPUT_BOX_MID_Y,
         /* const float z: */
-            TERM_LABELS_Z,
+            T1_TERM_LABELS_Z,
         /* const float max_width: */
             T1_render_views->cpu[0].width -
-                (TERMINAL_WHITESPACE * 2));
+                (T1_TERM_WHITESPACE * 2));
     
-    font_settings->font_height = previous_font_height;
+    font_settings->font_height =
+        previous_font_height;
     
     requesting_label_update = false;
 }
@@ -279,7 +287,7 @@ void T1_term_sendchar(uint32_t to_send) {
     
     if (to_send == T1_IO_KEY_ESCAPE) {
         // ESC key
-        T1trms->cur_command[0] = '\0';
+        T1_trms->cur_command[0] = '\0';
         T1_term_active = false;
         T1_term_destroy_all();
         requesting_label_update = true;
@@ -288,17 +296,16 @@ void T1_term_sendchar(uint32_t to_send) {
     
     uint32_t last_i = 0;
     while (
-        T1trms->cur_command[last_i] != '\0')
+        T1_trms->cur_command[last_i] != '\0')
     {
         last_i++;
     }
     
-    if (
-        to_send == T1_IO_KEY_SPACEBAR)
+    if (to_send == T1_IO_KEY_SPACEBAR)
     {
-        T1trms->cur_command[last_i] = ' ';
+        T1_trms->cur_command[last_i] = ' ';
         last_i++;
-        T1trms->cur_command[last_i] = '\0';
+        T1_trms->cur_command[last_i] = '\0';
         return;
     }
     
@@ -306,17 +313,17 @@ void T1_term_sendchar(uint32_t to_send) {
         to_send == T1_IO_KEY_BACKSPACE &&
         last_i > 0)
     {
-        T1trms->cur_command[last_i - 1] = '\0';
+        T1_trms->cur_command[last_i - 1] = '\0';
         requesting_label_update = true;
     }
     
     if (
         to_send >= '!' &&
         to_send <= '}' &&
-        last_i < SINGLE_LINE_MAX)
+        last_i < T1_TERM_SINGLE_LINE_MAX)
     {
-        T1trms->cur_command[last_i] = (char)to_send;
-        T1trms->cur_command[last_i + 1] = '\0';
+        T1_trms->cur_command[last_i] = (char)to_send;
+        T1_trms->cur_command[last_i + 1] = '\0';
         requesting_label_update = true;
     }
 }
@@ -350,7 +357,7 @@ static bool32_t T1_term_evaluate(
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "PROFILER_ACTIVE was undefined at compile time, no profiler data "
             "is available.");
         #else
@@ -366,7 +373,7 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Enabling render view position updates...");
         T1_global->block_render_view_pos_updates = false;
         
@@ -380,7 +387,7 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Blocking render view position updates...");
         T1_global->block_render_view_pos_updates = true;
         
@@ -401,22 +408,22 @@ static bool32_t T1_term_evaluate(
             jump_rv >= (int32_t)T1_render_views->size) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Couldn't parse to render view index: ");
             T1_std_strcat_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 command + 15);
             return true;
         }
         
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Jumping to render view: ");
         T1_std_strcat_int_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             jump_rv);
         T1_camera->xyz[0] = T1_render_views->
             cpu[jump_rv].xyz[0];
@@ -442,12 +449,12 @@ static bool32_t T1_term_evaluate(
             T1_global->pause_profiler = true;
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Paused profiler...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Profiler was already paused...");
         }
         return true;
@@ -462,12 +469,12 @@ static bool32_t T1_term_evaluate(
             T1_global->pause_profiler = false;
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Resuming profiler...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Profiler was already running...");
         }
         return true;
@@ -485,7 +492,7 @@ static bool32_t T1_term_evaluate(
         T1_camera->xyz_angle[2] = 0.0f;
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Reset camera position and angles to {0,0,0}");
         return true;
     }
@@ -499,55 +506,55 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Camera is at: [");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz[0]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             ", ");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz[1]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             ", ");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz[2]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "], xyz_angles: [");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz_angle[0]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             ", ");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz_angle[1]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             ", ");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_camera->xyz_angle[2]);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "].");
         return true;
     }
@@ -575,27 +582,29 @@ static bool32_t T1_term_evaluate(
         #else
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Can't draw axes because raw shader (points & lines) is disabled");
         #endif
         return true;
     }
     
     if (
-        T1_std_are_equal_strings(command, "MOUSE") ||
-        T1_std_are_equal_strings(command, "DRAW MOUSE"))
+        T1_std_are_equal_strings(
+            command, "MOUSE") ||
+        T1_std_are_equal_strings(
+            command, "DRAW MOUSE"))
     {
         T1_global->draw_mouseptr = !T1_global->draw_mouseptr;
         
         if (T1_global->draw_mouseptr) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the mouse pointer...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the mouse pointer...");
         }
         return true;
@@ -608,7 +617,7 @@ static bool32_t T1_term_evaluate(
     {
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         unsigned char * recipient =
-            T1_mem_malloc_from_managed(T1_audio_state->global_buffer_size_bytes + 100);
+            T1_mem_malloc_managed(T1_audio_state->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
         
         T1_wav_samples_to_wav(
@@ -625,7 +634,7 @@ static bool32_t T1_term_evaluate(
         
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Dumping global sound buffer to disk...");
         
         uint32_t good = 0;
@@ -642,18 +651,18 @@ static bool32_t T1_term_evaluate(
         if (good) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "\nSuccess!");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "\nFailed to write to disk :(");
         }
         #elif T1_AUDIO_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Audio code is disabled! set AUDIO_CODE_ACTIVE to 1 in "
             "clientlogic_macro_settings.h to enable it.");
         #else
@@ -668,7 +677,7 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
         T1_global->postproc_consts.nonblur_pct = 0.02f;
         T1_global->postproc_consts.blur_pct = 1.0f;
@@ -680,7 +689,7 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
         T1_global->postproc_consts.nonblur_pct = 1.0f;
         T1_global->postproc_consts.blur_pct = 0.0f;
@@ -693,7 +702,7 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Reverted to standard blur+non-blur composite...");
         T1_global->postproc_consts.nonblur_pct = 1.0f;
         T1_global->postproc_consts.blur_pct = 1.0f;
@@ -705,19 +714,19 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "window height: ");
         T1_std_strcat_uint_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             (uint32_t)T1_render_views->cpu[0].height);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             ", width: ");
         T1_std_strcat_uint_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             (uint32_t)T1_render_views->cpu[0].width);
         return true;
     }
@@ -737,7 +746,10 @@ static bool32_t T1_term_evaluate(
         uint32_t zp_i = T1_std_string_to_uint32(command + 9);
         
         response[0] = '\0';
-        T1_term_describe_zpolygon(response, SINGLE_LINE_MAX, zp_i);
+        T1_term_describe_zpolygon(
+            response,
+            T1_TERM_SINGLE_LINE_MAX,
+            zp_i);
         return true;
     }
     
@@ -750,7 +762,7 @@ static bool32_t T1_term_evaluate(
         
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Toggled mouse block");
         return true;
     }
@@ -766,15 +778,15 @@ static bool32_t T1_term_evaluate(
         if (T1_global->draw_top_touchable_id) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
             T1_texquad_delete(
-                T1_FPS_COUNTER_ZSPRITE_ID);
+                T1_ZSPRITEID_FPS_COUNTER);
             
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the top touchable_id...");
         }
         return true;
@@ -790,14 +802,14 @@ static bool32_t T1_term_evaluate(
         if (T1_global->draw_fps) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
             T1_texquad_delete(
-                T1_FPS_COUNTER_ZSPRITE_ID);
+                T1_ZSPRITEID_FPS_COUNTER);
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the fps counter...");
         }
         return true;
@@ -816,32 +828,34 @@ static bool32_t T1_term_evaluate(
         if (T1_global->draw_imputed_normals) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
-                "Drawing the 'imputed normals' for for each triangle...");
+                T1_TERM_SINGLE_LINE_MAX,
+                "Drawing the 'imputed normals' "
+                "for for each triangle...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the 'imputed normals' for the last touch...");
         }
         return true;
     }
     
     if (
-        T1_std_string_starts_with(command, "DUMP TEXTUREARRAY "))
+        T1_std_string_starts_with(
+            command, "DUMP TEXTUREARRAY "))
     {
         if (command[18] < '0' || command[18] > '9') {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
             T1_std_strcat_uint_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 TEXTUREARRAYS_SIZE);
             T1_std_strcat_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 ", but you didn't pass an index.");
         } else {
             int32_t texture_array_i = T1_std_string_to_int32(command + 18);
@@ -849,34 +863,34 @@ static bool32_t T1_term_evaluate(
             if (texture_array_i >= TEXTUREARRAYS_SIZE) {
                 T1_std_strcpy_cap(
                     response,
-                    SINGLE_LINE_MAX,
+                    T1_TERM_SINGLE_LINE_MAX,
                     "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
                 T1_std_strcat_uint_cap(
                     response,
-                    SINGLE_LINE_MAX,
+                    T1_TERM_SINGLE_LINE_MAX,
                     TEXTUREARRAYS_SIZE);
                 T1_std_strcat_cap(
                     response,
-                    SINGLE_LINE_MAX,
+                    T1_TERM_SINGLE_LINE_MAX,
                     ", so please pass a number below that.");
                 return true;
             }
             
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Attempting to dump texture array: ");
             T1_std_strcat_int_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 texture_array_i);
             T1_std_strcat_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 " to disk...\n");
             
             uint32_t success = 0;
-            T1_texture_array_debug_dump_texturearray_to_writables(
+            T1_tex_array_debug_dump_to_writables(
                 /* const int32_t texture_array_i: */
                     texture_array_i,
                 /* uint32_t * success: */
@@ -884,7 +898,7 @@ static bool32_t T1_term_evaluate(
             
             T1_std_strcat_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 success ?
                     "Succesfully dumped texturearray\n" :
                     "Failed to dump texturearray\n");
@@ -898,8 +912,8 @@ static bool32_t T1_term_evaluate(
         T1_std_are_equal_strings(command, "OPEN WRITABLES"))
     {
         char writables_path[512];
-        T1_platform_get_writables_path(writables_path, 512);
-        T1_platform_open_folder_in_window_if_possible(writables_path);
+        T1_platform_get_writables_dir(writables_path, 512);
+        T1_platform_open_dir_in_window_if_possible(writables_path);
         
         return true;
     }
@@ -913,12 +927,12 @@ static bool32_t T1_term_evaluate(
         if (T1_global->draw_triangles) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Drawing triangles...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing triangles...");
         }
         return true;
@@ -929,9 +943,9 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Entering full screen...");
-        T1trms->to_fullscreen_fncptr();
+        T1_trms->to_fullscreen_fncptr();
         return true;
     }
     
@@ -950,7 +964,7 @@ static bool32_t T1_term_evaluate(
     if (T1_std_are_equal_strings(command, "CRASH")) {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Forcing the app to crash...");
         log_dump_and_crash("Terminal-induced crash");
         return true;
@@ -966,15 +980,15 @@ static bool32_t T1_term_evaluate(
     {
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "There are ");
         T1_std_strcat_uint_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_zlights_size);
         T1_std_strcat_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             " lights in this scene.\n");
         return true;
     }
@@ -995,11 +1009,11 @@ static bool32_t T1_term_evaluate(
         
         T1_std_strcpy_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             "Multiplying all delta time by: ");
         T1_std_strcat_float_cap(
             response,
-            SINGLE_LINE_MAX,
+            T1_TERM_SINGLE_LINE_MAX,
             T1_global->timedelta_mult);
         return true;
     }
@@ -1012,48 +1026,48 @@ void T1_term_commit_or_activate(void) {
     
     if (
         T1_term_active &&
-        T1trms->cur_command[0] != '\0')
+        T1_trms->cur_command[0] != '\0')
     {
         T1_std_strcat_cap(
-            T1trms->history,
+            T1_trms->history,
             T1_TERM_HIST_CAP,
-            T1trms->cur_command);
+            T1_trms->cur_command);
         T1_std_strcat_cap(
-            T1trms->history,
+            T1_trms->history,
             T1_TERM_HIST_CAP,
             "\n");
-        char client_response[SINGLE_LINE_MAX];
+        char client_response[T1_TERM_SINGLE_LINE_MAX];
         client_response[0] = '\0';
         
         if (
             T1_term_evaluate(
-                T1trms->cur_command,
+                T1_trms->cur_command,
                 client_response))
         {
             T1_std_strcat_cap(
-                T1trms->history,
+                T1_trms->history,
                 T1_TERM_HIST_CAP,
                 client_response);
             T1_std_strcat_cap(
-                T1trms->history,
+                T1_trms->history,
                 T1_TERM_HIST_CAP,
                 "\n");
         } else {
             T1_clientlogic_evaluate_terminal_command(
-                T1trms->cur_command,
+                T1_trms->cur_command,
                 client_response,
-                SINGLE_LINE_MAX);
+                T1_TERM_SINGLE_LINE_MAX);
             T1_std_strcat_cap(
-                T1trms->history,
+                T1_trms->history,
                 T1_TERM_HIST_CAP,
                 client_response);
             T1_std_strcat_cap(
-                T1trms->history,
+                T1_trms->history,
                 T1_TERM_HIST_CAP,
                 "\n");
         }
         
-        T1trms->cur_command[0] = '\0';
+        T1_trms->cur_command[0] = '\0';
         T1_term_update_history_size();
         T1_term_redraw_backgrounds();
         requesting_label_update = true;

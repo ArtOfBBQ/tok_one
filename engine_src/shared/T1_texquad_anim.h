@@ -5,7 +5,7 @@
 
 #include "T1_std.h"
 #include "T1_mem.h"
-#include "T1_cpu_to_gpu_types.h"
+#include "T1_cpu_to_gpu.h"
 #include "T1_global.h"
 #include "T1_easing.h"
 #include "T1_texquad.h"

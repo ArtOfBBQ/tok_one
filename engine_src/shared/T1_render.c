@@ -1,15 +1,19 @@
-#include "T1_renderer.h"
+#include "T1_render.h"
 
-static uint32_t renderer_initialized = false;
+static uint32_t T1_render_active = false;
 
-void T1_renderer_init(void) {
-    renderer_initialized = true;
+void T1_render_init(void) {
+    T1_render_active = true;
     
-    T1_std_memset(T1_camera, 0, sizeof(T1GPURenderView));
+    T1_std_memset(
+        T1_camera,
+        0,
+        sizeof(T1GPURenderView));
 }
 
-static void construct_projection_matrix(void) {
-    
+static void
+construct_projection_matrix(void)
+{
     T1_linal_float4x4 proj;
     
     for (
@@ -186,13 +190,13 @@ static void construct_light_matrices(
 }
 #endif
 
-void T1_renderer_hardware_render(
+void T1_render_update(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
 {
     (void)elapsed_us;
     
-    if (renderer_initialized != true) {
+    if (T1_render_active != true) {
         log_append("renderer not initialized, aborting...\n");
         return;
     }

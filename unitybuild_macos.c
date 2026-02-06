@@ -40,7 +40,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "decode_png.c"
 #include "decode_bmp.c"
 #include "T1_linalg3d.c"
-#include "T1_decodedimage.c"
+#include "T1_img.c"
 #include "T1_wav.c"
 #include "T1_token.c"
 #include "T1_objparser.c"
@@ -56,7 +56,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_material.c"
 #include "T1_render_view.c"
 #include "T1_zlight.c"
-#include "T1_cpu_to_gpu_types.c"
+#include "T1_cpu_to_gpu.c"
 #include "T1_texquad.c"
 // 2. Files that are part of the basic platform layer
 #include "T1_apple_audio.m"
@@ -70,12 +70,12 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_tex.c"
 #include "T1_objmodel.c"
 #include "T1_io.c"
-#include "T1_random.c"
+#include "T1_rand.c"
 // 4. Platform layer part 2: metal
 #include "T1_gpu.m"
 // 5. Files that are dependent on the GPU platform layer
-#include "T1_texture_array.c"
-#include "T1_texture_files.c"
+#include "T1_tex_array.c"
+#include "T1_tex_files.c"
 #include "T1_lines.c"
 #include "T1_zsprite.c"
 #include "T1_frame_anim.c"
@@ -86,13 +86,13 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_text.c"
 #include "T1_ui_widget.c"
 #include "T1_profiler.c"
-#if 1
+#if 0
 #include "clientlogic.c" // requires text and uielement
 #else
 #include "clientlogic_particledesigner.c" // requires text and uielement
 #endif
 #include "T1_term.c" // requires clientlogic
-#include "T1_renderer.c" // requires zpoly & part
+#include "T1_render.c" // requires zpoly & part
 #include "T1_gameloop.c" // requires renderer
 #include "T1_appinit.c" // requires gameloop
 #include "T1_macos_main.m"

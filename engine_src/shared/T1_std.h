@@ -35,35 +35,44 @@ extern "C" {
 #define T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
 #define T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
 
-// The common_memset_char signature matches libc's,
-// the others are my preference
-void * T1_std_memset(
+void *
+T1_std_memset(
     void * input,
     int value,
     size_t size_bytes);
-void T1_std_memset_i16(
+
+void
+T1_std_memset_i16(
     void * input,
     int16_t value,
     unsigned int size_bytes);
-void T1_std_memset_i32(
+
+void
+T1_std_memset_i32(
     void * input,
     int32_t value,
     unsigned int size_bytes);
-void T1_std_memset_f32(
+
+void
+T1_std_memset_f32(
     void * input,
     float value,
     unsigned int size_bytes);
-void * T1_std_memcpy(
+
+void *
+T1_std_memcpy(
     void * dest,
     const void * src,
     size_t n_bytes);
 
-// float common__sqrtf(const float in);
-
-int   T1_std_mini(const int x, const int y);
-int   T1_std_maxi(const int x, const int y);
-float T1_std_minf(const float x, const float y);
-float T1_std_maxf(const float x, const float y);
+int
+T1_std_mini(const int x, const int y);
+int
+T1_std_maxi(const int x, const int y);
+float
+T1_std_minf(const float x, const float y);
+float
+T1_std_maxf(const float x, const float y);
 
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -84,7 +93,8 @@ T1_std_strcat(
     char * recipient,
     const char * to_append);
 
-void T1_std_strcat_char_cap(
+void
+T1_std_strcat_char_cap(
     char * recipient,
     char to_append);
 
@@ -137,13 +147,15 @@ T1_std_internal_strcat_float_cap(
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, recipsize, to_append);
-void T1_std_internal_strcpy_cap(
+void
+T1_std_internal_strcpy_cap(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, to_append);
-void T1_std_internal_strcpy_cap(
+void
+T1_std_internal_strcpy_cap(
     char * recipient,
     const char * origin);
 #else
@@ -157,19 +169,24 @@ T1_std_copy_strings(
     const char * origin,
     const uint32_t origin_size);
 
-size_t T1_std_strlen(const char * null_terminated_string);
+size_t
+T1_std_strlen(const char * null_terminated_string);
 
-void T1_std_strtolower(char * in);
+void
+T1_std_strtolower(char * in);
 
-bool32_t T1_std_string_starts_with(
+bool32_t
+T1_std_string_starts_with(
     const char * str_to_check,
     const char * start);
 
-bool32_t T1_std_string_ends_with(
+bool32_t
+T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending);
 
-void T1_std_strsub(
+void
+T1_std_strsub(
     char * in,
     const char * to_match,
     const char * replacement);

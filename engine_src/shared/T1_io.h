@@ -156,4 +156,4 @@ void T1_io_register_mousescroll(
 }
 #endif
 
-#endif // T1_IO
+#endif // T1_IO_H

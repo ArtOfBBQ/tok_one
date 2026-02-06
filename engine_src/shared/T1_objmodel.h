@@ -12,7 +12,7 @@
 #include "T1_logger.h"
 
 #include "T1_triangle.h"
-#include "T1_texture_array.h"
+#include "T1_tex_array.h"
 
 #include "T1_objparser.h"
 #include "T1_mtlparser.h"

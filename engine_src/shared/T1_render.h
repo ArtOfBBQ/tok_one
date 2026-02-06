@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef T1_RENDER_H
+#define T1_RENDER_H
 
 #include <inttypes.h>
 
@@ -9,7 +9,7 @@
 #include "T1_simd.h"
 #include "T1_platform_layer.h"
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_cpu_to_gpu_types.h"
+#include "T1_cpu_to_gpu.h"
 #include "T1_lines.h"
 #include "T1_texquad.h"
 #include "T1_zsprite.h"
@@ -21,14 +21,14 @@
 extern "C" {
 #endif
 
-void T1_renderer_init(void);
+void T1_render_init(void);
 
-void T1_renderer_hardware_render(
+void T1_render_update(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_nanoseconds);
+    uint64_t elapsed_us);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // RENDERER_H
+#endif // T1_RENDER_H

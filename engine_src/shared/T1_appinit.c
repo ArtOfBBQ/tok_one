@@ -290,7 +290,7 @@ void T1_appinit_before_gpu_init(
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
         /* void *(*arg_malloc_function)(size_t): */
-            T1_mem_malloc_from_unmanaged);
+            T1_mem_malloc_unmanaged);
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -406,7 +406,7 @@ void T1_appinit_before_gpu_init(
     #error "T1_TEXQUAD_ANIM_ACTIVE undefined!"
     #endif
     
-    T1_texture_array_init();
+    T1_tex_array_init();
     
     // initialize font with fontmetrics.dat
     T1FileBuffer font_metrics_file;
@@ -449,22 +449,22 @@ void T1_appinit_before_gpu_init(
         
     T1_io_init(T1_mem_malloc_unmanaged);
     
-    T1_renderer_init();
+    T1_render_init();
     
     T1_clientlogic_init();
     
-    gpu_shared_data_collection =
+    T1_cpu_to_gpu_data =
         T1_mem_malloc_unmanaged(
-            sizeof(T1GPUSharedDataCollection));
-    log_assert(gpu_shared_data_collection != NULL);
+            sizeof(T1CPUToGPUData));
+    log_assert(T1_cpu_to_gpu_data != NULL);
     
-    T1GPUSharedDataCollection * sd = gpu_shared_data_collection;
+    T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
     log_assert(sd != NULL);
     
     T1_std_memset(
         sd,
         0,
-        sizeof(T1GPUSharedDataCollection));
+        sizeof(T1CPUToGPUData));
     
     // init the buffers that contain our vertices to send to the GPU
     sd->vertices_alloc_size = pad_to_page_size(
@@ -612,7 +612,7 @@ static void T1_appinit_asset_loading_thread(int32_t asset_thread_id) {
             (uint32_t)asset_thread_id);    
     }
     
-    T1_texture_files_decode_all_preregistered(
+    T1_tex_files_decode_all_prereg(
         (uint32_t)asset_thread_id,
         ias->image_decoding_threads);
     
@@ -640,7 +640,7 @@ void T1_appinit_after_gpu_init_step1(
     
     error_message[0] = '\0';
     
-    T1_texture_files_load_font_images(
+    T1_tex_files_load_font_images(
         success,
         error_message);
     
@@ -656,7 +656,7 @@ void T1_appinit_after_gpu_init_step1(
         rv_height /= 2;
     }
     
-    T1_texture_array_create_new_render_view(
+    T1_tex_array_create_new_render_view(
         rv_width,
         rv_height);
     
@@ -670,7 +670,7 @@ void T1_appinit_after_gpu_init_step1(
     // text (see above comment)
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->locked_vertices,
+            T1_cpu_to_gpu_data->locked_vertices,
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
@@ -691,7 +691,7 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     uint32_t perlin_good = 0;
-    T1_texture_files_preregister_dds_resource(
+    T1_tex_files_prereg_dds_res(
         "perlin_noise.dds",
         &perlin_good);
     
@@ -702,7 +702,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_global->postproc_consts.perlin_texturearray_i = 1;
         T1_global->postproc_consts.perlin_texture_i = 0;
     } else {
-        T1Tex perlin_tex = T1_texture_array_get_filename_location(
+        T1Tex perlin_tex = T1_tex_array_get_filename_loc(
             "perlin_noise.dds");
         T1_global->postproc_consts.perlin_texturearray_i =
             perlin_tex.array_i;
@@ -836,7 +836,7 @@ void T1_appinit_after_gpu_init_step2(
     
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->
+            T1_cpu_to_gpu_data->
                 locked_vertices,
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
@@ -846,7 +846,7 @@ void T1_appinit_after_gpu_init_step2(
     
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->
+            T1_cpu_to_gpu_data->
                 const_mats_f32,
         /* const void * src: */
             all_mesh_materials->gpu_f32,
@@ -854,7 +854,7 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(T1GPUConstMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_std_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->
+            T1_cpu_to_gpu_data->
                 const_mats_i32,
         /* const void * src: */
             all_mesh_materials->gpu_i32,
@@ -890,10 +890,10 @@ void T1_appinit_after_gpu_init_step2(
     
     uint64_t longest_taken = 0;
     int32_t longest_ta_i = -1;
-    for (int32_t i = 0; i < (int32_t)T1_texture_arrays_size; i++) {
+    for (int32_t i = 0; i < (int32_t)T1_tex_arrays_size; i++) {
         uint64_t taken =
-            T1_texture_arrays[i].ended_decoding -
-            T1_texture_arrays[i].started_decoding;
+            T1_tex_arrays[i].ended_decoding -
+            T1_tex_arrays[i].started_decoding;
         if (taken > longest_taken) {
             longest_taken = taken;
             longest_ta_i = i;
@@ -904,18 +904,18 @@ void T1_appinit_after_gpu_init_step2(
         log_append("Slowest texture array: ");
         log_append_int(longest_ta_i);
         log_append("\nIncludes images: ");
-        log_append(T1_texture_arrays[longest_ta_i].images[0].name);
+        log_append(T1_tex_arrays[longest_ta_i].images[0].name);
         for (
             int32_t t_i = 1;
-            t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
+            t_i < (int32_t)T1_tex_arrays[longest_ta_i].images_size;
             t_i++)
         {
             log_append(", ");
-            log_append(T1_texture_arrays[longest_ta_i].images[t_i].name);
+            log_append(T1_tex_arrays[longest_ta_i].images[t_i].name);
         }
     }
     
-    T1_texture_array_push_all_predecoded();
+    T1_tex_array_push_all_predecoded();
     
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
@@ -992,7 +992,7 @@ void T1_appinit_shutdown(void)
         T1_global->fullscreen;
     
     uint32_t good = false;
-    T1_platform_delete_writable("enginestate.dat");
+    T1_platform_del_writable("enginestate.dat");
     
     T1_platform_write_file_to_writables(
         /* const char filepath_inside_writables: */

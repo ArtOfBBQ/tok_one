@@ -4,7 +4,7 @@
 #include "T1_std.h"
 #include "T1_appinit.h"
 #include "T1_logger.h"
-#include "T1_random.h"
+#include "T1_rand.h"
 #include "T1_zlight.h"
 #include "T1_io.h"
 #include "T1_global.h"
@@ -481,7 +481,7 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
-    T1_platform_get_resources_path(
+    T1_platform_get_res_dir(
         shader_lib_path_cstr,
         2000);
     

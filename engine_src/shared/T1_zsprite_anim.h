@@ -6,7 +6,7 @@
 #include "T1_std.h"
 #include "T1_simd.h"
 #include "T1_mem.h"
-#include "T1_cpu_to_gpu_types.h"
+#include "T1_cpu_to_gpu.h"
 #include "T1_easing.h"
 #include "T1_zsprite.h"
 #include "T1_render_view.h"
@@ -43,17 +43,20 @@ typedef struct {
 T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool8_t endpoints_not_deltas);
 
-void T1_zsprite_anim_commit_and_instarun(
+void
+T1_zsprite_anim_commit_and_instarun(
     T1zSpriteAnim * to_commit);
 
 void
 T1_zsprite_anim_assert_anim_valid_before_commit(
     T1zSpriteAnim * to_check);
 
-void T1_zsprite_anim_commit(
+void
+T1_zsprite_anim_commit(
     T1zSpriteAnim * to_commit);
 
-void T1_zsprite_anim_shatter_and_destroy(
+void
+T1_zsprite_anim_shatter_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 
@@ -62,32 +65,44 @@ T1_zsprite_anim_evaporate_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 
-void T1_zsprite_anim_fade_and_destroy(
+void
+T1_zsprite_anim_fade_and_destroy(
     const int32_t zsprite_id,
     const uint64_t duration_us);
 
-void T1_zsprite_anim_fade_destroy_all(
+void
+T1_zsprite_anim_fade_destroy_all(
     const uint64_t duration_us);
 
-void T1_zsprite_anim_fade_to(
+void
+T1_zsprite_anim_fade_to(
     const int32_t zsprite_id,
     const uint64_t duration_us,
     const float target_alpha);
 
-void T1_zsprite_anim_dud_dance(
+void
+T1_zsprite_anim_dud_dance(
     const int32_t zsprite_id,
     const float magnitude);
 
-void T1_zsprite_anim_bump(
+void
+T1_zsprite_anim_bump(
     const int32_t zsprite_id,
     const uint32_t wait);
 
-void T1_zsprite_anim_delete_all(void);
-void T1_zsprite_anim_delete_endpoint_anims_targeting(
-    const int32_t zsprite_id);
-void T1_zsprite_anim_delete_all_anims_targeting(const int32_t zsprite_id);
+void
+T1_zsprite_anim_delete_all(void);
 
-void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
+void
+T1_zsprite_anim_delete_endpoint_anims_targeting(
+    const int32_t zsprite_id);
+
+void
+T1_zsprite_anim_delete_all_anims_targeting(const
+    int32_t zsprite_id);
+
+void
+T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     const int32_t zsprite_id,
     const float new_ignore_camera);
 

@@ -129,7 +129,7 @@ bool32_t T1_apple_gpu_init(
     float backing_scale_factor,
     char * error_msg_string)
 {
-    if (gpu_shared_data_collection == NULL) {
+    if (T1_cpu_to_gpu_data == NULL) {
         T1_std_strcpy_cap(error_msg_string, 128, "GPU frame buffer was not initialized");
         return false;
     }
@@ -701,11 +701,11 @@ bool32_t T1_apple_gpu_init(
         frame_i < T1_FRAMES_CAP;
         frame_i++)
     {
-        T1GPUFrame * f = &gpu_shared_data_collection->
+        T1GPUFrame * f = &T1_cpu_to_gpu_data->
             triple_buffers[frame_i];
         
         log_assert(
-            gpu_shared_data_collection->
+            T1_cpu_to_gpu_data->
                 polygons_alloc_size >=
             (sizeof(T1GPUzSprite) *
                 T1_ZSPRITES_CAP));
@@ -717,7 +717,7 @@ bool32_t T1_apple_gpu_init(
                         f->zsprite_list->polygons
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->polygons_alloc_size
+                        T1_cpu_to_gpu_data->polygons_alloc_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -732,7 +732,7 @@ bool32_t T1_apple_gpu_init(
                         f->matrices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->matrices_alloc_size
+                        T1_cpu_to_gpu_data->matrices_alloc_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -747,7 +747,7 @@ bool32_t T1_apple_gpu_init(
                         f->verts
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->vertices_alloc_size
+                        T1_cpu_to_gpu_data->vertices_alloc_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -763,7 +763,7 @@ bool32_t T1_apple_gpu_init(
                         f->flat_bb_quads
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->flat_quads_alloc_size
+                        T1_cpu_to_gpu_data->flat_quads_alloc_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -780,7 +780,7 @@ bool32_t T1_apple_gpu_init(
                         f->flat_tex_quads
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->
+                        T1_cpu_to_gpu_data->
                             flat_texquads_alloc_size
                     options:
                         MTLResourceStorageModeShared
@@ -798,7 +798,7 @@ bool32_t T1_apple_gpu_init(
                         f->postproc_consts
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->
+                        T1_cpu_to_gpu_data->
                             postprocessing_constants_alloc_size
                     options:
                         MTLResourceStorageModeShared
@@ -817,7 +817,7 @@ bool32_t T1_apple_gpu_init(
                         f->lights
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->lights_alloc_size
+                        T1_cpu_to_gpu_data->lights_alloc_size
                     options:
                         MTLResourceStorageModeShared | MTLResourceUsageRead
                 /* deallocator = nil to opt out */
@@ -828,7 +828,7 @@ bool32_t T1_apple_gpu_init(
             MTLBufferFrameLights;
         
         log_assert(
-            gpu_shared_data_collection->
+            T1_cpu_to_gpu_data->
                 render_views_alloc_size >= (sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP));
         id<MTLBuffer> MTLBufferFrameCamera =
         [with_metal_device
@@ -837,7 +837,7 @@ bool32_t T1_apple_gpu_init(
                     f->render_views
             /* also needs to be aligned */
                 length:
-                    gpu_shared_data_collection->
+                    T1_cpu_to_gpu_data->
                         render_views_alloc_size
                 options:
                     MTLResourceStorageModeShared
@@ -853,10 +853,10 @@ bool32_t T1_apple_gpu_init(
         [with_metal_device
             /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection->locked_vertices
+                    T1_cpu_to_gpu_data->locked_vertices
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection->locked_vertices_alloc_size
+                    T1_cpu_to_gpu_data->locked_vertices_alloc_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -868,7 +868,7 @@ bool32_t T1_apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedVertices =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->
+                T1_cpu_to_gpu_data->
                     locked_vertices_alloc_size
             options:
                 MTLResourceStorageModePrivate];
@@ -878,10 +878,10 @@ bool32_t T1_apple_gpu_init(
         [with_metal_device
             /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection->const_mats_f32
+                    T1_cpu_to_gpu_data->const_mats_f32
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection->const_matsf32_alloc_size
+                    T1_cpu_to_gpu_data->const_matsf32_alloc_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -892,10 +892,10 @@ bool32_t T1_apple_gpu_init(
         [with_metal_device
             /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection->const_mats_i32
+                    T1_cpu_to_gpu_data->const_mats_i32
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection->const_matsi32_alloc_size
+                    T1_cpu_to_gpu_data->const_matsi32_alloc_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -909,7 +909,7 @@ bool32_t T1_apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedMatsf32 =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->const_matsf32_alloc_size
+                T1_cpu_to_gpu_data->const_matsf32_alloc_size
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_matf32_buffer = MTLBufferLockedMatsf32;
@@ -917,7 +917,7 @@ bool32_t T1_apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedMatsi32 =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->const_matsi32_alloc_size
+                T1_cpu_to_gpu_data->const_matsi32_alloc_size
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_mati32_buffer = MTLBufferLockedMatsi32;
@@ -1257,7 +1257,7 @@ void T1_platform_gpu_copy_texture_array(
     log_assert(ags->metal_textures[texture_array_i] == NULL);
     ags->metal_textures[texture_array_i] = texture;
     
-    T1_texture_arrays[texture_array_i].
+    T1_tex_arrays[texture_array_i].
         gpu_capacity = num_images;
     
     if (copy_prev) {
@@ -1450,32 +1450,33 @@ void T1_platform_gpu_generate_mipmaps_for_texture_array(
 #error
 #endif
 
-void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * rgba_values_freeable,
-    uint8_t * rgba_values_page_aligned)
+void
+T1_platform_gpu_push_tex_slice_and_free_rgba(
+    const int32_t tex_array_i,
+    const int32_t tex_i,
+    const uint32_t parent_tex_array_imgs_size,
+    const uint32_t img_width,
+    const uint32_t img_height,
+    uint8_t * rgba_freeable,
+    uint8_t * rgba_page_aligned)
 {
-    (void)parent_texture_array_images_size;
+    (void)parent_tex_array_imgs_size;
     
-    log_assert(rgba_values_freeable != NULL);
-    log_assert(rgba_values_page_aligned != NULL);
+    log_assert(rgba_freeable != NULL);
+    log_assert(rgba_page_aligned != NULL);
     
-    log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 0);
-    log_assert(texture_array_i < TEXTUREARRAYS_SIZE);
+    log_assert(tex_i >= 0);
+    log_assert(tex_array_i >= 0);
+    log_assert(tex_array_i < TEXTUREARRAYS_SIZE);
     
-    if (ags->metal_textures[texture_array_i] == NULL) {
+    if (ags->metal_textures[tex_array_i] == NULL) {
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_cap(errmsg, 256, texture_array_i);
+        T1_std_strcat_int_cap(errmsg, 256, tex_array_i);
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
@@ -1490,10 +1491,10 @@ void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
         [ags->device
             /* the ptr needs to be page aligned */
             newBufferWithBytesNoCopy:
-                rgba_values_page_aligned
+                rgba_page_aligned
             /* the length weirdly needs to be page aligned also */
             length:
-                image_width * image_height * 4
+                img_width * img_height * 4
             options:
                 MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -1515,15 +1516,15 @@ void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
         sourceOffset:
             0
         sourceBytesPerRow:
-            image_width * 4
+            img_width * 4
         sourceBytesPerImage:
-            image_width * image_height * 4
+            img_width * img_height * 4
         sourceSize:
-            MTLSizeMake(image_width, image_height, 1)
+            MTLSizeMake(img_width, img_height, 1)
         toTexture:
-            ags->metal_textures[texture_array_i]
+            ags->metal_textures[tex_array_i]
         destinationSlice:
-            (NSUInteger)texture_i
+            (NSUInteger)tex_i
         destinationLevel:
             0
         destinationOrigin:
@@ -1539,34 +1540,34 @@ void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
     [combuf commit];
     [combuf waitUntilCompleted];
     
-    T1_mem_free_managed(rgba_values_freeable);
+    T1_mem_free_managed(rgba_freeable);
 }
 
 #if T1_TEXTURES_ACTIVE
-void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
+void T1_platform_gpu_push_bc1_tex_slice_then_free(
+    const int32_t tex_array_i,
+    const int32_t tex_i,
+    const uint32_t parent_tex_array_imgs_size,
+    const uint32_t img_width,
+    const uint32_t img_height,
     uint8_t * raw_bc1_file_freeable,
     uint8_t * raw_bc1_file_page_aligned)
 {
-    (void)parent_texture_array_images_size;
+    (void)parent_tex_array_imgs_size;
     
     log_assert(raw_bc1_file_page_aligned != NULL);
     
-    log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 1); // 0 is resered for font
+    log_assert(tex_i >= 0);
+    log_assert(tex_array_i >= 1); // 0 is resered for font
     
-    if (ags->metal_textures[texture_array_i] == NULL) {
+    if (ags->metal_textures[tex_array_i] == NULL) {
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_cap(errmsg, 256, texture_array_i);
+        T1_std_strcat_int_cap(errmsg, 256, tex_array_i);
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
@@ -1585,7 +1586,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
             raw_bc1_file_page_aligned + 128
             /* the length weirdly needs to be page aligned also */
         length:
-            ((image_width + 3) / 4) * ((image_height + 3) / 4) * 8
+            ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8
         options:
             MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -1603,15 +1604,15 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
         sourceOffset:
             0
         sourceBytesPerRow:
-            ((image_width + 3) / 4) * 8
+            ((img_width + 3) / 4) * 8
         sourceBytesPerImage:
-            ((image_width + 3) / 4) * ((image_height + 3) / 4) * 8
+            ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8
         sourceSize:
-            MTLSizeMake(image_width, image_height, 1)
+            MTLSizeMake(img_width, img_height, 1)
         toTexture:
-            ags->metal_textures[texture_array_i]
+            ags->metal_textures[tex_array_i]
         destinationSlice:
-            (NSUInteger)texture_i
+            (NSUInteger)tex_i
         destinationLevel:
             0
         destinationOrigin:
@@ -1632,7 +1633,7 @@ void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 
 void T1_platform_gpu_copy_locked_vertices(void)
 {
-    gpu_shared_data_collection->locked_vertices_size = T1_mesh_summary_all_vertices->size;
+    T1_cpu_to_gpu_data->locked_vertices_size = T1_mesh_summary_all_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1648,7 +1649,7 @@ void T1_platform_gpu_copy_locked_vertices(void)
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection->locked_vertices_alloc_size];
+            T1_cpu_to_gpu_data->locked_vertices_alloc_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1661,7 +1662,7 @@ void T1_platform_gpu_copy_locked_vertices(void)
 
 void T1_platform_gpu_copy_locked_materials(void)
 {
-    gpu_shared_data_collection->const_mats_size = all_mesh_materials->size;
+    T1_cpu_to_gpu_data->const_mats_size = all_mesh_materials->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1676,7 +1677,7 @@ void T1_platform_gpu_copy_locked_materials(void)
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection->const_matsf32_alloc_size];
+            T1_cpu_to_gpu_data->const_matsf32_alloc_size];
     [blit_copy_encoder
         copyFromBuffer:
             ags->locked_mati32_populator_buffer
@@ -1687,7 +1688,7 @@ void T1_platform_gpu_copy_locked_materials(void)
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection->const_matsi32_alloc_size];
+            T1_cpu_to_gpu_data->const_matsi32_alloc_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1698,7 +1699,8 @@ void T1_platform_gpu_copy_locked_materials(void)
     [combuf commit];
 }
 
-static id<MTLTexture> get_texture_array_slice(
+static id<MTLTexture>
+get_tex_slice(
     const int32_t at_array_i,
     const int32_t at_slice_i)
 {
@@ -2556,7 +2558,7 @@ static void set_defaults_for_encoder(
         T1_render_views->cpu[0].write_array_i >= 0);
     log_assert(
         T1_render_views->cpu[0].write_array_i <
-            (int)T1_texture_arrays_size);
+            (int)T1_tex_arrays_size);
     
     #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
@@ -2566,13 +2568,13 @@ static void set_defaults_for_encoder(
     #endif
     
     T1GPUFrame * f =
-        &gpu_shared_data_collection->
+        &T1_cpu_to_gpu_data->
             triple_buffers[ags->frame_i];
     
     log_assert(f->verts_size % 3 == 0);
     
     funcptr_gameloop_before_render(
-        gpu_shared_data_collection->
+        T1_cpu_to_gpu_data->
             triple_buffers + ags->frame_i);
     
     if (
@@ -2673,7 +2675,7 @@ static void set_defaults_for_encoder(
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
             {
                 ags->cur_rtt =
-                    get_texture_array_slice(
+                    get_tex_slice(
                         T1_render_views->cpu[cam_i].
                             write_array_i,
                         T1_render_views->cpu[cam_i].
@@ -2696,7 +2698,7 @@ static void set_defaults_for_encoder(
             case T1RENDERVIEW_WRITE_RGBA:
             {
                 ags->cur_rtt =
-                    get_texture_array_slice(
+                    get_tex_slice(
                         T1_render_views->cpu[cam_i].
                             write_array_i,
                         T1_render_views->cpu[cam_i].
@@ -2831,7 +2833,7 @@ static void set_defaults_for_encoder(
         atIndex:1];
     
     log_assert(T1_render_views->cpu[0].write_array_i >= 0);
-    log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_texture_arrays_size);
+    log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_tex_arrays_size);
     id<MTLTexture> arr_tex = ags->metal_textures[
         T1_render_views->cpu[0].write_array_i];
     id<MTLTexture> sliced_tex = [arr_tex

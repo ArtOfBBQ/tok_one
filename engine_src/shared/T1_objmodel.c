@@ -697,7 +697,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 if (parsed_materials[matching_parsed_materials_i].
                     diffuse_map[0] != '\0')
                 {
-                    T1Tex lmat = T1_texture_array_get_filename_location(
+                    T1Tex lmat = T1_tex_array_get_filename_loc(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);

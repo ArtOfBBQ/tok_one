@@ -1,5 +1,5 @@
-#ifndef TOKONE_SIMD_H
-#define TOKONE_SIMD_H
+#ifndef T1_SIMD_H
+#define T1_SIMD_H
 
 /*
 A wrapper around Intel AVX instructions and Arm Neon instructions, for floats
@@ -285,4 +285,4 @@ because I don't know much about how that works or how reliable it is
 #define simd_extract_vec4i(a, lane)        vdups_laneq_s32(a, lane)
 #endif
 
-#endif // TOKONE_SIMD_H
+#endif // T1_SIMD_H

@@ -1,6 +1,6 @@
-#include "T1_random.h"
+#include "T1_rand.h"
 
-uint32_t random_seed = 0;
+uint32_t T1_rand_seed = 0;
 
 static float float_sequence[FLOAT_SEQUENCE_SIZE] = {
 0.7933f,0.4715f,0.2122f,0.7217f,0.3542f,0.0679f,0.8379f,
@@ -773,16 +773,16 @@ static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
 };
 
 int32_t T1_rand(void) {
-    random_seed++;
-    if (random_seed >= RANDOM_SEQUENCE_SIZE) {
-        random_seed = 0;
+    T1_rand_seed++;
+    if (T1_rand_seed >= RANDOM_SEQUENCE_SIZE) {
+        T1_rand_seed = 0;
     }
     
     #ifndef RANDOM_IGNORE_ASSERTS
-    assert(random_sequence[random_seed] >= 0);
+    assert(random_sequence[T1_rand_seed] >= 0);
     #endif
     
-    return random_sequence[random_seed];
+    return random_sequence[T1_rand_seed];
 }
 
 int32_t T1_rand_at_i(const uint64_t index) {
@@ -791,7 +791,7 @@ int32_t T1_rand_at_i(const uint64_t index) {
     #endif
     
     #ifndef RANDOM_IGNORE_ASSERTS
-    assert(random_sequence[random_seed] >= 0);
+    assert(random_sequence[T1_rand_seed] >= 0);
     #endif
     return random_sequence[index];
 }
@@ -806,7 +806,7 @@ SIMD_FLOAT T1_rand_simd_at_i(const uint64_t index)
         float_sequence + index));
 }
 
-void T1_rand_shuffle_array(
+void T1_rand_shuf_array(
     void * array,
     const uint32_t array_size,
     const uint32_t element_size)

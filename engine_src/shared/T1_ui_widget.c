@@ -619,7 +619,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 touch_id_top >= 0 &&
             T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                touch_id_top < T1_LAST_UI_TOUCH_ID)
+                touch_id_top < T1_ZSPRITEID_LAST_UI_TOUCH)
         {
             for (
                 uint32_t i = 0;

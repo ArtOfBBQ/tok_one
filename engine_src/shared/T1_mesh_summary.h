@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "T1_cpu_to_gpu_types.h"
+#include "T1_cpu_to_gpu.h"
 
 // Basic quads and cubes are predefined, they can be used without registering
 // an .obj file.

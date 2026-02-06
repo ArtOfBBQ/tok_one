@@ -1,16 +1,17 @@
 #include "T1_platform_layer.h"
 
-uint32_t T1_platform_get_directory_separator_size(void) {
+uint32_t T1_platform_get_dir_separator_size(void) {
     return 1;
 }
 
-void T1_platform_get_directory_separator(char * recipient) {
+void T1_platform_get_dir_separator(char * recipient) {
     recipient[0] = '/';
     recipient[1] = '\0';
 }
 
 uint64_t
-T1_platform_get_current_time_us(void) {
+T1_platform_get_current_time_us(void)
+{
     struct timeval tv;
     gettimeofday(&tv,NULL);
     uint64_t result =
@@ -36,6 +37,17 @@ T1_platform_get_clock_frequency(void) {
     // return (uint64_t)clockinfo.tick;
     return 3600000000; // my pc's clock frequency
 }
+
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
+void
+T1_platform_audio_start_loop(void)
+{
+    T1_apple_audio_start_loop();
+}
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 /*
 Get a file's size. Returns 0 if no such file
@@ -191,7 +203,7 @@ void T1_platform_mkdir_if_not_exist(
     return;
 }
 
-void T1_platform_delete_file(
+void T1_platform_del_file(
     const char * filepath)
 {
     log_append(
@@ -317,7 +329,7 @@ void T1_platform_get_filenames_in(
 }
 
 void
-T1_platform_get_application_path(
+T1_platform_get_app_dir(
     char * recipient,
     const uint32_t recipient_size)
 {
@@ -336,7 +348,7 @@ T1_platform_get_application_path(
                 NSASCIIStringEncoding]);
 }
 
-void T1_platform_get_resources_path(
+void T1_platform_get_res_dir(
     char * recipient,
     const uint32_t recipient_size)
 {

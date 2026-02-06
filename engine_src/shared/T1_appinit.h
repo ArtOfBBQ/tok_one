@@ -7,7 +7,7 @@
 #include "T1_meta.h"
 #include "T1_logger.h"
 #include "T1_profiler.h"
-#include "T1_random.h"
+#include "T1_rand.h"
 #include "T1_objmodel.h"
 #include "T1_audio.h"
 #include "T1_zlight.h"
@@ -16,13 +16,14 @@
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_zsprite_anim.h"
-#include "T1_renderer.h"
+#include "T1_render.h"
 #include "T1_gameloop.h"
 #include "T1_token.h"
 #include "T1_mtlparser.h"
 #include "T1_objparser.h"
 
 #include "T1_clientlogic.h"
+#include "T1_platform_layer.h"
 
 #ifdef __cplusplus
 extern "C" {
