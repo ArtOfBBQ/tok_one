@@ -48,7 +48,7 @@ static void malloc_img_from_resource_name(
                 &recipient->good);
         
         if (!recipient->good) {
-            log_assert(0);
+            T1_log_assert(0);
             T1_mem_free_managed((uint8_t *)file_buffer.contents);
             return;
         }
@@ -99,7 +99,7 @@ static void malloc_img_from_resource_name(
                 &recipient->good);
         
         if (!recipient->good) {
-            log_assert(0);
+            T1_log_assert(0);
             T1_mem_free_managed((uint8_t *)file_buffer.contents);
             return;
         }
@@ -157,9 +157,9 @@ static void malloc_img_from_resource_name(
         
         recipient->good = true;
     } else {
-        log_append("unrecognized file format in: ");
-        log_append(filename);
-        log_append_char('\n');
+        T1_log_append("unrecognized file format in: ");
+        T1_log_append(filename);
+        T1_log_append_char('\n');
         recipient->good = false;
     }
     T1_mem_free_managed(file_buffer.contents);
@@ -180,7 +180,7 @@ void T1_tex_files_reg_new_by_splitting_file(
     T1Img * img = &stack_img;
     malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
-    log_assert(img->good);
+    T1_log_assert(img->good);
     if (!img->good) { return; }
     
     char filename_prefix[256];
@@ -237,7 +237,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     T1Img * img = &stack_img;
     malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
-    log_assert(img->good);
+    T1_log_assert(img->good);
     if (!img->good) {
         T1_std_strcpy_cap(
             error_message,
@@ -487,11 +487,11 @@ void T1_tex_files_prereg_dds_res(
     }
     
     DDS_Header * header = (DDS_Header *)buf.contents;
-    log_assert(header->magic_number_dds[0] == 'D');
-    log_assert(header->magic_number_dds[1] == 'D');
-    log_assert(header->magic_number_dds[2] == 'S');
-    log_assert(header->magic_number_dds[3] == ' ');
-    log_assert(header->size == 124);
+    T1_log_assert(header->magic_number_dds[0] == 'D');
+    T1_log_assert(header->magic_number_dds[1] == 'D');
+    T1_log_assert(header->magic_number_dds[2] == 'S');
+    T1_log_assert(header->magic_number_dds[3] == ' ');
+    T1_log_assert(header->size == 124);
     
     if (
         header->magic_number_dds[0] != 'D' ||
@@ -534,8 +534,8 @@ void T1_tex_files_decode_all_prereg(
             (int32_t)T1_tex_arrays_size :
             start_ta_i + texture_arrays_per_thread;
     
-    log_assert(using_num_threads > 0);
-    log_assert(using_num_threads < 7);
+    T1_log_assert(using_num_threads > 0);
+    T1_log_assert(using_num_threads < 7);
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         if (!T1_tex_arrays[ta_i].bc1_compressed) {
@@ -549,10 +549,10 @@ void T1_tex_files_decode_all_prereg(
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         T1_tex_arrays[ta_i].started_decoding = T1_platform_get_current_time_us();
-        log_assert(T1_tex_arrays[ta_i].images_size > 0);
-        log_assert(T1_tex_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
-        log_assert(T1_tex_arrays[ta_i].single_img_width > 0);
-        log_assert(T1_tex_arrays[ta_i].single_img_height > 0);
+        T1_log_assert(T1_tex_arrays[ta_i].images_size > 0);
+        T1_log_assert(T1_tex_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
+        T1_log_assert(T1_tex_arrays[ta_i].single_img_width > 0);
+        T1_log_assert(T1_tex_arrays[ta_i].single_img_height > 0);
         
         for (
             uint32_t t_i = 0;
@@ -563,10 +563,10 @@ void T1_tex_files_decode_all_prereg(
                 continue;
             }
             
-            log_assert(!T1_tex_arrays[ta_i].images[t_i].image.good);
-            log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
-            log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
-            log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
+            T1_log_assert(!T1_tex_arrays[ta_i].images[t_i].image.good);
+            T1_log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
+            T1_log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
+            T1_log_assert(T1_tex_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
             
             malloc_img_from_resource_name(
                 /* DecodedImage * recipient: */

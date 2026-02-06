@@ -221,9 +221,9 @@ void T1_term_render(void) {
         char_offset += 1;
     }
     
-    log_append("terminal history: ");
-    log_append(T1_trms->history + char_offset);
-    log_append_char('\n');
+    T1_log_append("terminal history: ");
+    T1_log_append(T1_trms->history + char_offset);
+    T1_log_append_char('\n');
     
     T1_text_props->f32.rgba[0] =
         T1_trms->font_color[0];

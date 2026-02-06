@@ -25,19 +25,24 @@ void T1_platform_init(
         ((char *)*unmanaged_memory_store) + size);
 }
 
-uint32_t T1_platform_init_mutex_and_return_id(void) {
-    
-    log_assert(next_mutex_id + 1 < T1_MUTEXES_SIZE);
-    log_assert(!mutexes[next_mutex_id].initialized);
+uint32_t
+T1_platform_init_mutex_and_return_id(void)
+{
+    T1_log_assert(
+        next_mutex_id + 1 < T1_MUTEXES_SIZE);
+    T1_log_assert(
+        !mutexes[next_mutex_id].initialized);
     
     int mutex_init_error_value = pthread_mutex_init(
         &(mutexes[next_mutex_id].mutex),
         NULL);
     
-    #if LOGGER_ASSERTS_ACTIVE
-    log_assert(mutex_init_error_value == 0);
-    #else
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_log_assert(mutex_init_error_value == 0);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)mutex_init_error_value;
+    #else
+    #error
     #endif
     
     uint32_t return_value = next_mutex_id;
@@ -57,23 +62,23 @@ bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id)
     If successful, pthread_mutex_trylock() will return zero.
     Otherwise, an error number will be returned to indicate the error.
     */
-    log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(mutexes[mutex_id].initialized);
     
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     if (return_val != 0) {
         // EINVAL = The value specified by mutex is invalid
-        log_assert(return_val != EINVAL);
+        T1_log_assert(return_val != EINVAL);
         
         // EPERM = Operation not permitted
-        log_assert(return_val != EPERM);
+        T1_log_assert(return_val != EPERM);
         
         // EBUSY = Mutex is already locked
-        log_assert(return_val == EBUSY);
+        T1_log_assert(return_val == EBUSY);
         
     }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -97,8 +102,8 @@ was unlocked
 void T1_platform_mutex_lock(
     const uint32_t mutex_id)
 {
-    log_assert(mutex_id < T1_MUTEXES_SIZE);
-    log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
+    T1_log_assert(mutexes[mutex_id].initialized);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id].mutex));
     
     #if T1_LOGGER_ASSERTS_ACTIVE
@@ -111,17 +116,17 @@ void T1_platform_mutex_lock(
 }
 
 void T1_platform_mutex_unlock(const uint32_t mutex_id) {
-    log_assert(mutex_id < T1_MUTEXES_SIZE);
-    log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
+    T1_log_assert(mutexes[mutex_id].initialized);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     int return_value =
         pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
     #else
-    #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
+    #error
     #endif
     
-    log_assert(return_value == 0);
+    T1_log_assert(return_value == 0);
 }

@@ -12,7 +12,7 @@ extern "C" {
 
 #include "T1_cpu_to_gpu.h"
 #include "T1_std.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_rand.h"
 #include "T1_zsprite.h"
 #include "T1_easing.h"

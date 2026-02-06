@@ -1,7 +1,7 @@
-#ifndef GPU_H
-#define GPU_H
+#ifndef T1_GPU_H
+#define T1_GPU_H
 
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_mem.h"
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
@@ -40,4 +40,4 @@ int32_t T1_apple_gpu_make_depth_tex(
 extern MetalKitViewDelegate * apple_gpu_delegate;
 extern uint64_t previous_time;
 
-#endif
+#endif // T1_GPU_H

@@ -47,7 +47,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_mtlparser.c"
 #include "T1_std.c"
 #include "T1_meta.c"
-#include "T1_logger.c"
+#include "T1_log.c"
 #include "T1_collision.c"
 #include "T1_zspriteid.c"
 #include "T1_audio.c"
@@ -85,7 +85,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_text.c"
 #include "T1_ui_widget.c"
 #include "T1_profiler.c"
-#if 1
+#if 0
 #include "clientlogic.c" // requires text and uielement
 #else
 #include "clientlogic_particledesigner.c" // requires text and uielement

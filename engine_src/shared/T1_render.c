@@ -197,7 +197,7 @@ void T1_render_update(
     (void)elapsed_us;
     
     if (T1_render_active != true) {
-        log_append("renderer not initialized, aborting...\n");
+        T1_log_append("renderer not initialized, aborting...\n");
         return;
     }
     
@@ -205,7 +205,7 @@ void T1_render_update(
         frame_data == NULL ||
         frame_data->verts == NULL)
     {
-        log_append(
+        T1_log_append(
             "ERROR: platform layer didnt "
             "pass recipients\n");
         return;
@@ -235,12 +235,12 @@ void T1_render_update(
         T1_global->postproc_consts;
     
     T1_zsprite_add_opaque_zpolygons_to_workload(frame_data);
-    log_assert(frame_data->zsprite_list->size <
+    T1_log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     T1_zsprite_add_alphablending_zpolygons_to_workload(frame_data);
-    log_assert(frame_data->zsprite_list->size <
+    T1_log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
@@ -274,7 +274,7 @@ void T1_render_update(
     
     T1_zsprite_add_bloom_zpolygons_to_workload(
         frame_data);
-    log_assert(frame_data->zsprite_list->size <
+    T1_log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -291,7 +291,7 @@ void T1_render_update(
             frame_data,
         /* uint64_t elapsed_us: */
             elapsed_us);
-    log_assert(frame_data->zsprite_list->size <
+    T1_log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(
@@ -357,10 +357,10 @@ void T1_render_update(
     frame_data->render_views_size =
         T1_render_views->size;
     
-    log_assert(frame_data->render_views != NULL);
+    T1_log_assert(frame_data->render_views != NULL);
     T1_std_memcpy(
         frame_data->render_views,
         T1_render_views->gpu,
         sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP);
-    log_assert(frame_data->render_views != NULL);
+    T1_log_assert(frame_data->render_views != NULL);
 }

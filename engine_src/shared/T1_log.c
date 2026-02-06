@@ -1,6 +1,6 @@
-#include "T1_logger.h"
+#include "T1_log.h"
 
-bool32_t T1_app_running = false;
+bool32_t T1_logger_app_running = false;
 #define CRASH_STRING_SIZE 256
 char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
@@ -20,7 +20,7 @@ static uint32_t log_i = 0;
 extern "C" {
 #endif
 
-void logger_init(
+void T1_logger_init(
     void * (* arg_logger_malloc_func)(size_t size),
     uint32_t (* arg_logger_create_mutex_func)(void),
     void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),
@@ -41,7 +41,7 @@ void logger_init(
     }
 }
 
-#ifndef LOGGER_SILENCE
+#if T1_LOG_SILENCE == T1_INACTIVE
 void
 internal_log_append_uint(
     const uint32_t to_append,
@@ -54,7 +54,7 @@ internal_log_append_uint(
         /* char * recipient: */
             converted);
     
-    internal_log_append(
+    T1_log_internal_append(
         converted,
         caller_function_name);
 }
@@ -68,7 +68,7 @@ internal_log_append_char(
     to_append_array[0] = to_append;
     to_append_array[1] = '\0';
     
-    internal_log_append(
+    T1_log_internal_append(
         to_append_array,
         caller_function_name);
 }
@@ -85,7 +85,7 @@ internal_log_append_int(
         /* char * recipient: */
             converted);
     
-    internal_log_append(
+    T1_log_internal_append(
         converted,
         caller_function_name);
 }
@@ -104,13 +104,13 @@ internal_log_append_float(
         /* const uint32_t recipient_size: */
             1000);
     
-    internal_log_append(
+    T1_log_internal_append(
         float_str,
         caller_function_name);
 }
 
 void
-internal_log_append(
+T1_log_internal_append(
     const char * to_append,
     const char * caller_function_name)
 {
@@ -215,6 +215,9 @@ internal_log_append(
     }
     #endif
 }
+#elif T1_LOG_SILENCE == T1_ACTIVE
+#else
+#error
 #endif
 
 void log_dump(bool32_t * good) {
@@ -241,7 +244,7 @@ log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     
-    if (T1_app_running) {
+    if (T1_logger_app_running) {
         unsigned int i = 0;
         while (
             crash_message[i] != '\0' &&
@@ -258,23 +261,23 @@ log_dump_and_crash(const char * crash_message) {
     printf("DUMP & CRASHED: %s\n", crash_message);
     #endif
     
-    T1_app_running = false;
+    T1_logger_app_running = false;
     
     #ifdef IGNORE_LOGGER
     assert(0);
     #endif
 }
 
-#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void
-internal_log_assert(
+T1_log_assert_internal(
     bool32_t condition,
     const char * str_condition,
     const char * file_name,
     const int line_number,
     const char * func_name)
 {
-    if (condition || !T1_app_running) { return; }
+    if (condition || !T1_logger_app_running) { return; }
     
     #ifndef LOGGER_SILENCE
     printf(
@@ -326,7 +329,7 @@ internal_log_assert(
     
     log_dump_and_crash(assert_failed_msg);
 }
-#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif

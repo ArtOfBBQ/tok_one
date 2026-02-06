@@ -237,7 +237,7 @@ static void destroy_all_sliders(void) {
     T1_texquad_delete(pds->title_zsprite_id);
     T1_texquad_delete(pds->title_label_zsprite_id);
     
-    log_assert(pds->regs_size < MAX_SLIDER_PARTICLE_PROPS);
+    T1_log_assert(pds->regs_size < MAX_SLIDER_PARTICLE_PROPS);
     for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
         T1_texquad_delete(pds->regs[i].label_zsprite_id);
         T1_texquad_delete(pds->regs[i].pin_zsprite_id);
@@ -345,10 +345,10 @@ static void redraw_all_sliders(void) {
         {
             T1_ui_widget_next_props->meta_struct_name =
                 field.enum_type_name;
-            log_assert(
+            T1_log_assert(
                 T1_ui_widget_next_props->
                     meta_struct_name != NULL);
-            log_assert(
+            T1_log_assert(
                 T1_ui_widget_next_props->
                     meta_struct_name[0] != '\0');
         }
@@ -359,7 +359,7 @@ static void redraw_all_sliders(void) {
             array_i++)
         {
             if (field.data_type == T1_TYPE_STRUCT) {
-                log_assert(field.struct_type_name != NULL);
+                T1_log_assert(field.struct_type_name != NULL);
             }
             
             cur_y = get_slider_y_screenspace(y_spot);
@@ -385,11 +385,11 @@ static void redraw_all_sliders(void) {
                     pds->inspecting_field,
                     expanded_field_name,
                     &good);
-            log_assert(good);
-            log_assert(indexed_field.data_type != T1_TYPE_NOTSET);
+            T1_log_assert(good);
+            T1_log_assert(indexed_field.data_type != T1_TYPE_NOTSET);
             
             if (array_i > 0) {
-                log_assert(indexed_field.offset !=
+                T1_log_assert(indexed_field.offset !=
                     field.offset);
             }
             
@@ -587,9 +587,9 @@ void T1_clientlogic_late_startup(void) {
 void T1_clientlogic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         default:
-            log_append("unhandled threadmain_id: ");
-            log_append_int(threadmain_id);
-            log_append("\n");
+            T1_log_append("unhandled threadmain_id: ");
+            T1_log_append_int(threadmain_id);
+            T1_log_append("\n");
     }
 }
 

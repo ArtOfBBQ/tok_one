@@ -167,20 +167,20 @@ bool32_t T1_apple_gpu_init(
     
     if (ags->lib == NULL)
     {
-        log_append("failed to load default shader lib, trying ");
-        log_append(
+        T1_log_append("failed to load default shader lib, trying ");
+        T1_log_append(
             [shader_lib_filepath
                 cStringUsingEncoding: NSASCIIStringEncoding]);
-        log_append("\n");
+        T1_log_append("\n");
         
         NSURL * shader_lib_url = [NSURL
             fileURLWithPath: shader_lib_filepath
             isDirectory: false];
         
         if (shader_lib_url == NULL) {
-            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
             log_dump_and_crash("Failed to find the shader lib\n");
-            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -203,12 +203,12 @@ bool32_t T1_apple_gpu_init(
                 error: &Error];
         
         if (ags->lib == NULL) {
-            log_append("Failed to find the shader library\n");
-            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+            T1_log_append("Failed to find the shader library\n");
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
             log_dump_and_crash((char *)[
                 [[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:NSASCIIStringEncoding]);
-            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
             // Pass
             #else
             #error
@@ -233,7 +233,7 @@ bool32_t T1_apple_gpu_init(
             
             return false;
         } else {
-            log_append(
+            T1_log_append(
                 "Success! Found the shader lib on 2nd try.\n");
         }
     }
@@ -242,7 +242,7 @@ bool32_t T1_apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"vertex_shader"];
     if (vertex_shader == NULL) {
-        log_append(
+        T1_log_append(
             "Missing function: vertex_shader()!");
         
         T1_std_strcpy_cap(
@@ -294,8 +294,10 @@ bool32_t T1_apple_gpu_init(
     id<MTLFunction> z_prepass_fragment_shader =
         [ags->lib newFunctionWithName:
             @"z_prepass_fragment_shader"];
-    if (z_prepass_fragment_shader == NULL) {
-        log_append("Missing function: z_prepass_fragment_shader()!");
+    if (
+        z_prepass_fragment_shader == NULL)
+    {
+        T1_log_append("Missing function: z_prepass_fragment_shader()!");
         
         T1_std_strcpy_cap(
             error_msg_string,
@@ -449,7 +451,7 @@ bool32_t T1_apple_gpu_init(
             error:
                 &Error];
     
-    log_assert(Error == nil);
+    T1_log_assert(Error == nil);
     flat_billboard_quad_pls_desc.
         colorAttachments[1] = nil;
     ags->bb_notouch_pls =
@@ -524,7 +526,7 @@ bool32_t T1_apple_gpu_init(
             error:
                 &Error];
     
-    log_assert(Error == nil);
+    T1_log_assert(Error == nil);
     
     
     
@@ -563,9 +565,9 @@ bool32_t T1_apple_gpu_init(
             [[[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:
                         NSASCIIStringEncoding]);
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash(error_msg_string);
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -580,7 +582,7 @@ bool32_t T1_apple_gpu_init(
                 diamond_pls_desc 
             error:
                 &Error];
-    log_assert(Error == NULL);
+    T1_log_assert(Error == NULL);
     
     diamond_pls_desc.colorAttachments[0] = nil;
     diamond_pls_desc.fragmentFunction = nil;
@@ -628,16 +630,16 @@ bool32_t T1_apple_gpu_init(
     
     if (Error != NULL)
     {
-        log_append(
+        T1_log_append(
             [[Error localizedDescription]
                 cStringUsingEncoding:
                     kCFStringEncodingASCII]);
         
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash(
             "Error loading the alpha "
             "blending shader\n");
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -656,7 +658,7 @@ bool32_t T1_apple_gpu_init(
                 alpha_pls_desc 
             error:
                 &Error];
-    log_assert(Error == NULL);
+    T1_log_assert(Error == NULL);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -675,15 +677,15 @@ bool32_t T1_apple_gpu_init(
     
     if (Error != NULL)
     {
-        log_append(
+        T1_log_append(
             [[Error localizedDescription]
                 cStringUsingEncoding:
                     kCFStringEncodingASCII]);
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash(
             "Error setting the depth "
             "stencil state\n");
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -704,7 +706,7 @@ bool32_t T1_apple_gpu_init(
         T1GPUFrame * f = &T1_cpu_to_gpu_data->
             triple_buffers[frame_i];
         
-        log_assert(
+        T1_log_assert(
             T1_cpu_to_gpu_data->
                 polygons_alloc_size >=
             (sizeof(T1GPUzSprite) *
@@ -805,7 +807,7 @@ bool32_t T1_apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        log_assert(MTLBufferPostProcessingConstants != nil);
+        T1_log_assert(MTLBufferPostProcessingConstants != nil);
         
         ags->postprocessing_constants_buffers[frame_i] =
             MTLBufferPostProcessingConstants;
@@ -827,7 +829,7 @@ bool32_t T1_apple_gpu_init(
         ags->light_buffers[frame_i] =
             MTLBufferFrameLights;
         
-        log_assert(
+        T1_log_assert(
             T1_cpu_to_gpu_data->
                 render_views_alloc_size >= (sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP));
         id<MTLBuffer> MTLBufferFrameCamera =
@@ -980,7 +982,7 @@ bool32_t T1_apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"single_quad_vertex_shader"];
     if (singlequad_vertex_shader == NULL) {
-        log_append(
+        T1_log_append(
             "Missing function: "
             "postprocess_vertex_shader()!");
         
@@ -997,7 +999,7 @@ bool32_t T1_apple_gpu_init(
             newFunctionWithName: @"single_quad_fragment_shader"];
     
     if (singlequad_fragment_shader == NULL) {
-        log_append("Missing function: downsampling_fragment_shader()!");
+        T1_log_append("Missing function: downsampling_fragment_shader()!");
         T1_std_strcpy_cap(
             error_msg_string,
             512,
@@ -1081,9 +1083,9 @@ void T1_platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     // pass
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)recipient_cap;
     #else
     #error
@@ -1106,8 +1108,8 @@ T1_platform_gpu_make_depth_tex(
     const uint32_t width,
     const uint32_t height)
 {
-    log_assert(height <= 4000);
-    log_assert(width <= 4000);
+    T1_log_assert(height <= 4000);
+    T1_log_assert(width <= 4000);
     
     return T1_apple_gpu_make_depth_tex(
         width,
@@ -1186,8 +1188,8 @@ void T1_platform_gpu_copy_texture_array(
     const bool32_t is_render_target,
     const bool32_t use_bc1_compression)
 {
-    log_assert(texture_array_i >=  0);
-    log_assert(texture_array_i <  31);
+    T1_log_assert(texture_array_i >=  0);
+    T1_log_assert(texture_array_i <  31);
     bool32_t copy_prev = false;
     id<MTLTexture> prev_copy = nil;
     
@@ -1210,9 +1212,9 @@ void T1_platform_gpu_copy_texture_array(
             ags->metal_textures[texture_array_i];
         ags->metal_textures[texture_array_i] = NULL;
     } else {
-        log_assert(ags->metal_textures[texture_array_i].
+        T1_log_assert(ags->metal_textures[texture_array_i].
             pixelFormat != MTLPixelFormatBC1_RGBA);
-        log_assert((ags->metal_textures[texture_array_i].
+        T1_log_assert((ags->metal_textures[texture_array_i].
             usage & MTLTextureUsageRenderTarget) > 0);
         return;
     }
@@ -1254,7 +1256,7 @@ void T1_platform_gpu_copy_texture_array(
     id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
-    log_assert(ags->metal_textures[texture_array_i] == NULL);
+    T1_log_assert(ags->metal_textures[texture_array_i] == NULL);
     ags->metal_textures[texture_array_i] = texture;
     
     T1_tex_arrays[texture_array_i].
@@ -1279,7 +1281,7 @@ void T1_platform_gpu_copy_texture_array(
 void T1_platform_gpu_delete_texture_array(
     const int32_t array_i)
 {
-    log_assert(array_i != DEPTH_TEXTUREARRAYS_I);
+    T1_log_assert(array_i != DEPTH_TEXTUREARRAYS_I);
     
     ags->metal_textures[array_i] = nil;
 }
@@ -1287,7 +1289,7 @@ void T1_platform_gpu_delete_texture_array(
 void T1_platform_gpu_delete_depth_tex(
     const int32_t slice_i)
 {
-    log_assert(slice_i < T1_RENDER_VIEW_CAP);
+    T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
     
     ags->depth_textures[slice_i] = nil;
 }
@@ -1304,12 +1306,12 @@ void T1_platform_gpu_fetch_rgba_at(
     uint32_t * good)
 {
     // Validate inputs
-    log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 0);
-    log_assert(texture_array_i < TEXTUREARRAYS_SIZE);
-    log_assert(rgba_recipient != NULL);
-    log_assert(recipient_size != NULL);
-    log_assert(good != NULL);
+    T1_log_assert(texture_i >= 0);
+    T1_log_assert(texture_array_i >= 0);
+    T1_log_assert(texture_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(rgba_recipient != NULL);
+    T1_log_assert(recipient_size != NULL);
+    T1_log_assert(good != NULL);
     
     *good = false;
     
@@ -1462,15 +1464,15 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
 {
     (void)parent_tex_array_imgs_size;
     
-    log_assert(rgba_freeable != NULL);
-    log_assert(rgba_page_aligned != NULL);
+    T1_log_assert(rgba_freeable != NULL);
+    T1_log_assert(rgba_page_aligned != NULL);
     
-    log_assert(tex_i >= 0);
-    log_assert(tex_array_i >= 0);
-    log_assert(tex_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(tex_i >= 0);
+    T1_log_assert(tex_array_i >= 0);
+    T1_log_assert(tex_array_i < TEXTUREARRAYS_SIZE);
     
     if (ags->metal_textures[tex_array_i] == NULL) {
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
@@ -1480,7 +1482,7 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1555,13 +1557,13 @@ void T1_platform_gpu_push_bc1_tex_slice_then_free(
 {
     (void)parent_tex_array_imgs_size;
     
-    log_assert(raw_bc1_file_page_aligned != NULL);
+    T1_log_assert(raw_bc1_file_page_aligned != NULL);
     
-    log_assert(tex_i >= 0);
-    log_assert(tex_array_i >= 1); // 0 is resered for font
+    T1_log_assert(tex_i >= 0);
+    T1_log_assert(tex_array_i >= 1); // 0 is resered for font
     
     if (ags->metal_textures[tex_array_i] == NULL) {
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
@@ -1571,7 +1573,7 @@ void T1_platform_gpu_push_bc1_tex_slice_then_free(
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         // Pass
         #else
         #error
@@ -1704,9 +1706,9 @@ get_tex_slice(
     const int32_t at_array_i,
     const int32_t at_slice_i)
 {
-    log_assert(at_array_i >= 0);
-    log_assert(at_array_i < TEXTUREARRAYS_SIZE);
-    log_assert(at_slice_i >= 0);
+    T1_log_assert(at_array_i >= 0);
+    T1_log_assert(at_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(at_slice_i >= 0);
     
     id<MTLTexture> parent =
         ags->metal_textures[at_array_i];
@@ -1726,7 +1728,7 @@ get_tex_slice(
         slices:
             slice_range];
     
-    log_assert(retval != nil);
+    T1_log_assert(retval != nil);
     return retval;
 }
 
@@ -1783,9 +1785,9 @@ static void set_defaults_for_encoder(
     id<MTLRenderCommandEncoder> encoder,
     const uint32_t cam_i)
 {
-    log_assert(cam_i < T1_RENDER_VIEW_CAP);
+    T1_log_assert(cam_i < T1_RENDER_VIEW_CAP);
     
-    log_assert(ags->opaque_depth_stencil_state != nil);
+    T1_log_assert(ags->opaque_depth_stencil_state != nil);
     [encoder
         setDepthStencilState:
             ags->opaque_depth_stencil_state];
@@ -1813,7 +1815,7 @@ static void set_defaults_for_encoder(
         atIndex:
             1];
     
-    log_assert(ags->matrix_buffers[ags->frame_i] != nil);
+    T1_log_assert(ags->matrix_buffers[ags->frame_i] != nil);
     [encoder
         setVertexBuffer:
             ags->matrix_buffers[ags->frame_i]
@@ -1949,8 +1951,8 @@ static void set_defaults_for_encoder(
     ags->window_viewport.height  =
         T1_global->window_height *
             ags->retina_scaling_factor;
-    log_assert(ags->window_viewport.width > 0.0f);
-    log_assert(ags->window_viewport.height > 0.0f);
+    T1_log_assert(ags->window_viewport.width > 0.0f);
+    T1_log_assert(ags->window_viewport.height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -1986,8 +1988,8 @@ static void set_defaults_for_encoder(
 
 - (void) updateRenderViewSize: (int)at_i
 {
-    log_assert(at_i >= 0);
-    log_assert(at_i < T1_RENDER_VIEW_CAP);
+    T1_log_assert(at_i >= 0);
+    T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
     
     ags->render_viewports[at_i].originX = 0;
     ags->render_viewports[at_i].originY = 0;
@@ -1995,8 +1997,8 @@ static void set_defaults_for_encoder(
         T1_render_views->cpu[at_i].width;
     ags->render_viewports[at_i].height  =
         T1_render_views->cpu[at_i].height;
-    log_assert(ags->render_viewports[at_i].width > 0.0f);
-    log_assert(ags->render_viewports[at_i].height > 0.0f);
+    T1_log_assert(ags->render_viewports[at_i].width > 0.0f);
+    T1_log_assert(ags->render_viewports[at_i].height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -2115,14 +2117,14 @@ static void set_defaults_for_encoder(
             #error
             #endif
         }
-        log_assert(ags->zbuf_cleared);
+        T1_log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_OUTLINES:
         {
             #if T1_OUTLINES_ACTIVE == T1_ACTIVE
             // Drawing outlines to a depth target
             // seems pointless, not supported
-            log_assert(
+            T1_log_assert(
                 T1_render_views->cpu[cam_i].
                     write_type !=
                         T1RENDERVIEW_WRITE_DEPTH);
@@ -2211,8 +2213,8 @@ static void set_defaults_for_encoder(
                 pass_2_opaque_tris_enc,
                 (uint32_t)cam_i);
             
-            log_assert((pass->verts_size + pass->vert_i) < MAX_VERTICES_PER_BUFFER);
-            log_assert(pass->verts_size % 3 == 0);
+            T1_log_assert((pass->verts_size + pass->vert_i) < MAX_VERTICES_PER_BUFFER);
+            T1_log_assert(pass->verts_size % 3 == 0);
             
             [pass_2_opaque_tris_enc
                 drawPrimitives:
@@ -2224,7 +2226,7 @@ static void set_defaults_for_encoder(
             
             [pass_2_opaque_tris_enc endEncoding];
         }
-        log_assert(ags->zbuf_cleared);
+        T1_log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_ALPHA_BLEND:
         {
@@ -2274,7 +2276,7 @@ static void set_defaults_for_encoder(
             #error
             #endif
         }
-        log_assert(ags->zbuf_cleared);
+        T1_log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_BILLBOARDS:
         {
@@ -2328,15 +2330,15 @@ static void set_defaults_for_encoder(
             
             [bb_enc endEncoding];
         }
-        log_assert(ags->zbuf_cleared);
+        T1_log_assert(ags->zbuf_cleared);
         break;
         case T1RENDERPASS_BLOOM:
         {
-            log_assert(
+            T1_log_assert(
                 T1_render_views->cpu[cam_i].
                     write_type ==
                         T1RENDERVIEW_WRITE_RENDER_TARGET);
-            log_assert(ags->cur_blnd_pls != nil);
+            T1_log_assert(ags->cur_blnd_pls != nil);
             
             if (!T1_global->draw_triangles ||
                 pass->verts_size < 1)
@@ -2346,7 +2348,7 @@ static void set_defaults_for_encoder(
             
             #if T1_BLOOM_ACTIVE == T1_ACTIVE
             // only render target can bloom atm
-            log_assert(cam_i == 0);
+            T1_log_assert(cam_i == 0);
             
             MTLRenderPassDescriptor *
                 bloom_desc = [view
@@ -2534,11 +2536,11 @@ static void set_defaults_for_encoder(
             
             [flat_texq_enc endEncoding];
         }
-        log_assert(ags->zbuf_cleared);
+        T1_log_assert(ags->zbuf_cleared);
         break;
         default:
             // render pass type not set
-            log_assert(0);
+            T1_log_assert(0);
     }
     
     pass->verts_size = 0;
@@ -2554,9 +2556,9 @@ static void set_defaults_for_encoder(
         return;
     }
     
-    log_assert(
+    T1_log_assert(
         T1_render_views->cpu[0].write_array_i >= 0);
-    log_assert(
+    T1_log_assert(
         T1_render_views->cpu[0].write_array_i <
             (int)T1_tex_arrays_size);
     
@@ -2571,7 +2573,7 @@ static void set_defaults_for_encoder(
         &T1_cpu_to_gpu_data->
             triple_buffers[ags->frame_i];
     
-    log_assert(f->verts_size % 3 == 0);
+    T1_log_assert(f->verts_size % 3 == 0);
     
     funcptr_gameloop_before_render(
         T1_cpu_to_gpu_data->
@@ -2580,7 +2582,7 @@ static void set_defaults_for_encoder(
     if (
         (f->postproc_consts->timestamp -
             T1_global->last_resize_request_us)
-                < T1_WINDOW_RESIZE_TIMEOUT)
+                < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
         return;
     }
@@ -2669,7 +2671,7 @@ static void set_defaults_for_encoder(
         {
             case T1RENDERVIEW_WRITE_BELOWBOUNDS:
             {
-                log_assert(0);
+                T1_log_assert(0);
             }
             break;
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
@@ -2680,7 +2682,7 @@ static void set_defaults_for_encoder(
                             write_array_i,
                         T1_render_views->cpu[cam_i].
                             write_slice_i);
-                log_assert(ags->cur_rtt != NULL);
+                T1_log_assert(ags->cur_rtt != NULL);
                 ags->cur_depth =
                     ags->cam_depth_texture;
                 ags->cur_opq_pls =
@@ -2703,7 +2705,7 @@ static void set_defaults_for_encoder(
                             write_array_i,
                         T1_render_views->cpu[cam_i].
                             write_slice_i);
-                log_assert(ags->cur_rtt != NULL);
+                T1_log_assert(ags->cur_rtt != NULL);
                 ags->cur_depth =
                     ags->cam_depth_texture;
                 ags->cur_opq_pls =
@@ -2718,14 +2720,14 @@ static void set_defaults_for_encoder(
             break;
             case T1RENDERVIEW_WRITE_DEPTH:
             {
-                log_assert(
+                T1_log_assert(
                     T1_render_views->cpu[cam_i].
                         write_array_i ==
                             DEPTH_TEXTUREARRAYS_I);
-                log_assert(
+                T1_log_assert(
                     T1_render_views->cpu[cam_i].
                         write_slice_i >= 0);
-                log_assert(
+                T1_log_assert(
                     T1_render_views->cpu[cam_i].
                         write_slice_i <
                             T1_RENDER_VIEW_CAP);
@@ -2735,8 +2737,8 @@ static void set_defaults_for_encoder(
                         T1_render_views->cpu[cam_i].
                             write_slice_i];
                 
-                log_assert(ags->cur_depth != nil);
-                log_assert(
+                T1_log_assert(ags->cur_depth != nil);
+                T1_log_assert(
                     (ags->cur_depth.usage &
                         MTLTextureUsageRenderTarget)
                             > 0);
@@ -2751,7 +2753,7 @@ static void set_defaults_for_encoder(
             break;
             case T1RENDERVIEW_WRITE_ABOVEBOUNDS:
             {
-                log_assert(0);
+                T1_log_assert(0);
             }
             break;
         }
@@ -2769,11 +2771,11 @@ static void set_defaults_for_encoder(
                 withComBuf: combuf];
         }
         
-        log_assert(ags->viewports_set[cam_i]);
+        T1_log_assert(ags->viewports_set[cam_i]);
         
-        log_assert(T1_render_views->cpu[cam_i].
+        T1_log_assert(T1_render_views->cpu[cam_i].
             write_array_i >= 1);
-        log_assert(T1_render_views->cpu[cam_i].
+        T1_log_assert(T1_render_views->cpu[cam_i].
             write_slice_i >= 0);
     }
     
@@ -2818,7 +2820,7 @@ static void set_defaults_for_encoder(
     [pass_5_comp setCullMode: MTLCullModeNone];
     [pass_5_comp
         setRenderPipelineState: ags->singlequad_pls];
-    log_assert(ags->quad_vertices != NULL);
+    T1_log_assert(ags->quad_vertices != NULL);
     [pass_5_comp
         setVertexBytes:
             ags->quad_vertices
@@ -2832,8 +2834,8 @@ static void set_defaults_for_encoder(
         offset:0
         atIndex:1];
     
-    log_assert(T1_render_views->cpu[0].write_array_i >= 0);
-    log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_tex_arrays_size);
+    T1_log_assert(T1_render_views->cpu[0].write_array_i >= 0);
+    T1_log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_tex_arrays_size);
     id<MTLTexture> arr_tex = ags->metal_textures[
         T1_render_views->cpu[0].write_array_i];
     id<MTLTexture> sliced_tex = [arr_tex
@@ -2877,16 +2879,16 @@ static void set_defaults_for_encoder(
     
     int32_t perlin_ta_i =
         f->postproc_consts->perlin_texturearray_i;
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     int32_t perlin_t_i =
         f->postproc_consts->perlin_texture_i;
     // log_assert(perlin_ta_i >= 1);
-    log_assert(perlin_t_i == 0);
+    T1_log_assert(perlin_t_i == 0);
     
     [pass_5_comp
         setFragmentTexture: ags->metal_textures[perlin_ta_i]
         atIndex:6];
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error
@@ -2904,7 +2906,7 @@ static void set_defaults_for_encoder(
     
     ags->frame_i += 1;
     ags->frame_i %= T1_FRAMES_CAP;
-    log_assert(ags->frame_i < T1_FRAMES_CAP);
+    T1_log_assert(ags->frame_i < T1_FRAMES_CAP);
     
     [combuf addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
@@ -2931,8 +2933,8 @@ static void set_defaults_for_encoder(
 void T1_platform_gpu_update_internal_render_viewport(
     const int32_t at_i)
 {
-    log_assert(at_i >= 0);
-    log_assert(at_i < T1_RENDER_VIEW_CAP);
+    T1_log_assert(at_i >= 0);
+    T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
     
     ags->viewports_set[at_i] = false;
     [apple_gpu_delegate
@@ -2951,7 +2953,7 @@ int32_t T1_apple_gpu_make_depth_tex(
     int32_t slice_i = 0;
     while (ags->depth_textures[slice_i] != nil) {
         slice_i += 1;
-        log_assert(slice_i < T1_RENDER_VIEW_CAP);
+        T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
     }
     
     if (slice_i >= T1_RENDER_VIEW_CAP) {
@@ -2972,8 +2974,8 @@ int32_t T1_apple_gpu_make_depth_tex(
     ags->depth_textures[slice_i] =
         [ags->device newTextureWithDescriptor: desc];
     
-    log_assert(ags->depth_textures[slice_i] != nil);
-    log_assert(
+    T1_log_assert(ags->depth_textures[slice_i] != nil);
+    T1_log_assert(
         (ags->depth_textures[slice_i].usage &
             MTLTextureUsageRenderTarget) > 0);
     

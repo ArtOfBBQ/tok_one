@@ -111,7 +111,8 @@
 extern "C" {
 #endif
 
-void T1_io_init(
+void
+T1_io_init(
     void *(* arg_malloc_func)(size_t));
 
 typedef struct {
@@ -124,7 +125,9 @@ typedef struct {
     bool32_t handled;
 } T1IOEvent;
 
-void T1_io_event_construct(T1IOEvent * to_construct);
+void
+T1_io_event_construct(
+    T1IOEvent * to_construct);
 
 // indexes in the interactions array
 #define T1_IO_LAST_GPU_DATA               0
@@ -144,12 +147,18 @@ extern T1IOEvent * T1_io_events;
 extern bool32_t * T1_io_keymap;
 extern float T1_io_mouse_scroll_pos;
 
-void T1_io_event_register(
+void
+T1_io_event_register(
     T1IOEvent * touch_record);
 
-void T1_io_register_keyup(uint32_t key_id);
-void T1_io_register_keydown(uint32_t key_id);
-void T1_io_register_mousescroll(
+void
+T1_io_register_keyup(uint32_t key_id);
+
+void
+T1_io_register_keydown(uint32_t key_id);
+
+void
+T1_io_register_mousescroll(
     const float amount);
 
 #ifdef __cplusplus

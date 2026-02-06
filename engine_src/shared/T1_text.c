@@ -46,9 +46,9 @@ void T1_text_init(
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     (void)raw_fontmetrics_file_size;
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -69,20 +69,20 @@ void T1_text_init(
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
-    log_assert(sizeof(FontMetrics) < raw_fontmetrics_file_size);
+    T1_log_assert(sizeof(FontMetrics) < raw_fontmetrics_file_size);
     
     global_font_metrics = (FontMetrics *)buffer_at;
     buffer_at += sizeof(FontMetrics);
     codepoint_metrics_size = (uint32_t)global_font_metrics->codepoints_in_font;
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     uint64_t filesize_remaining =
         raw_fontmetrics_file_size - sizeof(FontMetrics);
-    log_assert(filesize_remaining % sizeof(FontCodepoint) == 0);
-    log_assert(
+    T1_log_assert(filesize_remaining % sizeof(FontCodepoint) == 0);
+    T1_log_assert(
         filesize_remaining ==
             codepoint_metrics_size * sizeof(FontCodepoint));
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -103,11 +103,11 @@ static float get_advance_width(const char input) {
     if (input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
-    // log_assert(codepoint_metrics[i].character == input);
+    // T1_log_assert(codepoint_metrics[i].character == input);
     
     if (i >= codepoint_metrics_size) {
         i = (uint32_t)('m' - '!');
-        log_assert(i < codepoint_metrics_size);
+        T1_log_assert(i < codepoint_metrics_size);
     }
     
     return
@@ -121,11 +121,11 @@ static float get_left_side_bearing(const char input) {
     if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
-    // log_assert(codepoint_metrics[i].character == input);
+    // T1_log_assert(codepoint_metrics[i].character == input);
     
     if (i >= codepoint_metrics_size) {
         i = (uint32_t)('m' - '!');
-        log_assert(i < codepoint_metrics_size);
+        T1_log_assert(i < codepoint_metrics_size);
     }
     
     return
@@ -141,11 +141,11 @@ static float get_y_offset(const char input) {
     uint32_t i = (uint32_t)(input - '!');
     if (i >= codepoint_metrics_size) { return 0.0f; }
     
-    log_assert(codepoint_metrics[i].character == input);
+    T1_log_assert(codepoint_metrics[i].character == input);
     
     if (i >= codepoint_metrics_size) {
         i = (uint32_t)('m' - '!');
-        log_assert(i < codepoint_metrics_size);
+        T1_log_assert(i < codepoint_metrics_size);
     }
     
     return
@@ -182,8 +182,8 @@ static void prefetch_label_lines(
     PrefetchedLine * recipient,
     uint32_t * recipient_size)
 {
-    log_assert(text_to_draw != NULL);
-    log_assert(text_to_draw[0] != '\0');
+    T1_log_assert(text_to_draw != NULL);
+    T1_log_assert(text_to_draw[0] != '\0');
     
     float widest_line_width = 0.0f;
     *recipient_size = 1;
@@ -229,8 +229,8 @@ static void prefetch_label_lines(
                 recipient[cur_line_i].width
                     + get_next_word_width(text_to_draw + i) > max_width)
             {
-                log_assert(recipient[cur_line_i].width > 0.0f);
-                log_assert(recipient[cur_line_i].start_i < i);
+                T1_log_assert(recipient[cur_line_i].width > 0.0f);
+                T1_log_assert(recipient[cur_line_i].start_i < i);
                 recipient[cur_line_i].end_i = i;
                 *recipient_size += 1;
                 cur_line_i += 1;
@@ -240,7 +240,7 @@ static void prefetch_label_lines(
         }
     }
     
-    log_assert(text_to_draw[i] == '\0');
+    T1_log_assert(text_to_draw[i] == '\0');
     recipient[cur_line_i].end_i = i;
     if (recipient[cur_line_i].end_i == recipient[cur_line_i].start_i) {
         *recipient_size -= 1;
@@ -251,7 +251,7 @@ static void prefetch_label_lines(
             widest_line_width = recipient[line_i].width;
         }
     }
-    log_assert(widest_line_width > 0.0f);
+    T1_log_assert(widest_line_width > 0.0f);
 }
 
 void T1_text_request_label_offset_around(
@@ -262,13 +262,13 @@ void T1_text_request_label_offset_around(
     const float z,
     const float max_width)
 {
-    log_assert(max_width > 0.0f);
-    log_assert(T1_text_props->font_height > 0);
-    log_assert(T1_text_props->f32.rgba[3] > -0.02f);
-    log_assert(T1_text_props->f32.rgba[3] < 1.05f);
-    log_assert(T1_text_props->font_height > 0.05f);
-    log_assert(text_to_draw != NULL);
-    log_assert(text_to_draw[0] != '\0');
+    T1_log_assert(max_width > 0.0f);
+    T1_log_assert(T1_text_props->font_height > 0);
+    T1_log_assert(T1_text_props->f32.rgba[3] > -0.02f);
+    T1_log_assert(T1_text_props->f32.rgba[3] < 1.05f);
+    T1_log_assert(T1_text_props->font_height > 0.05f);
+    T1_log_assert(text_to_draw != NULL);
+    T1_log_assert(text_to_draw[0] != '\0');
     
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -278,7 +278,7 @@ void T1_text_request_label_offset_around(
         max_width,
         lines,
         &lines_size);
-    log_assert(lines_size < MAX_LINES);
+    T1_log_assert(lines_size < MAX_LINES);
     
     T1FlatTexQuadRequest letter;
     
@@ -374,7 +374,7 @@ T1_text_request_label_around_x_at_top_y(
     PrefetchedLine lines[MAX_LINES];
     uint32_t lines_size;
     prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
-    log_assert(lines_size < MAX_LINES);
+    T1_log_assert(lines_size < MAX_LINES);
     
     T1_text_request_label_offset_around(
         /* const int32_t with_id: */
@@ -400,8 +400,8 @@ void T1_text_request_label_around(
     const float z,
     const float max_width)
 {
-    log_assert(text_to_draw != NULL);
-    log_assert(text_to_draw[0] != '\0');
+    T1_log_assert(text_to_draw != NULL);
+    T1_log_assert(text_to_draw[0] != '\0');
     
     T1_text_request_label_offset_around(
         /* const int32_t with_id: */
@@ -426,10 +426,10 @@ void T1_text_request_label_renderable(
     const float z,
     const float max_width)
 {
-    log_assert(z >= 0.0f);
-    log_assert(z <= 1.0f);
+    T1_log_assert(z >= 0.0f);
+    T1_log_assert(z <= 1.0f);
     
-    log_assert(text_to_draw[0] != '\0');
+    T1_log_assert(text_to_draw[0] != '\0');
     float cur_x_offset = 0;
     float cur_y_offset = 0;
     

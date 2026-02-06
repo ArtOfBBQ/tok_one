@@ -254,8 +254,8 @@ void T1_platform_writable_filename_to_pathfile(
         (filename_length
             + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
-    log_assert(assert_capacity >= full_filename_size);
-    if (!T1_app_running) {
+    T1_log_assert(assert_capacity >= full_filename_size);
+    if (!T1_logger_app_running) {
         recipient[0] = '\0';
         return;
     }
@@ -273,7 +273,7 @@ void T1_platform_writable_filename_to_pathfile(
         assert_capacity,
         separator_and_filename);
     
-    log_assert(recipient[0] != '\0');
+    T1_log_assert(recipient[0] != '\0');
 }
 
 void T1_platform_del_writable(

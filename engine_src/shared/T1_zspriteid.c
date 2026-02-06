@@ -11,22 +11,22 @@ static int32_t T1_zspriteid_latest_nonui_touch = T1_ZSPRITEID_FIRST_NONUI_TOUCH;
 static int32_t T1_zspriteid_latest_ui_touch = 2;
 
 int32_t T1_zspriteid_next_ui_element_id(void) {
-    log_assert(T1_zspriteid_latest_ui + 1 < T1_ZSPRITEID_FIRST_NONUI);
+    T1_log_assert(T1_zspriteid_latest_ui + 1 < T1_ZSPRITEID_FIRST_NONUI);
     return T1_zspriteid_latest_ui++;
 }
 
 int32_t T1_zspriteid_next_nonui_id(void) {
-    log_assert(
+    T1_log_assert(
         T1_zspriteid_latest_nonui + 1 >= T1_ZSPRITEID_FIRST_NONUI);
-    log_assert(T1_zspriteid_latest_nonui + 1 < T1_ZSPRITE_ID_MAX);
+    T1_log_assert(T1_zspriteid_latest_nonui + 1 < T1_ZSPRITE_ID_MAX);
     return T1_zspriteid_latest_nonui++;
 }
 
 int32_t
 T1_zspriteid_next_ui_element_touch_id(void)
 {
-    log_assert(T1_zspriteid_latest_ui_touch >= 0);
-    log_assert(T1_zspriteid_latest_ui_touch < T1_ZSPRITEID_FIRST_NONUI_TOUCH);
+    T1_log_assert(T1_zspriteid_latest_ui_touch >= 0);
+    T1_log_assert(T1_zspriteid_latest_ui_touch < T1_ZSPRITEID_FIRST_NONUI_TOUCH);
     return T1_zspriteid_latest_ui_touch++;
 }
 
@@ -35,8 +35,8 @@ void T1_zspriteid_clear_ui_element_touch_ids(void) {
 }
 
 int32_t T1_zspriteid_next_nonui_touch_id(void) {
-    log_assert(T1_zspriteid_latest_nonui_touch >=
+    T1_log_assert(T1_zspriteid_latest_nonui_touch >=
         T1_ZSPRITEID_FIRST_NONUI_TOUCH);
-    log_assert(T1_zspriteid_latest_nonui_touch < INT32_MAX);
+    T1_log_assert(T1_zspriteid_latest_nonui_touch < INT32_MAX);
     return T1_zspriteid_latest_nonui_touch++;
 }

@@ -72,7 +72,7 @@ extern "C" {
 #include "decode_bmp.h"
 #include "T1_std.h"
 #include "T1_mem.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_img.h"
 #include "T1_global.h"
 #include "T1_ui_widget.h"

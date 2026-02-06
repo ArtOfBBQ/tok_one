@@ -20,11 +20,11 @@
 		6028DD342886EE54000E1E98 /* T1_appinit.c in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD2F2886EE35000E1E98 /* T1_appinit.c */; };
 		6064C0C22892505000E8B3AD /* T1_gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BF2892504A00E8B3AD /* T1_gameloop.c */; };
 		6080CC46286FFD1E00444118 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
-		60A998F1287BD4C3003F7159 /* T1_logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* T1_logger.h */; };
+		60A998F1287BD4C3003F7159 /* T1_log.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* T1_log.h */; };
 		60A998F2287BD4C3003F7159 /* T1_render.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* T1_render.h */; };
 		60A998F4287BD4C3003F7159 /* T1_apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* T1_apple_platform_layer.m */; };
 		60A998F5287BD4C3003F7159 /* T1_tex_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* T1_tex_array.h */; };
-		60A998F7287BD4C3003F7159 /* T1_logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* T1_logger.c */; };
+		60A998F7287BD4C3003F7159 /* T1_log.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* T1_log.c */; };
 		60A998F8287BD4C3003F7159 /* T1_std.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* T1_std.h */; };
 		60A998FA287BD4C3003F7159 /* T1_render.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* T1_render.c */; };
 		60A998FB287BD4C3003F7159 /* T1_zlight.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* T1_zlight.h */; };
@@ -146,7 +146,6 @@
 		ECDD9C232DE2157500721A48 /* T1_tex_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_tex_files.c */; };
 		ECE531012EB229900035DC98 /* T1_linalg3d.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE531002EB229900035DC98 /* T1_linalg3d.c */; };
 		ECE759CE2C3FF1BE004B0847 /* T1_collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* T1_collision.c */; };
-		ECE759D12C400175004B0847 /* T1_lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* T1_lines.c */; };
 		ECF7CB172D53ADA400623C60 /* T1_platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */; };
 		ECF7CB182D53ADA400623C60 /* T1_profiler.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB152D53ADA400623C60 /* T1_profiler.c */; };
 /* End PBXBuildFile section */
@@ -172,7 +171,7 @@
 		601128702862511600F92967 /* clientlogic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic.c; path = ../../sampleproject_src/clientlogic.c; sourceTree = "<group>"; };
 		601128712862511600F92967 /* T1_zlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_zlight.h; path = ../../engine_src/shared/T1_zlight.h; sourceTree = "<group>"; };
 		601128742862511600F92967 /* T1_text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_text.c; path = ../../engine_src/shared/T1_text.c; sourceTree = "<group>"; };
-		601128752862511600F92967 /* T1_logger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_logger.h; path = ../../engine_src/shared/T1_logger.h; sourceTree = "<group>"; };
+		601128752862511600F92967 /* T1_log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_log.h; path = ../../engine_src/shared/T1_log.h; sourceTree = "<group>"; };
 		601128762862511600F92967 /* T1_cpu_to_gpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_cpu_to_gpu.h; path = ../../engine_src/shared/T1_cpu_to_gpu.h; sourceTree = "<group>"; };
 		601128772862511600F92967 /* T1_rand.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_rand.c; path = ../../engine_src/shared/T1_rand.c; sourceTree = "<group>"; };
 		601128782862511600F92967 /* T1_zlight.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_zlight.c; path = ../../engine_src/shared/T1_zlight.c; sourceTree = "<group>"; };
@@ -180,7 +179,7 @@
 		6011287B2862511700F92967 /* T1_render.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_render.h; path = ../../engine_src/shared/T1_render.h; sourceTree = "<group>"; };
 		6011287D2862511700F92967 /* T1_zsprite_anim.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_zsprite_anim.c; path = ../../engine_src/shared/T1_zsprite_anim.c; sourceTree = "<group>"; };
 		6011287E2862511700F92967 /* T1_zsprite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_zsprite.c; path = ../../engine_src/shared/T1_zsprite.c; sourceTree = "<group>"; };
-		6011287F2862511700F92967 /* T1_logger.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_logger.c; path = ../../engine_src/shared/T1_logger.c; sourceTree = "<group>"; };
+		6011287F2862511700F92967 /* T1_log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_log.c; path = ../../engine_src/shared/T1_log.c; sourceTree = "<group>"; };
 		601128802862511700F92967 /* T1_rand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_rand.h; path = ../../engine_src/shared/T1_rand.h; sourceTree = "<group>"; };
 		601128822862511700F92967 /* T1_global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_global.h; path = ../../engine_src/shared/T1_global.h; sourceTree = "<group>"; };
 		601128832862511700F92967 /* T1_platform_layer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = T1_platform_layer.h; path = ../../engine_src/shared/T1_platform_layer.h; sourceTree = "<group>"; };
@@ -303,8 +302,6 @@
 		ECE531002EB229900035DC98 /* T1_linalg3d.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_linalg3d.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_linalg3d.c; sourceTree = "<absolute>"; };
 		ECE759CC2C3FF1BE004B0847 /* T1_collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_collision.c; path = ../../engine_src/shared/T1_collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* T1_collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_collision.h; path = ../../engine_src/shared/T1_collision.h; sourceTree = "<group>"; };
-		ECE759CF2C400174004B0847 /* T1_lines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_lines.h; path = ../../engine_src/shared/T1_lines.h; sourceTree = "<group>"; };
-		ECE759D02C400175004B0847 /* T1_lines.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_lines.c; path = ../../engine_src/shared/T1_lines.c; sourceTree = "<group>"; };
 		ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_platform_layer_common.c; path = ../../engine_src/shared/T1_platform_layer_common.c; sourceTree = "<group>"; };
 		ECF7CB152D53ADA400623C60 /* T1_profiler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_profiler.c; path = ../../engine_src/shared/T1_profiler.c; sourceTree = "<group>"; };
 		ECF7CB162D53ADA400623C60 /* T1_profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_profiler.h; path = ../../engine_src/shared/T1_profiler.h; sourceTree = "<group>"; };
@@ -482,12 +479,10 @@
 				6028DD2F2886EE35000E1E98 /* T1_appinit.c */,
 				601128712862511600F92967 /* T1_zlight.h */,
 				601128782862511600F92967 /* T1_zlight.c */,
-				ECE759CF2C400174004B0847 /* T1_lines.h */,
-				ECE759D02C400175004B0847 /* T1_lines.c */,
 				ECDAFF682EFBDCB000AE4CA1 /* T1_render_view.h */,
 				ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */,
-				601128752862511600F92967 /* T1_logger.h */,
-				6011287F2862511700F92967 /* T1_logger.c */,
+				601128752862511600F92967 /* T1_log.h */,
+				6011287F2862511700F92967 /* T1_log.c */,
 				EC676A382DE6D667001FD4DE /* T1_material.h */,
 				EC676A392DE6D667001FD4DE /* T1_material.c */,
 				EC4186E62E8F0739007FF019 /* T1_easing.h */,
@@ -784,10 +779,9 @@
 				EC6441A729318B6D00A0267B /* ViewController.m in Sources */,
 				EC676A3C2DE85210001FD4DE /* T1_cpu_to_gpu.c in Sources */,
 				ECDD9C232DE2157500721A48 /* T1_tex_files.c in Sources */,
-				ECE759D12C400175004B0847 /* T1_lines.c in Sources */,
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
 				EC2914A12EEE200B00D3873E /* T1_frame_anim.c in Sources */,
-				60A998F7287BD4C3003F7159 /* T1_logger.c in Sources */,
+				60A998F7287BD4C3003F7159 /* T1_log.c in Sources */,
 				EC9B70BF2F2A8A8E00EB3E02 /* T1_texquad_anim.c in Sources */,
 				60A998FD287BD4C3003F7159 /* T1_img.c in Sources */,
 				60A998F5287BD4C3003F7159 /* T1_tex_array.h in Sources */,
@@ -804,7 +798,7 @@
 				EC6441A429318B6D00A0267B /* main.m in Sources */,
 				60A998FA287BD4C3003F7159 /* T1_render.c in Sources */,
 				EC914B8E2B94B1EF007FCBFC /* T1_term.c in Sources */,
-				60A998F1287BD4C3003F7159 /* T1_logger.h in Sources */,
+				60A998F1287BD4C3003F7159 /* T1_log.h in Sources */,
 				60A998F2287BD4C3003F7159 /* T1_render.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

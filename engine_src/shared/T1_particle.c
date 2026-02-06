@@ -80,7 +80,7 @@ T1ParticleEffect * T1_particle_get_next(void)
     }
     
     if (return_value == NULL) {
-        log_assert(T1_particle_effects_size + 1 <
+        T1_log_assert(T1_particle_effects_size + 1 <
             T1_PARTICLE_EFFECTS_SIZE);
         return_value = &T1_particle_effects[T1_particle_effects_size];
         T1_particle_effects_size += 1;
@@ -98,14 +98,14 @@ void T1_particle_commit(T1ParticleEffect * to_request)
         return;
     }
     
-    log_assert(!to_request->deleted);
+    T1_log_assert(!to_request->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
-    log_assert(!to_request->committed);
+    T1_log_assert(!to_request->committed);
     
-    log_assert(to_request->spawn_lifespan > 0);
-    log_assert(to_request->elapsed == 0);
-    log_assert(to_request->spawns_per_loop > 0);
+    T1_log_assert(to_request->spawn_lifespan > 0);
+    T1_log_assert(to_request->elapsed == 0);
+    T1_log_assert(to_request->spawns_per_loop > 0);
     
     to_request->committed = true;
 }
@@ -123,15 +123,15 @@ void T1_particle_shatter_commit(
         return;
     }
     
-    log_assert(!to_commit->deleted);
+    T1_log_assert(!to_commit->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
-    log_assert(!to_commit->committed);
+    T1_log_assert(!to_commit->committed);
     
-    log_assert(to_commit->spawn_lifespan > 0);
-    log_assert(to_commit->loop_duration > 0);
-    log_assert(to_commit->elapsed == 0);
-    log_assert(to_commit->spawns_per_loop > 0);
+    T1_log_assert(to_commit->spawn_lifespan > 0);
+    T1_log_assert(to_commit->loop_duration > 0);
+    T1_log_assert(to_commit->elapsed == 0);
+    T1_log_assert(to_commit->spawns_per_loop > 0);
     
     to_commit->committed = true;
 }
@@ -152,7 +152,7 @@ T1ShatterEffect * T1_particle_shatter_get_next(void)
     }
     
     if (return_value == NULL) {
-        log_assert(T1_shatter_effects_size + 1 <
+        T1_log_assert(T1_shatter_effects_size + 1 <
             T1_SHATTER_EFFECTS_SIZE);
         return_value =
             &T1_shatter_effects[
@@ -211,7 +211,7 @@ void T1_particle_resize_to_effect_height(
 {
     const float current_height = T1_particle_get_height(to_resize);
     
-    log_assert(current_height > 0.0f);
+    T1_log_assert(current_height > 0.0f);
     
     const float multiplier = new_height / current_height;
     
@@ -239,7 +239,7 @@ static void T1_particle_add_single_to_frame_data(
         frame_data->flat_bb_quads_size + 1 >=
             MAX_FLATQUADS_PER_BUFFER)
     {
-        log_assert(0);
+        T1_log_assert(0);
         return;
     }
     
@@ -384,7 +384,7 @@ T1_zsprite_add_single_shatter_to_frame_data(
         frame_data->zsprite_list->size + 1 >=
             MAX_ZSPRITES_PER_BUFFER)
     {
-        log_assert(0);
+        T1_log_assert(0);
         return;
     }
     
@@ -520,10 +520,10 @@ void T1_particle_add_all_to_frame_data(
     uint64_t elapsed_us)
 {
     // We expect padding to prevent out of bounds
-    log_assert(
+    T1_log_assert(
         sizeof(T1GPUFlatQuad) % sizeof(float) ==
             0);
-    log_assert(
+    T1_log_assert(
         (sizeof(T1GPUFlatQuad) %
             (SIMD_FLOAT_LANES * 4)) == 0);
     

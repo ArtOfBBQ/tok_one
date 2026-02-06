@@ -3,7 +3,7 @@
 
 #include "T1_std.h"
 #include "T1_appinit.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_rand.h"
 #include "T1_zlight.h"
 #include "T1_io.h"
@@ -15,9 +15,9 @@ void T1_macos_update_window_size(void);
 
 static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -175,20 +175,20 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         case (121):
             return T1_IO_KEY_PAGEDOWN;
         default:
-            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
             T1_std_strcat_uint_cap(err_msg, 128, apple_key);
             T1_std_strcat_cap(err_msg, 128, "\n");
-            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
             break;
     }
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     log_dump_and_crash(err_msg);
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -332,7 +332,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 @implementation GameWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification {
-    log_append("window will close, terminating app..\n");
+    T1_log_append("window will close, terminating app..\n");
     
     T1_appinit_shutdown();
     
@@ -342,7 +342,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     log_dump(&write_succesful);
     
     if (!write_succesful) {
-        log_append(
+        T1_log_append(
             "ERROR - failed to store "
             " the log file on app "
             " close..\n");
@@ -408,7 +408,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 int main(int argc, const char * argv[]) {
     
     T1_gameloop_active = false;
-    T1_app_running = true;
+    T1_logger_app_running = true;
     
     char errmsg[512];
     uint32_t success = 1;
@@ -471,7 +471,7 @@ int main(int argc, const char * argv[]) {
     // Indicate that Metal should clear all values in the depth buffer to x
     // when you create a render command encoder with the MetalKit view's
     // `currentRenderPassDescriptor` property.
-    mtk_view.clearDepth = T1_CLEARDEPTH;
+    mtk_view.clearDepth = T1_GLOBAL_CLEARDEPTH;
     [mtk_view setPaused: false];
     [mtk_view setNeedsDisplay: false];
     
@@ -508,10 +508,10 @@ int main(int argc, const char * argv[]) {
         /* char * error_msg_string: */
             errmsg);
     
-    if (!result || !T1_app_running) {
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    if (!result || !T1_logger_app_running) {
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Can't draw anything to the screen...\n");
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -544,7 +544,7 @@ int main(int argc, const char * argv[]) {
     
     if (!success) {
         T1_platform_request_messagebox(errmsg);
-        T1_app_running = false;
+        T1_logger_app_running = false;
     } else {
         T1_platform_start_thread(
             T1_appinit_after_gpu_init_step2,

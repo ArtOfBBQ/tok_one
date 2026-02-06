@@ -17,7 +17,7 @@ T1RenderViewCollection * T1_render_views = NULL;
 T1CPURenderView * T1_camera = NULL;
 
 void T1_render_view_init(void) {
-    log_assert(T1_RENDER_VIEW_CAP > 0);
+    T1_log_assert(T1_RENDER_VIEW_CAP > 0);
     T1_render_views = T1_mem_malloc_unmanaged(
         sizeof(T1RenderViewCollection));
     
@@ -104,8 +104,8 @@ int32_t T1_render_view_fetch_next(
         T1_render_views->size += 1;
     }
     
-    log_assert(ret >= 0);
-    log_assert(ret < T1_RENDER_VIEW_CAP);
+    T1_log_assert(ret >= 0);
+    T1_log_assert(ret < T1_RENDER_VIEW_CAP);
     
     T1_render_view_construct(
         T1_render_views->cpu + ret,
@@ -116,6 +116,7 @@ int32_t T1_render_view_fetch_next(
     return ret;
 }
 
+#if 0
 static void
 T1_render_view_pos_point_to_pos_to_angle3(
     float * recip_xyz_angle,
@@ -136,7 +137,7 @@ T1_render_view_pos_point_to_pos_to_angle3(
         dir[2] * dir[2]);
     
     if (length < 1e-6f) {
-        log_assert(0);
+        T1_log_assert(0);
         recip_xyz_angle[0] = 0.0f;
         recip_xyz_angle[1] = 0.0f;
         recip_xyz_angle[2] = 0.0f;
@@ -155,6 +156,7 @@ T1_render_view_pos_point_to_pos_to_angle3(
         dir[0], dir[2]);
     recip_xyz_angle[2] = 0.0f;
 }
+#endif
 
 static void
 T1_render_view_angle3_to_direction(
@@ -212,7 +214,7 @@ void T1_render_view_update_positions(
             // Assuming the main camera is always at 0
             // Assuming the main camera can't be a
             // reflection view
-            log_assert(rv_i != 0);
+            T1_log_assert(rv_i != 0);
             
             // Supporting only z-planes for now:
             float plane_z = T1_render_views->cpu[rv_i].
@@ -242,8 +244,8 @@ void T1_render_view_update_positions(
 void T1_render_view_delete(
     const int32_t rv_i)
 {
-    log_assert(rv_i >= 0);
-    log_assert(rv_i < T1_RENDER_VIEW_CAP);
+    T1_log_assert(rv_i >= 0);
+    T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
     
     T1_render_view_construct(
         T1_render_views->cpu + rv_i,
@@ -262,10 +264,10 @@ void T1_render_view_delete(
 }
 
 void T1_render_view_validate(void) {
-    log_assert(T1_render_views != NULL);
-    log_assert(
+    T1_log_assert(T1_render_views != NULL);
+    T1_log_assert(
         T1_render_views->size > 0);
-    log_assert(
+    T1_log_assert(
         T1_render_views->size <= T1_RENDER_VIEW_CAP);
     
     for (
@@ -283,32 +285,32 @@ void T1_render_view_validate(void) {
                 passes_size;
             pass_i++)
         {
-            log_assert(T1_render_views->cpu[i].
+            T1_log_assert(T1_render_views->cpu[i].
                 passes[pass_i].type >
                     T1RENDERPASS_BELOWBOUNDS);
-            log_assert(T1_render_views->cpu[i].
+            T1_log_assert(T1_render_views->cpu[i].
                 passes[pass_i].type <
                     T1RENDERPASS_ABOVEBOUNDS);
         }
         
-        log_assert(
+        T1_log_assert(
             T1_render_views->cpu[i].write_type >
                 T1RENDERVIEW_WRITE_BELOWBOUNDS);
-        log_assert(
+        T1_log_assert(
             T1_render_views->cpu[i].write_type <
                 T1RENDERVIEW_WRITE_ABOVEBOUNDS);
-        log_assert(
+        T1_log_assert(
             T1_render_views->cpu[i].write_type !=
                 T1RENDERVIEW_WRITE_RENDER_TARGET);
         
-        log_assert(
+        T1_log_assert(
             T1_render_views->cpu[i].project.aspect_ratio > 0.1f);
     }
     
-    log_assert(!T1_render_views->
+    T1_log_assert(!T1_render_views->
         cpu[T1_render_views->size-1].deleted);
     
-    log_assert(
+    T1_log_assert(
         T1_render_views->cpu[0].write_type ==
             T1RENDERVIEW_WRITE_RENDER_TARGET);
 }
@@ -351,8 +353,8 @@ float T1_render_view_screen_x_to_x(
     const float screenspace_x,
     const float given_z)
 {
-    log_assert(T1_render_views->cpu[0].width > 0);
-    log_assert(T1_render_views->cpu[0].height > 0);
+    T1_log_assert(T1_render_views->cpu[0].width > 0);
+    T1_log_assert(T1_render_views->cpu[0].height > 0);
     
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];

@@ -52,8 +52,10 @@ T1_platform_audio_start_loop(void)
 /*
 Get a file's size. Returns 0 if no such file
 */
-uint64_t T1_platform_get_filesize(const char * filepath) {
-    
+uint64_t
+T1_platform_get_filesize(
+    const char * filepath)
+{
     uint64_t return_value;
     
     NSString * nsfilepath = [NSString
@@ -65,7 +67,7 @@ uint64_t T1_platform_get_filesize(const char * filepath) {
     NSFileManager * file_manager = [NSFileManager defaultManager];
     
     if (file_manager == nil) {
-        log_append("ERROR - failed to get default NSFileManager\n");
+        T1_log_append("ERROR - failed to get default NSFileManager\n");
         return 0;
     }
     
@@ -74,9 +76,9 @@ uint64_t T1_platform_get_filesize(const char * filepath) {
         error:&error_value];
     
     if (error_value != nil) {
-        log_append("ERROR - failed to get size of file: ");
-        log_append(filepath);
-        log_append("\n");
+        T1_log_append("ERROR - failed to get size of file: ");
+        T1_log_append(filepath);
+        T1_log_append("\n");
         return 0;
     }
     
@@ -111,7 +113,7 @@ void T1_platform_read_file(
         [file_data length] < out_preallocatedbuffer->
             size_without_terminator)
     {
-        log_append("Error - failed [NSData initWithContentsOfFile:]\n");
+        T1_log_append("Error - failed [NSData initWithContentsOfFile:]\n");
         out_preallocatedbuffer->size_without_terminator = 0;
         out_preallocatedbuffer->good = false;
         return;
@@ -144,27 +146,27 @@ bool32_t T1_platform_file_exists(
         isDirectory: &is_directory])
     {
         if (is_directory) {
-	    log_append("warning filepath: ");
-	    log_append(filepath);
-	    log_append(" is a directory, returnin FALSE for existence\n");
+        T1_log_append("warning filepath: ");
+        T1_log_append(filepath);
+        T1_log_append(" is a directory, returnin FALSE for existence\n");
             return false;
         }
         
         return true;
     }
     
-    log_append("filepath: ");
-    log_append(filepath);
-    log_append(" does not exist, returning FALSE...\n");
+    T1_log_append("filepath: ");
+    T1_log_append(filepath);
+    T1_log_append(" does not exist, returning FALSE...\n");
     return false;
 }
 
 void T1_platform_mkdir_if_not_exist(
     const char * dirname)
 {
-    log_append("make directory if it doesn't exist: ");
-    log_append(dirname);
-    log_append("\n");
+    T1_log_append("make directory if it doesn't exist: ");
+    T1_log_append(dirname);
+    T1_log_append("\n");
     
     NSString * directory_path = [NSString
         stringWithCString:dirname
@@ -190,7 +192,7 @@ void T1_platform_mkdir_if_not_exist(
             error:&error];
         
         if (!success) {
-            log_append("ERROR - tried to create a directory and failed\n");
+            T1_log_append("ERROR - tried to create a directory and failed\n");
             if (error != NULL) {
                 NSLog(@" error => %@ ", [error userInfo]);
             }
@@ -206,11 +208,11 @@ void T1_platform_mkdir_if_not_exist(
 void T1_platform_del_file(
     const char * filepath)
 {
-    log_append(
+    T1_log_append(
         "trying to delete a file with "
         "NSFileManager: ");
-    log_append(filepath);
-    log_append("\n");
+    T1_log_append(filepath);
+    T1_log_append("\n");
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -224,11 +226,11 @@ void T1_platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
-    log_append("trying to copy from: ");
-    log_append(filepath_source);
-    log_append(", to: ");
-    log_append(filepath_destination);
-    log_append_char('\n');
+    T1_log_append("trying to copy from: ");
+    T1_log_append(filepath_source);
+    T1_log_append(", to: ");
+    T1_log_append(filepath_destination);
+    T1_log_append_char('\n');
     
     NSString * nsfilepath_source = [NSString
         stringWithCString:filepath_source
@@ -260,9 +262,9 @@ T1_platform_write_file(
     const uint32_t output_size,
     bool32_t * good)
 {
-    log_append("write file data to: ");
-    log_append(filepath);
-    log_append("\n");
+    T1_log_append("write file data to: ");
+    T1_log_append(filepath);
+    T1_log_append("\n");
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -279,8 +281,8 @@ T1_platform_write_file(
         attributes:
             nil])
     {
-        log_append("Failed to write to file: ");
-        log_append(filepath);
+        T1_log_append("Failed to write to file: ");
+        T1_log_append(filepath);
         *good = false;
         return;
     }
@@ -297,7 +299,7 @@ void T1_platform_get_filenames_in(
         encoding:NSASCIIStringEncoding];
     // NSURL * url = [NSURL URLWithString: path];
     
-    // log_assert(url != NULL);
+    // T1_log_assert(url != NULL);
     NSError * error = NULL;
     
     NSArray * results = [[NSFileManager defaultManager]
@@ -381,7 +383,7 @@ void T1_platform_start_thread(
     //     NULL,
     //     function_to_run,
     //     argument);
-    // log_assert(result == 0);
+    // T1_log_assert(result == 0);
     
     dispatch_async(
         dispatch_get_global_queue(

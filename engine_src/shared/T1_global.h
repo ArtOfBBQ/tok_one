@@ -30,14 +30,14 @@ This is the same screenspace coordinate system as used on Mac OS, so the Mac
 platform layer doesn't need to do anything and can just record values directly
 */
 
-#define T1_WINDOW_RESIZE_TIMEOUT 2500000
-#define T1_CLEARDEPTH 1.0f
+#define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
+#define T1_GLOBAL_CLEARDEPTH 1.0f
 
 #include <math.h>
 
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_mesh_summary.h"
 
 typedef struct {
@@ -79,30 +79,40 @@ typedef struct {
 
 extern T1Globals * T1_global;
 
-void T1_global_register_transformed_imputed_normal_for_debugging(
+#if 0
+// TODO: maybe abandoned, delete me?
+void
+T1_global_reg_transformed_imputed_normal_for_debug(
     const float origin[3],
     const float imputed_normal[3]);
+#endif
 
-void T1_global_init(void);
+void
+T1_global_init(void);
 
-void T1_global_update_window_pos(
+void
+T1_global_update_window_pos(
     float left,
     float bottom);
 
-void T1_global_update_window_size(
+void
+T1_global_update_window_size(
     float width,
     float height,
     uint64_t at_timestamp_us);
 
-float T1_global_get_z_mul_for_depth(
+float
+T1_global_get_z_mul_for_depth(
     const int32_t for_mesh_id,
     const float for_depth);
 
-float T1_global_get_y_mul_for_height(
+float
+T1_global_get_y_mul_for_height(
     const int32_t for_mesh_id,
     const float for_height);
 
-float T1_global_get_x_mul_for_width(
+float
+T1_global_get_x_mul_for_width(
     const int32_t for_mesh_id,
     const float for_width);
 

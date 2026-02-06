@@ -1,7 +1,7 @@
 #include "T1_gameloop.h"
 
 bool32_t T1_gameloop_active = false;
-bool32_t T1_loading_textures = false;
+bool32_t T1_gameloop_loading_texs = false;
 
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
@@ -70,7 +70,7 @@ static void show_dead_simple_text(
     T1_text_props->f32.rgba[2] = 1.0f;
     T1_text_props->f32.rgba[3] = 1.0f;
     
-    log_assert(T1_text_props->i32.tex_array_i == 0);
+    T1_log_assert(T1_text_props->i32.tex_array_i == 0);
     
     T1_text_request_label_renderable(
         /* const uint32_t with_object_id: */
@@ -134,7 +134,7 @@ void T1_gameloop_update_before_render_pass(
     frame_data->zsprite_list->size = 0;
     
     if (
-        !T1_gameloop_active && T1_loading_textures)
+        !T1_gameloop_active && T1_gameloop_loading_texs)
     {
         if (loading_text_sprite_id < 0) {
             loading_text_sprite_id =
@@ -181,8 +181,8 @@ void T1_gameloop_update_before_render_pass(
         return;
     }
     
-    log_assert(frame_data->lights != NULL);
-    log_assert(frame_data->render_views != NULL);
+    T1_log_assert(frame_data->lights != NULL);
+    T1_log_assert(frame_data->render_views != NULL);
     
     T1_global->this_frame_timestamp_us =
         T1_platform_get_current_time_us();
@@ -199,7 +199,7 @@ void T1_gameloop_update_before_render_pass(
         return;
     }
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         if (crashed_top_of_screen_msg[0] == '\0') {
             T1_std_strcpy_cap(
                 crashed_top_of_screen_msg,
@@ -226,7 +226,7 @@ void T1_gameloop_update_before_render_pass(
     if (
         T1_global->this_frame_timestamp_us -
             T1_global->last_resize_request_us <
-                T1_WINDOW_RESIZE_TIMEOUT)
+                T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
         if (
             T1_global->
@@ -238,7 +238,7 @@ void T1_gameloop_update_before_render_pass(
             // request, wait...
             // we break, not return, because we do want to render an
             // empty screen
-            log_append("w82RZ - ");
+            T1_log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
             T1_profiler_end(
@@ -252,9 +252,9 @@ void T1_gameloop_update_before_render_pass(
             T1_global_init();
             
             T1_global->last_resize_request_us = 0;
-            log_append("\nOK, resize window\n");
+            T1_log_append("\nOK, resize window\n");
             
-            log_assert(
+            T1_log_assert(
                 (int32_t)T1_render_views->size <=
                     T1_RENDER_VIEW_CAP);
             for (
@@ -277,7 +277,7 @@ void T1_gameloop_update_before_render_pass(
                 
                 T1_render_view_delete(rv_i);
             }
-            log_assert(T1_render_views->size == 0);
+            T1_log_assert(T1_render_views->size == 0);
             
             // TODO:
             // use an internal render size
@@ -288,13 +288,13 @@ void T1_gameloop_update_before_render_pass(
                         window_width,
                     (uint32_t)T1_global->
                         window_height);
-            log_assert(rv_i == 0);
-            log_assert(
+            T1_log_assert(rv_i == 0);
+            T1_log_assert(
                 !T1_render_views->cpu[0].deleted);
-            log_assert(
+            T1_log_assert(
                 T1_render_views->cpu[0].write_type ==
                     T1RENDERVIEW_WRITE_RENDER_TARGET);
-            log_assert(
+            T1_log_assert(
                 !T1_tex_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
             
             T1_platform_gpu_update_window_viewport();
@@ -313,7 +313,7 @@ void T1_gameloop_update_before_render_pass(
                 (uint32_t)T1_global->window_height);
        }
     } else if (
-        T1_app_running &&
+        T1_logger_app_running &&
         T1_global->clientlogic_early_startup_finished)
     {
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
@@ -323,9 +323,9 @@ void T1_gameloop_update_before_render_pass(
         #error
         #endif
         
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_render_view_validate();
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -441,7 +441,7 @@ void T1_gameloop_update_after_render_pass(void) {
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    if (T1_app_running) {
+    if (T1_logger_app_running) {
         T1_clientlogic_update_after_render_pass();
     }
     

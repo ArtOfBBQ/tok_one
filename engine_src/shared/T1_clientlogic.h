@@ -32,12 +32,12 @@ extern "C" {
 #include "T1_ui_widget.h"
 #include "T1_zsprite_anim.h"
 #include "T1_texquad_anim.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_term.h"
 
 #include "clientlogic_additional_defs.h"
 
-extern bool32_t T1_app_running;
+extern bool32_t T1_logger_app_running;
 
 
 void T1_clientlogic_init(void);

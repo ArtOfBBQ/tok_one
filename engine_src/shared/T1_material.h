@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "T1_std.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct LockedMaterialCollection {

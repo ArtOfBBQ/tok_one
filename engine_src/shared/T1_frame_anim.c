@@ -52,14 +52,14 @@ void T1_frame_anim_apply_all(
                 &T1_frame_anims[mod_i].
                     gpu_stats.i32);
         
-        log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
+        T1_log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
         for (
             int32_t i = 0;
             i < (int32_t)frame_data->
                 zsprite_list->size;
             i++)
         {
-            log_assert(i < T1_ZSPRITES_CAP);
+            T1_log_assert(i < T1_ZSPRITES_CAP);
             
             uint32_t hit = 0;
             
@@ -91,7 +91,7 @@ void T1_frame_anim_apply_all(
                 }
                 break;
                 default:
-                    log_assert(0);
+                    T1_log_assert(0);
             }
             
             if (hit) {
@@ -120,7 +120,7 @@ void T1_frame_anim_gpu_mod_to_touch_id_by_offset(
     const uint32_t gpu_prop_offset,
     const float val_to_memcpy_32bit)
 {
-    log_assert(touch_id >= 0);
+    T1_log_assert(touch_id >= 0);
     
     int32_t exist_i = -1;
     for (
@@ -158,7 +158,7 @@ void T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(
     const uint32_t gpu_prop_offset,
     const float val_to_memcpy_32bit)
 {
-    log_assert(zsprite_id >= 0);
+    T1_log_assert(zsprite_id >= 0);
     
     int32_t exist_i = -1;
     for (

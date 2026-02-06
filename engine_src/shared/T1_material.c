@@ -40,7 +40,7 @@ void T1_material_construct(
     to_construct_i32->texture_i = -1;
 }
 
-#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static uint32_t T1_material_fetch_locked_material_i(
     const char * material_name)
 {
@@ -56,7 +56,7 @@ static uint32_t T1_material_fetch_locked_material_i(
     
     return UINT32_MAX;
 }
-#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -65,12 +65,12 @@ uint32_t T1_material_preappend_locked_material_i(
     const char * obj_resource_name,
     const char * material_name)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t existing_i = T1_material_fetch_locked_material_i(material_name);
     if (!T1_std_are_equal_strings(material_name, "default")) {
-        log_assert(existing_i == UINT32_MAX); // doesn't exist
+        T1_log_assert(existing_i == UINT32_MAX); // doesn't exist
     }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -88,7 +88,7 @@ uint32_t T1_material_preappend_locked_material_i(
         T1_MATERIAL_NAME_CAP,
         material_name);
     
-    log_assert(all_mesh_materials->size < T1_ALL_LOCKED_MATERIALS_SIZE);
+    T1_log_assert(all_mesh_materials->size < T1_ALL_LOCKED_MATERIALS_SIZE);
     
     all_mesh_materials->size += 1;
     return all_mesh_materials->size - 1;
@@ -99,7 +99,7 @@ void T1_material_fetch_ptrs(
     T1GPUConstMati32 ** recip_i32,
     const uint32_t material_i)
 {
-    log_assert(material_i < all_mesh_materials->size);
+    T1_log_assert(material_i < all_mesh_materials->size);
     
     *recip_f32 = all_mesh_materials->gpu_f32 +
         material_i;

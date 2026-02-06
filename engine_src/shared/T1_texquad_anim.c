@@ -63,7 +63,7 @@ void T1_texquad_anim_init(
             &tqas->anims[i],
             &tqas->anims[0],
             sizeof(T1InternalTexQuadAnim));
-        log_assert(tqas->anims[i].deleted);
+        T1_log_assert(tqas->anims[i].deleted);
     }
     
     tqas->mutex_id = tqas->
@@ -74,7 +74,7 @@ static
 T1InternalTexQuadAnim * T1_texquad_anim_get_container(
     const T1TexQuadAnim * public_ptr)
 {
-    log_assert(
+    T1_log_assert(
         offsetof(
             T1InternalTexQuadAnim,
             public) == 0);
@@ -83,7 +83,7 @@ T1InternalTexQuadAnim * T1_texquad_anim_get_container(
         (T1InternalTexQuadAnim *)
             public_ptr;
     
-    log_assert(
+    T1_log_assert(
         &retval->public == public_ptr);
     
     return retval;
@@ -96,7 +96,7 @@ static void T1_texquad_anim_construct(
         to_construct,
         0,
         sizeof(T1InternalTexQuadAnim));
-    log_assert(
+    T1_log_assert(
         !to_construct->committed);
     
     to_construct->public.
@@ -105,9 +105,9 @@ static void T1_texquad_anim_construct(
         affect_touch_id = -1;
     to_construct->public.runs = 1;
     
-    log_assert(
+    T1_log_assert(
         !to_construct->deleted);
-    log_assert(
+    T1_log_assert(
         !to_construct->committed);
 }
 
@@ -116,7 +116,7 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
 {
     tqas->mutex_lock(tqas->mutex_id);
     
-    log_assert(
+    T1_log_assert(
         tqas->anims_size <
             T1_TEXQUAD_ANIMS_CAP);
     T1InternalTexQuadAnim * return_value = NULL;
@@ -136,17 +136,17 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
         return_value =
             &tqas->anims[tqas->anims_size];
         tqas->anims_size += 1;
-        log_assert(
+        T1_log_assert(
             tqas->anims_size <
                 T1_TEXQUAD_ANIMS_CAP);
     }
     
-    log_assert(return_value->deleted);
+    T1_log_assert(return_value->deleted);
     T1_texquad_anim_construct(
         return_value);
     
-    log_assert(!return_value->committed);
-    log_assert(!return_value->deleted);
+    T1_log_assert(!return_value->committed);
+    T1_log_assert(!return_value->deleted);
     
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
@@ -156,8 +156,8 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
         return_value->endpoints = endpoints_not_deltas;
     }
     
-    log_assert(!return_value->committed);
-    log_assert(!return_value->deleted);
+    T1_log_assert(!return_value->committed);
+    T1_log_assert(!return_value->deleted);
     
     tqas->mutex_unlock(tqas->mutex_id);
     
@@ -227,7 +227,7 @@ static void T1_texquad_anim_resolve_single(
         }
     }
     
-    log_assert(anim->remaining_duration_us > 0);
+    T1_log_assert(anim->remaining_duration_us > 0);
     
     if (elapsed < anim->remaining_duration_us)
     {
@@ -238,17 +238,17 @@ static void T1_texquad_anim_resolve_single(
     
     uint64_t elapsed_so_far =
         anim->public.duration_us - anim->remaining_duration_us;
-    log_assert(
+    T1_log_assert(
         elapsed_so_far <=
             anim->public.duration_us);
     
     float t_now = (float)elapsed_so_far / (float)anim->public.duration_us;
-    log_assert(t_now <= 1.0f);
-    log_assert(t_now >= 0.0f);
-    log_assert(t_now >= anim->already_applied_t);
+    T1_log_assert(t_now <= 1.0f);
+    T1_log_assert(t_now >= 0.0f);
+    T1_log_assert(t_now >= anim->already_applied_t);
     float t_applied = anim->already_applied_t;
     
-    log_assert(anim->already_applied_t <= t_now);
+    T1_log_assert(anim->already_applied_t <= t_now);
     anim->already_applied_t = t_now;
     
     t_now = T1_easing_t_to_eased_t(
@@ -308,7 +308,7 @@ void T1_texquad_anim_commit(
     
     T1InternalTexQuadAnim * parent =
         T1_texquad_anim_get_container(to_commit);
-    log_assert(&parent->public == to_commit);
+    T1_log_assert(&parent->public == to_commit);
     
     if (to_commit->del_conflict_anims)
     {
@@ -335,36 +335,36 @@ void T1_texquad_anim_commit(
         }
     }
     
-    log_assert(!parent->deleted);
-    log_assert(!parent->committed);
+    T1_log_assert(!parent->deleted);
+    T1_log_assert(!parent->committed);
     
     if (to_commit->affect_zsprite_id < 0) {
-        log_assert(to_commit->affect_touch_id >= 0);
+        T1_log_assert(to_commit->affect_touch_id >= 0);
     } else {
-        log_assert(
+        T1_log_assert(
             to_commit->affect_touch_id == -1);
     }
     
     if (to_commit->affect_touch_id < 0) {
-        log_assert(
+        T1_log_assert(
             to_commit->affect_zsprite_id >= 0);
     } else {
-        log_assert(
+        T1_log_assert(
             to_commit->affect_zsprite_id == -1);
     }
     
-    log_assert(parent->already_applied_t == 0.0f);
+    T1_log_assert(parent->already_applied_t == 0.0f);
     
     parent->remaining_pause_us =
         to_commit->pause_us;
     parent->remaining_duration_us =
         to_commit->duration_us;
     
-    log_assert(parent->remaining_duration_us > 0);
+    T1_log_assert(parent->remaining_duration_us > 0);
     parent->committed = true;
     
-    log_assert(parent->committed);
-    log_assert(!parent->deleted);
+    T1_log_assert(parent->committed);
+    T1_log_assert(!parent->deleted);
     tqas->mutex_unlock(tqas->mutex_id);
 }
 
@@ -375,8 +375,8 @@ void T1_texquad_anim_commit_and_instarun(
     
     T1InternalTexQuadAnim * parent =
         T1_texquad_anim_get_container(to_commit);
-    log_assert(&parent->public == to_commit);
-    log_assert(to_commit->duration_us == 1);
+    T1_log_assert(&parent->public == to_commit);
+    T1_log_assert(to_commit->duration_us == 1);
     
     parent->remaining_pause_us =
         to_commit->pause_us;
@@ -387,7 +387,7 @@ void T1_texquad_anim_commit_and_instarun(
     T1_texquad_anim_resolve_single(parent);
     parent->deleted = true;
     parent->committed = false;
-    log_assert(parent->remaining_duration_us == 0);
+    T1_log_assert(parent->remaining_duration_us == 0);
     
     tqas->mutex_unlock(tqas->mutex_id);
 }
@@ -396,7 +396,7 @@ void T1_texquad_anim_fade_and_destroy(
     const int32_t  zsprite_id,
     const uint64_t duration_us)
 {
-    log_assert(duration_us > 0);
+    T1_log_assert(duration_us > 0);
     
     // register scheduled animation
     T1TexQuadAnim * fade_destroy =

@@ -9,7 +9,8 @@ T1IOEvent * T1_io_events = NULL;
 
 float T1_io_mouse_scroll_pos = 0.0f;
 
-void T1_io_init(
+void
+T1_io_init(
     void *(* arg_malloc_func)(size_t))
 {
     T1_io_events = (T1IOEvent *)
@@ -29,7 +30,10 @@ void T1_io_init(
     }
 }
 
-void T1_io_event_construct(T1IOEvent * to_construct) {
+void
+T1_io_event_construct(
+    T1IOEvent * to_construct)
+{
     to_construct->touch_id_top = -1;
     to_construct->touch_id_pierce = -1;
     to_construct->screen_x = 0;
@@ -38,7 +42,9 @@ void T1_io_event_construct(T1IOEvent * to_construct) {
     to_construct->handled = true;
 }
 
-void T1_io_event_register(T1IOEvent * touch_record)
+void
+T1_io_event_register(
+    T1IOEvent * touch_record)
 {
     uint64_t timestamp = T1_platform_get_current_time_us();
     
@@ -56,21 +62,27 @@ void T1_io_event_register(T1IOEvent * touch_record)
     touch_record->handled = false;
 }
 
-void T1_io_register_keyup(uint32_t key_id)
+void
+T1_io_register_keyup(
+    uint32_t key_id)
 {
-    log_assert(key_id < T1_IO_KEYMAP_CAP);
+    T1_log_assert(key_id < T1_IO_KEYMAP_CAP);
     
     T1_io_keymap[key_id] = false;
 }
 
-void T1_io_register_keydown(uint32_t key_id)
+void
+T1_io_register_keydown(
+    uint32_t key_id)
 {
-    log_assert(key_id < T1_IO_KEYMAP_CAP);
+    T1_log_assert(key_id < T1_IO_KEYMAP_CAP);
     
     T1_io_keymap[key_id] = true;
 }
 
-void T1_io_register_mousescroll(float amount)
+void
+T1_io_register_mousescroll(
+    float amount)
 {
     T1_io_mouse_scroll_pos += amount;
     

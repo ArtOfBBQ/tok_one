@@ -6,7 +6,7 @@
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_logger.h"
+#include "T1_log.h"
 
 typedef struct {
     float aspect_ratio;

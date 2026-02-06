@@ -29,18 +29,18 @@ static EngineSaveFile * engine_save_file = NULL;
 #error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
 #endif
 
-#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
-    log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
-    log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
-    log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
-    log_assert(sizeof(T1GPUTexQuadi32)   % (SIMD_INT32_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUTexQuadi32)   % (SIMD_INT32_LANES * 4) == 0);
     
-    log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
     float * sets = T1_mem_malloc_managed(
@@ -129,7 +129,7 @@ static void test_simd_functions_floats(void) {
     
     for (uint32_t i = 0; i < 10; i++) {
         for (uint32_t j = 0; j < 16; j++) {
-            log_assert(
+            T1_log_assert(
                 (structs[i].imafloat[j] - double_checks[i].imafloat[j]) <  0.01f &&
                 (structs[i].imafloat[j] - double_checks[i].imafloat[j]) > -0.01f);
         }
@@ -143,15 +143,15 @@ static void test_simd_functions_floats(void) {
     T1_mem_free_managed(sets);
     T1_mem_free_managed(structs);
 }
-#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
-#error "T1_LOGGER_ASSERTS_ACTIVE undefined!"
+#error
 #endif
 
 static uint32_t pad_to_page_size(uint32_t base_allocation) {
     uint32_t return_value = base_allocation +
         (T1_mem_page_size - (base_allocation % T1_mem_page_size));
-    log_assert(return_value % T1_mem_page_size == 0);
+    T1_log_assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
@@ -210,12 +210,12 @@ void T1_appinit_before_gpu_init(
         /* const uint32_t thread_id: */
             0);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     test_simd_functions_floats();
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     // Pass
     #else
-    #error "T1_LOGGER_ASSERTS_ACTIVE undefined!"
+    #error
     #endif
     
     uint32_t good = 0;
@@ -224,7 +224,7 @@ void T1_appinit_before_gpu_init(
         T1_std_strlen,
         T1_mem_malloc_managed_infoless,
         &good);
-    log_assert(good);
+    T1_log_assert(good);
     
     T1_objparser_init(T1_mem_malloc_managed_infoless, T1_mem_free_managed);
     mtlparser_init(
@@ -232,7 +232,7 @@ void T1_appinit_before_gpu_init(
         T1_mem_malloc_managed_infoless,
         strlcat);
     
-    logger_init(
+    T1_logger_init(
         /* void * arg_malloc_function(size_t size): */
             T1_mem_malloc_unmanaged,
         /* uint32_t (* arg_create_mutex_function)(void): */
@@ -456,10 +456,10 @@ void T1_appinit_before_gpu_init(
     T1_cpu_to_gpu_data =
         T1_mem_malloc_unmanaged(
             sizeof(T1CPUToGPUData));
-    log_assert(T1_cpu_to_gpu_data != NULL);
+    T1_log_assert(T1_cpu_to_gpu_data != NULL);
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
-    log_assert(sd != NULL);
+    T1_log_assert(sd != NULL);
     
     T1_std_memset(
         sd,
@@ -470,7 +470,7 @@ void T1_appinit_before_gpu_init(
     sd->vertices_alloc_size = pad_to_page_size(
         sizeof(T1GPUVertexIndices) *
             MAX_VERTICES_PER_BUFFER);
-    log_assert(sd->vertices_alloc_size > 0);
+    T1_log_assert(sd->vertices_alloc_size > 0);
     
     sd->flat_quads_alloc_size =
         pad_to_page_size(sizeof(T1GPUFlatQuad) *
@@ -547,12 +547,12 @@ void T1_appinit_before_gpu_init(
                 sd->polygons_alloc_size,
                 T1_mem_page_size);
         
-        log_assert(sd->lights_alloc_size > 0);
+        T1_log_assert(sd->lights_alloc_size > 0);
         f->lights = (T1GPULight *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->lights_alloc_size,
                 T1_mem_page_size);
-        log_assert(f->lights != NULL);
+        T1_log_assert(f->lights != NULL);
         
         f->render_views = (T1GPURenderView *)
             T1_mem_malloc_unmanaged_aligned(
@@ -634,7 +634,7 @@ void T1_appinit_after_gpu_init_step1(
 {
     *success = 0;
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
@@ -661,7 +661,7 @@ void T1_appinit_after_gpu_init_step1(
         rv_height);
     
     // This needs to happen as early as possible, because we can't show
-    // log_dump_and_crash or log_assert() errors before this.
+    // log_dump_and_crash or T1_log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
     T1_platform_gpu_update_internal_render_viewport(0);
     T1_platform_gpu_update_window_viewport();
@@ -686,7 +686,7 @@ void T1_appinit_after_gpu_init_step2(
 {
     (void)throwaway_threadarg;
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
@@ -733,7 +733,7 @@ void T1_appinit_after_gpu_init_step2(
     char errmsg[256];
     errmsg[0] = '\0';
     
-    if (T1_app_running) {
+    if (T1_logger_app_running) {
         T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
@@ -752,7 +752,7 @@ void T1_appinit_after_gpu_init_step2(
             clientlogic_early_startup_finished = 1;
         
         uint32_t core_count = T1_platform_get_cpu_logical_core_count();
-        log_assert(core_count > 0);
+        T1_log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
         
         T1_std_memset(
@@ -761,15 +761,15 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
-        log_assert(T1_global->startup_bytes_to_load == 0);
-        log_assert(T1_global->startup_bytes_loaded == 0);
+        T1_log_assert(T1_global->startup_bytes_to_load == 0);
+        T1_log_assert(T1_global->startup_bytes_loaded == 0);
         
-        if (!T1_app_running) {
+        if (!T1_logger_app_running) {
             return;
         }
         
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-        T1_loading_textures = true;
+        T1_gameloop_loading_texs = true;
         for (
             int32_t i = 1;
             i < (int32_t)ias->
@@ -813,7 +813,7 @@ void T1_appinit_after_gpu_init_step2(
                     /* const uint32_t triangles_mulfiplier: */
                         (MIN_VERTICES_FOR_SHATTER_EFFECT /
                             (uint32_t)T1_mesh_summary_list[i].vertices_size) + 1);
-                log_assert(
+                T1_log_assert(
                     T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
             } else {
                 T1_mesh_summary_list[i].shattered_vertices_head_i =
@@ -829,7 +829,7 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         T1_gameloop_active = true;
         return;
     }
@@ -862,14 +862,14 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(T1GPUConstMati32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_platform_gpu_copy_locked_materials();
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     T1_appinit_asset_loading_thread(0);
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
@@ -882,7 +882,7 @@ void T1_appinit_after_gpu_init_step2(
             }
         }
     }
-    T1_loading_textures = false;
+    T1_gameloop_loading_texs = false;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     #else
     #error "T1_TEXTURES_ACTIVE undefined!"
@@ -901,17 +901,17 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     if (longest_ta_i >= 0) {
-        log_append("Slowest texture array: ");
-        log_append_int(longest_ta_i);
-        log_append("\nIncludes images: ");
-        log_append(T1_tex_arrays[longest_ta_i].images[0].name);
+        T1_log_append("Slowest texture array: ");
+        T1_log_append_int(longest_ta_i);
+        T1_log_append("\nIncludes images: ");
+        T1_log_append(T1_tex_arrays[longest_ta_i].images[0].name);
         for (
             int32_t t_i = 1;
             t_i < (int32_t)T1_tex_arrays[longest_ta_i].images_size;
             t_i++)
         {
-            log_append(", ");
-            log_append(T1_tex_arrays[longest_ta_i].images[t_i].name);
+            T1_log_append(", ");
+            T1_log_append(T1_tex_arrays[longest_ta_i].images[t_i].name);
         }
     }
     
@@ -932,21 +932,21 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_MIPMAPS_ACTIVE undefined!"
     #endif
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
     T1_platform_layer_start_window_resize(
         T1_platform_get_current_time_us());
     
-    if (T1_app_running) {
+    if (T1_logger_app_running) {
         T1_clientlogic_late_startup();
     } else {
         T1_gameloop_active = true;
         return;
     }
     
-    if (!T1_app_running) {
+    if (!T1_logger_app_running) {
         return;
     }
     
@@ -979,7 +979,7 @@ void T1_appinit_shutdown(void)
     #endif
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    log_assert(engine_save_file != NULL);
+    T1_log_assert(engine_save_file != NULL);
     engine_save_file->window_bottom =
         T1_global->window_bottom;
     engine_save_file->window_height =

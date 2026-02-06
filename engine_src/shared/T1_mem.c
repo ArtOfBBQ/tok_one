@@ -82,7 +82,7 @@ static void T1_mem_align_pointer(void ** to_align) {
     }
     
     *to_align = (void *)((char *)*to_align + padding);
-    log_assert((uintptr_t)*to_align % MEM_ALIGNMENT_BYTES == 0);
+    T1_log_assert((uintptr_t)*to_align % MEM_ALIGNMENT_BYTES == 0);
 }
 
 void T1_mem_init(
@@ -108,12 +108,12 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
 {
     void * return_value = unmanaged_memory;
     if (size >= unmanaged_memory_size) {
-        log_append("Tried to malloc_from_unamanged for: ");
-        log_append_uint((uint32_t)(size / 1000000));
-        log_append("MB, but you only had: ");
-        log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
-        log_append("MB remaining");
-        log_assert(0);
+        T1_log_append("Tried to malloc_from_unamanged for: ");
+        T1_log_append_uint((uint32_t)(size / 1000000));
+        T1_log_append("MB, but you only had: ");
+        T1_log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
+        T1_log_append("MB remaining");
+        T1_log_assert(0);
         return NULL;
     }
     
@@ -137,8 +137,8 @@ void * T1_mem_malloc_unmanaged_aligned(
         return NULL;
     }
     
-    log_assert(unmanaged_memory != NULL);
-    log_assert(size > 0); // don't malloc for 0
+    T1_log_assert(unmanaged_memory != NULL);
+    T1_log_assert(size > 0); // don't malloc for 0
     
     uint32_t padding = aligned_to - ((uintptr_t)unmanaged_memory % aligned_to);
     if (padding == aligned_to) padding = 0;
@@ -146,12 +146,12 @@ void * T1_mem_malloc_unmanaged_aligned(
     unmanaged_memory = ((char *)unmanaged_memory + padding);
     unmanaged_memory_size -= padding;
     
-    log_assert(padding < aligned_to);
-    log_assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
+    T1_log_assert(padding < aligned_to);
+    T1_log_assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
     void * return_value = T1_mem_malloc_from_unmanaged_without_aligning(size);
     
-    log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
+    T1_log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
     
     T1_mem_mutex_unlock(malloc_mutex_id);
     
@@ -160,7 +160,7 @@ void * T1_mem_malloc_unmanaged_aligned(
 
 // __attribute__((used, noinline))
 void * T1_mem_malloc_unmanaged(size_t size) {
-    log_assert(size > 0);
+    T1_log_assert(size > 0);
     
     void * return_value = T1_mem_malloc_unmanaged_aligned(
         size,
@@ -186,13 +186,13 @@ void T1_mem_malloc_managed_page_aligned(
     
     *aligned_subptr = ((char *)*base_pointer_for_freeing) + padding;
     
-    log_assert(*base_pointer_for_freeing != NULL);
-    log_assert(*aligned_subptr != NULL);
+    T1_log_assert(*base_pointer_for_freeing != NULL);
+    T1_log_assert(*aligned_subptr != NULL);
     
     #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t alignment_miss =
         (uintptr_t)(*aligned_subptr) % aligned_to;
-    log_assert(alignment_miss == 0);
+    T1_log_assert(alignment_miss == 0);
     #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error

@@ -23,7 +23,8 @@ T1_img_get_avg_rgba(
     return (uint32_t)(T1_img_get_sum_rgba(input) / input->rgba_values_size);
 }
 
-void T1_img_overwrite_subregion(
+void
+T1_img_overwrite_subregion(
     T1Img * whole_image,
     const T1Img * new_image,
     const uint32_t column_count,

@@ -1,9 +1,9 @@
 #ifndef T1_TEXQUAD_H
 #define T1_TEXQUAD_H
 
-#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 #include <math.h> // isnan check
-#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif

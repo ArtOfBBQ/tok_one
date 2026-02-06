@@ -36,7 +36,7 @@ T1_zlight_next(void)
         }
     }
     
-    log_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
+    T1_log_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
     return_value = &T1_zlights[T1_zlights_size];
     return_value->committed = false;
     T1_zlights_size += 1;
@@ -49,7 +49,7 @@ T1_zlight_next(void)
 void
 T1_zlight_commit(T1zLight * to_request)
 {
-    log_assert(!to_request->deleted);
+    T1_log_assert(!to_request->deleted);
     to_request->committed = true;
 }
 
@@ -242,7 +242,7 @@ T1_zlight_update_all_attached_render_views(void)
         
         if (depth_i < 0) { continue; }
         
-        log_assert(depth_i < T1_RENDER_VIEW_CAP);
+        T1_log_assert(depth_i < T1_RENDER_VIEW_CAP);
         
         int32_t rv_i = -1;
         
@@ -265,9 +265,9 @@ T1_zlight_update_all_attached_render_views(void)
             continue;
         }
         
-        log_assert(rv_i <
+        T1_log_assert(rv_i <
             (int32_t)T1_render_views->size);
-        log_assert(rv_i < T1_RENDER_VIEW_CAP);
+        T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
         
         T1_render_views->cpu[rv_i].xyz[0] =
             T1_zlights[zl_i].xyz[0];

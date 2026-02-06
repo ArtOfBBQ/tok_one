@@ -90,8 +90,8 @@ static float T1_ui_widget_get_pin_pos_given_mouse(
         new_slider_x, max_slider_x);
     
     *recip_pin_pct = (new_slider_x - min_slider_x) / (ae->props.width_screen);
-    log_assert(*recip_pin_pct >= 0.0f);
-    log_assert(*recip_pin_pct <= 1.0f);
+    T1_log_assert(*recip_pin_pct >= 0.0f);
+    T1_log_assert(*recip_pin_pct <= 1.0f);
     
     return T1_render_view_screen_width_to_width_noz(
             ((float)*recip_pin_pct) * ae->props.width_screen)
@@ -103,8 +103,8 @@ static void T1_ui_widget_get_pin_pos(
     ActiveUIElement * ae,
     float * xyz)
 {
-    log_assert(ae != NULL);
-    log_assert(xyz != NULL);
+    T1_log_assert(ae != NULL);
+    T1_log_assert(xyz != NULL);
     
     double initial_pct = 0.0;
     double curval_f64;
@@ -179,7 +179,7 @@ static void T1_ui_widget_get_pin_pos(
                             custom_uint_min));
         break;
         default:
-            log_append("Missing type, can't deducd initial slider val");
+            T1_log_append("Missing type, can't deducd initial slider val");
             initial_pct = 0.5;
     }
     
@@ -196,8 +196,8 @@ static void T1_ui_widget_get_pin_pos(
             initial_pct) -
         (slider_width / 2);
     
-    log_assert(new_x_offset >= -slider_width / 2);
-    log_assert(new_x_offset <= slider_width);
+    T1_log_assert(new_x_offset >= -slider_width / 2);
+    T1_log_assert(new_x_offset <= slider_width);
     
     xyz[0] = new_x_offset;
     xyz[1] =
@@ -321,7 +321,7 @@ next_active_ui_element(void)
         }
     }
     
-    log_assert(T1_ui_widget_list_size <
+    T1_log_assert(T1_ui_widget_list_size <
         ACTIVE_UI_ELEMENTS_SIZE);
     T1_ui_widget_list[T1_ui_widget_list_size].
         deleted = true;
@@ -466,7 +466,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
         
         if (ui_elem_i >= 0)
         {
-            log_assert(
+            T1_log_assert(
                 T1_ui_widget_list[ui_elem_i].
                     slideable);
             
@@ -490,7 +490,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
             slide->gpu_f32_active = true;
             T1_texquad_anim_commit_and_instarun(slide);
             
-            log_assert(
+            T1_log_assert(
                 T1_ui_widget_list[ui_elem_i].
                     slider_linked_value != NULL);
             
@@ -683,18 +683,18 @@ void T1_ui_widget_request_slider(
     const int32_t pin_zsprite_id,
     void * linked_value_ptr)
 {
-    log_assert(T1_ui_widget_next_props != NULL);
-    log_assert(back_zsprite_id != pin_zsprite_id);
-    log_assert(back_zsprite_id != label_zsprite_id);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props != NULL);
+    T1_log_assert(back_zsprite_id != pin_zsprite_id);
+    T1_log_assert(back_zsprite_id != label_zsprite_id);
+    T1_log_assert(T1_ui_widget_next_props->
         width_screen > 0);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         height_screen > 0);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         pin_width_screen > 0);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         pin_height_screen > 0);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         linked_type != T1_TYPE_NOTSET);
     
     ActiveUIElement * next_ae =
@@ -735,7 +735,7 @@ void T1_ui_widget_request_slider(
                 next_ae->props.custom_float_max = T1_F32_MAX;
             break;
             default:
-                log_assert(0);
+                T1_log_assert(0);
         }
     }
     
@@ -819,9 +819,9 @@ void T1_ui_widget_request_button(
     void (* onclick_funcptr)(int64_t),
     const int64_t clicked_arg)
 {
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         width_screen > 5.0f);
-    log_assert(T1_ui_widget_next_props->
+    T1_log_assert(T1_ui_widget_next_props->
         height_screen > 5.0f);
     
     ActiveUIElement * next_ae =

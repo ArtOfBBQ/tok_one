@@ -87,7 +87,7 @@ static void request_teapots(void) {
     teapot_object_ids[1] = T1_zspriteid_next_nonui_id();
     
     for (uint32_t i = 0; i < 1; i++) {
-        log_assert(teapot_mesh_id >= 0);
+        T1_log_assert(teapot_mesh_id >= 0);
         T1zSpriteRequest teapot_request;
         T1_zsprite_fetch_next(&teapot_request);
         T1_zsprite_construct(&teapot_request);
@@ -302,9 +302,9 @@ void T1_clientlogic_late_startup(void) {
 void T1_clientlogic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         default:
-            log_append("unhandled threadmain_id: ");
-            log_append_int(threadmain_id);
-            log_append("\n");
+            T1_log_append("unhandled threadmain_id: ");
+            T1_log_append_int(threadmain_id);
+            T1_log_append("\n");
     }
 }
 
@@ -613,7 +613,7 @@ void T1_clientlogic_window_resize(
             new_height);
     
     T1_render_views->cpu[rv_i].passes_size = 6;
-    log_assert(
+    T1_log_assert(
         T1_render_views->cpu[rv_i].write_type ==
             T1RENDERVIEW_WRITE_RENDER_TARGET);
     T1_render_views->cpu[rv_i].passes[0].type =

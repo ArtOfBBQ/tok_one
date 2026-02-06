@@ -1,29 +1,29 @@
 #include "T1_texquad.h"
 
-#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_sanity_check_texquad_vals(
     T1GPUTexQuadf32 * gpu_f32,
     T1GPUTexQuadi32 * gpu_i32)
 {
     if (gpu_f32) {
-        log_assert(!isnan(gpu_f32->xyz[0]));
-        log_assert(!isnan(gpu_f32->xyz[1]));
-        log_assert(!isnan(gpu_f32->xyz[2]));
-        log_assert(!isnan(gpu_f32->rgba[0]));
-        log_assert(!isnan(gpu_f32->rgba[1]));
-        log_assert(!isnan(gpu_f32->rgba[2]));
-        log_assert(!isnan(gpu_f32->rgba[3]));
-        log_assert(!isnan(gpu_f32->size_xy[0]));
-        log_assert(!isnan(gpu_f32->size_xy[1]));
+        T1_log_assert(!isnan(gpu_f32->xyz[0]));
+        T1_log_assert(!isnan(gpu_f32->xyz[1]));
+        T1_log_assert(!isnan(gpu_f32->xyz[2]));
+        T1_log_assert(!isnan(gpu_f32->rgba[0]));
+        T1_log_assert(!isnan(gpu_f32->rgba[1]));
+        T1_log_assert(!isnan(gpu_f32->rgba[2]));
+        T1_log_assert(!isnan(gpu_f32->rgba[3]));
+        T1_log_assert(!isnan(gpu_f32->size_xy[0]));
+        T1_log_assert(!isnan(gpu_f32->size_xy[1]));
     }
     
     if (gpu_i32) {
-        log_assert(gpu_i32->tex_array_i < TEXTUREARRAYS_SIZE);
-        log_assert(gpu_i32->tex_slice_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+        T1_log_assert(gpu_i32->tex_array_i < TEXTUREARRAYS_SIZE);
+        T1_log_assert(gpu_i32->tex_slice_i < MAX_FILES_IN_SINGLE_TEXARRAY);
     }
 }
 
-#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x)
 #define assert_sanity_check_zsprite_vals_by_id(x)
 #else
@@ -168,7 +168,7 @@ void T1_texquad_fetch_next(
         ret_i = (int32_t)T1_texquads->size;
         T1_texquads->size += 1;
         
-        log_assert(
+        T1_log_assert(
             T1_texquads->size <
                 MAX_FLATQUADS_PER_BUFFER);
     }
@@ -182,12 +182,12 @@ void T1_texquad_fetch_next(
 void T1_texquad_commit(
     T1FlatTexQuadRequest * request)
 {
-    log_assert(!request->cpu->deleted);
-    log_assert(request->gpu->f32.size_xy[0] > 0.0f);
-    log_assert(request->gpu->f32.size_xy[1] > 0.0f);
-    log_assert(request->gpu->i32.tex_array_i > -2);
-    log_assert(request->gpu->i32.tex_slice_i > -2);
-    log_assert(
+    T1_log_assert(!request->cpu->deleted);
+    T1_log_assert(request->gpu->f32.size_xy[0] > 0.0f);
+    T1_log_assert(request->gpu->f32.size_xy[1] > 0.0f);
+    T1_log_assert(request->gpu->i32.tex_array_i > -2);
+    T1_log_assert(request->gpu->i32.tex_slice_i > -2);
+    T1_log_assert(
         request->gpu->i32.tex_array_i <
             TEXTUREARRAYS_SIZE);
     
@@ -299,11 +299,11 @@ void T1_texquad_apply_endpoint_anim(
             
             int32_t * recip_vals_i32 = (int32_t *)
                 &T1_texquads->gpu[zp_i].i32;
-            log_assert(recip_vals_i32[0] ==
+            T1_log_assert(recip_vals_i32[0] ==
                 T1_texquads->gpu[zp_i].i32.tex_array_i);
             
-            log_assert(t_applied == 0.0f);
-            log_assert(t_now == 1.0f);
+            T1_log_assert(t_applied == 0.0f);
+            T1_log_assert(t_now == 1.0f);
             
             for (
                 uint32_t simd_step_i = 0;
@@ -371,7 +371,7 @@ void T1_texquad_anim_apply_effects_at_t(
     T1CPUTexQuad * recip_cpu)
 {
     // TODO: implement me
-    log_assert(0);
+    T1_log_assert(0);
 }
 
 void T1_texquad_apply_anim_effects_to_id(
@@ -383,7 +383,7 @@ void T1_texquad_apply_anim_effects_to_id(
     const int32_t * anim_gpu_vals_i32)
 {
     // TODO: implement me
-    log_assert(0);
+    T1_log_assert(0);
 }
 
 void T1_texquad_draw_test(
@@ -456,18 +456,18 @@ void T1_texquad_copy_to_frame_data(
         /* int (* _Nonnull compar)(const void *, const void *): */
             cmp_highest_z_texquad);
     
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
         i + 1 < *recip_fd_size;
         i++)
     {
-        log_assert(
+        T1_log_assert(
             recip_fd[i].f32.xyz[2]
                 >= recip_fd[i+1].f32.
                     xyz[2]);
     }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

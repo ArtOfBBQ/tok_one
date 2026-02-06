@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "T1_logger.h"
+#include "T1_log.h"
 
 #define T1_ZSPRITEID_FPS_COUNTER 0
 #define T1_ZSPRITEID_DEBUG_TEXT 1
