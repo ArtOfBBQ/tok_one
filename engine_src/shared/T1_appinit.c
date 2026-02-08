@@ -162,8 +162,9 @@ void T1_appinit_before_gpu_init(
     *success = true;
     error_message[0] = '\0';
     
-    void * unmanaged_memory_store = T1_platform_malloc_unaligned_block(
-        T1_UNMANAGED_MEM_CAP + 7232);
+    void * unmanaged_memory_store =
+        T1_platform_malloc_unaligned_block(
+            T1_UNMANAGED_MEM_CAP + 7232);
     
     T1_platform_init(&unmanaged_memory_store, 32);
     

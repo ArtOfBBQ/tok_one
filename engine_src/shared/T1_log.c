@@ -277,7 +277,12 @@ T1_log_assert_internal(
     const int line_number,
     const char * func_name)
 {
-    if (condition || !T1_logger_app_running) { return; }
+    if (
+        condition ||
+        !T1_logger_app_running)
+    {
+        return;
+    }
     
     #ifndef LOGGER_SILENCE
     printf(

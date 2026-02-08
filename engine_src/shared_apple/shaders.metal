@@ -444,25 +444,27 @@ float4 get_lit(
         const device T1GPURenderView * rfv =
             &render_views[zsprite->i32.mix_project_rv_i];
         
-        float4 refl_clipspace = worldspace_to_clipspace(
-            in.worldpos,
-            rfv);
+        float4 refl_clipspace =
+            worldspace_to_clipspace(
+                in.worldpos,
+                rfv);
         
         float2 refl_uv =
                 ((refl_clipspace.xy /
-                    refl_clipspace.w) * 0.5f) + 0.5f;
+                    refl_clipspace.w) * 0.5f) +
+                        0.5f;
         
         refl_uv = clamp(refl_uv, 0.0f, 1.0f);
         
         refl_uv[1] = 1.0 - refl_uv[1];
         
-        float mix_strength = 0.55f;
+        float mix_strength = 0.95f;
         
         float fade_x =
-            refl_uv.x * (1.0f - refl_uv.x) * 4.0f;
+            refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
         float fade_y =
-            refl_uv.y * (1.0f - refl_uv.y) * 4.0f;
-        float fade = min(fade_x, fade_y);
+            refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
+        float fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
         mix_strength *= fade;
         
         const half4 color_sample =
