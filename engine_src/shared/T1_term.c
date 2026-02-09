@@ -341,19 +341,21 @@ static bool32_t T1_term_evaluate(
             command, "PROFILE TREE"))
     {
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_global->show_profiler = !T1_global->show_profiler;
+        T1_global->show_profiler =
+            !T1_global->show_profiler;
         
         if (T1_global->show_profiler) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Showing profiler results...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped showing profiler results...");
         }
+        
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,

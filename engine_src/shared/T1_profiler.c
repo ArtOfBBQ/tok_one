@@ -74,16 +74,16 @@ void T1_profiler_init(
 {
     acceptable_frame_clock_cycles = clock_frequency / 60;
     
-    log_assert(sizeof(Frame) % 32 == 0); // simd padding, 32 bytes for AVX
+    T1_log_assert(sizeof(Frame) % 32 == 0); // simd padding, 32 bytes for AVX
     
     frames = profiler_malloc_function(
         sizeof(Frame) * FRAMES_MAX);
-    log_assert(frames != NULL);
+    T1_log_assert(frames != NULL);
     T1_std_memset(frames, 0, sizeof(Frame) * FRAMES_MAX);
     
     function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
-    log_assert(function_stack != NULL);
+    T1_log_assert(function_stack != NULL);
     T1_std_memset(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     gui_function_stack = profiler_malloc_function(
@@ -169,7 +169,7 @@ void T1_profiler_start(const char * function_name)
     if (function_stack_size > 0) {
         uint32_t parent_prof_i = function_stack[function_stack_size - 1];
         
-        log_assert(frames[frame_i].profiles[parent_prof_i].
+        T1_log_assert(frames[frame_i].profiles[parent_prof_i].
             children_size < MAX_CHILDREN_PER_NODE);
         
         for (
@@ -189,10 +189,11 @@ void T1_profiler_start(const char * function_name)
                 uint16_t new_i = frames[frame_i].profiles[parent_prof_i].
                     children[i];
                 new_node = &frames[frame_i].profiles[new_i];
-                log_assert(new_node->elapsed_count > 0);
+                T1_log_assert(new_node->elapsed_count > 0);
                 function_stack[function_stack_size] = new_i;
-                log_assert(new_node != NULL);
-                log_assert(new_node->parents_size > 0); log_assert(new_node->elapsed_count > 0);
+                T1_log_assert(new_node != NULL);
+                T1_log_assert(new_node->parents_size > 0);
+                T1_log_assert(new_node->elapsed_count > 0);
                 break;
             }
         }
@@ -202,13 +203,13 @@ void T1_profiler_start(const char * function_name)
             function_stack[function_stack_size] = new_i;
             
             new_node = &frames[frame_i].profiles[new_i];
-            log_assert(new_node != NULL);
-            log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
+            T1_log_assert(new_node != NULL);
+            T1_log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
                 MAX_CHILDREN_PER_NODE);
             frames[frame_i].profiles[parent_prof_i].children[frames[frame_i].
                 profiles[parent_prof_i].children_size] = new_i;
             frames[frame_i].profiles[parent_prof_i].children_size += 1;
-            log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
+            T1_log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
                 MAX_CHILDREN_PER_NODE);
             
             new_node->parents_size = frames[frame_i].profiles[parent_prof_i].
@@ -225,7 +226,7 @@ void T1_profiler_start(const char * function_name)
                 MAX_DESCRIPTION_SIZE,
                 function_name);
             
-            log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
+            T1_log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
             frames[frame_i].profiles_size += 1;
         }
     } else {
@@ -236,15 +237,15 @@ void T1_profiler_start(const char * function_name)
             new_node->description,
             MAX_DESCRIPTION_SIZE,
             function_name);
-        log_assert(new_node->parents_size == 0);
-        log_assert(new_node->children_size == 0);
-        log_assert(new_node->elapsed_total == 0);
-        log_assert(new_node->elapsed_count == 0);
-        log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
+        T1_log_assert(new_node->parents_size == 0);
+        T1_log_assert(new_node->children_size == 0);
+        T1_log_assert(new_node->elapsed_total == 0);
+        T1_log_assert(new_node->elapsed_count == 0);
+        T1_log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
         frames[frame_i].profiles_size += 1;
     }
     
-    log_assert(new_node != NULL);
+    T1_log_assert(new_node != NULL);
     
     function_stack_size += 1;
     
@@ -265,7 +266,7 @@ void T1_profiler_end(const char * function_name)
         return;
     }
     
-    log_assert(function_stack_size > 0);
+    T1_log_assert(function_stack_size > 0);
     uint32_t prof_i =
         function_stack[function_stack_size - 1];
     function_stack_size -= 1;
@@ -323,7 +324,7 @@ void T1_profiler_draw_labels(void) {
     
     if (T1_global->show_profiler) {
         T1zSpriteRequest profiler_backdrop;
-        T1_zsprite_request_next(&profiler_backdrop);
+        T1_zsprite_fetch_next(&profiler_backdrop);
         T1_zsprite_construct_quad_around(
             /* const float mid_x: */
                 0.0f,
@@ -338,24 +339,25 @@ void T1_profiler_draw_labels(void) {
             /* PolygonRequest *stack_recipient: */
                 &profiler_backdrop);
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
-        profiler_backdrop.gpu_data->ignore_camera = 1.0f;
-        profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
-        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[0] = 0.50f;
-        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[1] = 0.50f;
-        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[2] = 0.50f;
-        profiler_backdrop.gpu_data->base_mat.alpha = 0.75f;
-        profiler_backdrop.cpu_data->alpha_blending_on = true;
-        profiler_backdrop.gpu_data->touch_id = -1;
+        profiler_backdrop.gpu_data->
+            f32.ignore_camera = 1.0f;
+        profiler_backdrop.gpu_data->
+            f32.ignore_lighting = 1.0f;
+        profiler_backdrop.gpu_data->f32.base_mat_f32.diffuse_rgb[0] = 0.50f;
+        profiler_backdrop.gpu_data->f32.base_mat_f32.diffuse_rgb[1] = 0.50f;
+        profiler_backdrop.gpu_data->f32.base_mat_f32.diffuse_rgb[2] = 0.50f;
+        profiler_backdrop.gpu_data->f32.base_mat_f32.alpha = 0.75f;
+        profiler_backdrop.cpu_data->simd_stats.alpha_blending_on = true;
+        profiler_backdrop.gpu_data->i32.touch_id = -1;
         T1_zsprite_commit(&profiler_backdrop);
         
-        font_settings->mat.diffuse_rgb[0] = 0.1f;
-        font_settings->mat.diffuse_rgb[1] = 0.1f;
-        font_settings->mat.diffuse_rgb[2] = 0.1f;
-        font_settings->mat.alpha = 1.0f;
-        font_settings->font_height = 18.0f;
+        T1_text_props->f32.rgba[0] = 0.1f;
+        T1_text_props->f32.rgba[1] = 0.1f;
+        T1_text_props->f32.rgba[2] = 0.1f;
+        T1_text_props->f32.rgba[3] = 1.0f;
+        T1_text_props->font_height = 18.0f;
         
-        T1_text_props->ignore_camera = true;
-        text_request_label_renderable(
+        T1_text_request_label_renderable(
             /* const int32_t with_object_id: */
                 profiler_object_id,
             /* const char * text_to_draw: */
@@ -369,8 +371,12 @@ void T1_profiler_draw_labels(void) {
             /* const float max_width: */
                 T1_global->window_width);
         
-        for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
-            font_settings->mat.ambient_rgb[0] = 0.1f;
+        for (
+            int32_t gui_frame_i = 0;
+            gui_frame_i < 2;
+            gui_frame_i++)
+        {
+            T1_text_props->f32.rgba[0] = 0.1f;
             float gui_frame_left = 20 +
                 (gui_frame_i * T1_global->window_width / 2);
             
@@ -378,7 +384,7 @@ void T1_profiler_draw_labels(void) {
             
             float cur_top = T1_global->window_height -
                 20 -
-                (font_settings->font_height + 2.0f);
+                (T1_text_props->font_height + 2.0f);
             
             char line_text[128];
             T1_std_strcpy_cap(line_text, 128, "Selected frame: ");
@@ -386,11 +392,10 @@ void T1_profiler_draw_labels(void) {
                 line_text,
                 128,
                 f_i);
-            font_settings->touch_id = frame_selection_touch_ids[
+            T1_text_props->i32.touch_id = frame_selection_touch_ids[
                 gui_frame_i];
             
-            font_settings->ignore_camera = true;
-            text_request_label_renderable(
+            T1_text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
                 /* const char * text_to_draw: */
@@ -404,9 +409,9 @@ void T1_profiler_draw_labels(void) {
                 /* const float max_width: */
                     T1_global->window_width);
             
-            font_settings->touch_id = -1;
+            T1_text_props->i32.touch_id = -1;
             
-            cur_top -= (font_settings->font_height + 2.0f);
+            cur_top -= (T1_text_props->font_height + 2.0f);
             T1_std_strcpy_cap(line_text, 128, "Cycles: ");
             T1_std_strcat_uint_cap(
                 line_text,
@@ -420,7 +425,7 @@ void T1_profiler_draw_labels(void) {
                 128,
                 pct_of_acceptable);
             T1_std_strcat_cap(line_text, 128, ")");
-            text_request_label_renderable(
+            T1_text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
                 /* const char * text_to_draw: */
@@ -446,14 +451,16 @@ void T1_profiler_draw_labels(void) {
                     gui_function_stack_size - 1];
                 gui_function_stack_size -= 1;
                 
-                log_assert(frames[f_i].profiles[func_i].elapsed_total > 0);
+                T1_log_assert(frames[f_i].profiles[func_i].elapsed_total > 0);
                 
                 float pct_elapsed =
                     (float)frames[f_i].profiles[func_i].elapsed_total /
                         (float)acceptable_frame_clock_cycles;
-                font_settings->mat.diffuse_rgb[0] = 0.1f + (pct_elapsed * 2);
-                if (font_settings->mat.diffuse_rgb[0] > 1.0f) {
-                    font_settings->mat.diffuse_rgb[0] = 1.0f;
+                T1_text_props->f32.rgba[0] = 0.1f + (pct_elapsed * 2);
+                if (
+                    T1_text_props->f32.rgba[0] > 1.0f)
+                {
+                    T1_text_props->f32.rgba[0] = 1.0f;
                 }
                 
                 if (pct_elapsed >= 0.0f) {
@@ -467,7 +474,7 @@ void T1_profiler_draw_labels(void) {
                             children[child_i];
                         gui_function_stack[gui_function_stack_size] =
                             child_prof_i;
-                        log_assert(
+                        T1_log_assert(
                            frames[f_i].profiles[child_prof_i].parents_size > 0);
                         gui_function_stack_size += 1;
                     }
@@ -491,7 +498,7 @@ void T1_profiler_draw_labels(void) {
                     128,
                     " (");
                 
-                log_assert(pct_elapsed >= 0.0f);
+                T1_log_assert(pct_elapsed >= 0.0f);
                 T1_std_strcat_int_cap(
                     line_text,
                     128,
@@ -501,9 +508,8 @@ void T1_profiler_draw_labels(void) {
                     128,
                     "%)");
                 
-                cur_top -= (font_settings->font_height + 2.0f);
-                font_settings->ignore_camera = true;
-                text_request_label_renderable(
+                cur_top -= (T1_text_props->font_height + 2.0f);
+                T1_text_request_label_renderable(
                     /* const int32_t with_object_id: */
                         profiler_object_id,
                     /* const char * text_to_draw: */
