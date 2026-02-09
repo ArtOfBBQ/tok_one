@@ -65,7 +65,7 @@ T1_wav_check_strings_equal(
     }
     
     if (!*good) {
-        #ifndef T1_WAV_SILENCE
+        #if T1_WAV_SILENCE == T1_INACTIVE
         if (at_i > 50) {
             at_i = 50;
         }
@@ -80,6 +80,9 @@ T1_wav_check_strings_equal(
             field_description,
             expected_nullterm,
             actual_nullterm);
+        #elif T1_WAV_SILENCE == T1_ACTIVE
+        #else
+        #error
         #endif
     }
 }
@@ -194,11 +197,14 @@ T1_wav_parse(
     if (!*good) { return; }
     
     if (file_header.file_size + 8 != data_size) {
-        #ifndef T1_WAV_SILENCE
+        #if T1_WAV_SILENCE == T1_INACTIVE
         printf(
             ".wav header claims filesize %u+8 bytes, got %u byte datastream\n",
             file_header.file_size,
             data_size);
+        #elif T1_WAV_SILENCE == T1_ACTIVE
+        #else
+        #error
         #endif
         *good = 0;
         return;
@@ -458,23 +464,29 @@ T1_wav_parse(
                 "data"))
         {
             if (chunk_header.data_size > (recipient_cap * 2)) {
-                #ifndef T1_WAV_SILENCE
+                #if T1_WAV_SILENCE == T1_INACTIVE
                 printf(
                     "Recipient size of %u can't contain %u bytes of sound "
                     "data\n",
                     recipient_cap,
                     chunk_header.data_size);
+                #elif T1_WAV_SILENCE == T1_ACTIVE
+                #else
+                #error
                 #endif
                 *good = 0;
                 return;
             }
             
             if (chunk_header.data_size > file_header.file_size) {
-                #ifndef T1_WAV_SILENCE
+                #if T1_WAV_SILENCE == T1_INACTIVE
                 printf(
                     "Chunk size %u larger than file size %u?\n",
                     chunk_header.data_size,
                     file_header.file_size);
+                #elif T1_WAV_SILENCE == T1_ACTIVE
+                #else
+                #error
                 #endif
                 *good = 0;
                 return;
@@ -494,10 +506,13 @@ T1_wav_parse(
             }
         } else {
             *good = 0;
-            #ifndef T1_WAV_SILENCE
+            #if T1_WAV_SILENCE == T1_INACTIVE
             printf(
                 "Unrecognized chunk type: %s\n",
                 chunk_header.ascii_id);
+            #elif T1_WAV_SILENCE == T1_ACTIVE
+            #else
+            #error
             #endif
             return;
         }
