@@ -712,6 +712,7 @@ bool32_t T1_apple_gpu_init(
             (sizeof(T1GPUzSprite) *
                 T1_ZSPRITES_CAP));
         
+        T1_log_assert(f->zsprite_list != NULL);
         id<MTLBuffer> MTLBufferFramePolygons =
             [with_metal_device
                 /* the ptr needs to be page aligned */

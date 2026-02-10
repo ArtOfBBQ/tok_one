@@ -1293,6 +1293,7 @@ static void
 #error
 #endif
 
+#if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
 static void T1_objmodel_deduce_tangents_and_bitangents(
     const int32_t mesh_id)
 {
@@ -1396,6 +1397,10 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         }
     }
 }
+#elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
@@ -1579,8 +1584,13 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     #error
     #endif
     
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     T1_objmodel_deduce_tangents_and_bitangents(
         return_value);
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     *success = 1;
     return return_value;

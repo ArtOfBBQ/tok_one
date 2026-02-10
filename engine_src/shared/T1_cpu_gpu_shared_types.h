@@ -50,8 +50,13 @@ typedef struct {
     #error
     #endif
     float        norm_xyz[3];
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     float        tan_xyz[3];
     float        bitan_xyz[3];
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     float        uv[2];
     unsigned int locked_materials_head_i;
     unsigned int parent_material_i;

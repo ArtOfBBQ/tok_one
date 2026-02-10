@@ -149,6 +149,7 @@ vertex_shader(
         lv->face_normal_xyz[1],
         lv->face_normal_xyz[2]);
     
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     float3 vertex_tangent = vector_float3(
         lv->tan_xyz[0],
         lv->tan_xyz[1],
@@ -158,6 +159,10 @@ vertex_shader(
         lv->bitan_xyz[0],
         lv->bitan_xyz[1],
         lv->bitan_xyz[2]);
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     float4x4 model = matrix_float4x4(
         m->m_4x4[ 0], m->m_4x4[ 1], m->m_4x4[ 2], m->m_4x4[ 3],
@@ -217,6 +222,7 @@ vertex_shader(
         normalmodel3x3 *
         normalview3x3,
         0.0f);
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     out.tangent_viewspace = vector_float4(
         vertex_tangent *
         normalmodel3x3 *
@@ -227,6 +233,10 @@ vertex_shader(
         normalmodel3x3 *
         normalview3x3,
         0.0f);
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     return out;
 }

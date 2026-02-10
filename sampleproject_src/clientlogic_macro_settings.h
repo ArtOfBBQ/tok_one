@@ -10,8 +10,8 @@ of the engine for your specific app.
 #endif
 
 // The 2 pools of memory your app allocates on startup
-// 55 mb ->                  650...000
-#define T1_UNMANAGED_MEM_CAP 650000000
+// 325 mb ->                 325...000
+#define T1_UNMANAGED_MEM_CAP 275000000
 
 
 // these will be ignored on platforms where window size/position
@@ -33,6 +33,7 @@ of the engine for your specific app.
 #define T1_LOG_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_MEM_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_LOG_SILENCE T1_ACTIVE
+#define T1_WAV_SILENCE T1_ACTIVE
 
 #define T1_OCCLUSION_ACTIVE 2
 #define T1_AMBIENT_LIGHTING_ACTIVE 1
@@ -94,7 +95,8 @@ The maximum number of 'scheduled animations' simultaneously running
 #define T1_ALL_LOCKED_MATERIALS_SIZE 10000
 
 // the max # of permanently stored sounds in your app
-#define ALL_PERMASOUNDS_SIZE 100
+#define T1_ALL_PERMASOUNDS_SIZE 100
+#define T1_ALL_AUDIOSAMPLES_SIZE 1000000
 
 /*
 The max # of simultaneously active particle effects in your app

@@ -547,6 +547,7 @@ void T1_appinit_before_gpu_init(
             T1_mem_malloc_unmanaged_aligned(
                 sd->polygons_alloc_size,
                 T1_mem_page_size);
+        T1_log_assert(f->zsprite_list != NULL);
         
         T1_log_assert(sd->lights_alloc_size > 0);
         f->lights = (T1GPULight *)

@@ -14,8 +14,6 @@ typedef struct PermaSound {
 static PermaSound * all_permasounds = NULL;
 static int32_t all_permasounds_size = 0;
 
-// 60million samples = 120MB  60...000
-#define ALL_AUDIOSAMPLES_SIZE 60000000
 static int16_t * all_samples = NULL;
 int32_t all_samples_size = 0;
 
@@ -40,18 +38,18 @@ void T1_audio_init(
     T1_audio_clear_global_buffer();
     
     all_permasounds = (PermaSound *)arg_malloc_function(
-        sizeof(PermaSound) * ALL_PERMASOUNDS_SIZE);
+        sizeof(PermaSound) * T1_ALL_PERMASOUNDS_SIZE);
     
-    for (uint32_t i = 0; i < ALL_PERMASOUNDS_SIZE; i++) {
+    for (uint32_t i = 0; i < T1_ALL_PERMASOUNDS_SIZE; i++) {
         all_permasounds[i].name[0]           = '\0';
         all_permasounds[i].allsamples_head_i =   -1;
         all_permasounds[i].allsamples_tail_i =   -1;
     }
     
     all_samples = arg_malloc_function(
-        sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
+        sizeof(int16_t) * T1_ALL_AUDIOSAMPLES_SIZE);
     assert(all_samples != NULL);
-    T1_std_memset(all_samples, 0, sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
+    T1_std_memset(all_samples, 0, sizeof(int16_t) * T1_ALL_AUDIOSAMPLES_SIZE);
 }
 
 //__attribute__((noinline))
@@ -324,7 +322,7 @@ void T1_audio_register_samples_to_permasound(
     int16_t * samples,
     const int32_t samples_size)
 {
-    T1_log_assert(samples_size + all_samples_size <= ALL_AUDIOSAMPLES_SIZE);
+    T1_log_assert(samples_size + all_samples_size <= T1_ALL_AUDIOSAMPLES_SIZE);
     T1_log_assert(all_permasounds[permasound_id].allsamples_head_i < 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i < 0);
     T1_std_memcpy(
