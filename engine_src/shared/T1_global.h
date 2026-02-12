@@ -33,6 +33,8 @@ platform layer doesn't need to do anything and can just record values directly
 #define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
 #define T1_GLOBAL_CLEARDEPTH 1.0f
 
+#define T1_MAP_PANEL_SIZE 3
+
 #include <math.h>
 
 #include "T1_std.h"

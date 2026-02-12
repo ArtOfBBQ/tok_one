@@ -61,7 +61,7 @@ static void T1_render_view_construct(
     T1GPUProjectConsts * pjc = &cpu->project;
     
     pjc->znear = 0.1f;
-    pjc->zfar  = 6.0f;
+    pjc->zfar  = T1_ZFAR;
     
     float field_of_view = 75.0f;
     pjc->field_of_view_rad = (

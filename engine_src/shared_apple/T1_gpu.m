@@ -12,8 +12,7 @@ typedef struct {
     #endif
     NSUInteger frame_i;
     MTLViewport window_viewport;
-    MTLViewport
-        render_viewports[T1_RENDER_VIEW_CAP];
+    MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
     
     id<MTLDevice> device;
     id<MTLLibrary> lib;

@@ -64,6 +64,8 @@ of the engine for your specific app.
 
 #define SHADOW_BIAS 0.0001f
 
+#define T1_ZFAR 8.0f
+
 /*
 The maximum number of sprites in your app.
 */

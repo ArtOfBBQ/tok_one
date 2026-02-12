@@ -39,7 +39,7 @@ construct_projection_matrix(void)
         
         const float vertical_fov_degrees = 75.0f;
         const float zn = 0.1f;
-        const float zf = 6.0f;
+        const float zf = T1_ZFAR;
         
         float ar = w / h;
         

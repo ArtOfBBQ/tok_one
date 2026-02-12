@@ -11,6 +11,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_cpu_gpu_shared_types.h"
+#include "T1_simd.h"
 #include "stdlib.h" // TODO: stop using qsort
 
 #define T1_TEXQUADANIM_NO_EFFECT 0xFFFF

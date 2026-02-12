@@ -37,19 +37,30 @@ void T1_audio_init(
     
     T1_audio_clear_global_buffer();
     
-    all_permasounds = (PermaSound *)arg_malloc_function(
-        sizeof(PermaSound) * T1_ALL_PERMASOUNDS_SIZE);
+    all_permasounds = (PermaSound *)
+        arg_malloc_function(
+            sizeof(PermaSound) *
+                T1_ALL_PERMASOUNDS_SIZE);
     
-    for (uint32_t i = 0; i < T1_ALL_PERMASOUNDS_SIZE; i++) {
-        all_permasounds[i].name[0]           = '\0';
-        all_permasounds[i].allsamples_head_i =   -1;
-        all_permasounds[i].allsamples_tail_i =   -1;
+    for (
+        uint32_t i = 0;
+        i < T1_ALL_PERMASOUNDS_SIZE;
+        i++)
+    {
+        all_permasounds[i].name[0] = '\0';
+        all_permasounds[i].allsamples_head_i = -1;
+        all_permasounds[i].allsamples_tail_i = -1;
     }
     
     all_samples = arg_malloc_function(
-        sizeof(int16_t) * T1_ALL_AUDIOSAMPLES_SIZE);
+        sizeof(int16_t) *
+            T1_ALL_AUDIOSAMPLES_SIZE);
     assert(all_samples != NULL);
-    T1_std_memset(all_samples, 0, sizeof(int16_t) * T1_ALL_AUDIOSAMPLES_SIZE);
+    T1_std_memset(
+        all_samples,
+        0,
+        sizeof(int16_t) *
+            T1_ALL_AUDIOSAMPLES_SIZE);
 }
 
 //__attribute__((noinline))
