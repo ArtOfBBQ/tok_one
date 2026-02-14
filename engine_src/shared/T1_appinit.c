@@ -809,6 +809,8 @@ void T1_appinit_after_gpu_init_step2(
                 T1_mesh_summary_list[i].shattered_vertices_size <
                     MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
+                // If you land here via debugger:
+                // print T1_mesh_summary_list[i].resource_name
                 T1_objmodel_create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
                         T1_mesh_summary_list[i].mesh_id,
