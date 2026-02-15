@@ -2,7 +2,7 @@
 
 
 static uint32_t
-tex_arrays_mutex_ids[TEXTUREARRAYS_SIZE];
+tex_arrays_mutex_ids[T1_TEXTUREARRAYS_CAP];
 
 T1TexArray * T1_tex_arrays = NULL;
 uint32_t T1_tex_arrays_size = 0;
@@ -280,14 +280,14 @@ void T1_tex_array_init(void) {
     T1_tex_arrays = (T1TexArray *)
         T1_mem_malloc_unmanaged(
             sizeof(T1TexArray) *
-                TEXTUREARRAYS_SIZE);
+                T1_TEXTUREARRAYS_CAP);
     
     T1_std_memset(
         T1_tex_arrays,
         0,
-        sizeof(T1TexArray) * TEXTUREARRAYS_SIZE);
+        sizeof(T1TexArray) * T1_TEXTUREARRAYS_CAP);
     
-    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++)
+    for (uint32_t i = 0; i < T1_TEXTUREARRAYS_CAP; i++)
     {
         tex_arrays_mutex_ids[i] = T1_platform_init_mutex_and_return_id();
     }
@@ -573,7 +573,7 @@ void T1_tex_array_reg_new_by_splitting_img(
     int32_t new_texture_array_i = (int)T1_tex_arrays_size;
     T1_tex_arrays[new_texture_array_i].request_init = true;
     T1_tex_arrays_size++;
-    T1_log_assert(T1_tex_arrays_size <= TEXTUREARRAYS_SIZE);
+    T1_log_assert(T1_tex_arrays_size <= T1_TEXTUREARRAYS_CAP);
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_image: */
@@ -606,7 +606,7 @@ void T1_tex_array_prereg_null_img(
         i < T1_tex_arrays_size;
         i++)
     {
-        T1_log_assert(i < TEXTUREARRAYS_SIZE);
+        T1_log_assert(i < T1_TEXTUREARRAYS_CAP);
         if (
             T1_tex_arrays[i].images_size > 0 &&
             T1_tex_arrays[i].
@@ -647,7 +647,7 @@ void T1_tex_array_prereg_null_img(
         
         T1_log_assert(
             T1_tex_arrays_size <=
-                TEXTUREARRAYS_SIZE);
+                T1_TEXTUREARRAYS_CAP);
         new_texture_i = 0;
         
         T1_tex_arrays[new_texturearray_i].
@@ -697,7 +697,7 @@ void T1_tex_array_postreg_null_img(
         i < T1_tex_arrays_size;
         i++)
     {
-        T1_log_assert(i < TEXTUREARRAYS_SIZE);
+        T1_log_assert(i < T1_TEXTUREARRAYS_CAP);
         if (
             T1_tex_arrays[i].
                 single_img_width == width &&
@@ -760,7 +760,7 @@ void T1_tex_array_postreg_null_img(
         }
         
         T1_log_assert(T1_tex_arrays_size <=
-            TEXTUREARRAYS_SIZE);
+            T1_TEXTUREARRAYS_CAP);
         new_slice_i = 0;
         
         T1_tex_arrays[new_array_i].

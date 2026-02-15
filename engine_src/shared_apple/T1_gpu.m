@@ -77,7 +77,7 @@ typedef struct {
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    id<MTLTexture> metal_textures[TEXTUREARRAYS_SIZE];
+    id<MTLTexture> metal_textures[T1_TEXTUREARRAYS_CAP];
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     id<MTLTexture> metal_textures[1]; // for font only
     #else
@@ -1308,7 +1308,7 @@ void T1_platform_gpu_fetch_rgba_at(
     // Validate inputs
     T1_log_assert(texture_i >= 0);
     T1_log_assert(texture_array_i >= 0);
-    T1_log_assert(texture_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(texture_array_i < T1_TEXTUREARRAYS_CAP);
     T1_log_assert(rgba_recipient != NULL);
     T1_log_assert(recipient_size != NULL);
     T1_log_assert(good != NULL);
@@ -1469,7 +1469,7 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
     
     T1_log_assert(tex_i >= 0);
     T1_log_assert(tex_array_i >= 0);
-    T1_log_assert(tex_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(tex_array_i < T1_TEXTUREARRAYS_CAP);
     
     if (ags->metal_textures[tex_array_i] == NULL) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -1707,7 +1707,7 @@ get_tex_slice(
     const int32_t at_slice_i)
 {
     T1_log_assert(at_array_i >= 0);
-    T1_log_assert(at_array_i < TEXTUREARRAYS_SIZE);
+    T1_log_assert(at_array_i < T1_TEXTUREARRAYS_CAP);
     T1_log_assert(at_slice_i >= 0);
     
     id<MTLTexture> parent =
@@ -1907,7 +1907,7 @@ static void set_defaults_for_encoder(
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
-        i < TEXTUREARRAYS_SIZE;
+        i < T1_TEXTUREARRAYS_CAP;
         i++)
     {
         if (ags->metal_textures[i] != NULL) {
@@ -2507,7 +2507,7 @@ static void set_defaults_for_encoder(
             #if T1_TEXTURES_ACTIVE == T1_ACTIVE
             for (
                 uint32_t i = 0;
-                i < TEXTUREARRAYS_SIZE;
+                i < T1_TEXTUREARRAYS_CAP;
                 i++)
             {
                 if (ags->metal_textures[i] != NULL) {

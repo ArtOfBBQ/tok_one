@@ -357,7 +357,7 @@ float4 get_lit(
     #else
     #error
     #endif
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
+    array<texture2d_array<half>, T1_TEXTUREARRAYS_CAP> color_textures,
     const uint32_t camera_i,
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
@@ -714,7 +714,7 @@ float4 get_lit(
 fragment FragmentAndTouchableOut
 fragment_shader(
     const RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+    array<texture2d_array<half>, T1_TEXTUREARRAYS_CAP>
         color_textures[[ texture(0) ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_map [[texture(SHADOW_MAPS_1ST_FRAGARG_I)]],
@@ -813,7 +813,7 @@ fragment_shader(
 fragment FragmentAndTouchableOut
 alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+    array<texture2d_array<half>, T1_TEXTUREARRAYS_CAP>
         color_textures[[ texture(0), maybe_unused ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     array<texture2d<float>, T1_RENDER_VIEW_CAP>
@@ -1281,7 +1281,7 @@ flat_texquad_vertex_shader(
 }
 
 fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+    array<texture2d_array<half>, T1_TEXTUREARRAYS_CAP>
         color_textures,
     const FlatTexQuadPixel in [[stage_in]])
 {
@@ -1292,7 +1292,7 @@ fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
     float4 color_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
     if (
         in.array_i >= 0 &&
-        in.array_i < TEXTUREARRAYS_SIZE)
+        in.array_i < T1_TEXTUREARRAYS_CAP)
     {
         color_sample = float4(
             color_textures[in.array_i].
