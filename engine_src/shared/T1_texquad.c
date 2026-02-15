@@ -33,7 +33,7 @@ static void assert_sanity_check_texquad_vals(
 typedef struct {
     T1CPUTexQuad cpu[MAX_FLATQUADS_PER_BUFFER];
     T1GPUTexQuad gpu[MAX_FLATQUADS_PER_BUFFER];
-    uint32_t size;
+    int32_t size;
 } T1FlatTexQuadCollection;
 
 static T1FlatTexQuadCollection *
@@ -165,13 +165,15 @@ void T1_texquad_fetch_next(
     }
     
     if (ret_i < 0) {
-        ret_i = (int32_t)T1_texquads->size;
+        ret_i = T1_texquads->size;
         T1_texquads->size += 1;
         
         T1_log_assert(
             T1_texquads->size <
                 MAX_FLATQUADS_PER_BUFFER);
     }
+    
+    T1_log_assert(ret_i >= 0);
     
     T1_texquad_construct_at_i(ret_i);
     
@@ -424,7 +426,7 @@ void T1_texquad_copy_to_frame_data(
 {
     *recip_fd_size = 0;
     for (
-        uint32_t i = 0;
+        int32_t i = 0;
         i < T1_texquads->size;
         i++)
     {
