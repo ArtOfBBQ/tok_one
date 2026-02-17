@@ -6,11 +6,11 @@
 
 #if T1_LOG_SILENCE == T1_INACTIVE
 #include <stdio.h>
-#define T1_log_append(string) internal_log_append(string, __func__)
-#define T1_log_append_char(num) internal_log_append_char(num, __func__)
-#define T1_log_append_float(num) internal_log_append_float(num, __func__)
-#define T1_log_append_int(num) internal_log_append_int(num, __func__)
-#define T1_log_append_uint(num) internal_log_append_uint(num, __func__)
+#define T1_log_append(string) T1_log_internal_append(string, __func__)
+#define T1_log_append_char(num) T1_log_internal_append_char(num, __func__)
+#define T1_log_append_float(num) T1_log_internal_append_float(num, __func__)
+#define T1_log_append_int(num) T1_log_internal_append_int(num, __func__)
+#define T1_log_append_uint(num) T1_log_internal_append_uint(num, __func__)
 #elif T1_LOG_SILENCE == T1_ACTIVE
 #define T1_log_append(string)
 #define T1_log_append_char(num)
@@ -61,7 +61,7 @@ void T1_log_internal_append(
 don't use the internal_ functions, use the macros that call them.
 */
 void
-internal_log_append_int(
+T1_log_internal_append_int(
     const int32_t to_append,
     const char * caller_function_name);
 
@@ -69,8 +69,8 @@ internal_log_append_int(
 don't use the internal_ functions, use the macros that call them.
 */
 void
-internal_log_append_uint(
-    const uint32_t to_append,
+T1_log_internal_append_int(
+    const int32_t to_append,
     const char * caller_function_name);
 
 
@@ -78,7 +78,7 @@ internal_log_append_uint(
 don't use the internal_ functions, use the macros that call them.
 */
 void
-internal_log_append_uint(
+T1_log_internal_append_uint(
     const uint32_t to_append,
     const char * caller_function_name);
 
@@ -86,7 +86,7 @@ internal_log_append_uint(
 don't use the internal_ functions, use the macros that call them.
 */
 void
-internal_log_append_char(
+T1_log_internal_append_char(
     const char to_append,
     const char * caller_function_name);
 
@@ -94,7 +94,7 @@ internal_log_append_char(
 don't use the internal_ functions, use the macros that call them.
 */
 void
-internal_log_append_float(
+T1_log_internal_append_float(
     const float to_append,
     const char * caller_function_name);
 #elif T1_LOG_SILENCE == T1_ACTIVE
@@ -105,14 +105,14 @@ internal_log_append_float(
 /*
 dump the entire debug log to debuglog.txt
 */
-void log_dump(bool32_t * good);
+void T1_log_dump(bool32_t * good);
 
 /*
 Dump the entire debug log to debuglog.txt,
 then crash the application. This can be used even in release mode.
 */
 void
-log_dump_and_crash(const char * crash_message);
+T1_log_dump_and_crash(const char * crash_message);
 
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE

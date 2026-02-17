@@ -565,7 +565,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                         slider_linked_value) = (float)new_val_f64;
                 break;
                 default:
-                    log_dump_and_crash(
+                    T1_log_dump_and_crash(
                         "Unhandled slider data type");
             }
         }

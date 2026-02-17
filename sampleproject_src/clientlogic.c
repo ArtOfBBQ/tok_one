@@ -1,12 +1,5 @@
 #include "T1_clientlogic.h"
 
-#define TEAPOT 1
-#if TEAPOT
-static int32_t teapot_mesh_id = -1;
-static int32_t teapot_object_ids[2];
-static int32_t teapot_touch_ids[2];
-#endif
-
 void T1_clientlogic_init(void) {
     return;
 }
@@ -17,187 +10,104 @@ void T1_clientlogic_early_startup(
 {
     uint32_t good;
     T1_tex_files_prereg_png_res(
-        "1001_normal.png", &good);
-    T1_tex_files_prereg_png_res(
-        "1001_albedo.png", &good);
-    T1_tex_files_prereg_png_res(
-        "blob1.png", &good);
-    T1_tex_files_prereg_png_res(
-        "blob2.png", &good);
-    T1_tex_files_prereg_png_res(
-        "blob3.png", &good);
-    T1_tex_files_prereg_png_res(
-        "phoebus.png", &good);
-    T1_tex_files_prereg_png_res(
         "structuredart1.png", &good);
+    assert(good);
     T1_tex_files_prereg_png_res(
         "structuredart2.png", &good);
-    T1_tex_files_prereg_png_res(
-        "normalmap_rectangles.png", &good);
-    
     assert(good);
-    
-    #if TEAPOT
-    char err_msg[128];
-    #if 0
-    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
-        "crack_1.obj",
-        "crack_1.mtl",
-        false,
-        true,
-        &good,
-        err_msg);
-    #else
-    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
-        "guitar_simplified.obj",
-        "guitar_simplified.mtl",
-        /* flip_uv_u: */ false,
-        /* flip_uv_v: */ true,
-        &good,
-        err_msg);
-    #endif
-    
-    if (teapot_mesh_id < 0) {
-        #ifndef LOGGER_IGNORE_ASSERTS
-        log_dump_and_crash(
-            "Failed to register the "
-            "guitar_simplified model, maybe the .mtl"
-            " or .obj file is missing?");
-        #endif
-        return;
-    }
-    #endif
+    T1_tex_files_prereg_png_res(
+        "phoebus.png", &good);
+    assert(good);
     
     *success = true;
 }
 
-static void request_teapots(void) {
+static void redraw_quads(void) {
+    #if 1
+    T1Tex quad_texs[2];
+    quad_texs[0] = T1_tex_array_get_filename_loc("phoebus.png");
     
-    #define TEAPOT_X  0.0f
-    #define TEAPOT_Y  0.00f
-    #define TEAPOT_Z  2.0f
+    uint32_t tex_w = T1_tex_arrays[quad_texs[0].array_i].
+        single_img_width;
+    uint32_t tex_h = T1_tex_arrays[quad_texs[0].array_i].single_img_height;
+    uint32_t rgba_size = tex_w * tex_h * 4;
+    uint8_t rgba[rgba_size];
     
-    #if TEAPOT
-    if (teapot_mesh_id < 0) { return; }
+    for (uint32_t x = 0; x < tex_w; x++) {
+        for (uint32_t y = 0; y < tex_h; y++) {
+            
+            uint32_t i = ((y * tex_w)+x)*4;
+            
+            rgba[i+0] = 255;
+            rgba[i+1] = x % 255;
+            rgba[i+2] = (y*10) % 255;
+            rgba[i+3] = 255;
+        }
+    }
     
-    T1_zsprite_delete(teapot_object_ids[0]);
-    T1_zsprite_delete(teapot_object_ids[1]);
+    quad_texs[1] = T1_tex_array_get_filename_loc("structuredart_remixed");
     
-    teapot_object_ids[0] = T1_zspriteid_next_nonui_id();
-    teapot_object_ids[1] = T1_zspriteid_next_nonui_id();
+    if (quad_texs[1].array_i < 0) {
+        quad_texs[1] = T1_tex_array_reg_new_from_rgba(
+                "structuredart_remixed",
+            /* const uint8_t * rgba: */
+                rgba,
+            /* const uint32_t rgba_size: */
+                rgba_size,
+            /* const uint32_t width: */
+                tex_w,
+            /* const uint32_t height: */
+                tex_h);
+        
+        T1_platform_gpu_push_tex_slice_and_free_rgba(
+            quad_texs[1].array_i,
+            quad_texs[1].slice_i);
+    }
     
-    for (uint32_t i = 0; i < 1; i++) {
-        T1_log_assert(teapot_mesh_id >= 0);
-        T1zSpriteRequest teapot_request;
-        T1_zsprite_fetch_next(&teapot_request);
-        T1_zsprite_construct(&teapot_request);
-        teapot_request.cpu_data->mesh_id =
-            teapot_mesh_id;
-        teapot_request.cpu_data->simd_stats.mul_xyz[0] =
-            0.15f;
-        teapot_request.cpu_data->simd_stats.mul_xyz[1] =
-            0.15f;
-        teapot_request.cpu_data->simd_stats.mul_xyz[2] =
-            0.15f;
-        teapot_request.cpu_data->simd_stats.xyz[0] =
-            TEAPOT_X + (i * 0.20f);
-        teapot_request.cpu_data->simd_stats.xyz[1] =
-            TEAPOT_Y - (i * 1.0f);
-        teapot_request.cpu_data->simd_stats.xyz[2] =
-            TEAPOT_Z - (i * 0.25f);
-        teapot_request.cpu_data->simd_stats.
-            angle_xyz[0] = 0.00f;
-        teapot_request.cpu_data->simd_stats.
-            angle_xyz[1] = 3.2f;
-        teapot_request.cpu_data->simd_stats.
-            angle_xyz[2] = 0.0f;
-        teapot_request.cpu_data->zsprite_id =
-            teapot_object_ids[i];
-        teapot_request.cpu_data->visible = true;
-        teapot_touch_ids[i] =
-            T1_zspriteid_next_nonui_id();
-        teapot_request.gpu_data->i32.touch_id =
-            teapot_touch_ids[i];
-        teapot_request.gpu_data->f32.
-            ignore_lighting = 0.0f;
-        teapot_request.gpu_data->f32.
-            ignore_camera =  0.0f;
-        T1_zsprite_commit(&teapot_request);
+    float min_screen_dim = T1_render_views->cpu[0].width > T1_render_views->cpu[0].height ?
+        T1_render_views->cpu[0].height :
+        T1_render_views->cpu[0].width;
+    
+    float whitespace = min_screen_dim / 20.0f;
+    
+    float quad_size = (min_screen_dim - (whitespace * 3.0f)) / 2.0f;
+    
+    float quad_x[2];
+    quad_x[0] = whitespace + quad_size*0.5f;
+    quad_x[1] = whitespace*2.0f + quad_size*1.5f;
+    
+    for (uint32_t i = 0; i < 2; i++) {
+        T1FlatTexQuadRequest quad;
+        T1_texquad_fetch_next(&quad);
+        quad.gpu->f32.xyz[0] =
+            T1_render_view_screen_x_to_x_noz(quad_x[i]);
+        quad.gpu->f32.xyz[1] =
+            T1_render_view_screen_y_to_y_noz(whitespace + quad_size*0.5f);
+        quad.gpu->f32.xyz[2] = 0.5f;
+        quad.gpu->f32.size_xy[0] =
+            T1_render_view_screen_width_to_width_noz(quad_size);
+        quad.gpu->f32.size_xy[1] =
+            T1_render_view_screen_height_to_height_noz(quad_size);
+        quad.gpu->i32.tex_array_i = quad_texs[i].array_i;
+        quad.gpu->i32.tex_slice_i = quad_texs[i].slice_i;
+        quad.gpu->f32.rgba[0] = 1.0f;
+        quad.gpu->f32.rgba[1] = 1.0f;
+        quad.gpu->f32.rgba[2] = 1.0f;
+        quad.gpu->f32.rgba[3] = 1.0f;
+        quad.gpu->f32.offset_xy[0] = 0.0f;
+        quad.gpu->f32.offset_xy[1] = 0.0f;
+        
+        quad.cpu->zsprite_id = -1;
+        quad.gpu->i32.touch_id = -1;
+        quad.cpu->visible = 1;
+        quad.cpu->one_frame_only = 0;
+        
+        T1_texquad_commit(&quad);
     }
     #endif
-    
-    T1_text_props->font_height = 75;
-    T1_text_props->i32.touch_id = -1;
-    T1_text_props->f32.rgba[0] = 0.7f;
-    T1_text_props->f32.rgba[1] = 1.0f;
-    T1_text_props->f32.rgba[2] = 1.0f;
-    T1_text_props->f32.rgba[3] = 1.0f;
-    T1_text_request_label_renderable(
-        /* int32_t with_object_id: */
-            21,
-        /* char * text_to_draw: */
-            "Welcome",
-        /* float left_pixelspace: */
-            100.0f,
-        /* float top_pixelspace: */
-            100.0f,
-        /* float z: */
-            0.75f,
-        /* float max_width: */
-            1500.0f);
-    T1_text_props->i32.touch_id = -1;
 }
 
 void T1_clientlogic_late_startup(void) {
-    
-    float teapot_xyz[3];
-    teapot_xyz[0] = TEAPOT_X;
-    teapot_xyz[1] = TEAPOT_Y;
-    teapot_xyz[2] = TEAPOT_Z;
-    
-    T1zLight * light = T1_zlight_next();
-    light->RGBA[0]       =  1.0f;
-    light->RGBA[1]       =  1.0f;
-    light->RGBA[2]       =  1.0f;
-    light->RGBA[3]       =  1.0f;
-    light->diffuse       =  1.0f;
-    light->specular      =  1.0f;
-    light->reach         =  100.0f;
-    light->xyz[0]        =  TEAPOT_X - 1.20f;
-    light->xyz[1]        =  TEAPOT_Y + 0.50f;
-    light->xyz[2]        =  TEAPOT_Z;
-    T1_zlight_point_light_to_location(
-        light->xyz_angle,
-        light->xyz,
-        teapot_xyz);
-    T1_zlight_commit(light);
-    
-    T1zSpriteRequest lightcube_request;
-    T1_zsprite_fetch_next(&lightcube_request);
-    T1_zsprite_construct(&lightcube_request);
-    lightcube_request.cpu_data->mesh_id = T1_BASIC_CUBE_MESH_ID;
-    lightcube_request.cpu_data->simd_stats.mul_xyz[0] = 0.05f;
-    lightcube_request.cpu_data->simd_stats.mul_xyz[1] = 0.05f;
-    lightcube_request.cpu_data->simd_stats.mul_xyz[2] = 0.05f;
-    lightcube_request.cpu_data->simd_stats.xyz[0] = light->xyz[0];
-    lightcube_request.cpu_data->simd_stats.xyz[1] = light->xyz[1];
-    lightcube_request.cpu_data->simd_stats.xyz[2] = light->xyz[2];
-    lightcube_request.cpu_data->simd_stats.angle_xyz[0] = 0.0f;
-    lightcube_request.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
-    lightcube_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
-    lightcube_request.cpu_data->zsprite_id = light->object_id;
-    lightcube_request.cpu_data->visible = true;
-    lightcube_request.gpu_data->f32.
-        ignore_lighting = 1.0f;
-    lightcube_request.gpu_data->f32.
-        ignore_camera = 0.0f;
-    lightcube_request.gpu_data->f32.alpha = 1.0f;
-    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
-    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
-    lightcube_request.gpu_data->f32.base_mat_f32.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
-    lightcube_request.cpu_data->simd_stats.bloom_on = true;
-    lightcube_request.gpu_data->f32.shadow_strength = 0.0f;
-    T1_zsprite_commit(&lightcube_request);
     
     T1_camera->xyz[0] =  0.00f;
     T1_camera->xyz[1] =  0.00f;
@@ -205,98 +115,6 @@ void T1_clientlogic_late_startup(void) {
     T1_camera->xyz_angle[0] =  0.0f;
     T1_camera->xyz_angle[1] =  0.0f;
     T1_camera->xyz_angle[2] =  0.0f;
-    
-    request_teapots();
-    
-    T1Tex quad_tex =
-        T1_tex_array_get_filename_loc(
-            "structuredart1.png");
-    
-    
-    T1zSpriteRequest quad;
-    T1_zsprite_fetch_next(&quad);
-    T1_zsprite_construct_quad(
-        /* const float left_x: */
-            TEAPOT_X + 0.50f,
-        /* const float bottom_y: */
-            TEAPOT_Y - 0.75f,
-        /* const float z: */
-            TEAPOT_Z + 0.2f,
-        /* const float width: */
-            T1_render_view_screen_width_to_width(
-                T1_global->window_width * 2, 1.0f),
-        /* const float height: */
-            T1_render_view_screen_height_to_height(
-                T1_global->window_height * 2, 1.0f),
-        /* PolygonRequest * stack_recipient: */
-            &quad);
-    quad.gpu_data->i32.base_mat_i32.texturearray_i = quad_tex.array_i;
-    quad.gpu_data->i32.base_mat_i32.texture_i = quad_tex.slice_i;
-    quad.cpu_data->zsprite_id = -1;
-    quad.gpu_data->i32.touch_id = -1;
-    
-    quad.cpu_data->simd_stats.alpha_blending_on = 1.0f;
-    quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
-    quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;
-    quad.cpu_data->simd_stats.mul_xyz[2] = 0.0f;
-    quad.cpu_data->simd_stats.scale_factor = 1.0f;
-    quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
-    quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
-    quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-    quad.gpu_data->f32.ignore_camera = 0.0f;
-    quad.gpu_data->f32.ignore_lighting = 0.0f;
-    
-    quad.gpu_data->f32.base_mat_f32.ambient_rgb[0] = 0.05f;
-    quad.gpu_data->f32.base_mat_f32.ambient_rgb[1] = 0.05f;
-    quad.gpu_data->f32.base_mat_f32.ambient_rgb[2] = 0.50f;
-    quad.gpu_data->f32.alpha = 1.0f;
-    
-    T1_zsprite_commit(&quad);
-    
-    for (uint32_t i = 0; i < 3; i++) {
-        T1_zsprite_fetch_next(&quad);
-        T1_zsprite_construct_quad(
-            /* const float left_x: */
-                TEAPOT_X - 1.0f,
-            /* const float bottom_y: */
-                TEAPOT_Y - 0.50f,
-            /* const float z: */
-                TEAPOT_Z + 0.2f + (i * 0.75f),
-            /* const float width: */
-                T1_render_view_screen_width_to_width(
-                    T1_global->window_width * 2, 1.0f),
-            /* const float height: */
-                T1_render_view_screen_height_to_height(
-                    T1_global->window_height * 2, 1.0f),
-            /* PolygonRequest * stack_recipient: */
-                &quad);
-        
-        T1Tex phoebus_tex = T1_tex_array_get_filename_loc(
-            /* const char * for_filename: */
-                "phoebus.png");
-        quad.gpu_data->i32.base_mat_i32.texturearray_i = phoebus_tex.array_i;
-        quad.gpu_data->i32.base_mat_i32.texture_i = phoebus_tex.slice_i;
-        quad.cpu_data->zsprite_id = -1;
-        quad.gpu_data->i32.touch_id = -1;
-        quad.cpu_data->simd_stats.alpha_blending_on = true;
-        
-        quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
-        quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;
-        quad.cpu_data->simd_stats.mul_xyz[2] = 0.0f;
-        quad.cpu_data->simd_stats.scale_factor = 1.0f;
-        quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
-        quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
-        quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-        quad.gpu_data->f32.ignore_camera = 0.0f;
-        quad.gpu_data->f32.ignore_lighting = 0.0f;
-        
-        quad.gpu_data->f32.base_mat_f32.ambient_rgb[0] = 0.05f;
-        quad.gpu_data->f32.base_mat_f32.ambient_rgb[1] = 0.05f;
-        quad.gpu_data->f32.base_mat_f32.ambient_rgb[2] = 0.50f;
-        quad.gpu_data->f32.alpha = 0.25f;
-        
-        T1_zsprite_commit(&quad);
-    }
 }
 
 void T1_clientlogic_threadmain(int32_t threadmain_id) {
@@ -629,8 +447,7 @@ void T1_clientlogic_window_resize(
     T1_render_views->cpu[rv_i].passes[5].type =
         T1RENDERPASS_BILLBOARDS;
     
-    // You're notified that the window is resized!
-    request_teapots();
+    redraw_quads();
 }
 
 void T1_clientlogic_shutdown(void) {

@@ -43,7 +43,7 @@ void T1_logger_init(
 
 #if T1_LOG_SILENCE == T1_INACTIVE
 void
-internal_log_append_uint(
+T1_log_internal_append_uint(
     const uint32_t to_append,
     const char * caller_function_name)
 {
@@ -60,7 +60,7 @@ internal_log_append_uint(
 }
 
 void
-internal_log_append_char(
+T1_log_internal_append_char(
     const char to_append,
     const char * caller_function_name)
 {
@@ -74,7 +74,7 @@ internal_log_append_char(
 }
 
 void
-internal_log_append_int(
+T1_log_internal_append_int(
     const int32_t to_append,
     const char * caller_function_name)
 {
@@ -91,7 +91,7 @@ internal_log_append_int(
 }
 
 void
-internal_log_append_float(
+T1_log_internal_append_float(
     const float to_append,
     const char * caller_function_name)
 {
@@ -220,7 +220,7 @@ T1_log_internal_append(
 #error
 #endif
 
-void log_dump(bool32_t * good) {
+void T1_log_dump(bool32_t * good) {
     
     // TODO: move this elsewhere so logger can avoid #including platform_layer.h
     //    if (app_log == NULL) { return; }
@@ -240,9 +240,9 @@ void log_dump(bool32_t * good) {
 }
 
 void
-log_dump_and_crash(const char * crash_message) {
+T1_log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
-    log_dump(&log_dump_succesful);
+    T1_log_dump(&log_dump_succesful);
     
     if (T1_logger_app_running) {
         unsigned int i = 0;
@@ -332,7 +332,7 @@ T1_log_assert_internal(
         512,
         line_number);
     
-    log_dump_and_crash(assert_failed_msg);
+    T1_log_dump_and_crash(assert_failed_msg);
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else

@@ -2,12 +2,12 @@
 
 
 static uint32_t
-tex_arrays_mutex_ids[T1_TEXTUREARRAYS_CAP];
+tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
 
 T1TexArray * T1_tex_arrays = NULL;
 uint32_t T1_tex_arrays_size = 0;
 
-void T1_tex_array_push_all_predecoded(void)
+void T1_tex_array_push_all(void)
 {
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
@@ -15,154 +15,19 @@ void T1_tex_array_push_all_predecoded(void)
         ta_i < (int32_t)T1_tex_arrays_size;
         ta_i++)
     {
-        if (
-            T1_tex_arrays[ta_i].images_size < 1 ||
-            T1_tex_arrays[ta_i].gpu_capacity > 0)
-        {
-            continue;
-        }
-        
-        T1_platform_gpu_copy_texture_array(
-            /* const int32_t texture_array_i: */
-                ta_i,
-            /* const uint32_t num_images: */
-                T1_tex_arrays[ta_i].images_size,
-            /* const uint32_t single_image_width: */
-                T1_tex_arrays[ta_i].single_img_width,
-            /* const uint32_t single_image_height: */
-                T1_tex_arrays[ta_i].single_img_height,
-            /* const bool32_t is_render_target: */
-                false,
-            /* const bool32_t use_bc1_compression: */
-                T1_tex_arrays[ta_i].bc1_compressed);
-        
         for (
-            int32_t t_i = 0;
-            t_i < (int32_t)T1_tex_arrays[ta_i].images_size;
-            t_i++)
+            int32_t sl_i = (int32_t)T1_tex_arrays[ta_i].images_size - 1;
+            sl_i >= 0;
+            sl_i--)
         {
-            uint8_t * rgba_values_freeable = NULL;
-            uint8_t * rgba_values_page_aligned = NULL;
-            uint32_t use_error_image = false;
-            
             if (
-                !T1_tex_arrays[ta_i].images[t_i].image.good ||
-                T1_tex_arrays[ta_i].images[t_i].image.
-                    rgba_values_freeable == NULL ||
-                T1_tex_arrays[ta_i].images[t_i].image.
-                    rgba_values_page_aligned == NULL)
+                T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_freeable != NULL)
             {
-                use_error_image = true;
-                
-                uint32_t rgba_size =
-                    T1_tex_arrays[ta_i].single_img_width *
-                        T1_tex_arrays[ta_i].single_img_height * 4;
-                T1_mem_malloc_managed_page_aligned(
-                    /* void ** base_pointer_for_freeing: */
-                       (void **)&rgba_values_freeable,
-                    /* void ** aligned_subptr: */
-                       (void **)&rgba_values_page_aligned,
-                    /* const size_t subptr_size: */
-                        rgba_size);
-                
-                uint32_t packed_rgba_red_u32 =
-                    ((uint32_t)255 << 24) | // Alpha
-                    ((uint32_t)  5 << 16) | // Blue
-                    ((uint32_t)  5 <<  8) | // Green
-                    255;          // Red
-                uint32_t packed_rgba_blue_u32 =
-                    ((uint32_t)255 << 24) | // Alpha
-                    ((uint32_t)255 << 16) | // Blue
-                    ((uint32_t)255 <<  8) | // Green
-                    0;            // Red
-                
-                int32_t packed_rgba_red;
-                T1_std_memcpy(&packed_rgba_red, &packed_rgba_red_u32, 4);
-                int32_t packed_rgba_blue;
-                T1_std_memcpy(&packed_rgba_blue, &packed_rgba_blue_u32, 4);
-                
-                uint32_t one_third = (rgba_size / 3);
-                while (one_third % 4 != 0) {
-                    one_third -= 1;
-                }
-                
-                T1_std_memset_i32(
-                    rgba_values_page_aligned,
-                    packed_rgba_red,
-                    one_third);
-                T1_std_memset_i32(
-                    rgba_values_page_aligned + (one_third),
-                    packed_rgba_blue,
-                    one_third);
-                T1_std_memset_i32(
-                    rgba_values_page_aligned + (one_third * 2),
-                    packed_rgba_red,
-                    rgba_size - (one_third * 2));
-            } else {
-                rgba_values_freeable = T1_tex_arrays[ta_i].
-                        images[t_i].image.
-                            rgba_values_freeable;
-                rgba_values_page_aligned = T1_tex_arrays[ta_i].
-                        images[t_i].image.
-                            rgba_values_page_aligned;
-            }
-            
-            if (T1_tex_arrays[ta_i].bc1_compressed)
-            {
-                if (!use_error_image) {
-                    T1_platform_gpu_push_bc1_tex_slice_then_free(
-                        /* const int32_t texture_array_i: */
-                            ta_i,
-                        /* const int32_t texture_i: */
-                            t_i,
-                        /* const uint32_t parent_texture_array_images_size: */
-                            T1_tex_arrays[ta_i].images_size,
-                        /* const uint32_t image_width: */
-                            T1_tex_arrays[ta_i].single_img_width,
-                        /* const uint32_t image_height: */
-                            T1_tex_arrays[ta_i].single_img_height,
-                        /* uint8_t * raw_bc1_file_freeable: */
-                            rgba_values_freeable,
-                        /* uint8_t * raw_bc1_file_page_aligned: */
-                            rgba_values_page_aligned);    
-                } else {
-                    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-                    char errmsg[128];
-                    T1_std_strcpy_cap(
-                        errmsg,
-                        128,
-                        "Missing critical bc1 texture: ");
-                    T1_std_strcat_cap(
-                        errmsg,
-                        128,
-                        T1_tex_arrays[ta_i].images[t_i].name);
-                    T1_std_strcat_cap(
-                        errmsg,
-                        128,
-                        ".\n");
-                    log_dump_and_crash("Missing critical bc1 texture\n");
-                    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-                    // Pass
-                    #else
-                    #error
-                    #endif
-                }
-            } else {
                 T1_platform_gpu_push_tex_slice_and_free_rgba(
                     /* const int32_t texture_array_i: */
                         ta_i,
                     /* const int32_t texture_i: */
-                        t_i,
-                    /* const uint32_t parent_texture_array_images_size: */
-                        T1_tex_arrays[ta_i].images_size,
-                    /* const uint32_t image_width: */
-                        T1_tex_arrays[ta_i].single_img_width,
-                    /* const uint32_t image_height: */
-                        T1_tex_arrays[ta_i].single_img_height,
-                    /* uint8_t * rgba_values_freeable: */
-                        rgba_values_freeable,
-                    /* uint8_t * rgba_values_page_aligned: */
-                        rgba_values_page_aligned);
+                        sl_i);
             }
         }
     }
@@ -280,26 +145,26 @@ void T1_tex_array_init(void) {
     T1_tex_arrays = (T1TexArray *)
         T1_mem_malloc_unmanaged(
             sizeof(T1TexArray) *
-                T1_TEXTUREARRAYS_CAP);
+                T1_TEXARRAYS_CAP);
     
     T1_std_memset(
         T1_tex_arrays,
         0,
-        sizeof(T1TexArray) * T1_TEXTUREARRAYS_CAP);
+        sizeof(T1TexArray) * T1_TEXARRAYS_CAP);
     
-    for (uint32_t i = 0; i < T1_TEXTUREARRAYS_CAP; i++)
+    for (uint32_t i = 0; i < T1_TEXARRAYS_CAP; i++)
     {
         tex_arrays_mutex_ids[i] = T1_platform_init_mutex_and_return_id();
     }
 }
 
 static void
-    register_to_texturearray_by_splitting_image(
-        T1Img * new_image,
-        const char * filename_prefix,
-        const int32_t ta_i,
-        const uint32_t rows,
-        const uint32_t columns)
+register_to_texturearray_by_splitting_image(
+    T1Img * new_image,
+    const char * filename_prefix,
+    const int32_t ta_i,
+    const uint32_t rows,
+    const uint32_t columns)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -322,6 +187,7 @@ static void
     T1_tex_arrays[ta_i].single_img_width  = expected_width;
     T1_tex_arrays[ta_i].single_img_height = expected_height;
     
+    #if 0
     T1_platform_gpu_copy_texture_array(
         /* const int32_t texture_array_i: */
             ta_i,
@@ -335,10 +201,15 @@ static void
             false,
         /* const uint32_t use_bc1_compression: */
             false);
+    #endif
     
-    for (int32_t row_i = 0; row_i < (int32_t)rows; row_i++) {
-        for (int32_t col_i = 0; col_i < (int32_t)columns; col_i++) {
-            
+    T1_tex_arrays[ta_i].images_size = rows * columns;
+    T1_tex_arrays[ta_i].is_render_target = false;
+    T1_tex_arrays[ta_i].bc1_compressed = false;
+    
+    for (int32_t row_i = (int32_t)rows-1; row_i >= 0; row_i--) {
+        for (int32_t col_i = (int32_t)columns-1; col_i >= 0; col_i--)
+        {
             int32_t t_i = (row_i * ((int32_t)columns)) + col_i;
             
             T1Img * split_img = extract_image(
@@ -390,23 +261,24 @@ static void
                 T1_tex_arrays[ta_i].images[t_i].name,
                 FILENAME_MAX,
                 filenames[(row_i*(int32_t)columns)+col_i]);
-            T1_tex_arrays[ta_i].images_size += 1;
+            T1_tex_arrays[ta_i].images[t_i].image.width =
+                split_img->width;
+            T1_tex_arrays[ta_i].images[t_i].image.height =
+                split_img->height;
+            T1_tex_arrays[ta_i].images[t_i].image.pixel_count =
+                split_img->width * split_img->height;
+            T1_tex_arrays[ta_i].images[t_i].image.rgba_values_size =
+                split_img->rgba_values_size;
+            T1_tex_arrays[ta_i].images[t_i].image.rgba_values_freeable =
+                split_img->rgba_values_freeable;
+            T1_tex_arrays[ta_i].images[t_i].image.rgba_values_page_aligned =
+                split_img->rgba_values_page_aligned;
             
             T1_platform_gpu_push_tex_slice_and_free_rgba(
                 /* const int32_t texture_array_i: */
                     ta_i,
                 /* const int32_t texture_i: */
-                    t_i,
-                /* const uint32_t parent_texture_array_images_size: */
-                    T1_tex_arrays[ta_i].images_size,
-                /* const uint32_t image_width: */
-                    T1_tex_arrays[ta_i].single_img_width,
-                /* const uint32_t image_height: */
-                    T1_tex_arrays[ta_i].single_img_height,
-                /* uint8_t * rgba_values_freeable: */
-                    split_img->rgba_values_freeable,
-                /* uint8_t * rgba_values_page_aligned: */
-                    split_img->rgba_values_page_aligned);
+                    t_i);
         }
     }
     
@@ -457,7 +329,7 @@ int32_t T1_tex_array_create_new_render_view(
     T1_log_assert(existing.array_i < 0);
     T1_log_assert(existing.slice_i < 0);
     
-    T1_tex_array_postreg_null_img(
+    T1_tex_array_prereg_null_img(
         /* const char * filename: */
             tex_name,
         /* const uint32_t width: */
@@ -482,22 +354,13 @@ int32_t T1_tex_array_create_new_render_view(
     T1_log_assert(
         T1_render_views->cpu[rv_i].write_slice_i >= 0);
     
-    T1_platform_gpu_copy_texture_array(
-        /* const int32_t texture_array_i: */
-            tex.array_i,
-        /* const uint32_t num_images: */
-            T1_tex_arrays[tex.array_i].
-                images_size,
-        /* const uint32_t single_image_width: */
-            T1_tex_arrays[tex.array_i].
-                single_img_width,
-        /* const uint32_t single_image_height: */
-            T1_tex_arrays[tex.array_i].
-                single_img_height,
-        /* const bool32_t is_render_target: */
-            true,
-        /* const bool32_t use_bc1_compression: */
-            false);
+    T1_log_assert((int32_t)T1_tex_arrays[tex.array_i].images_size > tex.slice_i);
+    T1_log_assert(!T1_tex_arrays[tex.array_i].deleted);
+    T1_log_assert(!T1_tex_arrays[tex.array_i].images[tex.slice_i].deleted);
+    T1_log_assert(T1_tex_arrays[tex.array_i].images[tex.slice_i].image.width == width);
+    T1_log_assert(T1_tex_arrays[tex.array_i].images[tex.slice_i].image.height == height);
+    
+    T1_platform_gpu_update_capacity_if_needed(tex.array_i);
     
     return rv_i;
 }
@@ -561,6 +424,91 @@ void T1_tex_array_delete_slice(
     }
 }
 
+T1Tex T1_tex_array_reg_new_from_rgba(
+    const char * fake_filename,
+    const uint8_t * rgba,
+    const uint32_t rgba_size,
+    const uint32_t width,
+    const uint32_t height)
+{
+    T1_log_assert(width * height * 4 == rgba_size);
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1Tex retval = T1_tex_array_get_filename_loc(fake_filename);
+    T1_log_assert(retval.array_i < 0);
+    T1_log_assert(retval.slice_i < 0);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    for (int16_t i = 0; i < (int16_t)T1_tex_arrays_size; i++) {
+        if (
+            T1_tex_arrays[i].single_img_width  == width &&
+            T1_tex_arrays[i].single_img_height == height &&
+            !T1_tex_arrays[i].is_render_target &&
+            !T1_tex_arrays[i].bc1_compressed)
+        {
+            retval.array_i = i;
+            retval.slice_i = (int16_t)T1_tex_arrays[i].images_size;
+            T1_tex_arrays[i].images_size += 1;
+            break;
+        }
+    }
+    
+    if (retval.array_i < 0) {
+        retval.array_i = (int16_t)T1_tex_arrays_size;
+        retval.slice_i = 0;
+        T1_tex_arrays_size += 1;
+        T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
+        
+        T1_tex_arrays[retval.array_i].images_size = 1;
+        T1_tex_arrays[retval.array_i].bc1_compressed = false;
+        T1_tex_arrays[retval.array_i].single_img_width  = width;
+        T1_tex_arrays[retval.array_i].single_img_height = height;
+        T1_tex_arrays[retval.array_i].deleted = false;
+        T1_tex_arrays[retval.array_i].is_render_target = false;
+        T1_tex_arrays[retval.array_i].request_init = 0;
+    }
+    
+    T1_log_assert(retval.array_i >= 0);
+    T1_log_assert(retval.slice_i >= 0);
+    T1_log_assert(retval.array_i < T1_TEXARRAYS_CAP);
+    T1_log_assert(retval.slice_i < T1_TEX_SLICES_CAP);
+    
+    T1_std_strcpy_cap(
+        T1_tex_arrays[retval.array_i].images[retval.slice_i].name,
+        T1_TEX_NAME_CAP,
+        fake_filename);
+    
+    T1_tex_arrays[retval.array_i].images[retval.slice_i].image.rgba_values_size =
+        rgba_size;
+    if (
+        T1_tex_arrays[retval.array_i].
+            images[retval.slice_i].image.
+                rgba_values_freeable == NULL)
+    {
+        T1_mem_malloc_managed_page_aligned(
+            /* void **base_pointer_for_freeing: */
+                (void **)&T1_tex_arrays[retval.array_i].
+                    images[retval.slice_i].image.
+                        rgba_values_freeable,
+            /* void **aligned_subptr: */
+                (void **)&T1_tex_arrays[retval.array_i].
+                    images[retval.slice_i].image.
+                        rgba_values_page_aligned,
+            /* const size_t subptr_size: */
+                rgba_size);
+    }
+    T1_std_memcpy(
+        T1_tex_arrays[retval.array_i].images[retval.slice_i].
+            image.rgba_values_page_aligned,
+        rgba,
+        rgba_size);
+    
+    return retval;
+}
+
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
@@ -573,7 +521,7 @@ void T1_tex_array_reg_new_by_splitting_img(
     int32_t new_texture_array_i = (int)T1_tex_arrays_size;
     T1_tex_arrays[new_texture_array_i].request_init = true;
     T1_tex_arrays_size++;
-    T1_log_assert(T1_tex_arrays_size <= T1_TEXTUREARRAYS_CAP);
+    T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_image: */
@@ -598,6 +546,9 @@ void T1_tex_array_prereg_null_img(
     int32_t new_texturearray_i = -1;
     int32_t new_texture_i = -1;
     
+    T1_log_assert(width > 0);
+    T1_log_assert(height > 0);
+    
     // *****************
     // find out if same width/height was already used
     // set new_texturearray_i and new_texture_i if so
@@ -606,24 +557,29 @@ void T1_tex_array_prereg_null_img(
         i < T1_tex_arrays_size;
         i++)
     {
-        T1_log_assert(i < T1_TEXTUREARRAYS_CAP);
+        T1_log_assert(i < T1_TEXARRAYS_CAP);
         if (
+            !T1_tex_arrays[i].deleted &&
             T1_tex_arrays[i].images_size > 0 &&
-            T1_tex_arrays[i].
-                single_img_width  == width &&
-            T1_tex_arrays[i].
-                single_img_height == height &&
-            T1_tex_arrays[i].
-                is_render_target == is_render_target &&
-            T1_tex_arrays[i].bc1_compressed ==
-                use_bc1_compression)
+            T1_tex_arrays[i].single_img_width  == width &&
+            T1_tex_arrays[i].single_img_height == height &&
+            T1_tex_arrays[i].is_render_target == is_render_target &&
+            T1_tex_arrays[i].bc1_compressed == use_bc1_compression)
         {
             new_texturearray_i = (int)i;
             new_texture_i = (int32_t)T1_tex_arrays[i].images_size;
             T1_tex_arrays[i].images_size++;
             
+            T1_tex_arrays[i].images[new_texture_i].image.width =
+                width;
+            T1_tex_arrays[i].images[new_texture_i].image.height =
+                height;
+            T1_tex_arrays[i].images[new_texture_i].image.rgba_values_size =
+                width * height * 4;
+            T1_tex_arrays[i].images[new_texture_i].image.good = 1;
+            
             T1_log_assert(new_texture_i >= 1);
-            T1_log_assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+            T1_log_assert(new_texture_i < T1_TEX_SLICES_CAP);
             break;
         }
     }
@@ -645,144 +601,29 @@ void T1_tex_array_prereg_null_img(
             T1_tex_arrays_size++;
         }
         
-        T1_log_assert(
-            T1_tex_arrays_size <=
-                T1_TEXTUREARRAYS_CAP);
+        T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
         new_texture_i = 0;
         
-        T1_tex_arrays[new_texturearray_i].
-            images_size = 1;
-        T1_tex_arrays[new_texturearray_i].
-            single_img_width = width;
-        T1_tex_arrays[new_texturearray_i].
-            single_img_height = height;
-        T1_tex_arrays[new_texturearray_i].
-            is_render_target = is_render_target;
-        T1_tex_arrays[new_texturearray_i].
-            bc1_compressed =
-                use_bc1_compression;
+        T1_tex_arrays[new_texturearray_i].deleted = 0;
+        T1_tex_arrays[new_texturearray_i].images_size = 1;
+        T1_tex_arrays[new_texturearray_i].single_img_width = width;
+        T1_tex_arrays[new_texturearray_i].single_img_height = height;
+        T1_tex_arrays[new_texturearray_i].is_render_target =
+            is_render_target > 0;
+        T1_tex_arrays[new_texturearray_i].bc1_compressed =
+            use_bc1_compression > 0;
+        T1_tex_arrays[new_texturearray_i].images[0].image.width =
+            width;
+        T1_tex_arrays[new_texturearray_i].images[0].image.height =
+            height;
+        T1_tex_arrays[new_texturearray_i].images[0].image.rgba_values_size = width * height * 4;
+        T1_tex_arrays[new_texturearray_i].images[0].image.good = 1;
     }
     
     T1_std_strcpy_cap(
         T1_tex_arrays[new_texturearray_i].images[new_texture_i].name,
-        T1_TEXARRAY_FILENAME_CAP,
+        T1_TEX_NAME_CAP,
         filename);
-}
-
-void T1_tex_array_postreg_null_img(
-    const char * filename,
-    const uint32_t width,
-    const uint32_t height,
-    const uint32_t is_render_target,
-    const uint32_t use_bc1_compression)
-{
-    if (
-        !is_render_target &&
-        T1_std_string_starts_with(filename, "__%T1%__"))
-    {
-        log_dump_and_crash(
-            "The __%T1%__ prefix"
-            " is reserved for internal textures.");
-        return;
-    }
-    
-    int32_t new_array_i = -1;
-    int32_t new_slice_i = -1;
-    
-    // *****************
-    // find out if same width/height was already used
-    // set new_texturearray_i and new_texture_i if so
-    for (
-        uint32_t i = 0;
-        i < T1_tex_arrays_size;
-        i++)
-    {
-        T1_log_assert(i < T1_TEXTUREARRAYS_CAP);
-        if (
-            T1_tex_arrays[i].
-                single_img_width == width &&
-            T1_tex_arrays[i].
-                single_img_height == height &&
-            T1_tex_arrays[i].
-                is_render_target == is_render_target &&
-            T1_tex_arrays[i].
-                bc1_compressed == use_bc1_compression)
-        {
-            new_array_i = (int)i;
-            new_slice_i = 0;
-            while (
-                !T1_tex_arrays[new_array_i].
-                    images[new_slice_i].deleted &&
-                new_slice_i < (int32_t)
-                    T1_tex_arrays[new_array_i].
-                        images_size)
-            {
-                new_slice_i += 1;
-            }
-            
-            if (
-                new_slice_i == (int32_t)
-                    T1_tex_arrays[new_array_i].
-                        images_size)
-            {
-                T1_tex_arrays[new_array_i].
-                    images_size += 1;
-            }
-            
-            T1_log_assert(new_slice_i >= 0);
-            T1_log_assert(new_slice_i < (int32_t)
-                T1_tex_arrays[new_array_i].
-                    images_size);
-            T1_log_assert(new_slice_i <
-                MAX_FILES_IN_SINGLE_TEXARRAY);
-            break;
-        }
-    }
-    
-    // if this is a new texturearray (we never saw
-    // these image dimensions before)
-    if (new_array_i < 0)
-    {
-        new_array_i = 0;
-        while (
-            new_array_i <
-                (int32_t)T1_tex_arrays_size &&
-            T1_tex_arrays[new_array_i].
-                images_size > 0)
-        {
-            new_array_i += 1;
-        }
-        
-        if (new_array_i == (int32_t)
-            T1_tex_arrays_size)
-        {
-            T1_tex_arrays_size++;
-        }
-        
-        T1_log_assert(T1_tex_arrays_size <=
-            T1_TEXTUREARRAYS_CAP);
-        new_slice_i = 0;
-        
-        T1_tex_arrays[new_array_i].
-            images_size = 1;
-        T1_tex_arrays[new_array_i].
-            single_img_width = width;
-        T1_tex_arrays[new_array_i].
-            single_img_height = height;
-        T1_tex_arrays[new_array_i].
-            is_render_target = is_render_target;
-        T1_tex_arrays[new_array_i].
-            bc1_compressed =
-                use_bc1_compression;
-    }
-    
-    T1_std_strcpy_cap(
-        T1_tex_arrays[new_array_i].
-            images[new_slice_i].name,
-        T1_TEXARRAY_FILENAME_CAP,
-        filename);
-    T1_tex_arrays[new_array_i].
-        images[new_slice_i].deleted = false;
 }
 
 T1Tex T1_tex_array_get_filename_loc(

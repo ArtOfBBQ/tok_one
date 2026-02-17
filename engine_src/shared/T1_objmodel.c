@@ -728,7 +728,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                             128,
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                        log_dump_and_crash(errmsg);
+                        T1_log_dump_and_crash(errmsg);
                         return -1;
                     }
                 } else {
@@ -1207,7 +1207,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     
     if (!good) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash(mtlparser_get_last_error_msg());
+        T1_log_dump_and_crash(mtlparser_get_last_error_msg());
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error

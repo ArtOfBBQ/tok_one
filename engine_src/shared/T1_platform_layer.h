@@ -252,6 +252,9 @@ T1_platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap);
 
+void T1_platform_gpu_update_capacity_if_needed(
+    const int32_t tex_array_i);
+
 uint32_t
 T1_platform_get_cpu_logical_core_count(void);
 
@@ -302,6 +305,8 @@ T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
+// DEPRECATED
+#if 0
 void
 T1_platform_gpu_copy_texture_array(
     const int32_t texture_array_i,
@@ -310,6 +315,7 @@ T1_platform_gpu_copy_texture_array(
     const uint32_t single_image_height,
     const bool32_t is_render_target,
     const bool32_t use_bc1_compression);
+#endif
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void
@@ -323,14 +329,10 @@ T1_platform_gpu_generate_mipmaps_for_texture_array(
 void
 T1_platform_gpu_push_tex_slice_and_free_rgba(
     const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * rgba_values_freeable,
-    uint8_t * rgba_values_page_aligned);
+    const int32_t texture_i);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
+#if 0
 void T1_platform_gpu_push_bc1_tex_slice_then_free(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -339,6 +341,7 @@ void T1_platform_gpu_push_bc1_tex_slice_then_free(
     const uint32_t image_height,
     uint8_t * raw_bc1_file_freeable,
     uint8_t * raw_bc1_file_page_aligned);
+#endif
 
 void T1_platform_gpu_fetch_rgba_at(
     const int32_t texture_array_i,

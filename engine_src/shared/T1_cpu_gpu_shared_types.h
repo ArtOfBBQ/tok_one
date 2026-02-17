@@ -9,17 +9,8 @@
 
 #define DEPTH_TEXTUREARRAYS_I 54321
 
-#ifndef T1_TEXTUREARRAYS_CAP
-#define T1_TEXTUREARRAYS_CAP 29
-#endif
-
 #define DOWNSAMPLES_SIZE 5
 #define DOWNSAMPLES_CUTOFF 4
-
-#ifndef MAX_FILES_IN_SINGLE_TEXARRAY
-#define MAX_FILES_IN_SINGLE_TEXARRAY 200
-#endif
-
 
 #pragma pack(push, 1)
 typedef struct {

@@ -11,17 +11,17 @@
 #include "T1_img.h"
 #include "T1_cpu_gpu_shared_types.h"
 
-#define T1_TEXARRAY_FILENAME_CAP 128
+#define T1_TEX_NAME_CAP 128
 typedef struct {
     T1Img image;
-    char name[T1_TEXARRAY_FILENAME_CAP];
+    char name[T1_TEX_NAME_CAP];
     bool8_t deleted;
     bool8_t request_update;
     bool8_t prioritize_asset_load;
 } T1TexArrayImg;
 
 typedef struct {
-    T1TexArrayImg images[MAX_FILES_IN_SINGLE_TEXARRAY];
+    T1TexArrayImg images[T1_TEX_SLICES_CAP];
     uint64_t started_decoding;
     uint64_t ended_decoding;
     uint32_t images_size;
@@ -41,15 +41,9 @@ void
 T1_tex_array_init(void);
 
 void
-T1_tex_array_push_all_predecoded(void);
+T1_tex_array_push_all(void);
 
 void T1_tex_array_prereg_null_img(
-    const char * filename,
-    const uint32_t width,
-    const uint32_t height,
-    const uint32_t is_render_target,
-    const uint32_t use_bc1_compression);
-void T1_tex_array_postreg_null_img(
     const char * filename,
     const uint32_t width,
     const uint32_t height,
@@ -67,11 +61,21 @@ void T1_tex_array_delete_slice(
     const int32_t array_i,
     const int32_t slice_i);
 
+T1Tex T1_tex_array_reg_new_from_rgba(
+    const char * fake_filename,
+    const uint8_t * rgba,
+    const uint32_t rgba_size,
+    const uint32_t width,
+    const uint32_t height);
+
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
     const uint32_t rows,
     const uint32_t columns);
+
+T1Tex T1_tex_array_create_new_in_array(
+    const int32_t array_i);
 
 T1Tex T1_tex_array_get_filename_loc(
     const char * for_filename);

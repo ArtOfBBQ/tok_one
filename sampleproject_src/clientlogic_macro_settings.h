@@ -32,7 +32,7 @@ of the engine for your specific app.
 #define T1_STD_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_LOG_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_MEM_ASSERTS_ACTIVE T1_ACTIVE
-#define T1_LOG_SILENCE T1_ACTIVE
+#define T1_LOG_SILENCE T1_INACTIVE
 #define T1_WAV_SILENCE T1_ACTIVE
 
 #define T1_OCCLUSION_ACTIVE 2
@@ -61,6 +61,9 @@ of the engine for your specific app.
 
 #define MAX_VERTICES_PER_BUFFER 840000
 #define T1_ZLIGHTS_CAP 3
+
+#define T1_TEXARRAYS_CAP 29
+#define T1_TEX_SLICES_CAP 100
 
 #define SHADOW_BIAS 0.0001f
 

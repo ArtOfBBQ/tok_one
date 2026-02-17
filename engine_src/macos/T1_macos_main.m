@@ -187,7 +187,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     }
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    log_dump_and_crash(err_msg);
+    T1_log_dump_and_crash(err_msg);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -339,7 +339,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     T1_clientlogic_shutdown();
     
     bool32_t write_succesful = false;
-    log_dump(&write_succesful);
+    T1_log_dump(&write_succesful);
     
     if (!write_succesful) {
         T1_log_append(
@@ -510,7 +510,7 @@ int main(int argc, const char * argv[]) {
     
     if (!result || !T1_logger_app_running) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Can't draw anything to the screen...\n");
+        T1_log_dump_and_crash("Can't draw anything to the screen...\n");
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error

@@ -854,7 +854,7 @@ static bool32_t T1_term_evaluate(
             T1_std_strcat_uint_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
-                T1_TEXTUREARRAYS_CAP);
+                T1_TEXARRAYS_CAP);
             T1_std_strcat_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
@@ -862,7 +862,7 @@ static bool32_t T1_term_evaluate(
         } else {
             int32_t texture_array_i = T1_std_string_to_int32(command + 18);
             
-            if (texture_array_i >= T1_TEXTUREARRAYS_CAP) {
+            if (texture_array_i >= T1_TEXARRAYS_CAP) {
                 T1_std_strcpy_cap(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,
@@ -870,7 +870,7 @@ static bool32_t T1_term_evaluate(
                 T1_std_strcat_uint_cap(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,
-                    T1_TEXTUREARRAYS_CAP);
+                    T1_TEXARRAYS_CAP);
                 T1_std_strcat_cap(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,

@@ -77,7 +77,7 @@ typedef struct {
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    id<MTLTexture> metal_textures[T1_TEXTUREARRAYS_CAP];
+    id<MTLTexture> metal_textures[T1_TEXARRAYS_CAP];
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     id<MTLTexture> metal_textures[1]; // for font only
     #else
@@ -178,7 +178,7 @@ bool32_t T1_apple_gpu_init(
         
         if (shader_lib_url == NULL) {
             #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-            log_dump_and_crash("Failed to find the shader lib\n");
+            T1_log_dump_and_crash("Failed to find the shader lib\n");
             #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
@@ -204,7 +204,7 @@ bool32_t T1_apple_gpu_init(
         if (ags->lib == NULL) {
             T1_log_append("Failed to find the shader library\n");
             #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-            log_dump_and_crash((char *)[
+            T1_log_dump_and_crash((char *)[
                 [[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:NSASCIIStringEncoding]);
             #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -375,7 +375,7 @@ bool32_t T1_apple_gpu_init(
                 &Error];
     
     if (Error != nil) {
-        log_dump_and_crash((char *)[
+        T1_log_dump_and_crash((char *)[
             [[Error userInfo] descriptionInStringsFileFormat]
                 cStringUsingEncoding:
                     NSASCIIStringEncoding]);
@@ -565,7 +565,7 @@ bool32_t T1_apple_gpu_init(
                     cStringUsingEncoding:
                         NSASCIIStringEncoding]);
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash(error_msg_string);
+        T1_log_dump_and_crash(error_msg_string);
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -635,7 +635,7 @@ bool32_t T1_apple_gpu_init(
                     kCFStringEncodingASCII]);
         
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash(
+        T1_log_dump_and_crash(
             "Error loading the alpha "
             "blending shader\n");
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -681,7 +681,7 @@ bool32_t T1_apple_gpu_init(
                 cStringUsingEncoding:
                     kCFStringEncodingASCII]);
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash(
+        T1_log_dump_and_crash(
             "Error setting the depth "
             "stencil state\n");
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -1101,6 +1101,131 @@ void T1_platform_gpu_get_device_name(
         device_name_cstr);
 }
 
+void T1_platform_gpu_update_capacity_if_needed(
+    const int32_t tex_array_i)
+{
+    T1_log_assert(tex_array_i >=  0);
+    T1_log_assert(tex_array_i <  31);
+    bool32_t copy_prev = false;
+    id<MTLTexture> prev_copy = nil;
+    
+    if (T1_tex_arrays[tex_array_i].deleted) {
+        ags->metal_textures[tex_array_i] = nil;
+        return;
+    } else if (
+        ags->metal_textures[tex_array_i] == NULL ||
+        (T1_tex_arrays[tex_array_i].bc1_compressed &&
+            ags->metal_textures[tex_array_i].pixelFormat !=
+                    MTLPixelFormatBC1_RGBA) ||
+        ((!T1_tex_arrays[tex_array_i].bc1_compressed) &&
+            ags->metal_textures[tex_array_i].pixelFormat !=
+                    MTLPixelFormatRGBA8Unorm) ||
+        T1_tex_arrays[tex_array_i].single_img_width !=
+            ags->metal_textures[tex_array_i].width ||
+        T1_tex_arrays[tex_array_i].single_img_height !=
+            ags->metal_textures[tex_array_i].height)
+    {
+        ags->metal_textures[tex_array_i] = nil;
+        copy_prev = false;
+    } else if (
+        T1_tex_arrays[tex_array_i].images_size >
+            [ags->metal_textures[tex_array_i] arrayLength] )
+    {
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_log_assert(
+            T1_tex_arrays[tex_array_i].single_img_width ==
+                ags->metal_textures[tex_array_i].width);
+        T1_log_assert(
+            T1_tex_arrays[tex_array_i].single_img_height ==
+                ags->metal_textures[tex_array_i].height);
+        T1_log_assert(
+            T1_tex_arrays[tex_array_i].is_render_target ==
+                ((ags->metal_textures[tex_array_i].usage &
+                    MTLTextureUsageRenderTarget) > 0));
+        if (T1_tex_arrays[tex_array_i].bc1_compressed) {
+            T1_log_assert(
+                ags->metal_textures[tex_array_i].pixelFormat ==
+                    MTLPixelFormatBC1_RGBA);
+        }
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
+        copy_prev = true;
+        prev_copy = ags->metal_textures[tex_array_i];
+        ags->metal_textures[tex_array_i] = NULL;
+    } else {
+        T1_log_assert(
+            T1_tex_arrays[tex_array_i].is_render_target ==
+                ((ags->metal_textures[tex_array_i].usage &
+                    MTLTextureUsageRenderTarget) > 0));
+        return;
+    }
+    
+    MTLTextureDescriptor * texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    texture_descriptor.textureType =
+        MTLTextureType2DArray;
+    texture_descriptor.arrayLength =
+        T1_tex_arrays[tex_array_i].images_size;
+    texture_descriptor.pixelFormat = T1_tex_arrays[tex_array_i].bc1_compressed ?
+        MTLPixelFormatBC1_RGBA :
+        MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.storageMode =
+        MTLStorageModePrivate;
+    
+    if (T1_tex_arrays[tex_array_i].is_render_target)
+    {
+        texture_descriptor.usage =
+            MTLTextureUsageShaderRead |
+            MTLTextureUsageRenderTarget;
+    } else {
+        texture_descriptor.usage = MTLTextureUsageShaderRead;
+    }
+    texture_descriptor.width =
+        T1_tex_arrays[tex_array_i].single_img_width;
+    texture_descriptor.height =
+        T1_tex_arrays[tex_array_i].single_img_height;
+    
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    texture_descriptor.mipmapLevelCount =
+        use_bc1_compression || texture_array_i == 0 ?
+        1 :
+        (NSUInteger)floor(
+            log2((double)MAX(
+                single_image_width,
+                single_image_height))) + 1;
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    texture_descriptor.mipmapLevelCount = 1;
+    #else
+    #error
+    #endif
+    id<MTLTexture> texture = [ags->device
+        newTextureWithDescriptor:texture_descriptor];
+    
+    T1_log_assert(ags->metal_textures[tex_array_i] == NULL);
+    ags->metal_textures[tex_array_i] = texture;
+    
+    T1_tex_arrays[tex_array_i].gpu_capacity =
+        T1_tex_arrays[tex_array_i].images_size;
+    
+    if (copy_prev) {
+        id<MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+        id<MTLBlitCommandEncoder> blitenc = [combuf blitCommandEncoder];
+        
+        [blitenc
+            copyFromTexture:
+                prev_copy
+            toTexture:
+                ags->metal_textures[tex_array_i]];
+        
+        [blitenc endEncoding];
+        [combuf commit];
+        [combuf waitUntilCompleted];
+    }
+}
+
 // returns the slice_i of the new depth texture
 // in the array of depth textures
 int32_t
@@ -1180,104 +1305,6 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     return final_id;
 }
 
-void T1_platform_gpu_copy_texture_array(
-    const int32_t texture_array_i,
-    const uint32_t num_images,
-    const uint32_t single_image_width,
-    const uint32_t single_image_height,
-    const bool32_t is_render_target,
-    const bool32_t use_bc1_compression)
-{
-    T1_log_assert(texture_array_i >=  0);
-    T1_log_assert(texture_array_i <  31);
-    bool32_t copy_prev = false;
-    id<MTLTexture> prev_copy = nil;
-    
-    if (
-        ags->metal_textures[texture_array_i] ==
-            NULL)
-    {
-        copy_prev = false;
-    } else if (
-        num_images >
-            [ags->metal_textures[texture_array_i]
-                arrayLength] ||
-        single_image_width != ags->
-            metal_textures[texture_array_i].width ||
-        single_image_height != ags->
-            metal_textures[texture_array_i].height)
-    {
-        copy_prev = true;
-        prev_copy =
-            ags->metal_textures[texture_array_i];
-        ags->metal_textures[texture_array_i] = NULL;
-    } else {
-        T1_log_assert(ags->metal_textures[texture_array_i].
-            pixelFormat != MTLPixelFormatBC1_RGBA);
-        T1_log_assert((ags->metal_textures[texture_array_i].
-            usage & MTLTextureUsageRenderTarget) > 0);
-        return;
-    }
-    
-    MTLTextureDescriptor * texture_descriptor =
-        [[MTLTextureDescriptor alloc] init];
-    texture_descriptor.textureType =
-        MTLTextureType2DArray;
-    texture_descriptor.arrayLength = num_images;
-    texture_descriptor.pixelFormat = use_bc1_compression ?
-        MTLPixelFormatBC1_RGBA :
-        MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.storageMode =
-        MTLStorageModePrivate;
-    
-    if (is_render_target)
-    {
-        texture_descriptor.usage =
-            MTLTextureUsageShaderRead |
-            MTLTextureUsageRenderTarget;
-    } else {
-        texture_descriptor.usage = MTLTextureUsageShaderRead;
-    }
-    texture_descriptor.width = single_image_width;
-    texture_descriptor.height = single_image_height;
-    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-    texture_descriptor.mipmapLevelCount =
-        use_bc1_compression || texture_array_i == 0 ?
-        1 :
-        (NSUInteger)floor(
-            log2((double)MAX(
-                single_image_width,
-                single_image_height))) + 1;
-    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
-    texture_descriptor.mipmapLevelCount = 1;
-    #else
-    #error
-    #endif
-    id<MTLTexture> texture = [ags->device
-        newTextureWithDescriptor:texture_descriptor];
-    
-    T1_log_assert(ags->metal_textures[texture_array_i] == NULL);
-    ags->metal_textures[texture_array_i] = texture;
-    
-    T1_tex_arrays[texture_array_i].
-        gpu_capacity = num_images;
-    
-    if (copy_prev) {
-        id<MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
-        id<MTLBlitCommandEncoder> blitenc = [combuf blitCommandEncoder];
-        
-        [blitenc
-            copyFromTexture:
-                prev_copy
-            toTexture:
-                ags->metal_textures[texture_array_i]];
-        
-        [blitenc endEncoding];
-        [combuf commit];
-        [combuf waitUntilCompleted];
-    }
-}
-
 void T1_platform_gpu_delete_texture_array(
     const int32_t array_i)
 {
@@ -1308,7 +1335,7 @@ void T1_platform_gpu_fetch_rgba_at(
     // Validate inputs
     T1_log_assert(texture_i >= 0);
     T1_log_assert(texture_array_i >= 0);
-    T1_log_assert(texture_array_i < T1_TEXTUREARRAYS_CAP);
+    T1_log_assert(texture_array_i < T1_TEXARRAYS_CAP);
     T1_log_assert(rgba_recipient != NULL);
     T1_log_assert(recipient_size != NULL);
     T1_log_assert(good != NULL);
@@ -1455,55 +1482,74 @@ void T1_platform_gpu_generate_mipmaps_for_texture_array(
 void
 T1_platform_gpu_push_tex_slice_and_free_rgba(
     const int32_t tex_array_i,
-    const int32_t tex_i,
-    const uint32_t parent_tex_array_imgs_size,
-    const uint32_t img_width,
-    const uint32_t img_height,
-    uint8_t * rgba_freeable,
-    uint8_t * rgba_page_aligned)
+    const int32_t tex_slice_i)
 {
-    (void)parent_tex_array_imgs_size;
+    uint8_t * rgba_freeable =
+        T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_freeable;
+    uint8_t * rgba_page_aligned =
+        T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_page_aligned;
     
     T1_log_assert(rgba_freeable != NULL);
     T1_log_assert(rgba_page_aligned != NULL);
     
-    T1_log_assert(tex_i >= 0);
+    T1_log_assert(tex_slice_i >= 0);
     T1_log_assert(tex_array_i >= 0);
-    T1_log_assert(tex_array_i < T1_TEXTUREARRAYS_CAP);
+    T1_log_assert(tex_array_i < T1_TEXARRAYS_CAP);
     
-    if (ags->metal_textures[tex_array_i] == NULL) {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        char errmsg[256];
-        T1_std_strcpy_cap(
-            errmsg,
-            256,
-            "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_cap(errmsg, 256, tex_array_i);
-        T1_std_strcat_cap(errmsg, 256, "\n");
-        
-        log_dump_and_crash(errmsg);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
+    T1_platform_gpu_update_capacity_if_needed(tex_array_i);
+    
+    uint32_t img_width = T1_tex_arrays[tex_array_i].single_img_width;
+    uint32_t img_height = T1_tex_arrays[tex_array_i].single_img_height;
+    
+    uint32_t temp_buf_cap = img_width * img_height * 4;
+    T1_log_assert(temp_buf_cap > 0);
+    while (temp_buf_cap % T1_mem_page_size != 0) {
+        temp_buf_cap++;
+    }
+    
+    T1_log_assert(T1_mem_is_page_aligned(rgba_page_aligned));
+    
+    vm_address_t vm_ptr;
+    vm_size_t vm_size = temp_buf_cap;  // Already a page multiple
+    kern_return_t err = vm_allocate(mach_task_self(), &vm_ptr, vm_size, VM_FLAGS_ANYWHERE);
+    if (err != KERN_SUCCESS) {
+        T1_log_assert(0);
         return;
     }
     
-    id<MTLBuffer> temp_buf =
+    uint8_t * temp_src_buf_ptr = (uint8_t *)vm_ptr;
+    
+    T1_std_memset(temp_src_buf_ptr, 0, temp_buf_cap);
+    if (T1_tex_arrays[tex_array_i].bc1_compressed) {
+        T1_std_memcpy(
+            temp_src_buf_ptr ,
+            rgba_page_aligned + 128,
+            T1_tex_arrays[tex_array_i].images[tex_slice_i].
+                image.rgba_values_size);
+    } else {
+        T1_std_memcpy(
+            temp_src_buf_ptr,
+            rgba_page_aligned,
+            T1_tex_arrays[tex_array_i].images[tex_slice_i].
+                image.rgba_values_size);
+    }
+    
+    id<MTLBuffer> temp_source_buf =
         [ags->device
             /* the ptr needs to be page aligned */
             newBufferWithBytesNoCopy:
-                rgba_page_aligned
+                temp_src_buf_ptr
             /* the length weirdly needs to be page aligned also */
             length:
-                img_width * img_height * 4
+                temp_buf_cap
             options:
                 MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
             deallocator:
                 nil];
     
-    if (temp_buf == NULL) {
+    if (temp_source_buf == NULL) {
+        T1_log_assert(0);
         return;
     }
     
@@ -1514,19 +1560,23 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
     
     [blit_copy_encoder
         copyFromBuffer:
-            temp_buf
+            temp_source_buf
         sourceOffset:
             0
         sourceBytesPerRow:
-            img_width * 4
+            T1_tex_arrays[tex_array_i].bc1_compressed ?
+                ((img_width + 3) / 4) * 8 :
+                img_width * 4
         sourceBytesPerImage:
-            img_width * img_height * 4
+            T1_tex_arrays[tex_array_i].bc1_compressed ?
+                ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8 :
+                img_width * img_height * 4
         sourceSize:
             MTLSizeMake(img_width, img_height, 1)
         toTexture:
             ags->metal_textures[tex_array_i]
         destinationSlice:
-            (NSUInteger)tex_i
+            (NSUInteger)tex_slice_i
         destinationLevel:
             0
         destinationOrigin:
@@ -1542,96 +1592,14 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
     [combuf commit];
     [combuf waitUntilCompleted];
     
+    vm_deallocate(mach_task_self(), vm_ptr, vm_size);
+    
     T1_mem_free_managed(rgba_freeable);
+    T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
+        rgba_values_freeable = NULL;
+    T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
+        rgba_values_page_aligned = NULL;
 }
-
-#if T1_TEXTURES_ACTIVE
-void T1_platform_gpu_push_bc1_tex_slice_then_free(
-    const int32_t tex_array_i,
-    const int32_t tex_i,
-    const uint32_t parent_tex_array_imgs_size,
-    const uint32_t img_width,
-    const uint32_t img_height,
-    uint8_t * raw_bc1_file_freeable,
-    uint8_t * raw_bc1_file_page_aligned)
-{
-    (void)parent_tex_array_imgs_size;
-    
-    T1_log_assert(raw_bc1_file_page_aligned != NULL);
-    
-    T1_log_assert(tex_i >= 0);
-    T1_log_assert(tex_array_i >= 1); // 0 is resered for font
-    
-    if (ags->metal_textures[tex_array_i] == NULL) {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        char errmsg[256];
-        T1_std_strcpy_cap(
-            errmsg,
-            256,
-            "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_cap(errmsg, 256, tex_array_i);
-        T1_std_strcat_cap(errmsg, 256, "\n");
-        
-        log_dump_and_crash(errmsg);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error
-        #endif
-        return;
-    }
-    
-    id<MTLBuffer> temp_buf =
-        [ags->device
-            /* the ptr needs to be page aligned */
-        newBufferWithBytesNoCopy:
-            raw_bc1_file_page_aligned + 128
-            /* the length weirdly needs to be page aligned also */
-        length:
-            ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8
-        options:
-            MTLResourceStorageModeShared
-            /* deallocator = nil to opt out */
-            deallocator:
-        nil];
-    
-    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
-    
-    id <MTLBlitCommandEncoder> blit_copy_encoder =
-        [combuf blitCommandEncoder];
-    
-    [blit_copy_encoder
-        copyFromBuffer:
-            temp_buf
-        sourceOffset:
-            0
-        sourceBytesPerRow:
-            ((img_width + 3) / 4) * 8
-        sourceBytesPerImage:
-            ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8
-        sourceSize:
-            MTLSizeMake(img_width, img_height, 1)
-        toTexture:
-            ags->metal_textures[tex_array_i]
-        destinationSlice:
-            (NSUInteger)tex_i
-        destinationLevel:
-            0
-        destinationOrigin:
-            MTLOriginMake(0, 0, 0)];
-    
-    [blit_copy_encoder endEncoding];
-    
-    // Add a completion handler and commit the command buffer.
-    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        // Populate private buffer.
-        (void)cb;
-    }];
-    [combuf commit];
-    
-    T1_mem_free_managed(raw_bc1_file_freeable);
-}
-#endif
 
 void T1_platform_gpu_copy_locked_vertices(void)
 {
@@ -1707,11 +1675,12 @@ get_tex_slice(
     const int32_t at_slice_i)
 {
     T1_log_assert(at_array_i >= 0);
-    T1_log_assert(at_array_i < T1_TEXTUREARRAYS_CAP);
+    T1_log_assert(at_array_i < T1_TEXARRAYS_CAP);
     T1_log_assert(at_slice_i >= 0);
     
     id<MTLTexture> parent =
         ags->metal_textures[at_array_i];
+    
     NSRange level_range = NSMakeRange(
         0, parent.mipmapLevelCount);
     NSRange slice_range = NSMakeRange(
@@ -1728,7 +1697,6 @@ get_tex_slice(
         slices:
             slice_range];
     
-    T1_log_assert(retval != nil);
     return retval;
 }
 
@@ -1907,7 +1875,7 @@ static void set_defaults_for_encoder(
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
-        i < T1_TEXTUREARRAYS_CAP;
+        i < T1_TEXARRAYS_CAP;
         i++)
     {
         if (ags->metal_textures[i] != NULL) {
@@ -2507,7 +2475,7 @@ static void set_defaults_for_encoder(
             #if T1_TEXTURES_ACTIVE == T1_ACTIVE
             for (
                 uint32_t i = 0;
-                i < T1_TEXTUREARRAYS_CAP;
+                i < T1_TEXARRAYS_CAP;
                 i++)
             {
                 if (ags->metal_textures[i] != NULL) {
@@ -2647,10 +2615,8 @@ static void set_defaults_for_encoder(
         cam_i--)
     {
         if (
-            T1_render_views->cpu[cam_i].
-                deleted ||
-            T1_render_views->cpu[cam_i].
-                passes_size == 0)
+            T1_render_views->cpu[cam_i].deleted ||
+            T1_render_views->cpu[cam_i].passes_size == 0)
         {
             continue;
         }
@@ -2666,8 +2632,7 @@ static void set_defaults_for_encoder(
         ags->rtt_cleared = false;
         ags->zbuf_cleared = false;
         
-        switch (
-            T1_render_views->cpu[cam_i].write_type)
+        switch (T1_render_views->cpu[cam_i].write_type)
         {
             case T1RENDERVIEW_WRITE_BELOWBOUNDS:
             {
@@ -2682,7 +2647,10 @@ static void set_defaults_for_encoder(
                             write_array_i,
                         T1_render_views->cpu[cam_i].
                             write_slice_i);
-                T1_log_assert(ags->cur_rtt != NULL);
+                if (ags->cur_rtt == nil) {
+                    continue;
+                }
+                
                 ags->cur_depth =
                     ags->cam_depth_texture;
                 ags->cur_opq_pls =

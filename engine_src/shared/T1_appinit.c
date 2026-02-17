@@ -589,9 +589,9 @@ void T1_appinit_before_gpu_init(
             T1_mem_page_size);
     
     bool32_t initial_log_dump_succesful = false;
-    log_dump(&initial_log_dump_succesful);
+    T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        log_dump_and_crash("initial log dump unsuccesful, exiting app");
+        T1_log_dump_and_crash("initial log dump unsuccesful, exiting app");
         T1_std_internal_strcpy_cap(
             error_message,
             128,
@@ -603,7 +603,10 @@ void T1_appinit_before_gpu_init(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void T1_appinit_asset_loading_thread(int32_t asset_thread_id) {
+static void
+T1_appinit_asset_loading_thread(
+    int32_t asset_thread_id)
+{
     if (asset_thread_id > 0) {
         init_PNG_decoder(
             malloc,
@@ -698,7 +701,7 @@ void T1_appinit_after_gpu_init_step2(
         &perlin_good);
     
     if (!perlin_good) {
-        log_dump_and_crash(
+        T1_log_dump_and_crash(
             "Missing engine file: "
             "perlin_noise.dds");
         T1_global->postproc_consts.perlin_texturearray_i = 1;
@@ -717,7 +720,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_global->postproc_consts.perlin_texture_i != 0)
     {
         T1_gameloop_active = true;
-        log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
+        T1_log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
         return;
     }
     
@@ -746,7 +749,7 @@ void T1_appinit_after_gpu_init_step2(
                     "client_logic_early_startup() returned failure without "
                     "an error message");
             }
-            log_dump_and_crash(errmsg);
+            T1_log_dump_and_crash(errmsg);
             return;
         }
         
@@ -919,7 +922,7 @@ void T1_appinit_after_gpu_init_step2(
         }
     }
     
-    T1_tex_array_push_all_predecoded();
+    T1_tex_array_push_all();
     
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (

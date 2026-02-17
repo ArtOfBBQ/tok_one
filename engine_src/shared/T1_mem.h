@@ -42,6 +42,9 @@ void T1_mem_malloc_managed_page_aligned(
     void ** aligned_subptr,
     const size_t subptr_size);
 
+bool8_t
+T1_mem_is_page_aligned(void * to_check);
+
 #define T1_mem_malloc_managed(size) T1_mem_malloc_managed_internal(size, (char *)__FILE__, (char *)__func__);
 void * T1_mem_malloc_managed_internal(
     size_t size,

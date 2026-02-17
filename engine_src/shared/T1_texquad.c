@@ -18,8 +18,8 @@ static void assert_sanity_check_texquad_vals(
     }
     
     if (gpu_i32) {
-        T1_log_assert(gpu_i32->tex_array_i < T1_TEXTUREARRAYS_CAP);
-        T1_log_assert(gpu_i32->tex_slice_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+        T1_log_assert(gpu_i32->tex_array_i < T1_TEXARRAYS_CAP);
+        T1_log_assert(gpu_i32->tex_slice_i < T1_TEX_SLICES_CAP);
     }
 }
 
@@ -189,9 +189,7 @@ void T1_texquad_commit(
     T1_log_assert(request->gpu->f32.size_xy[1] > 0.0f);
     T1_log_assert(request->gpu->i32.tex_array_i > -2);
     T1_log_assert(request->gpu->i32.tex_slice_i > -2);
-    T1_log_assert(
-        request->gpu->i32.tex_array_i <
-            T1_TEXTUREARRAYS_CAP);
+    T1_log_assert(request->gpu->i32.tex_array_i < T1_TEXARRAYS_CAP);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */

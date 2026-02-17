@@ -199,6 +199,12 @@ void T1_mem_malloc_managed_page_aligned(
     #endif
 }
 
+bool8_t
+T1_mem_is_page_aligned(void * to_check)
+{
+    return (uintptr_t)to_check % T1_mem_page_size == 0;
+}
+
 void * T1_mem_malloc_managed_infoless(size_t size) {
     return T1_mem_malloc_managed_internal(size, "", "");
 }
