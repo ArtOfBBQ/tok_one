@@ -43,7 +43,7 @@ T1_tex_array_init(void);
 void
 T1_tex_array_push_all(void);
 
-void T1_tex_array_prereg_null_img(
+T1Tex T1_tex_array_reg_img(
     const char * filename,
     const uint32_t width,
     const uint32_t height,
@@ -61,12 +61,11 @@ void T1_tex_array_delete_slice(
     const int32_t array_i,
     const int32_t slice_i);
 
-T1Tex T1_tex_array_reg_new_from_rgba(
-    const char * fake_filename,
+void T1_tex_array_update_rgba(
+    const int32_t array_i,
+    const int32_t slice_i,
     const uint8_t * rgba,
-    const uint32_t rgba_size,
-    const uint32_t width,
-    const uint32_t height);
+    const uint32_t rgba_size);
 
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,

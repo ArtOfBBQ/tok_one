@@ -313,7 +313,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
         return;
     }
     
-    T1_tex_array_prereg_null_img(
+    T1Tex loc = T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
         /* const uint32_t height: */
@@ -324,8 +324,6 @@ void T1_tex_files_runtime_reg_png_from_writables(
             false,
         /* const uint32_t is_dds_image: */
             false);
-    
-    T1Tex loc = T1_tex_array_get_filename_loc(filename);
     
     T1Img * recipient =
         &T1_tex_arrays[loc.array_i].images[loc.slice_i].image;
@@ -413,7 +411,7 @@ void T1_tex_files_prereg_png_res(
         T1_mem_free_managed(buf.contents);
         return;
     }
-    T1_tex_array_prereg_null_img(
+    T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
         /* const uint32_t width: */
@@ -483,7 +481,7 @@ void T1_tex_files_prereg_dds_res(
         return;
     }
     
-    T1_tex_array_prereg_null_img(
+    T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
         /* const uint32_t width: */

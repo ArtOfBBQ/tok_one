@@ -444,6 +444,10 @@ void T1_texquad_copy_to_frame_data(
             
             *recip_fd_size += 1;
         }
+        
+        if (T1_texquads->cpu[i].one_frame_only) {
+            T1_texquads->cpu[i].deleted = true;
+        }
     }
     
     qsort(

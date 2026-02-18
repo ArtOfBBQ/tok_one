@@ -33,36 +33,41 @@ static void redraw_quads(void) {
     uint32_t rgba_size = tex_w * tex_h * 4;
     uint8_t rgba[rgba_size];
     
+    
+    uint8_t bonus = (T1_global->this_frame_timestamp_us / 10000) % 255;
     for (uint32_t x = 0; x < tex_w; x++) {
         for (uint32_t y = 0; y < tex_h; y++) {
             
             uint32_t i = ((y * tex_w)+x)*4;
             
             rgba[i+0] = 255;
-            rgba[i+1] = x % 255;
-            rgba[i+2] = (y*10) % 255;
+            rgba[i+1] = (x + bonus) % 255;
+            rgba[i+2] = (y + bonus) % 255;
             rgba[i+3] = 255;
         }
     }
     
-    quad_texs[1] = T1_tex_array_get_filename_loc("structuredart_remixed");
+    quad_texs[1] = T1_tex_array_get_filename_loc(
+        "structuredart_remixed");
     
     if (quad_texs[1].array_i < 0) {
-        quad_texs[1] = T1_tex_array_reg_new_from_rgba(
-                "structuredart_remixed",
-            /* const uint8_t * rgba: */
-                rgba,
-            /* const uint32_t rgba_size: */
-                rgba_size,
-            /* const uint32_t width: */
-                tex_w,
-            /* const uint32_t height: */
-                tex_h);
-        
-        T1_platform_gpu_push_tex_slice_and_free_rgba(
-            quad_texs[1].array_i,
-            quad_texs[1].slice_i);
+        quad_texs[1] = T1_tex_array_reg_img(
+            "structuredart_remixed",
+            tex_w,
+            tex_h,
+            false,
+            false);
     }
+    
+    T1_tex_array_update_rgba(
+        quad_texs[1].array_i,
+        quad_texs[1].slice_i,
+        rgba,
+        rgba_size);
+    
+    T1_platform_gpu_push_tex_slice_and_free_rgba(
+        quad_texs[1].array_i,
+        quad_texs[1].slice_i);
     
     float min_screen_dim = T1_render_views->cpu[0].width > T1_render_views->cpu[0].height ?
         T1_render_views->cpu[0].height :
@@ -100,7 +105,7 @@ static void redraw_quads(void) {
         quad.cpu->zsprite_id = -1;
         quad.gpu->i32.touch_id = -1;
         quad.cpu->visible = 1;
-        quad.cpu->one_frame_only = 0;
+        quad.cpu->one_frame_only = true;
         
         T1_texquad_commit(&quad);
     }
@@ -290,6 +295,8 @@ static void clientlogic_handle_keypresses(
 
 void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
+    redraw_quads();
+    
     if (
         !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].handled)
     {
@@ -446,8 +453,6 @@ void T1_clientlogic_window_resize(
         T1RENDERPASS_FLAT_TEXQUADS;
     T1_render_views->cpu[rv_i].passes[5].type =
         T1RENDERPASS_BILLBOARDS;
-    
-    redraw_quads();
 }
 
 void T1_clientlogic_shutdown(void) {
