@@ -11,7 +11,7 @@ of the engine for your specific app.
 
 // The 2 pools of memory your app allocates on startup
 // 325 mb ->                 325...000
-#define T1_UNMANAGED_MEM_CAP 275000000
+#define T1_UNMANAGED_MEM_CAP 325000000
 
 
 // these will be ignored on platforms where window size/position
