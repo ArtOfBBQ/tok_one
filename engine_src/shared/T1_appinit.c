@@ -197,7 +197,7 @@ void T1_appinit_before_gpu_init(
     
     // settings_init(malloc_from_unmanaged);
     
-    init_PNG_decoder(
+    decode_png_init(
         /* void *(*malloc_funcptr)(size_t): */
             T1_mem_malloc_managed_infoless,
         /* free_function: */
@@ -608,7 +608,7 @@ T1_appinit_asset_loading_thread(
     int32_t asset_thread_id)
 {
     if (asset_thread_id > 0) {
-        init_PNG_decoder(
+        decode_png_init(
             malloc,
             free,
             T1_std_memset,
@@ -622,7 +622,7 @@ T1_appinit_asset_loading_thread(
         ias->image_decoding_threads);
     
     if (asset_thread_id > 0) {
-        deinit_PNG_decoder((uint32_t)asset_thread_id);
+        decode_png_deinit((uint32_t)asset_thread_id);
     }
     
     ias->thread_finished[asset_thread_id] = 1;

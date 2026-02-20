@@ -36,7 +36,7 @@ static void malloc_img_from_resource_name(
         file_buffer.contents[2] == 'N' &&
         file_buffer.contents[3] == 'G')
     {
-        get_PNG_width_height(
+        decode_png_get_width_height(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
@@ -71,7 +71,7 @@ static void malloc_img_from_resource_name(
             0,
             recipient->rgba_values_size);
         
-        decode_PNG(
+        decode_png(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
@@ -297,7 +297,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
     T1_platform_read_file(filepath, &buf);
     uint32_t width = 0;
     uint32_t height = 0;
-    get_PNG_width_height(
+    decode_png_get_width_height(
         /* const uint8_t *compressed_input: */
             (uint8_t *)buf.contents,
         /* const uint64_t compressed_input_size: */
@@ -346,7 +346,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
         0,
         recipient->rgba_values_size);
     
-    decode_PNG(
+    decode_png(
         /* const uint8_t * compressed_input: */
             (uint8_t *)buf.contents,
         /* const uint64_t compressed_input_size: */
@@ -396,7 +396,7 @@ void T1_tex_files_prereg_png_res(
     T1_platform_read_resource_file(filename, &buf);
     uint32_t width = 0;
     uint32_t height = 0;
-    get_PNG_width_height(
+    decode_png_get_width_height(
         /* const uint8_t *compressed_input: */
             (uint8_t *)buf.contents,
         /* const uint64_t compressed_input_size: */

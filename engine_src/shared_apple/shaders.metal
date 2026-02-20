@@ -1034,8 +1034,8 @@ single_quad_fragment_shader(
     
     // reinhard tone mapping
     #if T1_TONE_MAPPING_ACTIVE == T1_ACTIVE
-    color_sample = clamp(color_sample, 0.0h, 1.20h);
-    color_sample = color_sample / 1.20h;
+    color_sample = clamp(color_sample, 0.0h, 1.10h);
+    color_sample = color_sample / 1.10h;
     #elif T1_TONE_MAPPING_ACTIVE == T1_INACTIVE
     #else
     #error
