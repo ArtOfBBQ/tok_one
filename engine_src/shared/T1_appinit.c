@@ -739,15 +739,16 @@ void T1_appinit_after_gpu_init_step2(
     errmsg[0] = '\0';
     
     if (T1_logger_app_running) {
-        T1_clientlogic_early_startup(&success, errmsg);
+        T1_clientlogic_early_startup(
+            &success, errmsg);
         
         if (!success) {
             if (errmsg[0] == '\0') {
                 T1_std_strcpy_cap(
                     errmsg,
                     256,
-                    "client_logic_early_startup() returned failure without "
-                    "an error message");
+                    "client_logic_early_startup() returned failure "
+                    "without an error message");
             }
             T1_log_dump_and_crash(errmsg);
             return;

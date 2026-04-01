@@ -49,7 +49,15 @@ void T1_text_request_label_renderable(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
-    const float mid_y_pixelspace,
+    const float top_y_pixelspace,
+    const float z,
+    const float max_width);
+
+void T1_text_request_label_renderable_leftx_toplinemidy(
+    const int32_t with_object_id,
+    const char * text_to_draw,
+    const float left_pixelspace,
+    const float topline_mid_y_pixelspace,
     const float z,
     const float max_width);
 

@@ -966,7 +966,10 @@ void T1_token_run(
     }
     
     for (uint32_t tok_i = 0; tok_i < tts->tokens_size; tok_i++) {
-        if (tts->tokens[tok_i].enum_value == tts->string_literal_enum_value) {
+        if (
+            tts->tokens[tok_i].enum_value ==
+                tts->string_literal_enum_value)
+        {
             tts->tokens[tok_i].string_value_size =
                 (uint16_t)tts->strlen(tts->tokens[tok_i].string_value);
             T1_token_set_number_flags(

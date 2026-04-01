@@ -9,15 +9,24 @@ static int32_t  loading_text_sprite_id = -1;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
-    if (T1_io_keymap[T1_IO_KEY_ENTER] && !T1_io_keymap[T1_IO_KEY_CONTROL]) {
+    if (
+        T1_io_keymap[T1_IO_KEY_ENTER] &&
+        !T1_io_keymap[T1_IO_KEY_CONTROL])
+    {
         T1_io_keymap[T1_IO_KEY_ENTER] = false;
         T1_term_commit_or_activate();
     }
     
     if (T1_term_active) {
         for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
+            if (i == T1_IO_KEY_SHIFT) { continue; }
             if (T1_io_keymap[i]) {
-                T1_term_sendchar(i);
+                if (T1_io_keymap[T1_IO_KEY_SHIFT]) {
+                    T1_term_sendchar('#');
+                } else {
+                    T1_term_sendchar(i);
+                }
+                
                 T1_io_keymap[i] = false;
             }
         }

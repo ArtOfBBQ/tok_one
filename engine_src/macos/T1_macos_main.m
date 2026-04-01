@@ -296,6 +296,17 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     T1_io_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
+- (void)flagsChanged:(NSEvent *)event {
+    
+    NSEventModifierFlags modifiers = [event modifierFlags];
+    
+    if (modifiers & NSEventModifierFlagShift) {
+        T1_io_register_keydown(T1_IO_KEY_SHIFT);
+    } else {
+        T1_io_register_keyup(T1_IO_KEY_SHIFT);
+    }
+}
+
 - (void)keyUp:(NSEvent *)event {
     T1_io_register_keyup(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
