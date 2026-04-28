@@ -123,7 +123,7 @@ static void parse_single_string_stat(
     T1Token * token,
     const char * material_name,
     char * string_stat,
-    uint32_t * good)
+    uint8_t * good)
 {
     (void)material_name;
     
@@ -195,7 +195,7 @@ static void parse_single_float_stat(
     T1Token * token,
     const char * material_name,
     float * float_stat,
-    uint32_t * good)
+    uint8_t * good)
 {
     (void)material_name;
     
@@ -271,7 +271,7 @@ static void parse_rgb_token(
     const char * material_name,
     float * rgb_stat,
     uint32_t * already_set_flag,
-    uint32_t * good)
+    uint8_t * good)
 {
     char initial_token_name[64];
     initial_token_name[0] = '\0';
@@ -417,7 +417,7 @@ void mtlparser_parse(
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
     const char * input,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     *recipient_size = 0;
@@ -651,7 +651,7 @@ void mtlparser_parse(
     T1_token_run(
         /* const char * input: */
             input,
-        /* uint32_t * good: */
+        /* uint8_t * good: */
             good);
     if (!*good) {
         mtlparser_state->last_error_msg[0] = '\0';
@@ -827,7 +827,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         target_float,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -848,7 +848,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->specular_exponent,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -868,7 +868,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->alpha,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -889,7 +889,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->illum,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -913,7 +913,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->refraction,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -937,7 +937,7 @@ void mtlparser_parse(
                         current_material->ambient_rgb,
                     /* uint32_t * already_set_flag: */
                         &mtlparser_state->ambient_set_for_current_mtl,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -960,7 +960,7 @@ void mtlparser_parse(
                         current_material->diffuse_rgb,
                     /* uint32_t * already_set_flag: */
                         &mtlparser_state->diffuse_set_for_current_mtl,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -983,7 +983,7 @@ void mtlparser_parse(
                         current_material->specular_rgb,
                     /* uint32_t * already_set_flag: */
                         &mtlparser_state->specular_set_for_current_mtl,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1006,7 +1006,7 @@ void mtlparser_parse(
                         current_material->emissive_rgb,
                     /* uint32_t * already_set_flag: */
                         &mtlparser_state->emissive_set_for_current_mtl,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1057,7 +1057,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->ambient_map,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1079,7 +1079,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->diffuse_map,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1105,7 +1105,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->specular_exponent_map,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (!*good) {
@@ -1150,7 +1150,7 @@ void mtlparser_parse(
                             current_material->name,
                         /* float * float_stat: */
                             &current_material->bump_map_intensity,
-                        /* uint32_t * good: */
+                        /* uint8_t * good: */
                             good);
                 } else {
                     current_material->bump_map_intensity = 1.0f;
@@ -1165,7 +1165,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->bump_or_normal_map,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1186,7 +1186,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->roughness,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1207,7 +1207,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->metallic,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1228,7 +1228,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->sheen,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1249,7 +1249,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->clearcoat,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1270,7 +1270,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->clearcoat_roughness,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1291,7 +1291,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->anisotropy,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {
@@ -1312,7 +1312,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* float * float_stat: */
                         &current_material->anisotropy_rotation,
-                    /* uint32_t * good: */
+                    /* uint8_t * good: */
                         good);
                 
                 if (*good) {

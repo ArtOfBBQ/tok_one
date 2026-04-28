@@ -22,7 +22,7 @@ T1_token_init(
     void * (* arg_memset_func)(void *, int, size_t),
     size_t (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(size_t),
-    uint32_t * good);
+    uint8_t * good);
 
 void
 T1_token_deinit(
@@ -35,7 +35,7 @@ reset() function in between each run to clear all registered tokens.
 You don't need to do this the 1st time, the init() also does a reset().
 */
 void
-T1_token_reset(uint32_t * good);
+T1_token_reset(uint8_t * good);
 
 /*
 Before running the tokenizer, register your enums with some ascii values that
@@ -84,12 +84,12 @@ T1_token_set_reg_middle_cap(
 void
 T1_token_set_string_literal(
     const uint32_t enum_value,
-    uint32_t * good);
+    uint8_t * good);
 
 void
 T1_token_register(
     const uint32_t enum_value,
-    uint32_t * good);
+    uint8_t * good);
 
 /*
 After setting everything up, run this function to actually do the work of
@@ -98,7 +98,7 @@ transforming text into the tokens you specified
 void
 T1_token_run(
     const char * input,
-    uint32_t * good);
+    uint8_t * good);
 
 
 /*

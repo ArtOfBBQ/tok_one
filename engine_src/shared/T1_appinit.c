@@ -219,7 +219,7 @@ void T1_appinit_before_gpu_init(
     #error
     #endif
     
-    uint32_t good = 0;
+    uint8_t good = 0;
     T1_token_init(
         T1_std_memset,
         T1_std_strlen,
@@ -739,8 +739,7 @@ void T1_appinit_after_gpu_init_step2(
     errmsg[0] = '\0';
     
     if (T1_logger_app_running) {
-        T1_clientlogic_early_startup(
-            &success, errmsg);
+        T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
             if (errmsg[0] == '\0') {

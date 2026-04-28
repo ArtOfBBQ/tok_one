@@ -43,8 +43,14 @@ void T1_texquad_anim_commit(
 void T1_texquad_anim_commit_and_instarun(
     T1TexQuadAnim * to_commit);
 
+void
+T1_texquad_anim_fade_to(
+    const int32_t zsprite_id,
+    const uint64_t duration_us,
+    const float target_alpha);
+
 void T1_texquad_anim_fade_and_destroy(
-    const int32_t  object_id,
+    const int32_t  zsprite_id,
     const uint64_t duration_us);
 
 void T1_texquad_anim_fade_destroy_all(

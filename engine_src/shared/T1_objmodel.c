@@ -1152,7 +1152,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
 {
     T1_log_assert(parsed_obj != NULL);
     
-    uint32_t good = 0;
+    uint8_t good = 0;
     T1_objparser_parse(
         /* ParsedObj * recipient: */
             parsed_obj,

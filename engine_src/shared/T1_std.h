@@ -226,7 +226,7 @@ T1_std_float_to_string(
 int32_t
 T1_std_string_to_int32_validate(
     const char * input,
-    bool32_t * good);
+    uint8_t * good);
 
 int32_t
 T1_std_string_to_int32(const char * input);
@@ -234,7 +234,7 @@ T1_std_string_to_int32(const char * input);
 uint32_t
 T1_std_string_to_uint32_validate(
     const char * input,
-    bool32_t * good);
+    uint8_t * good);
 
 uint32_t
 T1_std_string_to_uint32(const char * input);
@@ -242,7 +242,7 @@ T1_std_string_to_uint32(const char * input);
 float
 T1_std_string_to_float_validate(
     const char * input,
-    bool32_t * good);
+    uint8_t * good);
 
 float
 T1_std_string_to_float(const char * input);

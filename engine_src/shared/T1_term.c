@@ -221,10 +221,6 @@ void T1_term_render(void) {
         char_offset += 1;
     }
     
-    T1_log_append("terminal history: ");
-    T1_log_append(T1_trms->history + char_offset);
-    T1_log_append_char('\n');
-    
     T1_text_props->f32.rgba[0] =
         T1_trms->font_color[0];
     T1_text_props->f32.rgba[1] =
@@ -235,22 +231,26 @@ void T1_term_render(void) {
         T1_trms->font_color[3];
     T1_text_props->i32.touch_id = -1;
     
-    T1_text_request_label_renderable(
-        /* const int32_t with_object_id: */
-            T1_trms->labels_object_id,
-        /* const char * text_to_draw: */
-            T1_trms->history + char_offset,
-        /* const float left_pixelspace: */
-            T1_TERM_WHITESPACE * 2 +
-                (T1_TERM_FONT_SIZE * 0.5f),
-        /* const float mid_y_pixelspace: */
-            history_label_top -
-                (T1_TERM_FONT_SIZE * 0.5f),
-        /* const float z: */
-            T1_TERM_LABELS_Z,
-        /* const float max_width: */
-            T1_render_views->cpu[0].width -
-                (T1_TERM_WHITESPACE * 2));
+    if (T1_trms->history[char_offset] != '\0') {
+        T1_text_request_label_renderable(
+            /* const int32_t with_object_id: */
+                T1_trms->labels_object_id,
+            /* const char * text_to_draw: */
+                T1_trms->history + char_offset,
+            /* const float left_pixelspace: */
+                T1_TERM_WHITESPACE * 2 +
+                    (T1_TERM_FONT_SIZE * 0.5f),
+            /* const float mid_y_pixelspace: */
+                history_label_top -
+                    (T1_TERM_FONT_SIZE * 0.5f),
+            /* const float z: */
+                T1_TERM_LABELS_Z,
+            /* const float tab_width: */
+                4.0f,
+            /* const float max_width: */
+                T1_render_views->cpu[0].width -
+                    (T1_TERM_WHITESPACE * 2));
+    }
     
     if (T1_trms->cur_command[0] == '\0') {
         T1_text_props->font_height =
@@ -273,6 +273,8 @@ void T1_term_render(void) {
             T1_TERM_INPUT_BOX_MID_Y,
         /* const float z: */
             T1_TERM_LABELS_Z,
+        /* const float tab_width: */
+            4.0f,
         /* const float max_width: */
             T1_render_views->cpu[0].width -
                 (T1_TERM_WHITESPACE * 2));
@@ -400,7 +402,7 @@ static bool32_t T1_term_evaluate(
         T1_std_string_starts_with(
             command, "TO RENDER VIEW "))
     {
-        uint32_t rv_good = 0;
+        uint8_t rv_good = 0;
         int32_t jump_rv = T1_std_string_to_int32_validate(
             command + 15,
             &rv_good);
@@ -1024,10 +1026,17 @@ static bool32_t T1_term_evaluate(
 }
 
 void T1_term_commit_or_activate(void) {
+    
+    if (T1_trms->history_size > 200) {
+        T1_trms->history[0] = '\0';
+        T1_trms->history_size = 0;
+    }
+    
     T1_term_destroy_all();
     
     if (
         T1_term_active &&
+        
         T1_trms->cur_command[0] != '\0')
     {
         T1_std_strcat_cap(

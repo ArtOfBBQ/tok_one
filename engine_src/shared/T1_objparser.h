@@ -1,6 +1,7 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
+#include <stdint.h>
 #include <stddef.h>
 
 #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -70,7 +71,7 @@ void T1_objparser_init(
 void T1_objparser_parse(
     ParsedObj * recipient,
     const char * raw_buffer,
-    unsigned int * success);
+    uint8_t * success);
 
 /*
 -> init_obj_parser() must run before this

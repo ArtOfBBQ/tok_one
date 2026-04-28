@@ -168,9 +168,7 @@ void T1_texquad_fetch_next(
         ret_i = T1_texquads->size;
         T1_texquads->size += 1;
         
-        T1_log_assert(
-            T1_texquads->size <
-                MAX_FLATQUADS_PER_BUFFER);
+        T1_log_assert(T1_texquads->size < MAX_FLATQUADS_PER_BUFFER);
     }
     
     T1_log_assert(ret_i >= 0);
@@ -364,14 +362,91 @@ void T1_texquad_apply_endpoint_anim(
 void T1_texquad_anim_apply_effects_at_t(
     const float t_applied,
     const float t_now,
-    const float * anim_gpu_vals,
+    const float * anim_gpu_f32s,
     const int32_t * anim_gpu_i32s,
     const float * anim_cpu_vals,
     T1GPUTexQuad * recip_gpu,
     T1CPUTexQuad * recip_cpu)
 {
-    // TODO: implement me
-    T1_log_assert(0);
+    SIMD_FLOAT simd_t_now = simd_set1_float(t_now);
+    SIMD_FLOAT simd_t_b4  =
+        simd_set1_float(t_applied);
+    
+    T1_log_assert((sizeof(T1GPUTexQuadf32) / 4) %
+        SIMD_FLOAT_LANES == 0);
+    T1_log_assert((sizeof(T1GPUTexQuadi32) / 4) %
+        SIMD_INT32_LANES == 0);
+    
+    if (anim_gpu_f32s) {
+        float * target_vals_ptr = (float *)(&recip_gpu->f32);
+        
+        for (
+            uint32_t simd_step_i = 0;
+            (simd_step_i * sizeof(float)) < sizeof(T1GPUTexQuadf32);
+            simd_step_i += SIMD_FLOAT_LANES)
+        {
+            SIMD_FLOAT simd_anim_vals =
+                simd_load_floats(
+                    (anim_gpu_f32s + simd_step_i));
+            SIMD_FLOAT simd_target_vals =
+                simd_load_floats(
+                    (target_vals_ptr + simd_step_i));
+            
+            SIMD_FLOAT simd_t_now_deltas =
+                simd_mul_floats(
+                    simd_anim_vals,
+                    simd_t_now);
+            SIMD_FLOAT simd_t_previous_deltas =
+                simd_mul_floats(
+                    simd_anim_vals,
+                    simd_t_b4);
+            
+            simd_t_now_deltas = simd_sub_floats(
+                simd_t_now_deltas,
+                simd_t_previous_deltas);
+            
+            simd_store_floats(
+                (target_vals_ptr + simd_step_i),
+                simd_add_floats(
+                    simd_target_vals,
+                    simd_t_now_deltas));
+        }
+    }
+    
+    if (anim_gpu_i32s) {
+        T1_log_assert(t_now == 1.0f);
+        
+        int32_t * target_i32s_ptr = (int32_t *)
+            (&recip_gpu->i32);
+        
+        // Int32 values
+        for (
+            uint32_t simd_step_i = 0;
+            (simd_step_i * sizeof(int32_t)) < sizeof(T1GPUzSpritei32);
+            simd_step_i += SIMD_INT32_LANES)
+        {
+            SIMD_INT32 simd_add_i32s =
+                simd_load_int32s(
+                    (anim_gpu_i32s + simd_step_i));
+            
+            SIMD_INT32 simd_cur_i32s =
+                simd_load_int32s(
+                    (target_i32s_ptr +
+                        simd_step_i));
+                        
+            SIMD_INT32 result = simd_add_int32s(
+                simd_cur_i32s,
+                simd_add_i32s);
+            
+            simd_store_int32s(
+                target_i32s_ptr + simd_step_i,
+                result);
+        }
+    }
+    
+    if (!anim_cpu_vals) { return; }
+    
+    T1_log_assert(0); // no cpu vals for now
 }
 
 void T1_texquad_apply_anim_effects_to_id(
@@ -382,8 +457,40 @@ void T1_texquad_apply_anim_effects_to_id(
     const float * anim_gpu_vals_f32,
     const int32_t * anim_gpu_vals_i32)
 {
-    // TODO: implement me
-    T1_log_assert(0);
+    for (
+        int32_t tq_i = 0;
+        tq_i < (int32_t)T1_texquads->size;
+        tq_i++)
+    {
+        if (
+            (zsprite_id >= 0 &&
+            T1_texquads->cpu[tq_i].
+                zsprite_id != zsprite_id &&
+            zsprite_id != T1_TEXQUAD_ID_HIT_EVERYTHING) ||
+            (touch_id >= 0 &&
+            T1_texquads->gpu[tq_i].i32.
+                touch_id != touch_id) ||
+            T1_texquads->cpu[tq_i].deleted)
+        {
+            continue;
+        }
+        
+        T1_texquad_anim_apply_effects_at_t(
+            /* const float t_applied: */
+                t_applied,
+            /* const float t_now: */
+                t_now,
+            /* const float * anim_gpu_f32s: */
+                anim_gpu_vals_f32,
+            /* const int32_t * anim_gpu_i32s: */
+                anim_gpu_vals_i32,
+            /* : */
+                NULL,
+            /* : */
+                &T1_texquads->gpu[tq_i],
+            /* : */
+                &T1_texquads->cpu[tq_i]);
+    }
 }
 
 void T1_texquad_draw_test(

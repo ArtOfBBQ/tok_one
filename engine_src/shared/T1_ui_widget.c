@@ -223,7 +223,7 @@ static void T1_ui_widget_set_label(
             widget->props.label_prefix);
     }
     
-    uint32_t good = 0;
+    uint8_t good = 0;
     
     if (widget->slider_linked_value != NULL)
     {

@@ -168,10 +168,10 @@ T1_zsprite_handle_timed_occlusion(void);
 
 // TODO: encapsulate collection instead of externing
 typedef struct {
-    T1GPUzSprite gpu_data[T1_ZSPRITES_CAP];
+    T1GPUzSprite gpu[T1_ZSPRITES_CAP];
     T1GPUConstMatf32 gpu_mats_f32[T1_ALL_LOCKED_MATERIALS_SIZE];
     T1GPUConstMati32 gpu_mats_i32[T1_ALL_LOCKED_MATERIALS_SIZE];
-    T1CPUzSprite cpu_data[T1_ZSPRITES_CAP];
+    T1CPUzSprite cpu[T1_ZSPRITES_CAP];
     uint32_t size;
 } T1zSpriteCollection;
 

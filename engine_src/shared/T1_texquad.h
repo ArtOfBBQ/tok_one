@@ -63,7 +63,7 @@ void T1_texquad_apply_endpoint_anim(
 void T1_texquad_anim_apply_effects_at_t(
     const float t_applied,
     const float t_now,
-    const float * anim_gpu_vals,
+    const float * anim_gpu_f32s,
     const int32_t * anim_gpu_i32s,
     const float * anim_cpu_vals,
     T1GPUTexQuad * recip_gpu,

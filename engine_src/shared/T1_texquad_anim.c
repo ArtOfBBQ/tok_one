@@ -136,9 +136,7 @@ T1TexQuadAnim * T1_texquad_anim_request_next(
         return_value =
             &tqas->anims[tqas->anims_size];
         tqas->anims_size += 1;
-        T1_log_assert(
-            tqas->anims_size <
-                T1_TEXQUAD_ANIMS_CAP);
+        T1_log_assert(tqas->anims_size < T1_TEXQUAD_ANIMS_CAP);
     }
     
     T1_log_assert(return_value->deleted);
@@ -390,6 +388,27 @@ void T1_texquad_anim_commit_and_instarun(
     T1_log_assert(parent->remaining_duration_us == 0);
     
     tqas->mutex_unlock(tqas->mutex_id);
+}
+
+void
+T1_texquad_anim_fade_to(
+    const int32_t zsprite_id,
+    const uint64_t duration_us,
+    const float target_alpha)
+{
+    T1_log_assert(zsprite_id >= 0);
+    
+    // register scheduled animation
+    T1TexQuadAnim * modify_alpha = T1_texquad_anim_request_next(true);
+    modify_alpha->affect_zsprite_id = zsprite_id;
+    modify_alpha->duration_us = duration_us < 1 ? 1 : duration_us;
+    modify_alpha->gpu_vals.f32.rgba[3] = target_alpha;
+    modify_alpha->gpu_f32_active = true;
+    if (modify_alpha->duration_us < 2) {
+        T1_texquad_anim_commit_and_instarun(modify_alpha);
+    } else {
+        T1_texquad_anim_commit(modify_alpha);
+    }    
 }
 
 void T1_texquad_anim_fade_and_destroy(

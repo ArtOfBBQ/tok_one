@@ -539,10 +539,8 @@ void T1_zsprite_anim_commit(
     
     T1_log_assert(parent->already_applied_t == 0.0f);
     
-    parent->remaining_pause_us =
-        to_commit->pause_us;
-    parent->remaining_duration_us =
-        to_commit->duration_us;
+    parent->remaining_pause_us = to_commit->pause_us;
+    parent->remaining_duration_us = to_commit->duration_us;
     
     T1_log_assert(parent->remaining_duration_us > 0);
     parent->committed = true;
@@ -657,7 +655,12 @@ void T1_zsprite_anim_fade_to(
     modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_vals.f32.alpha = target_alpha;
     modify_alpha->gpu_vals_f32_active = true;
-    T1_zsprite_anim_commit(modify_alpha);
+    modify_alpha->del_obj_on_finish = true;
+    if (duration_us < 50) {
+        T1_zsprite_anim_commit_and_instarun(modify_alpha);
+    } else {
+        T1_zsprite_anim_commit(modify_alpha);
+    }
 }
 
 void T1_zsprite_anim_resolve(void)

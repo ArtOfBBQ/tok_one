@@ -784,7 +784,7 @@ T1_std_uint_to_string(
 int32_t
 T1_std_string_to_int32_validate(
     const char * input,
-    bool32_t * good)
+    uint8_t * good)
 {
     if (input[0] == '\0') {
         *good = false;
@@ -820,7 +820,7 @@ T1_std_string_to_int32_validate(
 int32_t
 T1_std_string_to_int32(const char * input)
 {
-    bool32_t result_good = false;
+    uint8_t result_good = false;
     int32_t result = T1_std_string_to_int32_validate(
         input,
         &result_good);
@@ -836,7 +836,7 @@ T1_std_string_to_int32(const char * input)
 uint32_t
 T1_std_string_to_uint32_validate(
     const char * input,
-    bool32_t * good)
+    uint8_t * good)
 {
     if (input[0] < '0' || input[0] > '9') {
         *good = false;
@@ -882,7 +882,7 @@ uint32_t
 T1_std_string_to_uint32(
     const char * input)
 {
-    bool32_t result_good = false;
+    uint8_t result_good = false;
     uint32_t result = T1_std_string_to_uint32_validate(
         input,
         &result_good);
@@ -898,7 +898,7 @@ T1_std_string_to_uint32(
 float
 T1_std_string_to_float_validate(
     const char * input,
-    bool32_t * good)
+    uint8_t * good)
 {
     if (input[0] == '\0') {
         *good = false;
@@ -979,7 +979,7 @@ T1_std_string_to_float_validate(
     
     first_part[first_part_size] = '\0';
     
-    bool32_t first_part_valid = false;
+    uint8_t first_part_valid = false;
     int first_part_int = T1_std_string_to_int32_validate(
         /* const char input: */ first_part,
         &first_part_valid);
@@ -995,7 +995,7 @@ T1_std_string_to_float_validate(
         if (second_part_size > 6) { second_part_size = 6; }
         
         second_part[second_part_size] = '\0';
-        bool32_t second_part_valid = false;
+        uint8_t second_part_valid = false;
         int second_part_int = T1_std_string_to_int32_validate(
             /* const char input: */ second_part,
             &second_part_valid);
@@ -1035,7 +1035,7 @@ float
 T1_std_string_to_float(
     const char * input)
 {
-    bool32_t result_good = false;
+    uint8_t result_good = false;
     float result = T1_std_string_to_float_validate(
         input,
         &result_good);

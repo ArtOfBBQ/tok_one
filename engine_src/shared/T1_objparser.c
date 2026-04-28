@@ -13,7 +13,7 @@ void T1_objparser_init(
 
 static unsigned int consume_uint(
     char ** raw_buffer,
-    unsigned int * good)
+    uint8_t * good)
 {
     #ifndef OBJ_PARSER_IGNORE_ASSERTS
     assert(*raw_buffer[0] >= '0');
@@ -39,7 +39,7 @@ static unsigned int consume_uint(
 
 static float consume_float(
     char ** raw_buffer,
-    unsigned int * good)
+    uint8_t * good)
 {
     float final_multiplier = 1.0f;
     if ((*raw_buffer)[0] == '-') {
@@ -132,13 +132,13 @@ static float consume_float(
 static void consume_separated_uints(
     char ** from_buffer,
     int * recipient,
-    unsigned int * success)
+    uint8_t * good)
 {
     unsigned int new_num = consume_uint(
         from_buffer,
-        success);
+        good);
     
-    if (!*success) { return; }
+    if (!*good) { return; }
     
     #ifndef OBJ_PARSER_IGNORE_ASSERTS
     assert(new_num < 2147483647);
@@ -157,10 +157,10 @@ static void consume_separated_uints(
         } else {
             new_num = consume_uint(
                 from_buffer,
-                success);
+                good);
         }
         
-        if (!success) { return; }
+        if (!good) { return; }
         
         #ifndef OBJ_PARSER_IGNORE_ASSERTS
         assert(new_num < 2147483647);
@@ -279,7 +279,7 @@ static int get_material_i_or_register_new(
 void T1_objparser_parse(
     ParsedObj * recipient,
     const char * raw_buf,
-    unsigned int * success)
+    uint8_t * success)
 {
     char * raw_buffer = (char *)raw_buf;
     

@@ -77,7 +77,7 @@ void T1_token_init(
     void * (* arg_memset_func)(void *, int, size_t),
     size_t (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(size_t),
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
         
@@ -113,7 +113,7 @@ void T1_token_deinit(
     tts = NULL;
 }
 
-void T1_token_reset(uint32_t * good) {
+void T1_token_reset(uint8_t * good) {
     *good = 0;
     if (tts == NULL) {
         // init() failed or wasn't called yet
@@ -264,7 +264,7 @@ void T1_token_set_reg_middle_cap(
 #if 0
 void toktoken_register_string_literal_enum(
     const uint32_t enum_value,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     if (
@@ -285,7 +285,7 @@ void toktoken_register_string_literal_enum(
 
 void T1_token_set_string_literal(
     const uint32_t enum_value,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     
@@ -303,7 +303,7 @@ void T1_token_set_string_literal(
 static char * copy_string_to_ascii_store(
     const char * to_copy,
     const uint32_t data_len,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     
@@ -329,7 +329,7 @@ static char * copy_string_to_ascii_store(
 
 void T1_token_register(
     const uint32_t enum_value,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     
@@ -779,7 +779,7 @@ static void T1_token_set_number_flags(
 
 void T1_token_run(
     const char * input,
-    uint32_t * good)
+    uint8_t * good)
 {
     tts->tokens_size = 0;
     tts->numbers_size = 0;
@@ -873,7 +873,7 @@ void T1_token_run(
             
             // Commit the previous string literal if it was going
             if (previous_lit_token) {
-                uint32_t copy_good = 0;
+                uint8_t copy_good = 0;
                 previous_lit_token->string_value =
                     copy_string_to_ascii_store(
                         previous_lit_token->string_value,

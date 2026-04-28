@@ -35,27 +35,27 @@ typedef struct {
         int64_t  custom_int_min;
         double   custom_float_min;
     };
-    T1Tex     slider_pin_tex;
-    float     width_screen;
-    float     height_screen;
-    float     pin_width_screen;
-    float     pin_height_screen;
+    T1Tex       slider_pin_tex;
+    float       width_screen;
+    float       height_screen;
+    float       pin_width_screen;
+    float       pin_height_screen;
     
-    float     screen_x;
-    float     screen_y;
-    float     z;
+    float       screen_x;
+    float       screen_y;
+    float       z;
     
-    char      sfx_filename[T1_UI_WIDGET_STR_CAP];
-    char      label_prefix[T1_UI_WIDGET_STR_CAP];
-    bool8_t   custom_min_max_vals;
-    bool8_t   is_meta_enum;
-    T1Type    linked_type;
+    char        sfx_filename[T1_UI_WIDGET_STR_CAP];
+    char        label_prefix[T1_UI_WIDGET_STR_CAP];
+    bool8_t     custom_min_max_vals;
+    bool8_t     is_meta_enum;
+    T1MetaType  linked_type;
     
-    float     pin_rgba[4];
-    int32_t   tex_array_i;
-    int32_t   tex_slice_i;
-    float     slider;
-    bool8_t   label_shows_value;
+    float       pin_rgba[4];
+    int32_t     tex_array_i;
+    int32_t     tex_slice_i;
+    float       slider;
+    bool8_t     label_shows_value;
 } T1UIWidgetProps;
 
 extern T1UIWidgetProps * T1_ui_widget_next_props;

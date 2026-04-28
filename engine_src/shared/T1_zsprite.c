@@ -40,8 +40,8 @@ static void assert_sanity_check_zsprite_vals_by_id(
     const int32_t zp_i)
 {
     assert_sanity_check_zsprite_vals(
-        &T1_zsprite_list->gpu_data[zp_i],
-        &T1_zsprite_list->cpu_data[zp_i].
+        &T1_zsprite_list->gpu[zp_i],
+        &T1_zsprite_list->cpu[zp_i].
             simd_stats);
 }
 
@@ -71,13 +71,13 @@ void T1_zsprite_fetch_next(
         zp_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[zp_i].
+            T1_zsprite_list->cpu[zp_i].
                 deleted)
         {
             stack_recipient->cpu_data =
-                &T1_zsprite_list->cpu_data[zp_i];
+                &T1_zsprite_list->cpu[zp_i];
             stack_recipient->gpu_data =
-                &T1_zsprite_list->gpu_data[zp_i];
+                &T1_zsprite_list->gpu[zp_i];
             stack_recipient->cpu_data->committed = false;
             break;
         }
@@ -89,10 +89,10 @@ void T1_zsprite_fetch_next(
     {
         stack_recipient->cpu_data =
             &T1_zsprite_list->
-                cpu_data[T1_zsprite_list->size];
+                cpu[T1_zsprite_list->size];
         stack_recipient->gpu_data =
             &T1_zsprite_list->
-                gpu_data[T1_zsprite_list->size];
+                gpu[T1_zsprite_list->size];
         stack_recipient->cpu_data[T1_zsprite_list->size].
             deleted = false;
         stack_recipient->cpu_data->
@@ -151,19 +151,19 @@ void T1_zsprite_get_pos_xyz(
         zs_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 zsprite_id == zsprite_id)
         {
             count += 1.0f;
             
             *recip_x +=
-                T1_zsprite_list->cpu_data[zs_i].
+                T1_zsprite_list->cpu[zs_i].
                     simd_stats.xyz[0];
             *recip_y +=
-                T1_zsprite_list->cpu_data[zs_i].
+                T1_zsprite_list->cpu[zs_i].
                     simd_stats.xyz[1];
             *recip_z +=
-                T1_zsprite_list->cpu_data[zs_i].
+                T1_zsprite_list->cpu[zs_i].
                     simd_stats.xyz[2];
         }
     }
@@ -183,12 +183,12 @@ void T1_zsprite_delete(const int32_t with_object_id)
         i++)
     {
         if (
-            T1_zsprite_list->cpu_data[i].
+            T1_zsprite_list->cpu[i].
                 zsprite_id == with_object_id)
         {
-            T1_zsprite_list->cpu_data[i].
+            T1_zsprite_list->cpu[i].
                 deleted = true;
-            T1_zsprite_list->cpu_data[i].zsprite_id = -1;
+            T1_zsprite_list->cpu[i].zsprite_id = -1;
         }
     }
 }
@@ -621,13 +621,13 @@ void T1_zsprite_apply_anim_effects_to_id(
     {
         if (
             (zsprite_id >= 0 &&
-            T1_zsprite_list->cpu_data[zp_i].
+            T1_zsprite_list->cpu[zp_i].
                 zsprite_id != zsprite_id &&
             zsprite_id != T1_ZSPRITE_ID_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu_data[zp_i].i32.
+            T1_zsprite_list->gpu[zp_i].i32.
                 touch_id != touch_id) ||
-            T1_zsprite_list->cpu_data[zp_i].deleted)
+            T1_zsprite_list->cpu[zp_i].deleted)
         {
             continue;
         }
@@ -644,9 +644,9 @@ void T1_zsprite_apply_anim_effects_to_id(
             /* const float * anim_cpu_vals: */
                 anim_cpu_vals,
             /* T1GPUzSprite * recip_gpu: */
-                &T1_zsprite_list->gpu_data[zp_i],
+                &T1_zsprite_list->gpu[zp_i],
             /* T1CPUzSpriteSimdStats * recip_cpu: */
-                &T1_zsprite_list->cpu_data[zp_i].
+                &T1_zsprite_list->cpu[zp_i].
                     simd_stats);
     }
 }
@@ -680,12 +680,12 @@ void T1_zsprite_apply_endpoint_anim(
             zsprite_id !=
                 T1_ZSPRITE_ID_HIT_EVERYTHING &&
             ((zsprite_id >= 0 &&
-            T1_zsprite_list->cpu_data[zp_i].
+            T1_zsprite_list->cpu[zp_i].
                 zsprite_id != zsprite_id) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu_data[zp_i].i32.
+            T1_zsprite_list->gpu[zp_i].i32.
                 touch_id != touch_id) ||
-            T1_zsprite_list->cpu_data[zp_i].deleted))
+            T1_zsprite_list->cpu[zp_i].deleted))
         {
             continue;
         }
@@ -694,7 +694,7 @@ void T1_zsprite_apply_endpoint_anim(
         
         if (goal_cpu_vals) {
             float * recip_vals_cpu = (float *)
-            &T1_zsprite_list->cpu_data[zp_i].
+            &T1_zsprite_list->cpu[zp_i].
                 simd_stats;
             
             for (
@@ -739,7 +739,7 @@ void T1_zsprite_apply_endpoint_anim(
         
         if (goal_gpu_vals_f32) {
             float * recip_vals_gpu = (float *)
-                &T1_zsprite_list->gpu_data[zp_i].
+                &T1_zsprite_list->gpu[zp_i].
                     f32;
             
             for (
@@ -792,9 +792,9 @@ void T1_zsprite_apply_endpoint_anim(
                 simd_set1_int32s(zero_i32);
             
             int32_t * recip_vals_i32 = (int32_t *)
-                &T1_zsprite_list->gpu_data[zp_i].i32;
+                &T1_zsprite_list->gpu[zp_i].i32;
             T1_log_assert(recip_vals_i32[0] ==
-                T1_zsprite_list->gpu_data[zp_i].i32.base_mat_i32.texturearray_i);
+                T1_zsprite_list->gpu[zp_i].i32.base_mat_i32.texturearray_i);
             
             T1_log_assert(t_applied == 0.0f);
             T1_log_assert(t_now == 1.0f);
@@ -917,20 +917,20 @@ void T1_zsprite_handle_timed_occlusion(void)
         zs_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 next_occlusion_in_us >
                     T1_global->elapsed)
         {
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 next_occlusion_in_us -=
                     T1_global->elapsed;
         } else if (
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 next_occlusion_in_us > 0)
         {
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 next_occlusion_in_us = 0;
-            T1_zsprite_list->cpu_data[zs_i].
+            T1_zsprite_list->cpu[zs_i].
                 visible = 0;
         }
     }
@@ -945,9 +945,9 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     
     for (uint32_t i = 0; i < T1_zsprite_list->size; i++)
     {
-        if (T1_zsprite_list->cpu_data[i].zsprite_id == zsprite_id) {
-            zs = T1_zsprite_list->gpu_data + i;
-            zs_cpu = T1_zsprite_list->cpu_data + i;
+        if (T1_zsprite_list->cpu[i].zsprite_id == zsprite_id) {
+            zs = T1_zsprite_list->gpu + i;
+            zs_cpu = T1_zsprite_list->cpu + i;
         }
     }
     
@@ -1023,7 +1023,7 @@ void T1_zsprite_copy_to_frame_data(
         /* void * dest: */
             recip,
         /* const void * src: */
-            T1_zsprite_list->gpu_data,
+            T1_zsprite_list->gpu,
         /* size_t n: */
             sizeof(T1GPUzSprite) *
                 T1_zsprite_list->size);
@@ -1033,8 +1033,8 @@ void T1_zsprite_copy_to_frame_data(
         i < T1_zsprite_list->size;
         i++)
     {
-        recip_ids[i].zsprite_id = T1_zsprite_list->cpu_data[i].zsprite_id;
-        recip_ids[i].touch_id = T1_zsprite_list->gpu_data[i].i32.
+        recip_ids[i].zsprite_id = T1_zsprite_list->cpu[i].zsprite_id;
+        recip_ids[i].touch_id = T1_zsprite_list->gpu[i].i32.
                 touch_id;
     }
     
@@ -1054,20 +1054,20 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].
                 visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].committed ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].committed ||
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.alpha_blending_on < 0.5f ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.bloom_on > 0.5f)
         {
             continue;
         }
         
-        int32_t mesh_id = T1_zsprite_list->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
         T1_log_assert(mesh_id >= 0);
         T1_log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
         
@@ -1132,27 +1132,27 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].
                 visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].
                 committed ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.bloom_on < 0.5f)
         {
             continue;
         }
         
         T1_log_assert(
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.alpha_blending_on < 0.5f);
         T1_log_assert(
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.bloom_on > 0.5f);
         
         int32_t mesh_id =
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 mesh_id;
         T1_log_assert(mesh_id >= 0);
         T1_log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
@@ -1238,22 +1238,22 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 deleted ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].
                 visible ||
-            !T1_zsprite_list->cpu_data[cpu_zp_i].
+            !T1_zsprite_list->cpu[cpu_zp_i].
                 committed ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.alpha_blending_on > 0.5f ||
-            T1_zsprite_list->cpu_data[cpu_zp_i].
+            T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.bloom_on > 0.5f)
         {
             continue;
         }
         
         int32_t mesh_id = T1_zsprite_list->
-            cpu_data[cpu_zp_i].mesh_id;
+            cpu[cpu_zp_i].mesh_id;
         T1_log_assert(mesh_id >= 0);
         T1_log_assert(mesh_id < (int32_t)
             T1_mesh_summary_list_size);
@@ -1371,7 +1371,7 @@ T1_zsprite_construct_model_and_normal_matrices(
         i++)
     {
         T1CPUzSpriteSimdStats * s =
-            &T1_zsprite_list->cpu_data[i].
+            &T1_zsprite_list->cpu[i].
                 simd_stats;
         
         T1_linal_float4x4_construct_identity(&result);
@@ -1474,7 +1474,7 @@ T1_zsprite_copy_data_for_shatter_effect(
         zp_i < (int32_t)T1_zsprite_list->size;
         zp_i++)
     {
-        if (T1_zsprite_list->cpu_data[zp_i].zsprite_id != zsprite_id)
+        if (T1_zsprite_list->cpu[zp_i].zsprite_id != zsprite_id)
         {
             continue;
         }
@@ -1483,15 +1483,15 @@ T1_zsprite_copy_data_for_shatter_effect(
             found = true;
             T1_std_memcpy(
                 gpu_recip,
-                T1_zsprite_list->gpu_data + zp_i,
+                T1_zsprite_list->gpu + zp_i,
                 sizeof(T1GPUzSprite));
             T1_std_memcpy(
                 gpu_recip,
-                T1_zsprite_list->cpu_data + zp_i,
+                T1_zsprite_list->cpu + zp_i,
                 sizeof(T1CPUzSprite));
         }
         
-        T1_zsprite_list->cpu_data[zp_i].deleted = true;
+        T1_zsprite_list->cpu[zp_i].deleted = true;
     }
 }
 

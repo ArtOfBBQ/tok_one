@@ -12,6 +12,8 @@ typedef struct FontSettings {
     T1GPUTexQuadf32 f32;
     T1GPUTexQuadi32 i32;
     float font_height;
+    int32_t highlight_i;
+    int32_t highlight_size;
 } T1TextFontSettings;
 
 extern T1TextFontSettings * T1_text_props;
@@ -51,6 +53,7 @@ void T1_text_request_label_renderable(
     const float left_pixelspace,
     const float top_y_pixelspace,
     const float z,
+    const float tab_width,
     const float max_width);
 
 void T1_text_request_label_renderable_leftx_toplinemidy(

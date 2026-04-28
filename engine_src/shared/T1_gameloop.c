@@ -92,6 +92,8 @@ static void show_dead_simple_text(
             T1_global->window_height - 30,
         /* const float z: */
             1.0f,
+        /* const float tab_width: */
+            4.0f,
         /* const float max_width: */
             T1_global->window_width - 30);
     
