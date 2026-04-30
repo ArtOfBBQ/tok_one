@@ -20,6 +20,7 @@ typedef enum : uint8_t {
     T1_TYPE_U32,
     T1_TYPE_U16,
     T1_TYPE_U8,
+    T1_TYPE_U4x2,
     T1_TYPE_I64,
     T1_TYPE_I32,
     T1_TYPE_I16,
@@ -90,6 +91,13 @@ void T1_meta_reg_int_limits_for_last_field(
 void T1_meta_reg_uint_limits_for_last_field(
     const uint64_t uint_min,
     const uint64_t uint_max,
+    uint8_t * good);
+
+void
+T1_meta_reg_u4_subname_for_last_field(
+    const char * subname,
+    const char * enum_name_if_any,
+    const uint8_t is_right_nibble,
     uint8_t * good);
 
 #define T1_META_ARRAY_SIZES_CAP 3

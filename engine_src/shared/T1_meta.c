@@ -1,9 +1,12 @@
 #include "T1_meta.h"
 
 #define T1_META_ARRAY_SLICE_NONE UINT16_MAX
-
+#define T1_META_SUBNAMES_CAP 2
 typedef struct {
     char * name;
+    char * subnames[T1_META_SUBNAMES_CAP];
+    uint16_t subnames_enum_ids[T1_META_SUBNAMES_CAP];
+    
     union {
         char * struct_type_name;
         char * enum_type_name;
@@ -46,6 +49,7 @@ typedef struct {
 typedef struct {
     MetaStruct * internal_parent;
     MetaField * internal_field;
+    uint8_t subname_i;
 } T1MetaFieldInternal;
 
 typedef struct {
@@ -570,19 +574,35 @@ static MetaStruct * find_struct_by_name(
 
 static MetaField * find_field_in_struct_by_name(
     const MetaStruct * in_struct,
-    const char * property_name)
+    const char * property_name,
+    uint8_t * hit_subname_i)
 {
+    *hit_subname_i = UINT8_MAX;
     MetaField * return_value = NULL;
     
     MetaField * i = metafield_i_to_ptr(in_struct->head_fields_i);
     
     while (i != NULL)
     {
-        if (
+        uint8_t match_name =
             i->name != NULL &&
-            t1ms->strcmp(
-                i->name,
-                property_name) == 0)
+                t1ms->strcmp(
+                    i->name,
+                    property_name) == 0;
+        
+        for (uint8_t j = 0; j < T1_META_SUBNAMES_CAP; j++) {
+            if (
+                i->subnames[j] != NULL &&
+                i->subnames[j][0] != '\0' &&
+                t1ms->strcmp(
+                    i->subnames[j],
+                    property_name) == 0)
+            {
+                *hit_subname_i = j;
+            }
+        }
+        
+        if (match_name || (*hit_subname_i < UINT8_MAX))
         {
             return_value = i;
             break;
@@ -613,6 +633,17 @@ void T1_meta_reg_enum(
     }
     
     switch (T1_type) {
+        case T1_TYPE_U4x2:
+            if (type_size_check != 1) {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0); // Incorrect T1_TYPE passed? sizeof() is not 8
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+        break;
         case T1_TYPE_I8:
         case T1_TYPE_U8:
             if (type_size_check != 1) {
@@ -883,9 +914,11 @@ void T1_meta_reg_field(
     #endif
     
     // check for existing field name in that struct
+    uint8_t target_subname_i;
     MetaField * target_mfield = find_field_in_struct_by_name(
         target_mstruct,
-        field_name);
+        field_name,
+        &target_subname_i);
     
     if (target_mfield == NULL) {
         if (t1ms->meta_fields_size + 1 >= t1ms->meta_fields_store_cap)
@@ -951,6 +984,10 @@ void T1_meta_reg_field(
         break;
         case T1_TYPE_U8:
             target_mfield->custom_uint_max = UINT8_MAX;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_U4x2:
+            target_mfield->custom_uint_max = 15;
             target_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_I64:
@@ -1052,6 +1089,18 @@ void T1_meta_reg_field(
                 target_mfield->enum_type_name =
                     t1ms->meta_enums[i].name;
                 target_mfield->parent_enum_id = i;
+                if (
+                    t1ms->meta_enums[i].T1_type != 
+                        target_mfield->data_type)
+                {
+                    #if T1_META_ASSERTS == T1_ACTIVE
+                    assert(0); // enum's data type is mismatched
+                    #elif T1_META_ASSERTS == T1_INACTIVE
+                    #else
+                    #error
+                    #endif
+                    return;
+                }
                 break;
             }
         }
@@ -1278,6 +1327,78 @@ void T1_meta_reg_uint_limits_for_last_field(
     *good = 1;
 }
 
+void
+T1_meta_reg_u4_subname_for_last_field(
+    const char * subname,
+    const char * enum_name_if_any,
+    const uint8_t is_right_nibble,
+    uint8_t * good)
+{
+    *good = 0;
+    
+    #if T1_META_ASSERTS == T1_ACTIVE
+    MetaStruct * target_mstruct = &t1ms->
+        metastructs[t1ms->meta_structs_size-1];
+    assert(target_mstruct != NULL);
+    if (target_mstruct == NULL) { return; }
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    //  register to the most recently registered field
+    MetaField * target_mfield = 
+        &t1ms->metafields_store[t1ms->meta_fields_size-1];
+    
+    if (target_mfield->data_type != T1_TYPE_U4x2) {
+        return;
+    }
+    
+    if (!is_right_nibble) {
+        assert(target_mfield->subnames[0] == NULL);
+        assert(target_mfield->subnames[1] == NULL);
+        
+        target_mfield->subnames[0] = T1_meta_copy_str_to_store(
+            subname, good);
+        if (!*good) { return; } else { *good = 0; }
+    } else {
+        assert(target_mfield->subnames[0] != NULL);
+        assert(target_mfield->subnames[1] == NULL);
+        
+        target_mfield->subnames[1] = T1_meta_copy_str_to_store(
+            subname, good);
+        if (!*good) { return; } else { *good = 0; }
+    }
+    
+    if (enum_name_if_any != NULL) {
+        uint16_t enum_i = UINT16_MAX;
+        for (
+            uint16_t me_i = 0;
+            me_i < t1ms->meta_enums_size;
+            me_i++)
+        {
+            if (t1ms->strcmp(t1ms->meta_enums[me_i].name, enum_name_if_any) == 0)
+            {
+                enum_i = me_i;
+            }
+        }
+        
+        if (enum_i >= UINT16_MAX) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0); // no such enum
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
+        }
+        
+        target_mfield->subnames_enum_ids[is_right_nibble] = enum_i;
+    }
+    
+    *good = 1;
+}
+
 static void strip_array_brackets_and_get_array_indices(
     char * to_strip,
     uint32_t * array_indices,
@@ -1417,7 +1538,7 @@ static uint32_t T1_meta_get_field_recursive(
         &array_indices_found);
     
     MetaField * metafield = find_field_in_struct_by_name(
-        metastruct, first_part);
+        metastruct, first_part, &return_value->subname_i);
     
     if (metafield == NULL) {
         return_value->internal_field = NULL;
@@ -1750,14 +1871,24 @@ void T1_meta_write_to_known_field_str(
     MetaEnum * parent_enum = NULL;
     T1MetaType type_adj = field.internal_field->data_type;
     uint8_t found_enum_field = 0;
-    
-    if (field.internal_field->is_enum) {
+        
+    if (field.internal_field->is_enum)
+    {
+        uint16_t enum_id = field.internal_field->parent_enum_id;
+        
+        if (
+            field.subname_i < T1_META_SUBNAMES_CAP &&
+            field.internal_field->
+                subnames_enum_ids[field.subname_i] < UINT16_MAX)
+        {
+            enum_id = field.internal_field->
+                subnames_enum_ids[field.subname_i];
+        }
+        
         if (
             field.internal_field == NULL ||
-            field.internal_field->parent_enum_id >=
-                t1ms->meta_enums_size ||
-            field.internal_field->parent_enum_id >=
-                t1ms->meta_enums_cap)
+            enum_id >= t1ms->meta_enums_size ||
+            enum_id >= t1ms->meta_enums_cap)
         {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0);
@@ -1766,7 +1897,7 @@ void T1_meta_write_to_known_field_str(
             #error
             #endif
         }
-        parent_enum = &t1ms->meta_enums[field.internal_field->parent_enum_id];
+        parent_enum = &t1ms->meta_enums[enum_id];
         
         for (
             uint32_t i = 0;
@@ -1775,9 +1906,7 @@ void T1_meta_write_to_known_field_str(
         {
             if (
                 t1ms->meta_enum_vals[i].
-                    metaenum_id ==
-                        field.internal_field->
-                            parent_enum_id &&
+                    metaenum_id == enum_id &&
                 t1ms->strcmp(
                     t1ms->meta_enum_vals[i].name,
                     value_adj) == 0)
@@ -1916,6 +2045,54 @@ void T1_meta_write_to_known_field_str(
             #else
             #error
             #endif
+        break;
+        case T1_TYPE_U4x2:
+            if (
+                !parsed.value_is_u64 ||
+                parsed.value_u64 > 15)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            
+            uint8_t value_u4 = (uint8_t)parsed.value_u64;
+            
+            int value_recip = *(uint8_t *)(
+                (char *)target_parent_ptr + total_offset);
+            
+            if (field.subname_i == 0) {
+                value_recip =
+                    (value_u4 << 4) |
+                    (value_recip & 0x0F);
+            } else if (
+                field.subname_i == 1)
+            {
+                value_recip =
+                    (value_recip & 0xF0) |
+                    (value_u4 & 0x0F);
+            } else
+            {
+                // trying to write a u4, but subfield > 1
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            } 
+            
+            value_u4 = (uint8_t)value_recip;
+            
+            t1ms->memcpy(
+                (uint8_t *)((char *)target_parent_ptr + total_offset),
+                &value_u4,
+                1);
         break;
         case T1_TYPE_U8:
             if (

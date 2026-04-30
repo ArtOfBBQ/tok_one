@@ -23,7 +23,7 @@
 #endif
 
 #define bool8_t  uint8_t
-#define bool32_t uint32_t
+typedef uint8_t uint4x2;
 
 #ifdef __cplusplus
 extern "C" {
