@@ -20,9 +20,9 @@
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 
-// **********************************************************************
-// **                    Client functions                              **
-// **********************************************************************
+// ******************************************************
+// **                 Client functions                 **
+// ******************************************************
 
 // This functions returns a mesh_id
 // Use it in clientlogic_early_startup()
@@ -50,8 +50,6 @@ float T1_objmodel_get_y_multiplier_for_height(
 **                    Internal functions (ignore)                   **
 **********************************************************************
 */
-#define MATERIAL_NAMES_MAX 20
-
 void T1_objmodel_init(void);
 
 int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(

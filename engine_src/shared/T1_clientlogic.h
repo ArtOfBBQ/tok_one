@@ -37,7 +37,7 @@ extern "C" {
 
 #include "clientlogic_additional_defs.h"
 
-extern bool32_t T1_logger_app_running;
+extern uint8_t T1_log_app_running;
 
 
 void T1_clientlogic_init(void);

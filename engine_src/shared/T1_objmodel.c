@@ -1,7 +1,7 @@
 #include "T1_objmodel.h"
 
 static void construct_mesh_summary(
-    MeshSummary * to_construct,
+    T1MeshSummary * to_construct,
     const int32_t id)
 {
     to_construct->resource_name[0]            = '\0';
@@ -68,26 +68,26 @@ static void guess_gpu_triangle_normal(T1GPULockedVertex * to_change) {
     to_change[2].norm_xyz[2] = to_change[0].norm_xyz[2];
 }
 
-static ParsedObj * parsed_obj = NULL;
+static T1ParsedObj * parsed_obj = NULL;
 
 void T1_objmodel_init(void) {
-    parsed_obj = T1_mem_malloc_unmanaged(sizeof(ParsedObj));
-    T1_std_memset(parsed_obj, 0, sizeof(ParsedObj));
+    parsed_obj = T1_mem_malloc_unmanaged(sizeof(T1ParsedObj));
+    T1_std_memset(parsed_obj, 0, sizeof(T1ParsedObj));
     
-    T1_mesh_summary_list = (MeshSummary *)T1_mem_malloc_unmanaged(
-        sizeof(MeshSummary) * T1_MESH_CAP);
+    T1_mesh_summary_list = (T1MeshSummary *)T1_mem_malloc_unmanaged(
+        sizeof(T1MeshSummary) * T1_MESH_CAP);
     
     for (uint32_t i = 0; i < T1_MESH_CAP; i++) {
         construct_mesh_summary(&T1_mesh_summary_list[i], (int32_t)i);
     }
     
     assert(T1_LOCKED_VERTEX_CAP > 0);
-    T1_mesh_summary_all_vertices = (LockedVertexWithMaterialCollection *)
-        T1_mem_malloc_unmanaged(sizeof(LockedVertexWithMaterialCollection));
+    T1_mesh_summary_all_vertices = (T1LockedVertexWithMaterialCollection *)
+        T1_mem_malloc_unmanaged(sizeof(T1LockedVertexWithMaterialCollection));
     T1_std_memset(
         T1_mesh_summary_all_vertices,
         0,
-        sizeof(LockedVertexWithMaterialCollection));
+        sizeof(T1LockedVertexWithMaterialCollection));
     
     // Let's hardcode a basic quad since that will be used by
     // even crticical engine features (terminal, text labels)
@@ -593,7 +593,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 
 static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
      const char * original_obj_filename,
-     ParsedObj * arg_parsed_obj,
+     T1ParsedObj * arg_parsed_obj,
      ParsedMaterial * parsed_materials,
      const uint32_t parsed_materials_size)
 {
@@ -1416,7 +1416,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         T1_mesh_summary_list_size <
             T1_MESH_CAP);
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         T1_std_strcpy_cap(
             error_message,
             128,

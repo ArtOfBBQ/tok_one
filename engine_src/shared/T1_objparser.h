@@ -16,12 +16,12 @@ vertices which build a polyline.
 l v1 v2 v3 v4 v5 v6 ...
 */
 
-typedef struct MaterialName {
+typedef struct {
     char name[64];
-} MaterialName;
+} T1MaterialName;
 
-typedef struct ParsedObj {
-    MaterialName * material_names;
+typedef struct {
+    T1MaterialName * material_names;
     float (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
     float (* textures_vt_uv)[2]; // 'vt' in .obj files, 'uv' in 3d graphics
     float (* normals_vn)[3];  // xyz, 'vn' in .obj files
@@ -41,7 +41,7 @@ typedef struct ParsedObj {
     unsigned int normals_count;
     unsigned int triangles_count;
     unsigned int quads_count;
-} ParsedObj;
+} T1ParsedObj;
 
 /*
 Pass your malloc() and free() functions. The parser doesn't work without
@@ -69,7 +69,7 @@ void T1_objparser_init(
 -> 'success' will be set to 0 on failure, 1 on success
 */
 void T1_objparser_parse(
-    ParsedObj * recipient,
+    T1ParsedObj * recipient,
     const char * raw_buffer,
     uint8_t * success);
 
@@ -78,7 +78,7 @@ void T1_objparser_parse(
 -> this is just a convenience function to free all pointers in the struct,
    you don't need to use it if you don't want to
 */
-void T1_objparser_deinit(ParsedObj * to_free);
+void T1_objparser_deinit(T1ParsedObj * to_free);
 
 #endif // OBJ_PARSER_H
 

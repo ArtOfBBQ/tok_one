@@ -60,7 +60,7 @@ T1_zsprite_construct(T1zSpriteRequest * to_construct);
 // Allocate a PolygonRequest on the stack, then call this
 
 void
-T1_zsprite_fetch_next(
+T1_zsprite_fetch_next_noconstruct(
     T1zSpriteRequest * stack_recipient);
 
 void

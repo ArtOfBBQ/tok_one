@@ -588,7 +588,7 @@ void T1_appinit_before_gpu_init(
             sd->const_matsi32_alloc_size,
             T1_mem_page_size);
     
-    bool32_t initial_log_dump_succesful = false;
+    uint8_t initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
         T1_log_dump_and_crash("initial log dump unsuccesful, exiting app");
@@ -639,7 +639,7 @@ void T1_appinit_after_gpu_init_step1(
 {
     *success = 0;
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     
@@ -691,7 +691,7 @@ void T1_appinit_after_gpu_init_step2(
 {
     (void)throwaway_threadarg;
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     
@@ -738,7 +738,7 @@ void T1_appinit_after_gpu_init_step2(
     char errmsg[256];
     errmsg[0] = '\0';
     
-    if (T1_logger_app_running) {
+    if (T1_log_app_running) {
         T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
@@ -769,7 +769,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_log_assert(T1_global->startup_bytes_to_load == 0);
         T1_log_assert(T1_global->startup_bytes_loaded == 0);
         
-        if (!T1_logger_app_running) {
+        if (!T1_log_app_running) {
             return;
         }
         
@@ -836,7 +836,7 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         T1_gameloop_active = true;
         return;
     }
@@ -869,14 +869,14 @@ void T1_appinit_after_gpu_init_step2(
             sizeof(T1GPUConstMati32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_platform_gpu_copy_locked_materials();
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     T1_appinit_asset_loading_thread(0);
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     
@@ -939,21 +939,21 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_MIPMAPS_ACTIVE undefined!"
     #endif
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     
     T1_platform_layer_start_window_resize(
         T1_platform_get_current_time_us());
     
-    if (T1_logger_app_running) {
+    if (T1_log_app_running) {
         T1_clientlogic_late_startup();
     } else {
         T1_gameloop_active = true;
         return;
     }
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         return;
     }
     

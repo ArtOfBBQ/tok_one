@@ -210,7 +210,7 @@ void T1_gameloop_update_before_render_pass(
         return;
     }
     
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         if (crashed_top_of_screen_msg[0] == '\0') {
             T1_std_strcpy_cap(
                 crashed_top_of_screen_msg,
@@ -324,7 +324,7 @@ void T1_gameloop_update_before_render_pass(
                 (uint32_t)T1_global->window_height);
        }
     } else if (
-        T1_logger_app_running &&
+        T1_log_app_running &&
         T1_global->clientlogic_early_startup_finished)
     {
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
@@ -452,7 +452,7 @@ void T1_gameloop_update_after_render_pass(void) {
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    if (T1_logger_app_running) {
+    if (T1_log_app_running) {
         T1_clientlogic_update_after_render_pass();
     }
     

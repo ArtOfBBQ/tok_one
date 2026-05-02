@@ -1,5 +1,36 @@
 #include "T1_clientlogic.h"
 
+static int32_t img_zsprite_id;
+static uint8_t img_toggle = 0;
+static void draw_test_quad(void) {
+    img_zsprite_id = T1_zspriteid_next_nonui_id();;
+    
+    T1zSpriteRequest img;
+    T1_zsprite_fetch_next_noconstruct(&img);
+    T1_zsprite_construct_quad(0.2f, 0.2f, 0.50f, 0.25f, 0.25f, &img);
+    T1_log_assert(img.cpu_data->mesh_id == T1_BASIC_QUAD_MESH_ID);
+    T1Tex tex = T1_tex_array_get_filename_loc("structuredart1.png");
+    img.gpu_data->i32.base_mat_i32.texturearray_i = tex.array_i;
+    img.gpu_data->i32.base_mat_i32.texture_i = tex.slice_i;
+    T1_log_assert(img.gpu_data->i32.base_mat_i32.texturearray_i >= 1);
+    T1_log_assert(img.gpu_data->i32.base_mat_i32.texture_i >= 0);
+    T1_log_assert(img.gpu_data->f32.base_mat_f32.alpha == 1.0f);
+    img.cpu_data->zsprite_id = img_zsprite_id;
+    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[0] > 0.02f);
+    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[1] > 0.02f);
+    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[2] > 0.02f);
+    img.gpu_data->f32.ignore_lighting = 1.0f;
+    //    img.cpu_data->simd_stats.xyz[0] = 0.0f;
+    //    img.cpu_data->simd_stats.xyz[1] = 0.0f;
+    //    img.cpu_data->simd_stats.xyz[2] = 0.25f;
+    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[0] == 0.0f);
+    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[1] == 0.0f);
+    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[2] == 0.0f);
+    T1_log_assert(img.cpu_data->simd_stats.scale_factor == 1.0f);
+    T1_log_assert(img.gpu_data->f32.alpha == 1.0f);
+    T1_zsprite_commit(&img);
+}
+
 void T1_clientlogic_init(void) {
     return;
 }
@@ -47,27 +78,27 @@ static void clientlogic_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (T1_io_keymap[T1_IO_KEY_S] == true)
+    if (T1_io_keymap[T1_IO_KEY_D] == true)
     {
-        T1_io_keymap[T1_IO_KEY_S] = false;
-        
-        #if TEAPOT
-        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-        T1_zsprite_anim_shatter_and_destroy(
-            /* const int32_t object_id: */
-                teapot_object_ids[1],
-            /* const uint64_t duration_microseconds: */
-                750000);
-        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        #endif
+        T1_io_keymap[T1_IO_KEY_D] = false;
+        draw_test_quad();
     }
     
-    if (T1_io_keymap[T1_IO_KEY_P] == true)
+    if (T1_io_keymap[T1_IO_KEY_R] == true)
     {
-        T1_zsprite_list->cpu_data[0].simd_stats.xyz[2] += 0.001f;
+        T1_io_keymap[T1_IO_KEY_R] = false;
+        
+        T1zSpriteAnim * rot = T1_zsprite_anim_request_next(true);
+        rot->affected_zsprite_id = img_zsprite_id;
+        rot->cpu_vals.xyz[0] = -0.25f;
+        rot->cpu_vals.xyz[1] =  0.00f;
+        rot->cpu_vals.xyz[2] =  0.35f;
+        rot->duration_us = 250000;
+        rot->cpu_vals.angle_xyz[2] = img_toggle ? 3.14159f : 0.0f;
+        rot->cpu_vals_active = true;
+        T1_zsprite_anim_commit(rot);
+        
+        img_toggle = !img_toggle;
     }
     
     if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
@@ -120,28 +151,6 @@ static void clientlogic_handle_keypresses(
             cam_rotation_speed;
     }
     
-    #if TEAPOT
-    if (T1_io_keymap[T1_IO_KEY_M] == true) {
-        T1_io_keymap[T1_IO_KEY_M] = false;
-        
-        testswitch = !testswitch;
-        T1zSpriteAnim * anim =
-            T1_zsprite_anim_request_next(true);
-        anim->cpu_vals.xyz[0] =
-            testswitch ? 1.25f : -1.25f;
-        anim->cpu_vals.angle_xyz[2] =
-            testswitch ? 1.80f : 0.00f;
-        anim->gpu_vals.i32.touch_id =
-            testswitch ? 12542209 : teapot_touch_ids[0];
-        anim->affected_zsprite_id =
-            teapot_object_ids[0];
-        anim->easing_type = EASINGTYPE_NONE;
-        anim->duration_us = 1;
-        anim->cpu_vals_active = true;
-        anim->gpu_vals_i32_active = true;
-        T1_zsprite_anim_commit_and_instarun(anim);
-    }
-    #else
     if (T1_io_keymap[T1_IO_KEY_M] == true) {
         T1_io_keymap[T1_IO_KEY_M] = false;
         
@@ -166,27 +175,6 @@ static void clientlogic_handle_keypresses(
         anim->del_conflict_anims = true;
         T1_texquad_anim_commit(anim);
     }
-    #endif
-    
-    #if TEAPOT
-    if (T1_io_keymap[T1_IO_KEY_T] == true) {
-        T1_io_keymap[T1_IO_KEY_T] = false;
-        
-        if (testswitch) {
-            #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-            T1_zsprite_anim_evaporate_and_destroy(
-                teapot_object_ids[0],
-                900000);
-            #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
-            #else
-            #error
-            #endif
-        } else {
-            request_teapots();
-        }
-        testswitch = !testswitch;
-    }
-    #endif
     
     if (
         T1_io_keymap[T1_IO_KEY_BACKSLASH] == true)
@@ -227,20 +215,6 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         }
     }
     
-    if (T1_io_keymap[T1_IO_KEY_R]) {
-        for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
-            if (T1_zsprite_list->cpu_data[i].zsprite_id == 20)
-            {
-                T1_zsprite_list->cpu_data[i].simd_stats.
-                    angle_xyz[0] += 0.014f;
-                T1_zsprite_list->cpu_data[i].simd_stats.
-                    angle_xyz[1] += 0.01f;
-                T1_zsprite_list->cpu_data[i].simd_stats.
-                    angle_xyz[2] += 0.003f;
-            }
-        }
-    }
-    
     if (
         !T1_io_events[T1_IO_LAST_RCLICK_START].handled)
     {
@@ -252,39 +226,6 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     {
         T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].handled = true;
     }
-    
-    #if TEAPOT
-    for (uint32_t i = 0; i < 2; i++) {
-    if (
-        !T1_io_events[T1_IO_LAST_LCLICK_START].
-            handled &&
-        T1_io_events[T1_IO_LAST_LCLICK_START].
-            touch_id_top == teapot_touch_ids[i])
-    {
-        T1_io_events[T1_IO_LAST_LCLICK_START].handled = true;
-        
-        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-        T1_zsprite_anim_bump(
-            teapot_object_ids[0],
-            0.0f);
-        #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-    }
-    }
-    
-    if (T1_io_keymap[T1_IO_KEY_R]) {
-        for (uint32_t i = 0; i < T1_zsprite_list->size; i++) {
-            if (T1_zsprite_list->cpu_data[i].zsprite_id ==
-                teapot_object_ids[0])
-            {
-                T1_zsprite_list->cpu_data[i].simd_stats.
-                    angle_xyz[1] += 0.01f;
-            }
-        }
-    }
-    #endif
     
     clientlogic_handle_keypresses(microseconds_elapsed);
 }
@@ -358,6 +299,8 @@ void T1_clientlogic_window_resize(
         T1RENDERPASS_FLAT_TEXQUADS;
     T1_render_views->cpu[rv_i].passes[5].type =
         T1RENDERPASS_BILLBOARDS;
+    
+    draw_test_quad();
 }
 
 void T1_clientlogic_shutdown(void) {

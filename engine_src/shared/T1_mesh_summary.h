@@ -11,7 +11,7 @@
 #define T1_BASIC_CUBE_MESH_ID 1
 
 #define OBJ_STRING_SIZE 128
-typedef struct MeshSummary {
+typedef struct {
     char resource_name[OBJ_STRING_SIZE]; // resource filename
     int32_t mesh_id;
     int32_t vertices_head_i;
@@ -24,16 +24,16 @@ typedef struct MeshSummary {
     uint32_t locked_material_head_i;
     uint32_t locked_material_base_offset; // UINT32_MAX = no base mat
     uint32_t materials_size;
-} MeshSummary;
+} T1MeshSummary;
 
-extern MeshSummary * T1_mesh_summary_list;
+extern T1MeshSummary * T1_mesh_summary_list;
 extern uint32_t T1_mesh_summary_list_size;
 
-typedef struct LockedVertexWithMaterialCollection {
+typedef struct {
     T1GPULockedVertex gpu_data[T1_LOCKED_VERTEX_CAP];
     uint32_t size;
-} LockedVertexWithMaterialCollection;
+} T1LockedVertexWithMaterialCollection;
 
-extern LockedVertexWithMaterialCollection * T1_mesh_summary_all_vertices;
+extern T1LockedVertexWithMaterialCollection * T1_mesh_summary_all_vertices;
 
 #endif // T1_MESH_H

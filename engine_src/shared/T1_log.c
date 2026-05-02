@@ -1,6 +1,6 @@
 #include "T1_log.h"
 
-bool32_t T1_logger_app_running = false;
+uint8_t T1_log_app_running = false;
 #define CRASH_STRING_SIZE 256
 char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
@@ -114,7 +114,7 @@ T1_log_internal_append(
     const char * to_append,
     const char * caller_function_name)
 {
-    #ifndef LOGGER_SILENCE
+    #ifndef T1_LOG_SILENCE
     printf("%s", to_append);
     #endif
     
@@ -220,7 +220,7 @@ T1_log_internal_append(
 #error
 #endif
 
-void T1_log_dump(bool32_t * good) {
+void T1_log_dump(uint8_t * good) {
     
     // TODO: move this elsewhere so logger can avoid #including platform_layer.h
     //    if (app_log == NULL) { return; }
@@ -241,10 +241,10 @@ void T1_log_dump(bool32_t * good) {
 
 void
 T1_log_dump_and_crash(const char * crash_message) {
-    bool32_t log_dump_succesful = false;
+    uint8_t log_dump_succesful = false;
     T1_log_dump(&log_dump_succesful);
     
-    if (T1_logger_app_running) {
+    if (T1_log_app_running) {
         unsigned int i = 0;
         while (
             crash_message[i] != '\0' &&
@@ -257,11 +257,11 @@ T1_log_dump_and_crash(const char * crash_message) {
         crashed_top_of_screen_msg[i] = '\0';
     }
     
-    #ifndef LOGGER_SILENCE
+    #ifndef T1_LOG_SILENCE
     printf("DUMP & CRASHED: %s\n", crash_message);
     #endif
     
-    T1_logger_app_running = false;
+    T1_log_app_running = false;
     
     #ifdef IGNORE_LOGGER
     assert(0);
@@ -271,7 +271,7 @@ T1_log_dump_and_crash(const char * crash_message) {
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void
 T1_log_assert_internal(
-    bool32_t condition,
+    uint8_t condition,
     const char * str_condition,
     const char * file_name,
     const int line_number,
@@ -279,18 +279,21 @@ T1_log_assert_internal(
 {
     if (
         condition ||
-        !T1_logger_app_running)
+        !T1_log_app_running)
     {
         return;
     }
     
-    #ifndef LOGGER_SILENCE
+    #if T1_LOG_SILENCE == T1_ACTIVE
     printf(
         "\n*****\nfailed condition (%s::%s::%i: %s\n*****\n",
         file_name != NULL ? file_name : "NULL",
         func_name != NULL ? func_name : "NULL",
         line_number,
         str_condition != NULL ? str_condition : "NULL");
+    #elif T1_LOG_SILENCE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     assert(str_condition != NULL);
@@ -333,6 +336,33 @@ T1_log_assert_internal(
         line_number);
     
     T1_log_dump_and_crash(assert_failed_msg);
+}
+
+void
+T1_log_warn_internal(
+    uint8_t condition,
+    const char * str_condition,
+    const char * file_name,
+    const int line_number,
+    const char * func_name)
+{
+    if (condition) { return; }
+    
+    #if T1_LOG_SILENCE == T1_ACTIVE
+    printf(
+        "\n*****\nWARN CONDITION (%s::%s::%i: %s\n*****\n",
+        file_name != NULL ? file_name : "NULL",
+        func_name != NULL ? func_name : "NULL",
+        line_number,
+        str_condition != NULL ? str_condition : "NULL");
+    #elif T1_LOG_SILENCE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1_log_append("WARN CONDITION from function: ");
+    T1_log_append(str_condition);
+    T1_log_append("\n");
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else

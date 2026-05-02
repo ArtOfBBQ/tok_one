@@ -349,7 +349,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     T1_clientlogic_shutdown();
     
-    bool32_t write_succesful = false;
+    uint8_t write_succesful = false;
     T1_log_dump(&write_succesful);
     
     if (!write_succesful) {
@@ -419,7 +419,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 int main(int argc, const char * argv[]) {
     
     T1_gameloop_active = false;
-    T1_logger_app_running = true;
+    T1_log_app_running = true;
     
     char errmsg[512];
     uint32_t success = 1;
@@ -519,7 +519,7 @@ int main(int argc, const char * argv[]) {
         /* char * error_msg_string: */
             errmsg);
     
-    if (!result || !T1_logger_app_running) {
+    if (!result || !T1_log_app_running) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_log_dump_and_crash("Can't draw anything to the screen...\n");
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -555,7 +555,7 @@ int main(int argc, const char * argv[]) {
     
     if (!success) {
         T1_platform_request_messagebox(errmsg);
-        T1_logger_app_running = false;
+        T1_log_app_running = false;
     } else {
         T1_platform_start_thread(
             T1_appinit_after_gpu_init_step2,

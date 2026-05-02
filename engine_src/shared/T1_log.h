@@ -24,6 +24,7 @@
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 #include <stdio.h>
 #include <assert.h>
+#define T1_log_warn(condition) T1_log_warn_internal(condition, #condition, __FILE__, __LINE__, __func__)
 #define T1_log_assert(condition) T1_log_assert_internal(condition, #condition, __FILE__, __LINE__, __func__)
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_log_assert(condition)
@@ -36,7 +37,7 @@ extern "C" {
 #endif
 
 extern char crashed_top_of_screen_msg[256];
-extern bool32_t T1_logger_app_running;
+extern uint8_t T1_log_app_running;
 
 /*
 Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
@@ -105,7 +106,7 @@ T1_log_internal_append_float(
 /*
 dump the entire debug log to debuglog.txt
 */
-void T1_log_dump(bool32_t * good);
+void T1_log_dump(uint8_t * good);
 
 /*
 Dump the entire debug log to debuglog.txt,
@@ -122,7 +123,14 @@ instead of crashing the app
 */
 void
 T1_log_assert_internal(
-    bool32_t condition,
+    uint8_t condition,
+    const char * str_condition,
+    const char * file_name,
+    const int line_number,
+    const char * func_name);
+void
+T1_log_warn_internal(
+    uint8_t condition,
     const char * str_condition,
     const char * file_name,
     const int line_number,

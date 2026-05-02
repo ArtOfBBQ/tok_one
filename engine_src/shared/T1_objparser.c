@@ -212,7 +212,7 @@ static unsigned int count_upcoming_spacenums(
 }
 
 static int get_material_i_or_register_new(
-    ParsedObj * in_obj,
+    T1ParsedObj * in_obj,
     char * name)
 {
     int already_exist_i = -1;
@@ -277,7 +277,7 @@ static int get_material_i_or_register_new(
 }
 
 void T1_objparser_parse(
-    ParsedObj * recipient,
+    T1ParsedObj * recipient,
     const char * raw_buf,
     uint8_t * success)
 {
@@ -299,7 +299,7 @@ void T1_objparser_parse(
     recipient->textures_vt_uv = 0;
     recipient->normals_vn = 0;
     recipient->material_names = objparser_malloc_func(
-        sizeof(MaterialName) * 200);
+        sizeof(T1MaterialName) * 200);
     for (unsigned int i = 0; i < 200; i++) {
         recipient->material_names[i].name[0] = '\0';
     }
@@ -414,7 +414,7 @@ void T1_objparser_parse(
         sizeof(unsigned int[6]) * recipient->vertices_count);
     if (recipient->materials_count > 0) {
         recipient->material_names = objparser_malloc_func(
-            sizeof(MaterialName) * recipient->materials_count);
+            sizeof(T1MaterialName) * recipient->materials_count);
         for (unsigned int j = 0; j < recipient->materials_count; j++) {
             recipient->material_names[j].name[0] = '\0';
         }
@@ -424,7 +424,7 @@ void T1_objparser_parse(
         recipient->normals_vn = objparser_malloc_func(
             sizeof(unsigned int[3]) * recipient->normals_count);
         
-        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+        #ifndef T1_OBJ_PARSER_IGNORE_ASSERTS
         assert(
             recipient->triangles_count + recipient->quads_count > 0);
         #endif
@@ -962,7 +962,7 @@ void T1_objparser_parse(
     return;
 }
 
-void T1_objparser_deinit(ParsedObj * to_free) {
+void T1_objparser_deinit(T1ParsedObj * to_free) {
     
     if (to_free->quads != 0) {
         objparser_free_func(to_free->quads);

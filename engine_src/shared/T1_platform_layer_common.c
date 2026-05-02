@@ -255,7 +255,7 @@ void T1_platform_writable_filename_to_pathfile(
             + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
     T1_log_assert(assert_capacity >= full_filename_size);
-    if (!T1_logger_app_running) {
+    if (!T1_log_app_running) {
         recipient[0] = '\0';
         return;
     }

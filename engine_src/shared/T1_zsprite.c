@@ -59,7 +59,7 @@ void T1_zsprite_init(void) {
     T1_zsprite_list->size = 0;
 }
 
-void T1_zsprite_fetch_next(
+void T1_zsprite_fetch_next_noconstruct(
     T1zSpriteRequest * stack_recipient)
 {
     stack_recipient->cpu_data = NULL;
@@ -88,15 +88,12 @@ void T1_zsprite_fetch_next(
         stack_recipient->gpu_data == NULL)
     {
         stack_recipient->cpu_data =
-            &T1_zsprite_list->
-                cpu[T1_zsprite_list->size];
+            &T1_zsprite_list->cpu[T1_zsprite_list->size];
         stack_recipient->gpu_data =
-            &T1_zsprite_list->
-                gpu[T1_zsprite_list->size];
+            &T1_zsprite_list->gpu[T1_zsprite_list->size];
         stack_recipient->cpu_data[T1_zsprite_list->size].
             deleted = false;
-        stack_recipient->cpu_data->
-            committed = false;
+        stack_recipient->cpu_data->committed = false;
         
         T1_zsprite_list->size += 1;
         T1_log_assert(T1_zsprite_list->size + 1 <
@@ -116,6 +113,13 @@ void T1_zsprite_commit(
     T1_log_assert(
         T1_mesh_summary_list[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
+    
+    // probably shouldn't be requesting sprites in africa
+    T1_log_warn(to_commit->gpu_data->i32.base_mat_i32.texturearray_i > 0);
+    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] <  100.0f);
+    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] <  100.0f);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t all_mesh_vertices_tail_i =
@@ -360,10 +364,8 @@ void T1_zsprite_construct_quad(
     
     T1_zsprite_construct(stack_recipient);
     
-    const float mid_x =
-        left_x + (width  / 2);
-    const float mid_y =
-        bottom_y  + (height / 2);
+    const float mid_x = left_x + (width  / 2);
+    const float mid_y = bottom_y + (height / 2);
     
     stack_recipient->cpu_data->simd_stats.xyz[0] = mid_x;
     stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
@@ -378,8 +380,10 @@ void T1_zsprite_construct_quad(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[0] = width / current_width;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[1] = height / current_height;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[0] =
+        width / current_width;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[1] =
+        height / current_height;
     stack_recipient->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
 }
 
