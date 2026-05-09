@@ -591,7 +591,8 @@ void T1_appinit_before_gpu_init(
     uint8_t initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        T1_log_dump_and_crash("initial log dump unsuccesful, exiting app");
+        T1_log_dump_and_crash(
+            "initial log dump unsuccesful, exiting app");
         T1_std_internal_strcpy_cap(
             error_message,
             128,

@@ -36,8 +36,7 @@ typedef struct {
     int32_t size;
 } T1FlatTexQuadCollection;
 
-static T1FlatTexQuadCollection *
-    T1_texquads = NULL;
+static T1FlatTexQuadCollection * T1_texquads = NULL;
 
 void T1_texquad_construct(
     T1GPUTexQuadf32 * f32,
@@ -63,6 +62,9 @@ void T1_texquad_construct(
 static void T1_texquad_construct_at_i(
     const int32_t i)
 {
+    T1_log_assert(i >= 0);
+    T1_log_assert(i  < MAX_FLATQUADS_PER_BUFFER);
+    
     T1_std_memset(
         &T1_texquads->cpu[i],
         0,

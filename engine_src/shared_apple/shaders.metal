@@ -115,13 +115,9 @@ vertex_shader(
     out.polygon_i = vertices[vertex_i].polygon_i;
     out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
-    const device T1GPULockedVertex * lv =
-        &lverts[out.locked_vertex_i];
-    const device T1GPUzSprite * zs =
-        &zsprites[out.polygon_i];
-    const device T1GPUzSpriteMatrices * m =
-        &matrices[out.polygon_i];
-    
+    const device T1GPULockedVertex * lv = &lverts[out.locked_vertex_i];
+    const device T1GPUzSprite * zs = &zsprites[out.polygon_i];
+    const device T1GPUzSpriteMatrices * m = &matrices[out.polygon_i];
     const device T1GPURenderView * c = rv + rv_i;
     
     if (
@@ -931,7 +927,7 @@ single_quad_vertex_shader(
         constants->rgb_add[0],
         constants->rgb_add[1],
         constants->rgb_add[2],
-        1.0h);
+        0.0h);
     
     out.color_quantization = constants->color_quantization;
     
@@ -1281,26 +1277,27 @@ flat_texquad_vertex_shader(
 }
 
 fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
-    array<texture2d_array<half>, T1_TEXARRAYS_CAP>
-        color_textures,
+    array<texture2d_array<half>, T1_TEXARRAYS_CAP> color_textures,
     const FlatTexQuadPixel in [[stage_in]])
 {
     constexpr sampler texture_sampler(
         mag_filter::linear,
         min_filter::linear);
     
-    float4 color_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 color_sample = in.rgba;
     if (
         in.array_i >= 0 &&
         in.array_i < T1_TEXARRAYS_CAP)
     {
-        color_sample = float4(
+        color_sample *= float4(
             color_textures[in.array_i].
                 sample(
                     texture_sampler,
                     in.uv,
                     in.slice_i));
     }
+    
+    if (color_sample[3] < 0.03f) { discard_fragment(); }
     
     FragmentAndTouchableOut packed_out =
         pack_color_and_touchable_id(

@@ -222,10 +222,8 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x =
-        (float)window_location.x;
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y =
-        (float)window_location.y;
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x = (float)window_location.x;
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y = (float)window_location.y;
     
     T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_MOVE]);
     T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);

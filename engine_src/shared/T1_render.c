@@ -32,10 +32,8 @@ construct_projection_matrix(void)
                 T1RENDERVIEW_WRITE_RENDER_TARGET ||
                 T1RENDERVIEW_WRITE_RGBA;
         
-        const float w =
-            (float)T1_render_views->cpu[i].width;
-        const float h =
-            (float)T1_render_views->cpu[i].height;
+        const float w = (float)T1_render_views->cpu[i].width;
+        const float h = (float)T1_render_views->cpu[i].height;
         
         const float vertical_fov_degrees = 75.0f;
         const float zn = 0.1f;
@@ -86,10 +84,8 @@ static void construct_view_matrix(void) {
         rv_i < T1_render_views->size;
         rv_i++)
     {
-        T1GPURenderView * rv_gpu =
-            T1_render_views->gpu + rv_i;
-        T1CPURenderView * rv_cpu =
-            T1_render_views->cpu + rv_i;
+        T1GPURenderView * rv_gpu = T1_render_views->gpu + rv_i;
+        T1CPURenderView * rv_cpu = T1_render_views->cpu + rv_i;
         
         T1_linal_float4x4_construct_identity(
             &result);
@@ -111,8 +107,7 @@ static void construct_view_matrix(void) {
             0.0f, 0.0f, 1.0f, -rv_cpu->xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
-        T1_linal_float4x4_mul_float4x4_inplace(
-            &result, &next);
+        T1_linal_float4x4_mul_float4x4_inplace(&result, &next);
         
         T1_std_memcpy(
             rv_gpu->v_4x4 + 0,

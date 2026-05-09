@@ -129,6 +129,7 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
         if (T1_zsprite_anims[i].deleted)
         {
             return_value = &T1_zsprite_anims[i];
+            break;
         }
     }
     
@@ -136,9 +137,7 @@ T1zSpriteAnim * T1_zsprite_anim_request_next(
         return_value =
             &T1_zsprite_anims[zsprite_anims_size];
         zsprite_anims_size += 1;
-        T1_log_assert(
-            zsprite_anims_size <
-                T1_ZSPRITE_ANIMS_CAP);
+        T1_log_assert(zsprite_anims_size < T1_ZSPRITE_ANIMS_CAP);
     }
     
     T1_log_assert(return_value->deleted);
@@ -178,9 +177,8 @@ static void T1_zsprite_anim_resolve_single(
     }
     
     if (anim->already_applied_t >= 1.0f) {
-        bool32_t delete = anim->public.runs == 1;
-        bool32_t reduce_runs =
-            anim->public.runs > 0;
+        uint8_t delete = anim->public.runs == 1;
+        uint8_t reduce_runs = anim->public.runs > 0;
         
         if (delete) {
             anim->deleted = true;
@@ -323,10 +321,8 @@ void T1_zsprite_anim_commit_and_instarun(
     T1_log_assert(&parent->public == to_commit);
     T1_log_assert(to_commit->duration_us == 1);
     
-    parent->remaining_pause_us =
-        to_commit->pause_us;
-    parent->remaining_duration_us =
-        to_commit->duration_us;
+    parent->remaining_pause_us = to_commit->pause_us;
+    parent->remaining_duration_us = to_commit->duration_us;
     parent->committed = true;
     
     T1_zsprite_anim_resolve_single(parent);
@@ -497,14 +493,14 @@ void T1_zsprite_anim_commit(
     if (to_commit->del_conflict_anims)
     {
         for (
-            uint32_t anim_i = 0;
-            anim_i < zsprite_anims_size;
-            anim_i++)
+            int32_t anim_i = (int32_t)zsprite_anims_size - 1;
+            anim_i >= 0;
+            anim_i--)
         {
-            T1InternalzSpriteAnim * a =
-                &T1_zsprite_anims[anim_i];
+            T1InternalzSpriteAnim * a = &T1_zsprite_anims[anim_i];
             
             if (
+                (void *)a != (void *)to_commit &&
                 (a->public.affected_zsprite_id ==
                     to_commit->affected_zsprite_id ||
                 a->public.affected_zsprite_id ==
@@ -515,6 +511,7 @@ void T1_zsprite_anim_commit(
                 a->endpoints_not_deltas)
             {
                 T1_zsprite_anims[anim_i].deleted = true;
+                if (anim_i == (int32_t)zsprite_anims_size-1) { zsprite_anims_size -= 1; }
             }
         }
     }

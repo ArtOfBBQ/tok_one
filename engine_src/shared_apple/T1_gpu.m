@@ -58,8 +58,7 @@ typedef struct {
     id<MTLRenderPipelineState> depth_only_pls;
     id<MTLRenderPipelineState> blend_notouch_pls;
     id<MTLRenderPipelineState> bb_notouch_pls;
-    id<MTLRenderPipelineState>
-        flat_texquad_touch_pls;
+    id<MTLRenderPipelineState> flat_texquad_touch_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -2455,8 +2454,7 @@ static void set_defaults_for_encoder(
             
             [flat_texq_enc
                 setVertexBuffer:
-                    ags->flat_texquad_buffers
-                        [ags->frame_i]
+                    ags->flat_texquad_buffers[ags->frame_i]
                 offset: 0
                 atIndex: 0];
             
@@ -2498,9 +2496,7 @@ static void set_defaults_for_encoder(
                 vertexStart:
                     0
                 vertexCount:
-                    (NSUInteger)
-                        pass->verts_size * 6
-                ];
+                    (NSUInteger)pass->verts_size * 6];
             
             [flat_texq_enc endEncoding];
         }
