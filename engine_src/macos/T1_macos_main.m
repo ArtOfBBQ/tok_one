@@ -420,7 +420,7 @@ int main(int argc, const char * argv[]) {
     T1_log_app_running = true;
     
     char errmsg[512];
-    uint32_t success = 1;
+    bool8_t success = 1;
     T1_appinit_before_gpu_init(
         &success,
         errmsg);
@@ -504,7 +504,7 @@ int main(int argc, const char * argv[]) {
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
     
-    bool32_t result = T1_apple_gpu_init(
+    bool8_t result = T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,

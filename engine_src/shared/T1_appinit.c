@@ -156,7 +156,7 @@ static uint32_t pad_to_page_size(uint32_t base_allocation) {
 }
 
 void T1_appinit_before_gpu_init(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message)
 {
     *success = true;
@@ -635,7 +635,7 @@ T1_appinit_asset_loading_thread(
 #endif
 
 void T1_appinit_after_gpu_init_step1(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message)
 {
     *success = 0;
@@ -735,7 +735,7 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_SHADOWS_ACTIVE undefined"
     #endif
     
-    bool32_t success = false;
+    uint8_t success = false;
     char errmsg[256];
     errmsg[0] = '\0';
     

@@ -22,7 +22,7 @@
 #define NULL 0
 #endif
 
-#define bool8_t  uint8_t
+typedef uint8_t bool8_t;
 typedef uint8_t uint4x2;
 
 #ifdef __cplusplus
@@ -150,7 +150,7 @@ T1_std_internal_strcat_float_cap(
 void
 T1_std_internal_strcpy_cap(
     char * recipient,
-    const uint32_t recipient_size,
+    const uint32_t recipient_cap,
     const char * origin);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, to_append);
@@ -175,12 +175,12 @@ T1_std_strlen(const char * null_terminated_string);
 void
 T1_std_strtolower(char * in);
 
-bool32_t
+uint8_t
 T1_std_string_starts_with(
     const char * str_to_check,
     const char * start);
 
-bool32_t
+uint8_t
 T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending);
@@ -191,17 +191,17 @@ T1_std_strsub(
     const char * to_match,
     const char * replacement);
 
-bool32_t
+uint8_t
 T1_std_are_equal_strings(
     const char * str1,
     const char * str2);
 
-bool32_t
+uint8_t
 T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2);
 
-bool32_t
+uint8_t
 T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,

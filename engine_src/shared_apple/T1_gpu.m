@@ -108,8 +108,8 @@ typedef struct {
     
     T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
-    bool32_t viewports_set[T1_RENDER_VIEW_CAP];
-    bool32_t metal_active;
+    uint8_t viewports_set[T1_RENDER_VIEW_CAP];
+    uint8_t metal_active;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -119,7 +119,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 static void (* funcptr_gameloop_before_render)(T1GPUFrame *) = NULL;
 static void (* funcptr_gameloop_after_render)(void) = NULL;
 
-bool32_t T1_apple_gpu_init(
+uint8_t T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
@@ -1105,7 +1105,7 @@ void T1_platform_gpu_update_capacity_if_needed(
 {
     T1_log_assert(tex_array_i >=  0);
     T1_log_assert(tex_array_i <  31);
-    bool32_t copy_prev = false;
+    uint8_t copy_prev = false;
     id<MTLTexture> prev_copy = nil;
     
     if (T1_tex_arrays[tex_array_i].deleted) {

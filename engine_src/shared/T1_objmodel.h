@@ -29,9 +29,9 @@
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * filename,
     const char * mtl_filename,
-    const bool32_t flip_uv_u,
-    const bool32_t flip_uv_v,
-    bool32_t * success,
+    const uint8_t flip_uv_u,
+    const uint8_t flip_uv_v,
+    uint8_t * success,
     char * error_message);
 
 int32_t T1_objmodel_resource_name_to_mesh_id(

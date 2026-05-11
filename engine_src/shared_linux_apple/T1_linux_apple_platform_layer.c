@@ -56,7 +56,7 @@ T1_platform_init_mutex_and_return_id(void)
 /*
 Attempt to lock a mutex and return True if succesful
 */
-bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id)
+uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id)
 {
     /*
     If successful, pthread_mutex_trylock() will return zero.

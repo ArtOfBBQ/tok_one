@@ -3,7 +3,7 @@
 // permanent size of the interactions array
 #define T1_USERIO_EVENTS_CAP 12
 
-bool32_t * T1_io_keymap; //[KEYPRESS_MAP_SIZE];
+uint8_t * T1_io_keymap; //[KEYPRESS_MAP_SIZE];
 
 T1IOEvent * T1_io_events = NULL;
 
@@ -23,8 +23,7 @@ T1_io_init(
         T1_io_event_construct(&T1_io_events[m]);
     }
     
-    T1_io_keymap = (bool32_t *)arg_malloc_func(
-        sizeof(bool32_t) * T1_IO_KEYMAP_CAP);
+    T1_io_keymap = arg_malloc_func(T1_IO_KEYMAP_CAP);
     for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
         T1_io_keymap[i] = false;
     }

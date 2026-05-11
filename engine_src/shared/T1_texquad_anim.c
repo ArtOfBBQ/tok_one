@@ -173,10 +173,8 @@ static void T1_texquad_anim_resolve_single(
     }
     
     if (anim->already_applied_t >= 1.0f) {
-        bool32_t delete =
-            anim->public.runs == 1;
-        bool32_t reduce_runs =
-            anim->public.runs > 0;
+        uint8_t delete = anim->public.runs == 1;
+        uint8_t reduce_runs = anim->public.runs > 0;
         
         if (delete) {
             anim->deleted = true;

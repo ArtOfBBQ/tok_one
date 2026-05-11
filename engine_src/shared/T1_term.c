@@ -29,7 +29,7 @@ static T1TermState * T1_trms = NULL;
 #define T1_TERM_INPUT_BOX_MID_Y ((T1_TERM_INPUT_BOX_HEIGHT * 0.5f) + T1_TERM_WHITESPACE)
 
 
-static bool32_t requesting_label_update = false;
+static uint8_t requesting_label_update = false;
 
 static void T1_term_describe_zpolygon(
     char * append_to,
@@ -330,7 +330,7 @@ void T1_term_sendchar(uint32_t to_send) {
     }
 }
 
-static bool32_t T1_term_evaluate(
+static uint8_t T1_term_evaluate(
     char * command,
     char * response)
 {

@@ -84,7 +84,7 @@ void T1_platform_init(
 typedef struct {
     uint64_t size_without_terminator;
     char * contents;
-    bool32_t good;
+    uint8_t good;
 } T1FileBuffer;
 
 void
@@ -138,10 +138,10 @@ T1_platform_get_writables_dir(
     char * recipient,
     const uint32_t recipient_size);
 
-bool32_t
+uint8_t
 T1_platform_res_exists(const char * resource_name);
 
-bool32_t
+uint8_t
 T1_platform_file_exists(const char * filepath);
 
 void
@@ -155,14 +155,14 @@ T1_platform_write_file(
     const char * filepath_destination,
     const char * output,
     const uint32_t output_size,
-    bool32_t * good);
+    uint8_t * good);
 
 void
 T1_platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
-    bool32_t * good);
+    uint8_t * good);
 
 void
 T1_platform_write_rgba_to_writables(
@@ -171,7 +171,7 @@ T1_platform_write_rgba_to_writables(
     const uint32_t rgba_size,
     const uint32_t width,
     const uint32_t height,
-    bool32_t * good);
+    uint8_t * good);
 
 void
 T1_platform_copy_file(
@@ -245,7 +245,7 @@ T1_platform_read_file_from_writables(
     const char * filepath_inside_writables,
     char * recipient,
     const uint32_t recipient_size,
-    bool32_t * good);
+    uint8_t * good);
 
 void
 T1_platform_gpu_get_device_name(
@@ -380,7 +380,7 @@ creates a mutex and return the ID of said mutex for you to store
 uint32_t T1_platform_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
-bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id);
+uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id);
 
 void T1_platform_assert_mutex_locked(const uint32_t mutex_id);
 

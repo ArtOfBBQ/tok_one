@@ -119,10 +119,10 @@ typedef struct {
     uint64_t timestamp;
     int32_t touch_id_pierce;
     int32_t touch_id_top;
-    bool32_t checked_touch_ids;
     float screen_x;
     float screen_y;
-    bool32_t handled;
+    uint8_t checked_touch_ids;
+    uint8_t handled;
 } T1IOEvent;
 
 void
@@ -144,7 +144,7 @@ T1_io_event_construct(
 #define T1_IO_LAST_MOUSE_OR_TOUCH_MOVE   11
 extern T1IOEvent * T1_io_events;
 
-extern bool32_t * T1_io_keymap;
+extern uint8_t * T1_io_keymap;
 extern float T1_io_mouse_scroll_pos;
 
 void

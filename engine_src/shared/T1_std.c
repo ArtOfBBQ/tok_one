@@ -413,7 +413,7 @@ void
 T1_std_internal_strcpy_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    const uint32_t recipient_size,
+    const uint32_t recipient_cap,
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -431,7 +431,7 @@ T1_std_internal_strcpy_cap(
     while (origin[i] != '\0')
     {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_size - 1);
+        assert(i < recipient_cap - 1);
         #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -441,7 +441,7 @@ T1_std_internal_strcpy_cap(
     }
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(i < recipient_size);
+    assert(i < recipient_cap);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -509,7 +509,7 @@ T1_std_strtolower(char * in)
     }
 }
 
-bool32_t
+uint8_t
 T1_std_string_starts_with(
     const char * str_to_check,
     const char * start)
@@ -530,7 +530,7 @@ T1_std_string_starts_with(
     return true;
 }
 
-bool32_t
+uint8_t
 T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending)
@@ -610,7 +610,7 @@ T1_std_strsub(
     }
 }
 
-bool32_t
+uint8_t
 T1_std_are_equal_strings(
     const char * str1,
     const char * str2)
@@ -641,7 +641,7 @@ T1_std_are_equal_strings(
     return true;
 }
 
-bool32_t
+uint8_t
 T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2)
@@ -664,7 +664,7 @@ T1_std_are_equal_until_nullterminator(
     return true;
 }
 
-bool32_t
+uint8_t
 T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
@@ -908,14 +908,14 @@ T1_std_string_to_float_validate(
     float return_value = 0;
     
     uint32_t i = 0;
-    bool32_t found_num = false;
-    bool32_t used_dot = false;
+    uint8_t found_num = false;
+    uint8_t used_dot = false;
     char first_part[20];
     uint32_t first_part_size = 0;
     char second_part[20];
     uint32_t second_part_size = 0;
     
-    bool32_t found_exponent = false;
+    uint8_t found_exponent = false;
     int32_t exponent_modifier = 1; 
     int32_t exponent = 0;
     

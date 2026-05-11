@@ -13,12 +13,11 @@ typedef struct ActiveUIElement {
     int32_t label_zsprite_id;
     int32_t touch_id;
     
-    bool32_t slideable;
-    bool32_t deleted;
-    
     void * slider_linked_value;
     void (* clicked_funcptr)(int64_t);
     
+    uint8_t slideable;
+    uint8_t deleted;
     uint8_t pos_updated_this_frame;
     uint8_t has_label;
     uint8_t label_dirty;

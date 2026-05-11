@@ -133,7 +133,7 @@ void T1_platform_read_file(
     out_preallocatedbuffer->good = true;
 }
 
-bool32_t T1_platform_file_exists(
+uint8_t T1_platform_file_exists(
     const char * filepath)
 {
     NSString * nsfilepath = [NSString
@@ -185,7 +185,7 @@ void T1_platform_mkdir_if_not_exist(
     {
         NSError * error = NULL;
         
-        bool32_t success = (bool32_t)[[NSFileManager defaultManager]
+        uint8_t success = [[NSFileManager defaultManager]
             createDirectoryAtPath:directory_path
             withIntermediateDirectories:true
             attributes:NULL 
@@ -260,7 +260,7 @@ T1_platform_write_file(
     const char * filepath,
     const char * output,
     const uint32_t output_size,
-    bool32_t * good)
+    uint8_t * good)
 {
     T1_log_append("write file data to: ");
     T1_log_append(filepath);

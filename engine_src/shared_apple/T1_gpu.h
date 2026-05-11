@@ -16,7 +16,7 @@
 
 extern uint64_t last_resize_request_at;
 
-bool32_t T1_apple_gpu_init(
+uint8_t T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)
         (T1GPUFrame *),
     void (* arg_funcptr_gameloop_update_after_render)(void),

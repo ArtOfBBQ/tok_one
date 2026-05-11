@@ -659,7 +659,7 @@ void T1_tex_array_debug_dump_to_writables(
         T1_std_strcat_int_cap(filename, 128, texture_i);
         T1_std_strcat_cap(filename, 128, ".bmp");
         
-        uint32_t write_good = 0;
+        uint8_t write_good = 0;
         T1_platform_write_rgba_to_writables(
             /* const char * local_filename: */
                 filename,

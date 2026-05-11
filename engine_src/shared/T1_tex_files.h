@@ -18,7 +18,7 @@ T1_tex_files_reg_new_by_splitting_file(
 
 void
 T1_tex_files_load_font_images(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message);
 
 void
@@ -26,14 +26,14 @@ T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns,
-    bool32_t * success,
+    uint8_t * success,
     char * error_message);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void
 T1_tex_files_runtime_reg_png_from_writables(
     const char * filename,
-    uint32_t * good);
+    uint8_t * good);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error

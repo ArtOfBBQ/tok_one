@@ -1,8 +1,6 @@
 #ifndef T1_IMG_H
 #define T1_IMG_H
 
-#define bool32_t uint32_t
-
 #include "inttypes.h"
 
 #define T1_IMG_SILENCE
@@ -21,7 +19,7 @@ typedef struct {
     uint32_t width;
     uint32_t height;
     uint32_t pixel_count; // rgba_values_size / 4
-    bool32_t good;
+    uint8_t  good;
 } T1Img;
 
 #ifdef __cplusplus

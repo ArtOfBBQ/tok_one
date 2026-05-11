@@ -80,10 +80,10 @@ static void malloc_img_from_resource_name(
                 recipient->rgba_values_page_aligned,
             /* rgba_values_size: */
                 recipient->rgba_values_size,
-            /* uint32_t * out_good: */
-                &recipient->good,
             /* const uint32_t thread_id: */
-                thread_id);
+                thread_id,
+            /* uint8_t * out_good: */
+                &recipient->good);
     } else if (
         file_buffer.contents[0] == 'B' &&
         file_buffer.contents[1] == 'M')
@@ -204,7 +204,7 @@ void T1_tex_files_reg_new_by_splitting_file(
 }
 
 void T1_tex_files_load_font_images(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message)
 {
     *success = 0;
@@ -233,7 +233,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns,
-    bool32_t * success,
+    uint8_t * success,
     char * error_message)
 {
     *success = 0;
@@ -275,7 +275,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const char * filename,
-    uint32_t * good)
+    uint8_t * good)
 {
     *good = 0;
     
@@ -357,10 +357,10 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* const uint64_t rgba_values_size: */
             T1_tex_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_size,
-        /* uint32_t * out_good: */
-            &T1_tex_arrays[loc.array_i].images[loc.slice_i].image.good,
         /* const uint32_t thread_id: */
-            0);
+            0,
+        /* uint8_t * out_good: */
+            &T1_tex_arrays[loc.array_i].images[loc.slice_i].image.good);
     
     T1_platform_gpu_push_tex_slice_and_free_rgba(
         /* const int32_t texture_array_i: */

@@ -32,10 +32,10 @@ extern "C" {
 extern uint32_t block_drawinmtkview;
 
 void T1_appinit_before_gpu_init(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message);
 void T1_appinit_after_gpu_init_step1(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message);
 void T1_appinit_after_gpu_init_step2(int32_t throwaway_threadarg);
 

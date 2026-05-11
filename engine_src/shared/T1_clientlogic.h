@@ -54,7 +54,7 @@ will be called once at startup, before rendering frame 1
 If you draw objects here they will be deleted by an automatic screen resize
 */
 void T1_clientlogic_early_startup(
-    bool32_t * success,
+    uint8_t * success,
     char * error_message);
 
 /*

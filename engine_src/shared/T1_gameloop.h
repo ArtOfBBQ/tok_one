@@ -21,8 +21,8 @@
 extern "C" {
 #endif
 
-extern bool32_t T1_gameloop_active;
-extern bool32_t T1_gameloop_loading_texs;
+extern uint8_t T1_gameloop_active;
+extern uint8_t T1_gameloop_loading_texs;
 
 void
 T1_gameloop_init(void);

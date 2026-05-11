@@ -1,7 +1,7 @@
 #include "T1_gameloop.h"
 
-bool32_t T1_gameloop_active = false;
-bool32_t T1_gameloop_loading_texs = false;
+uint8_t T1_gameloop_active = false;
+uint8_t T1_gameloop_loading_texs = false;
 
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
@@ -376,8 +376,7 @@ void T1_gameloop_update_before_render_pass(
         #endif
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_start(
-            "T1_clientlogic_update()");
+        T1_profiler_start("T1_clientlogic_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"

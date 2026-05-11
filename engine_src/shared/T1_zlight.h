@@ -24,11 +24,11 @@ typedef struct {
         float flt_object_id;
     };
     union {
-        bool32_t deleted;
+        uint32_t deleted;
         float flt_deleted;
     };
     union {
-        bool32_t committed;
+        uint32_t committed;
         float flt_committed;
     };
     float xyz[3];

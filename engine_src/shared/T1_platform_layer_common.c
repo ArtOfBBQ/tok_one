@@ -34,7 +34,7 @@ void T1_platform_read_file_from_writables(
     const char * filepath_inside_writables,
     char * recipient,
     const uint32_t recipient_size,
-    bool32_t * good)
+    uint8_t * good)
 {
     char filepath[512];
     T1_platform_writable_filename_to_pathfile(
@@ -63,7 +63,7 @@ void T1_platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
-    bool32_t * good)
+    uint8_t * good)
 {
     char recipient[500];
     T1_platform_writable_filename_to_pathfile(
@@ -92,7 +92,7 @@ T1_platform_write_rgba_to_writables(
     const uint32_t rgba_size,
     const uint32_t width,
     const uint32_t height,
-    bool32_t * good)
+    uint8_t * good)
 {
     uint32_t bmp_cap = rgba_size + 10000;
     uint8_t * bmp = T1_mem_malloc_managed(bmp_cap);
@@ -141,7 +141,7 @@ T1_platform_write_rgba_to_writables(
 }
 
 
-bool32_t T1_platform_res_exists(const char * resource_name) {
+uint8_t T1_platform_res_exists(const char * resource_name) {
     char pathfile[500];
     T1_platform_res_filename_to_pathfile(
         resource_name,

@@ -961,11 +961,11 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     }
     
     // For now we're only supporting the easy case of a full toggle
-    bool32_t is_near_zero =
+    uint8_t is_near_zero =
         zs->f32.ignore_camera > -0.01f &&
         zs->f32.ignore_camera <  0.01f;
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    bool32_t is_near_one =
+    uint8_t is_near_one =
         zs->f32.ignore_camera >  0.99f &&
         zs->f32.ignore_camera <  1.01f;
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
