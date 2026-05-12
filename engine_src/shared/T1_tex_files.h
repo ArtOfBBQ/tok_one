@@ -41,11 +41,11 @@ T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const char * filename,
-    uint32_t * good);
+    bool8_t * good);
 
 void T1_tex_files_prereg_dds_res(
     const char * filename,
-    uint32_t * good);
+    bool8_t * good);
 
 /*
 Internal engine use

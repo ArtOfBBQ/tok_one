@@ -696,7 +696,7 @@ void T1_appinit_after_gpu_init_step2(
         return;
     }
     
-    uint32_t perlin_good = 0;
+    bool8_t perlin_good = 0;
     T1_tex_files_prereg_dds_res(
         "perlin_noise.dds",
         &perlin_good);
