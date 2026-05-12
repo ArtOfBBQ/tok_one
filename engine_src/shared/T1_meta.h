@@ -140,6 +140,13 @@ void T1_meta_write_to_known_field_str(
     void * target_parent_ptr,
     uint8_t * good);
 
+void T1_meta_write_to_known_field_uint(
+    const char * target_parent_type,
+    const char * target_field_name,
+    const uint64_t value_to_write_uint,
+    void * target_parent_ptr,
+    uint8_t * good);
+
 #define T1_meta_get_num_of_fields_in_struct(struct_type) internal_T1_meta_get_num_of_fields_in_struct(#struct_type)
 uint32_t internal_T1_meta_get_num_of_fields_in_struct(
     const char * struct_name);

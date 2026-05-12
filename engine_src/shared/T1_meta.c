@@ -2213,6 +2213,246 @@ void T1_meta_write_to_known_field_str(
     *good = 1;
 }
 
+void T1_meta_write_to_known_field_uint(
+    const char * target_parent_type,
+    const char * target_field_name,
+    const uint64_t value_to_write_uint,
+    void * target_parent_ptr,
+    uint8_t * good)
+{
+    *good = 0;
+    
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(target_parent_type != NULL);
+    assert(target_parent_type[0] != '"');
+    assert(target_field_name != NULL);
+    assert(target_field_name[0] != '"');
+    assert(target_parent_ptr != NULL);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1MetaFieldInternal field;
+    field.internal_field = NULL;
+    field.internal_parent = NULL;
+    
+    // T1_meta_get_field_recursive() will push to the ascii store
+    // as if it were stack memory
+    uint32_t before_recursion_ascii_store_next_i = t1ms->ascii_store_next_i;
+    
+    uint32_t total_offset = T1_meta_get_field_recursive(
+        &field,
+        target_parent_type,
+        target_field_name,
+        good);
+    
+    if (!*good) {
+        return;
+    }
+    *good = 0;
+    
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(field.internal_field->name != NULL);
+    assert(field.internal_field->data_type != T1_TYPE_NOTSET);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    // discard or "pop" T1_meta_get_field_recursive()'s strings
+    t1ms->ascii_store_next_i = before_recursion_ascii_store_next_i;
+    
+    T1MetaParsedvalue parsed;
+    parsed.value_u64 = value_to_write_uint;
+    parsed.value_is_i64 = 0;
+    parsed.value_is_u64 = 1;
+    parsed.value_is_f64 = 0;
+    
+    MetaEnum * parent_enum = NULL;
+    T1MetaType type_adj = field.internal_field->data_type;
+    uint8_t found_enum_field = 0;
+        
+    if (field.internal_field->is_enum)
+    {
+        return;
+    } else if (
+        field.internal_field->data_type != T1_TYPE_CHAR &&
+        !parsed.value_is_u64 &&
+        !parsed.value_is_i64 &&
+        !parsed.value_is_f64)
+    {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0); // trying to write string to non-enum non-char field?
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        return;
+    }
+    
+    switch (type_adj) {
+        case T1_TYPE_NOTSET:
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
+        case T1_TYPE_F32:
+            return;
+        break;
+        case T1_TYPE_I8:
+            return;
+        break;
+        case T1_TYPE_I16:
+            return;
+        break;
+        case T1_TYPE_I32:
+            return;
+        break;
+        case T1_TYPE_I64:
+            return;
+        break;
+        case T1_TYPE_U4x2:
+            if (
+                !parsed.value_is_u64 ||
+                parsed.value_u64 > 15)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            
+            uint8_t value_u4 = (uint8_t)parsed.value_u64;
+            
+            int value_recip = *(uint8_t *)(
+                (char *)target_parent_ptr + total_offset);
+            
+            if (field.subname_i == 0) {
+                value_recip =
+                    (value_u4 << 4) |
+                    (value_recip & 0x0F);
+            } else if (
+                field.subname_i == 1)
+            {
+                value_recip =
+                    (value_recip & 0xF0) |
+                    (value_u4 & 0x0F);
+            } else
+            {
+                // trying to write a u4, but subfield > 1
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            } 
+            
+            value_u4 = (uint8_t)value_recip;
+            
+            t1ms->memcpy(
+                (uint8_t *)((char *)target_parent_ptr + total_offset),
+                &value_u4,
+                1);
+        break;
+        case T1_TYPE_U8:
+            if (
+                !parsed.value_is_u64 ||
+                parsed.value_u64 > UINT8_MAX)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            uint8_t value_u8 = (uint8_t)parsed.value_u64;
+            t1ms->memcpy(
+                (uint8_t *)((char *)target_parent_ptr + total_offset),
+                &value_u8,
+                1);
+        break;
+        case T1_TYPE_U16:
+            if (
+                !parsed.value_is_u64 ||
+                parsed.value_u64 > UINT16_MAX)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            uint16_t value_u16 = (uint16_t)parsed.value_u64;
+            t1ms->memcpy(
+                (uint16_t *)((char *)target_parent_ptr + total_offset),
+                &value_u16,
+                2);
+        break;
+        case T1_TYPE_U32:
+            if (
+                !parsed.value_is_u64 ||
+                parsed.value_u64 > UINT32_MAX)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            t1ms->memcpy(
+                (uint32_t *)((char *)target_parent_ptr + total_offset),
+                &parsed.value_u64,
+                4);
+        break;
+        case T1_TYPE_U64:
+            if (
+                !parsed.value_is_u64)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            
+            t1ms->memcpy(
+                (uint64_t *)((char *)target_parent_ptr + total_offset),
+                &parsed.value_u64,
+                8);
+        break;
+        case T1_TYPE_CHAR:
+            return;
+        break;
+        default:
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
+    }
+    
+    *good = 1;
+}
+
 uint32_t internal_T1_meta_get_num_of_fields_in_struct(
     const char * struct_name)
 {
@@ -2240,6 +2480,14 @@ T1_meta_get_offset_and_type(
     T1MetaFieldInternal field;
     
     uint8_t good = 0;
+    
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(field_name != NULL);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_meta_get_field_recursive(
         &field,
         struct_name,

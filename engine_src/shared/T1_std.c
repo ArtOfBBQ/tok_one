@@ -431,7 +431,7 @@ T1_std_internal_strcpy_cap(
     while (origin[i] != '\0')
     {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_cap - 1);
+        assert(i < recipient_cap);
         #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -441,7 +441,7 @@ T1_std_internal_strcpy_cap(
     }
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(i < recipient_cap);
+    assert(i <= recipient_cap);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
