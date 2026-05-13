@@ -526,7 +526,7 @@ static char * T1_meta_copy_str_to_store(
     {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_ACTIVE
+        #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
         #endif
