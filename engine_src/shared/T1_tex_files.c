@@ -326,7 +326,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
             false);
     
     T1Img * recipient =
-        &T1_tex_arrays[loc.array_i].images[loc.slice_i].image;
+        &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image;
     
     recipient->good = false;
     recipient->width = width;
@@ -352,21 +352,21 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* const uint64_t compressed_input_size: */
             buf.size_without_terminator,
         /* const uint8_t * out_rgba_values: */
-            T1_tex_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.
                 rgba_values_freeable,
         /* const uint64_t rgba_values_size: */
-            T1_tex_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.
                 rgba_values_size,
         /* const uint32_t thread_id: */
             0,
         /* uint8_t * out_good: */
-            &T1_tex_arrays[loc.array_i].images[loc.slice_i].image.good);
+            &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.good);
     
     T1_platform_gpu_push_tex_slice_and_free_rgba(
         /* const int32_t texture_array_i: */
-            loc.array_i,
+            T1_tex_to_array_i(loc),
         /* const int32_t texture_i: */
-            loc.slice_i);
+            T1_tex_to_slice_i(loc));
     
     T1_mem_free_managed(buf.contents);
     *good = 1;

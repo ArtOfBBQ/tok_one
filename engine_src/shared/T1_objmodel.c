@@ -701,10 +701,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                    locked_mat_i32->texturearray_i =
-                        lmat.array_i;
-                    locked_mat_i32->texture_i =
-                        lmat.slice_i;
+                    locked_mat_i32->texturearray_i = T1_tex_to_array_i(lmat);
+                    locked_mat_i32->texture_i = T1_tex_to_slice_i(lmat);
                 }
                 
                 if (

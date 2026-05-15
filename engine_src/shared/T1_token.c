@@ -80,7 +80,8 @@ void T1_token_init(
     uint8_t * good)
 {
     *good = 0;
-        
+    
+    assert(tts == NULL); // aready initted
     tts = arg_malloc_func(sizeof(TokTokenState));
     if (!tts) {
         tts->good = 0;

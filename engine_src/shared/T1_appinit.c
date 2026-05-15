@@ -710,10 +710,10 @@ void T1_appinit_after_gpu_init_step2(
     } else {
         T1Tex perlin_tex = T1_tex_array_get_filename_loc(
             "perlin_noise.dds");
-        T1_global->postproc_consts.perlin_texturearray_i =
-            perlin_tex.array_i;
+        T1_global->postproc_consts.perlin_texturearray_i = 
+            T1_tex_to_array_i(perlin_tex);
         T1_global->postproc_consts.perlin_texture_i =
-            perlin_tex.slice_i;
+            T1_tex_to_slice_i(perlin_tex);
     }
     
     if (
