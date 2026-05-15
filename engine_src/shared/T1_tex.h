@@ -29,8 +29,8 @@ typedef uint16_t T1Tex;
 
 #define T1_TEX_NONE UINT16_MAX
 
-#define T1_tex_to_array_i(x) (x >> 11)
-#define T1_tex_to_slice_i(x) (x & 0x7F)
+#define T1_tex_to_array_i(x) (x == T1_TEX_NONE ? -1 : x >> 11)
+#define T1_tex_to_slice_i(x) (x == T1_TEX_NONE ? -1 : x & 0x7F)
 
 void T1_tex_set_array_i(
     T1Tex * recip,
