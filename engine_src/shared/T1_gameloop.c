@@ -79,7 +79,7 @@ static void show_dead_simple_text(
     T1_text_props->f32.rgba[2] = 1.0f;
     T1_text_props->f32.rgba[3] = 1.0f;
     
-    T1_log_assert(T1_text_props->i32.tex_array_i == 0);
+    T1_log_assert((T1_text_props->i32.reserved_and_tex & 0x0000FFFF) == T1_TEX_NONE);
     
     T1_text_request_label_renderable(
         /* const uint32_t with_object_id: */

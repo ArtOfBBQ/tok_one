@@ -16,11 +16,6 @@ static void assert_sanity_check_texquad_vals(
         T1_log_assert(!isnan(gpu_f32->size_xy[0]));
         T1_log_assert(!isnan(gpu_f32->size_xy[1]));
     }
-    
-    if (gpu_i32) {
-        T1_log_assert(gpu_i32->tex_array_i < T1_TEXARRAYS_CAP);
-        T1_log_assert(gpu_i32->tex_slice_i < T1_TEX_SLICES_CAP);
-    }
 }
 
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -54,8 +49,7 @@ void T1_texquad_construct(
     
     f32->size_xy[0] = 0.25f;
     f32->size_xy[1] = 0.25f;
-    i32->tex_array_i = -1;
-    i32->tex_slice_i = -1;
+    i32->reserved_and_tex = 0x00000000 | T1_TEX_NONE;
     i32->touch_id = -1;
 }
 
@@ -170,6 +164,7 @@ void T1_texquad_fetch_next(
         ret_i = T1_texquads->size;
         T1_texquads->size += 1;
         
+        T1_log_assert(T1_texquads->size > 0);
         T1_log_assert(T1_texquads->size < MAX_FLATQUADS_PER_BUFFER);
     }
     
@@ -187,9 +182,6 @@ void T1_texquad_commit(
     T1_log_assert(!request->cpu->deleted);
     T1_log_assert(request->gpu->f32.size_xy[0] > 0.0f);
     T1_log_assert(request->gpu->f32.size_xy[1] > 0.0f);
-    T1_log_assert(request->gpu->i32.tex_array_i > -2);
-    T1_log_assert(request->gpu->i32.tex_slice_i > -2);
-    T1_log_assert(request->gpu->i32.tex_array_i < T1_TEXARRAYS_CAP);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */
@@ -300,7 +292,7 @@ void T1_texquad_apply_endpoint_anim(
             int32_t * recip_vals_i32 = (int32_t *)
                 &T1_texquads->gpu[zp_i].i32;
             T1_log_assert(recip_vals_i32[0] ==
-                T1_texquads->gpu[zp_i].i32.tex_array_i);
+                T1_texquads->gpu[zp_i].i32.reserved_and_tex);
             
             T1_log_assert(t_applied == 0.0f);
             T1_log_assert(t_now == 1.0f);
@@ -493,22 +485,6 @@ void T1_texquad_apply_anim_effects_to_id(
             /* : */
                 &T1_texquads->cpu[tq_i]);
     }
-}
-
-void T1_texquad_draw_test(
-    const float width,
-    const float height)
-{
-    T1FlatTexQuadRequest texq;
-    T1_texquad_fetch_next(&texq);
-    texq.gpu->f32.size_xy[0] = width;
-    texq.gpu->f32.size_xy[1] = height;
-    texq.gpu->f32.xyz[0] = -0.75f;
-    texq.gpu->f32.xyz[1] = -0.75f;
-    texq.gpu->f32.xyz[2] = 0.05f;
-    texq.gpu->i32.tex_array_i = 2;
-    texq.gpu->i32.tex_slice_i = 0;
-    T1_texquad_commit(&texq);
 }
 
 static int cmp_highest_z_texquad(

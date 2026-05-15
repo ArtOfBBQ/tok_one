@@ -426,9 +426,12 @@ float4 get_lit(
     
     float4 texture_base = vector_float4(
         1.0f, 1.0f, 1.0f, 1.0f);
-    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    if (mati32->texturearray_i >= 0)
+    ushort tex = (mati32->normalmap_tex_and_tex & 0x0000FFFF);
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE 
+    if (tex != 0xFFFF)
     {
+    int texarray_i = tex >> 11;
+    int texslice_i = tex & 0x07FF;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     if (mati32->texturearray_i == 0)
     {
@@ -437,11 +440,10 @@ float4 get_lit(
     #endif
         // Sample the texture to obtain a color
         const half4 color_sample =
-            color_textures[mati32->texturearray_i].
-                sample(
-                    texture_sampler,
-                    uv_adjusted,
-                    mati32->texture_i);
+            color_textures[texarray_i].sample(
+                texture_sampler,
+                uv_adjusted,
+                texslice_i);
         texture_base = float4(color_sample);
     }
     
@@ -1269,8 +1271,10 @@ flat_texquad_vertex_shader(
     
     out.uv = uvs[corner_id];
     
-    out.array_i = quads[quad_i].i32.tex_array_i;
-    out.slice_i = quads[quad_i].i32.tex_slice_i;
+    ushort tex = quads[quad_i].i32.reserved_and_tex & 0x0000FFFF;
+    
+    out.array_i = tex >> 11;
+    out.slice_i = tex & 0x07FF;
     out.touch_id = quads[quad_i].i32.touch_id;
     
     return out;

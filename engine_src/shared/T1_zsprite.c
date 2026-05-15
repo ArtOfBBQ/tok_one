@@ -115,7 +115,7 @@ void T1_zsprite_commit(
             vertices_size > 0);
     
     // probably shouldn't be requesting sprites in africa
-    T1_log_warn(to_commit->gpu_data->i32.base_mat_i32.texturearray_i > 0);
+    T1_log_warn((to_commit->gpu_data->i32.base_mat_i32.normalmap_tex_and_tex & 0x0000FFFF) != UINT16_MAX);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] <  100.0f);
@@ -798,8 +798,7 @@ void T1_zsprite_apply_endpoint_anim(
             int32_t * recip_vals_i32 = (int32_t *)
                 &T1_zsprite_list->gpu[zp_i].i32;
             T1_log_assert(recip_vals_i32[0] ==
-                T1_zsprite_list->gpu[zp_i].i32.base_mat_i32.texturearray_i);
-            
+                T1_zsprite_list->gpu[zp_i].i32.base_mat_i32.normalmap_tex_and_tex);
             T1_log_assert(t_applied == 0.0f);
             T1_log_assert(t_now == 1.0f);
             
@@ -1224,8 +1223,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
     // for now we assume this always comes 1st
     T1_log_assert(frame_data->verts_size == 0);
     
-    int32_t first_opaq_i =
-        (int32_t)frame_data->verts_size;
+    int32_t first_opaq_i = (int32_t)frame_data->verts_size;
     
     int32_t cur_vals[4];
     int32_t incr_vals[4];
@@ -1242,46 +1240,37 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
-            T1_zsprite_list->cpu[cpu_zp_i].
-                deleted ||
-            !T1_zsprite_list->cpu[cpu_zp_i].
-                visible ||
-            !T1_zsprite_list->cpu[cpu_zp_i].
-                committed ||
-            T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.alpha_blending_on > 0.5f ||
+            T1_zsprite_list->cpu[cpu_zp_i].deleted ||
+            !T1_zsprite_list->cpu[cpu_zp_i].visible ||
+            !T1_zsprite_list->cpu[cpu_zp_i].committed ||
+            T1_zsprite_list->cpu[cpu_zp_i].simd_stats.
+                alpha_blending_on > 0.5f ||
             T1_zsprite_list->cpu[cpu_zp_i].
                 simd_stats.bloom_on > 0.5f)
         {
             continue;
         }
         
-        int32_t mesh_id = T1_zsprite_list->
-            cpu[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
         T1_log_assert(mesh_id >= 0);
-        T1_log_assert(mesh_id < (int32_t)
-            T1_mesh_summary_list_size);
+        T1_log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
         
         int32_t vert_tail_i =
-            T1_mesh_summary_list[mesh_id].
-                vertices_head_i +
-                    T1_mesh_summary_list
-                        [mesh_id].vertices_size;
-        T1_log_assert(
-            vert_tail_i < MAX_VERTICES_PER_BUFFER);
+            T1_mesh_summary_list[mesh_id].vertices_head_i + 
+            T1_mesh_summary_list[mesh_id].vertices_size;
+        T1_log_assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         /*
         We are free to overflow the vertices buffer, since its end is not
         in use yet anyway.
         */
-        int32_t vert_i =
-            T1_mesh_summary_list[mesh_id].
-                vertices_head_i;
+        int32_t vert_i = T1_mesh_summary_list[mesh_id].
+            vertices_head_i;
         cur_vals[0] = vert_i-2;
         cur_vals[1] = cpu_zp_i;
         cur_vals[2] = vert_i-1;
         cur_vals[3] = cpu_zp_i;
-        SIMD_VEC4I cur  = simd_load_vec4i(cur_vals);
+        SIMD_VEC4I cur = simd_load_vec4i(cur_vals);
         
         int32_t verts_to_copy = vert_tail_i - vert_i;
         
@@ -1300,8 +1289,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         {
             cur = simd_add_vec4i(cur, incr);
             simd_store_vec4i(
-                (frame_data->verts +
-                    frame_data->verts_size),
+                (frame_data->verts + frame_data->verts_size),
                 cur);
             frame_data->verts_size += 2;
             
@@ -1345,15 +1333,12 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         {
             if (
                 T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                        T1RENDERPASS_DIAMOND_ALPHA)
+                    T1RENDERPASS_DIAMOND_ALPHA)
             {
                 T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i =
-                        first_opaq_i;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (int32_t)frame_data->
-                            verts_size;
+                    passes[pass_i].vert_i = first_opaq_i;
+                T1_render_views->cpu[cam_i].passes[pass_i].
+                    verts_size = (int32_t)frame_data->verts_size;
             }
         }
     }

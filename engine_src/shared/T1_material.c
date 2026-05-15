@@ -36,8 +36,7 @@ void T1_material_construct(
     #else
     #error
     #endif
-    to_construct_i32->texturearray_i = -1;
-    to_construct_i32->texture_i = -1;
+    to_construct_i32->normalmap_tex_and_tex = -1;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE

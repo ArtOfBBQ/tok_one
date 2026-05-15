@@ -84,12 +84,7 @@ typedef struct {
 } T1GPUConstMatf32;
 
 typedef struct {
-    int   texturearray_i;
-    int   texture_i;
-    #if T1_NORMAL_MAPPING_ACTIVE
-    int   normalmap_texturearray_i;
-    int   normalmap_texture_i;
-    #endif
+    int normalmap_tex_and_tex;
 } T1GPUConstMati32;
 
 typedef struct {
@@ -135,10 +130,9 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
-    int tex_array_i;
-    int tex_slice_i;
+    int reserved_and_tex;
     int touch_id;
-    int padding[5];
+    int padding[2];
 } T1GPUTexQuadi32;
 
 typedef struct {

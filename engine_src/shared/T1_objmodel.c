@@ -701,8 +701,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                    locked_mat_i32->texturearray_i = T1_tex_to_array_i(lmat);
-                    locked_mat_i32->texture_i = T1_tex_to_slice_i(lmat);
+                    locked_mat_i32->normalmap_tex_and_tex &= 0xFFFF0000;
+                    locked_mat_i32->normalmap_tex_and_tex |= lmat;
                 }
                 
                 if (
@@ -716,8 +716,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     T1_log_append("\n");
                     
                     if (
-                        locked_mat_i32->texturearray_i < 0 ||
-                        locked_mat_i32->texture_i < 0)
+                        (locked_mat_i32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
                     {
                         char errmsg[128];
                         T1_std_strcpy_cap(errmsg, 128, "Missing material texture: ");
@@ -730,8 +729,15 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         return -1;
                     }
                 } else {
-                    T1_log_assert(locked_mat_i32->texturearray_i < 0);
-                    T1_log_assert(locked_mat_i32->texture_i < 0);
+                    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+                    T1Tex tex = (locked_mat_i32->
+                        normalmap_tex_and_tex & 0x0000FFFF);
+                    T1_log_assert(T1_tex_to_array_i(tex) < 0);
+                    T1_log_assert(T1_tex_to_slice_i(tex) < 0);
+                    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
+                    #endif
                 }
                 
                 #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE

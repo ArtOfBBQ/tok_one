@@ -788,10 +788,8 @@ void T1_ui_widget_request_slider(
                 pin_height_screen);
     slider_pin.cpu->zsprite_id = pin_zsprite_id;
     
-    slider_pin.gpu->i32.tex_array_i =
-        T1_tex_to_array_i(next_ae->props.slider_pin_tex);
-    slider_pin.gpu->i32.tex_slice_i =
-        T1_tex_to_slice_i(next_ae->props.slider_pin_tex);
+    slider_pin.gpu->i32.reserved_and_tex =
+        0x00000000 | next_ae->props.slider_pin_tex;
     
     slider_pin.gpu->f32.rgba[0] =
         T1_ui_widget_next_props->pin_rgba[0];

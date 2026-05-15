@@ -61,7 +61,8 @@ void T1_text_init(
         
         T1_text_props->font_height = 30.0f;
         
-        T1_text_props->i32.tex_array_i = 0;
+        T1_text_props->i32.reserved_and_tex =
+            0x00000000 | T1_TEX_NONE;
         T1_text_props->f32.rgba[0] = 1.0f;
         T1_text_props->f32.rgba[1] = 1.0f;
         T1_text_props->f32.rgba[2] = 1.0f;
@@ -347,9 +348,11 @@ void T1_text_request_label_offset_around(
                         get_y_offset(text_to_draw[j]) -
                         (T1_text_props->font_height * 0.5f)));
             
-            letter.gpu->i32.tex_array_i = 0;
-            letter.gpu->i32.tex_slice_i =
-                (int32_t)text_to_draw[j] - '!';
+            T1Tex tex;
+            T1_tex_set_array_i(&tex, 0);
+            T1_tex_set_slice_i(
+                &tex, (int16_t)text_to_draw[j] - '!');
+            letter.gpu->i32.reserved_and_tex = 0x00000000 | tex;
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
@@ -524,15 +527,19 @@ void T1_text_request_label_renderable(
         
         letter.cpu->zsprite_id = with_id;
         
-        letter.gpu->i32.tex_slice_i = (int32_t)(text_to_draw[i] - '!');
+        T1Tex tex;
+        T1_tex_set_array_i(&tex, 0);
+        T1_tex_set_slice_i(&tex, (int16_t)(text_to_draw[i] - '!'));
         
         if (
-            letter.gpu->i32.tex_slice_i < 0 ||
-            letter.gpu->i32.tex_slice_i > 100)
+            T1_tex_to_slice_i(tex) < 0 ||
+            T1_tex_to_slice_i(tex) > 100)
         {
+            i++;
             continue;
         }
         
+        letter.gpu->i32.reserved_and_tex = tex;
         letter.gpu->i32.touch_id = T1_text_props->i32.touch_id;
         
         letter.cpu->offset_xyz[0] = 

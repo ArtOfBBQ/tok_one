@@ -127,8 +127,8 @@ void T1_term_redraw_backgrounds(void) {
     input_req.gpu->f32.size_xy[1] =
         T1_render_view_screen_height_to_height_noz(
             T1_TERM_INPUT_BOX_HEIGHT);
-    input_req.gpu->i32.tex_array_i = -1;
-    input_req.gpu->i32.tex_slice_i = -1;
+    input_req.gpu->i32.reserved_and_tex =
+        0x00000000 | T1_TEX_NONE;
     input_req.gpu->f32.rgba[0] =
         T1_trms->background_color[0];
     input_req.gpu->f32.rgba[1] =
