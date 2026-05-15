@@ -556,6 +556,8 @@ T1Tex T1_tex_array_reg_img(
         T1_tex_arrays[array_i].images[0].image.rgba_values_size =
             width * height * 4;
         T1_tex_arrays[array_i].images[0].image.good = 1;
+    } else {
+        T1_log_assert(T1_tex_to_slice_i(retval) > 0);
     }
     
     T1_log_assert(retval != T1_TEX_NONE);

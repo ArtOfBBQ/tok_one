@@ -4,7 +4,7 @@ void T1_tex_set_array_i(
     T1Tex * recip,
     const int16_t newval)
 {
-    *recip &= 0x007F;
+    *recip &= 0x07FF;
     *recip |= (newval << 11);
 }
 

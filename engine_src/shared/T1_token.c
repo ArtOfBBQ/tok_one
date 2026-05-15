@@ -114,7 +114,6 @@ void T1_token_deinit(
     tts = NULL;
 }
 
-
 void T1_token_reset(uint8_t * good) {
     *good = 0;
     if (tts == NULL) {
