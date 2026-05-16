@@ -12,7 +12,7 @@ static void     (* logger_mutex_lock_func)(const uint32_t) = NULL;
 static void     (* logger_mutex_unlock_func)(const uint32_t) = NULL;
 static uint32_t logger_mutex_id = UINT32_MAX;
 
-#define LOG_SIZE 5000000
+#define LOG_SIZE 500000
 static char * app_log = NULL;
 static uint32_t log_i = 0;
 

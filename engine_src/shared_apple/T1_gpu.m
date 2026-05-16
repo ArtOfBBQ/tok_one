@@ -35,8 +35,7 @@ typedef struct {
     id projection_constants_buffer;
     
     id<MTLTexture> cam_depth_texture;
-    id<MTLTexture>
-        depth_textures[T1_RENDER_VIEW_CAP];
+    id<MTLTexture> depth_textures[T1_RENDER_VIEW_CAP];
     
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> z_prepass_pls;
@@ -70,8 +69,7 @@ typedef struct {
     
     id<MTLRenderPipelineState> singlequad_pls;
     
-    id<MTLDepthStencilState>
-        opaque_depth_stencil_state;
+    id<MTLDepthStencilState> opaque_depth_stencil_state;
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
@@ -132,8 +130,7 @@ uint8_t T1_apple_gpu_init(
         return false;
     }
     
-    ags = T1_mem_malloc_unmanaged(
-        sizeof(AppleGPUState));
+    ags = T1_mem_malloc_unmanaged(sizeof(AppleGPUState));
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
     #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE

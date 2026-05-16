@@ -40,10 +40,10 @@ typedef struct {
     #else
     #error
     #endif
-    float        norm_xyz[3];
+    float norm_xyz[3];
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    float        tan_xyz[3];
-    float        bitan_xyz[3];
+    float tan_xyz[3];
+    float bitan_xyz[3];
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -51,7 +51,7 @@ typedef struct {
     float        uv[2];
     unsigned int locked_materials_head_i;
     unsigned int parent_material_i;
-} __attribute__((aligned(32))) T1GPULockedVertex;
+} __attribute__((aligned(16))) T1GPULockedVertex;
 
 typedef enum : unsigned int {
     T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
@@ -103,9 +103,7 @@ typedef struct {
 typedef struct {
     T1GPUConstMati32 base_mat_i32; // start of i32
     int touch_id;
-    int mix_project_rv_i;
-    int mix_project_array_i;
-    int mix_project_slice_i;
+    int mix_rv_and_mix_tex;
 } __attribute__((aligned(16))) T1GPUzSpritei32;
 
 typedef struct {

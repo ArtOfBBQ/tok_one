@@ -652,10 +652,8 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
-    uint32_t rv_width = (uint32_t)
-        T1_global->window_width;
-    uint32_t rv_height = (uint32_t)
-        T1_global->window_height;
+    uint32_t rv_width = (uint32_t)T1_global->window_width;
+    uint32_t rv_height = (uint32_t)T1_global->window_height;
     
     while (rv_width > 2048 || rv_height > 2048) {
         rv_width  /= 2;

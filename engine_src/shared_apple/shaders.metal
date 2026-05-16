@@ -447,10 +447,15 @@ float4 get_lit(
         texture_base = float4(color_sample);
     }
     
-    if (zsprite->i32.mix_project_rv_i >= 0) {
+    if ((zsprite->i32.mix_rv_and_mix_tex & 0x0000FFFF) != 0xFFFF) {
         
-        const device T1GPURenderView * rfv =
-            &render_views[zsprite->i32.mix_project_rv_i];
+        int mix_rv = zsprite->i32.mix_rv_and_mix_tex >> 16;
+        int mix_array_i =
+            (zsprite->i32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
+        int mix_slice_i =
+            zsprite->i32.mix_rv_and_mix_tex & 0x000007FF;
+        
+        const device T1GPURenderView * rfv = &render_views[mix_rv];
         
         float4 refl_clipspace =
             worldspace_to_clipspace(
@@ -476,12 +481,11 @@ float4 get_lit(
         mix_strength *= fade;
         
         const half4 color_sample =
-            color_textures[zsprite->i32.mix_project_array_i].
+            color_textures[mix_array_i].
                 sample(
                     texture_sampler,
                     refl_uv,
-                    zsprite->i32.
-                        mix_project_slice_i);
+                    mix_slice_i);
         
         texture_base =
             (texture_base * (1.0h - mix_strength)) +
