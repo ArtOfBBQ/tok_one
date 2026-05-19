@@ -46,10 +46,9 @@ void T1_texquad_construct(
         0,
         sizeof(T1GPUTexQuadi32));
     
-    
     f32->size_xy[0] = 0.25f;
     f32->size_xy[1] = 0.25f;
-    i32->reserved_and_tex = 0x00000000 | T1_TEX_NONE;
+    i32->reserved_and_tex = T1_TEX_NONE;
     i32->touch_id = -1;
 }
 
@@ -58,6 +57,10 @@ static void T1_texquad_construct_at_i(
 {
     T1_log_assert(i >= 0);
     T1_log_assert(i  < MAX_FLATQUADS_PER_BUFFER);
+    
+    if (!T1_log_app_running) {
+        return;
+    }
     
     T1_std_memset(
         &T1_texquads->cpu[i],
@@ -519,7 +522,8 @@ void T1_texquad_copy_to_frame_data(
             T1_texquads->cpu[i].committed)
         {
             recip_fd[*recip_fd_size] =
-                    T1_texquads->gpu[i];
+                T1_texquads->gpu[i];
+            
             recip_fd[*recip_fd_size].f32.xyz[0] +=
                 T1_texquads->cpu[i].offset_xyz[0];
             recip_fd[*recip_fd_size].f32.xyz[1] +=
@@ -535,6 +539,7 @@ void T1_texquad_copy_to_frame_data(
         }
     }
     
+    #if 1
     qsort(
         /* void *base: */
             recip_fd,
@@ -559,5 +564,6 @@ void T1_texquad_copy_to_frame_data(
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
+    #endif
     #endif
 }

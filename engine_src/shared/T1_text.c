@@ -511,6 +511,11 @@ void T1_text_request_label_renderable(
         
         T1_texquad_fetch_next(&letter);
         
+        T1_log_assert(letter.cpu != NULL);
+        T1_log_assert(letter.gpu != NULL);
+        
+        if (!T1_log_app_running) { return; }
+        
         letter.gpu->i32 = T1_text_props->i32;
         letter.gpu->f32 = T1_text_props->f32;
         
@@ -528,8 +533,9 @@ void T1_text_request_label_renderable(
         letter.cpu->zsprite_id = with_id;
         
         T1Tex tex;
+        int16_t charval = text_to_draw[i] - '!';
         T1_tex_set_array_i(&tex, 0);
-        T1_tex_set_slice_i(&tex, (int16_t)(text_to_draw[i] - '!'));
+        T1_tex_set_slice_i(&tex, charval);
         
         if (
             T1_tex_to_slice_i(tex) < 0 ||

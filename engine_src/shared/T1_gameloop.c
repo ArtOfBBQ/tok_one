@@ -102,14 +102,10 @@ static void show_dead_simple_text(
     T1_global->draw_axes = 0;
     T1_global->draw_fps = 0;
     T1_global->show_profiler = false;
-    T1_global->postproc_consts.
-        perlin_texturearray_i = 0;
-    T1_global->postproc_consts.
-        perlin_texture_i = 0;
-    T1_global->postproc_consts.
-        color_quantization = 1;
-    T1_global->postproc_consts.
-        lights_size = 0;
+    T1_global->postproc_consts.perlin_texturearray_i = 0;
+    T1_global->postproc_consts.perlin_texture_i = 0;
+    T1_global->postproc_consts.color_quantization = 1;
+    T1_global->postproc_consts.lights_size = 0;
     
     T1_render_update(
             frame_data,

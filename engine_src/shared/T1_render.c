@@ -225,7 +225,7 @@ void T1_render_update(
     T1_texquad_copy_to_frame_data(
         frame_data->flat_tex_quads,
         &frame_data->flat_tex_quads_size);
-        
+    
     *frame_data->postproc_consts =
         T1_global->postproc_consts;
     
