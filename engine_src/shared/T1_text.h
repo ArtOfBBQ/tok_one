@@ -14,6 +14,7 @@ typedef struct FontSettings {
     float font_height;
     int32_t highlight_i;
     int32_t highlight_size;
+    bool8_t opaque_back_active;
 } T1TextFontSettings;
 
 extern T1TextFontSettings * T1_text_props;

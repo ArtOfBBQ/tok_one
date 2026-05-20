@@ -421,6 +421,7 @@ T1_std_internal_strcpy_cap(
     const char * origin)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    assert(recipient != NULL);
     assert(origin != NULL);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else

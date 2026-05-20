@@ -430,6 +430,7 @@ void T1_text_request_label_renderable(
     const float tab_width,
     const float max_width)
 {
+    T1_log_assert(max_width > 0.005f);
     T1_log_assert(z >= 0.0f);
     T1_log_assert(z <= 1.0f);
     
@@ -447,10 +448,12 @@ void T1_text_request_label_renderable(
     
     T1FlatTexQuadRequest letter;
     
-    float letter_width = T1_render_view_screen_width_to_width_noz(
-        T1_text_props->font_height);
-    float letter_height = T1_render_view_screen_height_to_height_noz(
-        T1_text_props->font_height);
+    float letter_width = 
+        T1_render_view_screen_width_to_width_noz(
+            T1_text_props->font_height);
+    float letter_height = 
+        T1_render_view_screen_height_to_height_noz(
+            T1_text_props->font_height);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
@@ -574,6 +577,20 @@ void T1_text_request_label_renderable(
             letter.gpu->f32.rgba[2] += 0.2f;
             letter.gpu->f32.size_xy[0] *= 1.12f;
             letter.gpu->f32.size_xy[1] *= 1.12f;
+        }
+        
+        if (T1_text_props->opaque_back_active) {
+            T1FlatTexQuadRequest back;
+            T1_texquad_fetch_next(&back);
+            *back.cpu = *letter.cpu;
+            *back.gpu = *letter.gpu;
+            back.gpu->i32.reserved_and_tex = T1_TEX_NONE;
+            back.gpu->f32.rgba[0] = 0.15f;
+            back.gpu->f32.rgba[1] = 0.15f;
+            back.gpu->f32.rgba[2] = 0.60f;
+            back.gpu->f32.rgba[3] = 1.00f;
+            back.gpu->f32.xyz[2] += 0.01f;
+            T1_texquad_commit(&back);
         }
         
         i++;
