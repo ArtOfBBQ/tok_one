@@ -89,18 +89,22 @@ void T1_texquad_init(void) {
 void T1_texquad_delete(const int32_t zsprite_id)
 {
     for (
-        int32_t i = 0;
-        i < (int32_t)T1_texquads->size;
-        i++)
+        int32_t i = T1_texquads->size-1;
+        i >= 0;
+        i--)
     {
-        if (
-            T1_texquads->cpu[i].
-                zsprite_id == zsprite_id)
+        if (T1_texquads->cpu[i].zsprite_id == zsprite_id)
         {
-            T1_texquads->cpu[i].deleted =
-                true;
-            T1_texquads->cpu[i].zsprite_id = -1;
+            T1_texquads->cpu[i].deleted    = true;
+            T1_texquads->cpu[i].zsprite_id =   -1;
         }
+    }
+    
+    while (
+        T1_texquads->size > 0 &&
+        T1_texquads->cpu[T1_texquads->size-1].deleted)
+    {
+        T1_texquads->size -= 1;
     }
 }
 
@@ -151,6 +155,7 @@ void T1_texquad_fetch_next(
 {
     int32_t ret_i = -1;
     
+    #if 0
     for (
         int32_t i = 0;
         i < (int32_t)T1_texquads->size;
@@ -162,6 +167,7 @@ void T1_texquad_fetch_next(
             ret_i = i;
         }
     }
+    #endif
     
     if (ret_i < 0) {
         ret_i = T1_texquads->size;
@@ -177,6 +183,32 @@ void T1_texquad_fetch_next(
     
     request->cpu = T1_texquads->cpu + ret_i;
     request->gpu = T1_texquads->gpu + ret_i;
+}
+
+void T1_texquad_defragment(void) {
+    int32_t i = 0;
+    int32_t j = (int32_t)T1_texquads->size-1;
+    
+    while (i < j) {
+        if (!T1_texquads->cpu[i].deleted) {
+            i++;
+            continue;
+        }
+        
+        if (T1_texquads->cpu[i].deleted) {
+            T1_texquads->cpu[i] = T1_texquads->cpu[j];
+            T1_texquads->gpu[i] = T1_texquads->gpu[j];
+            T1_texquads->cpu[j].deleted = true;
+            j--;
+        }
+    }
+    
+    while (
+        T1_texquads->size > 0 &&
+        T1_texquads->cpu[T1_texquads->size-1].deleted)
+    {
+        T1_texquads->size -= 1;
+    }
 }
 
 void T1_texquad_commit(

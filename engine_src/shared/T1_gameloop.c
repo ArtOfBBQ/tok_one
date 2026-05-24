@@ -412,6 +412,9 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
         
+        T1_texquad_defragment();
+        T1_zsprite_defragment();
+        
         uint32_t overflow_vertices = frame_data->verts_size % 3;
         frame_data->verts_size -= overflow_vertices;
     }

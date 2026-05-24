@@ -250,8 +250,7 @@ T1_log_dump_and_crash(const char * crash_message) {
             crash_message[i] != '\0' &&
             i < (CRASH_STRING_SIZE-1))
         {
-            crashed_top_of_screen_msg[i] =
-                crash_message[i];
+            crashed_top_of_screen_msg[i] = crash_message[i];
             i++;
         }
         crashed_top_of_screen_msg[i] = '\0';

@@ -86,12 +86,16 @@ uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id)
     return return_val == 0;
 }
 
-void T1_platform_assert_mutex_locked(const uint32_t mutex_id) {
-    #if LOGGER_IGNORE_ASSERTS
+void T1_platform_assert_mutex_locked(
+    const uint32_t mutex_id) 
+{
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
-    log_assert(return_val == EBUSY);
-    #else
+    T1_log_assert(return_val == EBUSY);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)mutex_id;
+    #else
+    #error
     #endif
 }
 
@@ -104,12 +108,15 @@ void T1_platform_mutex_lock(
 {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
-    int return_value = pthread_mutex_lock(&(mutexes[mutex_id].mutex));
+    int return_value = 
+        pthread_mutex_lock(&(mutexes[mutex_id].mutex));
     
-    #if T1_LOGGER_ASSERTS_ACTIVE
-    log_assert(return_value == 0);
-    #else
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_log_assert(return_value == 0);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)return_value;
+    #else
+    #error
     #endif
     
     return;

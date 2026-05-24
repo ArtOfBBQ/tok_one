@@ -50,6 +50,9 @@ void
 T1_zsprite_init(void);
 
 void
+T1_zsprite_defragment(void);
+
+void
 T1_zsprite_construct_with_mesh_id(
     T1zSpriteRequest * to_construct,
     const int32_t mesh_id);

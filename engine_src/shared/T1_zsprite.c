@@ -59,48 +59,49 @@ void T1_zsprite_init(void) {
     T1_zsprite_list->size = 0;
 }
 
+void T1_zsprite_defragment(void) {
+    int32_t i = 0;
+    int32_t j = (int32_t)T1_zsprite_list->size-1;
+    
+    while (i < j) {
+        if (!T1_zsprite_list->cpu[i].deleted) {
+            i++;
+            continue;
+        }
+        
+        if (T1_zsprite_list->cpu[i].deleted) {
+            T1_zsprite_list->cpu[i] = T1_zsprite_list->cpu[j];
+            T1_zsprite_list->gpu[i] = T1_zsprite_list->gpu[j];
+            T1_zsprite_list->cpu[j].deleted = true;
+            j--;
+        }
+    }
+    
+    while (
+        T1_zsprite_list->size > 0 &&
+        T1_zsprite_list->cpu[T1_zsprite_list->size-1].deleted)
+    {
+        T1_zsprite_list->size -= 1;
+    }
+}
+
 void T1_zsprite_fetch_next_noconstruct(
     T1zSpriteRequest * stack_recipient)
 {
     stack_recipient->cpu_data = NULL;
     stack_recipient->gpu_data = NULL;
     
-    for (
-        uint32_t zp_i = 0;
-        zp_i < T1_zsprite_list->size;
-        zp_i++)
-    {
-        if (
-            T1_zsprite_list->cpu[zp_i].
-                deleted)
-        {
-            stack_recipient->cpu_data =
-                &T1_zsprite_list->cpu[zp_i];
-            stack_recipient->gpu_data =
-                &T1_zsprite_list->gpu[zp_i];
-            stack_recipient->cpu_data->committed = false;
-            break;
-        }
-    }
+    stack_recipient->cpu_data =
+        &T1_zsprite_list->cpu[T1_zsprite_list->size];
+    stack_recipient->gpu_data =
+        &T1_zsprite_list->gpu[T1_zsprite_list->size];
+    stack_recipient->cpu_data[T1_zsprite_list->size].
+        deleted = false;
+    stack_recipient->cpu_data->committed = false;
     
-    if (
-        stack_recipient->cpu_data == NULL &&
-        stack_recipient->gpu_data == NULL)
-    {
-        stack_recipient->cpu_data =
-            &T1_zsprite_list->cpu[T1_zsprite_list->size];
-        stack_recipient->gpu_data =
-            &T1_zsprite_list->gpu[T1_zsprite_list->size];
-        stack_recipient->cpu_data[T1_zsprite_list->size].
-            deleted = false;
-        stack_recipient->cpu_data->committed = false;
-        
-        T1_zsprite_list->size += 1;
-        T1_log_assert(T1_zsprite_list->size + 1 <
-            T1_ZSPRITES_CAP);
-    }
-    
-    return;
+    T1_zsprite_list->size += 1;
+    T1_log_assert(T1_zsprite_list->size + 1 <
+        T1_ZSPRITES_CAP);
 }
 
 void T1_zsprite_commit(

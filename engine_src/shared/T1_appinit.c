@@ -963,8 +963,6 @@ void T1_appinit_after_gpu_init_step2(
     #else
     #error "T1_AUDIO_ACTIVE undefined!"
     #endif
-    
-    T1_token_deinit(T1_mem_free_managed);
 }
 
 void T1_appinit_shutdown(void)

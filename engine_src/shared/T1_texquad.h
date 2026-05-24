@@ -39,6 +39,8 @@ void T1_texquad_construct(
 
 void T1_texquad_init(void);
 
+void T1_texquad_defragment(void);
+
 void T1_texquad_delete(const int32_t zsprite_id);
 
 void T1_texquad_get_avg_xyz(
