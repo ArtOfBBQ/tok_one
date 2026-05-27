@@ -1292,12 +1292,12 @@ fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
         mag_filter::linear,
         min_filter::linear);
     
-    float4 color_sample = in.rgba;
+    float4 color_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
     if (
         in.array_i >= 0 &&
         in.array_i < T1_TEXARRAYS_CAP)
     {
-        color_sample *= float4(
+        color_sample = float4(
             color_textures[in.array_i].
                 sample(
                     texture_sampler,
