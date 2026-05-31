@@ -2536,7 +2536,8 @@ static void set_defaults_for_encoder(
     T1_log_assert(f->verts_size % 3 == 0);
     
     funcptr_gameloop_before_render(
-        T1_cpu_to_gpu_data->triple_buffers + ags->frame_i);
+        T1_cpu_to_gpu_data->triple_buffers + 
+            ags->frame_i);
     
     if (
         (f->postproc_consts->timestamp -

@@ -32,6 +32,13 @@ typedef struct {
     int32_t affected_zsprite_id;
     int32_t affected_touch_id;
     
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    char original_func_name[128];
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1EasingType easing_type; // u8
     bool8_t gpu_vals_f32_active;
     bool8_t gpu_vals_i32_active;
@@ -43,9 +50,15 @@ typedef struct {
 T1zSpriteAnim * T1_zsprite_anim_request_next(
     bool8_t endpoints_not_deltas);
 
-void
-T1_zsprite_anim_commit_and_instarun(
-    T1zSpriteAnim * to_commit);
+void T1_zsprite_anim_commit_and_instarun(
+    T1zSpriteAnim * to_commit
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    );
 
 void
 T1_zsprite_anim_assert_anim_valid_before_commit(
@@ -53,7 +66,14 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
 
 void
 T1_zsprite_anim_commit(
-    T1zSpriteAnim * to_commit);
+    T1zSpriteAnim * to_commit
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    );
 
 void
 T1_zsprite_anim_shatter_and_destroy(

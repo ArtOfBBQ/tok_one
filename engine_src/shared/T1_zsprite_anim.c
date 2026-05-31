@@ -14,9 +14,7 @@ typedef struct {
     uint64_t remaining_duration_us;
     uint64_t remaining_pause_us;
     float already_applied_t;
-    
     bool8_t endpoints_not_deltas;
-    
     bool8_t deleted;
     bool8_t committed;
 } T1InternalzSpriteAnim;
@@ -262,8 +260,7 @@ static void T1_zsprite_anim_resolve_single(
         
         T1_zsprite_apply_endpoint_anim(
             /* const int32_t zsprite_id: */
-                anim->public.
-                    affected_zsprite_id,
+                anim->public.affected_zsprite_id,
             /* const int32_t touch_id: */
                 anim->public.affected_touch_id,
             /* const float t_applied: */
@@ -278,7 +275,7 @@ static void T1_zsprite_anim_resolve_single(
                 anim->public.gpu_vals_i32_active ?
                     (int32_t *)&anim->
                         public.gpu_vals.i32 :
-                NULL,
+                    NULL,
             /* const float * goal_cpu_vals: */
                 anim->public.cpu_vals_active ?
                     (float *)&anim->
@@ -310,9 +307,26 @@ static void T1_zsprite_anim_resolve_single(
 }
 
 void T1_zsprite_anim_commit_and_instarun(
-    T1zSpriteAnim * to_commit)
+    T1zSpriteAnim * to_commit
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    )
 {
     fas->mutex_lock(fas->mutex_id);
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_std_strcat_cap(
+        to_commit->original_func_name,
+        64,
+        original_func_name);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_zsprite_anim_assert_anim_valid_before_commit(to_commit);
     
@@ -340,6 +354,8 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1InternalzSpriteAnim * parent =
         T1_zsprite_anim_get_container(to_check);
+    
+    T1_log_assert(to_check->original_func_name[0] != '\0');
     T1_log_assert(&parent->public == to_check);
     
     if (parent->endpoints_not_deltas) {
@@ -480,9 +496,26 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
 }
 
 void T1_zsprite_anim_commit(
-    T1zSpriteAnim * to_commit)
+    T1zSpriteAnim * to_commit
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    )
 {
     fas->mutex_lock(fas->mutex_id);
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_std_strcat_cap(
+        to_commit->original_func_name,
+        128,
+        original_func_name);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_zsprite_anim_assert_anim_valid_before_commit(to_commit);
     
@@ -565,7 +598,15 @@ void T1_zsprite_anim_shatter_and_destroy(
     set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
     set_scatter_mesh->cpu_vals_active = true;
     set_scatter_mesh->duration_us = 1;
-    T1_zsprite_anim_commit_and_instarun(set_scatter_mesh);
+    T1_zsprite_anim_commit_and_instarun(
+        set_scatter_mesh
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_shatter_and_destroy"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
     
     T1zSpriteAnim * scatter = T1_zsprite_anim_request_next(true);
     scatter->gpu_vals.f32.explode = 1.25f;
@@ -576,7 +617,15 @@ void T1_zsprite_anim_shatter_and_destroy(
     scatter->runs = 1;
     scatter->del_obj_on_finish = true;
     scatter->gpu_vals_f32_active = true;
-    T1_zsprite_anim_commit(scatter);
+    T1_zsprite_anim_commit(
+        scatter
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_shatter_and_destroy"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
 }
 
 void T1_zsprite_anim_evaporate_and_destroy(
@@ -597,7 +646,15 @@ void T1_zsprite_anim_evaporate_and_destroy(
     set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
     set_scatter_mesh->cpu_vals_active = true;
     set_scatter_mesh->duration_us = 1;
-    T1_zsprite_anim_commit_and_instarun(set_scatter_mesh);
+    T1_zsprite_anim_commit_and_instarun(
+        set_scatter_mesh
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_evaporate_and_destroy"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
     
     T1zSpriteAnim * evap =
         T1_zsprite_anim_request_next(true);
@@ -609,7 +666,15 @@ void T1_zsprite_anim_evaporate_and_destroy(
     evap->runs = 1;
     evap->del_obj_on_finish = true;
     evap->gpu_vals_f32_active = true;
-    T1_zsprite_anim_commit(evap);
+    T1_zsprite_anim_commit(
+        evap
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_evaporate_and_destroy"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
 }
 
 void T1_zsprite_anim_fade_and_destroy(
@@ -626,7 +691,15 @@ void T1_zsprite_anim_fade_and_destroy(
     fade_destroy->gpu_vals.f32.alpha = 0.0f;
     fade_destroy->del_obj_on_finish = true;
     fade_destroy->gpu_vals_f32_active = true;
-    T1_zsprite_anim_commit(fade_destroy);
+    T1_zsprite_anim_commit(
+        fade_destroy
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_fade_and_destroy"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
 }
 
 void T1_zsprite_anim_fade_destroy_all(
@@ -654,9 +727,25 @@ void T1_zsprite_anim_fade_to(
     modify_alpha->gpu_vals_f32_active = true;
     modify_alpha->del_obj_on_finish = true;
     if (duration_us < 50) {
-        T1_zsprite_anim_commit_and_instarun(modify_alpha);
+        T1_zsprite_anim_commit_and_instarun(
+            modify_alpha
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+            , "T1_zsprite_anim_fade_to"
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
+            );
     } else {
-        T1_zsprite_anim_commit(modify_alpha);
+        T1_zsprite_anim_commit(
+            modify_alpha
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+            , "T1_zsprite_anim_fade_to"
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
+            );
     }
 }
 
@@ -690,7 +779,15 @@ void T1_zsprite_anim_dud_dance(
     move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
     move_request->cpu_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
-    T1_zsprite_anim_commit(move_request);
+    T1_zsprite_anim_commit(
+        move_request
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_dud_dance"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
 }
 
 void T1_zsprite_anim_bump(
@@ -712,7 +809,15 @@ void T1_zsprite_anim_bump(
     bump_request->cpu_vals.mul_xyz[2] = 0.05f;
     bump_request->duration_us = 200000;
     bump_request->cpu_vals_active = true;
-    T1_zsprite_anim_commit(bump_request);
+    T1_zsprite_anim_commit(
+        bump_request
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        , "T1_zsprite_anim_bump"
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        );
 }
 
 void T1_zsprite_anim_delete_all(void)
