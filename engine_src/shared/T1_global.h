@@ -81,14 +81,6 @@ typedef struct {
 
 extern T1Globals * T1_global;
 
-#if 0
-// TODO: maybe abandoned, delete me?
-void
-T1_global_reg_transformed_imputed_normal_for_debug(
-    const float origin[3],
-    const float imputed_normal[3]);
-#endif
-
 void
 T1_global_init(void);
 

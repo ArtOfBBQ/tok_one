@@ -4,7 +4,6 @@ uint8_t T1_log_app_running = false;
 #define CRASH_STRING_SIZE 256
 char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
-
 // These are function pointers to our injected dependencies
 static void *   (* logger_malloc_func)(size_t) = NULL;
 static uint32_t (* logger_create_mutex_func)(void) = NULL;
