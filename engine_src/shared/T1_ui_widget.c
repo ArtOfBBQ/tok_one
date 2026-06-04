@@ -98,6 +98,7 @@ static float T1_ui_widget_get_pin_pos_given_mouse(
             ae->props.width_screen / 2.0f);
 }
 
+#if 0
 static void T1_ui_widget_get_pin_pos(
     ActiveUIElement * ae,
     float * xyz)
@@ -206,6 +207,7 @@ static void T1_ui_widget_get_pin_pos(
     xyz[2] =
         ae->props.z;
 }
+#endif
 
 static void T1_ui_widget_set_label(
     char * recip,

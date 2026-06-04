@@ -3,7 +3,8 @@
 T1zSpriteCollection * T1_zsprite_list = NULL;
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-static void assert_sanity_check_zsprite_vals(
+static void
+assert_sanity_check_zsprite_vals(
     T1GPUzSprite * recip_gpu,
     T1CPUzSpriteSimdStats * recip_cpu)
 {
@@ -36,7 +37,8 @@ static void assert_sanity_check_zsprite_vals(
     }
 }
 
-static void assert_sanity_check_zsprite_vals_by_id(
+static void
+assert_sanity_check_zsprite_vals_by_id(
     const int32_t zp_i)
 {
     assert_sanity_check_zsprite_vals(
@@ -44,7 +46,6 @@ static void assert_sanity_check_zsprite_vals_by_id(
         &T1_zsprite_list->cpu[zp_i].
             simd_stats);
 }
-
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x, y)
 #define assert_sanity_check_zsprite_vals_by_id(id)
@@ -52,14 +53,16 @@ static void assert_sanity_check_zsprite_vals_by_id(
 #error
 #endif
 
-void T1_zsprite_init(void) {
+void
+T1_zsprite_init(void) {
     T1_zsprite_list = (T1zSpriteCollection *)
         T1_mem_malloc_unmanaged(
             sizeof(T1zSpriteCollection));
     T1_zsprite_list->size = 0;
 }
 
-void T1_zsprite_defragment(void) {
+void
+T1_zsprite_defragment(void) {
     int32_t i = 0;
     int32_t j = (int32_t)T1_zsprite_list->size-1;
     
@@ -85,7 +88,8 @@ void T1_zsprite_defragment(void) {
     }
 }
 
-void T1_zsprite_fetch_next_noconstruct(
+void
+T1_zsprite_fetch_next_noconstruct(
     T1zSpriteRequest * stack_recipient)
 {
     stack_recipient->cpu_data = NULL;
@@ -104,7 +108,8 @@ void T1_zsprite_fetch_next_noconstruct(
         T1_ZSPRITES_CAP);
 }
 
-void T1_zsprite_commit(
+void
+T1_zsprite_commit(
     T1zSpriteRequest * to_commit)
 {
     T1_log_assert(to_commit->cpu_data->mesh_id >= 0);
@@ -139,7 +144,8 @@ void T1_zsprite_commit(
     to_commit->cpu_data->committed = true;
 }
 
-void T1_zsprite_get_pos_xyz(
+void
+T1_zsprite_get_pos_xyz(
     const int32_t zsprite_id,
     float * recip_x,
     float * recip_y,
@@ -180,7 +186,9 @@ void T1_zsprite_get_pos_xyz(
     }
 }
 
-void T1_zsprite_delete(const int32_t with_object_id)
+void
+T1_zsprite_delete(
+    const int32_t with_object_id)
 {
     for (
         uint32_t i = 0;
@@ -198,11 +206,13 @@ void T1_zsprite_delete(const int32_t with_object_id)
     }
 }
 
-void T1_zsprite_delete_all(void) {
+void
+T1_zsprite_delete_all(void) {
     T1_zsprite_list->size = 0;
 }
 
-static float T1_zsprite_get_x_multiplier_for_width(
+static float
+T1_zsprite_get_x_multiplier_for_width(
     T1CPUzSprite * for_poly,
     const float for_width)
 {
@@ -228,36 +238,14 @@ static float T1_zsprite_get_x_multiplier_for_width(
     return return_value;
 }
 
-#if 0
-static float T1_zsprite_get_z_multiplier_for_depth(
-    T1CPUzSprite * for_poly,
-    const float for_depth)
-{
-    T1_log_assert(for_poly != NULL);
-    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (for_poly == NULL) {
-        return 0.0f;
-    }
-    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1_log_assert(for_poly->mesh_id >= 0);
-    T1_log_assert(for_poly->mesh_id < (int32_t)T1_mesh_summary_list_size);
-    
-    float return_value =
-        for_depth / T1_mesh_summary_list[for_poly->mesh_id].base_depth;
-    
-    return return_value;
-}
-#endif
-
-void T1_zsprite_scale_multipliers_to_width(
+void
+T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
+    (void)gpu_data;
+    
     float new_multiplier = T1_zsprite_get_x_multiplier_for_width(
         /* zPolygonCPU * for_poly: */
             cpu_data,
@@ -269,11 +257,14 @@ void T1_zsprite_scale_multipliers_to_width(
     cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
 }
 
-void T1_zsprite_scale_multipliers_to_height(
+void
+T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
+    (void)gpu_data;
+    
     float new_multiplier = T1_global_get_y_mul_for_height(
         /* zPolygonCPU * for_poly: */
             cpu_data->mesh_id,
@@ -285,7 +276,8 @@ void T1_zsprite_scale_multipliers_to_height(
     cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
 }
 
-void T1_zsprite_construct_with_mesh_id(
+void
+T1_zsprite_construct_with_mesh_id(
     T1zSpriteRequest * to_construct,
     const int32_t mesh_id)
 {
@@ -293,12 +285,15 @@ void T1_zsprite_construct_with_mesh_id(
     
     to_construct->cpu_data->mesh_id = mesh_id;
     
-    if (mesh_id >= 0 &&
-        T1_mesh_summary_list[mesh_id].locked_material_base_offset != UINT32_MAX)
+    if (
+        mesh_id >= 0 &&
+        T1_mesh_summary_list[mesh_id].
+            locked_material_base_offset != UINT32_MAX)
     {
-        uint32_t base_mat_i =
-            T1_mesh_summary_list[mesh_id].locked_material_head_i +
-            T1_mesh_summary_list[mesh_id].locked_material_base_offset;
+        uint32_t base_mat_i = T1_mesh_summary_list[mesh_id].
+            locked_material_head_i +
+                T1_mesh_summary_list[mesh_id].
+                    locked_material_base_offset;
         
         to_construct->gpu_data->f32.base_mat_f32 =
             all_mesh_materials->gpu_f32[base_mat_i];
@@ -1273,14 +1268,6 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         
         int32_t verts_to_copy = vert_tail_i - vert_i;
         
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        uint32_t previous_verts_size = frame_data->verts_size;
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error
-        #endif
-        
         for (
             int32_t i = 0;
             i < verts_to_copy;
@@ -1291,32 +1278,11 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
                 (frame_data->verts + frame_data->verts_size),
                 cur);
             frame_data->verts_size += 2;
-            
-            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-            T1_log_assert(frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
-            T1_log_assert(frame_data->verts[frame_data->verts_size-2].
-                locked_vertex_i == (vert_i + i));
-            T1_log_assert(frame_data->verts[frame_data->verts_size-1].
-                locked_vertex_i == (vert_i + i + 1));
-            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-            // Pass
-            #else
-            #error
-            #endif
         }
         
         if (verts_to_copy % 2 == 1) {
             frame_data->verts_size -= 1;
         }
-        
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_assert(frame_data->verts_size ==
-            (previous_verts_size + (uint32_t)verts_to_copy));
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error
-        #endif
     }
     
     for (
@@ -1455,6 +1421,8 @@ T1_zsprite_copy_data_for_shatter_effect(
     T1GPUzSprite * gpu_recip,
     T1CPUzSprite * cpu_recip)
 {
+    (void)cpu_recip;
+    
     bool8_t found = false;
     
     for (

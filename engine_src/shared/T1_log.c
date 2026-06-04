@@ -113,6 +113,8 @@ T1_log_internal_append(
     const char * to_append,
     const char * caller_function_name)
 {
+    (void)to_append;
+    
     #ifndef T1_LOG_SILENCE
     printf("%s", to_append);
     #endif
@@ -354,6 +356,9 @@ T1_log_warn_internal(
         line_number,
         str_condition != NULL ? str_condition : "NULL");
     #elif T1_LOG_SILENCE == T1_INACTIVE
+    (void)line_number;
+    (void)file_name;
+    (void)func_name;
     #else
     #error
     #endif

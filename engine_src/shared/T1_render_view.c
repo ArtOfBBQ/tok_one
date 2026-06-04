@@ -158,6 +158,7 @@ T1_render_view_pos_point_to_pos_to_angle3(
 }
 #endif
 
+#if 0
 static void
 T1_render_view_angle3_to_direction(
     float * recip_dir,
@@ -175,7 +176,9 @@ T1_render_view_angle3_to_direction(
     recip_dir[1] = -sp;
     recip_dir[2] =  cy * cp;
 }
+#endif
 
+#if 0
 static void
 T1_render_view_get_arbitrary_lookat_point(
     float * new_pos,
@@ -194,6 +197,7 @@ T1_render_view_get_arbitrary_lookat_point(
     new_pos[1] = from_pos_xyz[1] + forward[1] * look_at_dist;
     new_pos[2] = from_pos_xyz[2] + forward[2] * look_at_dist;
 }
+#endif
 
 void T1_render_view_update_positions(
     void)

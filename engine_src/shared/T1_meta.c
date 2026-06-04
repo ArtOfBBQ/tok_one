@@ -1681,6 +1681,7 @@ static size_t T1_meta_shared_get_element_size_bytes(
             return 2;
         break;
         case T1_TYPE_U8:
+        case T1_TYPE_U4x2:
             return 1;
         break;
         case T1_TYPE_I64:
@@ -2269,10 +2270,8 @@ void T1_meta_write_to_known_field_uint(
     parsed.value_is_u64 = 1;
     parsed.value_is_f64 = 0;
     
-    MetaEnum * parent_enum = NULL;
     T1MetaType type_adj = field.internal_field->data_type;
-    uint8_t found_enum_field = 0;
-        
+    
     if (field.internal_field->is_enum)
     {
         return;

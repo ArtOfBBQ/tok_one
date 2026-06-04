@@ -5,6 +5,8 @@ static void assert_sanity_check_texquad_vals(
     T1GPUTexQuadf32 * gpu_f32,
     T1GPUTexQuadi32 * gpu_i32)
 {
+    (void)gpu_i32;
+    
     if (gpu_f32) {
         T1_log_assert(!isnan(gpu_f32->xyz[0]));
         T1_log_assert(!isnan(gpu_f32->xyz[1]));
@@ -397,6 +399,8 @@ void T1_texquad_anim_apply_effects_at_t(
     T1GPUTexQuad * recip_gpu,
     T1CPUTexQuad * recip_cpu)
 {
+    (void)recip_cpu;
+    
     SIMD_FLOAT simd_t_now = simd_set1_float(t_now);
     SIMD_FLOAT simd_t_b4  =
         simd_set1_float(t_applied);

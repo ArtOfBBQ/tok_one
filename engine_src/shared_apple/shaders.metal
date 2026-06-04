@@ -168,9 +168,11 @@ vertex_shader(
     
     out.worldpos = mesh_vertices * model;
     
+    #if 0
     float dist = distance(
         mesh_vertices,
         vector_float4(0.0f, 0.0f, 0.0f, 1.0f));
+    #endif
     
     out.worldpos += (
         zs->f32.explode *

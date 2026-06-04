@@ -92,10 +92,6 @@ typedef struct {
     id<MTLBuffer>  touch_id_buffer;
     id<MTLBuffer>  touch_id_buffer_all_zeros;
     
-    // Rendering state
-    uint32_t zbuf_cleared;
-    uint32_t rtt_cleared;
-    
     id<MTLTexture> cur_rtt;
     id<MTLTexture> cur_depth;
     id<MTLRenderPipelineState> cur_opq_pls;
@@ -107,7 +103,9 @@ typedef struct {
     T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
     uint8_t viewports_set[T1_RENDER_VIEW_CAP];
-    uint8_t metal_active;
+    bool8_t metal_active;
+    bool8_t zbuf_cleared;
+    bool8_t rtt_cleared;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;

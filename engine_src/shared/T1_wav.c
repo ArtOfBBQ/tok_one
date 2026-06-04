@@ -53,7 +53,6 @@ static void
 T1_wav_check_strings_equal(
     char * actual,
     char * expected_nullterm,
-    char * field_description,
     uint32_t * good)
 {
     uint32_t at_i = 0;
@@ -190,8 +189,6 @@ T1_wav_parse(
             file_header.riff,
         /* char * expected_nullterm: */
             "RIFF",
-        /* char * field_description: */
-            "file header",
         /* uint32_t * good: */
             good);
     if (!*good) { return; }
@@ -215,8 +212,6 @@ T1_wav_parse(
             file_header.wave,
         /* char * expected_nullterm: */
             "WAVE",
-        /* char * field_description: */
-            "file header",
         /* uint32_t * good: */
             good);
     if (!*good) { return; }

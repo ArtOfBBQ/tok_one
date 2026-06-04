@@ -33,7 +33,8 @@ static EngineSaveFile * engine_save_file = NULL;
 typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
-static void test_simd_functions_floats(void) {
+static void 
+test_simd_functions_floats(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
@@ -747,8 +748,8 @@ void T1_appinit_after_gpu_init_step2(
                     256,
                     "client_logic_early_startup() returned failure "
                     "without an error message");
-                T1_log_dump_and_crash(errmsg);
             }
+            T1_log_dump_and_crash(errmsg);
             return;
         }
         
@@ -805,7 +806,11 @@ void T1_appinit_after_gpu_init_step2(
     */
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
-    for (uint32_t i = 0; i < T1_mesh_summary_list_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < T1_mesh_summary_list_size;
+        i++)
+    {
         if (T1_mesh_summary_list[i].shattered_vertices_head_i < 0) {
             if (
                 T1_mesh_summary_list[i].shattered_vertices_size <
