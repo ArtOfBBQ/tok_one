@@ -40,7 +40,7 @@ void T1_logger_init(
     }
 }
 
-#if T1_LOG_SILENCE == T1_INACTIVE
+#if T1_LOG_PRINTF == T1_ACTIVE
 void
 T1_log_internal_append_uint(
     const uint32_t to_append,
@@ -115,9 +115,7 @@ T1_log_internal_append(
 {
     (void)to_append;
     
-    #ifndef T1_LOG_SILENCE
     printf("%s", to_append);
-    #endif
     
     // logger_mutex_lock_func(logger_mutex_id);
     
@@ -216,7 +214,7 @@ T1_log_internal_append(
     }
     #endif
 }
-#elif T1_LOG_SILENCE == T1_ACTIVE
+#elif T1_LOG_PRINTF == T1_INACTIVE
 #else
 #error
 #endif
@@ -257,15 +255,14 @@ T1_log_dump_and_crash(const char * crash_message) {
         crashed_top_of_screen_msg[i] = '\0';
     }
     
-    #ifndef T1_LOG_SILENCE
+    #if T1_LOG_PRINTF == T1_ACTIVE
     printf("DUMP & CRASHED: %s\n", crash_message);
+    #elif T1_LOG_PRINTF == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_log_app_running = false;
-    
-    #ifdef IGNORE_LOGGER
-    assert(0);
-    #endif
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -284,14 +281,14 @@ T1_log_assert_internal(
         return;
     }
     
-    #if T1_LOG_SILENCE == T1_ACTIVE
+    #if T1_LOG_PRINTF == T1_ACTIVE
     printf(
         "\n*****\nfailed condition (%s::%s::%i: %s\n*****\n",
         file_name != NULL ? file_name : "NULL",
         func_name != NULL ? func_name : "NULL",
         line_number,
         str_condition != NULL ? str_condition : "NULL");
-    #elif T1_LOG_SILENCE == T1_INACTIVE
+    #elif T1_LOG_PRINTF == T1_INACTIVE
     #else
     #error
     #endif
@@ -348,17 +345,18 @@ T1_log_warn_internal(
 {
     if (condition) { return; }
     
-    #if T1_LOG_SILENCE == T1_ACTIVE
+    #if T1_LOG_PRINTF == T1_ACTIVE
     printf(
         "\n*****\nWARN CONDITION (%s::%s::%i: %s\n*****\n",
         file_name != NULL ? file_name : "NULL",
         func_name != NULL ? func_name : "NULL",
         line_number,
         str_condition != NULL ? str_condition : "NULL");
-    #elif T1_LOG_SILENCE == T1_INACTIVE
+    #elif T1_LOG_PRINTF == T1_INACTIVE
     (void)line_number;
     (void)file_name;
     (void)func_name;
+    (void)str_condition;
     #else
     #error
     #endif

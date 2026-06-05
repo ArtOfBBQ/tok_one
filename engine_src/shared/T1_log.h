@@ -4,14 +4,14 @@
 #include <stddef.h>
 #include "T1_std.h"
 
-#if T1_LOG_SILENCE == T1_INACTIVE
+#if T1_LOG_PRINTF == T1_ACTIVE
 #include <stdio.h>
 #define T1_log_append(string) T1_log_internal_append(string, __func__)
 #define T1_log_append_char(num) T1_log_internal_append_char(num, __func__)
 #define T1_log_append_float(num) T1_log_internal_append_float(num, __func__)
 #define T1_log_append_int(num) T1_log_internal_append_int(num, __func__)
 #define T1_log_append_uint(num) T1_log_internal_append_uint(num, __func__)
-#elif T1_LOG_SILENCE == T1_ACTIVE
+#elif T1_LOG_PRINTF == T1_INACTIVE
 #define T1_log_append(string)
 #define T1_log_append_char(num)
 #define T1_log_append_float(num)
@@ -50,7 +50,7 @@ T1_logger_init(
     void (* mutex_lock_function)(const uint32_t mutex_id),
     void (* mutex_unlock_function)(const uint32_t mutex_id));
 
-#if T1_LOG_SILENCE == T1_INACTIVE
+#if T1_LOG_PRINTF == T1_ACTIVE
 /*
 don't use the internal_ functions, use the macros that call them.
 */
@@ -98,7 +98,7 @@ void
 T1_log_internal_append_float(
     const float to_append,
     const char * caller_function_name);
-#elif T1_LOG_SILENCE == T1_ACTIVE
+#elif T1_LOG_PRINTF == T1_INACTIVE
 #else
 #error
 #endif
