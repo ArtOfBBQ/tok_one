@@ -575,11 +575,9 @@ T1Tex T1_tex_array_get_filename_loc(
 {
     // T1_log_assert(for_filename != NULL);
     // T1_log_assert(for_filename[0] != '\0');
-    
-    T1Tex return_value = T1_TEX_NONE;
-    
+        
     if (for_filename == NULL || for_filename[0] == '\0') {
-        return return_value;
+        return T1_TEX_NONE;
     }
     
     for (int16_t i = 0; i < (int16_t)T1_tex_arrays_size; i++) {
@@ -590,14 +588,15 @@ T1Tex T1_tex_array_get_filename_loc(
                     T1_tex_arrays[i].images[j].name,
                     for_filename))
             {
+                T1Tex return_value;
                 T1_tex_set_array_i(&return_value, i);
                 T1_tex_set_slice_i(&return_value, j);
-                break;
+                return return_value;
             }
         }
     }
     
-    return return_value;
+    return T1_TEX_NONE;
 }
 
 void T1_tex_array_debug_dump_to_writables(

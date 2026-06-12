@@ -239,7 +239,9 @@ void T1_log_dump(uint8_t * good) {
 }
 
 void
-T1_log_dump_and_crash(const char * crash_message) {
+T1_log_dump_and_crash(
+    const char * crash_message)
+{
     uint8_t log_dump_succesful = false;
     T1_log_dump(&log_dump_succesful);
     
