@@ -1,5 +1,7 @@
 #include "T1_mem.h"
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "T1_log.h"
 
 

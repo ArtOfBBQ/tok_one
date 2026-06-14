@@ -1,12 +1,8 @@
-#ifndef OBJ_PARSER_H
-#define OBJ_PARSER_H
+#ifndef T1_OBJPARSER_H
+#define T1_OBJPARSER_H
 
 #include <stdint.h>
 #include <stddef.h>
-
-#ifndef OBJ_PARSER_IGNORE_ASSERTS
-#include <assert.h>
-#endif
 
 /*
 Reminder: "line elements" are unsupported for now
@@ -80,5 +76,5 @@ void T1_objparser_parse(
 */
 void T1_objparser_deinit(T1ParsedObj * to_free);
 
-#endif // OBJ_PARSER_H
+#endif // T1_OBJPARSER_H
 

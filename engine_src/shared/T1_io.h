@@ -1,7 +1,9 @@
 #ifndef T1_IO_H
 #define T1_IO_H
 
-#include "T1_std.h"
+#include <stdint.h>
+#include <stddef.h>
+
 
 #ifdef __cplusplus
 extern "C" {

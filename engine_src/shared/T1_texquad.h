@@ -1,13 +1,6 @@
 #ifndef T1_TEXQUAD_H
 #define T1_TEXQUAD_H
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-#include <math.h> // isnan check
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
-
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
 

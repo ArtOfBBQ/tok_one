@@ -1,13 +1,7 @@
 #ifndef T1_EASING_H
 #define T1_EASING_H
 
-#include <math.h>
 #include <stdint.h>
-
-#define T1_EASING_ASSERTS 1
-#if T1_EASING_ASSERTS
-#include <assert.h>
-#endif
 
 typedef enum : uint8_t {
     EASINGTYPE_NONE = 0,

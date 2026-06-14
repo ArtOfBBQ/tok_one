@@ -1,5 +1,12 @@
 #include "T1_rand.h"
 
+#if T1_RAND_ASSERTS_ACTIVE == T1_ACTIVE
+#include "assert.h"
+#elif T1_RAND_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 uint32_t T1_rand_seed = 0;
 
 static float float_sequence[FLOAT_SEQUENCE_SIZE] = {
@@ -778,8 +785,11 @@ int32_t T1_rand(void) {
         T1_rand_seed = 0;
     }
     
-    #ifndef RANDOM_IGNORE_ASSERTS
+    #if T1_RAND_ASSERTS_ACTIVE == T1_ACTIVE
     assert(random_sequence[T1_rand_seed] >= 0);
+    #elif T1_RAND_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return random_sequence[T1_rand_seed];

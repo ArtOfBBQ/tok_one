@@ -1,5 +1,7 @@
 #include "T1_appinit.h"
 
+#include <stdlib.h>
+
 #include "decode_png.h"
 
 #include "T1_std.h"

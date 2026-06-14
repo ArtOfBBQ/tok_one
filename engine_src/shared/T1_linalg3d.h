@@ -6,11 +6,6 @@ Linear algebra
 - Data is stored row-major
 - Vectors are considered to be column vectors
 */
-
-#include <assert.h>
-#include <stdint.h>
-#include <math.h>
-
 #if defined(__ARM_NEON)
 #include <arm_neon.h>
 #elif defined(__SSE2__)

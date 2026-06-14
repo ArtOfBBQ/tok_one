@@ -2,7 +2,6 @@
 #define OBJMODEL_H
 
 #include <stdint.h>
-#include <math.h>
 
 // ******************************************************
 // **                 Client functions                 **

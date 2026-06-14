@@ -1,5 +1,14 @@
 #include "T1_std.h"
 
+#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+#include <assert.h>
+#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
+#include "T1_simd.h"
+
 void * T1_std_memset(
     void * in,
     int value,

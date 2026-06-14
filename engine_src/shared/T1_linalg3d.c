@@ -1,5 +1,9 @@
 #include "T1_linalg3d.h"
 
+#include <assert.h>
+#include <stdint.h>
+#include <math.h>
+
 float T1_linal_float4_dot(
     const T1_linal_float4 a,
     const T1_linal_float4 b)

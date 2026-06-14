@@ -22,8 +22,6 @@
 #endif
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-#include <stdio.h>
-#include <assert.h>
 #define T1_log_warn(condition) T1_log_warn_internal(condition, #condition, __FILE__, __LINE__, __func__)
 #define T1_log_assert(condition) T1_log_assert_internal(condition, #condition, __FILE__, __LINE__, __func__)
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE

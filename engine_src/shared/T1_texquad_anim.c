@@ -6,6 +6,8 @@
 #include "T1_log.h"
 
 
+
+
 #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
 
 typedef struct {

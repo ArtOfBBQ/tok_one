@@ -1,5 +1,15 @@
 #include "T1_easing.h"
 
+#include <math.h>
+
+#define T1_EASING_ASSERTS_ACTIVE T1_ACTIVE
+#if T1_EASING_ASSERTS_ACTIVE == T1_ACTIVE
+#include <assert.h>
+#elif T1_EASING_ASSERTS_ACTIVE == T1_INATIVE
+#else
+#error
+#endif
+
 static float T1_easing_bounce_zero_to_zero(
     const float t,
     const float bounces)

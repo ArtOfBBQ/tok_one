@@ -8,9 +8,6 @@
 #error
 #endif
 
-#include <stdlib.h>
-#include <unistd.h>
-
 #include "T1_std.h"
 
 

@@ -391,8 +391,6 @@ static void parse_rgb_token(
             return;
         }
         
-        assert(token->number_value != NULL);
-        
         rgb_stat[rgb_i] =
             (float)token->number_value->double_precision;
     }
@@ -698,7 +696,6 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_NEWLINE: {
-                assert(token->number_value == NULL);
                 break;
             }
             case MTLTOKEN_NEWMTL: {
@@ -1094,8 +1091,6 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_SPECULAR_MAP: {
-                assert(0);
-                
                 break;
             }
             case MTLTOKEN_SPECULAR_EXPONENT_MAP: {

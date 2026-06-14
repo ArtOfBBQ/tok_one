@@ -1,6 +1,7 @@
 #include "T1_render.h"
 
 #include "T1_std.h"
+#include "T1_log.h"
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_simd.h"

@@ -2,6 +2,13 @@
 
 #include <stdlib.h> // TODO: stop using qsort
 
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#include <math.h> // isnan check
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 #include "T1_mem.h"
 #include "T1_simd.h"
 #include "T1_tex.h"

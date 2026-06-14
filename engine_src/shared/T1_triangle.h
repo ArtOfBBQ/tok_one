@@ -1,10 +1,8 @@
 #ifndef T1_TRIANGLE_H
 #define T1_TRIANGLE_H
 
-#include <math.h>
-
+#include "T1_simd.h"
 #include "T1_std.h"
-#include "T1_log.h"
 
 #ifdef __cplusplus
 extern "C" {

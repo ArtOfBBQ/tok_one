@@ -1,23 +1,20 @@
 #include "T1_objmodel.h"
 
-#include "T1_cpu_gpu_shared_types.h"
+#include <math.h>
 
 #include "T1_std.h"
+#include "T1_cpu_gpu_shared_types.h"
+#include "T1_global.h"
 #include "T1_mem.h"
 #include "T1_tex.h"
-#include "T1_global.h"
 #include "T1_log.h"
-
 #include "T1_triangle.h"
 #include "T1_tex_array.h"
-
 #include "T1_objparser.h"
 #include "T1_mtlparser.h"
-// #include "T1_platform_layer.h"
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_render_view.h"
-
 #include "T1_platform_layer.h"
 
 static void construct_mesh_summary(

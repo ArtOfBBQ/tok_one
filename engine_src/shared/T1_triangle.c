@@ -1,5 +1,8 @@
 #include "T1_triangle.h"
 
+#include <math.h>
+#include "T1_log.h"
+
 static float get_magnitude_vec4f(
     const SIMD_VEC4F input_xyz)
 {

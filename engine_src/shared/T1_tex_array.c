@@ -195,22 +195,6 @@ register_to_texturearray_by_splitting_image(
     T1_tex_arrays[ta_i].single_img_width  = expected_width;
     T1_tex_arrays[ta_i].single_img_height = expected_height;
     
-    #if 0
-    T1_platform_gpu_copy_texture_array(
-        /* const int32_t texture_array_i: */
-            ta_i,
-        /* const uint32_t num_images: */
-            rows * columns,
-        /* const uint32_t single_image_width: */
-            T1_tex_arrays[ta_i].single_img_width,
-        /* const uint32_t single_image_height: */
-            T1_tex_arrays[ta_i].single_img_height,
-        /* const bool32_t is_render_target: */
-            false,
-        /* const uint32_t use_bc1_compression: */
-            false);
-    #endif
-    
     T1_tex_arrays[ta_i].images_size = rows * columns;
     T1_tex_arrays[ta_i].is_render_target = false;
     T1_tex_arrays[ta_i].bc1_compressed = false;
@@ -291,7 +275,7 @@ register_to_texturearray_by_splitting_image(
     }
     
     for (uint32_t i = 0; i < 256; i++) {
-        free(filenames[i]);
+        T1_mem_free_managed(filenames[i]);
     }
 }
 

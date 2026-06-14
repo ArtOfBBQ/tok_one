@@ -7,7 +7,6 @@
 #include "T1_cpu_to_gpu.h"
 #include "T1_easing.h"
 
-
 void T1_texquad_anim_init(
     uint32_t (* funcptr_init_mutex_and_return_id)(void),
     void (* funcptr_mutex_lock)(const uint32_t),

@@ -1,5 +1,12 @@
 #include "T1_objparser.h"
 
+#if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
+#include <assert.h> 
+#elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 static void * (* objparser_malloc_func)(size_t);
 static void   (*   objparser_free_func)(void *);
 
@@ -15,9 +22,12 @@ static unsigned int consume_uint(
     char ** raw_buffer,
     uint8_t * good)
 {
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(*raw_buffer[0] >= '0');
     assert(*raw_buffer[0] <= '9');
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if ((*raw_buffer)[0] < '0' || (*raw_buffer)[0] > '9') {
@@ -47,9 +57,12 @@ static float consume_float(
         (*raw_buffer)++;
     }
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert((*raw_buffer)[0] >= '0');
     assert((*raw_buffer)[0] <= '9');
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if ((*raw_buffer)[0] < '0' || (*raw_buffer)[0] > '9') {
@@ -103,9 +116,12 @@ static float consume_float(
             (*raw_buffer)++;
         }
         
-        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert((*raw_buffer)[0] >= '0');
         assert((*raw_buffer)[0] <= '9');
+        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         unsigned int e_num = consume_uint(raw_buffer, good);
@@ -140,8 +156,11 @@ static void consume_separated_uints(
     
     if (!*good) { return; }
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(new_num < 2147483647);
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     recipient[0] = (int)new_num;
     
@@ -162,8 +181,11 @@ static void consume_separated_uints(
         
         if (!good) { return; }
         
-        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(new_num < 2147483647);
+        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         recipient[recipient_i] = (int)new_num;
     }
@@ -217,8 +239,11 @@ static int get_material_i_or_register_new(
 {
     int already_exist_i = -1;
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(name[0] != '\0');
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     unsigned int char_i;
@@ -259,9 +284,12 @@ static int get_material_i_or_register_new(
         }
     }
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     // no room for more materials? impossible
     assert(first_unused_material >= 0);
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     char_i = 0;
@@ -283,9 +311,12 @@ void T1_objparser_parse(
 {
     char * raw_buffer = (char *)raw_buf;
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(recipient != 0);
     assert(raw_buffer != 0);
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     *success = 1;
@@ -359,8 +390,11 @@ void T1_objparser_parse(
                 recipient->materials_count += 1;
             }
             
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             assert(new_material_i < (int)recipient->materials_count);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         }
         if (raw_buffer[i] == 'v' && raw_buffer[i + 1] == 'n') {
@@ -386,8 +420,11 @@ void T1_objparser_parse(
                 // We're not supporting faces with more than 4 vertices for now
                 // (we just count spaces, so this can also be triggered by
                 // consecutive spaces)
-                #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
+                #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                #else
+                #error
                 #endif
                 
                 *success = 0;
@@ -399,8 +436,11 @@ void T1_objparser_parse(
     
     if (recipient->vertices_count < 3) {
         // We didn't even find 1 triangle's worth of vertices?
-        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
+        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         *success = 0;
         return;
@@ -424,9 +464,12 @@ void T1_objparser_parse(
         recipient->normals_vn = objparser_malloc_func(
             sizeof(unsigned int[3]) * recipient->normals_count);
         
-        #ifndef T1_OBJ_PARSER_IGNORE_ASSERTS
+        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(
             recipient->triangles_count + recipient->quads_count > 0);
+        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         if (recipient->triangles_count > 0) {
@@ -443,9 +486,12 @@ void T1_objparser_parse(
         recipient->textures_vt_uv = objparser_malloc_func(
             sizeof(float[2]) * recipient->textures_count);
         
-        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(
             recipient->triangles_count + recipient->quads_count > 0);
+        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         if (recipient->triangles_count > 0) {
@@ -522,8 +568,11 @@ void T1_objparser_parse(
         }
         
         if (raw_buffer[0] == '\0') {
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             return;
         }
@@ -568,8 +617,11 @@ void T1_objparser_parse(
                 smooth_shading = 0;
             } else {
                 // expected 's on', 's off', 's 1', or 's 0'
-                #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
+                #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                #else
+                #error
                 #endif
                 
                 *success = 0;
@@ -600,14 +652,20 @@ void T1_objparser_parse(
             }
             
             for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
-                #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(cur_vertex_i < recipient->vertices_count);
+                #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                #else
+                #error
                 #endif
                 recipient->vertices[cur_vertex_i][axis_i] =
                     consume_float(&raw_buffer, success);
                 if (!*success) {
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(0);
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                     return;
                 }
@@ -618,9 +676,12 @@ void T1_objparser_parse(
             }
             
             cur_vertex_i += 1;
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             // actually should be < vertices_count, but this may be the last one
             assert(cur_vertex_i <= recipient->vertices_count);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         } else if (raw_buffer[0] == 'f' && raw_buffer[1] == ' ') {
             // face data
@@ -635,16 +696,22 @@ void T1_objparser_parse(
                 raw_buffer++;
             }
             
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             assert(vertices_in_face_count > 2);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
             int indexes[4];
             switch (vertices_in_face_count) {
                 case 3: {
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(recipient->triangles != 0);
                     assert(recipient->triangles_count > 0);
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                     
                     unsigned int consec_entry_i = 0;
@@ -659,15 +726,21 @@ void T1_objparser_parse(
                             success);
                         
                         if (!success) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(0);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             return;
                         }
                         
                         if (indexes[0] < 0) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(0);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             success = 0;
                             return;
@@ -677,11 +750,14 @@ void T1_objparser_parse(
                             (unsigned int)indexes[0];
                         
                         if (indexes[1] >= 0) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->triangle_textures != 0);
                             assert(indexes[1] >= 1);
                             assert(
                                 indexes[1] <= (int)recipient->textures_count);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             recipient->triangle_textures[cur_triangle_i]
                                 [consec_entry_i] = (unsigned int)indexes[1];
@@ -690,21 +766,30 @@ void T1_objparser_parse(
                         if (indexes[2] >= 0) {
                             recipient->triangle_normals[cur_triangle_i]
                                 [consec_entry_i] = (unsigned int)indexes[2];
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->triangle_normals[cur_triangle_i]
                                 [consec_entry_i] > 0);
                             assert(recipient->triangle_normals[cur_triangle_i]
                                 [consec_entry_i] <= recipient->normals_count);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                         }
                         
-                        #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                         assert(indexes[3] == -1);
+                        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                        #else
+                        #error
                         #endif
                         
                         if (indexes[3] != -1) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(0);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             *success = 0;
                             return;
@@ -724,10 +809,13 @@ void T1_objparser_parse(
                     break;
                 }
                 case 4: {
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(recipient->quads != 0);
                     assert(recipient->quads_count > 0);
                     assert(cur_quad_i < recipient->quads_count);
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                     
                     unsigned int consec_entry_i = 0;
@@ -744,8 +832,11 @@ void T1_objparser_parse(
                         if (!success) { return; }
                         
                         if (indexes[0] < 0) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(0);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             success = 0;
                             return;
@@ -755,19 +846,25 @@ void T1_objparser_parse(
                             (unsigned int)indexes[0];
                         
                         if (indexes[1] >= 0) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->quad_textures != 0);
                             assert(indexes[1] >= 1);
                             assert(
                                 indexes[1] <= (int)recipient->textures_count);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             recipient->quad_textures[cur_quad_i]
                                 [consec_entry_i] = (unsigned int)indexes[1];
                         }
                         
                         if (indexes[2] >= 0) {
-                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->quad_normals != 0);
+                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                            #else
+                            #error
                             #endif
                             recipient->quad_normals[cur_quad_i]
                                 [consec_entry_i] = (unsigned int)indexes[2];
@@ -783,7 +880,7 @@ void T1_objparser_parse(
                     
                     recipient->quads[cur_quad_i][5] = cur_material_i;
                     
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     if (recipient->quad_textures != 0) {
                         assert(recipient->quad_textures[cur_quad_i][0] >= 0);
                         assert(recipient->quad_textures[cur_quad_i][1] >= 0);
@@ -798,13 +895,19 @@ void T1_objparser_parse(
                         assert(recipient->quad_textures[cur_quad_i][3] <=
                             recipient->textures_count);
                     }
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                     cur_quad_i += 1;
                     break;
                 }
                 default: {
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(0);
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                 }
             }
@@ -835,8 +938,11 @@ void T1_objparser_parse(
                 (void)w_coordinate;
                 
                 if (!*success) {
-                    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(0);
+                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
                     #endif
                     return;
                 }
@@ -847,9 +953,12 @@ void T1_objparser_parse(
             }
             
             cur_texture_i += 1;
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             // actually should be < vertices_count, but this may be the last one
             assert(cur_texture_i <= recipient->textures_count);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         }  else if (raw_buffer[0] == 'v' && raw_buffer[1] == 'n') {
             
@@ -871,9 +980,12 @@ void T1_objparser_parse(
             }
             
             cur_normal_i += 1;
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             // actually should be < normals_count, but this may be the last one
             assert(cur_normal_i <= recipient->normals_count);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
         } else if (
@@ -903,8 +1015,11 @@ void T1_objparser_parse(
                 recipient,
                 material_name);
         } else {
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             *success = 0;
             return;
@@ -916,8 +1031,11 @@ void T1_objparser_parse(
         
         if (raw_buffer[0] != '\n' && raw_buffer[0] != '\r') {
             *success = 0;
-            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
+            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             return;
         }
@@ -933,7 +1051,7 @@ void T1_objparser_parse(
         }
     }
     
-    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     for (unsigned int tri_i = 0; tri_i < recipient->triangles_count; tri_i++) {
         if (recipient->triangle_normals != 0) {
             assert(recipient->triangle_normals[tri_i][0] >= 1);
@@ -957,6 +1075,9 @@ void T1_objparser_parse(
             }
         }
     }
+    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return;

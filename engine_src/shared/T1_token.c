@@ -1,5 +1,12 @@
 #include "T1_token.h"
 
+#if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
+#include <assert.h>
+#elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 static void T1_token_strcat(
     char * recip,
     const uint32_t cap,
@@ -81,7 +88,12 @@ void T1_token_init(
 {
     *good = 0;
     
+    #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
     assert(tts == NULL); // aready initted
+    #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     tts = arg_malloc_func(sizeof(TokTokenState));
     if (!tts) {
         tts->good = 0;
@@ -143,7 +155,12 @@ void T1_token_reset(uint8_t * good) {
     tts->string_literal_enum_value = UINT32_MAX;
     tts->good = 1;
     
+    #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
     assert(tts->ascii_store_next_i == 0);
+    #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     *good = 1;
 }
@@ -450,11 +467,14 @@ static void toktoken_string_match_tokens(
         // If there are no stop conditions registered, this is automatically
         // a hit. If so, there must also be 0 middle characters
         if (tts->regs[i].stop_patterns[0] == NULL) {
-            #ifndef T1_TOKEN_NO_ASSERTS
+            #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
             for (uint32_t pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
                 assert(tts->regs[i].stop_patterns[pat_i] == NULL);
             }
             assert(tts->regs[i].middle_cap == 0);
+            #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             return;
         }
@@ -785,8 +805,11 @@ void T1_token_run(
     tts->tokens_size = 0;
     tts->numbers_size = 0;
     
-    #ifndef T1_TOKEN_IGNORE_ASSERTS
+    #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
     assert(good != NULL);
+    #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     *good = 0;
@@ -818,10 +841,13 @@ void T1_token_run(
             &start_sz,
             &mid_sz,
             &stop_sz);
-        #ifndef T1_TOKEN_NO_ASSERTS
+        #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
         if (matching_token_i < UINT32_MAX) {
             assert(start_sz > 0);
         }
+        #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         if (matching_token_i == UINT32_MAX) {
@@ -849,7 +875,12 @@ void T1_token_run(
             
             previous_lit_token->string_value[previous_lit_ascii_i] =
                 input[i];
+            #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
             assert(previous_lit_ascii_i+1 < STRING_LITERAL_CAP);;
+            #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
             previous_lit_token->string_value[previous_lit_ascii_i+1] =
                 '\0';
             previous_lit_ascii_i += 1;
@@ -910,8 +941,11 @@ void T1_token_run(
                     new->string_value,
                     (uint32_t)start_sz + mid_sz + stop_sz,
                     tts->regs[matching_token_i].start_pattern);
-                #ifndef T1_TOKEN_NO_ASSERTS
+                #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(new->string_value[start_sz] == '\0');
+                #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
+                #else
+                #error
                 #endif
                 tts->ascii_store_next_i += start_sz;
                 new->string_value_size += start_sz;

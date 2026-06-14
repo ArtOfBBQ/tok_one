@@ -5,7 +5,6 @@
 
 #include "T1_cpu_to_gpu.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

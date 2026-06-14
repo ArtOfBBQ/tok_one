@@ -3,11 +3,6 @@
 
 #include "T1_simd.h"
 
-// #define RANDOM_IGNORE_ASSERTS
-#ifndef RANDOM_IGNORE_ASSERTS
-#include "assert.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

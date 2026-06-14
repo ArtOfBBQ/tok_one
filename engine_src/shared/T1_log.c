@@ -1,6 +1,15 @@
 #include "T1_log.h"
 #include "T1_std.h"
 
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#include <stdio.h>
+#include <assert.h>
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
+
 uint8_t T1_log_app_running = false;
 char * T1_log_crash_msg = NULL;
 

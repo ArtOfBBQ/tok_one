@@ -4,15 +4,6 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#include <assert.h>
-#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
-
-#include "T1_simd.h"
-
 #ifndef __cplusplus
 #define true 1
 #define false 0

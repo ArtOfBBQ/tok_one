@@ -1,11 +1,10 @@
-#ifndef CPU_GPU_SHARED_TYPES_H
-#define CPU_GPU_SHARED_TYPES_H
+#ifndef T1_CPU_GPU_SHARED_TYPES_H
+#define T1_CPU_GPU_SHARED_TYPES_H
 
 #include "clientlogic_macro_settings.h"
 
 #define CAM_DEPTH_FRAGARG_I 30
 #define SHADOW_MAPS_1ST_FRAGARG_I 31
-
 
 #define DEPTH_TEXTUREARRAYS_I 54321
 

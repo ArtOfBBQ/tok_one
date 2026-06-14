@@ -4,10 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef T1_TOKEN_NO_ASSERTS
-#include <assert.h>
-#endif
-
 
 /*
 THE API FOR TRANSFORMING TEXT TO TOKENS (below)

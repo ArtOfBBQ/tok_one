@@ -1,5 +1,7 @@
 #include "T1_zlight.h"
 
+#include "T1_log.h"
+
 T1zLight * T1_zlights = NULL;
 uint32_t T1_zlights_size = 0;
 
