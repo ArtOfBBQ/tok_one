@@ -1,10 +1,7 @@
 #ifndef T1_FRAMEANIM_H
 #define T1_FRAMEANIM_H
 
-#include "T1_std.h"
-#include "T1_mem.h"
 #include "T1_cpu_to_gpu.h"
-#include "T1_zsprite.h"
 
 #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
 

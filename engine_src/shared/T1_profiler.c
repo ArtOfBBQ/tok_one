@@ -1,5 +1,15 @@
 #include "T1_profiler.h"
 
+#include "T1_std.h"
+#include "T1_log.h"
+#include "T1_zspriteid.h"
+#include "T1_io.h"
+
+#include "T1_global.h"
+#include "T1_zsprite.h"
+#include "T1_text.h"
+
+
 #if T1_PROFILER_ACTIVE == T1_ACTIVE
 
 #ifndef __x86_64__

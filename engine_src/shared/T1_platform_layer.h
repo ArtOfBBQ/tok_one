@@ -26,56 +26,11 @@ on each platform
 #ifndef T1_PLATFORM_LAYER_H
 #define T1_PLATFORM_LAYER_H
 
-#ifdef _WIN32 
-#include <windows.h>
-#include <Knownfolders.h>
-#include <Libloaderapi.h>
-#include <shlwapi.h>
-#endif
-
-#ifdef PLATFORM_IOS
-#import <UIKit/UIKit.h>
-#endif
-
-#define T1_MUTEXES_SIZE 100
-
-#if T1_SHARED_APPLE_PLATFORM
-#import <Foundation/Foundation.h>
-#include <pthread.h>
-#include <errno.h> // for pthreads error codes
-#include <sys/time.h>
-#include <sys/sysctl.h> // for sysctl to get clock frequency
-#include "T1_apple_audio.h"
-#endif
-
-#if T1_LINUX_PLATFORM
-#include <pthread.h>
-#include <sys/errno.h> // for pthreads errors
-#include <sys/time.h>
-#include <sys/mman.h>
-#include <sys/stat.h> // stat function to check if dir exists
-#include <sys/errno.h>
-#include <fcntl.h> // contains flags like O_RDONLY for open()
-#include <dirent.h> // to list files in a dir
-#endif
-
-#ifdef __ARM_NEON
-#include "arm_neon.h"
-#elif defined(__AVX__)
-#include "immintrin.h"
-#endif
+#include "T1_std.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "decode_bmp.h"
-#include "T1_std.h"
-#include "T1_mem.h"
-#include "T1_log.h"
-#include "T1_img.h"
-#include "T1_global.h"
-#include "T1_ui_widget.h"
 
 void T1_platform_init(
     void ** unmanaged_memory_store,

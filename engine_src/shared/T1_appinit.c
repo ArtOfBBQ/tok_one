@@ -1,5 +1,43 @@
 #include "T1_appinit.h"
 
+#include "decode_png.h"
+
+#include "T1_std.h"
+#include "T1_mem.h"
+#include "T1_meta.h"
+#include "T1_log.h"
+#include "T1_tex.h"
+#include "T1_tex_files.h"
+#include "T1_profiler.h"
+#include "T1_rand.h"
+#include "T1_objmodel.h"
+#include "T1_audio.h"
+#include "T1_zlight.h"
+#include "T1_text.h"
+#include "T1_ui_widget.h"
+#include "T1_io.h"
+#include "T1_global.h"
+#include "T1_term.h"
+#include "T1_texquad.h"
+#include "T1_zsprite_anim.h"
+#include "T1_render.h"
+#include "T1_gameloop.h"
+#include "T1_token.h"
+#include "T1_mtlparser.h"
+#include "T1_objparser.h"
+#include "T1_particle.h"
+#include "T1_texquad_anim.h"
+#include "T1_frame_anim.h"
+#include "T1_mesh_summary.h"
+#include "T1_material.h"
+#include "T1_tex_array.h"
+
+#include "T1_clientlogic.h"
+#include "T1_platform_layer.h"
+
+
+
+
 #define IMAGE_DECODING_THREADS_MAX 10
 typedef struct InitApplicationState {
     uint32_t image_decoding_threads;

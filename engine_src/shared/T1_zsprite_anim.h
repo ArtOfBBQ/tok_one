@@ -5,13 +5,8 @@
 
 #include "T1_std.h"
 #include "T1_simd.h"
-#include "T1_mem.h"
-#include "T1_cpu_to_gpu.h"
-#include "T1_easing.h"
 #include "T1_zsprite.h"
-#include "T1_render_view.h"
-// #include "T1_particle.h"
-// #include "clientlogic.h"
+#include "T1_easing.h"
 
 
 void T1_zsprite_anim_init(

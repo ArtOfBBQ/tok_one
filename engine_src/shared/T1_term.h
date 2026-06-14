@@ -3,18 +3,12 @@
 #ifndef T1_TERM_H
 #define T1_TERM_H
 
-#include "T1_mem.h"
-#include "T1_global.h"
-#include "T1_io.h"
-#include "T1_zsprite.h"
-#include "T1_text.h"
-#include "T1_clientlogic.h"
-#include "T1_wav.h"
-#include "T1_audio.h"
+#include "T1_std.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 extern bool8_t T1_term_active;
 

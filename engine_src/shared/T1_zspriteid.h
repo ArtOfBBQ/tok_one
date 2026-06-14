@@ -1,11 +1,12 @@
 #ifndef T1_ZPSPRITEID_H
 #define T1_ZPSPRITEID_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "T1_log.h"
 
 #define T1_ZSPRITEID_FPS_COUNTER 0
 #define T1_ZSPRITEID_DEBUG_TEXT 1

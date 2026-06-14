@@ -1,22 +1,6 @@
 #ifndef T1_COLLISION_H
 #define T1_COLLISION_H
 
-#include <math.h>
-
-#define T1_COLLISION_SILENCE
-#ifndef T1_COLLISION_SILENCE
-#include <stdio.h>
-#endif
-
-#define T1_COLLISION_IGNORE_ASSERTS
-#ifndef T1_COLLISION_IGNORE_ASSERTS
-#include <assert.h>
-#endif
-
-#ifndef T1_COL_FLT_MAX
-#define T1_COL_FLT_MAX 3.402823466e+38F
-#endif
-
 int
 T1_collision_point_hits_AArect(
     const float point[2],

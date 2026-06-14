@@ -1,10 +1,9 @@
 #ifndef T1_MATERIAL_H
 #define T1_MATERIAL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-#include "T1_std.h"
-#include "T1_log.h"
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct LockedMaterialCollection {

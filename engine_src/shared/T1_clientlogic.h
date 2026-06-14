@@ -11,31 +11,7 @@ extern "C" {
 #endif
 
 #include <string.h>
-
-#include "T1_meta.h"
-#include "T1_rand.h"
-#include "T1_mem.h"
-#include "T1_collision.h"
-#include "T1_tex_array.h"
-#include "T1_tex_files.h"
-#include "T1_texquad.h"
-#include "T1_zsprite.h"
-#include "T1_zlight.h"
-#include "T1_particle.h"
-#include "T1_cpu_gpu_shared_types.h"
-#include "T1_img.h"
-#include "T1_platform_layer.h"
-#include "debigulator/src/decode_png.h"
-#include "debigulator/src/decode_bmp.h"
-#include "T1_io.h"
-#include "T1_text.h"
-#include "T1_ui_widget.h"
-#include "T1_zsprite_anim.h"
-#include "T1_texquad_anim.h"
-#include "T1_log.h"
-#include "T1_term.h"
-
-#include "clientlogic_additional_defs.h"
+#include <stdint.h>
 
 extern uint8_t T1_log_app_running;
 

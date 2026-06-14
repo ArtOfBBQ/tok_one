@@ -1,5 +1,12 @@
 #include "T1_particle.h"
 
+#include "T1_mem.h"
+#include "T1_log.h"
+#include "T1_global.h"
+#include "T1_rand.h"
+#include "T1_zsprite.h"
+#include "T1_mesh_summary.h"
+
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
 #define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }

@@ -1,15 +1,10 @@
 #ifndef T1_TEX_ARRAY_H
 #define T1_TEX_ARRAY_H
 
-#include "debigulator/src/decode_png.h"
-#include "debigulator/src/decode_bmp.h"
-
+#include "T1_std.h"
 #include "T1_tex.h"
-#include "T1_platform_layer.h"
-#include "T1_log.h"
-#include "T1_mem.h"
 #include "T1_img.h"
-#include "T1_cpu_gpu_shared_types.h"
+
 
 #define T1_TEX_NAME_CAP 128
 typedef struct {

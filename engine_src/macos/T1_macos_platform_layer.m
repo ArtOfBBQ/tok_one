@@ -1,5 +1,6 @@
 #import "Appkit/Appkit.h"
 
+#include "T1_log.h"
 #include "T1_platform_layer.h"
 
 void T1_platform_get_writables_dir(

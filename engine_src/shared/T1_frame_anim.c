@@ -1,5 +1,10 @@
 #include "T1_frame_anim.h"
 
+#include "T1_log.h"
+#include "T1_std.h"
+#include "T1_mem.h"
+#include "T1_zsprite.h"
+
 #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
 
 typedef enum : uint8_t {

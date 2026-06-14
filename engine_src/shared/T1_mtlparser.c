@@ -1,5 +1,8 @@
 #include "T1_mtlparser.h"
 
+#include "T1_std.h"
+#include "T1_token.h"
+
 #define PARSED_MATERIALS_CAP 100
 
 #define ERROR_MSG_CAP 256

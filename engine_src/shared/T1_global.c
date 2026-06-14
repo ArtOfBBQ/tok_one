@@ -1,5 +1,8 @@
 #include "T1_global.h"
 
+#include "T1_log.h"
+#include "T1_mesh_summary.h"
+
 T1Globals * T1_global = NULL;
 
 void

@@ -1,5 +1,12 @@
 #include "T1_text.h"
 
+#include "T1_log.h"
+#include "T1_tex.h"
+#include "T1_zspriteid.h"
+#include "T1_render_view.h"
+#include "T1_platform_layer.h"
+
+
 #pragma pack(push, 1)
 typedef struct FontMetrics {
     float ascent;

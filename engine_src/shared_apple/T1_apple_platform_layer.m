@@ -1,5 +1,14 @@
 #include "T1_platform_layer.h"
 
+#import <Foundation/Foundation.h>
+#include <pthread.h>
+#include <errno.h> // for pthreads error codes
+#include <sys/time.h>
+#include <sys/sysctl.h> // for sysctl to get clock frequency
+
+#include "T1_log.h"
+#include "T1_apple_audio.h"
+
 uint32_t T1_platform_get_dir_separator_size(void) {
     return 1;
 }

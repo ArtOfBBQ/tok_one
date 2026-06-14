@@ -1,7 +1,6 @@
 #ifndef T1_TEXT_H
 #define T1_TEXT_H
 
-#include "T1_platform_layer.h"
 #include "T1_texquad.h"
 
 #ifdef __cplusplus

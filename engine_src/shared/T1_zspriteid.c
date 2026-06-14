@@ -1,5 +1,8 @@
 #include "T1_zspriteid.h"
 
+#include "T1_log.h"
+
+
 // an object id identifies a group of graphical items (like 2 images and
 // a bunch of letters that combine to make a button)
 int32_t T1_zspriteid_retired = T1_ZSPRITEID_RETIRED_BUT_NOT_DELETED + 1;

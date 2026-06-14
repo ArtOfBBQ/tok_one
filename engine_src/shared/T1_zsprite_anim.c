@@ -1,5 +1,12 @@
 #include "T1_zsprite_anim.h"
 
+#include "T1_mem.h"
+#include "T1_log.h"
+#include "T1_global.h"
+#include "T1_cpu_to_gpu.h"
+#include "T1_easing.h"
+#include "T1_render_view.h"
+
 #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
 
 typedef struct {

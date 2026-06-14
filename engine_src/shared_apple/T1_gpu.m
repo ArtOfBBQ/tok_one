@@ -1,5 +1,14 @@
 #import "T1_gpu.h"
 
+#include "T1_global.h"
+#include "T1_mem.h"
+#include "T1_log.h"
+#include "T1_material.h"
+#include "T1_mesh_summary.h"
+#include "T1_tex_array.h"
+#include "T1_render_view.h"
+
+
 #define T1_DRAWING_SEMAPHORE_ACTIVE T1_INACTIVE
 
 typedef struct {

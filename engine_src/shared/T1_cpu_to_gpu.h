@@ -1,8 +1,10 @@
 #ifndef T1_CPU_TO_GPU_H
 #define T1_CPU_TO_GPU_H
 
+#include <stdint.h>
+
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_std.h"
+
 
 typedef struct {
     int32_t zsprite_id;

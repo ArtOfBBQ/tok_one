@@ -1,10 +1,9 @@
 #ifndef T1_TEX_FILES_H
 #define T1_TEX_FILES_H
 
-#include "T1_mem.h"
-#include "T1_img.h"
-#include "T1_tex_array.h"
-#include "T1_platform_layer.h"
+#include <stdint.h>
+
+#include "T1_std.h"
 
 
 /*

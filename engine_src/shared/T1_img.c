@@ -1,5 +1,14 @@
 #include "T1_img.h"
 
+#define T1_IMG_SILENCE
+#ifndef T1_IMG_SILENCE
+#include "stdio.h"
+#endif
+
+#ifndef T1_IMG_IGNORE_ASSERTS
+#include "assert.h"
+#endif
+
 uint64_t
 T1_img_get_sum_rgba(
     const T1Img * input)

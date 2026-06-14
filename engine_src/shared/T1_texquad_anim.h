@@ -4,11 +4,9 @@
 #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
 
 #include "T1_std.h"
-#include "T1_mem.h"
 #include "T1_cpu_to_gpu.h"
-#include "T1_global.h"
 #include "T1_easing.h"
-#include "T1_texquad.h"
+
 
 void T1_texquad_anim_init(
     uint32_t (* funcptr_init_mutex_and_return_id)(void),

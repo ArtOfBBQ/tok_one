@@ -1,6 +1,10 @@
 #ifndef T1_PARTICLE_H
 #define T1_PARTICLE_H
 
+#include "T1_std.h"
+#include "T1_cpu_to_gpu.h"
+#include "T1_easing.h"
+
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
 #ifdef __cplusplus
@@ -9,14 +13,6 @@ extern "C" {
 
 #define MAX_PARTICLE_TEXTURES 10
 #define PARTICLE_RGBA_PROGRESSION_MAX 10
-
-#include "T1_cpu_to_gpu.h"
-#include "T1_std.h"
-#include "T1_log.h"
-#include "T1_rand.h"
-#include "T1_zsprite.h"
-#include "T1_easing.h"
-#include "T1_mesh_summary.h"
 
 /*
 If "randomize" is set:

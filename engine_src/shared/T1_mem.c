@@ -1,5 +1,8 @@
 #include "T1_mem.h"
 
+#include "T1_log.h"
+
+
 #define MEM_ALIGNMENT_BYTES 64
 
 //#define MANAGED_MEMORY_STACK_SIZE 1000

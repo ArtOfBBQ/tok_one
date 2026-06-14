@@ -2,7 +2,7 @@
 #define T1_LOGGER_H
 
 #include <stddef.h>
-#include "T1_std.h"
+#include <stdint.h>
 
 #if T1_LOG_PRINTF == T1_ACTIVE
 #include <stdio.h>
@@ -36,8 +36,8 @@
 extern "C" {
 #endif
 
-extern char crashed_top_of_screen_msg[256];
 extern uint8_t T1_log_app_running;
+extern char * T1_log_crash_msg;
 
 /*
 Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes

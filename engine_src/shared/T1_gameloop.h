@@ -1,20 +1,9 @@
 #ifndef T1_GAMELOOP_H
 #define T1_GAMELOOP_H
 
-#include "T1_term.h"
-#include "T1_log.h"
-#include "T1_global.h"
-#include "T1_cpu_gpu_shared_types.h"
-#include "T1_io.h"
-#include "T1_platform_layer.h"
-#include "T1_tex_array.h"
-#include "T1_text.h"
-#include "T1_ui_widget.h"
-#include "T1_render.h"
-#include "T1_zlight.h"
-#include "T1_zsprite_anim.h"
-#include "T1_clientlogic.h"
-#include "T1_profiler.h"
+#include <stdint.h>
+
+#include "T1_cpu_to_gpu.h"
 
 
 #ifdef __cplusplus

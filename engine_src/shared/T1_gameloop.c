@@ -1,5 +1,24 @@
 #include "T1_gameloop.h"
 
+#include "T1_term.h"
+#include "T1_log.h"
+#include "T1_global.h"
+#include "T1_io.h"
+#include "T1_zspriteid.h"
+#include "T1_texquad.h"
+#include "T1_platform_layer.h"
+#include "T1_tex_array.h"
+#include "T1_text.h"
+#include "T1_ui_widget.h"
+#include "T1_render.h"
+#include "T1_zlight.h"
+#include "T1_zsprite_anim.h"
+#include "T1_texquad_anim.h"
+#include "T1_clientlogic.h"
+#include "T1_profiler.h"
+#include "T1_particle.h"
+#include "T1_frame_anim.h"
+
 uint8_t T1_gameloop_active = false;
 uint8_t T1_gameloop_loading_texs = false;
 
@@ -10,24 +29,24 @@ static int32_t  loading_text_sprite_id = -1;
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
     if (
-        T1_io_keymap[T1_IO_KEY_ENTER] &&
-        !T1_io_keymap[T1_IO_KEY_CONTROL])
+        T1_io->keymap[T1_IO_KEY_ENTER] &&
+        !T1_io->keymap[T1_IO_KEY_CONTROL])
     {
-        T1_io_keymap[T1_IO_KEY_ENTER] = false;
+        T1_io->keymap[T1_IO_KEY_ENTER] = false;
         T1_term_commit_or_activate();
     }
     
     if (T1_term_active) {
         for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
             if (i == T1_IO_KEY_SHIFT) { continue; }
-            if (T1_io_keymap[i]) {
-                if (T1_io_keymap[T1_IO_KEY_SHIFT]) {
+            if (T1_io->keymap[i]) {
+                if (T1_io->keymap[T1_IO_KEY_SHIFT]) {
                     T1_term_sendchar('#');
                 } else {
                     T1_term_sendchar(i);
                 }
                 
-                T1_io_keymap[i] = false;
+                T1_io->keymap[i] = false;
             }
         }
     }
@@ -207,16 +226,9 @@ void T1_gameloop_update_before_render_pass(
     }
     
     if (!T1_log_app_running) {
-        if (crashed_top_of_screen_msg[0] == '\0') {
-            T1_std_strcpy_cap(
-                crashed_top_of_screen_msg,
-                256,
-                "Failed assert, and also failed to retrieve an error message");
-        }
-        
         show_dead_simple_text(
             frame_data,
-            crashed_top_of_screen_msg,
+            T1_log_crash_msg,
             T1_global->elapsed);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
@@ -356,10 +368,10 @@ void T1_gameloop_update_before_render_pass(
         T1_zsprite_handle_timed_occlusion();
         
         // always copy
-        T1_io_events[T1_IO_LAST_MOUSE_MOVE] =
-            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
-        T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
-            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
+        T1_io->events[T1_IO_LAST_MOUSE_MOVE] =
+            T1_io->events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
+        T1_io->events[T1_IO_LAST_TOUCH_MOVE] =
+            T1_io->events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
         T1_ui_widget_handle_touches(T1_global->elapsed);
         
@@ -425,7 +437,7 @@ void T1_gameloop_update_before_render_pass(
                 T1_global->elapsed);
     } else if (T1_global->draw_top_touchable_id) {
         T1_text_request_top_touch_id(
-            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
+            T1_io->events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                 touch_id_top);
     }
     
@@ -454,19 +466,18 @@ void T1_gameloop_update_after_render_pass(void) {
         T1_clientlogic_update_after_render_pass();
     }
     
-    T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_top =
+    T1_io->events[T1_IO_LAST_GPU_DATA].touch_id_top =
         T1_platform_gpu_get_touch_id_at_screen_pos(
             /* const int screen_x: */
-                T1_io_events[T1_IO_LAST_GPU_DATA].
+                T1_io->events[T1_IO_LAST_GPU_DATA].
                     screen_x,
             /* const int screen_y: */
-                T1_io_events
-                    [T1_IO_LAST_GPU_DATA].
-                        screen_y);
+                T1_io->events[T1_IO_LAST_GPU_DATA].
+                    screen_y);
     
-    T1_io_events[T1_IO_LAST_GPU_DATA].
+    T1_io->events[T1_IO_LAST_GPU_DATA].
         touch_id_pierce =
-            T1_io_events[T1_IO_LAST_GPU_DATA].
+            T1_io->events[T1_IO_LAST_GPU_DATA].
                 touch_id_top;
     
     if (T1_global->upcoming_fullscreen_request) {

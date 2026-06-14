@@ -5,15 +5,22 @@
 #include "T1_appinit.h"
 #include "T1_log.h"
 #include "T1_rand.h"
+#include "T1_zsprite.h"
 #include "T1_zlight.h"
+#include "T1_ui_widget.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
+#include "T1_gameloop.h"
+#include "T1_particle.h"
+#include "T1_platform_layer.h"
+
 
 void T1_macos_update_window_size(void);
 
-static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
+static uint32_t T1_apple_keycode_to_tokone_keycode(
+    const uint32_t apple_key)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
@@ -222,11 +229,11 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x = (float)window_location.x;
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y = (float)window_location.y;
+    T1_io->events[T1_IO_LAST_GPU_DATA].screen_x = (float)window_location.x;
+    T1_io->events[T1_IO_LAST_GPU_DATA].screen_y = (float)window_location.y;
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_MOVE]);
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
+    T1_io_event_register(&T1_io->events[T1_IO_LAST_MOUSE_MOVE]);
+    T1_io_event_register(&T1_io->events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -237,13 +244,13 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x =
+    T1_io->events[T1_IO_LAST_GPU_DATA].screen_x =
         (float)window_location.x;
-    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y =
+    T1_io->events[T1_IO_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_MOVE]);
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
+    T1_io_event_register(&T1_io->events[T1_IO_LAST_MOUSE_MOVE]);
+    T1_io_event_register(&T1_io->events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -252,9 +259,10 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_LCLICK_START]);
-    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START] =
-        T1_io_events[T1_IO_LAST_LCLICK_START];
+    T1_io_event_register(
+        &T1_io->events[T1_IO_LAST_LCLICK_START]);
+    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START] =
+        T1_io->events[T1_IO_LAST_LCLICK_START];
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -263,9 +271,9 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_LCLICK_END]);
-    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END] =
-        T1_io_events[T1_IO_LAST_LCLICK_END];
+    T1_io_event_register(&T1_io->events[T1_IO_LAST_LCLICK_END]);
+    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END] =
+        T1_io->events[T1_IO_LAST_LCLICK_END];
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -274,7 +282,8 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_RCLICK_START]);
+    T1_io_event_register(
+        &T1_io->events[T1_IO_LAST_RCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -283,7 +292,8 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_io_event_register(&T1_io_events[T1_IO_LAST_RCLICK_END]);
+    T1_io_event_register(
+        &T1_io->events[T1_IO_LAST_RCLICK_END]);
 }
 
 - (void)update_mouse_location {

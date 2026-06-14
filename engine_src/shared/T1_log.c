@@ -1,19 +1,22 @@
 #include "T1_log.h"
+#include "T1_std.h"
 
 uint8_t T1_log_app_running = false;
-#define CRASH_STRING_SIZE 256
-char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
+char * T1_log_crash_msg = NULL;
 
-// These are function pointers to our injected dependencies
-static void *   (* logger_malloc_func)(size_t) = NULL;
-static uint32_t (* logger_create_mutex_func)(void) = NULL;
-static void     (* logger_mutex_lock_func)(const uint32_t) = NULL;
-static void     (* logger_mutex_unlock_func)(const uint32_t) = NULL;
-static uint32_t logger_mutex_id = UINT32_MAX;
-
+#define T1_LOG_CRASH_STRING_SIZE 256
 #define LOG_SIZE 500000
-static char * app_log = NULL;
-static uint32_t log_i = 0;
+typedef struct {
+    void * (* malloc)(size_t);
+    uint32_t (* create_mutex)(void);
+    void (* mutex_lock)(const uint32_t);
+    void (* mutex_unlock)(const uint32_t);
+    uint32_t mutex_id;
+    char * full;
+    uint32_t full_i;
+} T1LogState;
+
+static T1LogState * T1_log_s = NULL;
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,18 +28,23 @@ void T1_logger_init(
     void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),
     void (* arg_logger_mutex_unlock_func)(const uint32_t mutex_id))
 {
-    logger_malloc_func       = arg_logger_malloc_func;
-    logger_create_mutex_func = arg_logger_create_mutex_func;
-    logger_mutex_lock_func   = arg_logger_mutex_lock_func;
-    logger_mutex_unlock_func = arg_logger_mutex_unlock_func;
+    T1_log_s = arg_logger_malloc_func(sizeof(T1LogState));
+    T1_std_memset(T1_log_s, 0, sizeof(T1LogState));
+    
+    T1_log_crash_msg = arg_logger_malloc_func(
+        T1_LOG_CRASH_STRING_SIZE);
+    T1_std_memset(T1_log_crash_msg, 0, T1_LOG_CRASH_STRING_SIZE);
+    
+    T1_log_s->malloc = arg_logger_malloc_func;
+    T1_log_s->create_mutex = arg_logger_create_mutex_func;
+    T1_log_s->mutex_lock = arg_logger_mutex_lock_func;
+    T1_log_s->mutex_unlock = arg_logger_mutex_unlock_func;
     
     // create a log for debug text
-    app_log    = logger_malloc_func(LOG_SIZE);
-    app_log[0] = '\0';
-    log_i      = 0;
+    T1_log_s->full_i = 0;
     
-    if (logger_create_mutex_func != NULL) {
-        logger_mutex_id = logger_create_mutex_func();
+    if (T1_log_s->create_mutex != NULL) {
+        T1_log_s->mutex_id = T1_log_s->create_mutex();
     }
 }
 
@@ -249,12 +257,12 @@ T1_log_dump_and_crash(
         unsigned int i = 0;
         while (
             crash_message[i] != '\0' &&
-            i < (CRASH_STRING_SIZE-1))
+            i < (T1_LOG_CRASH_STRING_SIZE-1))
         {
-            crashed_top_of_screen_msg[i] = crash_message[i];
+            T1_log_crash_msg[i] = crash_message[i];
             i++;
         }
-        crashed_top_of_screen_msg[i] = '\0';
+        T1_log_crash_msg[i] = '\0';
     }
     
     #if T1_LOG_PRINTF == T1_ACTIVE

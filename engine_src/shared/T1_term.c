@@ -1,5 +1,20 @@
 #include "T1_term.h"
 
+#include "T1_mem.h"
+#include "T1_global.h"
+#include "T1_io.h"
+#include "T1_zsprite.h"
+#include "T1_text.h"
+#include "T1_clientlogic.h"
+#include "T1_wav.h"
+#include "T1_audio.h"
+
+#include "T1_zspriteid.h"
+#include "T1_tex.h"
+#include "T1_tex_array.h"
+#include "T1_zlight.h"
+#include "T1_platform_layer.h"
+
 #if T1_TERM_ACTIVE == T1_ACTIVE
 
 #define T1_TERM_HIST_CAP 500000
@@ -785,8 +800,7 @@ static uint8_t T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            T1_texquad_delete(
-                T1_ZSPRITEID_FPS_COUNTER);
+            T1_texquad_delete(T1_ZSPRITEID_FPS_COUNTER);
             
             T1_std_strcpy_cap(
                 response,

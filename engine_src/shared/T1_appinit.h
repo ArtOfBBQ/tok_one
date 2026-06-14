@@ -1,29 +1,8 @@
 #ifndef INIT_APPLICATION_H
 #define INIT_APPLICATION_H
 
+#include <stdint.h>
 #include <string.h> // strlcat
-
-#include "T1_std.h"
-#include "T1_meta.h"
-#include "T1_log.h"
-#include "T1_profiler.h"
-#include "T1_rand.h"
-#include "T1_objmodel.h"
-#include "T1_audio.h"
-#include "T1_zlight.h"
-#include "T1_text.h"
-#include "T1_ui_widget.h"
-#include "T1_io.h"
-#include "T1_global.h"
-#include "T1_zsprite_anim.h"
-#include "T1_render.h"
-#include "T1_gameloop.h"
-#include "T1_token.h"
-#include "T1_mtlparser.h"
-#include "T1_objparser.h"
-
-#include "T1_clientlogic.h"
-#include "T1_platform_layer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +16,8 @@ void T1_appinit_before_gpu_init(
 void T1_appinit_after_gpu_init_step1(
     uint8_t * success,
     char * error_message);
-void T1_appinit_after_gpu_init_step2(int32_t throwaway_threadarg);
+void T1_appinit_after_gpu_init_step2(
+    int32_t throwaway_threadarg);
 
 void T1_appinit_shutdown(void);
 

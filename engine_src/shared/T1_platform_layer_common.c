@@ -1,5 +1,15 @@
 #include "T1_platform_layer.h"
 
+#include "decode_png.h"
+#include "decode_bmp.h"
+#include "T1_mem.h"
+#include "T1_log.h"
+#include "T1_global.h"
+#include "T1_zsprite.h"
+#include "T1_texquad.h"
+#include "T1_ui_widget.h"
+
+
 #define MAX_FILENAME_SIZE  512
 #define MAX_SEPARATOR_SIZE   3 // 2 characters and NULL terminator
 

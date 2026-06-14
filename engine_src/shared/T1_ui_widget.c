@@ -1,5 +1,20 @@
 #include "T1_ui_widget.h"
 
+#include "T1_std.h"
+#include "T1_log.h"
+#include "T1_mem.h"
+#include "T1_zspriteid.h"
+#include "T1_meta.h"
+#include "T1_io.h"
+#include "T1_zsprite.h"
+#include "T1_tex_array.h"
+#include "T1_zsprite_anim.h"
+#include "T1_texquad_anim.h"
+#include "T1_text.h"
+#include "T1_profiler.h"
+#include "T1_render_view.h"
+
+
 static int32_t T1_ui_widget_sliding_touch_id = -1;
 static int32_t T1_ui_widget_clicking_zsprite_id = -1;
 
@@ -452,11 +467,11 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                     deleted &&
                 T1_ui_widget_list[elem_i].
                     slideable &&
-                T1_io_events
+                T1_io->events
                     [T1_IO_LAST_TOUCH_OR_LCLICK_START].touch_id_top ==
                 T1_ui_widget_list[elem_i].touch_id)
             {
-                T1_io_events
+                T1_io->events
                     [T1_IO_LAST_TOUCH_OR_LCLICK_START].
                         handled = true;
                 ui_elem_i = elem_i;
@@ -477,7 +492,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
             float pin_offset_x =
                 T1_ui_widget_get_pin_pos_given_mouse(
                 T1_ui_widget_list + ui_elem_i,
-                T1_io_events
+                T1_io->events
                     [T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].screen_x,
                 &pin_pct);
             
@@ -572,7 +587,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+        !T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
             handled)
     {
         if (T1_ui_widget_sliding_touch_id >= 0)
@@ -593,12 +608,12 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                     !T1_ui_widget_list[ui_elem_i].deleted &&
                     T1_ui_widget_list[ui_elem_i].
                         clicked_funcptr != NULL &&
-                    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
                         touch_id_top ==
                     T1_ui_widget_list[ui_elem_i].
                         touch_id)
                 {
-                    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
                         handled = true;
                     T1_ui_widget_list[ui_elem_i].
                         clicked_funcptr(
@@ -612,13 +627,13 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+        !T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
             handled)
     {
         if (
-            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 touch_id_top >= 0 &&
-            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 touch_id_top < T1_ZSPRITEID_LAST_UI_TOUCH)
         {
             for (
@@ -628,7 +643,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     T1_ui_widget_list[i].deleted ||
-                    T1_io_events
+                    T1_io->events
                         [T1_IO_LAST_TOUCH_OR_LCLICK_START].
                             touch_id_top !=
                     T1_ui_widget_list[i].touch_id)
@@ -641,7 +656,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                     T1_ui_widget_sliding_touch_id =
                         T1_ui_widget_list[i].
                             touch_id;
-                    T1_io_events
+                    T1_io->events
                         [T1_IO_LAST_TOUCH_OR_LCLICK_END].
                             handled = true;
                 }
@@ -668,7 +683,7 @@ void T1_ui_widget_handle_touches(uint64_t ms_elapsed)
                      #endif
                 }
                 
-                T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                     handled = true;
             }
         }

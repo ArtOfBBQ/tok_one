@@ -1,8 +1,8 @@
 #ifndef MTLPARSER_H
 #define MTLPARSER_H
 
-#include "T1_std.h"
-#include "T1_token.h"
+#include <stdint.h>
+#include <stddef.h>
 
 typedef struct ParsedMaterial {
     char name[T1_MATERIAL_NAME_CAP];

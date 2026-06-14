@@ -1,5 +1,11 @@
 #include "T1_texquad_anim.h"
 
+#include "T1_mem.h"
+#include "T1_global.h"
+#include "T1_texquad.h"
+#include "T1_log.h"
+
+
 #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
 
 typedef struct {

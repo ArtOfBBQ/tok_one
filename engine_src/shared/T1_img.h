@@ -1,16 +1,7 @@
 #ifndef T1_IMG_H
 #define T1_IMG_H
 
-#include "inttypes.h"
-
-#define T1_IMG_SILENCE
-#ifndef T1_IMG_SILENCE
-#include "stdio.h"
-#endif
-
-#ifndef T1_IMG_IGNORE_ASSERTS
-#include "assert.h"
-#endif
+#include <stdint.h>
 
 typedef struct {
     uint8_t * rgba_values_freeable;

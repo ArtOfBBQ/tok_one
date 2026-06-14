@@ -1,5 +1,8 @@
 #include "T1_material.h"
 
+#include "T1_std.h"
+#include "T1_log.h"
+
 LockedMaterialCollection * all_mesh_materials = NULL;
 
 void T1_material_init(

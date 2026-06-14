@@ -1,5 +1,21 @@
 #include "T1_collision.h"
 
+#define T1_COLLISION_SILENCE
+#ifndef T1_COLLISION_SILENCE
+#include <stdio.h>
+#endif
+
+#define T1_COLLISION_IGNORE_ASSERTS
+#ifndef T1_COLLISION_IGNORE_ASSERTS
+#include <assert.h>
+#endif
+
+#ifndef T1_COL_FLT_MAX
+#define T1_COL_FLT_MAX 3.402823466e+38F
+#endif
+
+#include <math.h>
+
 // evaporate printf statements if T1_COLLISION_SILENCE is set
 #ifndef T1_COLLISION_SILENCE
 #define col_printf(...) printf(__VA_ARGS__)

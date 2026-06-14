@@ -1,9 +1,11 @@
 #ifndef T1_AUDIO_H
 #define T1_AUDIO_H
 
-#include "T1_log.h"
-
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
+
+#include <stdint.h>
+
+#include "T1_std.h"
 
 typedef struct {
     int16_t * samples_buffer;
@@ -42,13 +44,13 @@ void T1_audio_add_at_offset(
 void T1_audio_copy(
     int16_t * data,
     const uint32_t data_size,
-    const bool32_t is_music);
+    const bool8_t is_music);
 
 void T1_audio_copy_at_offset(
     int16_t * samples,
     const uint32_t samples_size,
     const uint64_t play_cursor_offset,
-    const bool32_t is_music);
+    const bool8_t is_music);
 
 void
 T1_audio_add_permasound_to_global_buffer_at_offset(
@@ -72,7 +74,7 @@ void
 T1_audio_copy_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t play_cursor_offset,
-    const bool32_t is_music);
+    const bool8_t is_music);
 
 void
 T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
@@ -80,7 +82,7 @@ T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
     const uint64_t permasound_offset,
     const uint64_t play_cursor_offset,
     const uint32_t samples_to_copy_size,
-    const bool32_t is_music);
+    const bool8_t is_music);
 
 void
 T1_audio_copy_permasound_to_global_buffer(

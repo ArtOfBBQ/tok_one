@@ -1,5 +1,13 @@
 #include "T1_texquad.h"
 
+#include <stdlib.h> // TODO: stop using qsort
+
+#include "T1_mem.h"
+#include "T1_simd.h"
+#include "T1_tex.h"
+#include "T1_log.h"
+
+
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_sanity_check_texquad_vals(
     T1GPUTexQuadf32 * gpu_f32,

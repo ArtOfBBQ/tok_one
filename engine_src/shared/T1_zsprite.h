@@ -6,14 +6,9 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "T1_cpu_gpu_shared_types.h"
-#include "T1_simd.h"
 #include "T1_std.h"
-#include "T1_log.h"
-#include "T1_global.h"
-#include "T1_material.h"
-#include "T1_mesh_summary.h"
-#include "T1_zlight.h"
+#include "T1_cpu_gpu_shared_types.h"
+#include "T1_cpu_to_gpu.h"
 
 #define T1_ZSPRITEANIM_NO_EFFECT 0xFFFF
 

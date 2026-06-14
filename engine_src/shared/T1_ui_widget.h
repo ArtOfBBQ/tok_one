@@ -1,18 +1,11 @@
 #ifndef UI_WIDGET_H
 #define UI_WIDGET_H
 
-#include "T1_std.h"
-#include "T1_mem.h"
-#include "T1_zspriteid.h"
-#include "T1_meta.h"
-#include "T1_io.h"
-#include "T1_zsprite.h"
-#include "T1_tex_array.h"
-#include "T1_zsprite_anim.h"
-#include "T1_texquad_anim.h"
-#include "T1_text.h"
-#include "T1_profiler.h"
+#include <stdint.h>
 
+#include "T1_std.h"
+#include "T1_tex.h"
+#include "T1_meta.h"
 
 /*
 These options are applied to every new UI element (like a button or a slider)

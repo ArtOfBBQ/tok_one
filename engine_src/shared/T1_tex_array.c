@@ -1,5 +1,13 @@
 #include "T1_tex_array.h"
 
+#include "debigulator/src/decode_png.h"
+#include "debigulator/src/decode_bmp.h"
+
+#include "T1_platform_layer.h"
+#include "T1_log.h"
+#include "T1_mem.h"
+#include "T1_cpu_gpu_shared_types.h"
+#include "T1_render_view.h"
 
 static uint32_t
 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];

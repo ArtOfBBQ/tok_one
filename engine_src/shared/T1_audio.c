@@ -1,4 +1,5 @@
 #include "T1_audio.h"
+#include "T1_log.h"
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 
@@ -129,7 +130,7 @@ void T1_audio_add(
 void T1_audio_copy(
     int16_t * data,
     const uint32_t data_size,
-    const bool32_t is_music)
+    const bool8_t is_music)
 {
     assert(data_size < T1_audio_state->global_buffer_size_bytes);
     
@@ -140,7 +141,7 @@ void T1_audio_copy(
             data_size,
         /* const uint64_t play_cursor_offset: */
             DEFAULT_WRITING_OFFSET,
-        /* const bool32_t is_music: */
+        /* const bool8_t is_music: */
             is_music);
 }
 
@@ -148,7 +149,7 @@ void T1_audio_copy_at_offset(
     int16_t * samples,
     const uint32_t samples_size,
     const uint64_t play_cursor_offset,
-    const bool32_t is_music)
+    const bool8_t is_music)
 {
     assert(samples_size < T1_audio_state->global_buffer_size_bytes);
     
@@ -235,7 +236,7 @@ void T1_audio_add_permasound_to_global_buffer(
 void T1_audio_copy_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t play_cursor_offset,
-    const bool32_t is_music)
+    const bool8_t is_music)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -262,7 +263,7 @@ void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
     const uint64_t permasound_offset,
     const uint64_t play_cursor_offset,
     const uint32_t samples_to_copy_size,
-    const bool32_t is_music)
+    const bool8_t is_music)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >

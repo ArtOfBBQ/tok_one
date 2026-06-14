@@ -1,6 +1,11 @@
 #ifndef T1_GLOBAL_H
 #define T1_GLOBAL_H
 
+#include <math.h>
+
+#include "T1_std.h"
+#include "T1_cpu_gpu_shared_types.h"
+
 /*
 Window sizes are a source of confusion because there are so many coordinate
 systems.
@@ -32,15 +37,6 @@ platform layer doesn't need to do anything and can just record values directly
 
 #define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
 #define T1_GLOBAL_CLEARDEPTH 1.0f
-
-#define T1_MAP_PANEL_SIZE 3
-
-#include <math.h>
-
-#include "T1_std.h"
-#include "T1_cpu_gpu_shared_types.h"
-#include "T1_log.h"
-#include "T1_mesh_summary.h"
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;

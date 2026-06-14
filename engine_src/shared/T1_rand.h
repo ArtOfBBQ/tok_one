@@ -2,7 +2,6 @@
 #define T1_RAND_H
 
 #include "T1_simd.h"
-#include "T1_std.h"
 
 // #define RANDOM_IGNORE_ASSERTS
 #ifndef RANDOM_IGNORE_ASSERTS
