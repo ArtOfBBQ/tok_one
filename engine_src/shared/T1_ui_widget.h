@@ -74,8 +74,7 @@ void T1_ui_widget_request_button(
     void (* onclick_funcptr)(int64_t),
     const int64_t clicked_arg);
 
-void T1_ui_widget_delete(
-    const int32_t with_zsprite_id);
+void T1_ui_widget_delete(const int32_t with_zsprite_id);
 
 void T1_ui_widget_delete_all(void);
 

@@ -3,7 +3,7 @@
 #include "T1_log.h"
 #include "T1_platform_layer.h"
 
-void T1_platform_get_writables_dir(
+void T1_os_get_writables_dir(
     char * recipient,
     const uint32_t recipient_size)
 {
@@ -29,10 +29,10 @@ void T1_platform_get_writables_dir(
     T1_std_strcat_cap(recipient, recipient_size, "/");
     T1_std_strcat_cap(recipient, recipient_size, T1_APP_NAME);
     
-    T1_platform_mkdir_if_not_exist(recipient);
+    T1_os_mkdir_if_not_exist(recipient);
 }
 
-void * T1_platform_malloc_unaligned_block(
+void * T1_os_malloc_unaligned_block(
     const uint64_t size)
 {
     void * return_value = mmap(
@@ -56,11 +56,11 @@ void * T1_platform_malloc_unaligned_block(
     return return_value;
 }
 
-void T1_platform_close_app(void) {
+void T1_os_close_app(void) {
     [NSApp terminate: nil];
 }
 
-void T1_platform_get_cwd(char * recipient, const uint32_t recipient_size) {
+void T1_os_get_cwd(char * recipient, const uint32_t recipient_size) {
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
@@ -76,15 +76,15 @@ void T1_platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     T1_std_strcpy_cap(recipient, recipient_size, return_value);
 }
 
-float T1_platform_x_to_x(const float x) {
+float T1_os_x_to_x(const float x) {
     return x;
 }
 
-float T1_platform_y_to_y(const float y) {
+float T1_os_y_to_y(const float y) {
     return y;
 }
 
-void T1_platform_open_dir_in_window_if_possible(
+void T1_os_open_dir_in_window_if_possible(
     const char * folderpath)
 {
     T1_log_append("Trying to open folder: ");

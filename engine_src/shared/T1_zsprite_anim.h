@@ -10,9 +10,9 @@
 
 
 void T1_zsprite_anim_init(
-    uint32_t (* funcptr_init_mutex_and_return_id)(void),
-    void (* funcptr_mutex_lock)(const uint32_t),
-    void (* funcptr_mutex_unlock)(const uint32_t));
+    uint32_t (* fptr_init_mutex_and_return_id)(void),
+    void (* fptr_mutex_lock)(const uint32_t),
+    void (* fptr_mutex_unlock)(const uint32_t));
 
 void T1_zsprite_anim_resolve(void);
 

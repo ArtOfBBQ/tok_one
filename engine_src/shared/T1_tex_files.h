@@ -5,7 +5,6 @@
 
 #include "T1_std.h"
 
-
 /*
 For "client" use in clientlogic.c or similar
 */

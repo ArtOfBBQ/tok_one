@@ -10,9 +10,9 @@
 #define T1_BASIC_QUAD_MESH_ID 0
 #define T1_BASIC_CUBE_MESH_ID 1
 
-#define OBJ_STRING_SIZE 128
+#define T1_OBJ_STRING_SIZE 128
 typedef struct {
-    char resource_name[OBJ_STRING_SIZE]; // resource filename
+    char resource_name[T1_OBJ_STRING_SIZE]; // resource filename
     int32_t mesh_id;
     int32_t vertices_head_i;
     int32_t vertices_size;

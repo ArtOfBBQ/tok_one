@@ -38,43 +38,6 @@ platform layer doesn't need to do anything and can just record values directly
 #define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
 #define T1_GLOBAL_CLEARDEPTH 1.0f
 
-typedef struct {
-    T1GPUPostProcConsts postproc_consts;
-    
-    uint64_t elapsed;
-    uint64_t this_frame_timestamp_us;
-    uint64_t last_resize_request_us;
-    
-    uint32_t startup_bytes_to_load;
-    uint32_t startup_bytes_loaded;
-    
-    float last_clickray_origin[3];
-    float last_clickray_direction[3];
-    float last_clickray_collision[3];
-    
-    uint32_t pixelation_div;
-    
-    float timedelta_mult;
-    float window_height;
-    float window_width;
-    float window_left;
-    float window_bottom;
-    
-    bool8_t draw_mouseptr;
-    bool8_t draw_imputed_normals;
-    bool8_t draw_triangles;
-    bool8_t draw_axes;
-    bool8_t draw_fps;
-    bool8_t draw_top_touchable_id;
-    bool8_t show_profiler;
-    bool8_t pause_profiler;
-    bool8_t block_mouse;
-    bool8_t block_render_view_pos_updates;
-    bool8_t fullscreen;
-    bool8_t clientlogic_early_startup_finished;
-    bool8_t upcoming_fullscreen_request;
-} T1Globals;
-
 extern T1Globals * T1_global;
 
 void
@@ -92,9 +55,9 @@ T1_global_update_window_size(
     uint64_t at_timestamp_us);
 
 float
-T1_global_get_z_mul_for_depth(
+T1_global_get_x_mul_for_width(
     const int32_t for_mesh_id,
-    const float for_depth);
+    const float for_width);
 
 float
 T1_global_get_y_mul_for_height(
@@ -102,8 +65,8 @@ T1_global_get_y_mul_for_height(
     const float for_height);
 
 float
-T1_global_get_x_mul_for_width(
+T1_global_get_z_mul_for_depth(
     const int32_t for_mesh_id,
-    const float for_width);
+    const float for_depth);
 
 #endif // T1_GLOBAL_H

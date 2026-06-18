@@ -33,6 +33,7 @@
 #include "T1_mesh_summary.h"
 #include "T1_material.h"
 #include "T1_tex_array.h"
+#include "T1_render_view.h"
 
 #include "T1_clientlogic.h"
 #include "T1_platform_layer.h"
@@ -204,10 +205,10 @@ void T1_appinit_before_gpu_init(
     error_message[0] = '\0';
     
     void * unmanaged_memory_store =
-        T1_platform_malloc_unaligned_block(
+        T1_os_malloc_unaligned_block(
             T1_UNMANAGED_MEM_CAP + 7232);
     
-    T1_platform_init(&unmanaged_memory_store, 32);
+    T1_os_init(&unmanaged_memory_store, 32);
     
     T1_mem_init(
         unmanaged_memory_store,
@@ -419,7 +420,7 @@ void T1_appinit_before_gpu_init(
     
     T1_gameloop_init();
     #if T1_TERM_ACTIVE == T1_ACTIVE
-    T1_term_init(T1_platform_enter_fullscreen);
+    T1_term_init(T1_os_enter_fullscreen);
     #elif T1_TERM_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -451,20 +452,25 @@ void T1_appinit_before_gpu_init(
     T1_tex_array_init();
     
     // initialize font with fontmetrics.dat
-    T1FileBuffer font_metrics_file;
-    font_metrics_file.size_without_terminator = T1_platform_get_resource_size(
+    uint64_t font_metrics_contents_cap = T1_os_get_resource_size(
         /* filename: */ "fontmetrics.dat");
+    char * font_metrics_contents = NULL; 
+    uint8_t font_metrics_good = 0;
     
-    if (font_metrics_file.size_without_terminator > 0) {
-        font_metrics_file.contents = (char *)T1_mem_malloc_unmanaged(
-            font_metrics_file.size_without_terminator + 1);
-        T1_platform_read_resource_file(
-            /* const char * filepath: */
+    if (font_metrics_contents_cap > 0) {
+        font_metrics_contents = (char *)T1_mem_malloc_unmanaged(
+            font_metrics_contents_cap + 1);
+        T1_os_read_resource_file(
+            /* const char * filename: */
                 "fontmetrics.dat",
-            /* FileBuffer * out_preallocatedbuffer: */
-                &font_metrics_file);
+            /* char * recip: */
+                font_metrics_contents,
+            /* const uint64_t recip_cap: */
+                font_metrics_contents_cap,
+            /* uint8_t * good: */
+                &font_metrics_good);
         
-        if (!font_metrics_file.good) {
+        if (!font_metrics_good) {
             T1_std_strcpy_cap(
                 error_message,
                 256, "fontmetrics.dat was corrupted\n");
@@ -475,9 +481,9 @@ void T1_appinit_before_gpu_init(
         T1_text_init(
                 T1_mem_malloc_unmanaged,
             /* raw_fontmetrics_file_contents: */
-                font_metrics_file.contents,
+                font_metrics_contents,
             /* raw_fontmetrics_file_size: */
-                font_metrics_file.size_without_terminator);
+                font_metrics_contents_cap);
     } else {
         T1_std_internal_strcpy_cap(
             error_message,
@@ -495,9 +501,18 @@ void T1_appinit_before_gpu_init(
     
     T1_clientlogic_init();
     
-    T1_cpu_to_gpu_data =
-        T1_mem_malloc_unmanaged(
-            sizeof(T1CPUToGPUData));
+    T1_rand_init(
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_os_get_current_time_us() % RANDOM_SEQUENCE_SIZE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        0
+        #else
+        #error
+        #endif
+        );
+    
+    T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
+        sizeof(T1CPUToGPUData));
     T1_log_assert(T1_cpu_to_gpu_data != NULL);
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
@@ -708,8 +723,8 @@ void T1_appinit_after_gpu_init_step1(
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or T1_log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
-    T1_platform_gpu_update_internal_render_viewport(0);
-    T1_platform_gpu_update_window_viewport();
+    T1_os_gpu_update_internal_render_viewport(0);
+    T1_os_gpu_update_window_viewport();
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)
@@ -720,7 +735,7 @@ void T1_appinit_after_gpu_init_step1(
             T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
-    T1_platform_gpu_copy_locked_vertices();
+    T1_os_gpu_copy_locked_vertices();
     
     T1_gameloop_active = true;
     *success = true;
@@ -796,7 +811,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_global->
             clientlogic_early_startup_finished = 1;
         
-        uint32_t core_count = T1_platform_get_cpu_logical_core_count();
+        uint32_t core_count = T1_os_get_cpu_logical_core_count();
         T1_log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
         
@@ -821,7 +836,7 @@ void T1_appinit_after_gpu_init_step2(
                 image_decoding_threads;
             i++)
         {
-            T1_platform_start_thread(
+            T1_os_start_thread(
                 /* void (*function_to_run)(int32_t): */
                     T1_appinit_asset_loading_thread,
                 /* int32_t argument: */
@@ -893,7 +908,7 @@ void T1_appinit_after_gpu_init_step2(
             T1_mesh_summary_all_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
-    T1_platform_gpu_copy_locked_vertices();
+    T1_os_gpu_copy_locked_vertices();
     
     T1_std_memcpy(
         /* void * dst: */
@@ -911,7 +926,7 @@ void T1_appinit_after_gpu_init_step2(
             all_mesh_materials->gpu_i32,
         /* size_t n: */
             sizeof(T1GPUConstMati32) * T1_ALL_LOCKED_MATERIALS_SIZE);
-    T1_platform_gpu_copy_locked_materials();
+    T1_os_gpu_copy_locked_materials();
     
     if (!T1_log_app_running) {
         return;
@@ -988,7 +1003,7 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     T1_platform_layer_start_window_resize(
-        T1_platform_get_current_time_us());
+        T1_os_get_current_time_us());
     
     if (T1_log_app_running) {
         T1_clientlogic_late_startup();

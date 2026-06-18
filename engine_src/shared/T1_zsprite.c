@@ -7,6 +7,7 @@
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_zlight.h"
+#include "T1_render_view.h"
 #include "T1_linalg3d.h"
 
 T1zSpriteCollection * T1_zsprite_list = NULL;
@@ -188,10 +189,14 @@ T1_zsprite_get_pos_xyz(
         }
     }
     
-    if (count >= 0.0f) {
+    if (count > 0.05f) {
         *recip_x /= count;
         *recip_y /= count;
         *recip_z /= count;
+    } else {
+        *recip_x = 0.0f;
+        *recip_y = 0.0f;
+        *recip_z = 0.0f;
     }
 }
 
@@ -979,37 +984,37 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         T1_log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->simd_stats.xyz[0] -= T1_camera->xyz[0];
-        zs_cpu->simd_stats.xyz[1] -= T1_camera->xyz[1];
-        zs_cpu->simd_stats.xyz[2] -= T1_camera->xyz[2];
-        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[0]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[1]);
-        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_camera->xyz_angle[2]);
+        zs_cpu->simd_stats.xyz[0] -= T1_cam->xyz[0];
+        zs_cpu->simd_stats.xyz[1] -= T1_cam->xyz[1];
+        zs_cpu->simd_stats.xyz[2] -= T1_cam->xyz[2];
+        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] -= T1_camera->xyz_angle[0];
-        zs_cpu->simd_stats.angle_xyz[1] -= T1_camera->xyz_angle[1];
-        zs_cpu->simd_stats.angle_xyz[2] -= T1_camera->xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] -= T1_cam->angle_xyz[0];
+        zs_cpu->simd_stats.angle_xyz[1] -= T1_cam->angle_xyz[1];
+        zs_cpu->simd_stats.angle_xyz[2] -= T1_cam->angle_xyz[2];
         #endif
         
         zs->f32.ignore_camera = 1.0f;
     } else {
         T1_log_assert(is_near_one);
         
-        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[2]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[1]);
-        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, T1_camera->xyz_angle[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[0]);
         
-        zs_cpu->simd_stats.xyz[0] += T1_camera->xyz[0];
-        zs_cpu->simd_stats.xyz[1] += T1_camera->xyz[1];
-        zs_cpu->simd_stats.xyz[2] += T1_camera->xyz[2];
+        zs_cpu->simd_stats.xyz[0] += T1_cam->xyz[0];
+        zs_cpu->simd_stats.xyz[1] += T1_cam->xyz[1];
+        zs_cpu->simd_stats.xyz[2] += T1_cam->xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] += T1_camera->xyz_angle[0];
-        zs_cpu->simd_stats.angle_xyz[1] += T1_camera->xyz_angle[1];
-        zs_cpu->simd_stats.angle_xyz[2] += T1_camera->xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] += T1_cam->angle_xyz[0];
+        zs_cpu->simd_stats.angle_xyz[1] += T1_cam->angle_xyz[1];
+        zs_cpu->simd_stats.angle_xyz[2] += T1_cam->angle_xyz[2];
         #endif
         
         zs->f32.ignore_camera = 0.0f;

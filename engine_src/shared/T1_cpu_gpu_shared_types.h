@@ -1,15 +1,16 @@
 #ifndef T1_CPU_GPU_SHARED_TYPES_H
 #define T1_CPU_GPU_SHARED_TYPES_H
 
+#include "T1_public_types.h"
 #include "clientlogic_macro_settings.h"
 
-#define CAM_DEPTH_FRAGARG_I 30
-#define SHADOW_MAPS_1ST_FRAGARG_I 31
+#define T1_CAM_DEPTH_FRAGARG_I 30
+#define T1_SHADOW_MAPS_1ST_FRAGARG_I 31
 
-#define DEPTH_TEXTUREARRAYS_I 54321
+#define T1_DEPTH_TEXTUREARRAYS_I 54321
 
-#define DOWNSAMPLES_SIZE 5
-#define DOWNSAMPLES_CUTOFF 4
+#define T1_DOWNSAMPLES_SIZE 5
+#define T1_DOWNSAMPLES_CUTOFF 4
 
 #pragma pack(push, 1)
 typedef struct {
@@ -127,25 +128,6 @@ typedef struct {
 } T1GPUFlatQuad;
 
 typedef struct {
-    int reserved_and_tex;
-    int touch_id;
-    int padding[2];
-} T1GPUTexQuadi32;
-
-typedef struct {
-    float xyz[3];
-    float offset_xy[2];
-    float size_xy[2];
-    float rgba[4];
-    float padding[5];
-} T1GPUTexQuadf32;
-
-typedef struct {
-    T1GPUTexQuadf32 f32;
-    T1GPUTexQuadi32 i32;
-} T1GPUTexQuad;
-
-typedef struct {
     float xyz[3];
     float angle_xyz[3];
     float diffuse;
@@ -163,40 +145,6 @@ typedef struct
     float brightness_threshold;
     float brightness_reduction;
 } T1GPUDownsamplingConstants;
-
-typedef struct
-{
-    float rgb_add[3];
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    float fog_color[3];
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    // float screen_width;
-    // float screen_height;
-    float nonblur_pct;
-    float blur_pct;
-    float color_quantization;
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    float fog_factor;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    float in_shadow_multipliers[3];
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    unsigned int cam_rv_i;
-    unsigned int timestamp;
-    unsigned int lights_size;
-    int perlin_texturearray_i;
-    int perlin_texture_i;
-    float padding[6];
-} T1GPUPostProcConsts;
 
 typedef struct
 {

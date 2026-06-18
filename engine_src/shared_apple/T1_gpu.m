@@ -91,7 +91,7 @@ typedef struct {
     #endif
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    id<MTLTexture> downsampled_rtts[DOWNSAMPLES_SIZE];
+    id<MTLTexture> downsampled_rtts[T1_DOWNSAMPLES_SIZE];
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -1058,7 +1058,7 @@ static float get_ds_width(
 {
     float return_value = base_width;
     
-    for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
+    for (uint32_t i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -1071,7 +1071,7 @@ static float get_ds_height(
 {
     float return_value = base_height;
     
-    for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
+    for (uint32_t i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -1082,7 +1082,7 @@ static float get_ds_height(
 #error
 #endif
 
-void T1_platform_gpu_get_device_name(
+void T1_os_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap)
 {
@@ -1104,7 +1104,7 @@ void T1_platform_gpu_get_device_name(
         device_name_cstr);
 }
 
-void T1_platform_gpu_update_capacity_if_needed(
+void T1_os_gpu_update_capacity_if_needed(
     const int32_t tex_array_i)
 {
     T1_log_assert(tex_array_i >=  0);
@@ -1244,7 +1244,7 @@ T1_platform_gpu_make_depth_tex(
         height);
 }
 
-int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
+int32_t T1_os_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y)
 {
@@ -1311,7 +1311,7 @@ int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
 void T1_platform_gpu_delete_texture_array(
     const int32_t array_i)
 {
-    T1_log_assert(array_i != DEPTH_TEXTUREARRAYS_I);
+    T1_log_assert(array_i != T1_DEPTH_TEXTUREARRAYS_I);
     
     ags->metal_textures[array_i] = nil;
 }
@@ -1325,7 +1325,7 @@ void T1_platform_gpu_delete_depth_tex(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-void T1_platform_gpu_fetch_rgba_at(
+void T1_os_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
     uint8_t * rgba_recipient,
@@ -1483,7 +1483,7 @@ void T1_platform_gpu_generate_mipmaps_for_texture_array(
 #endif
 
 void
-T1_platform_gpu_push_tex_slice_and_free_rgba(
+T1_os_gpu_push_tex_slice_and_free_rgba(
     const int32_t tex_array_i,
     const int32_t tex_slice_i)
 {
@@ -1499,7 +1499,7 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
     T1_log_assert(tex_array_i >= 0);
     T1_log_assert(tex_array_i < T1_TEXARRAYS_CAP);
     
-    T1_platform_gpu_update_capacity_if_needed(tex_array_i);
+    T1_os_gpu_update_capacity_if_needed(tex_array_i);
     
     uint32_t img_width = T1_tex_arrays[tex_array_i].single_img_width;
     uint32_t img_height = T1_tex_arrays[tex_array_i].single_img_height;
@@ -1604,7 +1604,7 @@ T1_platform_gpu_push_tex_slice_and_free_rgba(
         rgba_values_page_aligned = NULL;
 }
 
-void T1_platform_gpu_copy_locked_vertices(void)
+void T1_os_gpu_copy_locked_vertices(void)
 {
     T1_cpu_to_gpu_data->locked_vertices_size = T1_mesh_summary_all_vertices->size;
     
@@ -1633,7 +1633,7 @@ void T1_platform_gpu_copy_locked_vertices(void)
     [combuf commit];
 }
 
-void T1_platform_gpu_copy_locked_materials(void)
+void T1_os_gpu_copy_locked_materials(void)
 {
     T1_cpu_to_gpu_data->const_mats_size = all_mesh_materials->size;
     
@@ -1903,7 +1903,7 @@ static void set_defaults_for_encoder(
     {
         [encoder
             setFragmentTexture: ags->depth_textures[rv_i]
-            atIndex: SHADOW_MAPS_1ST_FRAGARG_I + rv_i];
+            atIndex: T1_SHADOW_MAPS_1ST_FRAGARG_I + rv_i];
     }
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
@@ -2027,7 +2027,7 @@ static void set_defaults_for_encoder(
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
-        i < DOWNSAMPLES_SIZE;
+        i < T1_DOWNSAMPLES_SIZE;
         i++)
     {
         ags->downsampled_rtts[i] = nil;
@@ -2369,7 +2369,7 @@ static void set_defaults_for_encoder(
             
             for (
                 uint32_t ds_i = 1;
-                ds_i < DOWNSAMPLES_SIZE;
+                ds_i < T1_DOWNSAMPLES_SIZE;
                 ds_i++)
             {
                 MTLViewport smaller_viewport =
@@ -2387,7 +2387,7 @@ static void set_defaults_for_encoder(
                 
                 MTLSize threadgroup = MTLSizeMake(16, 16, 1);
                 
-                if (ds_i < DOWNSAMPLES_CUTOFF) {
+                if (ds_i < T1_DOWNSAMPLES_CUTOFF) {
                     id<MTLComputeCommandEncoder>
                         compute_enc = [combuf computeCommandEncoder];
                     [compute_enc
@@ -2690,7 +2690,7 @@ static void set_defaults_for_encoder(
                 T1_log_assert(
                     T1_render_views->cpu[cam_i].
                         write_array_i ==
-                            DEPTH_TEXTUREARRAYS_I);
+                            T1_DEPTH_TEXTUREARRAYS_I);
                 T1_log_assert(
                     T1_render_views->cpu[cam_i].
                         write_slice_i >= 0);
@@ -2801,8 +2801,10 @@ static void set_defaults_for_encoder(
         offset:0
         atIndex:1];
     
+    // The main camera must have a target to write to
     T1_log_assert(T1_render_views->cpu[0].write_array_i >= 0);
     T1_log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_tex_arrays_size);
+    
     id<MTLTexture> arr_tex = ags->metal_textures[
         T1_render_views->cpu[0].write_array_i];
     id<MTLTexture> sliced_tex = [arr_tex
@@ -2863,7 +2865,7 @@ static void set_defaults_for_encoder(
     
     [pass_5_comp
         setFragmentTexture: ags->cam_depth_texture
-        atIndex: CAM_DEPTH_FRAGARG_I];
+        atIndex: T1_CAM_DEPTH_FRAGARG_I];
     [pass_5_comp
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
@@ -2897,7 +2899,7 @@ static void set_defaults_for_encoder(
 }
 @end
 
-void T1_platform_gpu_update_internal_render_viewport(
+void T1_os_gpu_update_internal_render_viewport(
     const int32_t at_i)
 {
     T1_log_assert(at_i >= 0);
@@ -2908,7 +2910,7 @@ void T1_platform_gpu_update_internal_render_viewport(
         updateRenderViewSize:at_i];
 }
 
-void T1_platform_gpu_update_window_viewport(void)
+void T1_os_gpu_update_window_viewport(void)
 {
     [apple_gpu_delegate updateFinalWindowSize];
 }

@@ -3,6 +3,7 @@
 #include "T1_std.h"
 #include "T1_log.h"
 #include "T1_mem.h"
+#include "T1_global.h"
 #include "T1_zspriteid.h"
 #include "T1_meta.h"
 #include "T1_io.h"
@@ -771,11 +772,11 @@ void T1_ui_widget_request_slider(
     slider_back.gpu->f32.xyz[1] = xyz_pos[1];
     slider_back.gpu->f32.xyz[2] = xyz_pos[2];
     
-    slider_back.gpu->f32.size_xy[0] =
+    slider_back.gpu->f32.wh[0] =
         T1_render_view_screen_width_to_width_noz(
             next_ae->props.
                 width_screen);
-    slider_back.gpu->f32.size_xy[1] =
+    slider_back.gpu->f32.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             next_ae->props.
                 height_screen);
@@ -785,7 +786,7 @@ void T1_ui_widget_request_slider(
     slider_back.gpu->f32.rgba[2] = 0.5f;
     slider_back.gpu->f32.rgba[3] = 1.0f;
     
-    slider_back.cpu->zsprite_id =
+    slider_back.cpu->T1_id =
         next_ae->back_zsprite_id;
     T1_texquad_commit(&slider_back);
     
@@ -795,15 +796,15 @@ void T1_ui_widget_request_slider(
     slider_pin.gpu->f32.xyz[0] = xyz_pos[0];
     slider_pin.gpu->f32.xyz[1] = xyz_pos[1];
     slider_pin.gpu->f32.xyz[2] = pin_z;
-    slider_pin.gpu->f32.size_xy[0] =
+    slider_pin.gpu->f32.wh[0] =
         T1_render_view_screen_width_to_width_noz(
             next_ae->props.
                 pin_width_screen);
-    slider_pin.gpu->f32.size_xy[1] =
+    slider_pin.gpu->f32.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             next_ae->props.
                 pin_height_screen);
-    slider_pin.cpu->zsprite_id = pin_zsprite_id;
+    slider_pin.cpu->T1_id = pin_zsprite_id;
     
     slider_pin.gpu->i32.reserved_and_tex =
         0x00000000 | next_ae->props.slider_pin_tex;
@@ -867,16 +868,16 @@ void T1_ui_widget_request_button(
     button_request.gpu->f32.xyz[0] = btn_pos[0];
     button_request.gpu->f32.xyz[1] = btn_pos[1];
     button_request.gpu->f32.xyz[2] = btn_pos[2];
-    button_request.gpu->f32.size_xy[0] =
+    button_request.gpu->f32.wh[0] =
         T1_render_view_screen_width_to_width_noz(
             next_ae->props.
                 width_screen);
-    button_request.gpu->f32.size_xy[1] =
+    button_request.gpu->f32.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             next_ae->props.
                 height_screen);
     
-    button_request.cpu->zsprite_id = button_object_id;
+    button_request.cpu->T1_id = button_object_id;
     button_request.gpu->i32.touch_id = next_ae->touch_id;
     button_request.gpu->f32.rgba[0] = 0.0f;
     button_request.gpu->f32.rgba[1] = 0.0f;
@@ -915,3 +916,13 @@ void T1_ui_widget_delete_all(void) {
     T1_zspriteid_clear_ui_element_touch_ids();
     T1_ui_widget_list_size = 0;
 }
+
+/*
+3D models
+*/
+float T1_get_x_mul_for_width(const int for_mesh_id, const float for_width) {
+    return T1_global_get_x_mul_for_width(for_mesh_id, for_width); }
+float T1_get_y_mul_for_height(const int for_mesh_id, const float for_height) {
+    return T1_global_get_y_mul_for_height(for_mesh_id, for_height); }
+float T1_get_z_mul_for_depth(const int32_t for_mesh_id, const float for_depth) {
+    return T1_global_get_z_mul_for_depth(for_mesh_id, for_depth); }

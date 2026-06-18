@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+typedef uint16_t T1Tex;
+
 /*
 Can we use 2 bytes to specify a texture?
 
@@ -24,8 +26,6 @@ so the mask 0x7F will be key
 
 when the 5 leftmost bits of the first byte are all set, their value is 0xF8
 */
-
-typedef uint16_t T1Tex;
 
 #define T1_TEX_NONE UINT16_MAX
 

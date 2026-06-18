@@ -42,8 +42,8 @@ T1Tex T1_tex_array_reg_img(
     const char * filename,
     const uint32_t width,
     const uint32_t height,
-    const uint32_t is_render_target,
-    const uint32_t use_bc1_compression);
+    const bool8_t is_render_target,
+    const bool8_t use_bc1_compression);
 
 int32_t T1_tex_array_create_new_render_view(
     const uint32_t width,

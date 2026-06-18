@@ -779,6 +779,10 @@ static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
     15512,5304,2811
 };
 
+void T1_rand_init(const uint32_t seed) {
+    T1_rand_seed = seed;
+}
+
 int32_t T1_rand(void) {
     T1_rand_seed++;
     if (T1_rand_seed >= RANDOM_SEQUENCE_SIZE) {

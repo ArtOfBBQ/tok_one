@@ -1,6 +1,14 @@
 #include "T1_audio.h"
 #include "T1_log.h"
 
+#define T1_AUDIO_ASSERTS_ACTIVE 2
+#if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
+#include <assert.h>
+#elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif 
+
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 
 T1AudioSettings * T1_audio_state = NULL;
@@ -56,7 +64,12 @@ void T1_audio_init(
     all_samples = arg_malloc_function(
         sizeof(int16_t) *
             T1_ALL_AUDIOSAMPLES_SIZE);
+    #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
     assert(all_samples != NULL);
+    #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     T1_std_memset(
         all_samples,
         0,
@@ -95,7 +108,12 @@ void T1_audio_add_at_offset(
     const uint64_t play_cursor_offset,
     const float volume_mult)
 {
+    #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
     assert(data_size < (T1_audio_state->global_buffer_size_bytes / 2));
+    #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     for (uint32_t i = 0; i < data_size; i++) {
         float new_value = data[i];
@@ -132,7 +150,12 @@ void T1_audio_copy(
     const uint32_t data_size,
     const bool8_t is_music)
 {
+    #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
     assert(data_size < T1_audio_state->global_buffer_size_bytes);
+    #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_audio_copy_at_offset(
         /* int16_t * data: */
@@ -151,7 +174,12 @@ void T1_audio_copy_at_offset(
     const uint64_t play_cursor_offset,
     const bool8_t is_music)
 {
+    #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
     assert(samples_size < T1_audio_state->global_buffer_size_bytes);
+    #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     for (uint32_t i = 0; i < samples_size; i++) {
         int32_t new_value = (int32_t)(samples[i] * (

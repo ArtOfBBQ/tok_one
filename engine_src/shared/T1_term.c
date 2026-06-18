@@ -13,6 +13,7 @@
 #include "T1_tex.h"
 #include "T1_tex_array.h"
 #include "T1_zlight.h"
+#include "T1_render_view.h"
 #include "T1_platform_layer.h"
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
@@ -129,7 +130,7 @@ void T1_term_redraw_backgrounds(void) {
     
     T1FlatTexQuadRequest input_req;
     T1_texquad_fetch_next(&input_req);
-    input_req.cpu->zsprite_id =
+    input_req.cpu->T1_id =
         T1_trms->back_object_id;
     input_req.gpu->f32.xyz[0] = 0.0f;
     input_req.gpu->f32.xyz[1] =
@@ -137,9 +138,9 @@ void T1_term_redraw_backgrounds(void) {
             T1_TERM_INPUT_BOX_MID_Y);
     input_req.gpu->f32.xyz[2] = T1_TERM_Z;
     
-    input_req.gpu->f32.size_xy[0] =
+    input_req.gpu->f32.wh[0] =
         T1_render_view_screen_width_to_width_noz(width);
-    input_req.gpu->f32.size_xy[1] =
+    input_req.gpu->f32.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             T1_TERM_INPUT_BOX_HEIGHT);
     input_req.gpu->i32.reserved_and_tex =
@@ -164,14 +165,14 @@ void T1_term_redraw_backgrounds(void) {
                T1_TERM_INPUT_BOX_HEIGHT +
                (T1_TERM_WHITESPACE * 2.0f));
     history_req.gpu->f32.xyz[2] = T1_TERM_Z;
-    history_req.gpu->f32.size_xy[0] =
+    history_req.gpu->f32.wh[0] =
         T1_render_view_screen_width_to_width_noz(
                 T1_render_views->cpu[0].width -
                     (T1_TERM_WHITESPACE * 2));
-    history_req.gpu->f32.size_xy[1] =
+    history_req.gpu->f32.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
-    history_req.cpu->zsprite_id = INT32_MAX;
+    history_req.cpu->T1_id = INT32_MAX;
     history_req.gpu->i32.touch_id = -1;
     history_req.gpu->f32.rgba[0] =
         T1_trms->background_color[0];
@@ -444,19 +445,19 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             jump_rv);
-        T1_camera->xyz[0] = T1_render_views->
+        T1_cam->xyz[0] = T1_render_views->
             cpu[jump_rv].xyz[0];
-        T1_camera->xyz[1] = T1_render_views->
+        T1_cam->xyz[1] = T1_render_views->
             cpu[jump_rv].xyz[1];
-        T1_camera->xyz[2] = T1_render_views->
+        T1_cam->xyz[2] = T1_render_views->
             cpu[jump_rv].xyz[2];
         
-        T1_camera->xyz_angle[0] = T1_render_views->
-            cpu[jump_rv].xyz_angle[0];
-        T1_camera->xyz_angle[1] = T1_render_views->
-            cpu[jump_rv].xyz_angle[1];
-        T1_camera->xyz_angle[2] = T1_render_views->
-            cpu[jump_rv].xyz_angle[2];
+        T1_cam->angle_xyz[0] = T1_render_views->
+            cpu[jump_rv].angle_xyz[0];
+        T1_cam->angle_xyz[1] = T1_render_views->
+            cpu[jump_rv].angle_xyz[1];
+        T1_cam->angle_xyz[2] = T1_render_views->
+            cpu[jump_rv].angle_xyz[2];
         
         return true;
     }
@@ -503,12 +504,7 @@ static uint8_t T1_term_evaluate(
         T1_std_are_equal_strings(command, "RESET CAMERA") ||
         T1_std_are_equal_strings(command, "CENTER CAMERA"))
     {
-        T1_camera->xyz[0] = 0.0f;
-        T1_camera->xyz[1] = 0.0f;
-        T1_camera->xyz[2] = 0.0f;
-        T1_camera->xyz_angle[0] = 0.0f;
-        T1_camera->xyz_angle[1] = 0.0f;
-        T1_camera->xyz_angle[2] = 0.0f;
+        T1_render_view_reset(0);
         T1_std_strcpy_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -530,7 +526,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz[0]);
+            T1_cam->xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -538,7 +534,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz[1]);
+            T1_cam->xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -546,7 +542,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz[2]);
+            T1_cam->xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -554,7 +550,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz_angle[0]);
+            T1_cam->angle_xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -562,7 +558,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz_angle[1]);
+            T1_cam->angle_xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -570,7 +566,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_float_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_camera->xyz_angle[2]);
+            T1_cam->angle_xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -930,8 +926,8 @@ static uint8_t T1_term_evaluate(
         T1_std_are_equal_strings(command, "OPEN WRITABLES"))
     {
         char writables_path[512];
-        T1_platform_get_writables_dir(writables_path, 512);
-        T1_platform_open_dir_in_window_if_possible(writables_path);
+        T1_os_get_writables_dir(writables_path, 512);
+        T1_os_open_dir_in_window_if_possible(writables_path);
         
         return true;
     }
@@ -974,7 +970,7 @@ static uint8_t T1_term_evaluate(
         T1_std_are_equal_strings(command, "Exit") ||
         T1_std_are_equal_strings(command, "EXIT"))
     {
-        T1_platform_close_app();
+        T1_os_close_app();
         return true;
     }
     

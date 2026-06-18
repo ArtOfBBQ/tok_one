@@ -4,6 +4,8 @@
 #include "T1_cpu_gpu_shared_types.h"
 #include "clientlogic_macro_settings.h"
 
+typedef uchar uint8_t;
+
 using namespace metal;
 
 float4 x_rotate(const float4 vertices, const float x_angle) {
@@ -721,7 +723,7 @@ fragment_shader(
     array<texture2d_array<half>, T1_TEXARRAYS_CAP>
         color_textures[[ texture(0) ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_map [[texture(SHADOW_MAPS_1ST_FRAGARG_I)]],
+    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_map [[texture(T1_SHADOW_MAPS_1ST_FRAGARG_I)]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -821,7 +823,7 @@ alphablending_fragment_shader(
         color_textures[[ texture(0), maybe_unused ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     array<texture2d<float>, T1_RENDER_VIEW_CAP>
-        shadow_maps[[ texture(SHADOW_MAPS_1ST_FRAGARG_I), maybe_unused ]],
+        shadow_maps[[ texture(T1_SHADOW_MAPS_1ST_FRAGARG_I), maybe_unused ]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -975,7 +977,7 @@ single_quad_fragment_shader(
     #error
     #endif
     depth2d<float> camera_depth_map
-        [[texture(CAM_DEPTH_FRAGARG_I)]])
+        [[texture(T1_CAM_DEPTH_FRAGARG_I)]])
 {
     constexpr sampler sampler(
         s_address::repeat,
@@ -1233,8 +1235,8 @@ flat_texquad_vertex_shader(
     uint corner_id  = vertex_i % 6;
     
     float2 size_xy = vector_float2(
-        quads[quad_i].f32.size_xy[0],
-        quads[quad_i].f32.size_xy[1]);
+        quads[quad_i].f32.wh[0],
+        quads[quad_i].f32.wh[1]);
     
     constexpr const float2 corners[6] = {
         float2(-0.5f, -0.5f),

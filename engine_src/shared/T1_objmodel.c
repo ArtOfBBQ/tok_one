@@ -110,7 +110,7 @@ void T1_objmodel_init(void) {
     // even crticical engine features (terminal, text labels)
     T1_std_strcpy_cap(
         T1_mesh_summary_list[0].resource_name,
-        OBJ_STRING_SIZE,
+        T1_OBJ_STRING_SIZE,
         "basic_quad");
     T1_mesh_summary_list[0].mesh_id = T1_BASIC_QUAD_MESH_ID;
     T1_mesh_summary_list[0].vertices_head_i = 0;
@@ -202,7 +202,7 @@ void T1_objmodel_init(void) {
     // Let's hardcode a basic cube (currently not used anywhere)
     T1_std_strcpy_cap(
         T1_mesh_summary_list[1].resource_name,
-        OBJ_STRING_SIZE,
+        T1_OBJ_STRING_SIZE,
         "basic_cube");
     T1_mesh_summary_list[1].vertices_head_i = 6;
     T1_mesh_summary_list[1].vertices_size = 36;
@@ -1447,13 +1447,10 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    T1FileBuffer obj_file_buf;
-    obj_file_buf.size_without_terminator =
-        T1_platform_get_resource_size(
-            obj_filename);
+    uint64_t contents_cap = T1_os_get_resource_size(obj_filename);
+    char * contents = NULL;
     
-    if (
-        obj_file_buf.size_without_terminator < 1)
+    if (contents_cap < 1)
     {
         T1_std_strcpy_cap(
             error_message,
@@ -1472,20 +1469,21 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    obj_file_buf.contents = (char *)
-        T1_mem_malloc_managed(
-            obj_file_buf.
-                size_without_terminator + 1);
-    obj_file_buf.good = false;
+    contents = (char *)T1_mem_malloc_managed(contents_cap + 1);
+    uint8_t contents_good = false;
     
-    T1_platform_read_resource_file(
-        /* char * filename: */
+    T1_os_read_resource_file(
+        /* const char * filename: */
             obj_filename,
-        /* FileBuffer *out_preallocatedbuffer: */
-            &obj_file_buf);
+        /* char * recip: */
+            contents,
+        /* const uint64_t recip_cap: */
+            contents_cap,
+        /* uint8_t * good: */
+            &contents_good);
     
-    if (!obj_file_buf.good) {
-        T1_mem_free_managed(obj_file_buf.contents);
+    if (!contents_good) {
+        T1_mem_free_managed(contents);
         
         T1_std_strcpy_cap(
             error_message,
@@ -1502,16 +1500,16 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    T1FileBuffer mtl_file_buf;
+    uint64_t mtl_contents_cap = 0;
+    char * mtl_contents = NULL;
+    uint8_t mtl_contents_good = 0;
+    
     if (mtl_filename == NULL || mtl_filename[0] == '\0') {
-        mtl_file_buf.contents = NULL;
-        mtl_file_buf.size_without_terminator = 0;
+        // leave uninitialized
     } else {
-        mtl_file_buf.size_without_terminator =
-            T1_platform_get_resource_size(mtl_filename);
+        mtl_contents_cap = T1_os_get_resource_size(mtl_filename);
         
-        if (mtl_file_buf.
-            size_without_terminator < 1)
+        if (mtl_contents_cap < 1)
         {
             T1_std_strcpy_cap(
                 error_message,
@@ -1530,20 +1528,22 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             return -1;
         }
         
-        mtl_file_buf.contents = (char *)
-            T1_mem_malloc_managed(
-                mtl_file_buf.size_without_terminator + 1);
-        mtl_file_buf.good = false;
+        mtl_contents = (char *)T1_mem_malloc_managed(mtl_contents_cap + 1);
+        mtl_contents_good = false;
         
-        T1_platform_read_resource_file(
-            /* char * filename: */
+        T1_os_read_resource_file(
+            /* const char * filename: */
                 mtl_filename,
-            /* FileBuffer *out_preallocatedbuffer: */
-                &mtl_file_buf);
+            /* char * recip: */
+                mtl_contents,
+            /* const uint64_t recip_cap: */
+                mtl_contents_cap,
+            /* uint8_t * good: */
+                &mtl_contents_good);
         
-        if (!mtl_file_buf.good) {
-            T1_mem_free_managed(obj_file_buf.contents);
-            T1_mem_free_managed(mtl_file_buf.contents);
+        if (!mtl_contents_good) {
+            T1_mem_free_managed(contents);
+            T1_mem_free_managed(mtl_contents);
             
             T1_std_strcpy_cap(
                 error_message,
@@ -1566,9 +1566,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     int32_t return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
             obj_filename,
         /* const char * obj_text: */
-            obj_file_buf.contents,
+            contents,
         /* const char * mtl_text: */
-            mtl_file_buf.contents);
+            mtl_contents);
     
     if (return_value < 0) {
         T1_std_strcpy_cap(
@@ -1581,12 +1581,12 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     
     T1_std_strcpy_cap(
         T1_mesh_summary_list[return_value].resource_name,
-        OBJ_STRING_SIZE,
+        T1_OBJ_STRING_SIZE,
         obj_filename);
     
-    T1_mem_free_managed(obj_file_buf.contents);
-    if (mtl_file_buf.contents != NULL) {
-       T1_mem_free_managed(mtl_file_buf.contents);
+    T1_mem_free_managed(contents);
+    if (mtl_contents != NULL) {
+       T1_mem_free_managed(mtl_contents);
     }
     
     if (flip_uv_v) {

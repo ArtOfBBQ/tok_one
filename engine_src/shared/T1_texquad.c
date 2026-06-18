@@ -30,8 +30,8 @@ static void assert_sanity_check_texquad_vals(
         T1_log_assert(!isnan(gpu_f32->rgba[1]));
         T1_log_assert(!isnan(gpu_f32->rgba[2]));
         T1_log_assert(!isnan(gpu_f32->rgba[3]));
-        T1_log_assert(!isnan(gpu_f32->size_xy[0]));
-        T1_log_assert(!isnan(gpu_f32->size_xy[1]));
+        T1_log_assert(!isnan(gpu_f32->wh[0]));
+        T1_log_assert(!isnan(gpu_f32->wh[1]));
     }
 }
 
@@ -63,8 +63,8 @@ void T1_texquad_construct(
         0,
         sizeof(T1GPUTexQuadi32));
     
-    f32->size_xy[0] = 0.25f;
-    f32->size_xy[1] = 0.25f;
+    f32->wh[0] = 0.25f;
+    f32->wh[1] = 0.25f;
     i32->reserved_and_tex = T1_TEX_NONE;
     i32->touch_id = -1;
 }
@@ -84,7 +84,7 @@ static void T1_texquad_construct_at_i(
         0,
         sizeof(T1CPUTexQuad));
     
-    T1_texquads->cpu[i].zsprite_id = -1;
+    T1_texquads->cpu[i].T1_id = -1;
     T1_texquads->cpu[i].visible = 1;
     
     T1_texquad_construct(
@@ -110,10 +110,10 @@ void T1_texquad_delete(const int32_t zsprite_id)
         i >= 0;
         i--)
     {
-        if (T1_texquads->cpu[i].zsprite_id == zsprite_id)
+        if (T1_texquads->cpu[i].T1_id == zsprite_id)
         {
             T1_texquads->cpu[i].deleted    = true;
-            T1_texquads->cpu[i].zsprite_id =   -1;
+            T1_texquads->cpu[i].T1_id =   -1;
         }
     }
     
@@ -142,7 +142,7 @@ void T1_texquad_get_avg_xyz(
         tq_i++)
     {
         if (
-            T1_texquads->cpu[tq_i].zsprite_id ==
+            T1_texquads->cpu[tq_i].T1_id ==
                 zsprite_id)
         {
             count += 1.0f;
@@ -232,8 +232,8 @@ void T1_texquad_commit(
     T1FlatTexQuadRequest * request)
 {
     T1_log_assert(!request->cpu->deleted);
-    T1_log_assert(request->gpu->f32.size_xy[0] > 0.0f);
-    T1_log_assert(request->gpu->f32.size_xy[1] > 0.0f);
+    T1_log_assert(request->gpu->f32.wh[0] > 0.0f);
+    T1_log_assert(request->gpu->f32.wh[1] > 0.0f);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */
@@ -273,7 +273,7 @@ void T1_texquad_apply_endpoint_anim(
                 T1_TEXQUAD_ID_HIT_EVERYTHING &&
             ((zsprite_id >= 0 &&
             T1_texquads->cpu[zp_i].
-                zsprite_id != zsprite_id) ||
+                T1_id != zsprite_id) ||
             (touch_id >= 0 &&
             T1_texquads->gpu[zp_i].i32.
                 touch_id != touch_id) ||
@@ -513,7 +513,7 @@ void T1_texquad_apply_anim_effects_to_id(
         if (
             (zsprite_id >= 0 &&
             T1_texquads->cpu[tq_i].
-                zsprite_id != zsprite_id &&
+                T1_id != zsprite_id &&
             zsprite_id != T1_TEXQUAD_ID_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
             T1_texquads->gpu[tq_i].i32.

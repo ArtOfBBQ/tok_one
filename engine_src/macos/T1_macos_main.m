@@ -367,7 +367,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
             " close..\n");
     }
     
-    T1_platform_close_app();
+    T1_os_close_app();
 }
 
 - (void)
@@ -404,7 +404,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     toSize:(NSSize)frameSize
 {
     T1_platform_layer_start_window_resize(
-        T1_platform_get_current_time_us());
+        T1_os_get_current_time_us());
     
     return frameSize;
 }
@@ -418,7 +418,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         /* float height */
             [window getHeight],
         /* uint64_t at_timestamp_us: */
-            T1_platform_get_current_time_us());
+            T1_os_get_current_time_us());
     
     [apple_gpu_delegate updateFinalWindowSize];
 }
@@ -500,7 +500,7 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
-    T1_platform_get_res_dir(
+    T1_os_get_res_dir(
         shader_lib_path_cstr,
         2000);
     
@@ -565,7 +565,7 @@ int main(int argc, const char * argv[]) {
         T1_platform_request_messagebox(errmsg);
         T1_log_app_running = false;
     } else {
-        T1_platform_start_thread(
+        T1_os_start_thread(
             T1_appinit_after_gpu_init_step2,
             0);
     }
@@ -584,12 +584,12 @@ void T1_platform_request_messagebox(const char * message) {
     [alert runModal];
 }
 
-void T1_platform_enter_fullscreen(void) {
+void T1_os_enter_fullscreen(void) {
     if ((window.styleMask & NSWindowStyleMaskFullScreen) == 0) {
         [window toggleFullScreen: window];
     }
 }
 
-void T1_platform_toggle_fullscreen(void) {
+void T1_os_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }

@@ -42,7 +42,7 @@ void
 T1_io_event_register(
     T1IOEvent * touch_record)
 {
-    uint64_t timestamp = T1_platform_get_current_time_us();
+    uint64_t timestamp = T1_os_get_current_time_us();
     
     touch_record->screen_x =
         T1_io->events[T1_IO_LAST_GPU_DATA].screen_x;

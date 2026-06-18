@@ -13,6 +13,7 @@
 #include "T1_io.h"
 #include "T1_zlight.h"
 #include "T1_frame_anim.h"
+#include "T1_render_view.h"
 
 static uint32_t T1_render_active = false;
 
@@ -20,7 +21,7 @@ void T1_render_init(void) {
     T1_render_active = true;
     
     T1_std_memset(
-        T1_camera,
+        T1_cam,
         0,
         sizeof(T1GPURenderView));
 }
@@ -106,9 +107,9 @@ static void construct_view_matrix(void) {
         
         T1_linal_float4x4_construct_xyz_rotation(
             &next,
-            -rv_cpu->xyz_angle[0],
-            -rv_cpu->xyz_angle[1],
-            -rv_cpu->xyz_angle[2]);
+            -rv_cpu->angle_xyz[0],
+            -rv_cpu->angle_xyz[1],
+            -rv_cpu->angle_xyz[2]);
         
         T1_linal_float4x4_mul_float4x4_inplace(
             &result,
@@ -218,6 +219,19 @@ void T1_render_update(
             "ERROR: platform layer didnt "
             "pass recipients\n");
         return;
+    }
+    
+    for (uint32_t rv_i = 0; rv_i < T1_render_views->size; rv_i++) {
+        T1CPURenderView * rv = T1_render_views->cpu + rv_i;
+        if (rv->clamped_to_zsprite_id >= 0) {
+            int32_t zs_i = rv->clamped_to_zsprite_id;
+            
+            T1_zsprite_get_pos_xyz(
+                zs_i,
+                &rv->dest_xyz[0],
+                &rv->dest_xyz[1],
+                &rv->dest_xyz[2]);
+        }
     }
     
     frame_data->zsprite_list->size = 0;

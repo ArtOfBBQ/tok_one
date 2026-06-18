@@ -27,100 +27,95 @@ on each platform
 #define T1_PLATFORM_LAYER_H
 
 #include "T1_std.h"
+#include "T1_public_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void T1_platform_init(
+void T1_os_init(
     void ** unmanaged_memory_store,
     const uint32_t aligned_to);
 
-typedef struct {
-    uint64_t size_without_terminator;
-    char * contents;
-    uint8_t good;
-} T1FileBuffer;
-
 void
-T1_platform_close_app(void);
+T1_os_close_app(void);
 
 void *
-T1_platform_malloc_unaligned_block(
+T1_os_malloc_unaligned_block(
     const uint64_t size);
 
 uint32_t
-T1_platform_get_dir_separator_size(void);
+T1_os_get_dir_separator_size(void);
 
 void
-T1_platform_get_dir_separator(char * recipient);
+T1_os_get_dir_separator(char * recipient);
 
 void
-T1_platform_res_filename_to_pathfile(
+T1_os_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t recipient_capacity);
 
 void
-T1_platform_writable_filename_to_pathfile(
+T1_os_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t recipient_capacity);
 
 void
-T1_platform_open_dir_in_window_if_possible(
+T1_os_open_dir_in_window_if_possible(
     const char * folderpath);
 
 // get current working directory
 void
-T1_platform_get_app_dir(
+T1_os_get_app_dir(
     char * recipient,
     const uint32_t recipient_size);
 
 void
-T1_platform_get_res_dir(
-    char * recipient,
-    const uint32_t recipient_size);
+T1_os_get_res_dir(
+    char * recip,
+    const uint32_t recip_cap);
 
 void
-T1_platform_get_cwd(
+T1_os_get_cwd(
     char * recipient,
     const uint32_t recipient_size);
 
 // a root directory where we're allowed to write
 void
-T1_platform_get_writables_dir(
+T1_os_get_writables_dir(
     char * recipient,
     const uint32_t recipient_size);
 
 uint8_t
-T1_platform_res_exists(const char * resource_name);
+T1_os_res_exists(const char * resource_name);
 
 uint8_t
-T1_platform_file_exists(const char * filepath);
+T1_os_file_exists(const char * filepath);
 
 void
-T1_platform_del_file(const char * filepath);
+T1_os_del_file(const char * filepath);
 
 void
-T1_platform_del_writable(const char * writable_filename);
+T1_os_del_writable(const char * writable_filename);
 
 void
-T1_platform_write_file(
+T1_os_write_file(
     const char * filepath_destination,
     const char * output,
     const uint32_t output_size,
     uint8_t * good);
 
 void
-T1_platform_write_file_to_writables(
+T1_os_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
     uint8_t * good);
 
 void
-T1_platform_write_rgba_to_writables(
+T1_os_write_rgba_to_writables(
     const char * local_filename,
     uint8_t * rgba,
     const uint32_t rgba_size,
@@ -129,16 +124,16 @@ T1_platform_write_rgba_to_writables(
     uint8_t * good);
 
 void
-T1_platform_copy_file(
+T1_os_copy_file(
     const char * filepath_source,
     const char * filepath_destination);
 
 void
-T1_platform_mkdir_if_not_exist(
+T1_os_mkdir_if_not_exist(
     const char * dirname);
 
 void
-T1_platform_get_filenames_in(
+T1_os_get_filenames_in(
     const char * directory,
     char filenames[2000][500]);
 
@@ -151,15 +146,15 @@ A 'resource' is a file that's available in the typical folder for our platform
 A 'filepath' is a full explicit path to and including the filename
 */
 uint64_t
-T1_platform_get_resource_size(
+T1_os_get_resource_size(
     const char * filename);
 
 uint64_t
-T1_platform_get_writable_size(
+T1_os_get_writable_size(
     const char * filename);
 
 uint64_t
-T1_platform_get_filesize(
+T1_os_get_filesize(
     const char * filepath);
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -186,32 +181,37 @@ If there's an error reading the file, the buffer's 'good' field will be set to
 0, else to 1
 */
 void
-T1_platform_read_resource_file(
+T1_os_read_resource_file(
     const char * filename,
-    T1FileBuffer * out_preallocatedbuffer);
+    char * recip,
+    const uint64_t recip_cap,
+    uint8_t * good);
 
 void
-T1_platform_read_file(
+T1_os_read_file(
     const char * filepath,
-    T1FileBuffer * out_preallocatedbuffer);
+    char * recip,
+    uint32_t * recip_size,
+    const uint64_t recip_cap,
+    uint8_t * good);
 
 void
-T1_platform_read_file_from_writables(
+T1_os_read_file_from_writables(
     const char * filepath_inside_writables,
     char * recipient,
     const uint32_t recipient_size,
     uint8_t * good);
 
 void
-T1_platform_gpu_get_device_name(
+T1_os_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap);
 
-void T1_platform_gpu_update_capacity_if_needed(
+void T1_os_gpu_update_capacity_if_needed(
     const int32_t tex_array_i);
 
 uint32_t
-T1_platform_get_cpu_logical_core_count(void);
+T1_os_get_cpu_logical_core_count(void);
 
 /*
 Run a task in the background I only use this to pass clientlogic.c's
@@ -220,57 +220,45 @@ implement client_logic_threadmain() to do what you want it to do when it gets
 that id
 */
 void
-T1_platform_start_thread(
+T1_os_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument);
 
 uint64_t
-T1_platform_get_current_time_us(void);
+T1_os_get_current_time_us(void);
 
 uint64_t
-T1_platform_get_clock_frequency(void);
+T1_os_get_clock_frequency(void);
 
 float
-T1_platform_x_to_x(const float x);
+T1_os_x_to_x(const float x);
 
 float
-T1_platform_y_to_y(const float y);
+T1_os_y_to_y(const float y);
 
 void
-T1_platform_enter_fullscreen(void);
+T1_os_enter_fullscreen(void);
 
 void
-T1_platform_toggle_fullscreen(void);
+T1_os_toggle_fullscreen(void);
 
 void
-T1_platform_gpu_update_internal_render_viewport(
+T1_os_gpu_update_internal_render_viewport(
     const int32_t at_i);
 
 void
-T1_platform_gpu_update_window_viewport(void);
+T1_os_gpu_update_window_viewport(void);
 
 void
-T1_platform_gpu_copy_locked_vertices(void);
+T1_os_gpu_copy_locked_vertices(void);
 
 void
-T1_platform_gpu_copy_locked_materials(void);
+T1_os_gpu_copy_locked_materials(void);
 
 int32_t
-T1_platform_gpu_get_touch_id_at_screen_pos(
+T1_os_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
-
-// DEPRECATED
-#if 0
-void
-T1_platform_gpu_copy_texture_array(
-    const int32_t texture_array_i,
-    const uint32_t num_images,
-    const uint32_t single_image_width,
-    const uint32_t single_image_height,
-    const bool32_t is_render_target,
-    const bool32_t use_bc1_compression);
-#endif
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void
@@ -282,23 +270,12 @@ T1_platform_gpu_generate_mipmaps_for_texture_array(
 #endif
 
 void
-T1_platform_gpu_push_tex_slice_and_free_rgba(
+T1_os_gpu_push_tex_slice_and_free_rgba(
     const int32_t texture_array_i,
     const int32_t texture_i);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-#if 0
-void T1_platform_gpu_push_bc1_tex_slice_then_free(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * raw_bc1_file_freeable,
-    uint8_t * raw_bc1_file_page_aligned);
-#endif
-
-void T1_platform_gpu_fetch_rgba_at(
+void T1_os_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
     uint8_t * rgba_recipient,

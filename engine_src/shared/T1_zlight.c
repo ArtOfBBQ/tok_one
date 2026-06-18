@@ -1,6 +1,8 @@
 #include "T1_zlight.h"
 
+#include "T1_simd.h"
 #include "T1_log.h"
+#include "T1_render_view.h"
 
 T1zLight * T1_zlights = NULL;
 uint32_t T1_zlights_size = 0;
@@ -170,11 +172,11 @@ T1_zlight_delete(
         i++)
     {
         if (
-            T1_zlights[i].object_id ==
+            T1_zlights[i].T1_id ==
                 with_object_id)
         {
             T1_zlights[i].deleted   = true;
-            T1_zlights[i].object_id = -1;
+            T1_zlights[i].T1_id = -1;
         }
     }
 }
@@ -255,7 +257,7 @@ T1_zlight_update_all_attached_render_views(void)
         {
             if (
                 T1_render_views->cpu[i].write_array_i ==
-                    DEPTH_TEXTUREARRAYS_I &&
+                    T1_DEPTH_TEXTUREARRAYS_I &&
                 T1_render_views->cpu[i].write_slice_i ==
                     depth_i)
             {
@@ -277,11 +279,11 @@ T1_zlight_update_all_attached_render_views(void)
             T1_zlights[zl_i].xyz[1];
         T1_render_views->cpu[rv_i].xyz[2] =
             T1_zlights[zl_i].xyz[2];
-        T1_render_views->cpu[rv_i].xyz_angle[0] =
+        T1_render_views->cpu[rv_i].angle_xyz[0] =
             T1_zlights[zl_i].xyz_angle[0];
-        T1_render_views->cpu[rv_i].xyz_angle[1] =
+        T1_render_views->cpu[rv_i].angle_xyz[1] =
             T1_zlights[zl_i].xyz_angle[1];
-        T1_render_views->cpu[rv_i].xyz_angle[2] =
+        T1_render_views->cpu[rv_i].angle_xyz[2] =
             T1_zlights[zl_i].xyz_angle[2];
     }
 }

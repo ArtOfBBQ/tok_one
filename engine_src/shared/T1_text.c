@@ -1,5 +1,6 @@
-#include "T1_text.h"
+#include "T1_public_types.h"
 
+#include "T1_text.h"
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_zspriteid.h"
@@ -330,14 +331,14 @@ void T1_text_request_label_offset_around(
                     mid_y_pixelspace);
             letter.gpu->f32.xyz[2] = z;
             
-            letter.gpu->f32.size_xy[0] =
+            letter.gpu->f32.wh[0] =
                 T1_render_view_screen_width_to_width_noz(
                     T1_text_props->font_height);
-            letter.gpu->f32.size_xy[1] =
+            letter.gpu->f32.wh[1] =
                 T1_render_view_screen_height_to_height_noz(
                     T1_text_props->font_height);
             
-            letter.cpu->zsprite_id = with_id;
+            letter.cpu->T1_id = with_id;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -537,10 +538,10 @@ void T1_text_request_label_renderable(
                 top_y_pixelspace); // (get_newline_advance() / 2)
         letter.gpu->f32.xyz[2] = z;
         
-        letter.gpu->f32.size_xy[0] = letter_width;
-        letter.gpu->f32.size_xy[1] = letter_height;
+        letter.gpu->f32.wh[0] = letter_width;
+        letter.gpu->f32.wh[1] = letter_height;
         
-        letter.cpu->zsprite_id = with_id;
+        letter.cpu->T1_id = with_id;
         
         T1Tex tex;
         int16_t charval = text_to_draw[i] - '!';
@@ -582,8 +583,8 @@ void T1_text_request_label_renderable(
             letter.gpu->f32.rgba[0] += 0.2f;
             letter.gpu->f32.rgba[1] += 0.2f;
             letter.gpu->f32.rgba[2] += 0.2f;
-            letter.gpu->f32.size_xy[0] *= 1.12f;
-            letter.gpu->f32.size_xy[1] *= 1.12f;
+            letter.gpu->f32.wh[0] *= 1.12f;
+            letter.gpu->f32.wh[1] *= 1.12f;
         }
         
         if (T1_text_props->opaque_back_active) {
@@ -605,7 +606,7 @@ void T1_text_request_label_renderable(
     }
 }
 
-void T1_text_request_label_renderable_leftx_toplinemidy(
+void T1_text_request_label_leftx_toplinemidy(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
@@ -732,9 +733,9 @@ void T1_text_request_top_touch_id(
     T1_std_strcat_int_cap(fps_string, 512, top_touchable_id);
     
     T1_std_strcat_cap(fps_string, 512, ", camera xyz: [");
-    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[0]);
-    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[1]);
-    T1_std_strcat_float_cap(fps_string, 512, T1_camera->xyz[2]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_cam->xyz[0]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_cam->xyz[1]);
+    T1_std_strcat_float_cap(fps_string, 512, T1_cam->xyz[2]);
     T1_std_strcat_cap(fps_string, 512, "]");
     
     T1_text_props->font_height = 16.0f;

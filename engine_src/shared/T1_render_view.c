@@ -1,10 +1,11 @@
-#include "T1_render_view.h"
-
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_log.h"
+#include "T1_zlight.h"
+#include "T1_render_view.h"
+#include "T1_platform_layer.h"
 
 /*
 render_views[0] is the global camera
@@ -20,14 +21,14 @@ security camera (set write_type
 T1RENDERVIEW_WRITE_RGBA)
 */
 T1RenderViewCollection * T1_render_views = NULL;
-T1CPURenderView * T1_camera = NULL;
+T1CPURenderView * T1_cam = NULL;
 
 void T1_render_view_init(void) {
     T1_log_assert(T1_RENDER_VIEW_CAP > 0);
     T1_render_views = T1_mem_malloc_unmanaged(
         sizeof(T1RenderViewCollection));
     
-    T1_camera = T1_render_views->cpu; // convenience
+    T1_cam = T1_render_views->cpu; // convenience
     
     T1_std_memset(
         T1_render_views,
@@ -37,7 +38,56 @@ void T1_render_view_init(void) {
     for (uint32_t i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         T1_render_views->cpu[i].write_array_i = -1;
         T1_render_views->cpu[i].write_slice_i = -1;
+        T1_render_views->cpu[i].clamped_to_zsprite_id = -1;
     }
+}
+
+typedef struct {
+    float    last_drag_start_camera_x;
+    float    last_drag_start_camera_y;
+    float    last_drag_start_x;
+    float    last_drag_start_y;
+    float    total_dragged_x;
+    float    total_dragged_y;
+} T1CamState;
+
+void T1_render_view_reset(int i)
+{
+    T1CPURenderView * rv = T1_render_views->cpu + i;
+    
+    T1_log_assert(!isnan(rv->dest_xyz[0]));
+    T1_log_assert(!isnan(rv->dest_xyz[1]));
+    T1_log_assert(!isnan(rv->dest_xyz[2]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
+    
+    rv->us_to_destination = 0;
+    rv->xyz[0] = 0.0f;
+    rv->xyz[1] = 0.0f;
+    rv->xyz[2] = 0.0f;
+    rv->angle_xyz[0] = 0.0f;
+    rv->angle_xyz[1] = 0.0f;
+    rv->angle_xyz[2] = 0.0f;
+    rv->dest_xyz[0] = 0.0f;
+    rv->dest_xyz[1] = 0.0f;
+    rv->dest_xyz[2] = 0.0f;
+    rv->dest_angle_xyz[0] = 0.0f;
+    rv->dest_angle_xyz[1] = 0.0f;
+    rv->dest_angle_xyz[2] = 0.0f;
+    rv->min_xyz[0] = T1_F32_MIN;
+    rv->min_xyz[1] = T1_F32_MIN;
+    rv->min_xyz[2] = T1_F32_MIN;
+    rv->max_xyz[0] = T1_F32_MAX;
+    rv->max_xyz[1] = T1_F32_MAX;
+    rv->max_xyz[2] = T1_F32_MAX;
+    
+    T1_log_assert(!isnan(rv->dest_xyz[0]));
+    T1_log_assert(!isnan(rv->dest_xyz[1]));
+    T1_log_assert(!isnan(rv->dest_xyz[2]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
+    T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
 }
 
 static void T1_render_view_construct(
@@ -46,9 +96,18 @@ static void T1_render_view_construct(
     const uint32_t height,
     const uint32_t width)
 {
+    T1_log_assert(!isnan(cpu->dest_xyz[0]));
+    T1_log_assert(!isnan(cpu->dest_xyz[1]));
+    T1_log_assert(!isnan(cpu->dest_xyz[2]));
+    
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[0]));
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[1]));
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[2]));
+    
     T1_std_memset(cpu, 0, sizeof(T1CPURenderView));
     T1_std_memset(gpu, 0, sizeof(T1GPURenderView));
     
+    cpu->clamped_to_zsprite_id = -1;
     cpu->write_array_i = -1;
     cpu->write_slice_i = -1;
     
@@ -84,6 +143,14 @@ static void T1_render_view_construct(
         pjc->field_of_view_modifier;
     
     pjc->y_multiplier = pjc->field_of_view_modifier;
+    
+    T1_log_assert(!isnan(cpu->dest_xyz[0]));
+    T1_log_assert(!isnan(cpu->dest_xyz[1]));
+    T1_log_assert(!isnan(cpu->dest_xyz[2]));
+    
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[0]));
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[1]));
+    T1_log_assert(!isnan(cpu->dest_angle_xyz[2]));
 }
 
 int32_t T1_render_view_fetch_next(
@@ -122,91 +189,8 @@ int32_t T1_render_view_fetch_next(
     return ret;
 }
 
-#if 0
-static void
-T1_render_view_pos_point_to_pos_to_angle3(
-    float * recip_xyz_angle,
-    const float * from_pos_xyz,
-    const float * point_to_xyz)
-{
-    float dir[3];
-    dir[0] =
-        point_to_xyz[0] - from_pos_xyz[0];
-    dir[1] =
-        point_to_xyz[1] - from_pos_xyz[1];
-    dir[2] =
-        point_to_xyz[2] - from_pos_xyz[2];
-    
-    float length = sqrtf(
-        dir[0] * dir[0] +
-        dir[1] * dir[1] +
-        dir[2] * dir[2]);
-    
-    if (length < 1e-6f) {
-        T1_log_assert(0);
-        recip_xyz_angle[0] = 0.0f;
-        recip_xyz_angle[1] = 0.0f;
-        recip_xyz_angle[2] = 0.0f;
-        return;
-    }
-    
-    float inv_length = 1.0f / length;
-    dir[0] *= inv_length;
-    dir[1] *= inv_length;
-    dir[2] *= inv_length;
-    
-    recip_xyz_angle[0] = -atan2f(
-        dir[1],
-        sqrtf(dir[0]*dir[0] + dir[2]*dir[2]));;
-    recip_xyz_angle[1] = atan2f(
-        dir[0], dir[2]);
-    recip_xyz_angle[2] = 0.0f;
-}
-#endif
-
-#if 0
-static void
-T1_render_view_angle3_to_direction(
-    float * recip_dir,
-    const float * angle_xyz)
-{
-    float pitch = angle_xyz[0]; // X
-    float yaw   = angle_xyz[1]; // Y
-    
-    float cp = cosf(pitch);
-    float sp = sinf(pitch);
-    float cy = cosf(yaw);
-    float sy = sinf(yaw);
-    
-    recip_dir[0] =  sy * cp;
-    recip_dir[1] = -sp;
-    recip_dir[2] =  cy * cp;
-}
-#endif
-
-#if 0
-static void
-T1_render_view_get_arbitrary_lookat_point(
-    float * new_pos,
-    const float * angle_xyz,
-    const float * from_pos_xyz)
-{
-    // get an arbitrary look-at position
-    float look_at_dist = 1.0f; // arbitrary dist
-    
-    float forward[3];
-    T1_render_view_angle3_to_direction(
-        forward,
-        angle_xyz);
-    
-    new_pos[0] = from_pos_xyz[0] + forward[0] * look_at_dist;
-    new_pos[1] = from_pos_xyz[1] + forward[1] * look_at_dist;
-    new_pos[2] = from_pos_xyz[2] + forward[2] * look_at_dist;
-}
-#endif
-
 void T1_render_view_update_positions(
-    void)
+    const uint64_t elapsed)
 {
     if (T1_global->block_render_view_pos_updates) {
         return;
@@ -217,9 +201,66 @@ void T1_render_view_update_positions(
         rv_i < T1_render_views->size;
         rv_i++)
     {
-        if (
-            T1_render_views->cpu[rv_i].
-                reflect_around_plane)
+        T1CPURenderView * rv = T1_render_views->cpu + rv_i;
+        
+        if (rv->us_to_destination < 1) {
+            continue;
+        }
+        
+        T1_log_assert(!isnan(rv->dest_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_xyz[2]));
+        
+        T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
+        
+        uint64_t us_actual;
+        if (elapsed > rv->us_to_destination) {
+            us_actual = rv->us_to_destination;
+        } else {
+            us_actual = elapsed;
+        }
+        
+        float elapsed_pct = (float)us_actual / (float)rv->us_to_destination;
+        T1_log_assert(elapsed_pct >= 0.0f);
+        T1_log_assert(elapsed_pct <= 1.0f);
+        T1_log_assert(!isnan(elapsed_pct));
+        rv->us_to_destination -= us_actual;
+        T1_log_assert(rv->us_to_destination < 5000000);
+        
+        rv->xyz[0] =
+            (rv->xyz[0]      * (1.0f - elapsed_pct)) +
+            (rv->dest_xyz[0] * elapsed_pct);
+        rv->xyz[1] =
+            (rv->xyz[1]      * (1.0f - elapsed_pct)) +
+            (rv->dest_xyz[1] * elapsed_pct);
+        rv->xyz[2] =
+            (rv->xyz[2]      * (1.0f - elapsed_pct)) +
+            (rv->dest_xyz[2] * elapsed_pct);
+        T1_log_assert(!isnan(rv->xyz[0]));
+        T1_log_assert(!isnan(rv->xyz[1]));
+        T1_log_assert(!isnan(rv->xyz[2]));
+        
+        rv->angle_xyz[0] =
+            ((float)rv->angle_xyz[0] * (1.0f - elapsed_pct)) +
+            ((float)rv->dest_angle_xyz[0] * elapsed_pct);
+        rv->angle_xyz[1] =
+            ((float)rv->angle_xyz[1] * (1.0f - elapsed_pct)) +
+            ((float)rv->dest_angle_xyz[1] * elapsed_pct);
+        rv->angle_xyz[2] =
+            ((float)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
+            ((float)rv->dest_angle_xyz[2] * elapsed_pct);
+        
+        T1_log_assert(!isnan(rv->dest_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_xyz[2]));
+        
+        T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
+        
+        if (rv->reflect_around_plane)
         {
             // Assuming the main camera is always at 0
             // Assuming the main camera can't be a
@@ -227,27 +268,29 @@ void T1_render_view_update_positions(
             T1_log_assert(rv_i != 0);
             
             // Supporting only z-planes for now:
-            float plane_z = T1_render_views->cpu[rv_i].
-                refl_cam_around_plane_xyz[2];
+            float plane_z = rv->refl_cam_around_plane_xyz[2];
             
             // Reflect position (flip Z over the plane)
-            T1_render_views->cpu[rv_i].xyz[0] = T1_camera->xyz[0];
-            T1_render_views->cpu[rv_i].xyz[1] = T1_camera->xyz[1];
-            T1_render_views->cpu[rv_i].xyz[2] = 2.0f * plane_z - T1_camera->xyz[2];
+            rv->xyz[0] = T1_cam->xyz[0];
+            rv->xyz[1] = T1_cam->xyz[1];
+            rv->xyz[2] = 2.0f * plane_z - T1_cam->xyz[2];
             
-            T1_render_views->cpu[rv_i].xyz_angle[0] =
-                -(3.14159265359f +
-                    T1_camera->xyz_angle[0]);
-            T1_render_views->cpu[rv_i].xyz_angle[1] =
-                T1_camera->xyz_angle[1];
-            T1_render_views->cpu[rv_i].xyz_angle[2] =
-                T1_camera->xyz_angle[2];
+            rv->angle_xyz[0] = -(3.14159f +
+                T1_cam->angle_xyz[0]);
+            rv->angle_xyz[1] = T1_cam->angle_xyz[1];
+            rv->angle_xyz[2] = T1_cam->angle_xyz[2];
             
-            T1_render_views->gpu[rv_i].
-                cull_above_z =
-                    T1_render_views->cpu[rv_i].
-                        refl_cam_around_plane_xyz[2];
+            T1_render_views->gpu[rv_i].cull_above_z =
+                rv->refl_cam_around_plane_xyz[2];
         }
+        
+        T1_log_assert(!isnan(rv->dest_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_xyz[2]));
+        
+        T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
+        T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
     }
 }
 

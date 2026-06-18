@@ -1,20 +1,12 @@
 #ifndef T1_TEXT_H
 #define T1_TEXT_H
 
+#include "T1_public_types.h"
 #include "T1_texquad.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct FontSettings {
-    T1GPUTexQuadf32 f32;
-    T1GPUTexQuadi32 i32;
-    float font_height;
-    int32_t highlight_i;
-    int32_t highlight_size;
-    bool8_t opaque_back_active;
-} T1TextFontSettings;
 
 extern T1TextFontSettings * T1_text_props;
 
@@ -56,7 +48,7 @@ void T1_text_request_label_renderable(
     const float tab_width,
     const float max_width);
 
-void T1_text_request_label_renderable_leftx_toplinemidy(
+void T1_text_request_label_leftx_toplinemidy(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,

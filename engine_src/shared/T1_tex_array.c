@@ -31,7 +31,7 @@ void T1_tex_array_push_all(void)
             if (
                 T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_freeable != NULL)
             {
-                T1_platform_gpu_push_tex_slice_and_free_rgba(
+                T1_os_gpu_push_tex_slice_and_free_rgba(
                     /* const int32_t texture_array_i: */
                         ta_i,
                     /* const int32_t texture_i: */
@@ -266,7 +266,7 @@ register_to_texturearray_by_splitting_image(
             T1_tex_arrays[ta_i].images[t_i].image.rgba_values_page_aligned =
                 split_img->rgba_values_page_aligned;
             
-            T1_platform_gpu_push_tex_slice_and_free_rgba(
+            T1_os_gpu_push_tex_slice_and_free_rgba(
                 /* const int32_t texture_array_i: */
                     ta_i,
                 /* const int32_t texture_i: */
@@ -342,7 +342,7 @@ int32_t T1_tex_array_create_new_render_view(
     T1_log_assert(T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].image.width == width);
     T1_log_assert(T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].image.height == height);
     
-    T1_platform_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
+    T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
     
     return rv_i;
 }
@@ -367,7 +367,7 @@ void T1_tex_array_delete_slice(
 {
     T1_log_assert(array_i >= 0);
     T1_log_assert(slice_i >= 0);
-    if (array_i != DEPTH_TEXTUREARRAYS_I) {
+    if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
         T1_log_assert(
             slice_i < (int32_t)
                 T1_tex_arrays[array_i].images_size);
@@ -376,7 +376,7 @@ void T1_tex_array_delete_slice(
                 deleted);
     }
     
-    if (array_i != DEPTH_TEXTUREARRAYS_I) {
+    if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
         T1_log_assert(
             array_i < (int32_t)T1_tex_arrays_size);
         
@@ -471,8 +471,8 @@ T1Tex T1_tex_array_reg_img(
     const char * filename,
     const uint32_t width,
     const uint32_t height,
-    const uint32_t is_render_target,
-    const uint32_t use_bc1_compression)
+    const bool8_t is_render_target,
+    const bool8_t use_bc1_compression)
 {
     T1Tex retval = T1_TEX_NONE;
     
@@ -605,7 +605,7 @@ void T1_tex_array_debug_dump_to_writables(
         uint32_t width = 0;
         uint32_t height = 0;
         
-        T1_platform_gpu_fetch_rgba_at(
+        T1_os_gpu_fetch_rgba_at(
             /* const int32_t texture_array_i: */
                 texture_array_i,
             /* const int32_t texture_i: */
@@ -644,7 +644,7 @@ void T1_tex_array_debug_dump_to_writables(
         T1_std_strcat_cap(filename, 128, ".bmp");
         
         uint8_t write_good = 0;
-        T1_platform_write_rgba_to_writables(
+        T1_os_write_rgba_to_writables(
             /* const char * local_filename: */
                 filename,
             /* uint8_t * rgba: */

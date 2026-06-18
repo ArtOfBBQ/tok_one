@@ -3,45 +3,15 @@
 
 #include <math.h>
 
+#include "T1_public_types.h"
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_simd.h"
 #include "T1_std.h"
 #include "T1_global.h"
 #include "T1_triangle.h"
-#include "T1_render_view.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct {
-    // you can make a group of lights and/or texquads by
-    // giving them the same positive object_id, then make
-    // ScheduledAnimations that affect the entire group
-    // set to -1 to not be a party of any group
-    union {
-        int32_t object_id;
-        float flt_object_id;
-    };
-    union {
-        uint32_t deleted;
-        float flt_deleted;
-    };
-    union {
-        uint32_t committed;
-        float flt_committed;
-    };
-    float xyz[3];
-    float xyz_angle[3];
-    float xyz_offset[3];
-    float RGBA[4];
-    float reach; // light's reach
-    float diffuse;     // how much diffuse light does this radiate?
-    float specular;
-    int32_t shadow_map_depth_texture_i;
-    int32_t shadow_map_render_view_i;
-    float simd_padding[3];
-} T1zLight; // 17 floats = 68 bytes
 
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,

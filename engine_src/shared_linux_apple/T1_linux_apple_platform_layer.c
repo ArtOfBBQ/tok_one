@@ -50,7 +50,7 @@ typedef struct OSMutexID {
 static OSMutexID * mutexes = NULL;
 static uint32_t next_mutex_id = 0;
 
-void T1_platform_init(
+void T1_os_init(
     void ** unmanaged_memory_store,
     const uint32_t aligned_to)
 {

@@ -18,6 +18,7 @@
 #include "T1_profiler.h"
 #include "T1_particle.h"
 #include "T1_frame_anim.h"
+#include "T1_render_view.h"
 
 uint8_t T1_gameloop_active = false;
 uint8_t T1_gameloop_loading_texs = false;
@@ -85,12 +86,7 @@ static void show_dead_simple_text(
     #error "T1_FOG_ACTIVE undefined"
     #endif
     
-    T1_camera->xyz[0] = 0.0f;
-    T1_camera->xyz[1] = 0.0f;
-    T1_camera->xyz[2] = 0.0f;
-    T1_camera->xyz_angle[0] = 0.0f;
-    T1_camera->xyz_angle[1] = 0.0f;
-    T1_camera->xyz_angle[2] = 0.0f;
+    T1_render_view_reset(0);
     
     T1_text_props->font_height = 20.0f;
     T1_text_props->f32.rgba[0] = 1.0f;
@@ -211,7 +207,7 @@ void T1_gameloop_update_before_render_pass(
     T1_log_assert(frame_data->render_views != NULL);
     
     T1_global->this_frame_timestamp_us =
-        T1_platform_get_current_time_us();
+        T1_os_get_current_time_us();
     
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = T1_global->this_frame_timestamp_us;
@@ -273,63 +269,7 @@ void T1_gameloop_update_before_render_pass(
             T1_global->last_resize_request_us = 0;
             T1_log_append("\nOK, resize window\n");
             
-            T1_log_assert(
-                (int32_t)T1_render_views->size <=
-                    T1_RENDER_VIEW_CAP);
-            for (
-                int32_t rv_i = 0;
-                rv_i < (int32_t)T1_render_views->size;
-                rv_i++)
-            {
-                if (
-                    !T1_render_views->cpu[rv_i].
-                        deleted &&
-                    T1_render_views->cpu[rv_i].
-                        write_array_i >= 0)
-                {
-                    T1_tex_array_delete_slice(
-                        T1_render_views->cpu[rv_i].
-                            write_array_i,
-                        T1_render_views->cpu[rv_i].
-                            write_slice_i);
-                }
-                
-                T1_render_view_delete(rv_i);
-            }
-            T1_log_assert(T1_render_views->size == 0);
-            
-            // TODO:
-            // use an internal render size
-            // determined by settings, not window
-            int32_t rv_i =
-                T1_tex_array_create_new_render_view(
-                    (uint32_t)T1_global->
-                        window_width,
-                    (uint32_t)T1_global->
-                        window_height);
-            T1_log_assert(rv_i == 0);
-            T1_log_assert(
-                !T1_render_views->cpu[0].deleted);
-            T1_log_assert(
-                T1_render_views->cpu[0].write_type ==
-                    T1RENDERVIEW_WRITE_RENDER_TARGET);
-            T1_log_assert(
-                !T1_tex_arrays[T1_render_views->cpu[rv_i].write_array_i].images[T1_render_views->cpu[rv_i].write_slice_i].deleted);
-            
-            T1_platform_gpu_update_window_viewport();
-            T1_platform_gpu_update_internal_render_viewport(rv_i);
-            
-            #if T1_TERM_ACTIVE == T1_ACTIVE
-            T1_term_render();
-            #elif T1_TERM_ACTIVE == T1_INACTIVE
-            // Pass
-            #else
-            #error "T1_TERM_ACTIVE undefined"
-            #endif
-            
-            T1_clientlogic_window_resize(
-                (uint32_t)T1_global->window_width,
-                (uint32_t)T1_global->window_height);
+            T1_clientlogic_window_resize();
        }
     } else if (
         T1_log_app_running &&
@@ -404,7 +344,7 @@ void T1_gameloop_update_before_render_pass(
             &T1_global->postproc_consts.
                 lights_size);
         
-        T1_render_view_update_positions();
+        T1_render_view_update_positions(T1_global->elapsed);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start(
@@ -467,7 +407,7 @@ void T1_gameloop_update_after_render_pass(void) {
     }
     
     T1_io->events[T1_IO_LAST_GPU_DATA].touch_id_top =
-        T1_platform_gpu_get_touch_id_at_screen_pos(
+        T1_os_gpu_get_touch_id_at_screen_pos(
             /* const int screen_x: */
                 T1_io->events[T1_IO_LAST_GPU_DATA].
                     screen_x,
@@ -482,7 +422,7 @@ void T1_gameloop_update_after_render_pass(void) {
     
     if (T1_global->upcoming_fullscreen_request) {
         T1_global->upcoming_fullscreen_request = false;
-        T1_platform_enter_fullscreen();
+        T1_os_enter_fullscreen();
     }
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE

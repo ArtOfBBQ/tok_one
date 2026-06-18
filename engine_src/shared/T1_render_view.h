@@ -5,7 +5,6 @@
 
 #include "T1_cpu_gpu_shared_types.h"
 
-
 typedef struct {
     float aspect_ratio;
     float znear;
@@ -42,16 +41,23 @@ typedef struct {
 typedef struct {
     T1GPUProjectConsts project;
     T1RenderPass passes[T1_RENDER_PASSES_MAX];
-    float    xyz[3];           // 12 bytes
-    float    xyz_angle[3];     // 12 bytes
+    uint64_t us_to_destination;
+    float    xyz[3];
+    float    angle_xyz[3];
+    float    dest_xyz[3];
+    float    dest_angle_xyz[3];
+    float    min_xyz[3];
+    float    max_xyz[3];
     float    refl_cam_around_plane_xyz[3];
     T1RenderViewWriteType write_type;
     int32_t  write_array_i;
     int32_t  write_slice_i;
+    int32_t  clamped_to_zsprite_id;
     uint32_t width;
     uint32_t height;
     uint8_t  passes_size;
     uint8_t  reflect_around_plane;
+    uint8_t  movement_enabled;
     uint8_t  deleted;
 } T1CPURenderView;
 
@@ -62,16 +68,18 @@ typedef struct {
 } T1RenderViewCollection;
 
 extern T1RenderViewCollection * T1_render_views;
-extern T1CPURenderView * T1_camera; // convenience
+extern T1CPURenderView * T1_cam; // convenience
 
 void T1_render_view_init(void);
+
+void T1_render_view_reset(int i);
 
 int32_t T1_render_view_fetch_next(
     const uint32_t width,
     const uint32_t height);
 
 void T1_render_view_update_positions(
-    void);
+    const uint64_t elapsed);
 
 void T1_render_view_delete(const int32_t rv_i);
 
@@ -85,8 +93,9 @@ float T1_render_view_x_to_screen_x_noz(
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
-float T1_render_view_screen_x_to_x(const float screenspace_x, const float given_z);
-
+float T1_render_view_screen_x_to_x(
+    const float screenspace_x,
+    const float given_z);
 float T1_render_view_y_to_screen_y(
     const float y,
     const float given_z);

@@ -1,25 +1,12 @@
 #ifndef T1_TEXQUAD_H
 #define T1_TEXQUAD_H
 
+#include "T1.h"
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
 
 #define T1_TEXQUADANIM_NO_EFFECT 0xFFFF
 #define T1_TEXQUAD_ID_HIT_EVERYTHING INT32_MAX
-
-typedef struct {
-    float offset_xyz[3];
-    int32_t zsprite_id;
-    bool8_t one_frame_only;
-    bool8_t committed;
-    bool8_t visible;
-    bool8_t deleted;
-} T1CPUTexQuad;
-
-typedef struct {
-    T1CPUTexQuad * cpu;
-    T1GPUTexQuad * gpu;
-} T1FlatTexQuadRequest;
 
 void T1_texquad_construct(
     T1GPUTexQuadf32 * f32,
@@ -37,6 +24,11 @@ void T1_texquad_get_avg_xyz(
     bool8_t * found);
 
 void T1_texquad_delete_all(void);
+
+typedef struct {
+    T1CPUTexQuad * cpu;
+    T1GPUTexQuad * gpu;
+} T1FlatTexQuadRequest;
 
 void T1_texquad_fetch_next(
     T1FlatTexQuadRequest * request);

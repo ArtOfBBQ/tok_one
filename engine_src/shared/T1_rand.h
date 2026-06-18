@@ -12,6 +12,7 @@ extern "C" {
 
 extern uint32_t T1_rand_seed;
 
+void T1_rand_init(const uint32_t seed);
 int32_t T1_rand(void);
 int32_t T1_rand_at_i(const uint64_t index);
 

@@ -9,17 +9,17 @@
 #include "T1_log.h"
 #include "T1_apple_audio.h"
 
-uint32_t T1_platform_get_dir_separator_size(void) {
+uint32_t T1_os_get_dir_separator_size(void) {
     return 1;
 }
 
-void T1_platform_get_dir_separator(char * recipient) {
+void T1_os_get_dir_separator(char * recipient) {
     recipient[0] = '/';
     recipient[1] = '\0';
 }
 
 uint64_t
-T1_platform_get_current_time_us(void)
+T1_os_get_current_time_us(void)
 {
     struct timeval tv;
     gettimeofday(&tv,NULL);
@@ -32,7 +32,7 @@ T1_platform_get_current_time_us(void)
 }
 
 uint64_t
-T1_platform_get_clock_frequency(void) {
+T1_os_get_clock_frequency(void) {
     //    int mib[2];
     //    size_t len;
     //    mib[0] = CTL_KERN;
@@ -62,7 +62,7 @@ T1_platform_audio_start_loop(void)
 Get a file's size. Returns 0 if no such file
 */
 uint64_t
-T1_platform_get_filesize(
+T1_os_get_filesize(
     const char * filepath)
 {
     uint64_t return_value;
@@ -98,9 +98,12 @@ T1_platform_get_filesize(
     return return_value;
 }
 
-void T1_platform_read_file(
+void T1_os_read_file(
     const char * filepath,
-    T1FileBuffer * out_preallocatedbuffer)
+    char * recip,
+    uint32_t * recip_size,
+    const uint64_t recip_cap,
+    uint8_t * good)
 {
     //@autoreleasepool {
     NSString * nsfilepath =
@@ -118,31 +121,31 @@ void T1_platform_read_file(
     if (
         error ||
         file_data == nil ||
-        out_preallocatedbuffer->size_without_terminator < 1 ||
-        [file_data length] < out_preallocatedbuffer->
-            size_without_terminator)
+        recip_cap < 1 ||
+        recip_cap >= UINT32_MAX ||
+        [file_data length] >= UINT32_MAX)
     {
         T1_log_append("Error - failed [NSData initWithContentsOfFile:]\n");
-        out_preallocatedbuffer->size_without_terminator = 0;
-        out_preallocatedbuffer->good = false;
+        *recip_size = 0;
+        *good = false;
         return;
     }
     
+    *recip_size = (uint32_t)[file_data length];
+    if (*recip_size > recip_cap) { *recip_size = (uint32_t)recip_cap; }
+    
     [file_data
         getBytes:
-            out_preallocatedbuffer->contents
+            recip
         length:
-            out_preallocatedbuffer->
-                size_without_terminator];
+            *recip_size];
     
-    out_preallocatedbuffer->contents[
-        out_preallocatedbuffer->
-            size_without_terminator] = '\0';
+    recip[*recip_size] = '\0';
     
-    out_preallocatedbuffer->good = true;
+    *good = true;
 }
 
-uint8_t T1_platform_file_exists(
+uint8_t T1_os_file_exists(
     const char * filepath)
 {
     NSString * nsfilepath = [NSString
@@ -170,7 +173,7 @@ uint8_t T1_platform_file_exists(
     return false;
 }
 
-void T1_platform_mkdir_if_not_exist(
+void T1_os_mkdir_if_not_exist(
     const char * dirname)
 {
     T1_log_append("make directory if it doesn't exist: ");
@@ -214,7 +217,7 @@ void T1_platform_mkdir_if_not_exist(
     return;
 }
 
-void T1_platform_del_file(
+void T1_os_del_file(
     const char * filepath)
 {
     T1_log_append(
@@ -231,7 +234,7 @@ void T1_platform_del_file(
         error: nil];
 }
 
-void T1_platform_copy_file(
+void T1_os_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
@@ -265,7 +268,7 @@ void T1_platform_copy_file(
 }
 
 void
-T1_platform_write_file(
+T1_os_write_file(
     const char * filepath,
     const char * output,
     const uint32_t output_size,
@@ -299,7 +302,7 @@ T1_platform_write_file(
     *good = true;
 }
 
-void T1_platform_get_filenames_in(
+void T1_os_get_filenames_in(
     const char * directory,
     char filenames[2000][500])
 {
@@ -340,7 +343,7 @@ void T1_platform_get_filenames_in(
 }
 
 void
-T1_platform_get_app_dir(
+T1_os_get_app_dir(
     char * recipient,
     const uint32_t recipient_size)
 {
@@ -359,26 +362,26 @@ T1_platform_get_app_dir(
                 NSASCIIStringEncoding]);
 }
 
-void T1_platform_get_res_dir(
-    char * recipient,
-    const uint32_t recipient_size)
+void T1_os_get_res_dir(
+    char * recip,
+    const uint32_t recip_cap)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    (void)recipient_size;
+    (void)recip_cap;
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     T1_std_strcpy_cap(
-        recipient,
-        recipient_size,
+        recip,
+        recip_cap,
         (char *)[
             [[NSBundle mainBundle] resourcePath]
                 cStringUsingEncoding: NSASCIIStringEncoding]);
 }
 
-void T1_platform_start_thread(
+void T1_os_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument)
 {
@@ -403,7 +406,7 @@ void T1_platform_start_thread(
         });
 }
 
-uint32_t T1_platform_get_cpu_logical_core_count(void)
+uint32_t T1_os_get_cpu_logical_core_count(void)
 {
     NSUInteger core_count = [
         [NSProcessInfo processInfo] activeProcessorCount];

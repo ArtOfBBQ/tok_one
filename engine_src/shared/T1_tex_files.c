@@ -14,41 +14,44 @@ static void malloc_img_from_resource_name(
     const char * filename,
     const uint32_t thread_id)
 {
-    T1FileBuffer file_buffer;
-    file_buffer.size_without_terminator =
-        T1_platform_get_resource_size(filename);
+    uint64_t size_without_terminator =
+        T1_os_get_resource_size(filename);
+    char * contents = NULL;
+    bool8_t good = 0;
     
-    if (file_buffer.size_without_terminator < 1) {
+    if (size_without_terminator < 1) {
         return;
     }
     
-    file_buffer.contents =
-        (char *)T1_mem_malloc_managed(sizeof(char) *
-            file_buffer.size_without_terminator + 1);
+    contents = (char *)T1_mem_malloc_managed(sizeof(char) *
+        size_without_terminator + 1);
+    
     T1_std_memset(
-        file_buffer.contents,
+        contents,
         0,
-        file_buffer.size_without_terminator + 1);
+        size_without_terminator + 1);
     
-    T1_platform_read_resource_file(
+    T1_os_read_resource_file(
         filename,
-        &file_buffer);
+        contents,
+        size_without_terminator,
+        &good);
     
-    if (!file_buffer.good) {
-        T1_mem_free_managed((uint8_t *)file_buffer.contents);
+    if (!good) {
+        T1_mem_free_managed((uint8_t *)contents);
         return;
     }
     
     if (
-        file_buffer.contents[1] == 'P' &&
-        file_buffer.contents[2] == 'N' &&
-        file_buffer.contents[3] == 'G')
+        contents[1] == 'P' &&
+        contents[2] == 'N' &&
+        contents[3] == 'G')
     {
         decode_png_get_width_height(
             /* const uint8_t * compressed_input: */
-                (uint8_t *)file_buffer.contents,
+                (uint8_t *)contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size_without_terminator - 1,
+                size_without_terminator - 1,
             /* uint32_t * out_width: */
                 &recipient->width,
             /* uint32_t * out_height: */
@@ -58,7 +61,7 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             T1_log_assert(0);
-            T1_mem_free_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_managed((uint8_t *)contents);
             return;
         }
         
@@ -81,9 +84,9 @@ static void malloc_img_from_resource_name(
         
         decode_png(
             /* const uint8_t * compressed_input: */
-                (uint8_t *)file_buffer.contents,
+                (uint8_t *)contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size_without_terminator - 1,
+                size_without_terminator - 1,
             /* out_rgba_values: */
                 recipient->rgba_values_page_aligned,
             /* rgba_values_size: */
@@ -93,14 +96,14 @@ static void malloc_img_from_resource_name(
             /* uint8_t * out_good: */
                 &recipient->good);
     } else if (
-        file_buffer.contents[0] == 'B' &&
-        file_buffer.contents[1] == 'M')
+        contents[0] == 'B' &&
+        contents[1] == 'M')
     {
         get_BMP_width_height(
             /* const uint8_t * compressed_input: */
-                (uint8_t *)file_buffer.contents,
+                (uint8_t *)contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size_without_terminator - 1,
+                size_without_terminator - 1,
             /* uint32_t * out_width: */
                 &recipient->width,
             /* uint32_t * out_height: */
@@ -110,7 +113,7 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             T1_log_assert(0);
-            T1_mem_free_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_managed((uint8_t *)contents);
             return;
         }
         
@@ -130,23 +133,23 @@ static void malloc_img_from_resource_name(
             recipient->rgba_values_size);
         
         decode_BMP(
-            /* raw_input: */ (uint8_t *)file_buffer.contents,
-            /* raw_input_size: */ file_buffer.size_without_terminator - 1,
+            /* raw_input: */ (uint8_t *)contents,
+            /* raw_input_size: */ size_without_terminator - 1,
             /* out_rgba_values: */ recipient->rgba_values_page_aligned,
             /* out_rgba_values_size: */ recipient->rgba_values_size,
             /* out_good: */ &recipient->good);
     } else if (
-        file_buffer.contents[0] == 'D' &&
-        file_buffer.contents[1] == 'D' &&
-        file_buffer.contents[2] == 'S' &&
-        file_buffer.contents[3] == ' ')
+        contents[0] == 'D' &&
+        contents[1] == 'D' &&
+        contents[2] == 'S' &&
+        contents[3] == ' ')
     {
         recipient->good = false;
         T1_log_assert(recipient->width > 0);
         T1_log_assert(recipient->height > 0);
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size =
-            (uint32_t)file_buffer.size_without_terminator + 1;
+            (uint32_t)size_without_terminator + 1;
         T1_mem_malloc_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
@@ -164,7 +167,7 @@ static void malloc_img_from_resource_name(
             /* void * dest: */
                 recipient->rgba_values_page_aligned,
             /* const void * src: */
-                file_buffer.contents,
+                contents,
             /* size_t n_bytes: */
                 recipient->rgba_values_size);
         
@@ -175,7 +178,7 @@ static void malloc_img_from_resource_name(
         T1_log_append_char('\n');
         recipient->good = false;
     }
-    T1_mem_free_managed(file_buffer.contents);
+    T1_mem_free_managed(contents);
     
     if (!recipient->good) {
         return;
@@ -289,35 +292,44 @@ void T1_tex_files_runtime_reg_png_from_writables(
     
     char filepath[256];
     T1_std_memset(filepath, 0, 256);
-    T1_platform_get_writables_dir(filepath, 256);
-    T1_platform_get_dir_separator(filepath + T1_std_strlen(filepath));
+    T1_os_get_writables_dir(filepath, 256);
+    T1_os_get_dir_separator(filepath + T1_std_strlen(filepath));
     T1_std_strcat_cap(filepath, 256, filename);
     
-    T1FileBuffer buf;
-    buf.size_without_terminator = T1_platform_get_filesize(filepath);
-    if (buf.size_without_terminator <= 28) {
+    uint64_t contents_cap = T1_os_get_filesize(filepath);
+    if (contents_cap <= 28) {
         return;
     }
-    buf.contents =
-        T1_mem_malloc_managed(buf.size_without_terminator+1);
-    buf.good = 0;
+    char * contents = T1_mem_malloc_managed(contents_cap+1);
+    uint32_t contents_size = 0;
     
-    T1_platform_read_file(filepath, &buf);
+    T1_os_read_file(
+        /* const char * filepath: */
+            filepath,
+        /* char * recip: */
+            contents,
+        /* uint32_t * recip_size: */
+            &contents_size,
+        /* const uint64_t recip_cap: */
+            contents_cap,
+        /* uint8_t * good: */
+            good);
+    
     uint32_t width = 0;
     uint32_t height = 0;
     decode_png_get_width_height(
         /* const uint8_t *compressed_input: */
-            (uint8_t *)buf.contents,
+            (uint8_t *)contents,
         /* const uint64_t compressed_input_size: */
-            buf.size_without_terminator,
+            contents_size,
         /* uint32_t *out_width: */
             &width,
         /* uint32_t *out_height: */
             &height,
         /* uint32_t *out_good: */
-            &buf.good);
-    if (!buf.good) {
-        T1_mem_free_managed(buf.contents);
+            good);
+    if (!*good) {
+        T1_mem_free_managed(contents);
         return;
     }
     
@@ -356,9 +368,9 @@ void T1_tex_files_runtime_reg_png_from_writables(
     
     decode_png(
         /* const uint8_t * compressed_input: */
-            (uint8_t *)buf.contents,
+            (uint8_t *)contents,
         /* const uint64_t compressed_input_size: */
-            buf.size_without_terminator,
+            contents_size,
         /* const uint8_t * out_rgba_values: */
             T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.
                 rgba_values_freeable,
@@ -370,13 +382,13 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* uint8_t * out_good: */
             &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.good);
     
-    T1_platform_gpu_push_tex_slice_and_free_rgba(
+    T1_os_gpu_push_tex_slice_and_free_rgba(
         /* const int32_t texture_array_i: */
             T1_tex_to_array_i(loc),
         /* const int32_t texture_i: */
             T1_tex_to_slice_i(loc));
     
-    T1_mem_free_managed(buf.contents);
+    T1_mem_free_managed(contents);
     *good = 1;
 }
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
@@ -390,35 +402,35 @@ void T1_tex_files_prereg_png_res(
 {
     *good = 0;
     
-    T1FileBuffer buf;
-    buf.size_without_terminator = T1_platform_get_resource_size(filename);
-    if (buf.size_without_terminator > 28) {
-        buf.size_without_terminator = 28;
+    uint64_t contents_cap = T1_os_get_resource_size(filename);
+    if (contents_cap > 28) {
+        contents_cap = 28;
     } else {
         return;
     }
-    buf.contents = T1_mem_malloc_managed(
-       buf.size_without_terminator+1);
-    buf.good = 0;
+    char * contents = T1_mem_malloc_managed(contents_cap+1);
     
-    T1_platform_read_resource_file(filename, &buf);
+    T1_os_read_resource_file(filename, contents, contents_cap, good);
+    if (!*good) { return; } else { *good = 0; }
+    
     uint32_t width = 0;
     uint32_t height = 0;
     decode_png_get_width_height(
         /* const uint8_t *compressed_input: */
-            (uint8_t *)buf.contents,
+            (uint8_t *)contents,
         /* const uint64_t compressed_input_size: */
-            buf.size_without_terminator,
+            contents_cap,
         /* uint32_t *out_width: */
             &width,
         /* uint32_t *out_height: */
             &height,
         /* uint32_t *out_good: */
-            &buf.good);
-    if (!buf.good) {
-        T1_mem_free_managed(buf.contents);
+            good);
+    if (!*good) {
+        T1_mem_free_managed(contents);
         return;
-    }
+    } else { *good = 0; }
+    
     T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
@@ -431,7 +443,7 @@ void T1_tex_files_prereg_png_res(
         /* const uint32_t is_dds_image: */
             false);
     
-    T1_mem_free_managed(buf.contents);
+    T1_mem_free_managed(contents);
     *good = 1;
 }
 
@@ -454,24 +466,19 @@ void T1_tex_files_prereg_dds_res(
 {
     *good = 0;
     
-    T1FileBuffer buf;
-    buf.size_without_terminator = T1_platform_get_resource_size(filename);
-    if (buf.size_without_terminator > 28) {
-        buf.size_without_terminator = 28;
+    uint64_t contents_cap = T1_os_get_resource_size(filename);
+    if (contents_cap > 28) {
+        contents_cap = 28;
     } else {
         return;
     }
-    buf.contents = T1_mem_malloc_managed(
-        buf.size_without_terminator+1);
-    buf.good = 0;
+    char * contents = T1_mem_malloc_managed(contents_cap+1);
     
-    T1_platform_read_resource_file(filename, &buf);
+    T1_os_read_resource_file(filename, contents, contents_cap, good);
     
-    if (!buf.good) {
-        return;
-    }
+    if (!*good) { return; } else { *good = 0; }
     
-    DDS_Header * header = (DDS_Header *)buf.contents;
+    DDS_Header * header = (DDS_Header *)contents;
     T1_log_assert(header->magic_number_dds[0] == 'D');
     T1_log_assert(header->magic_number_dds[1] == 'D');
     T1_log_assert(header->magic_number_dds[2] == 'S');
@@ -501,7 +508,7 @@ void T1_tex_files_prereg_dds_res(
         /* const uint32_t is_dds_image: */
             true);
     
-    T1_mem_free_managed(buf.contents);
+    T1_mem_free_managed(contents);
     *good = 1;
 }
 
@@ -537,7 +544,7 @@ void T1_tex_files_decode_all_prereg(
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         T1_tex_arrays[ta_i].started_decoding =
-            T1_platform_get_current_time_us();
+            T1_os_get_current_time_us();
         if (T1_tex_arrays[ta_i].images_size < 1) {
             continue;
         }
@@ -586,6 +593,6 @@ void T1_tex_files_decode_all_prereg(
             }
         }
         
-        T1_tex_arrays[ta_i].ended_decoding = T1_platform_get_current_time_us();
+        T1_tex_arrays[ta_i].ended_decoding = T1_os_get_current_time_us();
     }
 }
