@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include "T1_std.h"
 #include "T1_log.h"
 
 
@@ -12,23 +13,23 @@
 //    void * pointers[MANAGED_MEMORY_STACK_SIZE];
 //    char sources[MANAGED_MEMORY_STACK_SIZE][512];
 //    bool32_t used[MANAGED_MEMORY_STACK_SIZE];
-//    uint32_t size;
+//    u32 size;
 //} ManagedMemoryStack;
 //static ManagedMemoryStack * managed_stack = NULL;
 
-// uint32_t memorystore_page_size = 4000;
+// u32 memorystore_page_size = 4000;
 
-uint32_t T1_mem_page_size = 4096;
+u32 T1_mem_page_size = 4096;
 
 static void * unmanaged_memory = NULL;
-static uint64_t unmanaged_memory_size = T1_UNMANAGED_MEM_CAP;
+static u64 unmanaged_memory_size = T1_UNMANAGED_MEM_CAP;
 // static void * managed_memory = NULL;
 // static void * managed_memory_end = NULL;
 
-static uint32_t malloc_mutex_id = UINT32_MAX;
+static u32 malloc_mutex_id = UINT32_MAX;
 
-void (* T1_mem_mutex_lock)(const uint32_t mutex_id) = NULL;
-void (* T1_mem_mutex_unlock)(const uint32_t mutex_id) = NULL;
+void (* T1_mem_mutex_lock)(const u32 mutex_id) = NULL;
+void (* T1_mem_mutex_unlock)(const u32 mutex_id) = NULL;
 
 static void T1_mem_set_pagesize(void) {
     long query_result = sysconf(_SC_PAGESIZE);
@@ -36,13 +37,13 @@ static void T1_mem_set_pagesize(void) {
         assert(0);
         T1_mem_page_size = 4096;
     } else {
-        T1_mem_page_size = (uint32_t)query_result;
+        T1_mem_page_size = (u32)query_result;
     }
 }
 
 void T1_mem_get_usage_summary_string(
     char * recipient,
-    const uint32_t recipient_cap)
+    const u32 recipient_cap)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_cap;
@@ -58,7 +59,7 @@ void T1_mem_get_usage_summary_string(
     T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
-        T1_UNMANAGED_MEM_CAP - (uint32_t)unmanaged_memory_size);
+        T1_UNMANAGED_MEM_CAP - (u32)unmanaged_memory_size);
     T1_std_strcat_cap(
         recipient,
         recipient_cap,
@@ -74,14 +75,14 @@ void T1_mem_get_usage_summary_string(
     T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
-        (uint32_t)(
-            (float)(T1_UNMANAGED_MEM_CAP - (uint32_t)unmanaged_memory_size)
-                / (float)T1_UNMANAGED_MEM_CAP * 100.0f));
+        (u32)(
+            (f32)(T1_UNMANAGED_MEM_CAP - (u32)unmanaged_memory_size)
+                / (f32)T1_UNMANAGED_MEM_CAP * 100.0f));
 }
 
 static void T1_mem_align_pointer(void ** to_align) {
-    uint32_t leftover = ((uintptr_t)*to_align) % MEM_ALIGNMENT_BYTES;
-    uint32_t padding = 0;
+    u32 leftover = ((uintptr_t)*to_align) % MEM_ALIGNMENT_BYTES;
+    u32 padding = 0;
     if (leftover > 0) {
         padding = MEM_ALIGNMENT_BYTES - leftover;
     }
@@ -92,9 +93,9 @@ static void T1_mem_align_pointer(void ** to_align) {
 
 void T1_mem_init(
     void * ptr_unmanaged_memory_block,
-    uint32_t (* memstore_init_mutex_and_return_id)(void),
-    void (* ptr_mutex_lock)(const uint32_t mutex_id),
-    void (* ptr_mutex_unlock)(const uint32_t mutex_id))
+    u32 (* memstore_init_mutex_and_return_id)(void),
+    void (* ptr_mutex_lock)(const u32 mutex_id),
+    void (* ptr_mutex_unlock)(const u32 mutex_id))
 {
     malloc_mutex_id  = memstore_init_mutex_and_return_id();
     
@@ -109,14 +110,14 @@ void T1_mem_init(
 }
 
 static void * T1_mem_malloc_from_unmanaged_without_aligning(
-    const uint64_t size)
+    const u64 size)
 {
     void * return_value = unmanaged_memory;
     if (size >= unmanaged_memory_size) {
         T1_log_append("Tried to malloc_from_unamanged for: ");
-        T1_log_append_uint((uint32_t)(size / 1000000));
+        T1_log_append_uint((u32)(size / 1000000));
         T1_log_append("MB, but you only had: ");
-        T1_log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
+        T1_log_append_uint((u32)(unmanaged_memory_size / 1000000));
         T1_log_append("MB remaining");
         T1_log_assert(0);
         return NULL;
@@ -129,8 +130,8 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
 }
 
 void * T1_mem_malloc_unmanaged_aligned(
-    const uint64_t size,
-    const uint32_t aligned_to)
+    const u64 size,
+    const u32 aligned_to)
 {
     T1_mem_mutex_lock(malloc_mutex_id);
     
@@ -145,7 +146,7 @@ void * T1_mem_malloc_unmanaged_aligned(
     T1_log_assert(unmanaged_memory != NULL);
     T1_log_assert(size > 0); // don't malloc for 0
     
-    uint32_t padding = aligned_to - ((uintptr_t)unmanaged_memory % aligned_to);
+    u32 padding = aligned_to - ((uintptr_t)unmanaged_memory % aligned_to);
     if (padding == aligned_to) padding = 0;
     
     unmanaged_memory = ((char *)unmanaged_memory + padding);
@@ -164,7 +165,7 @@ void * T1_mem_malloc_unmanaged_aligned(
 }
 
 // __attribute__((used, noinline))
-void * T1_mem_malloc_unmanaged(size_t size) {
+void * T1_mem_malloc_unmanaged(u64 size) {
     T1_log_assert(size > 0);
     
     void * return_value = T1_mem_malloc_unmanaged_aligned(
@@ -177,14 +178,14 @@ void * T1_mem_malloc_unmanaged(size_t size) {
 void T1_mem_malloc_managed_page_aligned(
     void ** base_pointer_for_freeing,
     void ** aligned_subptr,
-    const size_t subptr_size)
+    const u64 subptr_size)
 {
-    uint32_t aligned_to = T1_mem_page_size;
+    u32 aligned_to = T1_mem_page_size;
     
     *base_pointer_for_freeing = T1_mem_malloc_managed(
         subptr_size + aligned_to);
     
-    uint32_t padding = aligned_to -
+    u32 padding = aligned_to -
         (((uintptr_t)*base_pointer_for_freeing) % aligned_to);
     
     if (padding == aligned_to) { padding = 0; }
@@ -195,7 +196,7 @@ void T1_mem_malloc_managed_page_aligned(
     T1_log_assert(*aligned_subptr != NULL);
     
     #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t alignment_miss =
+    u32 alignment_miss =
         (uintptr_t)(*aligned_subptr) % aligned_to;
     T1_log_assert(alignment_miss == 0);
     #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
@@ -204,18 +205,17 @@ void T1_mem_malloc_managed_page_aligned(
     #endif
 }
 
-bool8_t
-T1_mem_is_page_aligned(void * to_check)
+b8 T1_mem_is_page_aligned(void * to_check)
 {
     return (uintptr_t)to_check % T1_mem_page_size == 0;
 }
 
-void * T1_mem_malloc_managed_infoless(size_t size) {
+void * T1_mem_malloc_managed_infoless(u64 size) {
     return T1_mem_malloc_managed_internal(size, "", "");
 }
 
 void * T1_mem_malloc_managed_internal(
-    size_t size,
+    u64 size,
     char * called_from_file,
     char * called_from_func)
 {
@@ -233,8 +233,8 @@ void * T1_mem_malloc_managed_internal(
     void * return_value = managed_memory;
     log_assert((uintptr_t)return_value % MEM_ALIGNMENT_BYTES == 0);
     
-    uint32_t leftover = size % MEM_ALIGNMENT_BYTES;
-    uint32_t endpadding = 0;
+    u32 leftover = size % MEM_ALIGNMENT_BYTES;
+    u32 endpadding = 0;
     if (leftover > 0) {
         endpadding = MEM_ALIGNMENT_BYTES - leftover;
     }
@@ -289,7 +289,7 @@ void T1_mem_free_managed(void * to_free) {
     #ifndef T1_MEM_NO_ASSERTS
     bool32_t found = false;
     #endif
-    for (uint32_t i = 0; i < managed_stack->size; i++) {
+    for (u32 i = 0; i < managed_stack->size; i++) {
         if (managed_stack->used[i] &&
             managed_stack->pointers[i] == to_free)
         {

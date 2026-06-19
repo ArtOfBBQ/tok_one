@@ -1,9 +1,9 @@
 #ifndef T1_EASING_H
 #define T1_EASING_H
 
-#include <stdint.h>
+#include "T1_stdint.h"
 
-typedef enum : uint8_t {
+typedef enum : u8 {
     EASINGTYPE_NONE = 0,
     EASINGTYPE_ALWAYS_1,
     EASINGTYPE_INOUT_SINE,
@@ -18,8 +18,8 @@ typedef enum : uint8_t {
     EASINGTYPE_OUTOFBOUNDS
 } T1EasingType;
 
-float T1_easing_t_to_eased_t(
-    const float t,
+f32 T1_easing_t_to_eased_t(
+    const f32 t,
     const T1EasingType easing_type);
 
 #endif // T1_EASINGTYPE_H

@@ -11,13 +11,13 @@ extern "C" {
 #endif
 
 typedef struct {
-    uint64_t timestamp;
-    int32_t touch_id_pierce;
-    int32_t touch_id_top;
-    float screen_x;
-    float screen_y;
-    uint8_t checked_touch_ids;
-    uint8_t handled;
+    u64 timestamp;
+    s32 touch_id_pierce;
+    s32 touch_id_top;
+    f32 screen_x;
+    f32 screen_y;
+    u8 checked_touch_ids;
+    u8 handled;
 } T1IOEvent;
 
 // indexes in the interactions array
@@ -40,15 +40,15 @@ typedef struct {
 
 typedef struct {
     T1IOEvent events[T1_IO_EVENTS_CAP];
-    float mouse_scroll_pos;
-    uint8_t keymap[T1_IO_KEYMAP_CAP];
+    f32 mouse_scroll_pos;
+    u8 keymap[T1_IO_KEYMAP_CAP];
 } T1IOState;
 
 extern T1IOState * T1_io;
 
 void
 T1_io_init(
-    void *(* arg_malloc_func)(size_t));
+    void *(* arg_malloc_func)(u64));
 
 void
 T1_io_event_construct(
@@ -59,13 +59,13 @@ T1_io_event_register(
     T1IOEvent * touch_record);
 
 void
-T1_io_register_keyup(uint32_t key_id);
+T1_io_register_keyup(u32 key_id);
 
 void
-T1_io_register_keydown(uint32_t key_id);
+T1_io_register_keydown(u32 key_id);
 
 void
-T1_io_register_mousescroll(const float amount);
+T1_io_register_mousescroll(const f32 amount);
 
 #ifdef __cplusplus
 }

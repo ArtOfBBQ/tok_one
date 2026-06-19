@@ -2,6 +2,7 @@
 
 #include "T1_std.h"
 #include "T1_log.h"
+#include "T1_profiler.h"
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_simd.h"
@@ -15,7 +16,7 @@
 #include "T1_frame_anim.h"
 #include "T1_render_view.h"
 
-static uint32_t T1_render_active = false;
+static u32 T1_render_active = false;
 
 void T1_render_init(void) {
     T1_render_active = true;
@@ -29,10 +30,10 @@ void T1_render_init(void) {
 static void
 construct_projection_matrix(void)
 {
-    T1_linal_float4x4 proj;
+    T1_linal_f32x4x4 proj;
     
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_RENDER_VIEW_CAP;
         i++)
     {
@@ -47,22 +48,22 @@ construct_projection_matrix(void)
                 T1RENDERVIEW_WRITE_RENDER_TARGET ||
                 T1RENDERVIEW_WRITE_RGBA;
         
-        const float w = (float)T1_render_views->cpu[i].width;
-        const float h = (float)T1_render_views->cpu[i].height;
+        const f32 w = (f32)T1_render_views->cpu[i].width;
+        const f32 h = (f32)T1_render_views->cpu[i].height;
         
-        const float vertical_fov_degrees = 75.0f;
-        const float zn = 0.1f;
-        const float zf = T1_ZFAR;
+        const f32 vertical_fov_degrees = 75.0f;
+        const f32 zn = 0.1f;
+        const f32 zf = T1_ZFAR;
         
-        float ar = w / h;
+        f32 ar = w / h;
         
-        float half_fov_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-        float f = 1.0f / tanf(half_fov_rad);
+        f32 half_fov_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
+        f32 f = 1.0f / tanf(half_fov_rad);
         
-        float x_scale = f / ar;
-        float y_scale = f;
+        f32 x_scale = f / ar;
+        f32 y_scale = f;
         
-        T1_linal_float4x4_construct(&proj,
+        T1_linal_f32x4x4_construct(&proj,
             x_scale, 0.0f, 0.0f, 0.0f,
             0.0f, y_scale, 0.0f, 0.0f,
             0.0f, 0.0f, zf / (zf-zn), -zf*zn/(zf-zn),
@@ -72,137 +73,98 @@ construct_projection_matrix(void)
         T1_std_memcpy(
             rv->p_4x4 + 0,
             proj.rows[0].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv->p_4x4 + 4,
             proj.rows[1].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv->p_4x4 + 8,
             proj.rows[2].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv->p_4x4 + 12,
             proj.rows[3].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
     }
 }
 
 static void construct_view_matrix(void) {
     
-    T1_linal_float4x4 result;
-    T1_linal_float4x4 next;
-    T1_linal_float3x3 view_3x3;
+    T1_linal_f32x4x4 result;
+    T1_linal_f32x4x4 next;
+    T1_linal_f32x3x3 view_3x3;
     
     for (
-        uint32_t rv_i = 0;
+        u32 rv_i = 0;
         rv_i < T1_render_views->size;
         rv_i++)
     {
         T1GPURenderView * rv_gpu = T1_render_views->gpu + rv_i;
         T1CPURenderView * rv_cpu = T1_render_views->cpu + rv_i;
         
-        T1_linal_float4x4_construct_identity(
+        T1_linal_f32x4x4_construct_identity(
             &result);
         
-        T1_linal_float4x4_construct_xyz_rotation(
+        T1_linal_f32x4x4_construct_xyz_rotation(
             &next,
             -rv_cpu->angle_xyz[0],
             -rv_cpu->angle_xyz[1],
             -rv_cpu->angle_xyz[2]);
         
-        T1_linal_float4x4_mul_float4x4_inplace(
+        T1_linal_f32x4x4_mul_f32x4x4_inplace(
             &result,
             &next);
         
-        T1_linal_float4x4_construct(
+        T1_linal_f32x4x4_construct(
             &next,
             1.0f, 0.0f, 0.0f, -rv_cpu->xyz[0],
             0.0f, 1.0f, 0.0f, -rv_cpu->xyz[1],
             0.0f, 0.0f, 1.0f, -rv_cpu->xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
-        T1_linal_float4x4_mul_float4x4_inplace(&result, &next);
+        T1_linal_f32x4x4_mul_f32x4x4_inplace(&result, &next);
         
         T1_std_memcpy(
             rv_gpu->v_4x4 + 0,
             result.rows[0].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv_gpu->v_4x4 + 4,
             result.rows[1].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv_gpu->v_4x4 + 8,
             result.rows[2].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         T1_std_memcpy(
             rv_gpu->v_4x4 + 12,
             result.rows[3].data,
-            sizeof(float) * 4);
+            sizeof(f32) * 4);
         
-        T1_linal_float4x4_extract_float3x3(
+        T1_linal_f32x4x4_extract_f32x3x3(
             &result, 3, 3, &view_3x3);
         
-        T1_linal_float3x3_inverse_transpose_inplace(
+        T1_linal_f32x3x3_inverse_transpose_inplace(
             &view_3x3);
         T1_std_memcpy(
             rv_gpu->normv_3x3 + 0,
             view_3x3.rows[0].data,
-            sizeof(float) * 3);
+            sizeof(f32) * 3);
         T1_std_memcpy(
             rv_gpu->normv_3x3 + 3,
             view_3x3.rows[1].data,
-            sizeof(float) * 3);
+            sizeof(f32) * 3);
         T1_std_memcpy(
             rv_gpu->normv_3x3 + 6,
             view_3x3.rows[2].data,
-            sizeof(float) * 3);
+            sizeof(f32) * 3);
     }
 }
-
-#if 0
-static void construct_light_matrices(
-    T1GPUFrame * frame_data)
-{
-    T1_linal_float4x4 mat_view;
-    T1_linal_float4x4_construct_from_ptr(
-        &mat_view,
-        T1_render_views->gpu[0].v_4x4);
-    
-    T1_linal_float4x4 inv_camview_4x4;
-    T1_std_memcpy(
-        &inv_camview_4x4,
-        &mat_view,
-        sizeof(T1_linal_float4x4));
-    
-    T1_linal_float4x4_inverse_inplace(
-        &inv_camview_4x4);
-    
-    T1_linal_float4x4 a_4x4;
-    T1_linal_float4x4 b_4x4;
-    
-    for (
-        uint32_t light_i = 0;
-        light_i < frame_data->postproc_consts->lights_size;
-        light_i++)
-    {
-        T1_linal_float4 light_world;
-            // reminder: frame data includes an offset
-            light_world.data[0] =
-                frame_data->lights[light_i].xyz[0];
-            light_world.data[1] =
-                frame_data->lights[light_i].xyz[1];
-            light_world.data[2] =
-                frame_data->lights[light_i].xyz[2];
-            light_world.data[3] = 1.0f;
-    }
-}
-#endif
 
 void T1_render_update(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_us)
+    u64 elapsed_us)
 {
     (void)elapsed_us;
     
@@ -221,10 +183,10 @@ void T1_render_update(
         return;
     }
     
-    for (uint32_t rv_i = 0; rv_i < T1_render_views->size; rv_i++) {
+    for (u32 rv_i = 0; rv_i < T1_render_views->size; rv_i++) {
         T1CPURenderView * rv = T1_render_views->cpu + rv_i;
-        if (rv->clamped_to_zsprite_id >= 0) {
-            int32_t zs_i = rv->clamped_to_zsprite_id;
+        if (rv->clamped_to_T1_id >= 0) {
+            s32 zs_i = rv->clamped_to_T1_id;
             
             T1_zsprite_get_pos_xyz(
                 zs_i,
@@ -254,12 +216,10 @@ void T1_render_update(
         frame_data->flat_tex_quads,
         &frame_data->flat_tex_quads_size);
     
-    *frame_data->postproc_consts =
-        T1_global->postproc_consts;
+    *frame_data->postproc_consts = T1_global->postproc_consts;
     
     T1_zsprite_add_opaque_zpolygons_to_workload(frame_data);
-    T1_log_assert(frame_data->zsprite_list->size <
-        T1_ZSPRITES_CAP);
+    T1_log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     T1_zsprite_add_alphablending_zpolygons_to_workload(frame_data);
@@ -271,12 +231,12 @@ void T1_render_update(
     #endif
     
     for (
-        uint32_t cam_i = 0;
+        u32 cam_i = 0;
         cam_i < T1_render_views->size;
         cam_i++)
     {
         for (
-            int32_t pass_i = 0;
+            s32 pass_i = 0;
             pass_i < T1_render_views->cpu[cam_i].
                 passes_size;
             pass_i++)
@@ -289,7 +249,7 @@ void T1_render_update(
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (int32_t)frame_data->
+                        (s32)frame_data->
                             verts_size;
             }
         }
@@ -312,7 +272,7 @@ void T1_render_update(
     T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
-        /* uint64_t elapsed_us: */
+        /* u64 elapsed_us: */
             elapsed_us);
     T1_log_assert(frame_data->zsprite_list->size <
         T1_ZSPRITES_CAP);
@@ -331,12 +291,12 @@ void T1_render_update(
     #endif
     
     for (
-        uint32_t cam_i = 0;
+        u32 cam_i = 0;
         cam_i < T1_render_views->size;
         cam_i++)
     {
         for (
-            int32_t pass_i = 0;
+            s32 pass_i = 0;
             pass_i < T1_render_views->cpu[cam_i].
                 passes_size;
             pass_i++)
@@ -350,7 +310,7 @@ void T1_render_update(
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (int32_t)frame_data->
+                        (s32)frame_data->
                             flat_bb_quads_size;
             }
             
@@ -362,7 +322,7 @@ void T1_render_update(
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (int32_t)frame_data->
+                        (s32)frame_data->
                             flat_tex_quads_size;
             }
         }
@@ -377,8 +337,8 @@ void T1_render_update(
     #error
     #endif
     
-    frame_data->render_views_size =
-        T1_render_views->size;
+    frame_data->render_views_size = T1_render_views->size;
+    
     
     T1_log_assert(frame_data->render_views != NULL);
     T1_std_memcpy(

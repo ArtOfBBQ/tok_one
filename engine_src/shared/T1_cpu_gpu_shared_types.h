@@ -7,15 +7,15 @@
 #define T1_CAM_DEPTH_FRAGARG_I 30
 #define T1_SHADOW_MAPS_1ST_FRAGARG_I 31
 
-#define T1_DEPTH_TEXTUREARRAYS_I 54321
+#define T1_DEPTH_TEXTUREARRAYS_I 1000
 
 #define T1_DOWNSAMPLES_SIZE 5
 #define T1_DOWNSAMPLES_CUTOFF 4
 
 #pragma pack(push, 1)
 typedef struct {
-    int locked_vertex_i; // index into GPULockedVertex buffer
-    int polygon_i;       // index into GPUPolygonCollection buffer
+    s32 locked_vertex_i; // index into GPULockedVertex buffer
+    s32 polygon_i;       // index into GPUPolygonCollection buffer
 } T1GPUVertexIndices;
 
 /*
@@ -33,27 +33,27 @@ not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct {
-    float xyz            [3];
+    f32 xyz            [3];
+    f32 norm_xyz[3];
+    f32        uv[2];
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    float face_normal_xyz[3];
+    f32 face_normal_xyz[3];
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    float norm_xyz[3];
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    float tan_xyz[3];
-    float bitan_xyz[3];
+    f32 tan_xyz[3];
+    f32 bitan_xyz[3];
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    float        uv[2];
-    unsigned int locked_materials_head_i;
-    unsigned int parent_material_i;
+    u32 locked_materials_head_i;
+    u32 parent_material_i;
 } __attribute__((aligned(16))) T1GPULockedVertex;
 
-typedef enum : unsigned int {
+typedef enum : u32 {
     T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
     T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
     T1RENDERVIEW_WRITE_DEPTH = 2,
@@ -63,95 +63,93 @@ typedef enum : unsigned int {
 
 typedef struct {
     // v = view, p = projection
-    float    v_4x4[16];
-    float    p_4x4[16];
-    float    normv_3x3[9];
-    float    cull_below_z;
-    float    cull_above_z;
-    int      read_from_shadow_maps;
-    int      write_to_shadow_maps;
+    f32    v_4x4[16];
+    f32    p_4x4[16];
+    f32    normv_3x3[9];
+    f32    cull_below_z;
+    f32    cull_above_z;
+    s32      read_from_shadow_maps;
+    s32      write_to_shadow_maps;
 } T1GPURenderView;
 
 typedef struct {
-    float ambient_rgb[3];
-    float diffuse_rgb[3];
-    float specular_rgb[3];
-    float uv_scroll[2];
-    float specular_exponent;
-    float refraction;
-    float alpha;
-    float illum;
+    f32 ambient_rgb[3];
+    f32 diffuse_rgb[3];
+    f32 specular_rgb[3];
+    f32 uv_scroll[2];
+    f32 specular_exponent;
+    f32 refraction;
+    f32 alpha;
+    f32 illum;
 } T1GPUConstMatf32;
 
 typedef struct {
-    int normalmap_tex_and_tex;
-} T1GPUConstMati32;
+    s32 normalmap_tex_and_tex;
+} T1GPUConstMats32;
 
 typedef struct {
     T1GPUConstMatf32 base_mat_f32; // start f32 here
-    float            explode;
-    float            bonus_rgb[3];
-    float            base_mat_uv_offsets[2];
-    float            alpha;
-    float            ignore_lighting;
-    float            ignore_camera;
-    float            outline_alpha;
-    float            shadow_strength;
-    float            f32_padding[6];
+    f32              bonus_rgb[3];
+    f32              base_mat_uv_offsets[2];
+    f32              alpha;
+    f32              no_lighting;
+    f32              no_camera;
+    f32              outline_alpha;
+    f32              shadow_strength;
+    f32              f32_padding[7];
 } T1GPUzSpritef32;
 
 typedef struct {
-    T1GPUConstMati32 base_mat_i32; // start of i32
-    int touch_id;
-    int mix_rv_and_mix_tex;
-} __attribute__((aligned(16))) T1GPUzSpritei32;
+    T1GPUConstMats32 base_mat_s32; // start of s32
+    s32 touch_id;
+    s32 mix_rv_and_mix_tex;
+} __attribute__((aligned(16))) T1GPUzSprites32;
 
 typedef struct {
-    T1GPUzSpritef32 f32;
-    T1GPUzSpritei32 i32;
+    T1GPUzSpritef32 f32s;
+    T1GPUzSprites32 s32;
 } __attribute__((aligned(16))) T1GPUzSprite;
 
 typedef struct {
-    float m_4x4[16];
-    float norm_3x3[9];
+    f32 m_4x4[16];
+    f32 norm_3x3[9];
 } T1GPUzSpriteMatrices;
 
 typedef struct {
     T1GPUzSprite polygons[T1_ZSPRITES_CAP];
-    unsigned int size;
+    u32 size;
 } T1GPUzSpriteList;
 
 typedef struct {
-    float xyz[3];
-    float size;
-    float rgba[4];
+    f32 xyz[3];
+    f32 size;
+    f32 rgba[4];
 } T1GPUFlatQuad;
 
 typedef struct {
-    float xyz[3];
-    float angle_xyz[3];
-    float diffuse;
-    float specular;
-    float reach;
-    float rgb[3];
-    int   shadow_map_depth_tex_i;
-    int   shadow_map_render_view_i;
+    f32 xyz[3];
+    f32 angle_xyz[3];
+    f32 diffuse;
+    f32 specular;
+    f32 reach;
+    f32 rgb[3];
+    s32   shadow_map_depth_tex_i;
+    s32   shadow_map_render_view_i;
 } T1GPULight;
 
 typedef struct
 {
-    float texture_width;
-    float texture_height;
-    float brightness_threshold;
-    float brightness_reduction;
+    f32 texture_width;
+    f32 texture_height;
+    f32 brightness_threshold;
+    f32 brightness_reduction;
 } T1GPUDownsamplingConstants;
 
 typedef struct
 {
-    float position[2];
-    float texcoord[2];
+    f32 position[2];
+    f32 texcoord[2];
 } T1PostProcessingVertex;
-
 #pragma pack(pop)
 
-#endif
+#endif // T1_CPU_GPU_SHARED_TYPES_H

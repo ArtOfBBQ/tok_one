@@ -2,9 +2,10 @@
 
 #include "T1_term.h"
 #include "T1_log.h"
+#include "T1_settings.h"
 #include "T1_global.h"
 #include "T1_io.h"
-#include "T1_zspriteid.h"
+#include "T1_id.h"
 #include "T1_texquad.h"
 #include "T1_platform_layer.h"
 #include "T1_tex_array.h"
@@ -20,12 +21,12 @@
 #include "T1_frame_anim.h"
 #include "T1_render_view.h"
 
-uint8_t T1_gameloop_active = false;
-uint8_t T1_gameloop_loading_texs = false;
+u8 T1_gameloop_active = false;
+u8 T1_gameloop_loading_texs = false;
 
-static uint64_t gameloop_previous_time = 0;
-static uint64_t gameloop_frame_no = 0;
-static int32_t  loading_text_sprite_id = -1;
+static u64 gameloop_previous_time = 0;
+static u64 gameloop_frame_no = 0;
+static s32  loading_text_sprite_id = -1;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
@@ -38,7 +39,7 @@ static void update_terminal(void) {
     }
     
     if (T1_term_active) {
-        for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
+        for (u32 i = 0; i < T1_IO_KEYMAP_CAP; i++) {
             if (i == T1_IO_KEY_SHIFT) { continue; }
             if (T1_io->keymap[i]) {
                 if (T1_io->keymap[T1_IO_KEY_SHIFT]) {
@@ -65,7 +66,7 @@ void T1_gameloop_init(void) {
 static void show_dead_simple_text(
     T1GPUFrame * frame_data,
     const char * text_message,
-    const uint64_t elapsed)
+    const u64 elapsed)
 {
     T1_ui_widget_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -89,28 +90,28 @@ static void show_dead_simple_text(
     T1_render_view_reset(0);
     
     T1_text_props->font_height = 20.0f;
-    T1_text_props->f32.rgba[0] = 1.0f;
-    T1_text_props->f32.rgba[1] = 1.0f;
-    T1_text_props->f32.rgba[2] = 1.0f;
-    T1_text_props->f32.rgba[3] = 1.0f;
+    T1_text_props->f32s.rgba[0] = 1.0f;
+    T1_text_props->f32s.rgba[1] = 1.0f;
+    T1_text_props->f32s.rgba[2] = 1.0f;
+    T1_text_props->f32s.rgba[3] = 1.0f;
     
-    T1_log_assert((T1_text_props->i32.reserved_and_tex & 0x0000FFFF) == T1_TEX_NONE);
+    T1_log_assert((T1_text_props->s32s.reserved_and_tex & 0x0000FFFF) == T1_TEX_NONE);
     
     T1_text_request_label_renderable(
-        /* const uint32_t with_object_id: */
+        /* const u32 with_object_id: */
             0,
         /* const char * text_to_draw: */
             text_message,
-        /* const float left_pixelspace: */
+        /* const f32 left_pixelspace: */
             30,
-        /* const float mid_y_pixelspace: */
-            T1_global->window_height - 30,
-        /* const float z: */
+        /* const f32 mid_y_pixelspace: */
+            T1_settings_get_render_height() - 30,
+        /* const f32 z: */
             1.0f,
-        /* const float tab_width: */
+        /* const f32 tab_width: */
             4.0f,
-        /* const float max_width: */
-            T1_global->window_width - 30);
+        /* const f32 max_width: */
+            T1_settings_get_render_width() - 30);
     
     T1_global->draw_fps = 0;
     T1_global->draw_triangles = true;
@@ -124,7 +125,7 @@ static void show_dead_simple_text(
     
     T1_render_update(
             frame_data,
-        /* uint64_t elapsed_us: */
+        /* u64 elapsed_us: */
             elapsed);
 }
 
@@ -143,9 +144,9 @@ void T1_gameloop_update_before_render_pass(
             gameloop_previous_time;
     
     // TODO: set frame timestamp to an adj value
-    T1_global->elapsed = (uint64_t)(
-        (double)T1_global->elapsed *
-        (double)T1_global->timedelta_mult);
+    T1_global->elapsed = (u64)(
+        (f64)T1_global->elapsed *
+        (f64)T1_global->timedelta_mult);
     
     gameloop_previous_time = T1_global->this_frame_timestamp_us;
     
@@ -160,12 +161,12 @@ void T1_gameloop_update_before_render_pass(
     {
         if (loading_text_sprite_id < 0) {
             loading_text_sprite_id =
-                T1_zspriteid_next_ui_element_id();
+                T1_id_next_ui_element_id();
         }
         
-        float pct_progress =
-            (float)T1_global->startup_bytes_loaded /
-            (float)T1_global->startup_bytes_to_load;
+        f32 pct_progress =
+            (f32)T1_global->startup_bytes_loaded /
+            (f32)T1_global->startup_bytes_to_load;
         pct_progress *= 100.0f;
         
         char loading_text[256];
@@ -173,7 +174,7 @@ void T1_gameloop_update_before_render_pass(
             loading_text,
             256,
             "Loading textures - ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             loading_text,
             256,
             pct_progress);
@@ -341,8 +342,7 @@ void T1_gameloop_update_before_render_pass(
         
         T1_zlight_copy_all(
             frame_data->lights,
-            &T1_global->postproc_consts.
-                lights_size);
+            &T1_global->postproc_consts.lights_size);
         
         T1_render_view_update_positions(T1_global->elapsed);
         
@@ -367,13 +367,13 @@ void T1_gameloop_update_before_render_pass(
         T1_texquad_defragment();
         T1_zsprite_defragment();
         
-        uint32_t overflow_vertices = frame_data->verts_size % 3;
+        u32 overflow_vertices = frame_data->verts_size % 3;
         frame_data->verts_size -= overflow_vertices;
     }
     
     if (T1_global->draw_fps) {
         T1_text_request_fps(
-            /* uint64_t elapsed_us: */
+            /* u64 elapsed_us: */
                 T1_global->elapsed);
     } else if (T1_global->draw_top_touchable_id) {
         T1_text_request_top_touch_id(
@@ -382,7 +382,7 @@ void T1_gameloop_update_before_render_pass(
     }
     
     frame_data->postproc_consts->timestamp =
-        (uint32_t)T1_global->this_frame_timestamp_us;
+        (u32)T1_global->this_frame_timestamp_us;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(
@@ -408,10 +408,10 @@ void T1_gameloop_update_after_render_pass(void) {
     
     T1_io->events[T1_IO_LAST_GPU_DATA].touch_id_top =
         T1_os_gpu_get_touch_id_at_screen_pos(
-            /* const int screen_x: */
+            /* const s32 screen_x: */
                 T1_io->events[T1_IO_LAST_GPU_DATA].
                     screen_x,
-            /* const int screen_y: */
+            /* const s32 screen_y: */
                 T1_io->events[T1_IO_LAST_GPU_DATA].
                     screen_y);
     

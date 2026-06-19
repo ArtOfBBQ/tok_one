@@ -9,7 +9,7 @@
 #include "T1_wav.h"
 #include "T1_audio.h"
 
-#include "T1_zspriteid.h"
+#include "T1_id.h"
 #include "T1_tex.h"
 #include "T1_tex_array.h"
 #include "T1_zlight.h"
@@ -22,17 +22,17 @@
 #define T1_TERM_SINGLE_LINE_MAX 1024
 typedef struct {
     void (* to_fullscreen_fncptr)(void);
-    uint32_t history_size;
-    float font_color[4];
-    float font_rgb_cap[3];
-    float background_color[4];
-    int32_t back_object_id;
-    int32_t labels_object_id; // INT32_MAX - 1;
+    u32 history_size;
+    f32 font_color[4];
+    f32 font_rgb_cap[3];
+    f32 background_color[4];
+    s32 back_object_id;
+    s32 labels_object_id; // INT32_MAX - 1;
     char cur_command[T1_TERM_SINGLE_LINE_MAX];
     char history[T1_TERM_HIST_CAP];
 } T1TermState;
 
-bool8_t T1_term_active = false;
+b8 T1_term_active = false;
 static T1TermState * T1_trms = NULL;
 
 #define T1_TERM_WHITESPACE    7.0f
@@ -45,12 +45,12 @@ static T1TermState * T1_trms = NULL;
 #define T1_TERM_INPUT_BOX_MID_Y ((T1_TERM_INPUT_BOX_HEIGHT * 0.5f) + T1_TERM_WHITESPACE)
 
 
-static uint8_t requesting_label_update = false;
+static u8 requesting_label_update = false;
 
 static void T1_term_describe_zpolygon(
     char * append_to,
-    uint32_t cap,
-    uint32_t zp_i)
+    u32 cap,
+    u32 zp_i)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)cap;
@@ -118,69 +118,68 @@ void T1_term_init(
 void T1_term_redraw_backgrounds(void) {
     T1_trms->back_object_id = INT32_MAX;
     
-    float command_history_height =
+    f32 command_history_height =
         T1_render_views->cpu[0].height -
         T1_TERM_INPUT_BOX_HEIGHT -
         (T1_TERM_WHITESPACE * 3);
     
-    float width =
-        (float)T1_render_views->cpu[0].
+    f32 width =
+        (f32)T1_render_views->cpu[0].
             width - (T1_TERM_WHITESPACE
                 * 2.0f);
     
     T1FlatTexQuadRequest input_req;
     T1_texquad_fetch_next(&input_req);
-    input_req.cpu->T1_id =
-        T1_trms->back_object_id;
-    input_req.gpu->f32.xyz[0] = 0.0f;
-    input_req.gpu->f32.xyz[1] =
+    input_req.cpu->T1_id = T1_trms->back_object_id;
+    input_req.gpu->f32s.xyz[0] = 0.0f;
+    input_req.gpu->f32s.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
             T1_TERM_INPUT_BOX_MID_Y);
-    input_req.gpu->f32.xyz[2] = T1_TERM_Z;
+    input_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     
-    input_req.gpu->f32.wh[0] =
+    input_req.gpu->f32s.wh[0] =
         T1_render_view_screen_width_to_width_noz(width);
-    input_req.gpu->f32.wh[1] =
+    input_req.gpu->f32s.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             T1_TERM_INPUT_BOX_HEIGHT);
-    input_req.gpu->i32.reserved_and_tex =
+    input_req.gpu->s32s.reserved_and_tex =
         0x00000000 | T1_TEX_NONE;
-    input_req.gpu->f32.rgba[0] =
+    input_req.gpu->f32s.rgba[0] =
         T1_trms->background_color[0];
-    input_req.gpu->f32.rgba[1] =
+    input_req.gpu->f32s.rgba[1] =
         T1_trms->background_color[1];
-    input_req.gpu->f32.rgba[2] =
+    input_req.gpu->f32s.rgba[2] =
         T1_trms->background_color[2];
-    input_req.gpu->f32.rgba[3] =
+    input_req.gpu->f32s.rgba[3] =
         T1_trms->background_color[3];
     T1_texquad_commit(&input_req);
     
     // The console history area
     T1FlatTexQuadRequest history_req;
     T1_texquad_fetch_next(&history_req);
-    history_req.gpu->f32.xyz[0] = 0.0f;
-    history_req.gpu->f32.xyz[1] =
+    history_req.gpu->f32s.xyz[0] = 0.0f;
+    history_req.gpu->f32s.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
            (command_history_height / 2) +
                T1_TERM_INPUT_BOX_HEIGHT +
                (T1_TERM_WHITESPACE * 2.0f));
-    history_req.gpu->f32.xyz[2] = T1_TERM_Z;
-    history_req.gpu->f32.wh[0] =
+    history_req.gpu->f32s.xyz[2] = T1_TERM_Z;
+    history_req.gpu->f32s.wh[0] =
         T1_render_view_screen_width_to_width_noz(
                 T1_render_views->cpu[0].width -
                     (T1_TERM_WHITESPACE * 2));
-    history_req.gpu->f32.wh[1] =
+    history_req.gpu->f32s.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
     history_req.cpu->T1_id = INT32_MAX;
-    history_req.gpu->i32.touch_id = -1;
-    history_req.gpu->f32.rgba[0] =
+    history_req.gpu->s32s.touch_id = -1;
+    history_req.gpu->f32s.rgba[0] =
         T1_trms->background_color[0];
-    history_req.gpu->f32.rgba[1] =
+    history_req.gpu->f32s.rgba[1] =
         T1_trms->background_color[1];
-    history_req.gpu->f32.rgba[2] =
+    history_req.gpu->f32s.rgba[2] =
         T1_trms->background_color[2];
-    history_req.gpu->f32.rgba[3] =
+    history_req.gpu->f32s.rgba[3] =
         T1_trms->background_color[3];
     T1_texquad_commit(&history_req);
 }
@@ -196,26 +195,26 @@ void T1_term_render(void) {
     
     T1_texquad_delete(T1_trms->labels_object_id);
     
-    float previous_font_height =
+    f32 previous_font_height =
         T1_text_props->font_height;
     T1_text_props->font_height =
         T1_TERM_FONT_SIZE;
     
     // draw the terminal's history as a label
-    float history_label_top =
+    f32 history_label_top =
         T1_render_views->cpu[0].height -
             (T1_TERM_WHITESPACE * 2);
-    float history_label_height =
+    f32 history_label_height =
         T1_render_views->cpu[0].height -
             T1_TERM_FONT_SIZE -
             (T1_TERM_WHITESPACE * 4.5f);
     
-    uint32_t max_lines_in_history =
-        (uint32_t)(history_label_height / (T1_TERM_FONT_SIZE * 1.0f));
+    u32 max_lines_in_history =
+        (u32)(history_label_height / (T1_TERM_FONT_SIZE * 1.0f));
     
-    uint32_t char_offset = T1_trms->history_size;
-    uint32_t lines_taken = 0;
-    uint32_t chars_in_current_line = 0;
+    u32 char_offset = T1_trms->history_size;
+    u32 lines_taken = 0;
+    u32 chars_in_current_line = 0;
     
     while (
         lines_taken <= max_lines_in_history &&
@@ -237,33 +236,33 @@ void T1_term_render(void) {
         char_offset += 1;
     }
     
-    T1_text_props->f32.rgba[0] =
+    T1_text_props->f32s.rgba[0] =
         T1_trms->font_color[0];
-    T1_text_props->f32.rgba[1] =
+    T1_text_props->f32s.rgba[1] =
         T1_trms->font_color[1];
-    T1_text_props->f32.rgba[2] =
+    T1_text_props->f32s.rgba[2] =
         T1_trms->font_color[2];
-    T1_text_props->f32.rgba[3] =
+    T1_text_props->f32s.rgba[3] =
         T1_trms->font_color[3];
-    T1_text_props->i32.touch_id = -1;
+    T1_text_props->s32s.touch_id = -1;
     
     if (T1_trms->history[char_offset] != '\0') {
         T1_text_request_label_renderable(
-            /* const int32_t with_object_id: */
+            /* const s32 with_object_id: */
                 T1_trms->labels_object_id,
             /* const char * text_to_draw: */
                 T1_trms->history + char_offset,
-            /* const float left_pixelspace: */
+            /* const f32 left_pixelspace: */
                 T1_TERM_WHITESPACE * 2 +
                     (T1_TERM_FONT_SIZE * 0.5f),
-            /* const float mid_y_pixelspace: */
+            /* const f32 mid_y_pixelspace: */
                 history_label_top -
                     (T1_TERM_FONT_SIZE * 0.5f),
-            /* const float z: */
+            /* const f32 z: */
                 T1_TERM_LABELS_Z,
-            /* const float tab_width: */
+            /* const f32 tab_width: */
                 4.0f,
-            /* const float max_width: */
+            /* const f32 max_width: */
                 T1_render_views->cpu[0].width -
                     (T1_TERM_WHITESPACE * 2));
     }
@@ -275,23 +274,23 @@ void T1_term_render(void) {
         return;
     }
     
-    T1_text_props->i32.touch_id = -1;
+    T1_text_props->s32s.touch_id = -1;
     // the terminal's current input as a label
     T1_text_request_label_renderable(
         /* with_object_id: */
             T1_trms->labels_object_id,
         /* const char * text_to_draw: */
             T1_trms->cur_command,
-        /* const float left_pixelspace: */
+        /* const f32 left_pixelspace: */
             T1_TERM_WHITESPACE * 2 +
                 (T1_TERM_FONT_SIZE * 0.5f),
-        /* const float mid_y_pixelspace: */
+        /* const f32 mid_y_pixelspace: */
             T1_TERM_INPUT_BOX_MID_Y,
-        /* const float z: */
+        /* const f32 z: */
             T1_TERM_LABELS_Z,
-        /* const float tab_width: */
+        /* const f32 tab_width: */
             4.0f,
-        /* const float max_width: */
+        /* const f32 max_width: */
             T1_render_views->cpu[0].width -
                 (T1_TERM_WHITESPACE * 2));
     
@@ -301,7 +300,7 @@ void T1_term_render(void) {
     requesting_label_update = false;
 }
 
-void T1_term_sendchar(uint32_t to_send) {
+void T1_term_sendchar(u32 to_send) {
     
     if (to_send == T1_IO_KEY_ESCAPE) {
         // ESC key
@@ -312,7 +311,7 @@ void T1_term_sendchar(uint32_t to_send) {
         return;
     }
     
-    uint32_t last_i = 0;
+    u32 last_i = 0;
     while (
         T1_trms->cur_command[last_i] != '\0')
     {
@@ -346,7 +345,7 @@ void T1_term_sendchar(uint32_t to_send) {
     }
 }
 
-static uint8_t T1_term_evaluate(
+static u8 T1_term_evaluate(
     char * command,
     char * response)
 {
@@ -418,14 +417,14 @@ static uint8_t T1_term_evaluate(
         T1_std_string_starts_with(
             command, "TO RENDER VIEW "))
     {
-        uint8_t rv_good = 0;
-        int32_t jump_rv = T1_std_string_to_int32_validate(
+        u8 rv_good = 0;
+        s32 jump_rv = T1_std_string_to_int32_validate(
             command + 15,
             &rv_good);
         
         if (!rv_good ||
             jump_rv < 1 ||
-            jump_rv >= (int32_t)T1_render_views->size) {
+            jump_rv >= (s32)T1_render_views->size) {
             T1_std_strcpy_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
@@ -523,7 +522,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Camera is at: [");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->xyz[0]);
@@ -531,7 +530,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             ", ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->xyz[1]);
@@ -539,7 +538,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             ", ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->xyz[2]);
@@ -547,7 +546,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "], xyz_angles: [");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->angle_xyz[0]);
@@ -555,7 +554,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             ", ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->angle_xyz[1]);
@@ -563,7 +562,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             ", ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_cam->angle_xyz[2]);
@@ -632,35 +631,35 @@ static uint8_t T1_term_evaluate(
     {
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         unsigned char * recipient =
-            T1_mem_malloc_managed(T1_audio_state->global_buffer_size_bytes + 100);
-        uint32_t recipient_size = 0;
+            T1_mem_malloc_managed(T1_audio_s->global_buffer_size_bytes + 100);
+        u32 recipient_size = 0;
         
         T1_wav_samples_to_wav(
             /* unsigned char * recipient: */
                 recipient,
-            /* uint32_t * recipient_size: */
+            /* u32 * recipient_size: */
                 &recipient_size,
-            /* const uint32_t recipient_cap: */
-                T1_audio_state->global_buffer_size_bytes + 100,
-            /* int16_t * samples: */
-                T1_audio_state->samples_buffer,
-            /* const uint32_t samples_size: */
-                T1_audio_state->global_samples_size);
+            /* const u32 recipient_cap: */
+                T1_audio_s->global_buffer_size_bytes + 100,
+            /* i16 * samples: */
+                T1_audio_s->samples_buffer,
+            /* const u32 samples_size: */
+                T1_audio_s->global_samples_size);
         
         T1_std_strcpy_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Dumping global sound buffer to disk...");
         
-        uint32_t good = 0;
-        T1_platform_write_file_to_writables(
+        u32 good = 0;
+        T1_os_write_file_to_writables(
             /* const char * filepath_inside_writables: */
                 "global_sound_buffer.wav",
             /* const char * output: */
                 (char *)recipient,
-            /* const uint32_t output_size: */
+            /* const u32 output_size: */
                 recipient_size,
-            /* uint32_t * good: */
+            /* u32 * good: */
                 &good);
         
         if (good) {
@@ -734,7 +733,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_uint_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            (uint32_t)T1_render_views->cpu[0].height);
+            (u32)T1_render_views->cpu[0].height);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -742,7 +741,7 @@ static uint8_t T1_term_evaluate(
         T1_std_strcat_uint_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            (uint32_t)T1_render_views->cpu[0].width);
+            (u32)T1_render_views->cpu[0].width);
         return true;
     }
     
@@ -758,7 +757,7 @@ static uint8_t T1_term_evaluate(
         command[8] == ' ' &&
         command[9] >= '0' && command[9] <= '9')
     {
-        uint32_t zp_i = T1_std_string_to_uint32(command + 9);
+        u32 zp_i = T1_std_string_to_uint32(command + 9);
         
         response[0] = '\0';
         T1_term_describe_zpolygon(
@@ -796,7 +795,7 @@ static uint8_t T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            T1_texquad_delete(T1_ZSPRITEID_FPS_COUNTER);
+            T1_texquad_delete(T1_ID_FPS_COUNTER);
             
             T1_std_strcpy_cap(
                 response,
@@ -819,8 +818,7 @@ static uint8_t T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
-            T1_texquad_delete(
-                T1_ZSPRITEID_FPS_COUNTER);
+            T1_texquad_delete(T1_ID_FPS_COUNTER);
             T1_std_strcpy_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
@@ -872,7 +870,7 @@ static uint8_t T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 ", but you didn't pass an index.");
         } else {
-            int32_t texture_array_i = T1_std_string_to_int32(command + 18);
+            s32 texture_array_i = T1_std_string_to_s32(command + 18);
             
             if (texture_array_i >= T1_TEXARRAYS_CAP) {
                 T1_std_strcpy_cap(
@@ -903,11 +901,11 @@ static uint8_t T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 " to disk...\n");
             
-            uint32_t success = 0;
+            u32 success = 0;
             T1_tex_array_debug_dump_to_writables(
-                /* const int32_t texture_array_i: */
+                /* const s32 texture_array_i: */
                     texture_array_i,
-                /* uint32_t * success: */
+                /* u32 * success: */
                     &success);
             
             T1_std_strcat_cap(
@@ -1025,7 +1023,7 @@ static uint8_t T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Multiplying all delta time by: ");
-        T1_std_strcat_float_cap(
+        T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_global->timedelta_mult);

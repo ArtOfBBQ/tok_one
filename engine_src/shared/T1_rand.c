@@ -7,9 +7,9 @@
 #error
 #endif
 
-uint32_t T1_rand_seed = 0;
+u32 T1_rand_seed = 0;
 
-static float float_sequence[FLOAT_SEQUENCE_SIZE] = {
+static f32 f32_sequence[FLOAT_SEQUENCE_SIZE] = {
 0.7933f,0.4715f,0.2122f,0.7217f,0.3542f,0.0679f,0.8379f,
 0.1617f,0.2727f,0.1467f,0.9953f,0.8183f,0.4722f,0.6118f,
 0.3266f,0.2646f,0.0138f,0.7783f,0.3999f,0.2102f,0.5707f,
@@ -692,7 +692,7 @@ static float float_sequence[FLOAT_SEQUENCE_SIZE] = {
 0.6303f,0.6682f,0.9014f,0.7644f,0.0533f,0.9712f,0.0872f,
 };
 
-static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
+static s32 random_sequence[RANDOM_SEQUENCE_SIZE] = {
     7654,24225,27992,18159,20634,15636,5558,31144,8709,22118,20922,9389,
     30361,10707,15619,11980,6984,7613,19899,5045,5080,5197,24123,26630,
     32019,10134,1597,20681,26118,30497,27601,20489,27155,24616,16182,32227,
@@ -779,11 +779,11 @@ static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
     15512,5304,2811
 };
 
-void T1_rand_init(const uint32_t seed) {
+void T1_rand_init(const u32 seed) {
     T1_rand_seed = seed;
 }
 
-int32_t T1_rand(void) {
+s32 T1_rand(void) {
     T1_rand_seed++;
     if (T1_rand_seed >= RANDOM_SEQUENCE_SIZE) {
         T1_rand_seed = 0;
@@ -799,7 +799,7 @@ int32_t T1_rand(void) {
     return random_sequence[T1_rand_seed];
 }
 
-int32_t T1_rand_at_i(const uint64_t index) {
+s32 T1_rand_at_i(const u64 index) {
     #ifndef RANDOM_IGNORE_ASSERTS
     assert(index < RANDOM_SEQUENCE_SIZE);
     #endif
@@ -810,36 +810,36 @@ int32_t T1_rand_at_i(const uint64_t index) {
     return random_sequence[index];
 }
 
-SIMD_FLOAT T1_rand_simd_at_i(const uint64_t index)
+SIMD_FLOAT T1_rand_simd_at_i(const u64 index)
 {
     #ifndef RANDOM_IGNORE_ASSERTS
     assert(index + SIMD_FLOAT_LANES < FLOAT_SEQUENCE_SIZE);
     #endif
     
-    return simd_load_floats((float *)(
-        float_sequence + index));
+    return simd_load_f32s((f32 *)(
+        f32_sequence + index));
 }
 
 void T1_rand_shuf_array(
     void * array,
-    const uint32_t array_size,
-    const uint32_t element_size)
+    const u32 array_size,
+    const u32 element_size)
 {
     char * char_array = (char *)array;
     
-    uint32_t start_i = 0;
+    u32 start_i = 0;
     for (
-        uint32_t size_left = array_size;
+        u32 size_left = array_size;
         size_left > 1;
         size_left--)
     {
-        uint32_t swap_i = start_i +
-            ((uint32_t)T1_rand() % size_left) * element_size;
+        u32 swap_i = start_i +
+            ((u32)T1_rand() % size_left) * element_size;
         
         // swap element_size bytes starting at start_i with
         // element_size bytes starting at swap_i;
         char swap;
-        for (uint32_t _ = 0; _ < element_size; _++) {
+        for (u32 _ = 0; _ < element_size; _++) {
             swap = *(char_array + start_i + _);
             *(char_array + start_i + _) = *(char_array + swap_i + _);
             *(char_array + swap_i + _) = swap;

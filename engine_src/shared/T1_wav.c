@@ -2,7 +2,7 @@
 
 typedef struct {
     char     riff[4];
-    uint32_t file_size; // described sometimes as "integer", assuming uint
+    u32 file_size; // described sometimes as "integer", assuming uint
     char     wave[4];
 } T1WAVFileHeader;
 
@@ -18,26 +18,26 @@ a pad byte, if the chunk's length is not even
 */
 typedef struct {
     char ascii_id[4];
-    uint32_t data_size;
+    u32 data_size;
 } T1WAVChunkHeader;
 
 typedef struct {
-    uint16_t type; // Type of format (1 is PCM) - 2 byte integer
-    uint16_t channels; // Number of Channels - 2 byte integer
-    uint32_t sample_rate; // Sample Rate - u32. 44100 (CD), 48000 (DAT).
-    uint32_t idontgetit; // (Sample Rate * BitsPerSample * Channels) / 8
-    uint16_t must_be_four; // don't get this one either
-    uint16_t bits_per_sample;
+    u16 type; // Type of format (1 is PCM) - 2 byte integer
+    u16 channels; // Number of Channels - 2 byte integer
+    u32 sample_rate; // Sample Rate - u32. 44100 (CD), 48000 (DAT).
+    u32 idontgetit; // (Sample Rate * BitsPerSample * Channels) / 8
+    u16 must_be_four; // don't get this one either
+    u16 bits_per_sample;
 } T1WAVFormatChunkBody;
 
 #define consume_struct(from_ptr, StructName) *(StructName *)from_ptr; from_ptr += sizeof(StructName);
 
-static uint32_t
+static u32
 T1_wav_strings_are_equal(
     const char * string_1,
     const char * string_2)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (string_2[i] != '\0')
     {
         if (string_1[i] != string_2[i]) {
@@ -53,9 +53,9 @@ static void
 T1_wav_check_strings_equal(
     char * actual,
     char * expected_nullterm,
-    uint32_t * good)
+    u32 * good)
 {
-    uint32_t at_i = 0;
+    u32 at_i = 0;
     while (expected_nullterm[at_i] != '\0') {
         if (actual[at_i] != expected_nullterm[at_i]) {
             *good = 0;
@@ -70,7 +70,7 @@ T1_wav_check_strings_equal(
         }
         
         char actual_nullterm[50];
-        for (uint32_t i = 0; i < at_i; i++) {
+        for (u32 i = 0; i < at_i; i++) {
             actual_nullterm[i] = actual[i];
         }
         
@@ -88,10 +88,10 @@ T1_wav_check_strings_equal(
 void
 T1_wav_samples_to_wav(
     unsigned char * recipient,
-    uint32_t * recipient_size,
-    const uint32_t recipient_cap,
-    int16_t * samples,
-    const uint32_t samples_size)
+    u32 * recipient_size,
+    const u32 recipient_cap,
+    s16 * samples,
+    const u32 samples_size)
 {
     (void)recipient_cap; // TODO: check cap
     
@@ -100,7 +100,7 @@ T1_wav_samples_to_wav(
     riff_header.riff[1] = 'I';
     riff_header.riff[2] = 'F';
     riff_header.riff[3] = 'F';
-    riff_header.file_size = (samples_size * sizeof(int16_t)) + 36;
+    riff_header.file_size = (samples_size * sizeof(s16)) + 36;
     riff_header.wave[0] = 'W';
     riff_header.wave[1] = 'A';
     riff_header.wave[2] = 'V';
@@ -139,7 +139,7 @@ T1_wav_samples_to_wav(
     data_header.ascii_id[1] = 'a';
     data_header.ascii_id[2] = 't';
     data_header.ascii_id[3] = 'a';
-    data_header.data_size = samples_size * sizeof(int16_t);
+    data_header.data_size = samples_size * sizeof(s16);
     assert(sizeof(T1WAVChunkHeader) % 2 == 0); // no padding needed
     
     T1_std_memcpy(recipient, &data_header, sizeof(T1WAVChunkHeader));
@@ -152,13 +152,13 @@ T1_wav_samples_to_wav(
         recipient += 1;
     }
     
-    T1_std_memcpy(recipient, samples, samples_size * sizeof(int16_t));
+    T1_std_memcpy(recipient, samples, samples_size * sizeof(s16));
     
-    recipient += sizeof(int16_t) * samples_size;
+    recipient += sizeof(s16) * samples_size;
     recipient[0] = '\0';
     
     #ifndef NDEBUG
-    uint32_t before_sample_data_size_bytes =
+    u32 before_sample_data_size_bytes =
         sizeof(T1WAVChunkHeader) +
         sizeof(T1WAVChunkHeader) +
         sizeof(T1WAVFileHeader) +
@@ -166,17 +166,17 @@ T1_wav_samples_to_wav(
     #endif
     assert(before_sample_data_size_bytes == 44);
     
-    *recipient_size += (samples_size * sizeof(int16_t)) + 44;
+    *recipient_size += (samples_size * sizeof(s16)) + 44;
 }
 
 void
 T1_wav_parse(
-    int16_t * recipient,
-    uint32_t * recipient_size,
-    const uint32_t recipient_cap,
+    s16 * recipient,
+    u32 * recipient_size,
+    const u32 recipient_cap,
     unsigned char * raw_file,
-    const uint32_t data_size,
-    uint32_t * good)
+    const u32 data_size,
+    u32 * good)
 {
     *good = 1;
     
@@ -188,7 +188,7 @@ T1_wav_parse(
             file_header.riff,
         /* char * expected_nullterm: */
             "RIFF",
-        /* uint32_t * good: */
+        /* u32 * good: */
             good);
     if (!*good) { return; }
     
@@ -211,7 +211,7 @@ T1_wav_parse(
             file_header.wave,
         /* char * expected_nullterm: */
             "WAVE",
-        /* uint32_t * good: */
+        /* u32 * good: */
             good);
     if (!*good) { return; }
     

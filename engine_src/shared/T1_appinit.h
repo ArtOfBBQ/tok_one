@@ -1,23 +1,24 @@
 #ifndef INIT_APPLICATION_H
 #define INIT_APPLICATION_H
 
-#include <stdint.h>
 #include <string.h> // strlcat
+
+#include "T1_stdint.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern uint32_t block_drawinmtkview;
+extern u32 block_drawinmtkview;
 
 void T1_appinit_before_gpu_init(
-    uint8_t * success,
+    u8 * success,
     char * error_message);
 void T1_appinit_after_gpu_init_step1(
-    uint8_t * success,
+    u8 * success,
     char * error_message);
 void T1_appinit_after_gpu_init_step2(
-    int32_t throwaway_threadarg);
+    s32 throwaway_threadarg);
 
 void T1_appinit_shutdown(void);
 

@@ -6,7 +6,7 @@
 LockedMaterialCollection * all_mesh_materials = NULL;
 
 void T1_material_init(
-    void * (* arg_malloc_function)(size_t size))
+    void * (* arg_malloc_function)(u64 size))
 {
     all_mesh_materials = arg_malloc_function(sizeof(LockedMaterialCollection));
     all_mesh_materials->size = 0;
@@ -14,7 +14,7 @@ void T1_material_init(
 
 void T1_material_construct(
     T1GPUConstMatf32 * to_construct_f32,
-    T1GPUConstMati32 * to_construct_i32)
+    T1GPUConstMats32 * to_construct_s32)
 {
     T1_std_memset(
         to_construct_f32,
@@ -33,20 +33,20 @@ void T1_material_construct(
     to_construct_f32->specular_rgb[2] = 0.50f;
     to_construct_f32->specular_exponent = 25.0f;
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    to_construct_i32->normalmap_texture_i = -1;
-    to_construct_i32->normalmap_texturearray_i = -1;
+    to_construct_s32->normalmap_tex_and_tex =
+        (T1_TEX_NONE << 16) & T1_TEX_NONE;
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    to_construct_i32->normalmap_tex_and_tex = -1;
+    to_construct_s32->normalmap_tex_and_tex = -1;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-static uint32_t T1_material_fetch_locked_material_i(
+static u32 T1_material_fetch_locked_material_i(
     const char * material_name)
 {
-    for (uint32_t i = 0; i < all_mesh_materials->size; i++) {
+    for (u32 i = 0; i < all_mesh_materials->size; i++) {
         if (
             T1_std_are_equal_strings(
                 material_name,
@@ -63,12 +63,12 @@ static uint32_t T1_material_fetch_locked_material_i(
 #error
 #endif
 
-uint32_t T1_material_preappend_locked_material_i(
+u32 T1_material_preappend_locked_material_i(
     const char * obj_resource_name,
     const char * material_name)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t existing_i = T1_material_fetch_locked_material_i(material_name);
+    u32 existing_i = T1_material_fetch_locked_material_i(material_name);
     if (!T1_std_are_equal_strings(material_name, "default")) {
         T1_log_assert(existing_i == UINT32_MAX); // doesn't exist
     }
@@ -98,13 +98,13 @@ uint32_t T1_material_preappend_locked_material_i(
 
 void T1_material_fetch_ptrs(
     T1GPUConstMatf32 ** recip_f32,
-    T1GPUConstMati32 ** recip_i32,
-    const uint32_t material_i)
+    T1GPUConstMats32 ** recip_s32,
+    const u32 material_i)
 {
     T1_log_assert(material_i < all_mesh_materials->size);
     
     *recip_f32 = all_mesh_materials->gpu_f32 +
         material_i;
-    *recip_i32 = all_mesh_materials->gpu_i32 +
+    *recip_s32 = all_mesh_materials->gpu_s32 +
         material_i;
 }

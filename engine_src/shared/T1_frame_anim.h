@@ -1,6 +1,8 @@
 #ifndef T1_FRAMEANIM_H
 #define T1_FRAMEANIM_H
 
+#include <stddef.h>
+
 #include "T1_cpu_to_gpu.h"
 
 #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
@@ -9,16 +11,16 @@
 #define T1_frame_anim_gpu_mod_to_touch_id(touch_id, gpu_prop_name, val_f32) T1_frame_anim_gpu_mod_to_touch_id_by_offset(touch_id, offsetof(T1GPUzSprite, gpu_prop_name), val_f32)
 void
 T1_frame_anim_gpu_mod_to_touch_id_by_offset(
-    const int32_t touch_id,
-    const uint32_t gpu_prop_offset,
-    const float val_f32);
+    const s32 touch_id,
+    const u32 gpu_prop_offset,
+    const f32 val_f32);
 
-#define T1_frame_anim_gpu_mod_to_zsprite_id(zsprite_id, gpu_prop_name, val_f32) T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(zsprite_id, offsetof(T1GPUzSprite, gpu_prop_name), val_f32)
+#define T1_frame_anim_gpu_mod_to_T1_id(T1_id, gpu_prop_name, val_f32) T1_frame_anim_gpu_mod_to_T1_id_by_offset(T1_id, offsetof(T1GPUzSprite, gpu_prop_name), val_f32)
 void
-T1_frame_anim_gpu_mod_to_zsprite_id_by_offset(
-    const int32_t zsprite_id,
-    const uint32_t gpu_prop_offset,
-    const float val_f32);
+T1_frame_anim_gpu_mod_to_T1_id_by_offset(
+    const s32 T1_id,
+    const u32 gpu_prop_offset,
+    const f32 val_f32);
 
 // Internal use (call from renderer)
 void

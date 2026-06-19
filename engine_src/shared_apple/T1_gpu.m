@@ -1,13 +1,16 @@
 #import "T1_gpu.h"
 
+#include <stdio.h>
+
 #include "T1_global.h"
 #include "T1_mem.h"
 #include "T1_log.h"
+#include "T1_settings.h"
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
-
+#include "T1_platform_layer.h"
 
 #define T1_DRAWING_SEMAPHORE_ACTIVE T1_INACTIVE
 
@@ -38,9 +41,9 @@ typedef struct {
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
     id locked_matf32_populator_buffer;
-    id locked_mati32_populator_buffer;
+    id locked_mats32_populator_buffer;
     id locked_matf32_buffer;
-    id locked_mati32_buffer;
+    id locked_mats32_buffer;
     id projection_constants_buffer;
     
     id<MTLTexture> cam_depth_texture;
@@ -111,10 +114,10 @@ typedef struct {
     
     T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
-    uint8_t viewports_set[T1_RENDER_VIEW_CAP];
-    bool8_t metal_active;
-    bool8_t zbuf_cleared;
-    bool8_t rtt_cleared;
+    u8 viewports_set[T1_RENDER_VIEW_CAP];
+    b8 metal_active;
+    b8 zbuf_cleared;
+    b8 rtt_cleared;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -124,7 +127,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 static void (* funcptr_gameloop_before_render)(T1GPUFrame *) = NULL;
 static void (* funcptr_gameloop_after_render)(void) = NULL;
 
-uint8_t T1_apple_gpu_init(
+u8 T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
@@ -701,7 +704,7 @@ uint8_t T1_apple_gpu_init(
     }
     
     for (
-        uint32_t frame_i = 0;
+        u32 frame_i = 0;
         frame_i < T1_FRAMES_CAP;
         frame_i++)
     {
@@ -893,14 +896,14 @@ uint8_t T1_apple_gpu_init(
                 deallocator:
                     nil];
     
-    id<MTLBuffer> MTLBufferLockedMati32Populator =
+    id<MTLBuffer> MTLBufferLockedMats32Populator =
         [with_metal_device
             /* the ptr needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    T1_cpu_to_gpu_data->const_mats_i32
+                    T1_cpu_to_gpu_data->const_mats_s32
             /* the length weirdly needs to be page aligned also */
                 length:
-                    T1_cpu_to_gpu_data->const_matsi32_alloc_size
+                    T1_cpu_to_gpu_data->const_matss32_alloc_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -909,7 +912,7 @@ uint8_t T1_apple_gpu_init(
     
     ags->locked_matf32_populator_buffer = MTLBufferLockedMatf32Populator;
     
-    ags->locked_mati32_populator_buffer = MTLBufferLockedMati32Populator;
+    ags->locked_mats32_populator_buffer = MTLBufferLockedMats32Populator;
     
     id<MTLBuffer> MTLBufferLockedMatsf32 =
         [with_metal_device
@@ -919,13 +922,13 @@ uint8_t T1_apple_gpu_init(
                 MTLResourceStorageModePrivate];
     ags->locked_matf32_buffer = MTLBufferLockedMatsf32;
     
-    id<MTLBuffer> MTLBufferLockedMatsi32 =
+    id<MTLBuffer> MTLBufferLockedMatss32 =
         [with_metal_device
             newBufferWithLength:
-                T1_cpu_to_gpu_data->const_matsi32_alloc_size
+                T1_cpu_to_gpu_data->const_matss32_alloc_size
             options:
                 MTLResourceStorageModePrivate];
-    ags->locked_mati32_buffer = MTLBufferLockedMatsi32;
+    ags->locked_mats32_buffer = MTLBufferLockedMatss32;
     
     #define FLVERT 1.0f
     #define TEX_MAX 1.0f
@@ -1053,12 +1056,12 @@ uint8_t T1_apple_gpu_init(
 
 #if T1_BLOOM_ACTIVE == T1_ACTIVE
 static float get_ds_width(
-    const uint32_t ds_i,
-    const uint32_t base_width)
+    const u32 ds_i,
+    const u32 base_width)
 {
     float return_value = base_width;
     
-    for (uint32_t i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
+    for (u32 i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -1066,12 +1069,12 @@ static float get_ds_width(
 }
 
 static float get_ds_height(
-    const uint32_t ds_i,
-    const uint32_t base_height)
+    const u32 ds_i,
+    const u32 base_height)
 {
     float return_value = base_height;
     
-    for (uint32_t i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
+    for (u32 i = 0; i < ds_i && i < T1_DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -1084,7 +1087,7 @@ static float get_ds_height(
 
 void T1_os_gpu_get_device_name(
     char * recipient,
-    const uint32_t recipient_cap)
+    const u32 recipient_cap)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     // pass
@@ -1109,7 +1112,7 @@ void T1_os_gpu_update_capacity_if_needed(
 {
     T1_log_assert(tex_array_i >=  0);
     T1_log_assert(tex_array_i <  31);
-    uint8_t copy_prev = false;
+    u8 copy_prev = false;
     id<MTLTexture> prev_copy = nil;
     
     if (T1_tex_arrays[tex_array_i].deleted) {
@@ -1232,9 +1235,9 @@ void T1_os_gpu_update_capacity_if_needed(
 // returns the slice_i of the new depth texture
 // in the array of depth textures
 int32_t
-T1_platform_gpu_make_depth_tex(
-    const uint32_t width,
-    const uint32_t height)
+T1_os_gpu_make_depth_tex(
+    const u32 width,
+    const u32 height)
 {
     T1_log_assert(height <= 4000);
     T1_log_assert(width <= 4000);
@@ -1244,31 +1247,30 @@ T1_platform_gpu_make_depth_tex(
         height);
 }
 
-int32_t T1_os_gpu_get_touch_id_at_screen_pos(
-    const float screen_x,
-    const float screen_y)
+s32 T1_os_gpu_get_touch_id_at_screen_pos(
+    const f32 screen_x,
+    const f32 screen_y)
 {
     if (
         screen_x < 0 ||
         screen_y < 0 ||
-        screen_x >=
-            (T1_global->window_width) ||
-        screen_y >= (T1_global->window_height))
+        screen_x >= T1_settings_get_render_width() ||
+        screen_y >= T1_settings_get_render_height())
     {
         return -1;
     }
     
-    uint32_t rtt_width  =
-        (uint32_t)ags->render_viewports[0].width;
-    uint32_t rtt_height =
-        (uint32_t)ags->render_viewports[0].height;
+    u32 rtt_width  =
+        (u32)ags->render_viewports[0].width;
+    u32 rtt_height =
+        (u32)ags->render_viewports[0].height;
     
-    uint32_t screen_x_adj = (uint32_t)(
+    u32 screen_x_adj = (u32)(
         (screen_x * rtt_width) /
-            T1_global->window_width);
-    uint32_t screen_y_adj = (uint32_t)(
-        ((T1_global->window_height - screen_y) * rtt_height) /
-            T1_global->window_height);
+            T1_settings_get_render_width());
+    u32 screen_y_adj = (u32)(
+        ((T1_settings_get_render_height() - screen_y) * rtt_height) /
+            T1_settings_get_render_height());
     
     if (screen_x_adj >= rtt_width )
     {
@@ -1279,10 +1281,10 @@ int32_t T1_os_gpu_get_touch_id_at_screen_pos(
         screen_y_adj = rtt_height;
     }
     
-    uint8_t * data = (uint8_t *)[ags->touch_id_buffer contents];
-    uint64_t size = [ags->touch_id_buffer allocatedSize];
+    u8 * data = (u8 *)[ags->touch_id_buffer contents];
+    u64 size = [ags->touch_id_buffer allocatedSize];
     
-    uint32_t pixel_i =
+    u32 pixel_i =
         (screen_y_adj * rtt_width) + screen_x_adj;
     
     if (((pixel_i * 4) + 3) >= size)
@@ -1291,12 +1293,12 @@ int32_t T1_os_gpu_get_touch_id_at_screen_pos(
     }
     
     // See shaders for the packing logic
-    uint32_t first_8bits  = data[(pixel_i*4)+0];
-    uint32_t second_8bits = data[(pixel_i*4)+1];
-    uint32_t third_8bits  = data[(pixel_i*4)+2];
-    uint32_t fourth_8bits = data[(pixel_i*4)+3];
+    u32 first_8bits  = data[(pixel_i*4)+0];
+    u32 second_8bits = data[(pixel_i*4)+1];
+    u32 third_8bits  = data[(pixel_i*4)+2];
+    u32 fourth_8bits = data[(pixel_i*4)+3];
     
-    uint32_t uid =
+    u32 uid =
         (fourth_8bits << 24) |
         (third_8bits  << 16) |
         (second_8bits << 8) |
@@ -1308,7 +1310,7 @@ int32_t T1_os_gpu_get_touch_id_at_screen_pos(
     return final_id;
 }
 
-void T1_platform_gpu_delete_texture_array(
+void T1_os_gpu_delete_texture_array(
     const int32_t array_i)
 {
     T1_log_assert(array_i != T1_DEPTH_TEXTUREARRAYS_I);
@@ -1316,7 +1318,7 @@ void T1_platform_gpu_delete_texture_array(
     ags->metal_textures[array_i] = nil;
 }
 
-void T1_platform_gpu_delete_depth_tex(
+void T1_os_gpu_delete_depth_tex(
     const int32_t slice_i)
 {
     T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
@@ -1328,12 +1330,12 @@ void T1_platform_gpu_delete_depth_tex(
 void T1_os_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
-    uint8_t * rgba_recipient,
-    uint32_t * recipient_size,
-    uint32_t * recipient_width,
-    uint32_t * recipient_height,
-    const uint32_t recipient_cap,
-    uint32_t * good)
+    u8 * rgba_recipient,
+    u32 * recipient_size,
+    u32 * recipient_width,
+    u32 * recipient_height,
+    const u32 recipient_cap,
+    u32 * good)
 {
     // Validate inputs
     T1_log_assert(texture_i >= 0);
@@ -1354,12 +1356,12 @@ void T1_os_gpu_fetch_rgba_at(
     if (texture.pixelFormat != MTLPixelFormatRGBA8Unorm)
     {
         // Ensure the texture format is RGBA8Unorm
-        // for direct copying to uint8_t RGBA
+        // for direct copying to u8 RGBA
         return;
     }
     
-    *recipient_width = (uint32_t)texture.width;
-    *recipient_height = (uint32_t)texture.height;
+    *recipient_width = (u32)texture.width;
+    *recipient_height = (u32)texture.height;
     if (*recipient_width < 1 || *recipient_height < 1) {
         return;
     }
@@ -1435,7 +1437,7 @@ void T1_os_gpu_fetch_rgba_at(
     [command_buffer commit];
     [command_buffer waitUntilCompleted];
     
-    *recipient_size = (uint32_t)bytes_per_image;
+    *recipient_size = (u32)bytes_per_image;
     
     *good = true;
 }
@@ -1446,7 +1448,7 @@ void T1_os_gpu_fetch_rgba_at(
 #endif
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-void T1_platform_gpu_generate_mipmaps_for_texture_array(
+void T1_os_gpu_generate_mipmaps_for_texture_array(
     const int32_t texture_array_i)
 {
     // no mipmaps for font
@@ -1487,9 +1489,9 @@ T1_os_gpu_push_tex_slice_and_free_rgba(
     const int32_t tex_array_i,
     const int32_t tex_slice_i)
 {
-    uint8_t * rgba_freeable =
+    u8 * rgba_freeable =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_freeable;
-    uint8_t * rgba_page_aligned =
+    u8 * rgba_page_aligned =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_page_aligned;
     
     T1_log_assert(rgba_freeable != NULL);
@@ -1501,10 +1503,10 @@ T1_os_gpu_push_tex_slice_and_free_rgba(
     
     T1_os_gpu_update_capacity_if_needed(tex_array_i);
     
-    uint32_t img_width = T1_tex_arrays[tex_array_i].single_img_width;
-    uint32_t img_height = T1_tex_arrays[tex_array_i].single_img_height;
+    u32 img_width = T1_tex_arrays[tex_array_i].single_img_width;
+    u32 img_height = T1_tex_arrays[tex_array_i].single_img_height;
     
-    uint32_t temp_buf_cap = img_width * img_height * 4;
+    u32 temp_buf_cap = img_width * img_height * 4;
     T1_log_assert(temp_buf_cap > 0);
     while (temp_buf_cap % T1_mem_page_size != 0) {
         temp_buf_cap++;
@@ -1520,7 +1522,7 @@ T1_os_gpu_push_tex_slice_and_free_rgba(
         return;
     }
     
-    uint8_t * temp_src_buf_ptr = (uint8_t *)vm_ptr;
+    u8 * temp_src_buf_ptr = (u8 *)vm_ptr;
     
     T1_std_memset(temp_src_buf_ptr, 0, temp_buf_cap);
     if (T1_tex_arrays[tex_array_i].bc1_compressed) {
@@ -1653,15 +1655,15 @@ void T1_os_gpu_copy_locked_materials(void)
             T1_cpu_to_gpu_data->const_matsf32_alloc_size];
     [blit_copy_encoder
         copyFromBuffer:
-            ags->locked_mati32_populator_buffer
+            ags->locked_mats32_populator_buffer
         sourceOffset:
             0
         toBuffer:
-            ags->locked_mati32_buffer
+            ags->locked_mats32_buffer
         destinationOffset:
             0
         size:
-            T1_cpu_to_gpu_data->const_matsi32_alloc_size];
+            T1_cpu_to_gpu_data->const_matss32_alloc_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1754,7 +1756,7 @@ set_defaults_for_render_descriptor(
 
 static void set_defaults_for_encoder(
     id<MTLRenderCommandEncoder> encoder,
-    const uint32_t cam_i)
+    const u32 cam_i)
 {
     T1_log_assert(cam_i < T1_RENDER_VIEW_CAP);
     
@@ -1803,7 +1805,7 @@ static void set_defaults_for_encoder(
     
     [encoder
         setVertexBytes: &cam_i
-        length: sizeof(uint32_t)
+        length: sizeof(u32)
         atIndex: 4];
     
     [encoder
@@ -1848,7 +1850,7 @@ static void set_defaults_for_encoder(
     
     [encoder
         setFragmentBytes: &cam_i
-        length: sizeof(uint32_t)
+        length: sizeof(u32)
         atIndex: 4];
     
     [encoder
@@ -1861,7 +1863,7 @@ static void set_defaults_for_encoder(
     
     [encoder
         setFragmentBuffer:
-            ags->locked_mati32_buffer
+            ags->locked_mats32_buffer
         offset:
             0
         atIndex:
@@ -1877,7 +1879,7 @@ static void set_defaults_for_encoder(
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_TEXARRAYS_CAP;
         i++)
     {
@@ -1897,7 +1899,7 @@ static void set_defaults_for_encoder(
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     for (
-        uint32_t rv_i = 0;
+        u32 rv_i = 0;
         rv_i < T1_RENDER_VIEW_CAP;
         rv_i++)
     {
@@ -1917,10 +1919,10 @@ static void set_defaults_for_encoder(
     ags->window_viewport.originX = 0;
     ags->window_viewport.originY = 0;
     ags->window_viewport.width =
-        T1_global->window_width *
+        T1_settings_get_render_width() *
             ags->retina_scaling_factor;
     ags->window_viewport.height  =
-        T1_global->window_height *
+        T1_settings_get_render_height() *
             ags->retina_scaling_factor;
     T1_log_assert(ags->window_viewport.width > 0.0f);
     T1_log_assert(ags->window_viewport.height > 0.0f);
@@ -1933,11 +1935,6 @@ static void set_defaults_for_encoder(
     */
     ags->window_viewport.znear = 0.001f;
     ags->window_viewport.zfar = 1.0f;
-    
-    ags->window_viewport.width /=
-        T1_global->pixelation_div;
-    ags->window_viewport.height /=
-        T1_global->pixelation_div;
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
@@ -2002,7 +1999,7 @@ static void set_defaults_for_encoder(
             newTextureWithDescriptor:
                 touch_id_tex_desc];
     
-    uint64_t touch_buffer_size_bytes =
+    u64 touch_buffer_size_bytes =
         touch_id_tex_desc.width *
             touch_id_tex_desc.height *
             4;
@@ -2019,14 +2016,14 @@ static void set_defaults_for_encoder(
         options:
             MTLResourceStorageModeShared];
     int32_t minus_one = -1;
-    T1_std_memset_i32(
+    T1_std_memset_s32(
         ags->touch_id_buffer_all_zeros.contents,
         minus_one,
-        (uint32_t)touch_buffer_size_bytes);
+        (u32)touch_buffer_size_bytes);
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_DOWNSAMPLES_SIZE;
         i++)
     {
@@ -2039,12 +2036,12 @@ static void set_defaults_for_encoder(
         downsampled_rtt_desc.width =
             (NSUInteger)get_ds_width(
                 i,
-                (uint32_t)ags->
+                (u32)ags->
                     render_viewports[0].width);
         downsampled_rtt_desc.height =
             (NSUInteger)get_ds_height(
                 i,
-                (uint32_t)ags->
+                (u32)ags->
                     render_viewports[0].height);
         downsampled_rtt_desc.pixelFormat =
             MTLPixelFormatRGBA8Unorm;
@@ -2119,7 +2116,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_encoder(
                 pass_1_outline_enc,
-                (uint32_t)cam_i);
+                (u32)cam_i);
             
             [pass_1_outline_enc
                 setViewport:
@@ -2182,7 +2179,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_encoder(
                 pass_2_opaque_tris_enc,
-                (uint32_t)cam_i);
+                (u32)cam_i);
             
             T1_log_assert((pass->verts_size + pass->vert_i) < MAX_VERTICES_PER_BUFFER);
             T1_log_assert(pass->verts_size % 3 == 0);
@@ -2224,7 +2221,7 @@ static void set_defaults_for_encoder(
                     ags->cur_blnd_pls];
             set_defaults_for_encoder(
                 alpha_pass,
-                (uint32_t)cam_i);
+                (u32)cam_i);
             
             [alpha_pass
                 setCullMode: MTLCullModeBack];
@@ -2349,7 +2346,7 @@ static void set_defaults_for_encoder(
             
             set_defaults_for_encoder(
                 bloom_enc,
-                (uint32_t)cam_i);
+                (u32)cam_i);
             
             [bloom_enc
                 setCullMode: MTLCullModeBack];
@@ -2368,7 +2365,7 @@ static void set_defaults_for_encoder(
             [bloom_enc endEncoding];
             
             for (
-                uint32_t ds_i = 1;
+                u32 ds_i = 1;
                 ds_i < T1_DOWNSAMPLES_SIZE;
                 ds_i++)
             {
@@ -2381,8 +2378,8 @@ static void set_defaults_for_encoder(
                     downsampled_rtts[ds_i].height;
                 
                 MTLSize grid = MTLSizeMake(
-                    (uint32_t)smaller_viewport.width,
-                    (uint32_t)smaller_viewport.height,
+                    (u32)smaller_viewport.width,
+                    (u32)smaller_viewport.height,
                     1);
                 
                 MTLSize threadgroup = MTLSizeMake(16, 16, 1);
@@ -2476,7 +2473,7 @@ static void set_defaults_for_encoder(
             
             #if T1_TEXTURES_ACTIVE == T1_ACTIVE
             for (
-                uint32_t i = 0;
+                u32 i = 0;
                 i < T1_TEXARRAYS_CAP;
                 i++)
             {
@@ -2546,6 +2543,10 @@ static void set_defaults_for_encoder(
         T1_cpu_to_gpu_data->triple_buffers + 
             ags->frame_i);
     
+    printf(
+        "T1_cpu_to_gpu_data->triple_buffers[ags->frame_i].postproc_consts->lights_size: %u\n",
+        T1_cpu_to_gpu_data->triple_buffers[ags->frame_i].postproc_consts->lights_size);
+    
     if (
         (f->postproc_consts->timestamp -
             T1_global->last_resize_request_us)
@@ -2574,7 +2575,7 @@ static void set_defaults_for_encoder(
     }
     
     // Blit to clear the touch id buffer
-    uint32_t size_bytes = (uint32_t)(
+    u32 size_bytes = (u32)(
         [ags->touch_id_texture width] *
         [ags->touch_id_texture height] *
         8);
@@ -2906,8 +2907,7 @@ void T1_os_gpu_update_internal_render_viewport(
     T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
     
     ags->viewports_set[at_i] = false;
-    [apple_gpu_delegate
-        updateRenderViewSize:at_i];
+    [apple_gpu_delegate updateRenderViewSize:at_i];
 }
 
 void T1_os_gpu_update_window_viewport(void)
@@ -2916,8 +2916,8 @@ void T1_os_gpu_update_window_viewport(void)
 }
 
 int32_t T1_apple_gpu_make_depth_tex(
-    const uint32_t width,
-    const uint32_t height)
+    const u32 width,
+    const u32 height)
 {
     int32_t slice_i = 0;
     while (ags->depth_textures[slice_i] != nil) {

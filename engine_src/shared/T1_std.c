@@ -9,16 +9,18 @@
 
 #include "T1_simd.h"
 
+#include <string.h>
+
 void * T1_std_memset(
     void * in,
-    int value,
-    size_t size_bytes)
+    s32 value,
+    u64 size_bytes)
 {
     assert(in != NULL);
     
-    int8_t * input = (int8_t *)in;
+    s8 * input = (s8 *)in;
     
-    uint32_t i = 0;
+    u32 i = 0;
     
     #ifdef __ARM_NEON
     int8x16_t neon_preset = vld1q_dup_s8(&value);
@@ -57,12 +59,12 @@ void * T1_std_memset(
 void
 T1_std_memset_i16(
     void * in,
-    int16_t value,
-    unsigned int size_bytes)
+    s16 value,
+    u32 size_bytes)
 {
-    int16_t * input = (int16_t *)in;
+    s16 * input = (s16 *)in;
     
-    uint32_t i = 0;
+    u32 i = 0;
     
     #ifdef __ARM_NEON
     int16x8_t neon_preset = vld1q_dup_s16(&value);
@@ -97,14 +99,14 @@ T1_std_memset_i16(
 }
 
 void
-T1_std_memset_i32(
+T1_std_memset_s32(
     void * in,
-    int32_t value,
-    unsigned int size_bytes)
+    s32 value,
+    u32 size_bytes)
 {
-    int32_t * input = (int32_t *)in;
+    s32 * input = (s32 *)in;
     
-    uint32_t i = 0;
+    u32 i = 0;
     
     #ifdef __ARM_NEON
     int16x8_t neon_preset = vld1q_dup_s32(&value);
@@ -141,12 +143,12 @@ T1_std_memset_i32(
 void
 T1_std_memset_f32(
     void * in,
-    float value,
-    unsigned int size_bytes)
+    f32 value,
+    u32 size_bytes)
 {
-    float * input = (float *)in;
+    f32 * input = (f32 *)in;
     
-    uint32_t i = 0;
+    u32 i = 0;
     
     #ifdef __ARM_NEON
     float32x4_t neon_preset = vld1q_dup_f32(&value);
@@ -184,9 +186,9 @@ void *
 T1_std_memcpy(
     void * dest,
     const void * src,
-    size_t n_bytes)
+    u64 n_bytes)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     char * destination = (char *)dest;
     char * source = (char *)src;
     
@@ -222,20 +224,20 @@ T1_std_memcpy(
     return dest;
 }
 
-float
-T1_std_minf(const float x, const float y)
+f32
+T1_std_minf(const f32 x, const f32 y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-float
-T1_std_maxf(const float x, const float y)
+f32
+T1_std_maxf(const f32 x, const f32 y)
 {
     return ((x >  y) * x) + ((x <= y) * y);
 }
 
-int
-T1_std_mini(const int x, const int y)
+s32
+T1_std_mini(const s32 x, const s32 y)
 {
     return
         ((x <= y) * x) +
@@ -243,7 +245,7 @@ T1_std_mini(const int x, const int y)
 }
 
 int
-T1_std_maxi(const int x, const int y)
+T1_std_maxi(const s32 x, const s32 y)
 {
     return ((x >  y) * x) + ((x <= y) * y);
 }
@@ -251,10 +253,10 @@ T1_std_maxi(const int x, const int y)
 void
 T1_std_internal_strcat_cap(
     char * recipient,
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     const char * to_append)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (recipient[i] != '\0') {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
@@ -265,7 +267,7 @@ T1_std_internal_strcat_cap(
         i++;
     }
     
-    uint32_t j = 0;
+    u32 j = 0;
     while (to_append[j] != '\0') {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size - 1);
@@ -284,7 +286,7 @@ T1_std_strcat_char_cap(
     char * recipient,
     char to_append)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (recipient[i] != '\0') {
         i++;
     }
@@ -298,14 +300,14 @@ void
 T1_std_internal_strcat_int_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    const int32_t to_append)
+    const s32 to_append)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (recipient[i] != '\0') {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
@@ -316,21 +318,21 @@ T1_std_internal_strcat_int_cap(
         i++;
     }
     
-    T1_std_int_to_string(to_append, recipient + i);
+    T1_std_s32_to_string(to_append, recipient + i);
 }
 
 void
 T1_std_internal_strcat_uint_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     #elif T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     #else
     #error
     #endif
-    const uint32_t to_append)
+    const u32 to_append)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (recipient[i] != '\0') {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
@@ -341,16 +343,16 @@ T1_std_internal_strcat_uint_cap(
         i++;
     }
     
-    T1_std_uint_to_string(to_append, recipient + i);
+    T1_std_u32_to_string(to_append, recipient + i);
 }
 
 void
-T1_std_internal_strcat_float_cap(
+T1_std_internal_strcat_f32_cap(
     char * recipient,
-    const uint32_t recipient_size,
-    const float to_append)
+    const u32 recipient_size,
+    const f32 to_append)
 {
-    uint32_t precision = 4;
+    u32 precision = 4;
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(recipient != NULL);
@@ -360,10 +362,10 @@ T1_std_internal_strcat_float_cap(
     #error
     #endif
     
-    size_t rlen = T1_std_strlen(recipient);
+    u64 rlen = T1_std_strlen(recipient);
     
     char * adj_recip = recipient + rlen;
-    float input = to_append;
+    f32 input = to_append;
     rlen = 0;
     
     if (input < 0.0f) {
@@ -372,19 +374,19 @@ T1_std_internal_strcat_float_cap(
         input *= -1.0f;
     }
     
-    uint32_t precision_mult = 1;
-    for (uint8_t _ = 0; _ < precision; _++) {
+    u32 precision_mult = 1;
+    for (u8 _ = 0; _ < precision; _++) {
         precision_mult *= 10;
     }
     
-    float temp_above_decimal = (float)(int32_t)input;
-    uint32_t above_decimal = (uint32_t)temp_above_decimal;
+    f32 temp_above_decimal = (f32)(s32)input;
+    u32 above_decimal = (u32)temp_above_decimal;
     // we're adding an extra '1' in front of the fractional part here, to
     // make it easier to work with leading zeros
-    uint32_t below_decimal =
-        (uint32_t)(((input - temp_above_decimal)+1.0f) * precision_mult);
+    u32 below_decimal =
+        (u32)(((input - temp_above_decimal)+1.0f) * precision_mult);
     
-    T1_std_uint_to_string(
+    T1_std_u32_to_string(
         above_decimal,
         adj_recip + rlen);
     rlen = T1_std_strlen(adj_recip);
@@ -399,7 +401,7 @@ T1_std_internal_strcat_float_cap(
     if (below_decimal > 0) {
         adj_recip[rlen++] = '.';
         
-        T1_std_uint_to_string(
+        T1_std_u32_to_string(
             below_decimal,
             adj_recip + rlen);
         
@@ -418,11 +420,20 @@ T1_std_internal_strcat_float_cap(
     #endif
 }
 
+u64
+T1_std_strlcat(
+    char * dst,
+    const char * source,
+    u64 size)
+{
+    return strlcat(dst, source, size);
+}
+
 void
 T1_std_internal_strcpy_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    const uint32_t recipient_cap,
+    const u32 recipient_cap,
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -437,7 +448,7 @@ T1_std_internal_strcpy_cap(
     #error
     #endif
     
-    uint32_t i = 0;
+    u32 i = 0;
     while (origin[i] != '\0')
     {
         #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -462,11 +473,11 @@ T1_std_internal_strcpy_cap(
 void
 T1_std_copy_strings(
     char * recipient,
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     const char * origin,
-    const uint32_t origin_size)
+    const u32 origin_size)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     for (; i < origin_size; i++) {
         recipient[i] = origin[i];
     }
@@ -477,20 +488,20 @@ T1_std_copy_strings(
 }
 
 __attribute__((no_sanitize("address")))
-size_t
+u64
 T1_std_strlen(const char * null_terminated_string)
 {
-    uint32_t return_value = 0;
+    u32 return_value = 0;
     
     #ifdef __ARM_NEON
-    int8_t * str_as_i8 = (int8_t *)null_terminated_string;
-    int8_t nullchar = (int8_t)'\0';
+    s8 * str_as_i8 = (s8 *)null_terminated_string;
+    s8 nullchar = (s8)'\0';
     int8x16_t nullterm = vld1q_dup_s8(&nullchar);
     
     while (1) {
         int8x16_t chunk = vld1q_s8(str_as_i8);
         uint8x16_t matches = vceqq_s8(nullterm, chunk);
-        uint8_t any_match = vmaxvq_u8(matches);
+        u8 any_match = vmaxvq_u8(matches);
         if (any_match) { break; }
         
         return_value += 16;
@@ -510,7 +521,7 @@ T1_std_strlen(const char * null_terminated_string)
 void
 T1_std_strtolower(char * in)
 {
-    int8_t offset = ('A' - 'a');
+    s8 offset = ('A' - 'a');
     while (in[0] != '\0') {
         if (in[0] >= 'A' && in[0] <= 'Z') {
             in[0] = in[0] - offset;
@@ -519,7 +530,7 @@ T1_std_strtolower(char * in)
     }
 }
 
-uint8_t
+u8
 T1_std_string_starts_with(
     const char * str_to_check,
     const char * start)
@@ -528,7 +539,7 @@ T1_std_string_starts_with(
         return false;
     }
     
-    int32_t i = 0;
+    s32 i = 0;
     
     while (start[i] != '\0') {
         if (str_to_check[i] != start[i]) {
@@ -540,7 +551,7 @@ T1_std_string_starts_with(
     return true;
 }
 
-uint8_t
+u8
 T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending)
@@ -549,15 +560,15 @@ T1_std_string_ends_with(
         return false;
     }
     
-    uint32_t str_to_check_len = (uint32_t)T1_std_strlen(str_to_check);
-    uint32_t ending_len = (uint32_t)T1_std_strlen(ending);
+    u32 str_to_check_len = (u32)T1_std_strlen(str_to_check);
+    u32 ending_len = (u32)T1_std_strlen(ending);
     
     if (ending_len > str_to_check_len || ending_len < 1) {
         return false;
     }
     
-    uint32_t i = str_to_check_len;
-    uint32_t j = ending_len;
+    u32 i = str_to_check_len;
+    u32 j = ending_len;
     
     while (j > 0) {
         j--;
@@ -584,14 +595,14 @@ T1_std_strsub(
     #error
     #endif
     
-    size_t replacement_len = T1_std_strlen(replacement);
+    u64 replacement_len = T1_std_strlen(replacement);
     
-    uint32_t start_i = 0;
+    u32 start_i = 0;
     while (in[start_i] != '\0') {
         
-        uint32_t match = 1;
-        uint32_t match_len = 0;
-        uint32_t j = 0;
+        u32 match = 1;
+        u32 match_len = 0;
+        u32 j = 0;
         while (to_match[j] != '\0') {
             if (in[start_i + j] != to_match[j]) {
                 match = 0;
@@ -609,7 +620,7 @@ T1_std_strsub(
             }
             
             j -= 1;
-            uint32_t k = start_i + match_len;
+            u32 k = start_i + match_len;
             while (in[k] != '\0') {
                 in[j++] = in[k++];
             }
@@ -620,7 +631,7 @@ T1_std_strsub(
     }
 }
 
-uint8_t
+u8
 T1_std_are_equal_strings(
     const char * str1,
     const char * str2)
@@ -636,7 +647,7 @@ T1_std_are_equal_strings(
         return false;
     }
     
-    uint32_t i = 0;
+    u32 i = 0;
     while (str1[i] != '\0') {
         if (str1[i] != str2[i]) {
             return false;
@@ -651,7 +662,7 @@ T1_std_are_equal_strings(
     return true;
 }
 
-uint8_t
+u8
 T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2)
@@ -660,7 +671,7 @@ T1_std_are_equal_until_nullterminator(
         return false;
     }
     
-    uint32_t i = 0;
+    u32 i = 0;
     while (
         str1[i] != '\0' &&
         str2[i] != '\0')
@@ -674,13 +685,13 @@ T1_std_are_equal_until_nullterminator(
     return true;
 }
 
-uint8_t
+u8
 T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
-    const uint64_t len)
+    const u64 len)
 {
-    for (uint64_t i = 0; i < len; i++) {
+    for (u64 i = 0; i < len; i++) {
         if (str1[i] != str2[i]) {
             return false;
         }
@@ -689,25 +700,25 @@ T1_std_are_equal_strings_of_length(
     return true;
 }
 
-void T1_std_float_to_string(
-    const float input,
+void T1_std_f32_to_string(
+    const f32 input,
     char * recipient,
-    const uint32_t recipient_size)
+    const u32 recipient_size)
 {
     (void)recipient_size;
     
-    float temp_above_decimal = (float)(int32_t)input;
-    int32_t below_decimal =
-        (int32_t)((input - temp_above_decimal) * 100000);
-    int32_t above_decimal = (int32_t)temp_above_decimal;
+    f32 temp_above_decimal = (f32)(s32)input;
+    s32 below_decimal =
+        (s32)((input - temp_above_decimal) * 100000);
+    s32 above_decimal = (s32)temp_above_decimal;
     
-    T1_std_int_to_string(
-        /* const int32_t input: */
+    T1_std_s32_to_string(
+        /* const s32 input: */
             above_decimal,
         /* char * recipient: */
             recipient);
     
-    uint32_t count = 0;
+    u32 count = 0;
     while (recipient[count] != '\0') {
         count++;
     }
@@ -716,42 +727,42 @@ void T1_std_float_to_string(
     count++;
     
     // count the number of leading 0's after the comma
-    float mod = 10.0f;
+    f32 mod = 10.0f;
     while (
         (below_decimal > 0) &&
-        (uint32_t)((input - temp_above_decimal) * mod) < 1)
+        (u32)((input - temp_above_decimal) * mod) < 1)
     {
         mod *= 10.0f;
         recipient[count++] = '0';
     }
     
-    T1_std_int_to_string(
-        /* const int32_t input: */
+    T1_std_s32_to_string(
+        /* const s32 input: */
             below_decimal,
         /* char * recipient: */
             recipient + count);
 }
 
-void T1_std_int_to_string(
-    const int32_t input,
+void T1_std_s32_to_string(
+    const s32 input,
     char * recipient)
 {
     if (input < 0) {
         recipient[0] = '-';
-        int32_t positive_to_append = (input + (input == INT32_MIN)) * -1;
-        T1_std_uint_to_string(
-            /* input: */ (uint32_t)positive_to_append,
+        s32 positive_to_append = (input + (input == INT32_MIN)) * -1;
+        T1_std_u32_to_string(
+            /* input: */ (u32)positive_to_append,
             /* recipient: */ recipient + 1);
     } else {
-        T1_std_uint_to_string(
-            /* input: */ (uint32_t)input,
+        T1_std_u32_to_string(
+            /* input: */ (u32)input,
             /* recipient: */ recipient);
     }
 }
 
 void
-T1_std_uint_to_string(
-    const uint32_t input,
+T1_std_u32_to_string(
+    const u32 input,
     char * recipient)
 {
     if (input == 0) {
@@ -760,14 +771,14 @@ T1_std_uint_to_string(
         return;
     }
     
-    uint32_t i = 0;
-    uint32_t start_i = 0;
-    uint32_t end_i;
+    u32 i = 0;
+    u32 start_i = 0;
+    u32 end_i;
     
-    uint64_t decimal = 1;
-    uint32_t input_div_dec = input;
+    u64 decimal = 1;
+    u32 input_div_dec = input;
     while (input_div_dec > 0) {
-        uint32_t isolated_num = input % (decimal * 10);
+        u32 isolated_num = input % (decimal * 10);
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
@@ -791,20 +802,20 @@ T1_std_uint_to_string(
     }
 }
 
-int32_t
+s32
 T1_std_string_to_int32_validate(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     if (input[0] == '\0') {
         *good = false;
         return 0;
     }
     
-    // the maximum int32_t is 2147483647
+    // the maximum s32 is 2147483647
     
     if (input[0] == '-') {
-        uint32_t temp = T1_std_string_to_uint32(
+        u32 temp = T1_std_string_to_uint32(
             /* input: */
                 input + 1);
         
@@ -815,23 +826,23 @@ T1_std_string_to_int32_validate(
         
         *good = true;
         
-        return (int32_t)temp * -1;
+        return (s32)temp * -1;
     }
     
-    uint32_t unsigned_return = T1_std_string_to_uint32_validate(input, good);
+    u32 unsigned_return = T1_std_string_to_uint32_validate(input, good);
     
     if (!*good) {
         return 0;
     }
     
-    return (int32_t)unsigned_return;
+    return (s32)unsigned_return;
 }
 
-int32_t
-T1_std_string_to_int32(const char * input)
+s32
+T1_std_string_to_s32(const char * input)
 {
-    uint8_t result_good = false;
-    int32_t result = T1_std_string_to_int32_validate(
+    u8 result_good = false;
+    s32 result = T1_std_string_to_int32_validate(
         input,
         &result_good);
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -843,10 +854,10 @@ T1_std_string_to_int32(const char * input)
     return result;
 }
 
-uint32_t
+u32
 T1_std_string_to_uint32_validate(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     if (input[0] < '0' || input[0] > '9') {
         *good = false;
@@ -855,13 +866,13 @@ T1_std_string_to_uint32_validate(
         *good = true;
     }
     
-    uint32_t return_value = 0;
+    u32 return_value = 0;
     
-    // the maximum uint32_t is 4294967295
+    // the maximum u32 is 4294967295
     // so the decimal should   1000000000
     
-    uint32_t decimal = 1;
-    int32_t i = 0;
+    u32 decimal = 1;
+    s32 i = 0;
     while (input[i] >= '0' && input[i] <= '9') {
         i++;
     }
@@ -873,7 +884,7 @@ T1_std_string_to_uint32_validate(
             return return_value;
         }
         
-        uint32_t current_digit = (uint32_t)(input[i] - '0');
+        u32 current_digit = (u32)(input[i] - '0');
         return_value += decimal * current_digit;
         decimal *= 10;
         
@@ -888,12 +899,12 @@ T1_std_string_to_uint32_validate(
     return return_value;
 }
 
-uint32_t
+u32
 T1_std_string_to_uint32(
     const char * input)
 {
-    uint8_t result_good = false;
-    uint32_t result = T1_std_string_to_uint32_validate(
+    u8 result_good = false;
+    u32 result = T1_std_string_to_uint32_validate(
         input,
         &result_good);
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -905,31 +916,31 @@ T1_std_string_to_uint32(
     return result;
 }
 
-float
-T1_std_string_to_float_validate(
+f32
+T1_std_string_to_f32_validate(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     if (input[0] == '\0') {
         *good = false;
         return 0;
     }
     
-    float return_value = 0;
+    f32 return_value = 0;
     
-    uint32_t i = 0;
-    uint8_t found_num = false;
-    uint8_t used_dot = false;
-    char first_part[20];
-    uint32_t first_part_size = 0;
-    char second_part[20];
-    uint32_t second_part_size = 0;
+    u32 i = 0;
+    u8 found_num = false;
+    u8 used_dot = false;
+    char part1[20];
+    u32 part1_size = 0;
+    char part2[20];
+    u32 part2_size = 0;
     
-    uint8_t found_exponent = false;
-    int32_t exponent_modifier = 1; 
-    int32_t exponent = 0;
+    u8 found_exponent = false;
+    s32 exponent_modifier = 1; 
+    s32 exponent = 0;
     
-    float sign = 1.0f;
+    f32 sign = 1.0f;
     
     if (input[0] == '-') {
         sign = -1.0f;
@@ -958,9 +969,9 @@ T1_std_string_to_float_validate(
                     exponent = 10;
                 }
             } else if (!used_dot) {
-                first_part[first_part_size++] = input[i];
+                part1[part1_size++] = input[i];
             } else {
-                second_part[second_part_size++] = input[i];
+                part2[part2_size++] = input[i];
             }
         } else if (
             input[i] == 'e' || input[i] == 'E')
@@ -987,52 +998,52 @@ T1_std_string_to_float_validate(
         i++;
     }
     
-    first_part[first_part_size] = '\0';
+    part1[part1_size] = '\0';
     
-    uint8_t first_part_valid = false;
-    int first_part_int = T1_std_string_to_int32_validate(
-        /* const char input: */ first_part,
-        &first_part_valid);
-    if (!first_part_valid) {
+    u8 part1_valid = false;
+    s32 part1_s32 = T1_std_string_to_int32_validate(
+        /* const char input: */ part1,
+        &part1_valid);
+    if (!part1_valid) {
         *good = false;
         return return_value;
     }
     
-    return_value += (float)first_part_int;
+    return_value += (f32)part1_s32;
     
-    if (second_part_size > 0) {
+    if (part2_size > 0) {
     
-        if (second_part_size > 6) { second_part_size = 6; }
+        if (part2_size > 6) { part2_size = 6; }
         
-        second_part[second_part_size] = '\0';
-        uint8_t second_part_valid = false;
-        int second_part_int = T1_std_string_to_int32_validate(
-            /* const char input: */ second_part,
-            &second_part_valid);
-        if (!second_part_valid) {
+        part2[part2_size] = '\0';
+        u8 part2_valid = false;
+        s32 part2_s32 = T1_std_string_to_int32_validate(
+            /* const char input: */ part2,
+            &part2_valid);
+        if (!part2_valid) {
             *good = false;
             return return_value;
         }
         
         // throw away 0's at the end after the comma, they're useless
-        while (second_part_int % 10 == 0 && second_part_size > 0) {
-            second_part_int /= 10;
-            second_part_size -= 1;
+        while (part2_s32 % 10 == 0 && part2_size > 0) {
+            part2_s32 /= 10;
+            part2_size -= 1;
         }
         
-        float divisor = 1;
-        for (uint32_t _ = 0; _ < second_part_size; _++) {
+        f32 divisor = 1;
+        for (u32 _ = 0; _ < part2_size; _++) {
             divisor *= 10;
         }
-        return_value += ((float)second_part_int / divisor);
+        return_value += ((f32)part2_s32 / divisor);
     }
     
     return_value *= sign;
     
     // apply the 'scientific notation' exponent
     // e-4 means we want to multiply by -1 * (10^4)
-    float scinot_modifier = 1;
-    for (int32_t _ = 0; _ < exponent; _++) {
+    f32 scinot_modifier = 1;
+    for (s32 _ = 0; _ < exponent; _++) {
         scinot_modifier *= (exponent_modifier < 0 ? 0.1f : 10.0f);
     }
     return_value *= scinot_modifier;
@@ -1041,12 +1052,12 @@ T1_std_string_to_float_validate(
     return return_value;
 }
 
-float
-T1_std_string_to_float(
+f32
+T1_std_string_to_f32(
     const char * input)
 {
-    uint8_t result_good = false;
-    float result = T1_std_string_to_float_validate(
+    u8 result_good = false;
+    f32 result = T1_std_string_to_f32_validate(
         input,
         &result_good);
     

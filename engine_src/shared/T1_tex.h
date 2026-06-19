@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef uint16_t T1Tex;
+#include "T1_public_types.h"
 
 /*
 Can we use 2 bytes to specify a texture?
@@ -27,17 +27,15 @@ so the mask 0x7F will be key
 when the 5 leftmost bits of the first byte are all set, their value is 0xF8
 */
 
-#define T1_TEX_NONE UINT16_MAX
-
 #define T1_tex_to_array_i(x) (x == T1_TEX_NONE ? -1 : x >> 11)
 #define T1_tex_to_slice_i(x) (x == T1_TEX_NONE ? -1 : x & 0x07FF)
 
 void T1_tex_set_array_i(
     T1Tex * recip,
-    const int16_t newval);
+    const s16 newval);
 
 void T1_tex_set_slice_i(
     T1Tex * recip,
-    const int16_t newval);
+    const s16 newval);
 
 #endif // T1_TEX_H

@@ -9,37 +9,37 @@
 #include "assert.h"
 #endif
 
-uint64_t
+u64
 T1_img_get_sum_rgba(
     const T1Img * input)
 {
     assert(input->rgba_values_size > 0);
     
-    uint64_t return_value = 0;
-    for (uint32_t i = 0; i < input->rgba_values_size; i++) {
+    u64 return_value = 0;
+    for (u32 i = 0; i < input->rgba_values_size; i++) {
         return_value += input->rgba_values_page_aligned[i];
     }
     
     return return_value;
 }
 
-uint32_t
+u32
 T1_img_get_avg_rgba(
     const T1Img * input)
 {
     assert(input->rgba_values_size > 0);
     
-    return (uint32_t)(T1_img_get_sum_rgba(input) / input->rgba_values_size);
+    return (u32)(T1_img_get_sum_rgba(input) / input->rgba_values_size);
 }
 
 void
 T1_img_overwrite_subregion(
     T1Img * whole_image,
     const T1Img * new_image,
-    const uint32_t column_count,
-    const uint32_t row_count,
-    const uint32_t at_column,
-    const uint32_t at_row)
+    const u32 column_count,
+    const u32 row_count,
+    const u32 at_column,
+    const u32 at_row)
 {
     assert(at_column > 0);
     assert(at_row > 0);
@@ -67,8 +67,8 @@ T1_img_overwrite_subregion(
     }
     
     assert(at_row <= row_count);
-    uint32_t expected_width = whole_image->width / column_count;
-    uint32_t expected_height = whole_image->height / row_count;
+    u32 expected_width = whole_image->width / column_count;
+    u32 expected_height = whole_image->height / row_count;
     assert(expected_width * column_count == whole_image->width);
     assert(expected_height * row_count == whole_image->height);
     if (
@@ -94,32 +94,32 @@ T1_img_overwrite_subregion(
         return;
     }
     
-    uint32_t slice_width =
+    u32 slice_width =
         whole_image->width / column_count;
-    uint32_t slice_height =
+    u32 slice_height =
         whole_image->height / row_count;
-    uint32_t start_x = 1 + ((at_column - 1) * slice_width);
-    uint32_t start_y = 1 + ((at_row - 1) * slice_height);
-    uint32_t end_y = start_y + slice_height - 1;
+    u32 start_x = 1 + ((at_column - 1) * slice_width);
+    u32 start_y = 1 + ((at_row - 1) * slice_height);
+    u32 end_y = start_y + slice_height - 1;
     
     #ifndef NDEBUG
-    uint32_t end_x = start_x + slice_width - 1;
+    u32 end_x = start_x + slice_width - 1;
     #endif
     
     assert(end_x <= whole_image->width);
     assert(end_y <= whole_image->height);
     
-    uint32_t i = 0;
+    u32 i = 0;
     for (
-        uint32_t cur_y = start_y;
+        u32 cur_y = start_y;
         cur_y <= end_y;
         cur_y++)
     {
-        uint32_t pixel_i =
+        u32 pixel_i =
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * whole_image->width * 4);
         assert(pixel_i < whole_image->rgba_values_size);
-        for (uint32_t _ = 0; _ < (slice_width * 4); _++)
+        for (u32 _ = 0; _ < (slice_width * 4); _++)
         {
             if (i >= whole_image->rgba_values_size) {
                 break;

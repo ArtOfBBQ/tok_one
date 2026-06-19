@@ -1,5 +1,6 @@
 #include "T1_platform_layer.h"
 
+#include "T1_std.h"
 #include "T1_log.h"
 
 #ifdef _WIN32 
@@ -44,15 +45,15 @@
 
 typedef struct OSMutexID {
     pthread_mutex_t mutex;
-    bool8_t initialized;
+    b8 initialized;
 } OSMutexID;
 
 static OSMutexID * mutexes = NULL;
-static uint32_t next_mutex_id = 0;
+static u32 next_mutex_id = 0;
 
 void T1_os_init(
     void ** unmanaged_memory_store,
-    const uint32_t aligned_to)
+    const u32 aligned_to)
 {
     mutexes = *unmanaged_memory_store;
     
@@ -67,7 +68,7 @@ void T1_os_init(
         ((char *)*unmanaged_memory_store) + size);
 }
 
-uint32_t
+u32
 T1_platform_init_mutex_and_return_id(void)
 {
     T1_log_assert(
@@ -87,7 +88,7 @@ T1_platform_init_mutex_and_return_id(void)
     #error
     #endif
     
-    uint32_t return_value = next_mutex_id;
+    u32 return_value = next_mutex_id;
     
     mutexes[next_mutex_id].initialized = true;
     
@@ -98,7 +99,7 @@ T1_platform_init_mutex_and_return_id(void)
 /*
 Attempt to lock a mutex and return True if succesful
 */
-uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id)
+u8 T1_platform_mutex_trylock(const u32 mutex_id)
 {
     /*
     If successful, pthread_mutex_trylock() will return zero.
@@ -129,7 +130,7 @@ uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id)
 }
 
 void T1_platform_assert_mutex_locked(
-    const uint32_t mutex_id) 
+    const u32 mutex_id) 
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
@@ -146,7 +147,7 @@ returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
 void T1_platform_mutex_lock(
-    const uint32_t mutex_id)
+    const u32 mutex_id)
 {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
@@ -164,7 +165,7 @@ void T1_platform_mutex_lock(
     return;
 }
 
-void T1_platform_mutex_unlock(const uint32_t mutex_id) {
+void T1_platform_mutex_unlock(const u32 mutex_id) {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
     

@@ -9,22 +9,22 @@
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_render_view.h"
 
-static uint32_t
+static u32
 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
 
 T1TexArray * T1_tex_arrays = NULL;
-uint32_t T1_tex_arrays_size = 0;
+u32 T1_tex_arrays_size = 0;
 
 void T1_tex_array_push_all(void)
 {
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
-        int32_t ta_i = 1;
-        ta_i < (int32_t)T1_tex_arrays_size;
+        s32 ta_i = 1;
+        ta_i < (s32)T1_tex_arrays_size;
         ta_i++)
     {
         for (
-            int32_t sl_i = (int32_t)T1_tex_arrays[ta_i].images_size - 1;
+            s32 sl_i = (s32)T1_tex_arrays[ta_i].images_size - 1;
             sl_i >= 0;
             sl_i--)
         {
@@ -32,9 +32,9 @@ void T1_tex_array_push_all(void)
                 T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_freeable != NULL)
             {
                 T1_os_gpu_push_tex_slice_and_free_rgba(
-                    /* const int32_t texture_array_i: */
+                    /* const s32 texture_array_i: */
                         ta_i,
-                    /* const int32_t texture_i: */
+                    /* const s32 texture_i: */
                         sl_i);
             }
         }
@@ -47,10 +47,10 @@ void T1_tex_array_push_all(void)
 
 static T1Img * extract_image(
     const T1Img * original,
-    const uint32_t sprite_columns,
-    const uint32_t sprite_rows,
-    const uint32_t x,
-    const uint32_t y)
+    const u32 sprite_columns,
+    const u32 sprite_rows,
+    const u32 x,
+    const u32 y)
 {
     T1_log_assert(x > 0);
     T1_log_assert(y > 0);
@@ -75,13 +75,13 @@ static T1Img * extract_image(
     #error
     #endif
     
-    uint32_t slice_size_bytes =
+    u32 slice_size_bytes =
         (original->rgba_values_size
             / sprite_columns)
             / sprite_rows;
-    uint32_t slice_width_pixels =
+    u32 slice_width_pixels =
         original->width / sprite_columns;
-    uint32_t slice_height_pixels = original->height / sprite_rows;
+    u32 slice_height_pixels = original->height / sprite_rows;
     T1_log_assert(slice_size_bytes > 0);
     T1_log_assert(slice_width_pixels > 0);
     T1_log_assert(slice_height_pixels > 0);
@@ -99,7 +99,7 @@ static T1Img * extract_image(
             (void *)&new_image->rgba_values_freeable,
         /* void * aligned_subptr: */
             (void *)&new_image->rgba_values_page_aligned,
-        /* const size_t subptr_size: */
+        /* const u64 subptr_size: */
             new_image->rgba_values_size);
     T1_std_memset(
         new_image->rgba_values_page_aligned,
@@ -109,19 +109,19 @@ static T1Img * extract_image(
     new_image->width = slice_width_pixels;
     new_image->height = slice_height_pixels;
     
-    uint32_t start_x_pixels = 1 + ((x - 1) * slice_width_pixels);
-    uint32_t start_y_pixels = 1 + ((y - 1) * slice_height_pixels);
-    uint32_t end_y_pixels = start_y_pixels + slice_height_pixels - 1;
+    u32 start_x_pixels = 1 + ((x - 1) * slice_width_pixels);
+    u32 start_y_pixels = 1 + ((y - 1) * slice_height_pixels);
+    u32 end_y_pixels = start_y_pixels + slice_height_pixels - 1;
     
-    uint32_t i = 0;
+    u32 i = 0;
     for (
-        uint32_t cur_y_pixels = start_y_pixels;
+        u32 cur_y_pixels = start_y_pixels;
         cur_y_pixels <= end_y_pixels;
         cur_y_pixels++)
     {
         // get the pixel that's at [start_x_pixels, cur_y_pixels]
         // copcur_y slice_width pixels
-        uint64_t rgba_value_i =
+        u64 rgba_value_i =
             ((start_x_pixels - 1) * 4)
                 + ((cur_y_pixels - 1) * original->width * 4);
         
@@ -131,7 +131,7 @@ static T1Img * extract_image(
         }
         
         for (
-            uint32_t _ = 0;
+            u32 _ = 0;
             _ < (slice_width_pixels * 4);
             _++)
         {
@@ -160,7 +160,7 @@ void T1_tex_array_init(void) {
         0,
         sizeof(T1TexArray) * T1_TEXARRAYS_CAP);
     
-    for (uint32_t i = 0; i < T1_TEXARRAYS_CAP; i++)
+    for (u32 i = 0; i < T1_TEXARRAYS_CAP; i++)
     {
         tex_arrays_mutex_ids[i] = T1_platform_init_mutex_and_return_id();
     }
@@ -170,9 +170,9 @@ static void
 register_to_texturearray_by_splitting_image(
     T1Img * new_image,
     const char * filename_prefix,
-    const int32_t ta_i,
-    const uint32_t rows,
-    const uint32_t columns)
+    const s32 ta_i,
+    const u32 rows,
+    const u32 columns)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -184,14 +184,14 @@ register_to_texturearray_by_splitting_image(
     if (new_image->rgba_values_size < 1) { return; }
         
     char * filenames[256];
-    for (uint32_t i = 0; i < 256; i++) {
+    for (u32 i = 0; i < 256; i++) {
         filenames[i] = T1_mem_malloc_managed(256);
         T1_std_memset(filenames[i], 0, sizeof(rows * columns * 256));
     }
     
     // each image should have the exact same dimensions
-    uint32_t expected_width = new_image->width / columns;
-    uint32_t expected_height = new_image->height / rows;
+    u32 expected_width = new_image->width / columns;
+    u32 expected_height = new_image->height / rows;
     T1_tex_arrays[ta_i].single_img_width  = expected_width;
     T1_tex_arrays[ta_i].single_img_height = expected_height;
     
@@ -199,22 +199,22 @@ register_to_texturearray_by_splitting_image(
     T1_tex_arrays[ta_i].is_render_target = false;
     T1_tex_arrays[ta_i].bc1_compressed = false;
     
-    for (int32_t row_i = (int32_t)rows-1; row_i >= 0; row_i--) {
-        for (int32_t col_i = (int32_t)columns-1; col_i >= 0; col_i--)
+    for (s32 row_i = (s32)rows-1; row_i >= 0; row_i--) {
+        for (s32 col_i = (s32)columns-1; col_i >= 0; col_i--)
         {
-            int32_t t_i = (row_i * ((int32_t)columns)) + col_i;
+            s32 t_i = (row_i * ((s32)columns)) + col_i;
             
             T1Img * split_img = extract_image(
                 /* const DecodedImage * original: */
                     new_image,
-                /* const uint32_t sprite_columns: */
+                /* const u32 sprite_columns: */
                     columns,
-                /* const uint32_t sprite_rows: */
+                /* const u32 sprite_rows: */
                     rows,
-                /* const uint32_t x: */
-                    (uint32_t)col_i + 1,
-                /* const uint32_t y: */
-                    (uint32_t)row_i + 1);
+                /* const u32 x: */
+                    (u32)col_i + 1,
+                /* const u32 y: */
+                    (u32)row_i + 1);
             
             if (split_img == NULL ||
                 split_img->rgba_values_freeable == NULL ||
@@ -229,30 +229,30 @@ register_to_texturearray_by_splitting_image(
             T1_log_assert(split_img->height == expected_height);
             
             T1_std_strcpy_cap(
-                filenames[(row_i*(int32_t)columns)+col_i],
+                filenames[(row_i*(s32)columns)+col_i],
                 256,
                 filename_prefix);
             T1_std_strcat_cap(
-                filenames[(row_i*(int32_t)columns)+col_i],
+                filenames[(row_i*(s32)columns)+col_i],
                 256,
                 "_");
             T1_std_strcat_int_cap(
-                filenames[(row_i*(int32_t)columns)+col_i],
+                filenames[(row_i*(s32)columns)+col_i],
                 256,
                 col_i);
             T1_std_strcat_cap(
-                filenames[(row_i*(int32_t)columns)+col_i],
+                filenames[(row_i*(s32)columns)+col_i],
                 256,
                 "_");
             T1_std_strcat_int_cap(
-                filenames[(row_i*(int32_t)columns)+col_i],
+                filenames[(row_i*(s32)columns)+col_i],
                 256,
                 row_i);
             
             T1_std_strcpy_cap(
                 T1_tex_arrays[ta_i].images[t_i].name,
-                FILENAME_MAX,
-                filenames[(row_i*(int32_t)columns)+col_i]);
+                256,
+                filenames[(row_i*(s32)columns)+col_i]);
             T1_tex_arrays[ta_i].images[t_i].image.width =
                 split_img->width;
             T1_tex_arrays[ta_i].images[t_i].image.height =
@@ -267,25 +267,25 @@ register_to_texturearray_by_splitting_image(
                 split_img->rgba_values_page_aligned;
             
             T1_os_gpu_push_tex_slice_and_free_rgba(
-                /* const int32_t texture_array_i: */
+                /* const s32 texture_array_i: */
                     ta_i,
-                /* const int32_t texture_i: */
+                /* const s32 texture_i: */
                     t_i);
         }
     }
     
-    for (uint32_t i = 0; i < 256; i++) {
+    for (u32 i = 0; i < 256; i++) {
         T1_mem_free_managed(filenames[i]);
     }
 }
 
-int32_t T1_tex_array_create_new_render_view(
-    const uint32_t width,
-    const uint32_t height)
+s32 T1_tex_array_create_new_render_view(
+    const u32 width,
+    const u32 height)
 {
     T1_log_assert(T1_render_views != NULL);
     
-    int32_t rv_i = T1_render_view_fetch_next(
+    s32 rv_i = T1_render_view_fetch_next(
         width,
         height);
     if (rv_i < 0) { return rv_i; }
@@ -322,13 +322,13 @@ int32_t T1_tex_array_create_new_render_view(
     T1Tex tex = T1_tex_array_reg_img(
         /* const char * filename: */
             tex_name,
-        /* const uint32_t width: */
+        /* const u32 width: */
             T1_render_views->cpu[rv_i].width,
-        /* const uint32_t height: */
+        /* const u32 height: */
             T1_render_views->cpu[rv_i].height,
-        /* const uint32_t is_render_target: */
+        /* const u32 is_render_target: */
             true,
-        /* const uint32_t use_bc1_compression: */
+        /* const u32 use_bc1_compression: */
             false);
     
     T1_render_views->cpu[rv_i].write_array_i = T1_tex_to_array_i(tex);
@@ -336,7 +336,7 @@ int32_t T1_tex_array_create_new_render_view(
     T1_log_assert(T1_render_views->cpu[rv_i].write_array_i >= 1);
     T1_log_assert(T1_render_views->cpu[rv_i].write_slice_i >= 0);
     
-    T1_log_assert((int32_t)T1_tex_arrays[T1_tex_to_array_i(tex)].images_size > T1_tex_to_slice_i(tex));
+    T1_log_assert((s32)T1_tex_arrays[T1_tex_to_array_i(tex)].images_size > T1_tex_to_slice_i(tex));
     T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].deleted);
     T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].deleted);
     T1_log_assert(T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].image.width == width);
@@ -348,11 +348,11 @@ int32_t T1_tex_array_create_new_render_view(
 }
 
 void T1_tex_array_delete_array(
-    const int32_t array_i)
+    const s32 array_i)
 {
     T1_log_assert(array_i != 0);
     
-    T1_platform_gpu_delete_texture_array(array_i);
+    T1_os_gpu_delete_texture_array(array_i);
     
     T1_std_memset(
         T1_tex_arrays + array_i,
@@ -362,14 +362,14 @@ void T1_tex_array_delete_array(
 }
 
 void T1_tex_array_delete_slice(
-    const int32_t array_i,
-    const int32_t slice_i)
+    const s32 array_i,
+    const s32 slice_i)
 {
     T1_log_assert(array_i >= 0);
     T1_log_assert(slice_i >= 0);
     if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
         T1_log_assert(
-            slice_i < (int32_t)
+            slice_i < (s32)
                 T1_tex_arrays[array_i].images_size);
         T1_log_assert(
             !T1_tex_arrays[array_i].images[slice_i].
@@ -378,7 +378,7 @@ void T1_tex_array_delete_slice(
     
     if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
         T1_log_assert(
-            array_i < (int32_t)T1_tex_arrays_size);
+            array_i < (s32)T1_tex_arrays_size);
         
         T1_std_memset(
             T1_tex_arrays[array_i].images + slice_i,
@@ -402,15 +402,15 @@ void T1_tex_array_delete_slice(
             T1_tex_array_delete_array(array_i);
         }
     } else {
-        T1_platform_gpu_delete_depth_tex(slice_i);
+        T1_os_gpu_delete_depth_tex(slice_i);
     }
 }
 
 void T1_tex_array_update_rgba(
-    const int32_t array_i,
-    const int32_t slice_i,
-    const uint8_t * rgba,
-    const uint32_t rgba_size)
+    const s32 array_i,
+    const s32 slice_i,
+    const u8 * rgba,
+    const u32 rgba_size)
 {
     T1_log_assert(T1_tex_arrays[array_i].single_img_width * T1_tex_arrays[array_i].single_img_height * 4 == rgba_size);
     
@@ -430,7 +430,7 @@ void T1_tex_array_update_rgba(
                 (void **)&T1_tex_arrays[array_i].
                     images[slice_i].image.
                         rgba_values_page_aligned,
-            /* const size_t subptr_size: */
+            /* const u64 subptr_size: */
                 rgba_size);
     }
     T1_std_memcpy(
@@ -443,13 +443,13 @@ void T1_tex_array_update_rgba(
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
-    const uint32_t rows,
-    const uint32_t columns)
+    const u32 rows,
+    const u32 columns)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
     
-    int32_t new_texture_array_i = (int)T1_tex_arrays_size;
+    s32 new_texture_array_i = (int)T1_tex_arrays_size;
     T1_tex_arrays[new_texture_array_i].request_init = true;
     T1_tex_arrays_size++;
     T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
@@ -459,20 +459,20 @@ void T1_tex_array_reg_new_by_splitting_img(
             new_image,
         /* filename_prefix: */
             filename_prefix,
-        /* const int32_t texture_array_i: */
+        /* const s32 texture_array_i: */
             new_texture_array_i,
-        /* const uint32_t rows: */
+        /* const u32 rows: */
             rows,
-        /* const uint32_t columns: */
+        /* const u32 columns: */
             columns);
 }
 
 T1Tex T1_tex_array_reg_img(
     const char * filename,
-    const uint32_t width,
-    const uint32_t height,
-    const bool8_t is_render_target,
-    const bool8_t use_bc1_compression)
+    const u32 width,
+    const u32 height,
+    const b8 is_render_target,
+    const b8 use_bc1_compression)
 {
     T1Tex retval = T1_TEX_NONE;
     
@@ -483,8 +483,8 @@ T1Tex T1_tex_array_reg_img(
     // find out if same width/height was already used
     // set new_texturearray_i and new_texture_i if so
     for (
-        int16_t i = 0;
-        i < (int16_t)T1_tex_arrays_size;
+        s16 i = 0;
+        i < (s16)T1_tex_arrays_size;
         i++)
     {
         T1_log_assert(i < T1_TEXARRAYS_CAP);
@@ -496,7 +496,7 @@ T1Tex T1_tex_array_reg_img(
             T1_tex_arrays[i].is_render_target == is_render_target &&
             T1_tex_arrays[i].bc1_compressed == use_bc1_compression)
         {
-            const int16_t slice_i = (int16_t)T1_tex_arrays[i].images_size;
+            const s16 slice_i = (s16)T1_tex_arrays[i].images_size;
             T1_tex_set_array_i(&retval, i);
             T1_tex_set_slice_i(&retval, slice_i); 
             T1_tex_arrays[i].images_size++;
@@ -518,15 +518,15 @@ T1Tex T1_tex_array_reg_img(
     // if this is a new texturearray (we never saw
     // these image dimensions before)
     if (retval == T1_TEX_NONE) {
-        int16_t array_i = 0;
+        s16 array_i = 0;
         while (
-            array_i < (int32_t)T1_tex_arrays_size &&
+            array_i < (s32)T1_tex_arrays_size &&
             T1_tex_arrays[array_i].images_size > 0)
         {
             array_i += 1;
         }
         
-        if (array_i == (int32_t)T1_tex_arrays_size)
+        if (array_i == (s32)T1_tex_arrays_size)
         {
             T1_tex_arrays_size++;
         }
@@ -572,9 +572,9 @@ T1Tex T1_tex_array_get_filename_loc(
         return T1_TEX_NONE;
     }
     
-    for (int16_t i = 0; i < (int16_t)T1_tex_arrays_size; i++) {
+    for (s16 i = 0; i < (s16)T1_tex_arrays_size; i++) {
         T1_log_assert(T1_tex_arrays[i].images_size < 2000);
-        for (int16_t j = 0; j < (int16_t)T1_tex_arrays[i].images_size; j++) {
+        for (s16 j = 0; j < (s16)T1_tex_arrays[i].images_size; j++) {
             if (
                 T1_std_are_equal_strings(
                     T1_tex_arrays[i].images[j].name,
@@ -592,35 +592,35 @@ T1Tex T1_tex_array_get_filename_loc(
 }
 
 void T1_tex_array_debug_dump_to_writables(
-    const int32_t texture_array_i,
-    uint32_t * success)
+    const s32 texture_array_i,
+    u32 * success)
 {
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    for (int32_t texture_i = 0; texture_i < 100; texture_i++) {
-        uint32_t fetched = 0;
+    for (s32 texture_i = 0; texture_i < 100; texture_i++) {
+        u32 fetched = 0;
         
-        uint32_t rgba_cap = 30000000;
-        uint8_t * rgba = T1_mem_malloc_managed(rgba_cap);
-        uint32_t rgba_size = 0;
-        uint32_t width = 0;
-        uint32_t height = 0;
+        u32 rgba_cap = 30000000;
+        u8 * rgba = T1_mem_malloc_managed(rgba_cap);
+        u32 rgba_size = 0;
+        u32 width = 0;
+        u32 height = 0;
         
         T1_os_gpu_fetch_rgba_at(
-            /* const int32_t texture_array_i: */
+            /* const s32 texture_array_i: */
                 texture_array_i,
-            /* const int32_t texture_i: */
+            /* const s32 texture_i: */
                 texture_i,
-            /* uint8_t *rgba_recipient: */
+            /* u8 *rgba_recipient: */
                 rgba,
-            /* uint32_t * recipient_size: */
+            /* u32 * recipient_size: */
                 &rgba_size,
-            /* uint32_t * recipient_width: */
+            /* u32 * recipient_width: */
                 &width,
-            /* uint32_t * recipient_height: */
+            /* u32 * recipient_height: */
                 &height,
-            /* uint32_t recipient_cap: */
+            /* u32 recipient_cap: */
                 rgba_cap,
-            /* uint32_t *good: */
+            /* u32 *good: */
                 &fetched);
         
         if (!fetched) {
@@ -643,19 +643,19 @@ void T1_tex_array_debug_dump_to_writables(
         T1_std_strcat_int_cap(filename, 128, texture_i);
         T1_std_strcat_cap(filename, 128, ".bmp");
         
-        uint8_t write_good = 0;
+        u8 write_good = 0;
         T1_os_write_rgba_to_writables(
             /* const char * local_filename: */
                 filename,
-            /* uint8_t * rgba: */
+            /* u8 * rgba: */
                 rgba,
-            /* const uint32_t rgba_size: */
+            /* const u32 rgba_size: */
                 rgba_size,
-            /* const uint32_t width: */
+            /* const u32 width: */
                 width,
-            /* const uint32_t height: */
+            /* const u32 height: */
                 height,
-            /* uint32_t * good: */
+            /* u32 * good: */
                 &write_good);
         
         T1_mem_free_managed(rgba);

@@ -35,23 +35,23 @@ void T1_render_view_init(void) {
         0,
         sizeof(T1RenderViewCollection));
     
-    for (uint32_t i = 0; i < T1_RENDER_VIEW_CAP; i++) {
+    for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         T1_render_views->cpu[i].write_array_i = -1;
         T1_render_views->cpu[i].write_slice_i = -1;
-        T1_render_views->cpu[i].clamped_to_zsprite_id = -1;
+        T1_render_views->cpu[i].clamped_to_T1_id = -1;
     }
 }
 
 typedef struct {
-    float    last_drag_start_camera_x;
-    float    last_drag_start_camera_y;
-    float    last_drag_start_x;
-    float    last_drag_start_y;
-    float    total_dragged_x;
-    float    total_dragged_y;
+    f32    last_drag_start_camera_x;
+    f32    last_drag_start_camera_y;
+    f32    last_drag_start_x;
+    f32    last_drag_start_y;
+    f32    total_dragged_x;
+    f32    total_dragged_y;
 } T1CamState;
 
-void T1_render_view_reset(int i)
+void T1_render_view_reset(s32 i)
 {
     T1CPURenderView * rv = T1_render_views->cpu + i;
     
@@ -93,8 +93,8 @@ void T1_render_view_reset(int i)
 static void T1_render_view_construct(
     T1CPURenderView * cpu,
     T1GPURenderView * gpu,
-    const uint32_t height,
-    const uint32_t width)
+    const u32 height,
+    const u32 width)
 {
     T1_log_assert(!isnan(cpu->dest_xyz[0]));
     T1_log_assert(!isnan(cpu->dest_xyz[1]));
@@ -107,7 +107,7 @@ static void T1_render_view_construct(
     T1_std_memset(cpu, 0, sizeof(T1CPURenderView));
     T1_std_memset(gpu, 0, sizeof(T1GPURenderView));
     
-    cpu->clamped_to_zsprite_id = -1;
+    cpu->clamped_to_T1_id = -1;
     cpu->write_array_i = -1;
     cpu->write_slice_i = -1;
     
@@ -128,7 +128,7 @@ static void T1_render_view_construct(
     pjc->znear = 0.1f;
     pjc->zfar  = T1_ZFAR;
     
-    float field_of_view = 75.0f;
+    f32 field_of_view = 75.0f;
     pjc->field_of_view_rad = (
         (field_of_view * 0.5f) / 180.0f) * 3.14159f;
     
@@ -136,7 +136,7 @@ static void T1_render_view_construct(
         tanf(pjc->field_of_view_rad);
     
     pjc->aspect_ratio =
-        (float)cpu->width / (float)cpu->height;
+        (f32)cpu->width / (f32)cpu->height;
     
     pjc->x_multiplier =
         pjc->aspect_ratio *
@@ -153,15 +153,15 @@ static void T1_render_view_construct(
     T1_log_assert(!isnan(cpu->dest_angle_xyz[2]));
 }
 
-int32_t T1_render_view_fetch_next(
-    const uint32_t width,
-    const uint32_t height)
+s32 T1_render_view_fetch_next(
+    const u32 width,
+    const u32 height)
 {
-    int32_t ret = -1;
+    s32 ret = -1;
     
     for (
-        int32_t rv_i = 0;
-        rv_i < (int32_t)T1_render_views->size;
+        s32 rv_i = 0;
+        rv_i < (s32)T1_render_views->size;
         rv_i++)
     {
         if (T1_render_views->cpu[rv_i].deleted) {
@@ -173,7 +173,7 @@ int32_t T1_render_view_fetch_next(
         ret < 0 &&
         T1_render_views->size < T1_RENDER_VIEW_CAP)
     {
-        ret = (int32_t)T1_render_views->size;
+        ret = (s32)T1_render_views->size;
         T1_render_views->size += 1;
     }
     
@@ -190,14 +190,14 @@ int32_t T1_render_view_fetch_next(
 }
 
 void T1_render_view_update_positions(
-    const uint64_t elapsed)
+    const u64 elapsed)
 {
     if (T1_global->block_render_view_pos_updates) {
         return;
     }
     
     for (
-        uint32_t rv_i = 0;
+        u32 rv_i = 0;
         rv_i < T1_render_views->size;
         rv_i++)
     {
@@ -215,14 +215,14 @@ void T1_render_view_update_positions(
         T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
         T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
         
-        uint64_t us_actual;
+        u64 us_actual;
         if (elapsed > rv->us_to_destination) {
             us_actual = rv->us_to_destination;
         } else {
             us_actual = elapsed;
         }
         
-        float elapsed_pct = (float)us_actual / (float)rv->us_to_destination;
+        f32 elapsed_pct = (f32)us_actual / (f32)rv->us_to_destination;
         T1_log_assert(elapsed_pct >= 0.0f);
         T1_log_assert(elapsed_pct <= 1.0f);
         T1_log_assert(!isnan(elapsed_pct));
@@ -243,14 +243,14 @@ void T1_render_view_update_positions(
         T1_log_assert(!isnan(rv->xyz[2]));
         
         rv->angle_xyz[0] =
-            ((float)rv->angle_xyz[0] * (1.0f - elapsed_pct)) +
-            ((float)rv->dest_angle_xyz[0] * elapsed_pct);
+            ((f32)rv->angle_xyz[0] * (1.0f - elapsed_pct)) +
+            ((f32)rv->dest_angle_xyz[0] * elapsed_pct);
         rv->angle_xyz[1] =
-            ((float)rv->angle_xyz[1] * (1.0f - elapsed_pct)) +
-            ((float)rv->dest_angle_xyz[1] * elapsed_pct);
+            ((f32)rv->angle_xyz[1] * (1.0f - elapsed_pct)) +
+            ((f32)rv->dest_angle_xyz[1] * elapsed_pct);
         rv->angle_xyz[2] =
-            ((float)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
-            ((float)rv->dest_angle_xyz[2] * elapsed_pct);
+            ((f32)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
+            ((f32)rv->dest_angle_xyz[2] * elapsed_pct);
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));
@@ -268,7 +268,7 @@ void T1_render_view_update_positions(
             T1_log_assert(rv_i != 0);
             
             // Supporting only z-planes for now:
-            float plane_z = rv->refl_cam_around_plane_xyz[2];
+            f32 plane_z = rv->refl_cam_around_plane_xyz[2];
             
             // Reflect position (flip Z over the plane)
             rv->xyz[0] = T1_cam->xyz[0];
@@ -295,7 +295,7 @@ void T1_render_view_update_positions(
 }
 
 void T1_render_view_delete(
-    const int32_t rv_i)
+    const s32 rv_i)
 {
     T1_log_assert(rv_i >= 0);
     T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
@@ -324,7 +324,7 @@ void T1_render_view_validate(void) {
         T1_render_views->size <= T1_RENDER_VIEW_CAP);
     
     for (
-        uint32_t i = 1;
+        u32 i = 1;
         i < T1_render_views->size;
         i++)
     {
@@ -333,7 +333,7 @@ void T1_render_view_validate(void) {
         }
         
         for (
-            int32_t pass_i = 0;
+            s32 pass_i = 0;
             pass_i < T1_render_views->cpu[i].
                 passes_size;
             pass_i++)
@@ -368,43 +368,43 @@ void T1_render_view_validate(void) {
             T1RENDERVIEW_WRITE_RENDER_TARGET);
 }
 
-float T1_render_view_x_to_screen_x(
-    const float x,
-    const float given_z)
+f32 T1_render_view_x_to_screen_x(
+    const f32 x,
+    const f32 given_z)
 {
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];
     
-    float viewport_width  = (float)cpu->width;
-    float viewport_height = (float)cpu->height;
-    float aspect_ratio =
+    f32 viewport_width  = (f32)cpu->width;
+    f32 viewport_height = (f32)cpu->height;
+    f32 aspect_ratio =
         viewport_width / viewport_height;
     
-    const float vertical_fov_degrees = 75.0f;
-    float half_fov_y_rad =
+    const f32 vertical_fov_degrees = 75.0f;
+    f32 half_fov_y_rad =
         (vertical_fov_degrees * 0.5f) *
             (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_width_at_z =
+    f32 full_frustum_width_at_z =
         2.0f * given_z * tan_half_fov_y * aspect_ratio;
     
-    float ndc_x = x / (full_frustum_width_at_z * 0.5f);
+    f32 ndc_x = x / (full_frustum_width_at_z * 0.5f);
     
-    float screen_x = (ndc_x + 1.0f) * 0.5f * viewport_width;
+    f32 screen_x = (ndc_x + 1.0f) * 0.5f * viewport_width;
     
     return screen_x;
 }
 
-float T1_render_view_x_to_screen_x_noz(
-    const float x)
+f32 T1_render_view_x_to_screen_x_noz(
+    const f32 x)
 {
-    return ((x * 2.0f) - 1.0f) * (float)T1_render_views->cpu[0].width;
+    return ((x * 2.0f) - 1.0f) * (f32)T1_render_views->cpu[0].width;
 }
 
-float T1_render_view_screen_x_to_x(
-    const float screenspace_x,
-    const float given_z)
+f32 T1_render_view_screen_x_to_x(
+    const f32 screenspace_x,
+    const f32 given_z)
 {
     T1_log_assert(T1_render_views->cpu[0].width > 0);
     T1_log_assert(T1_render_views->cpu[0].height > 0);
@@ -412,157 +412,157 @@ float T1_render_view_screen_x_to_x(
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];
     
-    float viewport_width  = (float)cpu->width;
-    float viewport_height = (float)cpu->height;
+    f32 viewport_width  = (f32)cpu->width;
+    f32 viewport_height = (f32)cpu->height;
     
-    float aspect_ratio =
+    f32 aspect_ratio =
         viewport_width / viewport_height;
     
-    const float vertical_fov_degrees = 75.0f;
-    float half_fov_y_rad =
+    const f32 vertical_fov_degrees = 75.0f;
+    f32 half_fov_y_rad =
         (vertical_fov_degrees * 0.5f) *
             (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_width_at_z =
+    f32 full_frustum_width_at_z =
         2.0f * given_z * tan_half_fov_y * aspect_ratio;
     
-    float ndc_x =
+    f32 ndc_x =
         (screenspace_x / viewport_width) * 2.0f - 1.0f;
     
-    float view_space_x =
+    f32 view_space_x =
         ndc_x * (full_frustum_width_at_z * 0.5f);
     
     return view_space_x;
 }
 
-float T1_render_view_y_to_screen_y(
-    const float y,
-    const float given_z)
+f32 T1_render_view_y_to_screen_y(
+    const f32 y,
+    const f32 given_z)
 {
     const T1CPURenderView * cpu = &T1_render_views->cpu[0];
     
-    float viewport_height = (float)cpu->height;
+    f32 viewport_height = (f32)cpu->height;
     
-    const float vertical_fov_degrees = 75.0f;
-    float half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    const f32 vertical_fov_degrees = 75.0f;
+    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_height_at_z =
+    f32 full_frustum_height_at_z =
         2.0f * given_z * tan_half_fov_y;
     
-    float ndc_y = y / (full_frustum_height_at_z * 0.5f);
+    f32 ndc_y = y / (full_frustum_height_at_z * 0.5f);
     
-    float screen_y = (1.0f - ndc_y) * 0.5f * viewport_height;
+    f32 screen_y = (1.0f - ndc_y) * 0.5f * viewport_height;
     
     return screen_y;
 }
 
-float T1_render_view_y_to_screen_y_noz(
-    const float y)
+f32 T1_render_view_y_to_screen_y_noz(
+    const f32 y)
 {
-    return ((y * 2.0f) - 1.0f) * (float)T1_render_views->cpu[0].height;
+    return ((y * 2.0f) - 1.0f) * (f32)T1_render_views->cpu[0].height;
 }
 
-float T1_render_view_screen_y_to_y(
-    const float screenspace_y,
-    const float given_z)
+f32 T1_render_view_screen_y_to_y(
+    const f32 screenspace_y,
+    const f32 given_z)
 {
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];
     
-    float viewport_height = (float)cpu->height;
+    f32 viewport_height = (f32)cpu->height;
     
-    const float vertical_fov_degrees = 75.0f;
-    float half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    const f32 vertical_fov_degrees = 75.0f;
+    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_height_at_z = 2.0f * given_z * tan_half_fov_y;
+    f32 full_frustum_height_at_z = 2.0f * given_z * tan_half_fov_y;
     
-    float ndc_y = 1.0f -
+    f32 ndc_y = 1.0f -
         (screenspace_y / viewport_height) * 2.0f;
     
-    float view_space_y = ndc_y *
+    f32 view_space_y = ndc_y *
         (full_frustum_height_at_z * 0.5f);
     
     return -view_space_y;
 }
 
-float T1_render_view_screen_height_to_height(
-    const float screenspace_height,
-    const float given_z)
+f32 T1_render_view_screen_height_to_height(
+    const f32 screenspace_height,
+    const f32 given_z)
 {
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];
     
-    float viewport_height = (float)cpu->height;
+    f32 viewport_height = (f32)cpu->height;
     
-    const float vertical_fov_degrees = 75.0f;
-    float half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    const f32 vertical_fov_degrees = 75.0f;
+    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_height_at_z =
+    f32 full_frustum_height_at_z =
         2.0f * given_z * tan_half_fov_y;
     
-    float screen_fraction =
+    f32 screen_fraction =
         screenspace_height / viewport_height;
     
     return screen_fraction * full_frustum_height_at_z;
 }
 
-float T1_render_view_screen_x_to_x_noz(
-    const float screen_x)
+f32 T1_render_view_screen_x_to_x_noz(
+    const f32 screen_x)
 {
     return -1.0f + (screen_x /
-        ((float)T1_render_views->cpu[0].width) *
+        ((f32)T1_render_views->cpu[0].width) *
             2.0f);
 }
 
-float T1_render_view_screen_y_to_y_noz(
-    const float screen_y)
+f32 T1_render_view_screen_y_to_y_noz(
+    const f32 screen_y)
 {
     return -1.0f + (screen_y /
-        ((float)T1_render_views->cpu[0].height)
+        ((f32)T1_render_views->cpu[0].height)
             * 2.0f);
 }
 
-float T1_render_view_screen_width_to_width_noz(
-    const float screenspace_width)
+f32 T1_render_view_screen_width_to_width_noz(
+    const f32 screenspace_width)
 {
     return (screenspace_width /
-        (float)T1_render_views->cpu[0].width) *
+        (f32)T1_render_views->cpu[0].width) *
             2.0f;
 }
 
-float T1_render_view_screen_height_to_height_noz(
-    const float screenspace_height)
+f32 T1_render_view_screen_height_to_height_noz(
+    const f32 screenspace_height)
 {
     return (screenspace_height /
-        (float)T1_render_views->cpu[0].height) *
+        (f32)T1_render_views->cpu[0].height) *
             2.0f;
 }
 
-float T1_render_view_screen_width_to_width(
-    const float screenspace_width,
-    const float given_z)
+f32 T1_render_view_screen_width_to_width(
+    const f32 screenspace_width,
+    const f32 given_z)
 {
     const T1CPURenderView * cpu =
         &T1_render_views->cpu[0];
     
-    float viewport_width =
-        (float)cpu->width;
-    float aspect_ratio =
-        viewport_width / (float)cpu->height;
+    f32 viewport_width =
+        (f32)cpu->width;
+    f32 aspect_ratio =
+        viewport_width / (f32)cpu->height;
     
-    const float vertical_fov_deg = 75.0f;
-    float half_fov_y_rad =
+    const f32 vertical_fov_deg = 75.0f;
+    f32 half_fov_y_rad =
         (vertical_fov_deg * 0.5f) *
             (3.14159265359f / 180.0f);
-    float tan_half_fov_y = tanf(half_fov_y_rad);
+    f32 tan_half_fov_y = tanf(half_fov_y_rad);
     
-    float full_frustum_width_at_z = 2.0f * given_z * tan_half_fov_y * aspect_ratio;
+    f32 full_frustum_width_at_z = 2.0f * given_z * tan_half_fov_y * aspect_ratio;
     
-    float screen_fraction = screenspace_width / viewport_width;
+    f32 screen_fraction = screenspace_width / viewport_width;
     
     return screen_fraction * full_frustum_width_at_z;
 }

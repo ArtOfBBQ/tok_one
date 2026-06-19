@@ -11,31 +11,31 @@
 #include "T1_io.h"
 #include "T1_platform_layer.h"
 
-void T1_cam_set_us_to_dest(int cam_i, const uint64_t us) {
+void T1_cam_set_us_to_dest(s32 cam_i, const u64 us) {
     T1_render_views->cpu[cam_i].us_to_destination = us; }
-void T1_cam_set_dest_xyz(int cam_i, int i, float newval) {
+void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval) {
     T1_render_views->cpu[cam_i].dest_xyz[i] = newval; }
-void T1_cam_add_dest_xyz(int cam_i, int i, float newval) {
+void T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval) {
     T1_render_views->cpu[cam_i].dest_xyz[i] += newval; }
-void T1_cam_set_dest_angle_xyz(int cam_i, int i, float val) {
+void T1_cam_set_dest_angle_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].dest_angle_xyz[i] = val; }
-void T1_cam_add_dest_angle_xyz(int cam_i, int i, float val) {
+void T1_cam_add_dest_angle_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].dest_angle_xyz[i] += val; }
-void T1_cam_set_min_xyz(int cam_i, int i, float val) {
+void T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].min_xyz[i] = val; }
-void T1_cam_set_max_xyz(int cam_i, int i, float val) {
+void T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].max_xyz[i] = val; }
-void T1_cam_set_clamped_to_T1_id(int i, int32_t zsprite_id) {
-    T1_render_views->cpu[i].clamped_to_zsprite_id = zsprite_id; }
-void T1_cam_set_movement_enabled(int i, uint8_t newval) {
+void T1_cam_set_clamped_to_T1_id(s32 i, s32 T1_id) {
+    T1_render_views->cpu[i].clamped_to_T1_id = T1_id; }
+void T1_cam_set_movement_enabled(s32 i, u8 newval) {
     T1_render_views->cpu[i].movement_enabled = newval; }
-int32_t T1_cam_get_write_array_i(int i) {
+s16 T1_cam_get_write_array_i(s32 i) {
     return T1_render_views->cpu[i].write_array_i; }
-int32_t T1_cam_get_write_slice_i(int i) {
+s16 T1_cam_get_write_slice_i(s32 i) {
     return T1_render_views->cpu[i].write_slice_i; }
-void T1_cam_reset(int at_i) {
+void T1_cam_reset(s32 at_i) {
     return T1_render_view_reset(at_i); }
-void T1_cam_delete(const int rv_i) {
+void T1_cam_delete(const s32 rv_i) {
     if (
         T1_render_views->cpu[rv_i].
             write_array_i >= 0 &&
@@ -43,10 +43,10 @@ void T1_cam_delete(const int rv_i) {
             write_slice_i >= 0)
     {
         T1_tex_array_delete_slice(
-            /* const int32_t array_i: */
+            /* const s32 array_i: */
                 T1_render_views->cpu[rv_i].
                     write_array_i,
-            /* const int32_t slice_i: */
+            /* const s32 slice_i: */
                 T1_render_views->cpu[rv_i].
                     write_slice_i);
         T1_render_views->cpu[rv_i].
@@ -58,50 +58,48 @@ void T1_cam_delete(const int rv_i) {
     T1_render_view_delete(rv_i);
 }
 void T1_cam_delete_all(void) {
-    for (int i = 0; i < (int)T1_render_views->size; i++) {
+    for (s32 i = 0; i < (int)T1_render_views->size; i++) {
         T1_cam_delete(i);
     }
 }
-float T1_screen_x_to_x(const float ss_x, const float z) {
+f32 T1_screen_x_to_x(const f32 ss_x, const f32 z) {
     return T1_render_view_screen_x_to_x(ss_x, z); }
-float T1_screen_y_to_y(const float ss_y, const float z) {
+f32 T1_screen_y_to_y(const f32 ss_y, const f32 z) {
     return T1_render_view_screen_y_to_y(ss_y, z); }
-float T1_x_to_screen_x(const float x, const float z) {
+f32 T1_x_to_screen_x(const f32 x, const f32 z) {
     return T1_render_view_x_to_screen_x(x, z); }
-float T1_y_to_screen_y(const float y, const float z) {
+f32 T1_y_to_screen_y(const f32 y, const f32 z) {
     return T1_render_view_y_to_screen_y(y, z); }
-float T1_screen_x_to_x_noz(const float ss_x) {
+f32 T1_screen_x_to_x_noz(const f32 ss_x) {
     return T1_render_view_screen_x_to_x_noz(ss_x); }
-float T1_screen_y_to_y_noz(const float ss_y) {
+f32 T1_screen_y_to_y_noz(const f32 ss_y) {
     return T1_render_view_screen_y_to_y_noz(ss_y); }
-float T1_x_to_screen_x_noz(const float y) {
+f32 T1_x_to_screen_x_noz(const f32 y) {
     return T1_render_view_x_to_screen_x_noz(y); }
-float T1_y_to_screen_y_noz(const float y) {
+f32 T1_y_to_screen_y_noz(const f32 y) {
     return T1_render_view_y_to_screen_y_noz(y); }
-float T1_screen_width_to_width(const float ss_w, const float at_z) {
+f32 T1_screen_width_to_width(const f32 ss_w, const f32 at_z) {
     return T1_render_view_screen_width_to_width(ss_w, at_z); }
-float T1_screen_height_to_height(const float ss_h, const float at_z) {
+f32 T1_screen_height_to_height(const f32 ss_h, const f32 at_z) {
     return T1_render_view_screen_height_to_height(ss_h, at_z); }
-float T1_screen_width_to_width_noz(const float ss_w) {
+f32 T1_screen_width_to_width_noz(const f32 ss_w) {
     return T1_render_view_screen_width_to_width_noz(ss_w); }
-float T1_screen_height_to_height_noz(const float ss_h) {
+f32 T1_screen_height_to_height_noz(const f32 ss_h) {
     return T1_render_view_screen_height_to_height_noz(ss_h); }
 
 void T1_make_shadowmap_and_attach_to_light(
-    const int32_t light_zsprite_id,
-    const uint32_t new_cam_width,
-    const uint32_t new_cam_height)
+    const s32 light_T1_id,
+    const u32 new_cam_width,
+    const u32 new_cam_height)
 {
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    int32_t zl_i = -1;
+    s32 zl_i = -1;
     for (
-        int32_t i = 0;
-        i < (int32_t)T1_zlights_size;
+        s32 i = 0;
+        i < (s32)T1_zlights_size;
         i++)
     {
-        if (
-            T1_zlights[i].T1_id == light_zsprite_id)
-        {
+        if (T1_zlights[i].T1_id == light_T1_id) {
             zl_i = i;
         }
     }
@@ -109,21 +107,17 @@ void T1_make_shadowmap_and_attach_to_light(
     T1_log_assert(zl_i >= 0);
     if (zl_i < 0) { return; }
     
-    int32_t new_rv_i =
-        T1_render_view_fetch_next(
-            new_cam_width,
-            new_cam_height);
+    s32 new_rv_i = T1_render_view_fetch_next(
+        new_cam_width,
+        new_cam_height);
     T1_log_assert(new_rv_i >= 0);
     if (new_rv_i < 0) { return; }
     
-    int32_t slice_i =
-        T1_platform_gpu_make_depth_tex(
-            /* uint32_t width: */
-                T1_render_views->cpu[new_rv_i].
-                    width,
-            /* uint32_t height: */
-                T1_render_views->cpu[new_rv_i].
-                    height);
+    s32 slice_i = T1_os_gpu_make_depth_tex(
+        /* u32 width: */
+            T1_render_views->cpu[new_rv_i].width,
+        /* u32 height: */
+            T1_render_views->cpu[new_rv_i].height);
     
     T1_log_assert(slice_i >= 0);
     if (slice_i < 0) {
@@ -133,14 +127,13 @@ void T1_make_shadowmap_and_attach_to_light(
     
     T1CPURenderView * shadowm_cpu =
         T1_render_views->cpu + new_rv_i;
-    T1_log_assert(shadowm_cpu->width == (uint32_t)
+    T1_log_assert(shadowm_cpu->width == (u32)
         new_cam_width);
-    T1_log_assert(shadowm_cpu->height == (uint32_t)
+    T1_log_assert(shadowm_cpu->height == (u32)
         new_cam_height);
     shadowm_cpu->write_type =
         T1RENDERVIEW_WRITE_DEPTH;
-    shadowm_cpu->write_array_i =
-        T1_DEPTH_TEXTUREARRAYS_I;
+    shadowm_cpu->write_array_i = T1_DEPTH_TEXTUREARRAYS_I;
     shadowm_cpu->write_slice_i = slice_i;
     
     shadowm_cpu->passes_size = 2;
@@ -165,12 +158,12 @@ void T1_make_shadowmap_and_attach_to_light(
 }
 
 void T1_cam_create_main_view(
-    uint32_t new_cam_width,
-    uint32_t new_cam_height)
+    u32 new_cam_width,
+    u32 new_cam_height)
 {
     T1_log_assert(T1_render_views->size == 0);
     
-    int32_t rv_i = T1_tex_array_create_new_render_view(
+    s32 rv_i = T1_tex_array_create_new_render_view(
         new_cam_width,
         new_cam_height);
     
@@ -181,28 +174,30 @@ void T1_cam_create_main_view(
     T1_log_assert(
         !isnan(T1_render_views->cpu[rv_i].dest_xyz[2]));
     
+    
     T1_log_assert(rv_i == 0);
     T1_log_assert(T1_render_views->size > 0);
     
-    T1_os_gpu_update_internal_render_viewport(rv_i);
+    
+    (rv_i);
 }
 
 void T1_make_reflection_cam(
-    const uint32_t new_cam_w,
-    const uint32_t new_cam_h,
-    const float pos_x,
-    const float pos_y,
-    const float pos_z,
-    const float angle_x, 
-    const float angle_y,
-    const float angle_z,
-    const float reflection_z)
+    const u32 new_cam_w,
+    const u32 new_cam_h,
+    const f32 pos_x,
+    const f32 pos_y,
+    const f32 pos_z,
+    const f32 angle_x, 
+    const f32 angle_y,
+    const f32 angle_z,
+    const f32 reflection_z)
 {
-    int32_t new_rv_i =
+    s32 new_rv_i =
         T1_tex_array_create_new_render_view(
-            /* const uint32_t width: */
+            /* const u32 width: */
                 new_cam_w,
-            /* const uint32_t height: */
+            /* const u32 height: */
                 new_cam_h);
     
     T1_log_assert(new_rv_i >= 0);
@@ -210,17 +205,15 @@ void T1_make_reflection_cam(
     
     T1_log_assert(new_rv_i == 1);
     
-    T1CPURenderView * refl_cpu =
-        T1_render_views->cpu + new_rv_i;
-    refl_cpu->write_type =
-        T1RENDERVIEW_WRITE_RGBA;
+    T1CPURenderView * refl_cpu = T1_render_views->cpu + new_rv_i;
+    refl_cpu->write_type = T1RENDERVIEW_WRITE_RGBA;
     
     T1_log_assert(refl_cpu->width == new_cam_w);
     T1_log_assert(refl_cpu->height == new_cam_h);
     T1_log_assert(refl_cpu->write_array_i >= 0);
     T1_log_assert(refl_cpu->write_array_i < T1_TEXARRAYS_CAP);
     T1_log_assert(refl_cpu->write_slice_i >= 0);
-    T1_log_assert(refl_cpu->write_slice_i < (int32_t)T1_tex_arrays[refl_cpu->write_array_i].images_size);
+    T1_log_assert(refl_cpu->write_slice_i < (s32)T1_tex_arrays[refl_cpu->write_array_i].images_size);
     
     refl_cpu->xyz[0]       = pos_x;
     refl_cpu->xyz[1]       = pos_y;
@@ -247,11 +240,11 @@ void T1_make_reflection_cam(
 
 void
 T1_png_get_width_height(
-    const uint8_t * compressed_input,
-    const uint64_t compressed_input_size,
-    uint32_t * out_width,
-    uint32_t * out_height,
-    uint8_t * out_good)
+    const u8 * compressed_input,
+    const u64 compressed_input_size,
+    u32 * out_width,
+    u32 * out_height,
+    u8 * out_good)
 {
     decode_png_get_width_height(
         compressed_input,
@@ -261,12 +254,12 @@ T1_png_get_width_height(
         out_good);
 }
 void T1_png_decode(
-    const uint8_t * compressed_input,
-    const uint64_t compressed_input_size,
-    const uint8_t * out_rgba_values,
-    const uint64_t rgba_values_size,
-    const uint32_t thread_id,
-    uint8_t * out_good)
+    const u8 * compressed_input,
+    const u64 compressed_input_size,
+    const u8 * out_rgba_values,
+    const u64 rgba_values_size,
+    const u32 thread_id,
+    u8 * out_good)
 {
     decode_png(
         compressed_input,
@@ -288,26 +281,26 @@ void T1_texquad_make(T1MakeRequest * request) {
     T1FlatTexQuadRequest tq_req;
     T1_texquad_fetch_next(&tq_req);
     tq_req.cpu->T1_id = request->T1_id;
-    tq_req.gpu->f32.xyz[0] = request->xyz[0];
-    tq_req.gpu->f32.xyz[1] = request->xyz[1];
-    tq_req.gpu->f32.xyz[2] = request->xyz[2];
-    tq_req.gpu->f32.wh[0] = request->wh[0];
-    tq_req.gpu->f32.wh[1] = request->wh[1];
-    tq_req.gpu->i32.reserved_and_tex = 0x00000000 | request->tex;
-    tq_req.gpu->f32.rgba[0] = request->rgba[0];
-    tq_req.gpu->f32.rgba[1] = request->rgba[1];
-    tq_req.gpu->f32.rgba[2] = request->rgba[2];
-    tq_req.gpu->f32.rgba[3] = request->rgba[3];
+    tq_req.gpu->f32s.xyz[0] = request->xyz[0];
+    tq_req.gpu->f32s.xyz[1] = request->xyz[1];
+    tq_req.gpu->f32s.xyz[2] = request->xyz[2];
+    tq_req.gpu->f32s.wh[0] = request->wh[0];
+    tq_req.gpu->f32s.wh[1] = request->wh[1];
+    tq_req.gpu->s32s.reserved_and_tex = 0x00000000 | request->tex;
+    tq_req.gpu->f32s.rgba[0] = request->rgba[0];
+    tq_req.gpu->f32s.rgba[1] = request->rgba[1];
+    tq_req.gpu->f32s.rgba[2] = request->rgba[2];
+    tq_req.gpu->f32s.rgba[3] = request->rgba[3];
     T1_texquad_commit(&tq_req);
 }
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
 */
-float T1_io_get_mouse_scroll_pos(void) {
+f32 T1_io_get_mouse_scroll_pos(void) {
     return T1_io->mouse_scroll_pos;
 }
-void  T1_io_set_mouse_scroll_pos(float new_val) {
+void  T1_io_set_mouse_scroll_pos(f32 new_val) {
     T1_io->mouse_scroll_pos = new_val;
 }
 b8 T1_io_key_is_down_and_unhandled(T1IOKey key) {

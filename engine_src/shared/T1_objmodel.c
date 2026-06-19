@@ -19,7 +19,7 @@
 
 static void construct_mesh_summary(
     T1MeshSummary * to_construct,
-    const int32_t id)
+    const s32 id)
 {
     to_construct->resource_name[0]            = '\0';
     to_construct->mesh_id                     =   id;
@@ -35,26 +35,26 @@ static void construct_mesh_summary(
 }
 
 typedef struct BufferedNormal {
-    float x;
-    float y;
-    float z;
+    f32 x;
+    f32 y;
+    f32 z;
 } BufferedNormal;
 
-static float get_vector_magnitude(float input[3]) {
-    float sum_squares =
+static f32 get_vector_magnitude(f32 input[3]) {
+    f32 sum_squares =
         (input[0] * input[0]) +
         (input[1] * input[1]) +
         (input[2] * input[2]);
     
-    float return_value = sqrtf(sum_squares);
+    f32 return_value = sqrtf(sum_squares);
     
     return return_value;
 }
 
 static void normalize_vector_inplace(
-    float vector[3])
+    f32 vector[3])
 {
-    float magnitude = get_vector_magnitude(vector);
+    f32 magnitude = get_vector_magnitude(vector);
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
         magnitude = 0.0001f;
     }
@@ -65,13 +65,13 @@ static void normalize_vector_inplace(
 }
 
 static void guess_gpu_triangle_normal(T1GPULockedVertex * to_change) {
-    float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
-    float vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
-    float vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
+    f32 vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
+    f32 vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
+    f32 vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
     
-    float vec2_x = to_change[2].xyz[0] - to_change[0].xyz[0];
-    float vec2_y = to_change[2].xyz[1] - to_change[0].xyz[1];
-    float vec2_z = to_change[2].xyz[2] - to_change[0].xyz[2];
+    f32 vec2_x = to_change[2].xyz[0] - to_change[0].xyz[0];
+    f32 vec2_y = to_change[2].xyz[1] - to_change[0].xyz[1];
+    f32 vec2_z = to_change[2].xyz[2] - to_change[0].xyz[2];
     
     to_change[0].norm_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
     to_change[0].norm_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
@@ -94,8 +94,8 @@ void T1_objmodel_init(void) {
     T1_mesh_summary_list = (T1MeshSummary *)T1_mem_malloc_unmanaged(
         sizeof(T1MeshSummary) * T1_MESH_CAP);
     
-    for (uint32_t i = 0; i < T1_MESH_CAP; i++) {
-        construct_mesh_summary(&T1_mesh_summary_list[i], (int32_t)i);
+    for (u32 i = 0; i < T1_MESH_CAP; i++) {
+        construct_mesh_summary(&T1_mesh_summary_list[i], (s32)i);
     }
     
     assert(T1_LOCKED_VERTEX_CAP > 0);
@@ -122,14 +122,14 @@ void T1_objmodel_init(void) {
     T1_mesh_summary_list[0].shattered_vertices_head_i = -1;
     T1_mesh_summary_list[0].shattered_vertices_size = 0;
     
-    const float left_vertex     = -1.0f;
-    const float right_vertex    =  1.0f;
-    const float top_vertex      =  1.0f;
-    const float bottom_vertex   = -1.0f;
-    const float left_uv_coord   =  0.0f;
-    const float right_uv_coord  =  1.0f;
-    const float bottom_uv_coord =  1.0f;
-    const float top_uv_coord    =  0.0f;
+    const f32 left_vertex     = -1.0f;
+    const f32 right_vertex    =  1.0f;
+    const f32 top_vertex      =  1.0f;
+    const f32 bottom_vertex   = -1.0f;
+    const f32 left_uv_coord   =  0.0f;
+    const f32 right_uv_coord  =  1.0f;
+    const f32 bottom_uv_coord =  1.0f;
+    const f32 top_uv_coord    =  0.0f;
     
     // basic quad, triangle 1
     // bottom left vertex
@@ -212,8 +212,8 @@ void T1_objmodel_init(void) {
     T1_mesh_summary_list[1].base_height = 1.0f;
     T1_mesh_summary_list[1].base_depth = 1.0f;
     
-    const float front_vertex =  -1.0f;
-    const float back_vertex  =   1.0f;
+    const f32 front_vertex =  -1.0f;
+    const f32 back_vertex  =   1.0f;
     
     // basic cube, front face triangle 1
     T1_mesh_summary_all_vertices->gpu_data[6].xyz[0]            = left_vertex;
@@ -592,32 +592,32 @@ void T1_objmodel_init(void) {
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-static void assert_objmodel_validity(int32_t mesh_id) {
+static void assert_objmodel_validity(s32 mesh_id) {
     T1_log_assert(mesh_id >= 0);
-    T1_log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
+    T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
     T1_log_assert(T1_mesh_summary_list[mesh_id].vertices_head_i >= 0);
     T1_log_assert(
         T1_mesh_summary_list[mesh_id].vertices_size < T1_LOCKED_VERTEX_CAP);
-    int32_t all_vertices_tail_i =
+    s32 all_vertices_tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
         T1_mesh_summary_list[mesh_id].vertices_size;
-    T1_log_assert(all_vertices_tail_i <= (int32_t)T1_mesh_summary_all_vertices->size);
+    T1_log_assert(all_vertices_tail_i <= (s32)T1_mesh_summary_all_vertices->size);
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
-static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
+static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
      const char * original_obj_filename,
      T1ParsedObj * arg_parsed_obj,
      ParsedMaterial * parsed_materials,
-     const uint32_t parsed_materials_size)
+     const u32 parsed_materials_size)
 {
-    float invert_z_axis_modifier = -1.0f;
+    f32 invert_z_axis_modifier = -1.0f;
     
-    int32_t new_mesh_head_id =
-        (int32_t)T1_mesh_summary_all_vertices->size;
+    s32 new_mesh_head_id =
+        (s32)T1_mesh_summary_all_vertices->size;
     T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i =
         new_mesh_head_id;
     
@@ -627,7 +627,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_mesh_summary_list[T1_mesh_summary_list_size].materials_size =
         arg_parsed_obj->materials_count;
     
-    uint32_t first_material_head_i =
+    u32 first_material_head_i =
         T1_material_preappend_locked_material_i(
             original_obj_filename,
             parsed_obj->material_names == NULL ?
@@ -639,8 +639,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         T1_mesh_summary_list[T1_mesh_summary_list_size].
             locked_material_head_i = first_material_head_i;
         
-        for (uint32_t i = 1; i < arg_parsed_obj->materials_count; i++) {
-            uint32_t _ = T1_material_preappend_locked_material_i(
+        for (u32 i = 1; i < arg_parsed_obj->materials_count; i++) {
+            u32 _ = T1_material_preappend_locked_material_i(
                 original_obj_filename,
                 parsed_obj->material_names[i].name);
             
@@ -649,9 +649,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         }
         
         // Fill in data for each material
-        for (uint32_t i = 0; i < arg_parsed_obj->materials_count; i++) {
-            int32_t matching_parsed_materials_i = -1;
-            for (int32_t j = 0; j < (int32_t)parsed_materials_size; j++) {
+        for (u32 i = 0; i < arg_parsed_obj->materials_count; i++) {
+            s32 matching_parsed_materials_i = -1;
+            for (s32 j = 0; j < (s32)parsed_materials_size; j++) {
                 if (
                     T1_std_are_equal_strings(
                         arg_parsed_obj->material_names[i].name,
@@ -662,18 +662,18 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             }
             
             T1_log_assert(
-                matching_parsed_materials_i  < (int32_t)parsed_materials_size);
+                matching_parsed_materials_i  < (s32)parsed_materials_size);
             
             T1GPUConstMatf32 * locked_mat_f32 = NULL;
-            T1GPUConstMati32 * locked_mat_i32 = NULL;
+            T1GPUConstMats32 * locked_mat_s32 = NULL;
             T1_material_fetch_ptrs(
                 &locked_mat_f32,
-                &locked_mat_i32,
+                &locked_mat_s32,
                 T1_mesh_summary_list[T1_mesh_summary_list_size].locked_material_head_i + i);
             
             T1_material_construct(
                 locked_mat_f32,
-                locked_mat_i32);
+                locked_mat_s32);
             
             if (matching_parsed_materials_i >= 0) {
                 locked_mat_f32->ambient_rgb[0] =
@@ -718,8 +718,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                    locked_mat_i32->normalmap_tex_and_tex &= 0xFFFF0000;
-                    locked_mat_i32->normalmap_tex_and_tex |= lmat;
+                    locked_mat_s32->normalmap_tex_and_tex &= 0xFFFF0000;
+                    locked_mat_s32->normalmap_tex_and_tex |= lmat;
                 }
                 
                 if (
@@ -733,7 +733,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     T1_log_append("\n");
                     
                     if (
-                        (locked_mat_i32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
+                        (locked_mat_s32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
                     {
                         char errmsg[128];
                         T1_std_strcpy_cap(errmsg, 128, "Missing material texture: ");
@@ -747,7 +747,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     }
                 } else {
                     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-                    T1Tex tex = (locked_mat_i32->
+                    T1Tex tex = (locked_mat_s32->
                         normalmap_tex_and_tex & 0x0000FFFF);
                     T1_log_assert(T1_tex_to_array_i(tex) < 0);
                     T1_log_assert(T1_tex_to_slice_i(tex) < 0);
@@ -758,13 +758,12 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
                 
                 #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-                T1Tex lmat = T1_texture_array_get_filename_location(
+                T1Tex lmat = T1_tex_array_get_filename_loc(
                     /* const char * for_filename: */
                         parsed_materials[matching_parsed_materials_i].
                             bump_or_normal_map);
-                
-                locked_mat->normalmap_texturearray_i = lmat.array_i;
-                locked_mat->normalmap_texture_i = lmat.slice_i;
+                locked_mat_s32->normalmap_tex_and_tex &= 0x0000FFFF; 
+                locked_mat_s32->normalmap_tex_and_tex |= (lmat << 16); 
                 #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
                 #else
                 #error
@@ -774,17 +773,17 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     }
     
     for (
-        uint32_t triangle_i = 0;
+        u32 triangle_i = 0;
         triangle_i < arg_parsed_obj->triangles_count;
         triangle_i++)
     {
-        uint32_t cur_material_i = arg_parsed_obj->triangles[triangle_i][4];
+        u32 cur_material_i = arg_parsed_obj->triangles[triangle_i][4];
         
         if (parsed_materials != NULL) {
             // check if the cur_material_i is the "use base material"
             // material
-            int32_t parsed_mtls_matching_i = -1;
-            for (int32_t i = 0; i < (int32_t)parsed_materials_size; i++) {
+            s32 parsed_mtls_matching_i = -1;
+            for (s32 i = 0; i < (s32)parsed_materials_size; i++) {
                 if (
                     T1_std_are_equal_strings(
                         arg_parsed_obj->material_names[cur_material_i].name,
@@ -804,16 +803,16 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 
                 T1_mesh_summary_list[T1_mesh_summary_list_size].
                     locked_material_base_offset =
-                        (uint32_t)cur_material_i;
+                        (u32)cur_material_i;
             }
         }
         
-        uint32_t locked_vert_i = T1_mesh_summary_all_vertices->size;
+        u32 locked_vert_i = T1_mesh_summary_all_vertices->size;
         
         // We have to read all 3 positions first because we may need them to
         // infer the normals if the .obj file has no normals
-        for (uint32_t _ = 0; _ < 3; _++) {
-            uint32_t vert_i = arg_parsed_obj->triangles[triangle_i][_];
+        for (u32 _ = 0; _ < 3; _++) {
+            u32 vert_i = arg_parsed_obj->triangles[triangle_i][_];
             
             T1_log_assert(vert_i >= 1);
             T1_log_assert(vert_i <= arg_parsed_obj->vertices_count);
@@ -829,7 +828,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 invert_z_axis_modifier;
         }
         
-        for (uint32_t _ = 0; _ < 3; _++) {
+        for (u32 _ = 0; _ < 3; _++) {
             T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].
                 parent_material_i = cur_material_i;
             T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].
@@ -841,7 +840,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 arg_parsed_obj->normals_vn != NULL &&
                 arg_parsed_obj->triangle_normals != NULL)
             {
-                uint32_t norm_i = arg_parsed_obj->triangle_normals[triangle_i][_];
+                u32 norm_i = arg_parsed_obj->triangle_normals[triangle_i][_];
                 
                 T1_log_assert(norm_i >= 1);
                 T1_log_assert(norm_i <= arg_parsed_obj->normals_count);
@@ -864,13 +863,13 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         norm_xyz,
                     T1_mesh_summary_all_vertices->gpu_data[locked_vert_i].
                         norm_xyz,
-                    sizeof(float) * 3);
+                    sizeof(f32) * 3);
                 T1_std_memcpy(
                     T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + 2].
                         norm_xyz,
                     T1_mesh_summary_all_vertices->gpu_data[locked_vert_i].
                         norm_xyz,
-                    sizeof(float) * 3);
+                    sizeof(f32) * 3);
             }
             
             T1_triangle_normalize_zvertex_f3(
@@ -878,7 +877,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     norm_xyz);
             
             if (arg_parsed_obj->textures_count > 0) {
-                uint32_t text_i = arg_parsed_obj->triangle_textures[triangle_i][_];
+                u32 text_i = arg_parsed_obj->triangle_textures[triangle_i][_];
                 
                 T1_log_assert(text_i >= 1);
                 T1_log_assert(text_i <= arg_parsed_obj->textures_count);
@@ -902,7 +901,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     }
     
     for (
-        uint32_t quad_i = 0;
+        u32 quad_i = 0;
         quad_i < arg_parsed_obj->quads_count;
         quad_i++)
     {
@@ -921,24 +920,24 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         0-------1
         */
         
-        uint32_t cur_material_i = arg_parsed_obj->quads[quad_i][5];
+        u32 cur_material_i = arg_parsed_obj->quads[quad_i][5];
         T1_log_assert(cur_material_i < arg_parsed_obj->materials_count);
         
-        for (uint32_t quad_tri_i = 0; quad_tri_i < 2; quad_tri_i++) {
+        for (u32 quad_tri_i = 0; quad_tri_i < 2; quad_tri_i++) {
             
             T1GPULockedVertex * V1 = &T1_mesh_summary_all_vertices->gpu_data[T1_mesh_summary_all_vertices->size];
             T1GPULockedVertex * V2 = &T1_mesh_summary_all_vertices->gpu_data[T1_mesh_summary_all_vertices->size+1];
             T1GPULockedVertex * V3 = &T1_mesh_summary_all_vertices->gpu_data[T1_mesh_summary_all_vertices->size+2];
             
-            uint32_t vert_1_i;
-            uint32_t vert_2_i;
-            uint32_t vert_3_i;
-            uint32_t norm_1_i;
-            uint32_t norm_2_i;
-            uint32_t norm_3_i;
-            uint32_t textr_1_i = 1;
-            uint32_t textr_2_i = 1;
-            uint32_t textr_3_i = 1;
+            u32 vert_1_i;
+            u32 vert_2_i;
+            u32 vert_3_i;
+            u32 norm_1_i;
+            u32 norm_2_i;
+            u32 norm_3_i;
+            u32 textr_1_i = 1;
+            u32 textr_2_i = 1;
+            u32 textr_3_i = 1;
             
             if (quad_tri_i == 0) {
                 // First subtriangle of our quad
@@ -1033,7 +1032,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             if (arg_parsed_obj->normals_count > 0)
             {
                 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-                uint32_t norm_i = arg_parsed_obj->
+                u32 norm_i = arg_parsed_obj->
                     quad_normals[quad_i][quad_tri_i];
                 
                 T1_log_assert(norm_i >= 1);
@@ -1091,14 +1090,14 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_objparser_deinit(arg_parsed_obj);
     
     T1_mesh_summary_list[T1_mesh_summary_list_size].mesh_id =
-        (int32_t)T1_mesh_summary_list_size;
+        (s32)T1_mesh_summary_list_size;
     T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size =
-        (int32_t)T1_mesh_summary_all_vertices->size -
+        (s32)T1_mesh_summary_all_vertices->size -
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i;
     T1_log_assert(T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size > 0);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t new_tail_i = (uint32_t)(
+    u32 new_tail_i = (u32)(
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i +
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size -
         1);
@@ -1109,19 +1108,19 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     #endif
     
     // fetch base width/height/depth and store
-    float min_x = 0.0f;
-    float max_x = 0.0f;
-    float min_y = 0.0f;
-    float max_y = 0.0f;
-    float min_z = 0.0f;
-    float max_z = 0.0f;
+    f32 min_x = 0.0f;
+    f32 max_x = 0.0f;
+    f32 min_y = 0.0f;
+    f32 max_y = 0.0f;
+    f32 min_z = 0.0f;
+    f32 max_z = 0.0f;
     
     for (
-        int32_t tri_i = new_mesh_head_id;
-        tri_i < (int32_t)T1_mesh_summary_all_vertices->size;
+        s32 tri_i = new_mesh_head_id;
+        tri_i < (s32)T1_mesh_summary_all_vertices->size;
         tri_i += 3)
     {
-        for (int32_t m = 0; m < 3; m++) {
+        for (s32 m = 0; m < 3; m++) {
             if (min_x > T1_mesh_summary_all_vertices->gpu_data[tri_i + m].xyz[0]) {
                 min_x = T1_mesh_summary_all_vertices->gpu_data[tri_i + m].xyz[0];
             }
@@ -1157,29 +1156,29 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_log_assert(T1_mesh_summary_list_size <= T1_MESH_CAP);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    assert_objmodel_validity((int32_t)T1_mesh_summary_list_size - 1);
+    assert_objmodel_validity((s32)T1_mesh_summary_list_size - 1);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    return (int32_t)T1_mesh_summary_list_size - 1;
+    return (s32)T1_mesh_summary_list_size - 1;
 }
 
-int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
+s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_obj_filename,
     const char * obj_text,
     const char * mtl_text)
 {
     T1_log_assert(parsed_obj != NULL);
     
-    uint8_t good = 0;
+    u8 good = 0;
     T1_objparser_parse(
         /* ParsedObj * recipient: */
             parsed_obj,
         /* char * raw_buffer: */
             obj_text,
-        /* uint32_t * success: */
+        /* u32 * success: */
             &good);
     T1_log_assert(good);
     
@@ -1205,25 +1204,25 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     
     good = 0;
     
-    uint32_t parsed_materials_cap = 20;
+    u32 parsed_materials_cap = 20;
     ParsedMaterial * parsed_materials = T1_mem_malloc_managed(
         sizeof(ParsedMaterial) * parsed_materials_cap);
     T1_std_memset(
         parsed_materials,
         0,
         sizeof(ParsedMaterial) * parsed_materials_cap);
-    uint32_t parsed_materials_size = 0;
+    u32 parsed_materials_size = 0;
     
     mtlparser_parse(
         /* ParsedMaterial * recipient: */
             parsed_materials,
-        /* uint32_t * recipient_size: */
+        /* u32 * recipient_size: */
             &parsed_materials_size,
-        /* const uint32_t recipient_cap: */
+        /* const u32 recipient_cap: */
             parsed_materials_cap,
         /* const char * input: */
             mtl_text,
-        /* uint32_t * good: */
+        /* u32 * good: */
             &good);
     
     if (!good) {
@@ -1246,19 +1245,19 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE
 static void
     T1_objmodel_deduce_face_normals(
-        const int32_t mesh_id)
+        const s32 mesh_id)
 {
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].
                 vertices_size;
     
-    float edge1[3];
-    float edge2[3];
-    float face_normal_xyz[3];
+    f32 edge1[3];
+    f32 edge2[3];
+    f32 face_normal_xyz[3];
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].
+        s32 vert_i = T1_mesh_summary_list[mesh_id].
             vertices_head_i;
         vert_i < tail_i;
         vert_i += 3)
@@ -1286,11 +1285,11 @@ static void
         edge2[2] = v3->xyz[2] - v1->xyz[2];
         
         T1_triangle_cross_vertices(
-            /* float * a: */
+            /* f32 * a: */
                 edge1,
-            /* float * b: */
+            /* f32 * b: */
                 edge2,
-            /* float * recip: */
+            /* f32 * recip: */
                 face_normal_xyz);
         
         T1_triangle_normalize_vertex(face_normal_xyz);
@@ -1298,15 +1297,15 @@ static void
         T1_std_memcpy(
             v1->face_normal_xyz,
             face_normal_xyz,
-            sizeof(float)*3);
+            sizeof(f32)*3);
         T1_std_memcpy(
             v2->face_normal_xyz,
             face_normal_xyz,
-            sizeof(float)*3);
+            sizeof(f32)*3);
         T1_std_memcpy(
             v3->face_normal_xyz,
             face_normal_xyz,
-            sizeof(float)*3);
+            sizeof(f32)*3);
     }
 }
 #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
@@ -1316,21 +1315,21 @@ static void
 
 #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
 static void T1_objmodel_deduce_tangents_and_bitangents(
-    const int32_t mesh_id)
+    const s32 mesh_id)
 {
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].
                 vertices_size;
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].
+        s32 vert_i = T1_mesh_summary_list[mesh_id].
             vertices_head_i;
         vert_i < tail_i;
         vert_i += 3)
     {
         for (
-            int32_t offset = 0;
+            s32 offset = 0;
             offset < 3;
             offset++)
         {
@@ -1346,43 +1345,43 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         ΔP12 = P2 - P1, ΔP13 = P3 - P1.
         ΔUV12 = uv2 - uv1, ΔUV13 = uv3 - uv1.
         */
-        float vec_1_to_2[3];
+        f32 vec_1_to_2[3];
         vec_1_to_2[0] = v2->xyz[0] - v1->xyz[0];
         vec_1_to_2[1] = v2->xyz[1] - v1->xyz[1];
         vec_1_to_2[2] = v2->xyz[2] - v1->xyz[2];
         
-        float uv_1_to_2[2];
+        f32 uv_1_to_2[2];
         uv_1_to_2[0] = v2->uv[0] - v1->uv[0];
         uv_1_to_2[1] = v2->uv[1] - v1->uv[1];
         
-        float vec_1_to_3[3];
+        f32 vec_1_to_3[3];
         vec_1_to_3[0] = v3->xyz[0] - v1->xyz[0];
         vec_1_to_3[1] = v3->xyz[1] - v1->xyz[1];
         vec_1_to_3[2] = v3->xyz[2] - v1->xyz[2];
         
-        float uv_1_to_3[2];
+        f32 uv_1_to_3[2];
         uv_1_to_3[0] = v3->uv[0] - v1->uv[0];
         uv_1_to_3[1] = v3->uv[1] - v1->uv[1];
         
         
-        float denom =
+        f32 denom =
             ((uv_1_to_2[0] * uv_1_to_3[1]) - uv_1_to_3[0] * uv_1_to_2[1]);
         // Avoid division by zero
         if (T1_std_fabs(denom) < 0.000001f) { denom = 0.000001f; };
         
-        float T[3] = {
+        f32 T[3] = {
             (vec_1_to_2[0] * uv_1_to_3[1] - vec_1_to_3[0] * uv_1_to_2[1]) / denom,
             (vec_1_to_2[1] * uv_1_to_3[1] - vec_1_to_3[1] * uv_1_to_2[1]) / denom,
             (vec_1_to_2[2] * uv_1_to_3[1] - vec_1_to_3[2] * uv_1_to_2[1]) / denom
         };
         
         // Orthogonalize
-        float N[3] = {
+        f32 N[3] = {
             v1->norm_xyz[0],
             v1->norm_xyz[1],
             v1->norm_xyz[2]
         };
-        float dot_TN = T[0] * N[0] + T[1] * N[1] + T[2] * N[2];
+        f32 dot_TN = T[0] * N[0] + T[1] * N[1] + T[2] * N[2];
         T[0] -= dot_TN * N[0];
         T[1] -= dot_TN * N[1];
         T[2] -= dot_TN * N[2];
@@ -1392,7 +1391,7 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         v1->tan_xyz[1] = T[1];
         v1->tan_xyz[2] = T[2];
         
-        float B[3] = {
+        f32 B[3] = {
             N[1] * T[2] - N[2] * T[1],
             N[2] * T[0] - N[0] * T[2],
             N[0] * T[1] - N[1] * T[0]
@@ -1403,8 +1402,8 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         v1->bitan_xyz[2] = B[2];
         
         // Zero check
-        float T_len = sqrtf(T[0] * T[0] + T[1] * T[1] + T[2] * T[2]);
-        float B_len = sqrtf(B[0] * B[0] + B[1] * B[1] + B[2] * B[2]);
+        f32 T_len = sqrtf(T[0] * T[0] + T[1] * T[1] + T[2] * T[2]);
+        f32 B_len = sqrtf(B[0] * B[0] + B[1] * B[1] + B[2] * B[2]);
         if (T_len <= 1e-6) {
             v1->tan_xyz[0] = 0.0f;
             v1->tan_xyz[1] = 0.0f;
@@ -1423,12 +1422,12 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
 #error
 #endif
 
-int32_t T1_objmodel_new_mesh_id_from_resources(
+s32 T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
     const char * mtl_filename,
-    const uint8_t flip_uv_u,
-    const uint8_t flip_uv_v,
-    uint8_t * success,
+    const u8 flip_uv_u,
+    const u8 flip_uv_v,
+    u8 * success,
     char * error_message)
 {
     *success = 0;
@@ -1447,7 +1446,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    uint64_t contents_cap = T1_os_get_resource_size(obj_filename);
+    u64 contents_cap = T1_os_get_resource_size(obj_filename);
     char * contents = NULL;
     
     if (contents_cap < 1)
@@ -1470,16 +1469,16 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     }
     
     contents = (char *)T1_mem_malloc_managed(contents_cap + 1);
-    uint8_t contents_good = false;
+    u8 contents_good = false;
     
     T1_os_read_resource_file(
         /* const char * filename: */
             obj_filename,
         /* char * recip: */
             contents,
-        /* const uint64_t recip_cap: */
+        /* const u64 recip_cap: */
             contents_cap,
-        /* uint8_t * good: */
+        /* u8 * good: */
             &contents_good);
     
     if (!contents_good) {
@@ -1500,9 +1499,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    uint64_t mtl_contents_cap = 0;
+    u64 mtl_contents_cap = 0;
     char * mtl_contents = NULL;
-    uint8_t mtl_contents_good = 0;
+    u8 mtl_contents_good = 0;
     
     if (mtl_filename == NULL || mtl_filename[0] == '\0') {
         // leave uninitialized
@@ -1536,9 +1535,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
                 mtl_filename,
             /* char * recip: */
                 mtl_contents,
-            /* const uint64_t recip_cap: */
+            /* const u64 recip_cap: */
                 mtl_contents_cap,
-            /* uint8_t * good: */
+            /* u8 * good: */
                 &mtl_contents_good);
         
         if (!mtl_contents_good) {
@@ -1563,7 +1562,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         }
     }
     
-    int32_t return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
+    s32 return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
             obj_filename,
         /* const char * obj_text: */
             contents,
@@ -1617,10 +1616,10 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     return return_value;
 }
 
-int32_t T1_objmodel_resource_name_to_mesh_id(
+s32 T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename)
 {
-    for (int32_t i = 0; i < (int32_t)T1_mesh_summary_list_size; i++) {
+    for (s32 i = 0; i < (s32)T1_mesh_summary_list_size; i++) {
         if (
             T1_std_are_equal_strings(
                  T1_mesh_summary_list[i].resource_name,
@@ -1633,54 +1632,54 @@ int32_t T1_objmodel_resource_name_to_mesh_id(
     return -1;
 }
 
-float T1_objmodel_get_x_multiplier_for_width(
-    const int32_t mesh_id,
-    const float screenspace_width,
-    const float given_z)
+f32 T1_objmodel_get_x_multiplier_for_width(
+    const s32 mesh_id,
+    const f32 screenspace_width,
+    const f32 given_z)
 {
     return T1_render_view_screen_width_to_width(
-        /* const float screenspace_width: */
+        /* const f32 screenspace_width: */
             screenspace_width /
                 T1_mesh_summary_list[mesh_id].base_width,
-        /* const float given_z: */
+        /* const f32 given_z: */
             given_z);
 }
 
-float T1_objmodel_get_y_multiplier_for_height(
-    const int32_t mesh_id,
-    const float screenspace_height,
-    const float given_z)
+f32 T1_objmodel_get_y_multiplier_for_height(
+    const s32 mesh_id,
+    const f32 screenspace_height,
+    const f32 given_z)
 {
     return T1_render_view_screen_height_to_height(
-        /* const float screenspace_width: */
+        /* const f32 screenspace_width: */
             screenspace_height /
                 T1_mesh_summary_list[mesh_id].base_height,
-        /* const float given_z: */
+        /* const f32 given_z: */
             given_z);
 }
 
 void T1_objmodel_center_mesh_offsets(
-    const int32_t mesh_id)
+    const s32 mesh_id)
 {
-    T1_log_assert(mesh_id < (int32_t)T1_mesh_summary_list_size);
+    T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
     
-    float smallest_y = T1_F32_MAX;
-    float largest_y = T1_F32_MIN;
-    float smallest_x = T1_F32_MAX;
-    float largest_x = T1_F32_MIN;
-    float smallest_z = T1_F32_MAX;
-    float largest_z = T1_F32_MIN;
+    f32 smallest_y = T1_F32_MAX;
+    f32 largest_y = T1_F32_MIN;
+    f32 smallest_x = T1_F32_MAX;
+    f32 largest_x = T1_F32_MIN;
+    f32 smallest_z = T1_F32_MAX;
+    f32 largest_z = T1_F32_MIN;
     
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].vertices_size;
     
     for (
-        int32_t tri_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+        s32 tri_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
         tri_i < tail_i;
         tri_i += 3)
     {
-        for (int32_t m = 0; m < 3; m++) {
+        for (s32 m = 0; m < 3; m++) {
             if (smallest_x > T1_mesh_summary_all_vertices->gpu_data[tri_i + m].xyz[0]) {
                 smallest_x = T1_mesh_summary_all_vertices->gpu_data[tri_i + m].xyz[0];
             }
@@ -1707,13 +1706,13 @@ void T1_objmodel_center_mesh_offsets(
     
     // if smallest x is 2 and largest x is 6, we want to apply -4 to
     // everything then smallest x will be -2 and largest 2
-    float x_delta = (smallest_x + largest_x) / 2.0f;
-    float y_delta = (smallest_y + largest_y) / 2.0f;
-    float z_delta = (smallest_z + largest_z) / 2.0f;
+    f32 x_delta = (smallest_x + largest_x) / 2.0f;
+    f32 y_delta = (smallest_y + largest_y) / 2.0f;
+    f32 z_delta = (smallest_z + largest_z) / 2.0f;
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    float new_smallest_x = smallest_x - x_delta;
-    float new_largest_x = largest_x - x_delta;
+    f32 new_smallest_x = smallest_x - x_delta;
+    f32 new_largest_x = largest_x - x_delta;
     T1_log_assert(new_smallest_x + new_largest_x == 0.0f);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
@@ -1721,7 +1720,7 @@ void T1_objmodel_center_mesh_offsets(
     #endif
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+        s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
         vert_i < tail_i;
         vert_i++)
     {
@@ -1731,14 +1730,14 @@ void T1_objmodel_center_mesh_offsets(
     }
 }
 
-void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id)
+void T1_objmodel_flip_mesh_uvs(const s32 mesh_id)
 {
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].vertices_size;
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+        s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
         vert_i < tail_i;
         vert_i++)
     {
@@ -1753,14 +1752,14 @@ void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id)
     }
 }
 
-void T1_objmodel_flip_mesh_uvs_u(const int32_t mesh_id)
+void T1_objmodel_flip_mesh_uvs_u(const s32 mesh_id)
 {
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].vertices_size;
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+        s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
         vert_i < tail_i;
         vert_i++)
     {
@@ -1769,14 +1768,14 @@ void T1_objmodel_flip_mesh_uvs_u(const int32_t mesh_id)
     }
 }
 
-void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
+void T1_objmodel_flip_mesh_uvs_v(const s32 mesh_id)
 {
-    int32_t tail_i =
+    s32 tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
             T1_mesh_summary_list[mesh_id].vertices_size;
     
     for (
-        int32_t vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+        s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
         vert_i < tail_i;
         vert_i++)
     {
@@ -1785,7 +1784,7 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
     }
 }
 
-static float get_squared_distance_from_locked_vertices(
+static f32 get_squared_distance_from_locked_vertices(
     const T1GPULockedVertex a,
     const T1GPULockedVertex b)
 {
@@ -1796,42 +1795,42 @@ static float get_squared_distance_from_locked_vertices(
 }
 
 /* the largest length amongst any dimension be it x, y, or z */
-static float get_squared_triangle_length_from_locked_vertices(
+static f32 get_squared_triangle_length_from_locked_vertices(
     const T1GPULockedVertex * vertices)
 {
-    float largest_squared_dist = T1_F32_MIN;
+    f32 largest_squared_dist = T1_F32_MIN;
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    int32_t largest_start_vertex_i = -1;
-    int32_t largest_end_vertex_i = -1;
+    s32 largest_start_vertex_i = -1;
+    s32 largest_end_vertex_i = -1;
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    for (int32_t start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
+    for (s32 start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
         
-        int32_t end_vertex_i = (start_vertex_i + 1) % 3;
+        s32 end_vertex_i = (start_vertex_i + 1) % 3;
         T1_log_assert(start_vertex_i != end_vertex_i);
         T1_log_assert(start_vertex_i <= 3);
         T1_log_assert(end_vertex_i <= 3);
         
-        float squared_x =
+        f32 squared_x =
             ((vertices[start_vertex_i].xyz[0] -
                 vertices[end_vertex_i].xyz[0]) *
             (vertices[start_vertex_i].xyz[0] -
                 vertices[end_vertex_i].xyz[0]));
-        float squared_y =
+        f32 squared_y =
             ((vertices[start_vertex_i].xyz[1] -
                 vertices[end_vertex_i].xyz[1]) *
             (vertices[start_vertex_i].xyz[1] -
                 vertices[end_vertex_i].xyz[1]));
-        float squared_z =
+        f32 squared_z =
             ((vertices[start_vertex_i].xyz[2] -
                 vertices[end_vertex_i].xyz[2]) *
             (vertices[start_vertex_i].xyz[2] -
                 vertices[end_vertex_i].xyz[2]));
         
-        float new_squared_dist =
+        f32 new_squared_dist =
             squared_x +
             squared_y +
             squared_z;
@@ -1858,18 +1857,18 @@ static float get_squared_triangle_length_from_locked_vertices(
     return largest_squared_dist;
 }
 
-static int32_t find_biggest_area_triangle_head_in(
-    int32_t head_vertex_i,
-    int32_t tail_vertex_i)
+static s32 find_biggest_area_triangle_head_in(
+    s32 head_vertex_i,
+    s32 tail_vertex_i)
 {
     T1_log_assert(tail_vertex_i > head_vertex_i);
     T1_log_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
     
-    float biggest_area = T1_F32_MIN;
-    int32_t biggest_area_i = -1;
+    f32 biggest_area = T1_F32_MIN;
+    s32 biggest_area_i = -1;
     
-    for (int32_t i = head_vertex_i; i < (tail_vertex_i - 1); i += 3) {
-        float area = get_squared_triangle_length_from_locked_vertices(
+    for (s32 i = head_vertex_i; i < (tail_vertex_i - 1); i += 3) {
+        f32 area = get_squared_triangle_length_from_locked_vertices(
             T1_mesh_summary_all_vertices->gpu_data + i);
         T1_log_assert(area > 0.0f);
         if (area > biggest_area) {
@@ -1883,8 +1882,8 @@ static int32_t find_biggest_area_triangle_head_in(
 }
 
 void T1_objmodel_create_shattered_version_of_mesh(
-    const int32_t mesh_id,
-    const uint32_t triangles_multiplier)
+    const s32 mesh_id,
+    const u32 triangles_multiplier)
 {
     T1_log_assert(triangles_multiplier >= 1);
     if (triangles_multiplier == 1) {
@@ -1895,27 +1894,27 @@ void T1_objmodel_create_shattered_version_of_mesh(
         return;
     }
     
-    int32_t orig_head_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
+    s32 orig_head_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    int32_t orig_tail_i =
+    s32 orig_tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
         T1_mesh_summary_list[mesh_id].vertices_size;
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    int32_t orig_vertices_size = T1_mesh_summary_list[mesh_id].vertices_size;
+    s32 orig_vertices_size = T1_mesh_summary_list[mesh_id].vertices_size;
     
-    int32_t new_head_i = (int32_t)T1_mesh_summary_all_vertices->size;
+    s32 new_head_i = (s32)T1_mesh_summary_all_vertices->size;
     
     T1_mesh_summary_list[mesh_id].shattered_vertices_head_i = new_head_i;
     T1_mesh_summary_list[mesh_id].shattered_vertices_size =
         T1_mesh_summary_list[mesh_id].vertices_size *
-            (int32_t)triangles_multiplier;
+            (s32)triangles_multiplier;
     
-    int32_t goal_new_tail_i =
-        (int32_t)T1_mesh_summary_list[mesh_id].shattered_vertices_head_i +
-        (int32_t)T1_mesh_summary_list[mesh_id].shattered_vertices_size -
+    s32 goal_new_tail_i =
+        (s32)T1_mesh_summary_list[mesh_id].shattered_vertices_head_i +
+        (s32)T1_mesh_summary_list[mesh_id].shattered_vertices_size -
         1;
     
     /*
@@ -1926,8 +1925,8 @@ void T1_objmodel_create_shattered_version_of_mesh(
     */
     
     // first, copy all of the original triangle vertices as they are
-    int32_t temp_new_tail_i = new_head_i - 1;
-    for (int32_t i = 0; i < orig_vertices_size; i += 3) {
+    s32 temp_new_tail_i = new_head_i - 1;
+    for (s32 i = 0; i < orig_vertices_size; i += 3) {
         
         T1_log_assert(orig_head_i + i <= orig_tail_i);
         T1_mesh_summary_all_vertices->gpu_data[new_head_i + i + 0] =
@@ -1941,7 +1940,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_log_assert(new_head_i + i <= temp_new_tail_i);
         
-        float tri_length = get_squared_triangle_length_from_locked_vertices(
+        f32 tri_length = get_squared_triangle_length_from_locked_vertices(
             &T1_mesh_summary_all_vertices->gpu_data[new_head_i + i]);
         T1_log_assert(tri_length > 0);
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -1955,29 +1954,29 @@ void T1_objmodel_create_shattered_version_of_mesh(
     while (temp_new_tail_i < goal_new_tail_i) {
         
         // find the biggest triangle to split in 2
-        int32_t biggest_area_head_i = find_biggest_area_triangle_head_in(
+        s32 biggest_area_head_i = find_biggest_area_triangle_head_in(
             new_head_i,
             temp_new_tail_i);
         T1_log_assert(biggest_area_head_i >= new_head_i);
         T1_log_assert((biggest_area_head_i - new_head_i) % 3 == 0);
         
         // find a 'middle line' that splits this triangle in 2
-        int32_t midline_start_vert_i = 0;
-        int32_t midline_end_vert_i = 1;
+        s32 midline_start_vert_i = 0;
+        s32 midline_end_vert_i = 1;
         
         #define USE_MIDLINE -1
-        int32_t first_new_triangle_vertices[3];
-        int32_t second_new_triangle_vertices[3];
+        s32 first_new_triangle_vertices[3];
+        s32 second_new_triangle_vertices[3];
         
-        float distance_0_to_1 =
+        f32 distance_0_to_1 =
             get_squared_distance_from_locked_vertices(
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 0],
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 1]);
-        float distance_1_to_2 =
+        f32 distance_1_to_2 =
             get_squared_distance_from_locked_vertices(
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 1],
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2]);
-        float distance_2_to_0 =
+        f32 distance_2_to_0 =
             get_squared_distance_from_locked_vertices(
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2],
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 0]);
@@ -2120,7 +2119,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
         second_tri[1] = T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 1];
         second_tri[2] = T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2];
         
-        for (uint32_t m = 0; m < 3; m++) {
+        for (u32 m = 0; m < 3; m++) {
             
             if (first_new_triangle_vertices[m] == USE_MIDLINE) {
                 first_tri[m] = mid_of_line;
@@ -2144,12 +2143,12 @@ void T1_objmodel_create_shattered_version_of_mesh(
         }
         
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        float orig_area =
+        f32 orig_area =
             get_squared_triangle_length_from_locked_vertices(
                 &T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i]);
-        float first_tri_area =
+        f32 first_tri_area =
             get_squared_triangle_length_from_locked_vertices(first_tri);
-        float second_tri_area =
+        f32 second_tri_area =
             get_squared_triangle_length_from_locked_vertices(second_tri);
         T1_log_assert(orig_area > 0.0f);
         T1_log_assert(first_tri_area > 0.0f);
@@ -2163,7 +2162,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
         T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 1] = first_tri[1];
         T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2] = first_tri[2];
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        float overwritten_area =
+        f32 overwritten_area =
             get_squared_triangle_length_from_locked_vertices(
                 /* const GPULockedVertex * vertices: */
                     T1_mesh_summary_all_vertices->gpu_data + biggest_area_head_i);
@@ -2177,7 +2176,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
         T1_mesh_summary_all_vertices->gpu_data[temp_new_tail_i + 2] = second_tri[1];
         T1_mesh_summary_all_vertices->gpu_data[temp_new_tail_i + 3] = second_tri[2];
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        float new_area =
+        f32 new_area =
             get_squared_triangle_length_from_locked_vertices(
                 /* const GPULockedVertex * vertices: */
                     T1_mesh_summary_all_vertices->gpu_data + temp_new_tail_i + 1);
@@ -2191,7 +2190,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
         T1_log_assert(temp_new_tail_i <= goal_new_tail_i);
     }
     
-    T1_log_assert(T1_mesh_summary_all_vertices->size < (uint32_t)goal_new_tail_i);
+    T1_log_assert(T1_mesh_summary_all_vertices->size < (u32)goal_new_tail_i);
     
-    T1_mesh_summary_all_vertices->size = (uint32_t)goal_new_tail_i + 1;
+    T1_mesh_summary_all_vertices->size = (u32)goal_new_tail_i + 1;
 }

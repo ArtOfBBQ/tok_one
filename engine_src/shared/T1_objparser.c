@@ -7,20 +7,20 @@
 #error
 #endif
 
-static void * (* objparser_malloc_func)(size_t);
+static void * (* objparser_malloc_func)(u64);
 static void   (*   objparser_free_func)(void *);
 
 void T1_objparser_init(
-    void * (* arg_objparser_malloc_func)(size_t),
+    void * (* arg_objparser_malloc_func)(u64),
     void (* arg_objparser_free_func)(void *))
 {
     objparser_malloc_func = arg_objparser_malloc_func;
     objparser_free_func   = arg_objparser_free_func;
 }
 
-static unsigned int consume_uint(
+static u32 consume_u32(
     char ** raw_buffer,
-    uint8_t * good)
+    u8 * good)
 {
     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(*raw_buffer[0] >= '0');
@@ -35,10 +35,10 @@ static unsigned int consume_uint(
         return 0.0f;
     }
     
-    unsigned int return_value = 0;
+    u32 return_value = 0;
     
     while ((*raw_buffer)[0] >= '0' && (*raw_buffer)[0] <= '9') {
-        unsigned int new_digit = (unsigned int)((*raw_buffer)[0] - '0');
+        u32 new_digit = (u32)((*raw_buffer)[0] - '0');
         return_value *= 10;
         return_value += new_digit;
         (*raw_buffer)++;
@@ -47,11 +47,11 @@ static unsigned int consume_uint(
     return return_value;
 }
 
-static float consume_float(
+static f32 consume_f32(
     char ** raw_buffer,
-    uint8_t * good)
+    u8 * good)
 {
-    float final_multiplier = 1.0f;
+    f32 final_multiplier = 1.0f;
     if ((*raw_buffer)[0] == '-') {
         final_multiplier = -1.0f;
         (*raw_buffer)++;
@@ -70,10 +70,10 @@ static float consume_float(
         return 0.0f;
     }
     
-    unsigned int above_comma = consume_uint(raw_buffer, good);
-    unsigned int below_comma = 0;
-    float below_comma_adj = 0.0f;
-    unsigned int below_comma_leading_zeros = 0;
+    u32 above_comma = consume_u32(raw_buffer, good);
+    u32 below_comma = 0;
+    f32 below_comma_adj = 0.0f;
+    u32 below_comma_leading_zeros = 0;
     
     if ((*raw_buffer)[0] == '.') {
         (*raw_buffer)++;
@@ -84,7 +84,7 @@ static float consume_float(
         }
         
         if (*raw_buffer[0] >= '0' && *raw_buffer[0] <= '9') {
-            below_comma = consume_uint(raw_buffer, good);
+            below_comma = consume_u32(raw_buffer, good);
         }
         if (!*good) { return above_comma; }
     }
@@ -96,19 +96,19 @@ static float consume_float(
             below_comma_adj /= 10.0f;
         }
         
-        for (unsigned int _ = 0; _ < below_comma_leading_zeros; _++) {
+        for (u32 _ = 0; _ < below_comma_leading_zeros; _++) {
             below_comma_adj /= 10.0f;
         }
     }
-
-    float return_value = ((float)above_comma + below_comma_adj) *
+    
+    f32 return_value = ((f32)above_comma + below_comma_adj) *
         final_multiplier;
     
     if ((*raw_buffer)[0] == 'e') {
         // 'to the power of 10' adjustment
         (*raw_buffer)++;
         
-        unsigned int div_instead = 0;
+        u32 div_instead = 0;
         if ((*raw_buffer)[0] == '+') {
             (*raw_buffer)++;
         } else if ((*raw_buffer)[0] == '-') {
@@ -124,11 +124,11 @@ static float consume_float(
         #error
         #endif
         
-        unsigned int e_num = consume_uint(raw_buffer, good);
+        u32 e_num = consume_u32(raw_buffer, good);
         if (!good) { return 0.0f; }
         
-        unsigned int extracted_mod = 10;
-        for (unsigned int _ = 1; _ < e_num; _++) {
+        u32 extracted_mod = 10;
+        for (u32 _ = 1; _ < e_num; _++) {
             extracted_mod *= 10;
         }
         
@@ -145,12 +145,12 @@ static float consume_float(
     return return_value;
 }
 
-static void consume_separated_uints(
+static void consume_separated_u32s(
     char ** from_buffer,
-    int * recipient,
-    uint8_t * good)
+    s32 * recipient,
+    u8 * good)
 {
-    unsigned int new_num = consume_uint(
+    u32 new_num = consume_u32(
         from_buffer,
         good);
     
@@ -162,9 +162,9 @@ static void consume_separated_uints(
     #else
     #error
     #endif
-    recipient[0] = (int)new_num;
+    recipient[0] = (s32)new_num;
     
-    unsigned int recipient_i = 0;
+    u32 recipient_i = 0;
     while ((*from_buffer)[0] == '/') {
         
         (*from_buffer)++; // ditch the '/'
@@ -174,7 +174,7 @@ static void consume_separated_uints(
             recipient[recipient_i] = -1;
             continue;
         } else {
-            new_num = consume_uint(
+            new_num = consume_u32(
                 from_buffer,
                 good);
         }
@@ -187,7 +187,7 @@ static void consume_separated_uints(
         #else
         #error
         #endif
-        recipient[recipient_i] = (int)new_num;
+        recipient[recipient_i] = (s32)new_num;
     }
 }
 
@@ -203,15 +203,15 @@ this text doesnt matter"
 ...has 3 faces because there are 3 spaces followed by numbers before the next
 line break.
 */
-static unsigned int count_upcoming_spacenums(
+static u32 count_upcoming_spacenums(
     const char * in_buffer)
 {
-    unsigned int return_value = 0;
+    u32 return_value = 0;
     
-    unsigned int i = 0;
+    u32 i = 0;
     while (in_buffer[i] != '\n' && in_buffer[i] != '\0') {
         if (in_buffer[i] == ' ') {
-            unsigned int j = i;
+            u32 j = i;
             while (in_buffer[j] == ' ') {
                 j++;
             }
@@ -233,11 +233,11 @@ static unsigned int count_upcoming_spacenums(
     return return_value;
 }
 
-static int get_material_i_or_register_new(
+static s32 get_material_i_or_register_new(
     T1ParsedObj * in_obj,
     char * name)
 {
-    int already_exist_i = -1;
+    s32 already_exist_i = -1;
     
     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(name[0] != '\0');
@@ -246,14 +246,14 @@ static int get_material_i_or_register_new(
     #error
     #endif
     
-    unsigned int char_i;
+    u32 char_i;
     for (
-        unsigned int mat_i = 0;
+        u32 mat_i = 0;
         mat_i < in_obj->materials_count;
         mat_i++)
     {
         char_i = 0;
-        unsigned int match = 1;
+        u32 match = 1;
         while (name[char_i] != '\0') {
             if (in_obj->material_names[mat_i].name[char_i] !=
                 name[char_i])
@@ -267,7 +267,7 @@ static int get_material_i_or_register_new(
         if (!match) {
             continue;
         } else {
-            already_exist_i = (int)mat_i;
+            already_exist_i = (s32)mat_i;
             break;
         }
     }
@@ -276,8 +276,8 @@ static int get_material_i_or_register_new(
         return already_exist_i;
     }
     
-    int first_unused_material = -1;
-    for (int _ = 0; _ <= (int)in_obj->materials_count; _++) {
+    s32 first_unused_material = -1;
+    for (s32 _ = 0; _ <= (s32)in_obj->materials_count; _++) {
         if (in_obj->material_names[_].name[0] == '\0') {
             first_unused_material = _;
             break;
@@ -307,7 +307,7 @@ static int get_material_i_or_register_new(
 void T1_objparser_parse(
     T1ParsedObj * recipient,
     const char * raw_buf,
-    uint8_t * success)
+    u8 * success)
 {
     char * raw_buffer = (char *)raw_buf;
     
@@ -331,7 +331,7 @@ void T1_objparser_parse(
     recipient->normals_vn = 0;
     recipient->material_names = objparser_malloc_func(
         sizeof(T1MaterialName) * 200);
-    for (unsigned int i = 0; i < 200; i++) {
+    for (u32 i = 0; i < 200; i++) {
         recipient->material_names[i].name[0] = '\0';
     }
     
@@ -347,7 +347,7 @@ void T1_objparser_parse(
     1st run: count the number of vertices and faces so we know how much memory
     to allocate.
     */
-    unsigned int i = 0;
+    u32 i = 0;
     while (raw_buffer[i] != '\0') {
         if (raw_buffer[i] == '#') {
             // Ignore comment
@@ -372,7 +372,7 @@ void T1_objparser_parse(
             i += 7;
             
             char material_name[64];
-            unsigned int char_i = 0;
+            u32 char_i = 0;
             while (
                 raw_buffer[i] != '\n' &&
                 raw_buffer[i] != '\r' &&
@@ -383,15 +383,15 @@ void T1_objparser_parse(
             }
             material_name[char_i] = '\0';
             
-            int new_material_i = get_material_i_or_register_new(
+            s32 new_material_i = get_material_i_or_register_new(
                 recipient,
                 material_name);
-            if (new_material_i >= (int)recipient->materials_count) {
+            if (new_material_i >= (s32)recipient->materials_count) {
                 recipient->materials_count += 1;
             }
             
             #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-            assert(new_material_i < (int)recipient->materials_count);
+            assert(new_material_i < (s32)recipient->materials_count);
             #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
@@ -409,7 +409,7 @@ void T1_objparser_parse(
             we are essentially looking for a space(s) followed by a number(s)
             or a 'spacenum'
             */
-            unsigned int spacenums_before_lb = count_upcoming_spacenums(
+            u32 spacenums_before_lb = count_upcoming_spacenums(
                 raw_buffer + i);
             
             if (spacenums_before_lb == 3) {
@@ -451,18 +451,18 @@ void T1_objparser_parse(
     }
     
     recipient->vertices = objparser_malloc_func(
-        sizeof(unsigned int[6]) * recipient->vertices_count);
+        sizeof(u32[6]) * recipient->vertices_count);
     if (recipient->materials_count > 0) {
         recipient->material_names = objparser_malloc_func(
             sizeof(T1MaterialName) * recipient->materials_count);
-        for (unsigned int j = 0; j < recipient->materials_count; j++) {
+        for (u32 j = 0; j < recipient->materials_count; j++) {
             recipient->material_names[j].name[0] = '\0';
         }
     }
     
     if (recipient->normals_count > 0) {
         recipient->normals_vn = objparser_malloc_func(
-            sizeof(unsigned int[3]) * recipient->normals_count);
+            sizeof(u32[3]) * recipient->normals_count);
         
         #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(
@@ -474,17 +474,17 @@ void T1_objparser_parse(
         
         if (recipient->triangles_count > 0) {
             recipient->triangle_normals = objparser_malloc_func(
-                sizeof(unsigned int[3]) * recipient->triangles_count);
+                sizeof(u32[3]) * recipient->triangles_count);
         }
         
         if (recipient->quads_count > 0) {
             recipient->quad_normals = objparser_malloc_func(
-                sizeof(unsigned int[4]) * recipient->quads_count);
+                sizeof(u32[4]) * recipient->quads_count);
         }
     }
     if (recipient->textures_count > 0) {
         recipient->textures_vt_uv = objparser_malloc_func(
-            sizeof(float[2]) * recipient->textures_count);
+            sizeof(f32[2]) * recipient->textures_count);
         
         #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(
@@ -496,9 +496,9 @@ void T1_objparser_parse(
         
         if (recipient->triangles_count > 0) {
             recipient->triangle_textures = objparser_malloc_func(
-                sizeof(unsigned int[3]) * recipient->triangles_count);
+                sizeof(u32[3]) * recipient->triangles_count);
             for (
-                unsigned int tri_i = 0;
+                u32 tri_i = 0;
                 tri_i < recipient->triangles_count;
                 tri_i++)
             {
@@ -510,9 +510,9 @@ void T1_objparser_parse(
         
         if (recipient->quads_count > 0) {
             recipient->quad_textures = objparser_malloc_func(
-                sizeof(unsigned int[4]) * recipient->quads_count);
+                sizeof(u32[4]) * recipient->quads_count);
             for (
-                unsigned int quad_i = 0;
+                u32 quad_i = 0;
                 quad_i < recipient->quads_count;
                 quad_i++)
             {
@@ -526,11 +526,11 @@ void T1_objparser_parse(
     
     if (recipient->triangles_count > 0) {
         recipient->triangles = objparser_malloc_func(
-            sizeof(unsigned int) *
+            sizeof(u32) *
             5 *
             recipient->triangles_count);
     }
-    for (unsigned int j = 0; j < recipient->triangles_count; j++) {
+    for (u32 j = 0; j < recipient->triangles_count; j++) {
         recipient->triangles[j][0] = 0; // vertex index 1
         recipient->triangles[j][1] = 0; // vertex index 2
         recipient->triangles[j][2] = 0; // vertex index 3
@@ -540,11 +540,11 @@ void T1_objparser_parse(
     
     if (recipient->quads_count > 0) {
         recipient->quads = objparser_malloc_func(
-            sizeof(unsigned int) *
+            sizeof(u32) *
             6 *
             recipient->quads_count);
     }
-    for (unsigned int j = 0; j < recipient->quads_count; j++) {
+    for (u32 j = 0; j < recipient->quads_count; j++) {
         recipient->quads[j][0] = 0; // vertex index 1
         recipient->quads[j][1] = 0; // vertex index 2
         recipient->quads[j][2] = 0; // vertex index 3
@@ -554,13 +554,13 @@ void T1_objparser_parse(
     }
     
     // run 2: read in the data
-    unsigned int cur_vertex_i = 0;
-    unsigned int cur_texture_i = 0;
-    unsigned int cur_normal_i = 0;
-    unsigned int cur_material_i = 0;
-    unsigned int cur_triangle_i = 0;
-    unsigned int cur_quad_i = 0;
-    unsigned int smooth_shading = 0;
+    u32 cur_vertex_i = 0;
+    u32 cur_texture_i = 0;
+    u32 cur_normal_i = 0;
+    u32 cur_material_i = 0;
+    u32 cur_triangle_i = 0;
+    u32 cur_quad_i = 0;
+    u32 smooth_shading = 0;
     
     while (raw_buffer[0] != '\0') {
         while (raw_buffer[0] == ' ' || raw_buffer[0] == '\n') {
@@ -651,7 +651,7 @@ void T1_objparser_parse(
                 raw_buffer++;
             }
             
-            for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
+            for (u32 axis_i = 0; axis_i < 3; axis_i++) {
                 #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(cur_vertex_i < recipient->vertices_count);
                 #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
@@ -659,7 +659,7 @@ void T1_objparser_parse(
                 #error
                 #endif
                 recipient->vertices[cur_vertex_i][axis_i] =
-                    consume_float(&raw_buffer, success);
+                    consume_f32(&raw_buffer, success);
                 if (!*success) {
                     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(0);
@@ -689,7 +689,7 @@ void T1_objparser_parse(
             raw_buffer++; // skip the 'f'
             
             // peek ahead to decide how many vertices in this face
-            unsigned int vertices_in_face_count = count_upcoming_spacenums(
+            u32 vertices_in_face_count = count_upcoming_spacenums(
                 raw_buffer);
             
             while (raw_buffer[0] == ' ') {
@@ -703,7 +703,7 @@ void T1_objparser_parse(
             #error
             #endif
             
-            int indexes[4];
+            s32 indexes[4];
             switch (vertices_in_face_count) {
                 case 3: {
                     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
@@ -714,13 +714,13 @@ void T1_objparser_parse(
                     #error
                     #endif
                     
-                    unsigned int consec_entry_i = 0;
+                    u32 consec_entry_i = 0;
                     while (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                         indexes[0] = -1;
                         indexes[1] = -1;
                         indexes[2] = -1;
                         indexes[3] = -1;
-                        consume_separated_uints(
+                        consume_separated_u32s(
                             &raw_buffer,
                             indexes,
                             success);
@@ -747,25 +747,25 @@ void T1_objparser_parse(
                         }
                         
                         recipient->triangles[cur_triangle_i][consec_entry_i] =
-                            (unsigned int)indexes[0];
+                            (u32)indexes[0];
                         
                         if (indexes[1] >= 0) {
                             #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->triangle_textures != 0);
                             assert(indexes[1] >= 1);
                             assert(
-                                indexes[1] <= (int)recipient->textures_count);
+                                indexes[1] <= (s32)recipient->textures_count);
                             #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
                             #else
                             #error
                             #endif
                             recipient->triangle_textures[cur_triangle_i]
-                                [consec_entry_i] = (unsigned int)indexes[1];
+                                [consec_entry_i] = (u32)indexes[1];
                         }
                         
                         if (indexes[2] >= 0) {
                             recipient->triangle_normals[cur_triangle_i]
-                                [consec_entry_i] = (unsigned int)indexes[2];
+                                [consec_entry_i] = (u32)indexes[2];
                             #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->triangle_normals[cur_triangle_i]
                                 [consec_entry_i] > 0);
@@ -818,13 +818,13 @@ void T1_objparser_parse(
                     #error
                     #endif
                     
-                    unsigned int consec_entry_i = 0;
+                    u32 consec_entry_i = 0;
                     while (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                         indexes[0] = -1;
                         indexes[1] = -1;
                         indexes[2] = -1;
                         indexes[3] = -1;
-                        consume_separated_uints(
+                        consume_separated_u32s(
                             &raw_buffer,
                             indexes,
                             success);
@@ -843,20 +843,20 @@ void T1_objparser_parse(
                         }
                         
                         recipient->quads[cur_quad_i][consec_entry_i] =
-                            (unsigned int)indexes[0];
+                            (u32)indexes[0];
                         
                         if (indexes[1] >= 0) {
                             #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
                             assert(recipient->quad_textures != 0);
                             assert(indexes[1] >= 1);
                             assert(
-                                indexes[1] <= (int)recipient->textures_count);
+                                indexes[1] <= (s32)recipient->textures_count);
                             #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
                             #else
                             #error
                             #endif
                             recipient->quad_textures[cur_quad_i]
-                                [consec_entry_i] = (unsigned int)indexes[1];
+                                [consec_entry_i] = (u32)indexes[1];
                         }
                         
                         if (indexes[2] >= 0) {
@@ -867,7 +867,7 @@ void T1_objparser_parse(
                             #error
                             #endif
                             recipient->quad_normals[cur_quad_i]
-                                [consec_entry_i] = (unsigned int)indexes[2];
+                                [consec_entry_i] = (u32)indexes[2];
                         }
                         
                         while (raw_buffer[0] == ' ') {
@@ -922,9 +922,9 @@ void T1_objparser_parse(
                 raw_buffer++;
             }
             
-            for (unsigned int uv_i = 0; uv_i < 2; uv_i++) {
+            for (u32 uv_i = 0; uv_i < 2; uv_i++) {
                 recipient->textures_vt_uv[cur_texture_i][uv_i] =
-                    consume_float(&raw_buffer, success);
+                    consume_f32(&raw_buffer, success);
                 if (!*success) { return; }
                 
                 while (raw_buffer[0] == ' ') {
@@ -934,7 +934,7 @@ void T1_objparser_parse(
             
             if (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                 // w coordinate of uv coordinate
-                float w_coordinate = consume_float(&raw_buffer, success);
+                f32 w_coordinate = consume_f32(&raw_buffer, success);
                 (void)w_coordinate;
                 
                 if (!*success) {
@@ -969,9 +969,9 @@ void T1_objparser_parse(
                 raw_buffer++;
             }
             
-            for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
+            for (u32 axis_i = 0; axis_i < 3; axis_i++) {
                 recipient->normals_vn[cur_normal_i][axis_i] =
-                    consume_float(&raw_buffer, success);
+                    consume_f32(&raw_buffer, success);
                 if (!*success) { return; }
                 
                 while (raw_buffer[0] == ' ') {
@@ -1000,7 +1000,7 @@ void T1_objparser_parse(
             raw_buffer += 7;
             
             char material_name[64];
-            unsigned int char_i = 0;
+            u32 char_i = 0;
             while (
                 raw_buffer[0] != '\n' &&
                 raw_buffer[0] != '\r' &&
@@ -1011,7 +1011,7 @@ void T1_objparser_parse(
             }
             material_name[char_i] = '\0';
             
-            cur_material_i = (unsigned int)get_material_i_or_register_new(
+            cur_material_i = (u32)get_material_i_or_register_new(
                 recipient,
                 material_name);
         } else {
@@ -1052,7 +1052,7 @@ void T1_objparser_parse(
     }
     
     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-    for (unsigned int tri_i = 0; tri_i < recipient->triangles_count; tri_i++) {
+    for (u32 tri_i = 0; tri_i < recipient->triangles_count; tri_i++) {
         if (recipient->triangle_normals != 0) {
             assert(recipient->triangle_normals[tri_i][0] >= 1);
             assert(recipient->triangle_normals[tri_i][1] >= 1);
@@ -1065,9 +1065,9 @@ void T1_objparser_parse(
                 recipient->normals_count);
         }
     }
-    for (unsigned int quad_i = 0; quad_i < recipient->quads_count; quad_i++) {
+    for (u32 quad_i = 0; quad_i < recipient->quads_count; quad_i++) {
         if (recipient->quad_textures != 0) {
-            for (unsigned int m = 0; m < 4; m++) {
+            for (u32 m = 0; m < 4; m++) {
                 assert(recipient->quad_textures[quad_i][m] >= 1);
                 assert(
                     (recipient->quad_textures[quad_i][m] - 1) <

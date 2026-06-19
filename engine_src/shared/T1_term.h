@@ -3,14 +3,14 @@
 #ifndef T1_TERM_H
 #define T1_TERM_H
 
-#include "T1_std.h"
+#include "T1_public_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-extern bool8_t T1_term_active;
+extern b8 T1_term_active;
 
 void
 T1_term_init(
@@ -26,7 +26,7 @@ void
 T1_term_render(void);
 
 void
-T1_term_sendchar(uint32_t to_send);
+T1_term_sendchar(u32 to_send);
 
 void
 T1_term_commit_or_activate(void);

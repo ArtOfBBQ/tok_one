@@ -3,104 +3,102 @@
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 
-#include <stdint.h>
-
-#include "T1_std.h"
+#include "T1_stdint.h"
 
 typedef struct {
-    int16_t * samples_buffer;
-    uint64_t play_cursor;
-    uint64_t callback_runs;
-    uint32_t platform_buffer_size_bytes;
-    uint32_t global_buffer_size_bytes;
-    uint32_t global_samples_size;
-    float tone_frequency;
-    float volume;
-    float sfx_volume;
-    float music_volume;
-    float sample_rate;
+    i16 * samples_buffer;
+    u64 play_cursor;
+    u64 callback_runs;
+    u32 platform_buffer_size_bytes;
+    u32 global_buffer_size_bytes;
+    u32 global_samples_size;
+    f32 tone_frequency;
+    f32 volume;
+    f32 sfx_volume;
+    f32 music_volume;
+    f32 sample_rate;
 } T1AudioSettings;
 
-extern T1AudioSettings * T1_audio_state;
+extern T1AudioSettings * T1_audio_s;
 
 void T1_audio_init(
-    void * (* arg_malloc_function)(size_t size));
+    void * (* arg_malloc_function)(u64 size));
 
 void T1_audio_consume_int16_samples(
-    int16_t * recipient,
-    const uint32_t samples_to_copy);
+    i16 * recipient,
+    const u32 samples_to_copy);
 
 void T1_audio_add(
-    int16_t * data,
-    const uint32_t data_size,
-    const float volume_mult);
+    i16 * data,
+    const u32 data_size,
+    const f32 volume_mult);
 
 void T1_audio_add_at_offset(
-    int16_t * data,
-    const uint32_t data_size,
-    const uint64_t play_cursor_offset,
-    const float volume_mult);
+    i16 * data,
+    const u32 data_size,
+    const u64 play_cursor_offset,
+    const f32 volume_mult);
 
 void T1_audio_copy(
-    int16_t * data,
-    const uint32_t data_size,
-    const bool8_t is_music);
+    i16 * data,
+    const u32 data_size,
+    const b8 is_music);
 
 void T1_audio_copy_at_offset(
-    int16_t * samples,
-    const uint32_t samples_size,
-    const uint64_t play_cursor_offset,
-    const bool8_t is_music);
+    i16 * samples,
+    const u32 samples_size,
+    const u64 play_cursor_offset,
+    const b8 is_music);
 
 void
 T1_audio_add_permasound_to_global_buffer_at_offset(
-    const int32_t permasound_id,
-    const uint64_t play_cursor_offset,
-    const float volume_mult);
+    const s32 permasound_id,
+    const u64 play_cursor_offset,
+    const f32 volume_mult);
 
 void
 T1_audio_add_offset_permasound_to_global_buffer_at_offset(
-    const int32_t permasound_id,
-    const uint64_t permasound_offset,
-    const uint64_t play_cursor_offset,
-    const float volume_mult);
+    const s32 permasound_id,
+    const u64 permasound_offset,
+    const u64 play_cursor_offset,
+    const f32 volume_mult);
 
 void
 T1_audio_add_permasound_to_global_buffer(
-    const int32_t permasound_id,
-    const float volume_float);
+    const s32 permasound_id,
+    const f32 volume_f32);
 
 void
 T1_audio_copy_permasound_to_global_buffer_at_offset(
-    const int32_t permasound_id,
-    const uint64_t play_cursor_offset,
-    const bool8_t is_music);
+    const s32 permasound_id,
+    const u64 play_cursor_offset,
+    const b8 is_music);
 
 void
 T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
-    const int32_t permasound_id,
-    const uint64_t permasound_offset,
-    const uint64_t play_cursor_offset,
-    const uint32_t samples_to_copy_size,
-    const bool8_t is_music);
+    const s32 permasound_id,
+    const u64 permasound_offset,
+    const u64 play_cursor_offset,
+    const u32 samples_to_copy_size,
+    const b8 is_music);
 
 void
 T1_audio_copy_permasound_to_global_buffer(
-    const int32_t permasound_id,
-    const float volume_mult);
+    const s32 permasound_id,
+    const f32 volume_mult);
 
 void
 T1_audio_clear_global_buffer(void);
 
-int32_t
+s32
 T1_audio_get_permasound_id_or_register_new(
     const char * for_resource_name);
 
 void
 T1_audio_register_samples_to_permasound(
-    const int32_t permasound_id,
-    int16_t * samples,
-    const int32_t samples_size);
+    const s32 permasound_id,
+    i16 * samples,
+    const s32 samples_size);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 // Pass
 #else

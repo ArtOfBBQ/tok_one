@@ -66,7 +66,7 @@ typedef struct
     float4 projpos [[position]];
     float4 worldpos;
     float4 viewpos;
-    float2 texture_coordinate;
+    float2 texcoord;
     // float4 worldpos;
     float4 normal_viewspace;
     float4 tangent_viewspace;
@@ -124,7 +124,7 @@ vertex_shader(
     
     if (
         c->write_to_shadow_maps &&
-        zs->f32.shadow_strength < 0.1f)
+        zs->f32s.shadow_strength < 0.1f)
     {
         out.projpos = vector_float4(
             0.0f, 0.0f, 500.0f, 1.0f);
@@ -142,10 +142,15 @@ vertex_shader(
         lv->norm_xyz[1],
         lv->norm_xyz[2]);
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     float3 face_normal = vector_float3(
         lv->face_normal_xyz[0],
         lv->face_normal_xyz[1],
         lv->face_normal_xyz[2]);
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     float3 vertex_tangent = vector_float3(
@@ -176,10 +181,6 @@ vertex_shader(
         vector_float4(0.0f, 0.0f, 0.0f, 1.0f));
     #endif
     
-    out.worldpos += (
-        zs->f32.explode *
-        vector_float4(face_normal, 0.0f));
-    
     float4x4 view = matrix_float4x4(
         c->v_4x4[ 0], c->v_4x4[ 1], c->v_4x4[ 2], c->v_4x4[ 3],
         c->v_4x4[ 4], c->v_4x4[ 5], c->v_4x4[ 6], c->v_4x4[ 7],
@@ -188,15 +189,15 @@ vertex_shader(
     
     out.viewpos = out.worldpos * view;
     
-    float ic = clamp(zs->f32.ignore_camera, 0.0f, 1.0f);
+    float ic = clamp(zs->f32s.no_camera, 0.0f, 1.0f);
     
     out.viewpos =
         (ic * out.worldpos) +
         (1.0f - ic) * out.viewpos;
     
-    out.touchable_id = zs->i32.touch_id;
+    out.touchable_id = zs->s32.touch_id;
     
-    out.texture_coordinate = vector_float2(lv->uv[0], lv->uv[1]);
+    out.texcoord = vector_float2(lv->uv[0], lv->uv[1]);
     
     float4x4 projection = matrix_float4x4(
         c->p_4x4[ 0], c->p_4x4[ 1], c->p_4x4[ 2], c->p_4x4[ 3],
@@ -358,12 +359,12 @@ float4 get_lit(
     #error
     #endif
     array<texture2d_array<half>, T1_TEXARRAYS_CAP> color_textures,
-    const uint32_t camera_i,
+    const uint32_t cam_i,
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
     const device T1GPUzSprite * zsprite,
     const device T1GPUConstMatf32 * matf32,
-    const device T1GPUConstMati32 * mati32,
+    const device T1GPUConstMats32 * mati32,
     const device T1GPUPostProcConsts * globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
@@ -401,11 +402,11 @@ float4 get_lit(
     
     float2 uv_orig =
         vector_float2(
-            zsprite->f32.base_mat_uv_offsets[0],
-            zsprite->f32.base_mat_uv_offsets[1]);
+            zsprite->f32s.base_mat_uv_offsets[0],
+            zsprite->f32s.base_mat_uv_offsets[1]);
     
     float2 uv_adjusted =
-        in.texture_coordinate + (
+        in.texcoord + (
         is_base_mtl *
         uv_orig);
     
@@ -434,8 +435,8 @@ float4 get_lit(
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE 
     if (tex != 0xFFFF)
     {
-    int texarray_i = tex >> 11;
-    int texslice_i = tex & 0x07FF;
+        int texarray_i = tex >> 11;
+        int texslice_i = tex & 0x07FF;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     if (mati32->texturearray_i == 0)
     {
@@ -451,13 +452,13 @@ float4 get_lit(
         texture_base = float4(color_sample);
     }
     
-    if ((zsprite->i32.mix_rv_and_mix_tex & 0x0000FFFF) != 0xFFFF) {
+    if ((zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != 0xFFFF) {
         
-        int mix_rv = zsprite->i32.mix_rv_and_mix_tex >> 16;
+        int mix_rv = zsprite->s32.mix_rv_and_mix_tex >> 16;
         int mix_array_i =
-            (zsprite->i32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
+            (zsprite->s32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
         int mix_slice_i =
-            zsprite->i32.mix_rv_and_mix_tex & 0x000007FF;
+            zsprite->s32.mix_rv_and_mix_tex & 0x000007FF;
         
         const device T1GPURenderView * rfv = &render_views[mix_rv];
         
@@ -477,10 +478,8 @@ float4 get_lit(
         
         float mix_strength = 0.95f;
         
-        float fade_x =
-            refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
-        float fade_y =
-            refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
+        float fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
+        float fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
         float fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
         mix_strength *= fade;
         
@@ -496,8 +495,7 @@ float4 get_lit(
             (float4(color_sample) * mix_strength);
     }
     
-    float4 ignore_lighting_color =
-        diffuse_base * texture_base;
+    float4 no_lighting_color = diffuse_base * texture_base;
     
     for (
         uint32_t i = 0;
@@ -522,8 +520,7 @@ float4 get_lit(
                 worldspace_to_clipspace(
                     in.worldpos,
                     &render_views[
-                        lights[i].
-                            shadow_map_render_view_i]);
+                        lights[i].shadow_map_render_view_i]);
             
             float2 shadow_uv =
                 ((light_clip_pos.xy /
@@ -561,33 +558,31 @@ float4 get_lit(
         #error
         #endif
         
-        float4 light_pos_world =
-            vector_float4(
-                lights[i].xyz[0],
-                lights[i].xyz[1],
-                lights[i].xyz[2],
-                1.0f);
+        float4 light_pos_world = vector_float4(
+            lights[i].xyz[0],
+            lights[i].xyz[1],
+            lights[i].xyz[2],
+            1.0f);
         
         float4x4 cam_v_4x4 = matrix_float4x4(
-            render_views[camera_i].v_4x4[ 0],
-            render_views[camera_i].v_4x4[ 1],
-            render_views[camera_i].v_4x4[ 2],
-            render_views[camera_i].v_4x4[ 3],
-            render_views[camera_i].v_4x4[ 4],
-            render_views[camera_i].v_4x4[ 5],
-            render_views[camera_i].v_4x4[ 6],
-            render_views[camera_i].v_4x4[ 7],
-            render_views[camera_i].v_4x4[ 8],
-            render_views[camera_i].v_4x4[ 9],
-            render_views[camera_i].v_4x4[10],
-            render_views[camera_i].v_4x4[11],
-            render_views[camera_i].v_4x4[12],
-            render_views[camera_i].v_4x4[13],
-            render_views[camera_i].v_4x4[14],
-            render_views[camera_i].v_4x4[15]);
+            render_views[cam_i].v_4x4[ 0],
+            render_views[cam_i].v_4x4[ 1],
+            render_views[cam_i].v_4x4[ 2],
+            render_views[cam_i].v_4x4[ 3],
+            render_views[cam_i].v_4x4[ 4],
+            render_views[cam_i].v_4x4[ 5],
+            render_views[cam_i].v_4x4[ 6],
+            render_views[cam_i].v_4x4[ 7],
+            render_views[cam_i].v_4x4[ 8],
+            render_views[cam_i].v_4x4[ 9],
+            render_views[cam_i].v_4x4[10],
+            render_views[cam_i].v_4x4[11],
+            render_views[cam_i].v_4x4[12],
+            render_views[cam_i].v_4x4[13],
+            render_views[cam_i].v_4x4[14],
+            render_views[cam_i].v_4x4[15]);
         
-        float4 light_viewspace =
-            light_pos_world * cam_v_4x4;
+        float4 light_viewspace = light_pos_world * cam_v_4x4;
         
         float distance = get_distance_f3(
             (float3)light_viewspace,
@@ -611,6 +606,7 @@ float4 get_lit(
         
         #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
         // TODO: normal mapping in viewspace
+        #if 0
         if (material->normalmap_texturearray_i >= 0) {
             half4 normal_map_sample =
                 color_textures[material->normalmap_texturearray_i].sample(
@@ -638,6 +634,7 @@ float4 get_lit(
             normal_viewspace = normalize(
                 normal_viewspace);
         }
+        #endif
         #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -651,15 +648,13 @@ float4 get_lit(
             0.0f) * 0.85f + 0.15f;
         
         float4 light_diffuse_multiplier =
-            attenuation *
-            light_color *
-            diffuse_dot *
-            lights[i].diffuse *
-            shadow_factors;
+             attenuation *
+             light_color *
+             diffuse_dot *
+             lights[i].diffuse *
+             shadow_factors;
         
-        lit_color += (
-            diffuse_base *
-            light_diffuse_multiplier);
+        lit_color += (diffuse_base * light_diffuse_multiplier);
         #elif T1_DIFFUSE_LIGHTING_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -696,23 +691,29 @@ float4 get_lit(
         #endif
     }
     
+    if (globals->lights_size == 0) {
+        lit_color[0] = 0.0f;
+        lit_color[1] = 1.0f;
+        lit_color[2] = 1.0f;
+        lit_color[3] = 1.0f;
+    }
+    
     lit_color *= texture_base;
     
+    float no_lighting = clamp(zsprite->f32s.no_lighting, 0.0f, 1.0f);
     lit_color =
-        ((1.0f - zsprite->f32.ignore_lighting) *
-            lit_color) +
-        (zsprite->f32.ignore_lighting *
-            ignore_lighting_color);
+        ((1.0f - no_lighting) * lit_color) +
+        (no_lighting * no_lighting_color);
     
-    lit_color[3] *= zsprite->f32.alpha * matf32->alpha;
+    lit_color[3] *= zsprite->f32s.alpha * matf32->alpha;
     
     lit_color += vector_float4(
-        zsprite->f32.bonus_rgb[0],
-        zsprite->f32.bonus_rgb[1],
-        zsprite->f32.bonus_rgb[2],
+        zsprite->f32s.bonus_rgb[0],
+        zsprite->f32s.bonus_rgb[1],
+        zsprite->f32s.bonus_rgb[2],
         0.0f);
     
-    lit_color = clamp(lit_color, 0.0f, 1.0f);
+    lit_color = clamp(lit_color, 0.1f, 1.0f);
     
     return lit_color;
 }
@@ -738,11 +739,11 @@ fragment_shader(
         render_views [[ buffer(3) ]],
     constant uint32_t &camera_i [[buffer(4)]],
     const device T1GPUConstMatf32 * const_mats_f32 [[ buffer(6) ]],
-    const device T1GPUConstMati32 * const_mats_i32 [[ buffer(8) ]],
+    const device T1GPUConstMats32 * const_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].f32.ignore_camera < 0.05f &&
+        polygons[in.polygon_i].f32s.no_camera < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -756,12 +757,12 @@ fragment_shader(
         locked_vertices[in.locked_vertex_i].parent_material_i;
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].f32.base_mat_f32 :
+            &polygons[in.polygon_i].f32s.base_mat_f32 :
             &const_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
-    const device T1GPUConstMati32 * mati32 =
+    const device T1GPUConstMats32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].i32.base_mat_i32 :
+            &polygons[in.polygon_i].s32.base_mat_s32 :
             &const_mats_i32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     
@@ -834,11 +835,11 @@ alphablending_fragment_shader(
     const device T1GPURenderView * render_views [[ buffer(3) ]],
     constant uint &camera_i [[buffer(4)]],
     const device T1GPUConstMatf32 * locked_mats_f32 [[ buffer(6) ]],
-    const device T1GPUConstMati32 * locked_mats_i32 [[ buffer(8) ]],
+    const device T1GPUConstMats32 * locked_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].f32.ignore_camera < 0.05f &&
+        polygons[in.polygon_i].f32s.no_camera < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -853,11 +854,11 @@ alphablending_fragment_shader(
     
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].f32.base_mat_f32 :
+            &polygons[in.polygon_i].f32s.base_mat_f32 :
             &locked_mats_f32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
-    const device T1GPUConstMati32 * mati32 =
+    const device T1GPUConstMats32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].i32.base_mat_i32 :
+            &polygons[in.polygon_i].s32.base_mat_s32 :
             &locked_mats_i32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
@@ -1235,8 +1236,8 @@ flat_texquad_vertex_shader(
     uint corner_id  = vertex_i % 6;
     
     float2 size_xy = vector_float2(
-        quads[quad_i].f32.wh[0],
-        quads[quad_i].f32.wh[1]);
+        quads[quad_i].f32s.wh[0],
+        quads[quad_i].f32s.wh[1]);
     
     constexpr const float2 corners[6] = {
         float2(-0.5f, -0.5f),
@@ -1257,11 +1258,11 @@ flat_texquad_vertex_shader(
     };
     
     float4 worldpos = vector_float4(
-        quads[quad_i].f32.xyz[0] +
-            quads[quad_i].f32.offset_xy[0],
-        quads[quad_i].f32.xyz[1] +
-            quads[quad_i].f32.offset_xy[1],
-        quads[quad_i].f32.xyz[2],
+        quads[quad_i].f32s.xyz[0] +
+            quads[quad_i].f32s.offset_xy[0],
+        quads[quad_i].f32s.xyz[1] +
+            quads[quad_i].f32s.offset_xy[1],
+        quads[quad_i].f32s.xyz[2],
         1.0f);
     
     FlatTexQuadPixel out;
@@ -1272,18 +1273,18 @@ flat_texquad_vertex_shader(
         (corners[corner_id].xy * size_xy);
     
     out.rgba = vector_float4(
-        quads[quad_i].f32.rgba[0],
-        quads[quad_i].f32.rgba[1],
-        quads[quad_i].f32.rgba[2],
-        quads[quad_i].f32.rgba[3]);
+        quads[quad_i].f32s.rgba[0],
+        quads[quad_i].f32s.rgba[1],
+        quads[quad_i].f32s.rgba[2],
+        quads[quad_i].f32s.rgba[3]);
     
     out.uv = uvs[corner_id];
     
-    ushort tex = quads[quad_i].i32.reserved_and_tex & 0x0000FFFF;
+    ushort tex = quads[quad_i].s32s.reserved_and_tex & 0x0000FFFF;
     
     out.array_i = tex >> 11;
     out.slice_i = tex & 0x07FF;
-    out.touch_id = quads[quad_i].i32.touch_id;
+    out.touch_id = quads[quad_i].s32s.touch_id;
     
     return out;
 }

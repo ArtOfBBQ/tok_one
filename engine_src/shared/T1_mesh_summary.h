@@ -13,25 +13,25 @@
 #define T1_OBJ_STRING_SIZE 128
 typedef struct {
     char resource_name[T1_OBJ_STRING_SIZE]; // resource filename
-    int32_t mesh_id;
-    int32_t vertices_head_i;
-    int32_t vertices_size;
-    float base_width;
-    float base_height;
-    float base_depth;
-    int32_t shattered_vertices_head_i; // -1 if no shattered version
-    int32_t shattered_vertices_size; // 0 if no shattered version
-    uint32_t locked_material_head_i;
-    uint32_t locked_material_base_offset; // UINT32_MAX = no base mat
-    uint32_t materials_size;
+    s32 mesh_id;
+    s32 vertices_head_i;
+    s32 vertices_size;
+    f32 base_width;
+    f32 base_height;
+    f32 base_depth;
+    s32 shattered_vertices_head_i; // -1 if no shattered version
+    s32 shattered_vertices_size; // 0 if no shattered version
+    u32 locked_material_head_i;
+    u32 locked_material_base_offset; // UINT32_MAX = no base mat
+    u32 materials_size;
 } T1MeshSummary;
 
 extern T1MeshSummary * T1_mesh_summary_list;
-extern uint32_t T1_mesh_summary_list_size;
+extern u32 T1_mesh_summary_list_size;
 
 typedef struct {
     T1GPULockedVertex gpu_data[T1_LOCKED_VERTEX_CAP];
-    uint32_t size;
+    u32 size;
 } T1LockedVertexWithMaterialCollection;
 
 extern T1LockedVertexWithMaterialCollection * T1_mesh_summary_all_vertices;

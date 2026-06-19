@@ -6,6 +6,7 @@
 
 #include "T1_std.h"
 #include "T1_mem.h"
+#include "T1_settings.h"
 #include "T1_meta.h"
 #include "T1_log.h"
 #include "T1_tex.h"
@@ -43,9 +44,9 @@
 
 #define IMAGE_DECODING_THREADS_MAX 10
 typedef struct InitApplicationState {
-    uint32_t image_decoding_threads;
-    uint32_t all_finished;
-    uint32_t thread_finished[IMAGE_DECODING_THREADS_MAX];
+    u32 image_decoding_threads;
+    u32 all_finished;
+    u32 thread_finished[IMAGE_DECODING_THREADS_MAX];
 } InitApplicationState;
 
 static InitApplicationState * ias;
@@ -54,13 +55,13 @@ static InitApplicationState * ias;
 
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct EngineSaveFile {
-    float window_left;
-    float window_width;
-    float window_bottom;
-    float window_height;
-    float music_volume;
-    float sound_volume;
-    bool8_t window_fullscreen;
+    f32 window_left;
+    f32 window_width;
+    f32 window_bottom;
+    f32 window_height;
+    f32 music_volume;
+    f32 sound_volume;
+    b8 window_fullscreen;
 } EngineSaveFile;
 
 static EngineSaveFile * engine_save_file = NULL;
@@ -72,21 +73,21 @@ static EngineSaveFile * engine_save_file = NULL;
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 typedef struct SimdTestStruct {
-    float imafloat[16];
+    f32 imanf32[16];
 } SimdTestStruct;
 static void 
-test_simd_functions_floats(void) {
+test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     T1_log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUTexQuadi32)   % (SIMD_INT32_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUTexQuads32)   % (SIMD_INT32_LANES * 4) == 0);
     
     T1_log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
-    float * sets = T1_mem_malloc_managed(
-        sizeof(float) * 10);
+    f32 * sets = T1_mem_malloc_managed(
+        sizeof(f32) * 10);
     SimdTestStruct * muls = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * divs = T1_mem_malloc_managed(
@@ -95,89 +96,89 @@ test_simd_functions_floats(void) {
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * maxs = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * double_checks = T1_mem_malloc_managed(
+    SimdTestStruct * check_values = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * equals = T1_mem_malloc_managed(
         sizeof(SimdTestStruct) * 10);
     
     T1_std_memset(structs, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(double_checks, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(sets, 0, sizeof(float));
+    T1_std_memset(check_values, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(sets, 0, sizeof(f32));
     T1_std_memset(adds, 0, sizeof(SimdTestStruct)*10);
     T1_std_memset(maxs, 0, sizeof(SimdTestStruct)*10);
     T1_std_memset(muls, 0, sizeof(SimdTestStruct)*10);
     T1_std_memset(divs, 0, sizeof(SimdTestStruct)*10);
     T1_std_memset_f32(equals, 2.0f, sizeof(SimdTestStruct)*10);
     
-    for (uint32_t i = 0; i < 10; i++) {
-        sets[i] = (float)i;
-        for (uint32_t j = 0; j < sizeof(SimdTestStruct) / sizeof(float); j++) {
-            maxs[i].imafloat[j] = (float)((j % 2) * (i * 2));
-            muls[i].imafloat[j] = (float)(i % 4);
-            divs[i].imafloat[j] = (float)((i % 2) + 1);
-            adds[i].imafloat[j] = (float)((i + 1) % 4);
+    for (u32 i = 0; i < 10; i++) {
+        sets[i] = (f32)i;
+        for (u32 j = 0; j < sizeof(SimdTestStruct) / sizeof(f32); j++) {
+            maxs[i].imanf32[j] = (f32)((j % 2) * (i * 2));
+            muls[i].imanf32[j] = (f32)(i % 4);
+            divs[i].imanf32[j] = (f32)((i % 2) + 1);
+            adds[i].imanf32[j] = (f32)((i + 1) % 4);
         }
     }
     
-    for (uint32_t j = 0; j < 10; j++) {
-        for (uint32_t i = 0; i < sizeof(SimdTestStruct) / sizeof(float); i++) {
-            double_checks[j].imafloat[i]  = sets[j];
-            double_checks[j].imafloat[i] *= muls[j].imafloat[i];
-            double_checks[j].imafloat[i] += adds[j].imafloat[i];
-            double_checks[j].imafloat[i] /= divs[j].imafloat[i];
-            double_checks[j].imafloat[i] =
-                double_checks[j].imafloat[i] > maxs[j].imafloat[i] ?
-                    double_checks[j].imafloat[i] :
-                    maxs[j].imafloat[i];
+    for (u32 j = 0; j < 10; j++) {
+        for (u32 i = 0; i < sizeof(SimdTestStruct) / sizeof(f32); i++) {
+            check_values[j].imanf32[i]  = sets[j];
+            check_values[j].imanf32[i] *= muls[j].imanf32[i];
+            check_values[j].imanf32[i] += adds[j].imanf32[i];
+            check_values[j].imanf32[i] /= divs[j].imanf32[i];
+            check_values[j].imanf32[i] =
+                check_values[j].imanf32[i] > maxs[j].imanf32[i] ?
+                    check_values[j].imanf32[i] :
+                    maxs[j].imanf32[i];
         }
     }
     
-    for (uint32_t j = 0; j < 10; j++) {
-        float * structs_at = (float *)&structs[j];
-        float * muls_at    = (float *)&muls[j];
-        float * adds_at    = (float *)&adds[j];
-        float * divs_at    = (float *)&divs[j];
-        float * maxs_at    = (float *)&maxs[j];
-        // float * equals_at  = (float *)&equals[j];
+    for (u32 j = 0; j < 10; j++) {
+        f32 * structs_at = (f32 *)&structs[j];
+        f32 * muls_at    = (f32 *)&muls[j];
+        f32 * adds_at    = (f32 *)&adds[j];
+        f32 * divs_at    = (f32 *)&divs[j];
+        f32 * maxs_at    = (f32 *)&maxs[j];
+        // f32 * equals_at  = (f32 *)&equals[j];
         
-        // float one = 1.0f;
-        // SIMD_FLOAT all_ones   = simd_set1_float(one);
+        // f32 one = 1.0f;
+        // SIMD_FLOAT all_ones   = simd_set1_f32(one);
         for (
-            uint32_t i = 0;
-            i < sizeof(SimdTestStruct) / sizeof(float);
+            u32 i = 0;
+            i < sizeof(SimdTestStruct) / sizeof(f32);
             i += SIMD_FLOAT_LANES)
         {
-            SIMD_FLOAT cur  = simd_load_floats(structs_at + i);
-            cur = simd_set1_float(sets[j]);
-            SIMD_FLOAT mul    = simd_load_floats(muls_at + i);
-            SIMD_FLOAT add    = simd_load_floats(adds_at + i);
-            SIMD_FLOAT div    = simd_load_floats(divs_at + i);
-            SIMD_FLOAT max    = simd_load_floats(maxs_at + i);
-            // SIMD_FLOAT eq     = simd_load_floats(equals_at + i);
+            SIMD_FLOAT cur  = simd_load_f32s(structs_at + i);
+            cur = simd_set1_f32(sets[j]);
+            SIMD_FLOAT mul    = simd_load_f32s(muls_at + i);
+            SIMD_FLOAT add    = simd_load_f32s(adds_at + i);
+            SIMD_FLOAT div    = simd_load_f32s(divs_at + i);
+            SIMD_FLOAT max    = simd_load_f32s(maxs_at + i);
+            // SIMD_FLOAT eq     = simd_load_f32s(equals_at + i);
             
             
-            cur = simd_mul_floats(cur, mul);
-            cur = simd_add_floats(cur, add);
-            cur = simd_div_floats(cur, div);
-            cur = simd_max_floats(cur, max);
+            cur = simd_mul_f32s(cur, mul);
+            cur = simd_add_f32s(cur, add);
+            cur = simd_div_f32s(cur, div);
+            cur = simd_max_f32s(cur, max);
             
             //            SIMD_FLOAT equals_bonuses =
-            //                simd_and_floats(all_ones, simd_cmpeq_floats(cur, eq));
-            //            cur = simd_add_floats(cur, equals_bonuses);
+            //                simd_and_f32s(all_ones, simd_cmpeq_f32s(cur, eq));
+            //            cur = simd_add_f32s(cur, equals_bonuses);
             
-            simd_store_floats(structs_at + i, cur);
+            simd_store_f32s(structs_at + i, cur);
         }
     }
     
-    for (uint32_t i = 0; i < 10; i++) {
-        for (uint32_t j = 0; j < 16; j++) {
+    for (u32 i = 0; i < 10; i++) {
+        for (u32 j = 0; j < 16; j++) {
             T1_log_assert(
-                (structs[i].imafloat[j] - double_checks[i].imafloat[j]) <  0.01f &&
-                (structs[i].imafloat[j] - double_checks[i].imafloat[j]) > -0.01f);
+                (structs[i].imanf32[j] - check_values[i].imanf32[j]) <  0.01f &&
+                (structs[i].imanf32[j] - check_values[i].imanf32[j]) > -0.01f);
         }
     }
     
-    T1_mem_free_managed(double_checks);
+    T1_mem_free_managed(check_values);
     T1_mem_free_managed(maxs);
     T1_mem_free_managed(adds);
     T1_mem_free_managed(divs);
@@ -190,15 +191,15 @@ test_simd_functions_floats(void) {
 #error
 #endif
 
-static uint32_t pad_to_page_size(uint32_t base_allocation) {
-    uint32_t return_value = base_allocation +
+static u32 pad_to_page_size(u32 base_allocation) {
+    u32 return_value = base_allocation +
         (T1_mem_page_size - (base_allocation % T1_mem_page_size));
     T1_log_assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
 void T1_appinit_before_gpu_init(
-    uint8_t * success,
+    u8 * success,
     char * error_message)
 {
     *success = true;
@@ -216,22 +217,24 @@ void T1_appinit_before_gpu_init(
         T1_platform_mutex_lock,
         T1_platform_mutex_unlock);
     
+    T1_settings_init(T1_mem_malloc_unmanaged);
+    
     T1_meta_init(
-        memcpy,
+        T1_std_memcpy,
         T1_mem_malloc_unmanaged,
-        memset,
+        T1_std_memset,
         strcmp,
-        strlen,
+        T1_std_strlen,
         strtoull,
-        /* const uint32_t ascii_store_cap: */
+        /* const u32 ascii_store_cap: */
             30000,
-        /* const uint16_t meta_structs_cap: */
+        /* const u16 meta_structs_cap: */
             30,
-        /* const uint16_t meta_fields_cap: */
+        /* const u16 meta_fields_cap: */
             500,
-        /* const uint16_t meta_enums_cap: */
+        /* const u16 meta_enums_cap: */
             30,
-        /* const uint16_t meta_enum_vals_cap: */
+        /* const u16 meta_enum_vals_cap: */
             200);
     
     ias = T1_mem_malloc_unmanaged(sizeof(InitApplicationState));
@@ -240,7 +243,7 @@ void T1_appinit_before_gpu_init(
     // settings_init(malloc_from_unmanaged);
     
     decode_png_init(
-        /* void *(*malloc_funcptr)(size_t): */
+        /* void *(*malloc_funcptr)(u64): */
             T1_mem_malloc_managed_infoless,
         /* free_function: */
             T1_mem_free_managed,
@@ -250,18 +253,18 @@ void T1_appinit_before_gpu_init(
             T1_std_memcpy,
         /* dpng_working_memory_size: */
             DPNG_WORKING_MEMORY_SIZE,
-        /* const uint32_t thread_id: */
+        /* const u32 thread_id: */
             0);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    test_simd_functions_floats();
+    test_simd_functions_f32s();
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error
     #endif
     
-    uint8_t good = 0;
+    u8 good = 0;
     T1_token_init(
         T1_std_memset,
         T1_std_strlen,
@@ -273,16 +276,16 @@ void T1_appinit_before_gpu_init(
     mtlparser_init(
         T1_std_memset,
         T1_mem_malloc_managed_infoless,
-        strlcat);
+        T1_std_strlcat);
     
     T1_logger_init(
-        /* void * arg_malloc_function(size_t size): */
+        /* void * arg_malloc_function(u64 size): */
             T1_mem_malloc_unmanaged,
-        /* uint32_t (* arg_create_mutex_function)(void): */
+        /* u32 (* arg_create_mutex_function)(void): */
             T1_platform_init_mutex_and_return_id,
-        /* void arg_mutex_lock_function(const uint32_t mutex_id): */
+        /* void arg_mutex_lock_function(const u32 mutex_id): */
             T1_platform_mutex_lock,
-        /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
+        /* s32 arg_mutex_unlock_function(const u32 mutex_id): */
             T1_platform_mutex_unlock);
     
     #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
@@ -294,8 +297,8 @@ void T1_appinit_before_gpu_init(
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_init(
-        T1_platform_get_clock_frequency(),
-        T1_mem_malloc_unmanaged);
+        T1_os_get_clock_frequency(),
+            T1_mem_malloc_unmanaged);
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE not set"
@@ -332,7 +335,7 @@ void T1_appinit_before_gpu_init(
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
-        /* void *(*arg_malloc_function)(size_t): */
+        /* void *(*arg_malloc_function)(u64): */
             T1_mem_malloc_unmanaged);
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
@@ -379,14 +382,14 @@ void T1_appinit_before_gpu_init(
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     T1_global->fullscreen = false;
-    T1_global->window_height = INITIAL_WINDOW_HEIGHT;
-    T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+    T1_global->window_wh[0]  = INITIAL_WINDOW_WIDTH;
+    T1_global->window_wh[1]  = INITIAL_WINDOW_HEIGHT;
     T1_global->window_left   = INITIAL_WINDOW_LEFT;
     T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_state->music_volume  = 0.5f;
-    T1_audio_state->sfx_volume    = 0.5f;
+    T1_audio_s->music_volume  = 0.5f;
+    T1_audio_s->sfx_volume    = 0.5f;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -452,10 +455,10 @@ void T1_appinit_before_gpu_init(
     T1_tex_array_init();
     
     // initialize font with fontmetrics.dat
-    uint64_t font_metrics_contents_cap = T1_os_get_resource_size(
+    u64 font_metrics_contents_cap = T1_os_get_resource_size(
         /* filename: */ "fontmetrics.dat");
     char * font_metrics_contents = NULL; 
-    uint8_t font_metrics_good = 0;
+    u8 font_metrics_good = 0;
     
     if (font_metrics_contents_cap > 0) {
         font_metrics_contents = (char *)T1_mem_malloc_unmanaged(
@@ -465,9 +468,9 @@ void T1_appinit_before_gpu_init(
                 "fontmetrics.dat",
             /* char * recip: */
                 font_metrics_contents,
-            /* const uint64_t recip_cap: */
+            /* const u64 recip_cap: */
                 font_metrics_contents_cap,
-            /* uint8_t * good: */
+            /* u8 * good: */
                 &font_metrics_good);
         
         if (!font_metrics_good) {
@@ -566,9 +569,9 @@ void T1_appinit_before_gpu_init(
             sizeof(T1GPUConstMatf32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
-    sd->const_matsi32_alloc_size =
+    sd->const_matss32_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMati32) *
+            sizeof(T1GPUConstMats32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
@@ -577,7 +580,7 @@ void T1_appinit_before_gpu_init(
                 MAX_VERTICES_PER_BUFFER);
     
     for (
-        uint32_t cur_frame_i = 0;
+        u32 cur_frame_i = 0;
         cur_frame_i < T1_FRAMES_CAP;
         cur_frame_i++)
     {
@@ -639,12 +642,12 @@ void T1_appinit_before_gpu_init(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
     
-    sd->const_mats_i32 = (T1GPUConstMati32 *)
+    sd->const_mats_s32 = (T1GPUConstMats32 *)
         T1_mem_malloc_unmanaged_aligned(
-            sd->const_matsi32_alloc_size,
+            sd->const_matss32_alloc_size,
             T1_mem_page_size);
     
-    uint8_t initial_log_dump_succesful = false;
+    u8 initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
         T1_log_dump_and_crash(
@@ -662,24 +665,24 @@ void T1_appinit_before_gpu_init(
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 static void
 T1_appinit_asset_loading_thread(
-    int32_t asset_thread_id)
+    s32 asset_thread_id)
 {
     if (asset_thread_id > 0) {
         decode_png_init(
-            malloc,
-            free,
+            T1_mem_malloc_managed_infoless,
+            T1_mem_free_managed,
             T1_std_memset,
             T1_std_memcpy,
             DPNG_WORKING_MEMORY_SIZE,
-            (uint32_t)asset_thread_id);    
+            (u32)asset_thread_id);    
     }
     
     T1_tex_files_decode_all_prereg(
-        (uint32_t)asset_thread_id,
+        (u32)asset_thread_id,
         ias->image_decoding_threads);
     
     if (asset_thread_id > 0) {
-        decode_png_deinit((uint32_t)asset_thread_id);
+        decode_png_deinit((u32)asset_thread_id);
     }
     
     ias->thread_finished[asset_thread_id] = 1;
@@ -691,7 +694,7 @@ T1_appinit_asset_loading_thread(
 #endif
 
 void T1_appinit_after_gpu_init_step1(
-    uint8_t * success,
+    u8 * success,
     char * error_message)
 {
     *success = 0;
@@ -708,8 +711,8 @@ void T1_appinit_after_gpu_init_step1(
     
     if (!*success) { return; } else { *success = 0; }
     
-    uint32_t rv_width = (uint32_t)T1_global->window_width;
-    uint32_t rv_height = (uint32_t)T1_global->window_height;
+    u32 rv_width = T1_settings_get_render_width();
+    u32 rv_height = T1_settings_get_render_height();
     
     while (rv_width > 2048 || rv_height > 2048) {
         rv_width  /= 2;
@@ -733,7 +736,7 @@ void T1_appinit_after_gpu_init_step1(
             T1_cpu_to_gpu_data->locked_vertices,
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
-        /* size_t n: */
+        /* u64 n: */
             sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
     
@@ -742,7 +745,7 @@ void T1_appinit_after_gpu_init_step1(
 }
 
 void T1_appinit_after_gpu_init_step2(
-    int32_t throwaway_threadarg)
+    s32 throwaway_threadarg)
 {
     (void)throwaway_threadarg;
     
@@ -750,7 +753,7 @@ void T1_appinit_after_gpu_init_step2(
         return;
     }
     
-    bool8_t perlin_good = 0;
+    b8 perlin_good = 0;
     T1_tex_files_prereg_dds_res(
         "perlin_noise.dds",
         &perlin_good);
@@ -789,7 +792,7 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_SHADOWS_ACTIVE undefined"
     #endif
     
-    uint8_t success = false;
+    u8 success = false;
     char errmsg[256];
     errmsg[0] = '\0';
     
@@ -811,14 +814,14 @@ void T1_appinit_after_gpu_init_step2(
         T1_global->
             clientlogic_early_startup_finished = 1;
         
-        uint32_t core_count = T1_os_get_cpu_logical_core_count();
+        u32 core_count = T1_os_get_cpu_logical_core_count();
         T1_log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
         
         T1_std_memset(
             ias->thread_finished,
             0,
-            sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
+            sizeof(u32) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
         T1_log_assert(T1_global->startup_bytes_to_load == 0);
@@ -831,15 +834,15 @@ void T1_appinit_after_gpu_init_step2(
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
         T1_gameloop_loading_texs = true;
         for (
-            int32_t i = 1;
-            i < (int32_t)ias->
+            s32 i = 1;
+            i < (s32)ias->
                 image_decoding_threads;
             i++)
         {
             T1_os_start_thread(
-                /* void (*function_to_run)(int32_t): */
+                /* void (*function_to_run)(s32): */
                     T1_appinit_asset_loading_thread,
-                /* int32_t argument: */
+                /* s32 argument: */
                     i);
         }
         #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
@@ -862,7 +865,7 @@ void T1_appinit_after_gpu_init_step2(
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_mesh_summary_list_size;
         i++)
     {
@@ -874,11 +877,11 @@ void T1_appinit_after_gpu_init_step2(
                 // If you land here via debugger:
                 // print T1_mesh_summary_list[i].resource_name
                 T1_objmodel_create_shattered_version_of_mesh(
-                    /* const int32_t mesh_id: */
+                    /* const s32 mesh_id: */
                         T1_mesh_summary_list[i].mesh_id,
-                    /* const uint32_t triangles_mulfiplier: */
+                    /* const u32 triangles_mulfiplier: */
                         (MIN_VERTICES_FOR_SHATTER_EFFECT /
-                            (uint32_t)T1_mesh_summary_list[i].vertices_size) + 1);
+                            (u32)T1_mesh_summary_list[i].vertices_size) + 1);
                 T1_log_assert(
                     T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
             } else {
@@ -906,7 +909,7 @@ void T1_appinit_after_gpu_init_step2(
                 locked_vertices,
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
-        /* size_t n: */
+        /* u64 n: */
             sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
     
@@ -916,16 +919,16 @@ void T1_appinit_after_gpu_init_step2(
                 const_mats_f32,
         /* const void * src: */
             all_mesh_materials->gpu_f32,
-        /* size_t n: */
+        /* u64 n: */
             sizeof(T1GPUConstMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_std_memcpy(
         /* void * dst: */
             T1_cpu_to_gpu_data->
-                const_mats_i32,
+                const_mats_s32,
         /* const void * src: */
-            all_mesh_materials->gpu_i32,
-        /* size_t n: */
-            sizeof(T1GPUConstMati32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+            all_mesh_materials->gpu_s32,
+        /* u64 n: */
+            sizeof(T1GPUConstMats32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_os_gpu_copy_locked_materials();
     
     if (!T1_log_app_running) {
@@ -942,7 +945,7 @@ void T1_appinit_after_gpu_init_step2(
     // Wait until all worker threads are finished
     while (!ias->all_finished) {
         ias->all_finished = true;
-        for (uint32_t i = 1; i < ias->image_decoding_threads; i++) {
+        for (u32 i = 1; i < ias->image_decoding_threads; i++) {
             if (!ias->thread_finished[i]) {
                 ias->all_finished = false;
             }
@@ -954,10 +957,10 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_TEXTURES_ACTIVE undefined!"
     #endif
     
-    uint64_t longest_taken = 0;
-    int32_t longest_ta_i = -1;
-    for (int32_t i = 0; i < (int32_t)T1_tex_arrays_size; i++) {
-        uint64_t taken =
+    u64 longest_taken = 0;
+    s32 longest_ta_i = -1;
+    for (s32 i = 0; i < (s32)T1_tex_arrays_size; i++) {
+        u64 taken =
             T1_tex_arrays[i].ended_decoding -
             T1_tex_arrays[i].started_decoding;
         if (taken > longest_taken) {
@@ -972,8 +975,8 @@ void T1_appinit_after_gpu_init_step2(
         T1_log_append("\nIncludes images: ");
         T1_log_append(T1_tex_arrays[longest_ta_i].images[0].name);
         for (
-            int32_t t_i = 1;
-            t_i < (int32_t)T1_tex_arrays[longest_ta_i].images_size;
+            s32 t_i = 1;
+            t_i < (s32)T1_tex_arrays[longest_ta_i].images_size;
             t_i++)
         {
             T1_log_append(", ");
@@ -985,8 +988,8 @@ void T1_appinit_after_gpu_init_step2(
     
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
-        int32_t i = 1;
-        i < (int32_t)T1_texture_arrays_size;
+        s32 i = 1;
+        i < (s32)T1_texture_arrays_size;
         i++)
     {
         if (!T1_texture_arrays[i].bc1_compressed) {
@@ -1055,7 +1058,7 @@ void T1_appinit_shutdown(void)
     engine_save_file->window_fullscreen =
         T1_global->fullscreen;
     
-    uint32_t good = false;
+    u32 good = false;
     T1_platform_del_writable("enginestate.dat");
     
     T1_platform_write_file_to_writables(
@@ -1065,10 +1068,10 @@ void T1_appinit_shutdown(void)
             (char *)engine_save_file,
         /* output_size: */
             sizeof(EngineSaveFile),
-        /* uint32_t good: */
+        /* u32 good: */
             &good);
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    uint32_t good = true;
+    u32 good = true;
     #else
     #error
     #endif

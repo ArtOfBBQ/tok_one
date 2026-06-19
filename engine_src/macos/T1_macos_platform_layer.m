@@ -1,11 +1,12 @@
 #import "Appkit/Appkit.h"
 
+#include "T1_std.h"
 #include "T1_log.h"
 #include "T1_platform_layer.h"
 
 void T1_os_get_writables_dir(
     char * recipient,
-    const uint32_t recipient_size)
+    const u32 recipient_size)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
@@ -33,7 +34,7 @@ void T1_os_get_writables_dir(
 }
 
 void * T1_os_malloc_unaligned_block(
-    const uint64_t size)
+    const u64 size)
 {
     void * return_value = mmap(
         /* void *: */
@@ -60,7 +61,7 @@ void T1_os_close_app(void) {
     [NSApp terminate: nil];
 }
 
-void T1_os_get_cwd(char * recipient, const uint32_t recipient_size) {
+void T1_os_get_cwd(char * recipient, const u32 recipient_size) {
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;

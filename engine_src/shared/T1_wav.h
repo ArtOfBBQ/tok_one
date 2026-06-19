@@ -17,18 +17,18 @@
 void
 T1_wav_samples_to_wav(
     unsigned char * recipient,
-    uint32_t * recipient_size,
-    const uint32_t recipient_cap,
-    int16_t * samples,
-    const uint32_t samples_size);
+    u32 * recipient_size,
+    const u32 recipient_cap,
+    s16 * samples,
+    const u32 samples_size);
 
 void
 T1_wav_parse(
-    int16_t * recipient,
-    uint32_t * recipient_size,
-    const uint32_t recipient_cap,
+    s16 * recipient,
+    u32 * recipient_size,
+    const u32 recipient_cap,
     unsigned char * raw_file,
-    const uint32_t data_size,
-    uint32_t * good);
+    const u32 data_size,
+    u32 * good);
 
 #endif // T1_WAV_H

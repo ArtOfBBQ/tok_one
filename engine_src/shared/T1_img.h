@@ -1,36 +1,36 @@
 #ifndef T1_IMG_H
 #define T1_IMG_H
 
-#include <stdint.h>
+#include "T1_stdint.h"
 
 typedef struct {
-    uint8_t * rgba_values_freeable;
-    uint8_t * rgba_values_page_aligned;
-    uint32_t rgba_values_size;
-    uint32_t width;
-    uint32_t height;
-    uint32_t pixel_count; // rgba_values_size / 4
-    uint8_t  good;
+    u8 * rgba_values_freeable;
+    u8 * rgba_values_page_aligned;
+    u32 rgba_values_size;
+    u32 width;
+    u32 height;
+    u32 pixel_count; // rgba_values_size / 4
+    u8  good;
 } T1Img;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint64_t
+u64
 T1_img_get_sum_rgba(const T1Img * input);
 
-uint32_t
+u32
 T1_img_get_avg_rgba(const T1Img * input);
 
 void
 T1_img_overwrite_subregion(
     T1Img * whole_image,
     const T1Img * new_image,
-    const uint32_t column_count,
-    const uint32_t row_count,
-    const uint32_t at_column,
-    const uint32_t at_row);
+    const u32 column_count,
+    const u32 row_count,
+    const u32 at_column,
+    const u32 at_row);
 
 #ifdef __cplusplus
 }

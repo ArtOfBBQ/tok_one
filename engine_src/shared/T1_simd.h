@@ -2,12 +2,12 @@
 #define T1_SIMD_H
 
 /*
-A wrapper around Intel AVX instructions and Arm Neon instructions, for floats
+A wrapper around Intel AVX instructions and Arm Neon instructions, for f32s
 only, so that you can write basic simd instructions and have them be
 interpreted as:
 - Arm Neon instructions where supported
 - Intel AVX2 instructions where supported
-- Bog-standard 32-bit floating point math failing the above
+- Bog-standard 32-bit f32ing point math failing the above
 
 I want function-like macros instead of function definitions to avoid the tiny
 overhead of calling a function, and I don't want to rely on compiler inlining
@@ -94,13 +94,13 @@ because I don't know much about how that works or how reliable it is
 #else
 
 #define SIMD_INT16_LANES                    1
-#define SIMD_INT16                          int16_t
+#define SIMD_INT16                          i16
 #define simd_load_int16s(int16sptr)         (int16sptr)[0]
 #define simd_set1_int16s(i16)               i16
 #define simd_store_int16s(recip, from)      (recip)[0] = from
-#define simd_cmpgt_int16s(a, b)             (a > b ? ((int16_t)0xFFFF) : 0)
-#define simd_cmplt_int16s(a, b)             (a < b ? ((int16_t)0xFFFF) : 0)
-#define simd_cmpeq_int16s(a, b)             (a == b ? ((int16_t)0xFFFF) : 0)
+#define simd_cmpgt_int16s(a, b)             (a > b ? ((i16)0xFFFF) : 0)
+#define simd_cmplt_int16s(a, b)             (a < b ? ((i16)0xFFFF) : 0)
+#define simd_cmpeq_int16s(a, b)             (a == b ? ((i16)0xFFFF) : 0)
 #define simd_mul_int16s(a, b)               a * b
 #define simd_add_int16s(a, b)               a + b
 #define simd_sub_int16s(a, b)               a - b
@@ -119,7 +119,7 @@ because I don't know much about how that works or how reliable it is
 #define SIMD_INT32 int32x4_t
 #define simd_load_int32s(i32ptr) vld1q_s32(i32ptr)
 #define simd_set1_int32s(i32) vld1q_dup_s32(&i32)
-#define simd_cast_int32s_to_floats(i32vec) vcvtq_f32_s32((i32vec))
+#define simd_cast_int32s_to_f32s(i32vec) vcvtq_f32_s32((i32vec))
 #define simd_store_int32s(i32ptr, from) vst1q_s32(i32ptr, from)
 #define simd_add_int32s(a, b) vaddq_s32(a, b)
 #define simd_and_int32s(a, b) (int32x4_t)(vandq_s32(a, b))
@@ -127,89 +127,89 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmpgt_int32s(a, b)             vcgtq_s32(a, b)
 
 #define SIMD_FLOAT float32x4_t
-#define simd_load_floats(floatsptr) vld1q_f32((floatsptr))
-#define simd_set1_float(float) vld1q_dup_f32(&float)
-#define simd_cast_floats_to_int32s(i32vec) vcvtq_s32_f32(i32vec)
-#define simd_store_floats(to_ptr, from) vst1q_f32(to_ptr, from)
-#define simd_mul_floats(a, b) vmulq_f32(a, b)
-#define simd_div_floats(a, b) vdivq_f32(a, b)
-#define simd_add_floats(a, b) vaddq_f32(a, b)
-#define simd_sub_floats(a, b) vsubq_f32(a, b)
-#define simd_max_floats(a, b) vmaxq_f32(a, b)
+#define simd_load_f32s(f32sptr) vld1q_f32((f32sptr))
+#define simd_set1_f32(f32) vld1q_dup_f32(&f32)
+#define simd_cast_f32s_to_int32s(i32vec) vcvtq_s32_f32(i32vec)
+#define simd_store_f32s(to_ptr, from) vst1q_f32(to_ptr, from)
+#define simd_mul_f32s(a, b) vmulq_f32(a, b)
+#define simd_div_f32s(a, b) vdivq_f32(a, b)
+#define simd_add_f32s(a, b) vaddq_f32(a, b)
+#define simd_sub_f32s(a, b) vsubq_f32(a, b)
+#define simd_max_f32s(a, b) vmaxq_f32(a, b)
 // The arm comparison functions (like cmpeq) all return unsigned ints
-// we don't use the bitwise and with floats except immediately after passing
+// we don't use the bitwise and with f32s except immediately after passing
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether
-#define simd_and_floats(a, b) (float32x4_t)(vandq_u32(a, b))
-#define simd_sqrt_floats(a) vsqrtq_f32(a)
-#define simd_cmpeq_floats(a, b) vceqq_f32(a, b)
-#define simd_not_floats(a) vmvnq_u32(a)
-#define simd_cmplt_floats(a, b) vcltq_f32(a, b)
+#define simd_and_f32s(a, b) (float32x4_t)(vandq_u32(a, b))
+#define simd_sqrt_f32s(a) vsqrtq_f32(a)
+#define simd_cmpeq_f32s(a, b) vceqq_f32(a, b)
+#define simd_not_f32s(a) vmvnq_u32(a)
+#define simd_cmplt_f32s(a, b) vcltq_f32(a, b)
 
 #elif defined(__AVX__)
 
 #include "immintrin.h"
 #define SIMD_FLOAT_LANES 8
 #define SIMD_FLOAT __m256
-#define simd_load_floats(floatsptr) _mm256_loadu_ps((floatsptr))
-#define simd_set1_float(float) _mm256_set1_ps(float)
-#define simd_store_floats(floatsptr, from) _mm256_storeu_ps(floatsptr, from)
-#define simd_mul_floats(a, b) _mm256_mul_ps(a, b)
-#define simd_div_floats(a, b) _mm256_div_ps(a, b)
-#define simd_add_floats(a, b) _mm256_add_ps(a, b)
-#define simd_sub_floats(a, b) _mm256_sub_ps(a, b)
-#define simd_max_floats(a, b) _mm256_max_ps(a, b)
-#define simd_and_floats(a, b) _mm256_and_ps(a, b)
-#define simd_sqrt_floats(a) _mm256_sqrt_ps(a)
-#define simd_cmpeq_floats(a, b) _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
-#define simd_cmplt_floats(a, b) _mm256_cmp_ps(a, b, _CMP_LT_OQ)
+#define simd_load_f32s(f32sptr) _mm256_loadu_ps((f32sptr))
+#define simd_set1_f32(f32) _mm256_set1_ps(f32)
+#define simd_store_f32s(f32sptr, from) _mm256_storeu_ps(f32sptr, from)
+#define simd_mul_f32s(a, b) _mm256_mul_ps(a, b)
+#define simd_div_f32s(a, b) _mm256_div_ps(a, b)
+#define simd_add_f32s(a, b) _mm256_add_ps(a, b)
+#define simd_sub_f32s(a, b) _mm256_sub_ps(a, b)
+#define simd_max_f32s(a, b) _mm256_max_ps(a, b)
+#define simd_and_f32s(a, b) _mm256_and_ps(a, b)
+#define simd_sqrt_f32s(a) _mm256_sqrt_ps(a)
+#define simd_cmpeq_f32s(a, b) _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_f32s(a, b) _mm256_cmp_ps(a, b, _CMP_LT_OQ)
 
 #elif defined(__SSE__)
 
 #include "immintrin.h"
 #define SIMD_FLOAT_LANES 4
 #define SIMD_FLOAT __m128
-#define simd_load_floats(floatsptr) _mm_loadu_ps(floatsptr)
-#define simd_set1_float(float) _mm_set1_ps(float)
-#define simd_store_floats(floatsptr, from)  _mm_storeu_ps(floatsptr, from)
-#define simd_mul_floats(a, b) _mm_mul_ps(a, b)
-#define simd_div_floats(a, b) _mm_div_ps(a, b)
-#define simd_add_floats(a, b) _mm_add_ps(a, b)
-#define simd_sub_floats(a, b) _mm_sub_ps(a, b)
-#define simd_max_floats(a, b) _mm_max_ps(a, b)
-#define simd_and_floats(a, b) _mm_and_ps(a, b)
-#define simd_sqrt_floats(a) _mm_sqrt_ps(a)
-#define simd_cmpeq_floats(a, b) _mm_cmp_ps(a, b, _CMP_EQ_UQ)
-#define simd_cmplt_floats(a, b) _mm_cmp_ps(a, b, _CMP_LT_OQ)
+#define simd_load_f32s(f32sptr) _mm_loadu_ps(f32sptr)
+#define simd_set1_f32(f32) _mm_set1_ps(f32)
+#define simd_store_f32s(f32sptr, from)  _mm_storeu_ps(f32sptr, from)
+#define simd_mul_f32s(a, b) _mm_mul_ps(a, b)
+#define simd_div_f32s(a, b) _mm_div_ps(a, b)
+#define simd_add_f32s(a, b) _mm_add_ps(a, b)
+#define simd_sub_f32s(a, b) _mm_sub_ps(a, b)
+#define simd_max_f32s(a, b) _mm_max_ps(a, b)
+#define simd_and_f32s(a, b) _mm_and_ps(a, b)
+#define simd_sqrt_f32s(a) _mm_sqrt_ps(a)
+#define simd_cmpeq_f32s(a, b) _mm_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_f32s(a, b) _mm_cmp_ps(a, b, _CMP_LT_OQ)
 #else
 
 #define SIMD_FLOAT_LANES                    1
-#define SIMD_FLOAT                          float
-#define simd_load_floats(floatsptr)         (floatsptr)[0]
-#define simd_set1_float(float)              float
-#define simd_store_floats(floatsptr, from)  (floatsptr)[0] = from
-#define simd_mul_floats(a, b)               a * b
-#define simd_div_floats(a, b)               a / b
-#define simd_add_floats(a, b)               a + b
-#define simd_sub_floats(a, b)               a - b
-#define simd_max_floats(a, b)               tok_fmaxf(a, b)
-#define simd_and_floats(a, b)               a & b
-#define simd_sqrt_floats(a)                 sqrtf(a)
-#define simd_cmpeq_floats(a, b)             a == b
-#define simd_cmplt_floats(a, b)             a < b
+#define SIMD_FLOAT                          f32
+#define simd_load_f32s(f32sptr)         (f32sptr)[0]
+#define simd_set1_f32(f32)              f32
+#define simd_store_f32s(f32sptr, from)  (f32sptr)[0] = from
+#define simd_mul_f32s(a, b)               a * b
+#define simd_div_f32s(a, b)               a / b
+#define simd_add_f32s(a, b)               a + b
+#define simd_sub_f32s(a, b)               a - b
+#define simd_max_f32s(a, b)               tok_fmaxf(a, b)
+#define simd_and_f32s(a, b)               a & b
+#define simd_sqrt_f32s(a)                 sqrtf(a)
+#define simd_cmpeq_f32s(a, b)             a == b
+#define simd_cmplt_f32s(a, b)             a < b
 
 #endif // Float lanes
 
 // ***********************************
-// **    Exactly 4 floats (vec4f)   **
+// **    Exactly 4 f32s (vec4f)   **
 // ***********************************
 #if defined(__SSE__)
 #include "immintrin.h"
 #define SIMD_VEC4F                         __m128
-#define simd_load_vec4f(floatsptr)         _mm_loadu_ps(floatsptr)
-#define simd_set1_vec4f(float)             _mm_set1_ps(float)
-#define simd_store_vec4f(floatsptr, from)  _mm_storeu_ps(floatsptr, from)
+#define simd_load_vec4f(f32sptr)         _mm_loadu_ps(f32sptr)
+#define simd_set1_vec4f(f32)             _mm_set1_ps(f32)
+#define simd_store_vec4f(f32sptr, from)  _mm_storeu_ps(f32sptr, from)
 #define simd_mul_vec4f(a, b)               _mm_mul_ps(a, b)
 #define simd_div_vec4f(a, b)               _mm_div_ps(a, b)
 #define simd_add_vec4f(a, b)               _mm_add_ps(a, b)
@@ -223,8 +223,8 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__ARM_NEON)
 #include "arm_neon.h"
 #define SIMD_VEC4F                         float32x4_t
-#define simd_load_vec4f(floatsptr)         vld1q_f32(floatsptr)
-#define simd_set1_vec4f(float)             vld1q_dup_f32(&float)
+#define simd_load_vec4f(f32sptr)           vld1q_f32(f32sptr)
+#define simd_set1_vec4f(f32)               vld1q_dup_f32(&f32)
 #define simd_store_vec4f(to_ptr, from)     vst1q_f32(to_ptr, from)
 #define simd_mul_vec4f(a, b)               vmulq_f32(a, b)
 #define simd_div_vec4f(a, b)               vdivq_f32(a, b)
@@ -232,11 +232,11 @@ because I don't know much about how that works or how reliable it is
 #define simd_sub_vec4f(a, b)               vsubq_f32(a, b)
 #define simd_max_vec4f(a, b)               vmaxq_f32(a, b)
 // The arm comparison functions (like cmpeq) all return unsigned ints
-// we don't use the bitwise and with floats except immediately after passing
+// we don't use the bitwise and with f32s except immediately after passing
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether
-#define simd_and_vec4f(a, b)               (float32x4_t)(vandq_u32(a, b))
+#define simd_and_vec4f(a, b)               (f3232x4_t)(vandq_u32(a, b))
 #define simd_sqrt_vec4f(a)                 vsqrtq_f32(a)
 #define simd_cmpeq_vec4f(a, b)             vceq_f32(a, b)
 #define simd_cmplt_vec4f(a, b)             vcltq_f32(a, b)
@@ -248,33 +248,33 @@ because I don't know much about how that works or how reliable it is
 // ***********************************
 #if defined(__SSE__)
 #include "immintrin.h"
-#define SIMD_VEC4I                         __m128i
-#define simd_load_vec4i(intsptr)           _mm_loadu_si128((const __m128i *)(intsptr))
-#define simd_set1_vec4i(int)               _mm_set1_epi32(float)
-#define simd_store_vec4i(intsptr, from)    _mm_storeu_si128((__m128i *)(intsptr), from)
-#define simd_mul_vec4i(a, b)               _mm_mul_epi32(a, b)
-#define simd_div_vec4i(a, b)               _mm_div_epi32(a, b)
-#define simd_add_vec4i(a, b)               _mm_add_epi32(a, b)
-#define simd_sub_vec4i(a, b)               _mm_sub_epi32(a, b)
-#define simd_max_vec4i(a, b)               _mm_max_epi32(a, b)
-#define simd_and_vec4i(a, b)               _mm_and_epi32(a, b)
-#define simd_sqrt_vec4i(a)                 _mm_sqrt_epi32(a)
-#define simd_cmpeq_vec4i(a, b)             _mm_cmp_epi32(a, b, _CMP_EQ_UQ)
-#define simd_cmplt_vec4i(a, b)             _mm_cmp_epi32(a, b, _CMP_LT_OQ)
-#define simd_extract_vec4i(a, lane)        _mm_cvtss_f32(_mm_shuffle_epi32(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
+#define SIMD_VEC4I                       __m128i
+#define simd_load_vec4i(intsptr)         _mm_loadu_si128((const __m128i *)(intsptr))
+#define simd_set1_vec4i(int)             _mm_set1_epi32(f32)
+#define simd_store_vec4i(intsptr, from)  _mm_storeu_si128((__m128i *)(intsptr), from)
+#define simd_mul_vec4i(a, b)             _mm_mul_epi32(a, b)
+#define simd_div_vec4i(a, b)             _mm_div_epi32(a, b)
+#define simd_add_vec4i(a, b)             _mm_add_epi32(a, b)
+#define simd_sub_vec4i(a, b)             _mm_sub_epi32(a, b)
+#define simd_max_vec4i(a, b)             _mm_max_epi32(a, b)
+#define simd_and_vec4i(a, b)             _mm_and_epi32(a, b)
+#define simd_sqrt_vec4i(a)               _mm_sqrt_epi32(a)
+#define simd_cmpeq_vec4i(a, b)           _mm_cmp_epi32(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_vec4i(a, b)           _mm_cmp_epi32(a, b, _CMP_LT_OQ)
+#define simd_extract_vec4i(a, lane)      _mm_cvtss_f32(_mm_shuffle_epi32(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
 #elif defined(__ARM_NEON)
 #include "arm_neon.h"
-#define SIMD_VEC4I                         int32x4_t
-#define simd_load_vec4i(floatsptr)         vld1q_s32(floatsptr)
-#define simd_set1_vec4i(float)             vld1q_dup_s32(&float)
-#define simd_store_vec4i(to_ptr, from)     vst1q_s32((int32_t *)(to_ptr), from)
-#define simd_mul_vec4i(a, b)               vmulq_s32(a, b)
-#define simd_div_vec4i(a, b)               vdivq_s32(a, b)
-#define simd_add_vec4i(a, b)               vaddq_s32(a, b)
-#define simd_sub_vec4i(a, b)               vsubq_s32(a, b)
-#define simd_max_vec4i(a, b)               vmaxq_s32(a, b)
+#define SIMD_VEC4I                       int32x4_t
+#define simd_load_vec4i(f32sptr)         vld1q_s32(f32sptr)
+#define simd_set1_vec4i(f32)             vld1q_dup_s32(&f32)
+#define simd_store_vec4i(to_ptr, from)   vst1q_s32((s32 *)(to_ptr), from)
+#define simd_mul_vec4i(a, b)             vmulq_s32(a, b)
+#define simd_div_vec4i(a, b)             vdivq_s32(a, b)
+#define simd_add_vec4i(a, b)             vaddq_s32(a, b)
+#define simd_sub_vec4i(a, b)             vsubq_s32(a, b)
+#define simd_max_vec4i(a, b)             vmaxq_s32(a, b)
 // The arm comparison functions (like cmpeq) all return unsigned ints
-// we don't use the bitwise and with floats except immediately after passing
+// we don't use the bitwise and with f32s except immediately after passing
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether

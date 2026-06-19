@@ -7,9 +7,9 @@
 #import <MetalKit/MetalKit.h>
 #import <mach/mach_time.h>
 
-extern uint64_t last_resize_request_at;
+extern u64 last_resize_request_at;
 
-uint8_t T1_apple_gpu_init(
+u8 T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)
         (T1GPUFrame *),
     void (* arg_funcptr_gameloop_update_after_render)(void),
@@ -20,8 +20,8 @@ uint8_t T1_apple_gpu_init(
 
 // returns slice_i of new depth texture
 int32_t T1_apple_gpu_make_depth_tex(
-    uint32_t width,
-    uint32_t height);
+    u32 width,
+    u32 height);
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 - (void)
@@ -31,6 +31,6 @@ int32_t T1_apple_gpu_make_depth_tex(
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;
-extern uint64_t previous_time;
+extern u64 previous_time;
 
 #endif // T1_GPU_H

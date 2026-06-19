@@ -10,9 +10,9 @@
 
 
 void T1_zsprite_anim_init(
-    uint32_t (* fptr_init_mutex_and_return_id)(void),
-    void (* fptr_mutex_lock)(const uint32_t),
-    void (* fptr_mutex_unlock)(const uint32_t));
+    u32 (* fptr_init_mutex_and_return_id)(void),
+    void (* fptr_mutex_lock)(const u32),
+    void (* fptr_mutex_unlock)(const u32));
 
 void T1_zsprite_anim_resolve(void);
 
@@ -20,12 +20,12 @@ typedef struct {
     T1GPUzSprite gpu_vals;
     T1CPUzSpriteSimdStats cpu_vals;
     
-    uint64_t duration_us;
-    uint64_t pause_us;
+    u64 duration_us;
+    u64 pause_us;
     
-    uint32_t runs;
-    int32_t affected_zsprite_id;
-    int32_t affected_touch_id;
+    u32 runs;
+    s32 affected_T1_id;
+    s32 affected_touch_id;
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char original_func_name[128];
@@ -35,15 +35,15 @@ typedef struct {
     #endif
     
     T1EasingType easing_type; // u8
-    bool8_t gpu_vals_f32_active;
-    bool8_t gpu_vals_i32_active;
-    bool8_t cpu_vals_active;
-    bool8_t del_obj_on_finish;
-    bool8_t del_conflict_anims;
+    b8 gpu_vals_f32_active;
+    b8 gpu_vals_s32_active;
+    b8 cpu_vals_active;
+    b8 del_obj_on_finish;
+    b8 del_conflict_anims;
 } T1zSpriteAnim;
 
 T1zSpriteAnim * T1_zsprite_anim_request_next(
-    bool8_t endpoints_not_deltas);
+    b8 endpoints_not_deltas);
 
 void T1_zsprite_anim_commit_and_instarun(
     T1zSpriteAnim * to_commit
@@ -72,54 +72,54 @@ T1_zsprite_anim_commit(
 
 void
 T1_zsprite_anim_shatter_and_destroy(
-    const int32_t zsprite_id,
-    const uint64_t duration_us);
+    const s32 T1_id,
+    const u64 duration_us);
 
 void
 T1_zsprite_anim_evaporate_and_destroy(
-    const int32_t zsprite_id,
-    const uint64_t duration_us);
+    const s32 T1_id,
+    const u64 duration_us);
 
 void
 T1_zsprite_anim_fade_and_destroy(
-    const int32_t zsprite_id,
-    const uint64_t duration_us);
+    const s32 T1_id,
+    const u64 duration_us);
 
 void
 T1_zsprite_anim_fade_destroy_all(
-    const uint64_t duration_us);
+    const u64 duration_us);
 
 void
 T1_zsprite_anim_fade_to(
-    const int32_t zsprite_id,
-    const uint64_t duration_us,
-    const float target_alpha);
+    const s32 T1_id,
+    const u64 duration_us,
+    const f32 target_alpha);
 
 void
 T1_zsprite_anim_dud_dance(
-    const int32_t zsprite_id,
-    const float magnitude);
+    const s32 T1_id,
+    const f32 magnitude);
 
 void
 T1_zsprite_anim_bump(
-    const int32_t zsprite_id,
-    const uint32_t wait);
+    const s32 T1_id,
+    const u32 wait);
 
 void
 T1_zsprite_anim_delete_all(void);
 
 void
 T1_zsprite_anim_delete_endpoint_anims_targeting(
-    const int32_t zsprite_id);
+    const s32 T1_id);
 
 void
 T1_zsprite_anim_delete_all_anims_targeting(const
-    int32_t zsprite_id);
+    s32 T1_id);
 
 void
 T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
-    const int32_t zsprite_id,
-    const float new_ignore_camera);
+    const s32 T1_id,
+    const f32 new_ignore_camera);
 
 #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
 #else

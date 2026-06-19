@@ -6,10 +6,11 @@
 #include <sys/time.h>
 #include <sys/sysctl.h> // for sysctl to get clock frequency
 
+#include "T1_std.h"
 #include "T1_log.h"
 #include "T1_apple_audio.h"
 
-uint32_t T1_os_get_dir_separator_size(void) {
+u32 T1_os_get_dir_separator_size(void) {
     return 1;
 }
 
@@ -18,20 +19,20 @@ void T1_os_get_dir_separator(char * recipient) {
     recipient[1] = '\0';
 }
 
-uint64_t
+u64
 T1_os_get_current_time_us(void)
 {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    uint64_t result =
+    u64 result =
         1000000 *
-            (uint64_t)tv.tv_sec +
-            (uint64_t)tv.tv_usec;
+            (u64)tv.tv_sec +
+            (u64)tv.tv_usec;
     
     return result;
 }
 
-uint64_t
+u64
 T1_os_get_clock_frequency(void) {
     //    int mib[2];
     //    size_t len;
@@ -43,7 +44,7 @@ T1_os_get_clock_frequency(void) {
     //    assert(result != -1);
     // log_trace("clockinfo.hz: %d\n", clockinfo.hz);
     // log_trace("clockinfo.tick: %d\n", clockinfo.tick);
-    // return (uint64_t)clockinfo.tick;
+    // return (u64)clockinfo.tick;
     return 3600000000; // my pc's clock frequency
 }
 
@@ -61,11 +62,11 @@ T1_platform_audio_start_loop(void)
 /*
 Get a file's size. Returns 0 if no such file
 */
-uint64_t
+u64
 T1_os_get_filesize(
     const char * filepath)
 {
-    uint64_t return_value;
+    u64 return_value;
     
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
@@ -91,7 +92,7 @@ T1_os_get_filesize(
         return 0;
     }
     
-    uint64_t file_size = (uint64_t)[attrib_dict fileSize];
+    u64 file_size = (u64)[attrib_dict fileSize];
     
     return_value = file_size;
     
@@ -101,9 +102,9 @@ T1_os_get_filesize(
 void T1_os_read_file(
     const char * filepath,
     char * recip,
-    uint32_t * recip_size,
-    const uint64_t recip_cap,
-    uint8_t * good)
+    u32 * recip_size,
+    const u64 recip_cap,
+    u8 * good)
 {
     //@autoreleasepool {
     NSString * nsfilepath =
@@ -131,8 +132,8 @@ void T1_os_read_file(
         return;
     }
     
-    *recip_size = (uint32_t)[file_data length];
-    if (*recip_size > recip_cap) { *recip_size = (uint32_t)recip_cap; }
+    *recip_size = (u32)[file_data length];
+    if (*recip_size > recip_cap) { *recip_size = (u32)recip_cap; }
     
     [file_data
         getBytes:
@@ -145,7 +146,7 @@ void T1_os_read_file(
     *good = true;
 }
 
-uint8_t T1_os_file_exists(
+u8 T1_os_file_exists(
     const char * filepath)
 {
     NSString * nsfilepath = [NSString
@@ -197,7 +198,7 @@ void T1_os_mkdir_if_not_exist(
     {
         NSError * error = NULL;
         
-        uint8_t success = [[NSFileManager defaultManager]
+        u8 success = [[NSFileManager defaultManager]
             createDirectoryAtPath:directory_path
             withIntermediateDirectories:true
             attributes:NULL 
@@ -271,8 +272,8 @@ void
 T1_os_write_file(
     const char * filepath,
     const char * output,
-    const uint32_t output_size,
-    uint8_t * good)
+    const u32 output_size,
+    u8 * good)
 {
     T1_log_append("write file data to: ");
     T1_log_append(filepath);
@@ -323,12 +324,12 @@ void T1_os_get_filenames_in(
         return;
     }
     
-    uint32_t storable_results =
-        (uint32_t)[results count] > 2000 ?
-            2000 : (uint32_t)[results count];
+    u32 storable_results =
+        (u32)[results count] > 2000 ?
+            2000 : (u32)[results count];
     
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < storable_results;
         i++)
     {
@@ -345,7 +346,7 @@ void T1_os_get_filenames_in(
 void
 T1_os_get_app_dir(
     char * recipient,
-    const uint32_t recipient_size)
+    const u32 recipient_size)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
@@ -364,7 +365,7 @@ T1_os_get_app_dir(
 
 void T1_os_get_res_dir(
     char * recip,
-    const uint32_t recip_cap)
+    const u32 recip_cap)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recip_cap;
@@ -390,7 +391,7 @@ void T1_os_start_thread(
     // Let's revisit this when we port to other platforms
     
     // pthread_t thread;
-    // uint32_t result = pthread_create(
+    // u32 result = pthread_create(
     //     &thread,
     //     NULL,
     //     function_to_run,
@@ -406,7 +407,7 @@ void T1_os_start_thread(
         });
 }
 
-uint32_t T1_os_get_cpu_logical_core_count(void)
+u32 T1_os_get_cpu_logical_core_count(void)
 {
     NSUInteger core_count = [
         [NSProcessInfo processInfo] activeProcessorCount];

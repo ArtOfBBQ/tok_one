@@ -10,19 +10,19 @@
 #endif
 
 
-uint8_t T1_log_app_running = false;
+u8 T1_log_app_running = false;
 char * T1_log_crash_msg = NULL;
 
 #define T1_LOG_CRASH_STRING_SIZE 256
 #define LOG_SIZE 500000
 typedef struct {
-    void * (* malloc)(size_t);
-    uint32_t (* create_mutex)(void);
-    void (* mutex_lock)(const uint32_t);
-    void (* mutex_unlock)(const uint32_t);
-    uint32_t mutex_id;
+    void * (* malloc)(u64);
+    u32 (* create_mutex)(void);
+    void (* mutex_lock)(const u32);
+    void (* mutex_unlock)(const u32);
+    u32 mutex_id;
     char * full;
-    uint32_t full_i;
+    u32 full_i;
 } T1LogState;
 
 static T1LogState * T1_log_s = NULL;
@@ -32,10 +32,10 @@ extern "C" {
 #endif
 
 void T1_logger_init(
-    void * (* arg_logger_malloc_func)(size_t size),
-    uint32_t (* arg_logger_create_mutex_func)(void),
-    void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),
-    void (* arg_logger_mutex_unlock_func)(const uint32_t mutex_id))
+    void * (* arg_logger_malloc_func)(u64 size),
+    u32 (* arg_logger_create_mutex_func)(void),
+    void (* arg_logger_mutex_lock_func)(const u32 mutex_id),
+    void (* arg_logger_mutex_unlock_func)(const u32 mutex_id))
 {
     T1_log_s = arg_logger_malloc_func(sizeof(T1LogState));
     T1_std_memset(T1_log_s, 0, sizeof(T1LogState));
@@ -60,12 +60,12 @@ void T1_logger_init(
 #if T1_LOG_PRINTF == T1_ACTIVE
 void
 T1_log_internal_append_uint(
-    const uint32_t to_append,
+    const u32 to_append,
     const char * caller_function_name)
 {
     char converted[1000];
-    T1_std_uint_to_string(
-        /* const uint32_t input: */
+    T1_std_u32_to_string(
+        /* const u32 input: */
             to_append,
         /* char * recipient: */
             converted);
@@ -91,12 +91,12 @@ T1_log_internal_append_char(
 
 void
 T1_log_internal_append_int(
-    const int32_t to_append,
+    const s32 to_append,
     const char * caller_function_name)
 {
     char converted[1000];
-    T1_std_int_to_string(
-        /* const int32_t input: */
+    T1_std_s32_to_string(
+        /* const s32 input: */
             to_append,
         /* char * recipient: */
             converted);
@@ -107,21 +107,21 @@ T1_log_internal_append_int(
 }
 
 void
-T1_log_internal_append_float(
-    const float to_append,
+T1_log_internal_append_f32(
+    const f32 to_append,
     const char * caller_function_name)
 {
-    char float_str[1000];
-    T1_std_float_to_string(
-        /* const int32_t input: */
+    char f32_str[1000];
+    T1_std_f32_to_string(
+        /* const s32 input: */
             to_append,
         /* char * recipient: */
-            float_str,
-        /* const uint32_t recipient_size: */
+            f32_str,
+        /* const u32 recipient_size: */
             1000);
     
     T1_log_internal_append(
-        float_str,
+        f32_str,
         caller_function_name);
 }
 
@@ -143,7 +143,7 @@ T1_log_internal_append(
         caller_function_name != NULL)
     {
         char * prefix = (char *)"[";
-        uint32_t prefix_length = common_get_string_length(prefix);
+        u32 prefix_length = common_get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) {
             if (logger_mutex_unlock_func != NULL) {
                 // logger_mutex_unlock_func(logger_mutex_id);
@@ -164,7 +164,7 @@ T1_log_internal_append(
             return;
         }
         
-        uint32_t func_length = common_get_string_length(
+        u32 func_length = common_get_string_length(
         caller_function_name);
         if (log_i + func_length >= LOG_SIZE) {
             // logger_mutex_unlock_func(logger_mutex_id);
@@ -187,7 +187,7 @@ T1_log_internal_append(
         }
         
         char * glue = (char *)"]: ";
-        uint32_t glue_length = common_get_string_length(glue);
+        u32 glue_length = common_get_string_length(glue);
         if (log_i + glue_length >= LOG_SIZE) {
             if (logger_mutex_unlock_func != NULL) {
                 // logger_mutex_unlock_func(logger_mutex_id);
@@ -210,7 +210,7 @@ T1_log_internal_append(
         }
     }
     
-    uint32_t to_append_length = common_get_string_length(to_append);
+    u32 to_append_length = common_get_string_length(to_append);
     if (log_i + to_append_length >= LOG_SIZE) {
         if (logger_mutex_unlock_func != NULL) {
             // logger_mutex_unlock_func(logger_mutex_id);
@@ -236,7 +236,7 @@ T1_log_internal_append(
 #error
 #endif
 
-void T1_log_dump(uint8_t * good) {
+void T1_log_dump(u8 * good) {
     
     // TODO: move this elsewhere so logger can avoid #including platform_layer.h
     //    if (app_log == NULL) { return; }
@@ -259,11 +259,11 @@ void
 T1_log_dump_and_crash(
     const char * crash_message)
 {
-    uint8_t log_dump_succesful = false;
+    u8 log_dump_succesful = false;
     T1_log_dump(&log_dump_succesful);
     
     if (T1_log_app_running) {
-        unsigned int i = 0;
+        u32 i = 0;
         while (
             crash_message[i] != '\0' &&
             i < (T1_LOG_CRASH_STRING_SIZE-1))
@@ -281,16 +281,17 @@ T1_log_dump_and_crash(
     #error
     #endif
     
+    
     T1_log_app_running = false;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void
 T1_log_assert_internal(
-    uint8_t condition,
+    u8 condition,
     const char * str_condition,
     const char * file_name,
-    const int line_number,
+    const s32 line_number,
     const char * func_name)
 {
     if (
@@ -356,10 +357,10 @@ T1_log_assert_internal(
 
 void
 T1_log_warn_internal(
-    uint8_t condition,
+    u8 condition,
     const char * str_condition,
     const char * file_name,
-    const int line_number,
+    const s32 line_number,
     const char * func_name)
 {
     if (condition) { return; }
@@ -390,8 +391,8 @@ T1_log_warn_internal(
 #endif
 
 typedef struct TimerResults {
-    uint64_t inprogress_start;
-    uint64_t inprogress_end;
-    uint64_t averaged_result_so_far;
-    uint32_t runs;
+    u64 inprogress_start;
+    u64 inprogress_end;
+    u64 averaged_result_so_far;
+    u32 runs;
 } TimerResults;

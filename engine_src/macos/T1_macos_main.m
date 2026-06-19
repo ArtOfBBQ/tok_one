@@ -19,8 +19,8 @@
 
 void T1_macos_update_window_size(void);
 
-static uint32_t T1_apple_keycode_to_tokone_keycode(
-    const uint32_t apple_key)
+static u32 T1_apple_keycode_to_tokone_keycode(
+    const u32 apple_key)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
@@ -417,7 +417,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
             [window getWidth],
         /* float height */
             [window getHeight],
-        /* uint64_t at_timestamp_us: */
+        /* u64 at_timestamp_us: */
             T1_os_get_current_time_us());
     
     [apple_gpu_delegate updateFinalWindowSize];
@@ -430,7 +430,7 @@ int main(int argc, const char * argv[]) {
     T1_log_app_running = true;
     
     char errmsg[512];
-    bool8_t success = 1;
+    b8 success = 1;
     T1_appinit_before_gpu_init(
         &success,
         errmsg);
@@ -439,8 +439,8 @@ int main(int argc, const char * argv[]) {
     NSRect window_rect = NSMakeRect(
         /* x: */ T1_global->window_left,
         /* y: */ T1_global->window_bottom,
-        /* width: */ T1_global->window_width,
-        /* height: */ T1_global->window_height);
+        /* width: */ T1_settings_get_render_width(),
+        /* height: */ T1_settings_get_render_height());
     
     window =
         [[NSWindowWithCustomResponder alloc]
@@ -514,7 +514,7 @@ int main(int argc, const char * argv[]) {
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
     
-    bool8_t result = T1_apple_gpu_init(
+    b8 result = T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,

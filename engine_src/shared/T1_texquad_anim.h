@@ -8,31 +8,31 @@
 #include "T1_easing.h"
 
 void T1_texquad_anim_init(
-    uint32_t (* funcptr_init_mutex_and_return_id)(void),
-    void (* funcptr_mutex_lock)(const uint32_t),
-    void (* funcptr_mutex_unlock)(const uint32_t));
+    u32 (* funcptr_init_mutex_and_return_id)(void),
+    void (* funcptr_mutex_lock)(const u32),
+    void (* funcptr_mutex_unlock)(const u32));
 
 void T1_texquad_anim_resolve(void);
 
 typedef struct {
     T1GPUTexQuad gpu_vals;
     
-    uint64_t duration_us;
-    uint64_t pause_us;
+    u64 duration_us;
+    u64 pause_us;
     
-    uint32_t runs;
-    int32_t affect_zsprite_id;
-    int32_t affect_touch_id;
+    u32 runs;
+    s32 affect_T1_id;
+    s32 affect_touch_id;
     
     T1EasingType easing_type; // u8
-    bool8_t gpu_f32_active;
-    bool8_t gpu_i32_active;
-    bool8_t del_obj_on_finish;
-    bool8_t del_conflict_anims;
+    b8 gpu_f32_active;
+    b8 gpu_s32_active;
+    b8 del_obj_on_finish;
+    b8 del_conflict_anims;
 } T1TexQuadAnim;
 
 T1TexQuadAnim * T1_texquad_anim_request_next(
-    bool8_t endpoints_not_deltas);
+    b8 endpoints_not_deltas);
 
 void T1_texquad_anim_commit(
     T1TexQuadAnim * to_commit);
@@ -42,16 +42,16 @@ void T1_texquad_anim_commit_and_instarun(
 
 void
 T1_texquad_anim_fade_to(
-    const int32_t zsprite_id,
-    const uint64_t duration_us,
-    const float target_alpha);
+    const s32 T1_id,
+    const u64 duration_us,
+    const f32 target_alpha);
 
 void T1_texquad_anim_fade_and_destroy(
-    const int32_t  zsprite_id,
-    const uint64_t duration_us);
+    const s32 T1_id,
+    const u64 duration_us);
 
 void T1_texquad_anim_fade_destroy_all(
-    const uint64_t duration_us);
+    const u64 duration_us);
 
 void T1_texquad_anim_delete_all(void);
 

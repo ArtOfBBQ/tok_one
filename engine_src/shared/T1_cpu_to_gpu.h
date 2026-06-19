@@ -7,8 +7,8 @@
 
 
 typedef struct {
-    int32_t zsprite_id;
-    int32_t touch_id;
+    s32 T1_id;
+    s32 touch_id;
 } IdPair;
 
 /*
@@ -26,10 +26,10 @@ typedef struct
     T1GPUTexQuad *        flat_tex_quads;
     T1GPUzSpriteMatrices matrices[T1_ZSPRITES_CAP];
     IdPair                id_pairs[T1_ZSPRITES_CAP];
-    uint32_t              verts_size;
-    uint32_t              render_views_size;
-    uint32_t              flat_bb_quads_size;
-    uint32_t              flat_tex_quads_size;
+    u32              verts_size;
+    u32              render_views_size;
+    u32              flat_bb_quads_size;
+    u32              flat_tex_quads_size;
 } T1GPUFrame;
 
 typedef struct
@@ -37,22 +37,22 @@ typedef struct
     T1GPUFrame triple_buffers[T1_FRAMES_CAP];
     T1GPULockedVertex * locked_vertices;
     T1GPUConstMatf32 * const_mats_f32;
-    T1GPUConstMati32 * const_mats_i32;
-    uint32_t locked_vertices_size;
-    uint32_t const_mats_size;
-    uint32_t const_matsf32_alloc_size;
-    uint32_t const_matsi32_alloc_size;
-    uint32_t vertices_alloc_size;
-    uint32_t flat_quads_alloc_size;
-    uint32_t flat_texquads_alloc_size;
-    uint32_t locked_vertices_alloc_size;
-    uint32_t polygons_alloc_size;
-    uint32_t matrices_alloc_size;
-    uint32_t polygon_mats_alloc_size;
-    uint32_t lights_alloc_size;
-    uint32_t render_views_alloc_size;
-    uint32_t postprocessing_constants_alloc_size;
-    uint32_t frame_i;
+    T1GPUConstMats32 * const_mats_s32;
+    u32 locked_vertices_size;
+    u32 const_mats_size;
+    u32 const_matsf32_alloc_size;
+    u32 const_matss32_alloc_size;
+    u32 vertices_alloc_size;
+    u32 flat_quads_alloc_size;
+    u32 flat_texquads_alloc_size;
+    u32 locked_vertices_alloc_size;
+    u32 polygons_alloc_size;
+    u32 matrices_alloc_size;
+    u32 polygon_mats_alloc_size;
+    u32 lights_alloc_size;
+    u32 render_views_alloc_size;
+    u32 postprocessing_constants_alloc_size;
+    u32 frame_i;
 } T1CPUToGPUData;
 
 extern T1CPUToGPUData * T1_cpu_to_gpu_data;

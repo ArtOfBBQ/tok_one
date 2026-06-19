@@ -10,27 +10,27 @@
 typedef struct {
     T1Img image;
     char name[T1_TEX_NAME_CAP];
-    bool8_t deleted;
-    bool8_t request_update;
-    bool8_t prioritize_asset_load;
+    b8 deleted;
+    b8 request_update;
+    b8 prioritize_asset_load;
 } T1TexArrayImg;
 
 typedef struct {
     T1TexArrayImg images[T1_TEX_SLICES_CAP];
-    uint64_t started_decoding;
-    uint64_t ended_decoding;
-    uint32_t images_size;
-    uint32_t single_img_width;
-    uint32_t single_img_height;
-    uint32_t gpu_capacity;
-    bool8_t request_init;
-    bool8_t is_render_target;
-    bool8_t bc1_compressed;
-    bool8_t deleted;
+    u64 started_decoding;
+    u64 ended_decoding;
+    u32 images_size;
+    u32 single_img_width;
+    u32 single_img_height;
+    u32 gpu_capacity;
+    b8 request_init;
+    b8 is_render_target;
+    b8 bc1_compressed;
+    b8 deleted;
 } T1TexArray;
 
 extern T1TexArray * T1_tex_arrays;
-extern uint32_t T1_tex_arrays_size;
+extern u32 T1_tex_arrays_size;
 
 void
 T1_tex_array_init(void);
@@ -40,42 +40,42 @@ T1_tex_array_push_all(void);
 
 T1Tex T1_tex_array_reg_img(
     const char * filename,
-    const uint32_t width,
-    const uint32_t height,
-    const bool8_t is_render_target,
-    const bool8_t use_bc1_compression);
+    const u32 width,
+    const u32 height,
+    const b8 is_render_target,
+    const b8 use_bc1_compression);
 
-int32_t T1_tex_array_create_new_render_view(
-    const uint32_t width,
-    const uint32_t height);
+s32 T1_tex_array_create_new_render_view(
+    const u32 width,
+    const u32 height);
 
 void T1_tex_array_delete_array(
-    const int32_t array_i);
+    const s32 array_i);
 
 void T1_tex_array_delete_slice(
-    const int32_t array_i,
-    const int32_t slice_i);
+    const s32 array_i,
+    const s32 slice_i);
 
 void T1_tex_array_update_rgba(
-    const int32_t array_i,
-    const int32_t slice_i,
-    const uint8_t * rgba,
-    const uint32_t rgba_size);
+    const s32 array_i,
+    const s32 slice_i,
+    const u8 * rgba,
+    const u32 rgba_size);
 
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
-    const uint32_t rows,
-    const uint32_t columns);
+    const u32 rows,
+    const u32 columns);
 
 T1Tex T1_tex_array_create_new_in_array(
-    const int32_t array_i);
+    const s32 array_i);
 
 T1Tex T1_tex_array_get_filename_loc(
     const char * for_filename);
 
 void T1_tex_array_debug_dump_to_writables(
-    const int32_t texture_array_i,
-    uint32_t * success);
+    const s32 texture_array_i,
+    u32 * success);
 
 #endif // T1_TEX_ARRAY_H

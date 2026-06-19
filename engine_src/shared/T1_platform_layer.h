@@ -26,8 +26,7 @@ on each platform
 #ifndef T1_PLATFORM_LAYER_H
 #define T1_PLATFORM_LAYER_H
 
-#include "T1_std.h"
-#include "T1_public_types.h"
+#include "T1_stdint.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,16 +34,16 @@ extern "C" {
 
 void T1_os_init(
     void ** unmanaged_memory_store,
-    const uint32_t aligned_to);
+    const u32 aligned_to);
 
 void
 T1_os_close_app(void);
 
 void *
 T1_os_malloc_unaligned_block(
-    const uint64_t size);
+    const u64 size);
 
-uint32_t
+u32
 T1_os_get_dir_separator_size(void);
 
 void
@@ -54,13 +53,13 @@ void
 T1_os_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const uint32_t recipient_capacity);
+    const u32 recipient_capacity);
 
 void
 T1_os_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const uint32_t recipient_capacity);
+    const u32 recipient_capacity);
 
 void
 T1_os_open_dir_in_window_if_possible(
@@ -70,28 +69,28 @@ T1_os_open_dir_in_window_if_possible(
 void
 T1_os_get_app_dir(
     char * recipient,
-    const uint32_t recipient_size);
+    const u32 recipient_size);
 
 void
 T1_os_get_res_dir(
     char * recip,
-    const uint32_t recip_cap);
+    const u32 recip_cap);
 
 void
 T1_os_get_cwd(
     char * recipient,
-    const uint32_t recipient_size);
+    const u32 recipient_size);
 
 // a root directory where we're allowed to write
 void
 T1_os_get_writables_dir(
     char * recipient,
-    const uint32_t recipient_size);
+    const u32 recipient_size);
 
-uint8_t
+u8
 T1_os_res_exists(const char * resource_name);
 
-uint8_t
+u8
 T1_os_file_exists(const char * filepath);
 
 void
@@ -104,24 +103,24 @@ void
 T1_os_write_file(
     const char * filepath_destination,
     const char * output,
-    const uint32_t output_size,
-    uint8_t * good);
+    const u32 output_size,
+    u8 * good);
 
 void
 T1_os_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
-    const uint32_t output_size,
-    uint8_t * good);
+    const u32 output_size,
+    u8 * good);
 
 void
 T1_os_write_rgba_to_writables(
     const char * local_filename,
-    uint8_t * rgba,
-    const uint32_t rgba_size,
-    const uint32_t width,
-    const uint32_t height,
-    uint8_t * good);
+    u8 * rgba,
+    const u32 rgba_size,
+    const u32 width,
+    const u32 height,
+    u8 * good);
 
 void
 T1_os_copy_file(
@@ -145,15 +144,15 @@ A 'resource' is a file that's available in the typical folder for our platform
 
 A 'filepath' is a full explicit path to and including the filename
 */
-uint64_t
+u64
 T1_os_get_resource_size(
     const char * filename);
 
-uint64_t
+u64
 T1_os_get_writable_size(
     const char * filename);
 
-uint64_t
+u64
 T1_os_get_filesize(
     const char * filepath);
 
@@ -184,33 +183,33 @@ void
 T1_os_read_resource_file(
     const char * filename,
     char * recip,
-    const uint64_t recip_cap,
-    uint8_t * good);
+    const u64 recip_cap,
+    u8 * good);
 
 void
 T1_os_read_file(
     const char * filepath,
     char * recip,
-    uint32_t * recip_size,
-    const uint64_t recip_cap,
-    uint8_t * good);
+    u32 * recip_size,
+    const u64 recip_cap,
+    u8 * good);
 
 void
 T1_os_read_file_from_writables(
     const char * filepath_inside_writables,
     char * recipient,
-    const uint32_t recipient_size,
-    uint8_t * good);
+    const u32 recipient_size,
+    u8 * good);
 
 void
 T1_os_gpu_get_device_name(
     char * recipient,
-    const uint32_t recipient_cap);
+    const u32 recipient_cap);
 
 void T1_os_gpu_update_capacity_if_needed(
-    const int32_t tex_array_i);
+    const s32 tex_array_i);
 
-uint32_t
+u32
 T1_os_get_cpu_logical_core_count(void);
 
 /*
@@ -221,20 +220,20 @@ that id
 */
 void
 T1_os_start_thread(
-    void (*function_to_run)(int32_t),
-    int32_t argument);
+    void (*function_to_run)(s32),
+    s32 argument);
 
-uint64_t
+u64
 T1_os_get_current_time_us(void);
 
-uint64_t
+u64
 T1_os_get_clock_frequency(void);
 
-float
-T1_os_x_to_x(const float x);
+f32
+T1_os_x_to_x(const f32 x);
 
-float
-T1_os_y_to_y(const float y);
+f32
+T1_os_y_to_y(const f32 y);
 
 void
 T1_os_enter_fullscreen(void);
@@ -244,7 +243,7 @@ T1_os_toggle_fullscreen(void);
 
 void
 T1_os_gpu_update_internal_render_viewport(
-    const int32_t at_i);
+    const s32 at_i);
 
 void
 T1_os_gpu_update_window_viewport(void);
@@ -255,15 +254,15 @@ T1_os_gpu_copy_locked_vertices(void);
 void
 T1_os_gpu_copy_locked_materials(void);
 
-int32_t
+s32
 T1_os_gpu_get_touch_id_at_screen_pos(
-    const float screen_x,
-    const float screen_y);
+    const f32 screen_x,
+    const f32 screen_y);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void
-T1_platform_gpu_generate_mipmaps_for_texture_array(
-    const int32_t texture_array_i);
+T1_os_gpu_generate_mipmaps_for_texture_array(
+    const s32 texture_array_i);
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 #else
 #error
@@ -271,34 +270,33 @@ T1_platform_gpu_generate_mipmaps_for_texture_array(
 
 void
 T1_os_gpu_push_tex_slice_and_free_rgba(
-    const int32_t texture_array_i,
-    const int32_t texture_i);
+    const s32 texture_array_i,
+    const s32 texture_i);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_os_gpu_fetch_rgba_at(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    uint8_t * rgba_recipient,
-    uint32_t * recipient_size,
-    uint32_t * recipient_width,
-    uint32_t * recipient_height,
-    const uint32_t recipient_cap,
-    uint32_t * good);
+    const s32 texture_array_i,
+    const s32 texture_i,
+    u8 * rgba_recipient,
+    u32 * recipient_size,
+    u32 * recipient_width,
+    u32 * recipient_height,
+    const u32 recipient_cap,
+    u32 * good);
 
-void T1_platform_gpu_delete_texture_array(
-    const int32_t array_i);
+void T1_os_gpu_delete_texture_array(
+    const s32 array_i);
 
-void T1_platform_gpu_delete_depth_tex(
-    const int32_t slice_i);
+void T1_os_gpu_delete_depth_tex(
+    const s32 slice_i);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
-int32_t
-T1_platform_gpu_make_depth_tex(
-    const uint32_t width,
-    const uint32_t height);
+s32 T1_os_gpu_make_depth_tex(
+    const u32 width,
+    const u32 height);
 
 void T1_platform_update_mouse_location(void);
 
@@ -309,19 +307,19 @@ void T1_platform_request_messagebox(const char * message);
 /*
 creates a mutex and return the ID of said mutex for you to store
 */
-uint32_t T1_platform_init_mutex_and_return_id(void);
+u32 T1_platform_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
-uint8_t T1_platform_mutex_trylock(const uint32_t mutex_id);
+u8 T1_platform_mutex_trylock(const u32 mutex_id);
 
-void T1_platform_assert_mutex_locked(const uint32_t mutex_id);
+void T1_platform_assert_mutex_locked(const u32 mutex_id);
 
-void T1_platform_mutex_lock(const uint32_t mutex_id);
+void T1_platform_mutex_lock(const u32 mutex_id);
 
-void T1_platform_mutex_unlock(const uint32_t mutex_id);
+void T1_platform_mutex_unlock(const u32 mutex_id);
 
 void T1_platform_layer_start_window_resize(
-    const uint64_t timestamp);
+    const u64 timestamp);
 
 #ifdef __cplusplus
 }

@@ -13,7 +13,7 @@ void T1_render_init(void);
 
 void T1_render_update(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_us);
+    u64 elapsed_us);
 
 #ifdef __cplusplus
 }

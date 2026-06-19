@@ -19,36 +19,36 @@ some sliders, change the slider size, and then request some more sliders
 typedef struct {
     char * meta_struct_name;
     union {
-        uint64_t custom_uint_max;
-        int64_t  custom_int_max;
-        double   custom_float_max;
+        u64 custom_umax;
+        s64 custom_smax;
+        f64 custom_fmax;
     };
     union {
-        uint64_t custom_uint_min;
-        int64_t  custom_int_min;
-        double   custom_float_min;
+        u64 custom_umin;
+        s64 custom_smin;
+        f64 custom_fmin;
     };
     T1Tex       slider_pin_tex;
-    float       width_screen;
-    float       height_screen;
-    float       pin_width_screen;
-    float       pin_height_screen;
+    f32       width_screen;
+    f32       height_screen;
+    f32       pin_width_screen;
+    f32       pin_height_screen;
     
-    float       screen_x;
-    float       screen_y;
-    float       z;
+    f32       screen_x;
+    f32       screen_y;
+    f32       z;
     
     char        sfx_filename[T1_UI_WIDGET_STR_CAP];
     char        label_prefix[T1_UI_WIDGET_STR_CAP];
-    bool8_t     custom_min_max_vals;
-    bool8_t     is_meta_enum;
+    b8     custom_min_max_vals;
+    b8     is_meta_enum;
     T1MetaType  linked_type;
     
-    float       pin_rgba[4];
-    int32_t     tex_array_i;
-    int32_t     tex_slice_i;
-    float       slider;
-    bool8_t     label_shows_value;
+    f32       pin_rgba[4];
+    s32     tex_array_i;
+    s32     tex_slice_i;
+    f32       slider;
+    b8          label_shows_value;
 } T1UIWidgetProps;
 
 extern T1UIWidgetProps * T1_ui_widget_next_props;
@@ -56,25 +56,25 @@ extern T1UIWidgetProps * T1_ui_widget_next_props;
 // allocates memory for state
 void T1_ui_widget_init(void);
 
-void T1_ui_widget_handle_touches(uint64_t ms_elapsed);
+void T1_ui_widget_handle_touches(u64 ms_elapsed);
 
 /*
-A slider linked to a float of your choice, for the user to slide left/right to
+A slider linked to a f32 of your choice, for the user to slide left/right to
 get the value of their choosing
 */
 void T1_ui_widget_request_slider(
-    const int32_t background_zsprite_id,
-    const int32_t label_zsprite_id,
-    const int32_t pin_zsprite_id,
+    const s32 background_T1_id,
+    const s32 label_T1_id,
+    const s32 pin_T1_id,
     void * linked_value_ptr);
 
 void T1_ui_widget_request_button(
-    const int32_t button_zsprite_id,
-    const int32_t button_label_id,
-    void (* onclick_funcptr)(int64_t),
-    const int64_t clicked_arg);
+    const s32 button_T1_id,
+    const s32 button_label_T1_id,
+    void (* onclick_funcptr)(s64),
+    const s64 clicked_arg);
 
-void T1_ui_widget_delete(const int32_t with_zsprite_id);
+void T1_ui_widget_delete(const s32 with_T1_id);
 
 void T1_ui_widget_delete_all(void);
 

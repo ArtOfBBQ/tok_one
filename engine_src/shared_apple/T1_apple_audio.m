@@ -11,9 +11,9 @@ static void T1_apple_audio_callback(
     assert(
         buffer->mAudioDataByteSize == buffer->mAudioDataBytesCapacity);
     
-    uint32_t audio_data_cap = buffer->mAudioDataBytesCapacity;
-    uint32_t samples_to_copy = audio_data_cap / 2;
-    // uint32_t frames_to_copy_both_runs = bytes_to_copy_both_runs / 4;
+    u32 audio_data_cap = buffer->mAudioDataBytesCapacity;
+    u32 samples_to_copy = audio_data_cap / 2;
+    // u32 frames_to_copy_both_runs = bytes_to_copy_both_runs / 4;
     // buffer->mAudioDataByteSize = bytes_to_copy_both_runs;
     
     int16_t * platform_buffer_at = (int16_t *)buffer->mAudioData;
@@ -21,7 +21,7 @@ static void T1_apple_audio_callback(
     T1_audio_consume_int16_samples(
         /* int16_t * recipient: */
             platform_buffer_at,
-        /* const uint32_t samples_to_copy: */
+        /* const u32 samples_to_copy: */
             samples_to_copy);
     
     OSStatus err = AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
@@ -32,7 +32,7 @@ static void T1_apple_audio_callback(
 }
 
 void T1_apple_audio_start_loop(void) {
-    uint32_t platform_buffer_size_bytes = 3000;
+    u32 platform_buffer_size_bytes = 3000;
     
     // stereo 16-bit interleaved linear PCM audio data at 48kHz in SNORM format
     AudioStreamBasicDescription audio_stream_basic_description;

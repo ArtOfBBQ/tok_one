@@ -3,12 +3,12 @@
 #include <math.h>
 #include "T1_log.h"
 
-static float get_magnitude_vec4f(
+static f32 get_magnitude_vec4f(
     const SIMD_VEC4F input_xyz)
 {
     SIMD_VEC4F squared = simd_mul_vec4f(input_xyz, input_xyz);
     
-    float sum =
+    f32 sum =
         simd_extract_vec4f(squared, 0) +
         simd_extract_vec4f(squared, 1) +
         simd_extract_vec4f(squared, 2);
@@ -17,39 +17,39 @@ static float get_magnitude_vec4f(
 }
 
 inline
-static float
-T1_triangle_get_magnitude_f3(float input_xyz[3]) {
+static f32
+T1_triangle_get_magnitude_f3(f32 input_xyz[3]) {
     
-    float sum_squares =
+    f32 sum_squares =
         (input_xyz[0] * input_xyz[0]) +
         (input_xyz[1] * input_xyz[1]) +
         (input_xyz[2] * input_xyz[2]);
     
-    float return_value = sqrtf(sum_squares);
+    f32 return_value = sqrtf(sum_squares);
     
     return return_value;
 }
 
-static float
+static f32
 T1_triangle_get_vertex_magnitude(
-    float * input)
+    f32 * input)
 {
-    float x = (input[0] * input[0]);
-    float y = (input[1] * input[1]);
-    float z = (input[2] * input[2]);
+    f32 x = (input[0] * input[0]);
+    f32 y = (input[1] * input[1]);
+    f32 z = (input[2] * input[2]);
     
-    float sum_squares = x + y + z;
+    f32 sum_squares = x + y + z;
     
-    float return_value = sqrtf(sum_squares);
+    f32 return_value = sqrtf(sum_squares);
     
     return return_value;
 }
 
 void
 T1_triangle_cross_vertices(
-    float * a,
-    float * b,
-    float * recip)
+    f32 * a,
+    f32 * b,
+    f32 * recip)
 {
     recip[0] = a[1]*b[2]-a[2]*b[1];
     recip[1] = a[2]*b[0]-a[0]*b[2];
@@ -58,9 +58,9 @@ T1_triangle_cross_vertices(
 
 void
 T1_triangle_normalize_vertex(
-    float * to_normalize)
+    f32 * to_normalize)
 {
-    float magnitude =
+    f32 magnitude =
         T1_triangle_get_vertex_magnitude(
             to_normalize);
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
@@ -76,7 +76,7 @@ SIMD_VEC4F
 T1_triangle_normalize_vertex_vec4f(
     SIMD_VEC4F to_normalize_xyz)
 {
-    float magnitude = get_magnitude_vec4f(to_normalize_xyz);
+    f32 magnitude = get_magnitude_vec4f(to_normalize_xyz);
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
         magnitude = 0.0001f;
     }
@@ -86,9 +86,9 @@ T1_triangle_normalize_vertex_vec4f(
 
 void
 T1_triangle_normalize_zvertex_f3(
-    float to_normalize_xyz[3])
+    f32 to_normalize_xyz[3])
 {
-    float magnitude =
+    f32 magnitude =
         T1_triangle_get_magnitude_f3(
             to_normalize_xyz);
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
@@ -103,11 +103,11 @@ T1_triangle_normalize_zvertex_f3(
 SIMD_VEC4F
 T1_triangle_x_rotate_vec4f_known_cossin(
     SIMD_VEC4F xyz,
-    float cos_x_angle,
-    float sin_x_angle)
+    f32 cos_x_angle,
+    f32 sin_x_angle)
 {
     /*
-    float new_y =
+    f32 new_y =
         xyz[1] * cos_x_angle -
         xyz[2] * sin_x_angle;
     
@@ -118,7 +118,7 @@ T1_triangle_x_rotate_vec4f_known_cossin(
     xyz[1] = new_y;
     */
     
-    float new_vals[4];
+    f32 new_vals[4];
     new_vals[0] = simd_extract_vec4f(xyz, 0);
     new_vals[1] =
         simd_extract_vec4f(xyz, 1) * cos_x_angle -
@@ -134,11 +134,11 @@ T1_triangle_x_rotate_vec4f_known_cossin(
 }
 
 void T1_triangle_x_rotate_f3_known_cossin(
-    float * xyz,
-    float cos_x_angle,
-    float sin_x_angle)
+    f32 * xyz,
+    f32 cos_x_angle,
+    f32 sin_x_angle)
 {
-    float new_y =
+    f32 new_y =
         xyz[1] * cos_x_angle -
         xyz[2] * sin_x_angle;
     
@@ -150,15 +150,15 @@ void T1_triangle_x_rotate_f3_known_cossin(
 }
 
 void T1_triangle_x_rotate_f3(
-    float * xyz,
-    float x_angle)
+    f32 * xyz,
+    f32 x_angle)
 {
     T1_triangle_x_rotate_f3_known_cossin(
-        /* float * xyz: */
+        /* f32 * xyz: */
             xyz,
-        /* float cos_x_angle: */
+        /* f32 cos_x_angle: */
             cosf(x_angle),
-        /* float sin_x_angle: */
+        /* f32 sin_x_angle: */
             sinf(x_angle));
     
     return;
@@ -166,10 +166,10 @@ void T1_triangle_x_rotate_f3(
 
 SIMD_VEC4F T1_triangle_y_rotate_vec4f_known_cossin(
     SIMD_VEC4F xyz,
-    float cos_y_angle,
-    float sin_y_angle)
+    f32 cos_y_angle,
+    f32 sin_y_angle)
 {
-    float new_vals[4];
+    f32 new_vals[4];
     new_vals[0] =
         (simd_extract_vec4f(xyz, 0) * cos_y_angle) +
         (simd_extract_vec4f(xyz, 2) * sin_y_angle);
@@ -185,11 +185,11 @@ SIMD_VEC4F T1_triangle_y_rotate_vec4f_known_cossin(
 }
 
 void T1_triangle_y_rotate_f3_known_cossin(
-    float * xyz,
-    float cos_y_angle,
-    float sin_y_angle)
+    f32 * xyz,
+    f32 cos_y_angle,
+    f32 sin_y_angle)
 {
-    float new_x =
+    f32 new_x =
         xyz[0] * cos_y_angle +
         xyz[2] * sin_y_angle;
     
@@ -201,15 +201,15 @@ void T1_triangle_y_rotate_f3_known_cossin(
 }
 
 void T1_triangle_y_rotate_f3(
-    float * xyz,
-    float y_angle)
+    f32 * xyz,
+    f32 y_angle)
 {
     T1_triangle_y_rotate_f3_known_cossin(
-        /* float * xyz: */
+        /* f32 * xyz: */
             xyz,
-        /* float cos_x_angle: */
+        /* f32 cos_x_angle: */
             cosf(y_angle),
-        /* float sin_x_angle: */
+        /* f32 sin_x_angle: */
             sinf(y_angle));
     
     return;
@@ -217,10 +217,10 @@ void T1_triangle_y_rotate_f3(
 
 SIMD_VEC4F T1_triangle_z_rotate_vec4f_known_cossin(
     SIMD_VEC4F xyz,
-    float cos_z_angle,
-    float sin_z_angle)
+    f32 cos_z_angle,
+    f32 sin_z_angle)
 {
-    float new_vals[4];
+    f32 new_vals[4];
     new_vals[0] =
         (simd_extract_vec4f(xyz, 0) * cos_z_angle) -
         (simd_extract_vec4f(xyz, 1) * sin_z_angle);
@@ -236,11 +236,11 @@ SIMD_VEC4F T1_triangle_z_rotate_vec4f_known_cossin(
 }
 
 void T1_triangle_z_rotate_f3_known_cossin(
-    float * xyz,
-    float cos_z_angle,
-    float sin_z_angle)
+    f32 * xyz,
+    f32 cos_z_angle,
+    f32 sin_z_angle)
 {
-    float new_x =
+    f32 new_x =
         (xyz[0] * cos_z_angle) -
         (xyz[1] * sin_z_angle);
     
@@ -254,14 +254,14 @@ void T1_triangle_z_rotate_f3_known_cossin(
 }
 
 void T1_triangle_z_rotate_f3(
-    float * xyz,
-    float z_angle)
+    f32 * xyz,
+    f32 z_angle)
 {
     T1_triangle_z_rotate_f3_known_cossin(
-        /* float * xyz: */
+        /* f32 * xyz: */
             xyz,
-        /* float cos_x_angle: */
+        /* f32 cos_x_angle: */
             cosf(z_angle),
-        /* float sin_x_angle: */
+        /* f32 sin_x_angle: */
             sinf(z_angle));
 }

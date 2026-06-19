@@ -1,8 +1,7 @@
 #ifndef T1_TOKEN_H
 #define T1_TOKEN_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "T1_stdint.h"
 
 
 /*
@@ -15,10 +14,10 @@ own malloc function) before doing anything else.
 */
 void
 T1_token_init(
-    void * (* arg_memset_func)(void *, int, size_t),
-    size_t (* arg_strlen_func)(const char *),
-    void * (* arg_malloc_func)(size_t),
-    uint8_t * good);
+    void * (* arg_memset_func)(void *, int, u64),
+    u64 (* arg_strlen_func)(const char *),
+    void * (* arg_malloc_func)(u64),
+    u8 * good);
 
 void
 T1_token_deinit(
@@ -31,7 +30,7 @@ reset() function in between each run to clear all registered tokens.
 You don't need to do this the 1st time, the init() also does a reset().
 */
 void
-T1_token_reset(uint8_t * good);
+T1_token_reset(u8 * good);
 
 /*
 Before running the tokenizer, register your enums with some ascii values that
@@ -44,7 +43,7 @@ are convenient for you.
 #define T1_TOKEN_FLAG_PRECISE 8
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
 
-typedef enum : uint8_t {
+typedef enum : u8 {
     T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
     T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
     T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
@@ -56,7 +55,7 @@ T1_token_set_store_mode(const T1TokenStoreMode mode);
 
 void
 T1_token_set_reg_bitflags(
-    const uint8_t bitflags);
+    const u8 bitflags);
 
 void
 T1_token_clear_start_pattern(void);
@@ -71,21 +70,21 @@ T1_token_clear_stop_patterns(void);
 void
 T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
-    const uint32_t pattern_index);
+    const u32 pattern_index);
 
 void
 T1_token_set_reg_middle_cap(
-    const uint32_t middle_cap);
+    const u32 middle_cap);
 
 void
 T1_token_set_string_literal(
-    const uint32_t enum_value,
-    uint8_t * good);
+    const u32 enum_value,
+    u8 * good);
 
 void
 T1_token_register(
-    const uint32_t enum_value,
-    uint8_t * good);
+    const u32 enum_value,
+    u8 * good);
 
 /*
 After setting everything up, run this function to actually do the work of
@@ -94,7 +93,7 @@ transforming text into the tokens you specified
 void
 T1_token_run(
     const char * input,
-    uint8_t * good);
+    u8 * good);
 
 
 /*
@@ -117,36 +116,36 @@ the T1_token_is_number(T1Token*) macro will return 0 if a number is too
 big for a uint64, even if it's composed of all numbers
 */
 typedef struct {
-    uint64_t unsigned_int;
-    int64_t signed_int;
-    double double_precision;
+    u64 as_u64;
+    s64 as_i64;
+    f64 as_f64;
 } T1TokenNumber;
 
 #define T1_token_is_number(tokenptr) ((tokenptr)->castable_flags & 1)
-#define T1_token_fits_double(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
-#define T1_token_fits_float(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
+#define T1_token_fits_f64(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
+#define T1_token_fits_f32(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
 #define T1_token_fits_u8(tokenptr) (((tokenptr)->castable_flags & 8) > 0)
 #define T1_token_fits_u16(tokenptr) (((tokenptr)->castable_flags & 16) > 0)
 #define T1_token_fits_u32(tokenptr) (((tokenptr)->castable_flags & 32) > 0)
 #define T1_token_fits_u64(tokenptr) (((tokenptr)->castable_flags & 64) > 0)
 #define T1_token_fits_i8(tokenptr) (((tokenptr)->castable_flags & 128) > 0)
 #define T1_token_fits_i16(tokenptr) (((tokenptr)->castable_flags & 256) > 0)
-#define T1_token_fits_i32(tokenptr) (((tokenptr)->castable_flags & 512) > 0)
+#define T1_token_fits_s32(tokenptr) (((tokenptr)->castable_flags & 512) > 0)
 #define T1_token_fits_i64(tokenptr) (((tokenptr)->castable_flags & 1024) > 0)
 typedef struct {
     T1TokenNumber * number_value;
-    uint32_t enum_value;
-    uint32_t line_number;
+    u32 enum_value;
+    u32 line_number;
     char * string_value;
-    uint16_t string_value_size; // size in bytes
-    uint16_t castable_flags;
+    u16 string_value_size; // size in bytes
+    u16 castable_flags;
 } T1Token;
 
-uint32_t
+u32
 T1_token_get_token_count(void);
 
 T1Token *
 T1_token_get_token_at(
-    const uint32_t token_i);
+    const u32 token_i);
 
 #endif // T1_TOKEN_H

@@ -10,58 +10,58 @@
 #error
 #endif
 
-static float T1_easing_bounce_zero_to_zero(
-    const float t,
-    const float bounces)
+static f32 T1_easing_bounce_zero_to_zero(
+    const f32 t,
+    const f32 bounces)
 {
     // Ensure t is clamped between 0.0f and 1.0f
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 0.0f;
     
     // Base oscillation using sine for smooth bouncing
-    float oscillation = sinf(3.14159265359f * bounces * t); // 4 half-cycles for multiple bounces
+    f32 oscillation = sinf(3.14159265359f * bounces * t); // 4 half-cycles for multiple bounces
     
     // Amplitude envelope to control bounce height and ensure 0 at endpoints
-    float envelope = bounces * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
+    f32 envelope = bounces * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
     
     // Combine to get the bouncing effect
-    float result = oscillation * envelope;
+    f32 result = oscillation * envelope;
     
     // Scale to desired amplitude (adjust 0.5f for more/less extreme bounces)
     return result * 0.5f;
 }
 
-static float T1_easing_pulse_zero_to_zero(
-    const float t,
-    const float pulses)
+static f32 T1_easing_pulse_zero_to_zero(
+    const f32 t,
+    const f32 pulses)
 {
     // Ensure t is clamped between 0.0f and 1.0f
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 0.0f;
     
     // Base oscillation using absolute sine for non-negative pulsing
-    float oscillation = fabsf(sinf(3.14159265359f * pulses * t)); // Non-negative, bounces half-cycles
+    f32 oscillation = fabsf(sinf(3.14159265359f * pulses * t)); // Non-negative, bounces half-cycles
     
     // Amplitude envelope to ensure 0 at endpoints
-    float envelope = pulses * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
+    f32 envelope = pulses * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
     
     // Combine for pulsing effect
-    float result = oscillation * envelope;
+    f32 result = oscillation * envelope;
     
     // Scale to match original amplitude feel (adjust 0.5f for intensity)
     return result * 0.5f;
 }
 
-static float T1_easing_in_out_sine(const float t) {
-    return 0.5f - 0.5f * cosf(t * (float)M_PI);
+static f32 T1_easing_in_out_sine(const f32 t) {
+    return 0.5f - 0.5f * cosf(t * (f32)M_PI);
 }
 
-static float T1_easing_out_quadratic(const float t) {
+static f32 T1_easing_out_quadratic(const f32 t) {
     return 1.0f - (1.0f - t) * (1.0f - t);
 }
 
-static float T1_easing_out_elastic_zero_to_one(const float t) {
-    const float c4 = (2.0f * (float)M_PI) / 3.0f;
+static f32 T1_easing_out_elastic_zero_to_one(const f32 t) {
+    const f32 c4 = (2.0f * (f32)M_PI) / 3.0f;
     
     if (t == 0.0f || t == 1.0f) { return t; }
     
@@ -70,11 +70,11 @@ static float T1_easing_out_elastic_zero_to_one(const float t) {
         sinf((t * 10.0f - 0.75f) * c4) + 1.0f;
 }
 
-float T1_easing_t_to_eased_t(
-    const float t,
+f32 T1_easing_t_to_eased_t(
+    const f32 t,
     const T1EasingType easing_type)
 {
-    float return_val;
+    f32 return_val;
     
     switch (easing_type) {
         case EASINGTYPE_NONE:

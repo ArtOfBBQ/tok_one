@@ -45,28 +45,28 @@ T1_global_init(void);
 
 void
 T1_global_update_window_pos(
-    float left,
-    float bottom);
+    f32 left,
+    f32 bottom);
 
 void
 T1_global_update_window_size(
-    float width,
-    float height,
-    uint64_t at_timestamp_us);
+    f32 width,
+    f32 height,
+    u64 at_timestamp_us);
 
-float
+f32
 T1_global_get_x_mul_for_width(
-    const int32_t for_mesh_id,
-    const float for_width);
+    const s32 for_mesh_id,
+    const f32 for_width);
 
-float
+f32
 T1_global_get_y_mul_for_height(
-    const int32_t for_mesh_id,
-    const float for_height);
+    const s32 for_mesh_id,
+    const f32 for_height);
 
-float
+f32
 T1_global_get_z_mul_for_depth(
-    const int32_t for_mesh_id,
-    const float for_depth);
+    const s32 for_mesh_id,
+    const f32 for_depth);
 
 #endif // T1_GLOBAL_H

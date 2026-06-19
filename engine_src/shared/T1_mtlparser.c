@@ -8,15 +8,15 @@
 #define ERROR_MSG_CAP 256
 typedef struct MTLParserState {
     ParsedMaterial materials[PARSED_MATERIALS_CAP];
-    uint32_t materials_size;
+    u32 materials_size;
     char last_error_msg[ERROR_MSG_CAP];
-    void * (* mtlparser_memset)(void *, int, size_t);
-    size_t (* mtlparser_strlcat)(char *, const char *, size_t);
-    uint32_t ambient_set_for_current_mtl;
-    uint32_t diffuse_set_for_current_mtl;
-    uint32_t specular_set_for_current_mtl;
-    uint32_t emissive_set_for_current_mtl;
-    uint32_t first_newmtl_found;
+    void * (* mtlparser_memset)(void *, int, u64);
+    u64 (* mtlparser_strlcat)(char *, const char *, u64);
+    u32 ambient_set_for_current_mtl;
+    u32 diffuse_set_for_current_mtl;
+    u32 specular_set_for_current_mtl;
+    u32 emissive_set_for_current_mtl;
+    u32 first_newmtl_found;
 } MTLParserState;
 
 static MTLParserState * mtlparser_state = NULL;
@@ -62,9 +62,9 @@ static void mtlparser_reset(void) {
 }
 
 void mtlparser_init(
-    void * (* arg_memset_func)(void *, int, size_t),
-    void * (* arg_malloc_func)(size_t),
-    size_t (* arg_strlcat_func)(char *, const char *, size_t))
+    void * (* arg_memset_func)(void *, int, u64),
+    void * (* arg_malloc_func)(u64),
+    u64 (* arg_strlcat_func)(char *, const char *, u64))
 {
     mtlparser_state = arg_malloc_func(sizeof(MTLParserState));
     mtlparser_state->last_error_msg[0] = '\0';
@@ -81,7 +81,7 @@ const char * mtlparser_get_last_error_msg(void) {
 
 static void
 mtlparser_uint_to_string(
-    const uint32_t input,
+    const u32 input,
     char * recipient)
 {
     if (input == 0) {
@@ -90,14 +90,14 @@ mtlparser_uint_to_string(
         return;
     }
     
-    uint32_t i = 0;
-    uint32_t start_i = 0;
-    uint32_t end_i;
+    u32 i = 0;
+    u32 start_i = 0;
+    u32 end_i;
     
-    uint64_t decimal = 1;
-    uint32_t input_div_dec = input;
+    u64 decimal = 1;
+    u32 input_div_dec = input;
     while (input_div_dec > 0) {
-        uint32_t isolated_num = input % (decimal * 10);
+        u32 isolated_num = input % (decimal * 10);
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
@@ -122,11 +122,11 @@ mtlparser_uint_to_string(
 }
 
 static void parse_single_string_stat(
-    uint32_t * i,
+    u32 * i,
     T1Token * token,
     const char * material_name,
     char * string_stat,
-    uint8_t * good)
+    u8 * good)
 {
     (void)material_name;
     
@@ -193,12 +193,12 @@ static void parse_single_string_stat(
     *good = 1;
 }
 
-static void parse_single_float_stat(
-    uint32_t * i,
+static void parse_single_f32_stat(
+    u32 * i,
     T1Token * token,
     const char * material_name,
-    float * float_stat,
-    uint8_t * good)
+    f32 * f32_stat,
+    u8 * good)
 {
     (void)material_name;
     
@@ -245,13 +245,13 @@ static void parse_single_float_stat(
     if (
         token->enum_value != MTLTOKEN_STRINGLITERAL ||
         !T1_token_is_number(token) ||
-        !T1_token_fits_double(token) ||
+        !T1_token_fits_f64(token) ||
         !token->number_value)
     {
         *good = 0;
         mtlparser_state->mtlparser_strlcat(
             mtlparser_state->last_error_msg,
-            "Expected a float after '",
+            "Expected a f32 after '",
             ERROR_MSG_CAP);
         mtlparser_state->mtlparser_strlcat(
             mtlparser_state->last_error_msg,
@@ -264,17 +264,17 @@ static void parse_single_float_stat(
         return;
     }
     
-    *float_stat = (float)token->number_value->double_precision;
+    *f32_stat = (f32)token->number_value->as_f64;
     *good = 1;
 }
 
 static void parse_rgb_token(
-    uint32_t * i,
+    u32 * i,
     T1Token * token,
     const char * material_name,
-    float * rgb_stat,
-    uint32_t * already_set_flag,
-    uint8_t * good)
+    f32 * rgb_stat,
+    u32 * already_set_flag,
+    u8 * good)
 {
     char initial_token_name[64];
     initial_token_name[0] = '\0';
@@ -329,7 +329,7 @@ static void parse_rgb_token(
     }
     *already_set_flag = 1;
     
-    // we expect 3 float tokens to follow
+    // we expect 3 f32 tokens to follow
     if (*i + 3 >= T1_token_get_token_count()) {
         *good = 0;
         mtlparser_state->mtlparser_strlcat(
@@ -347,7 +347,7 @@ static void parse_rgb_token(
         return;
     }
     
-    for (uint32_t rgb_i = 0; rgb_i < 3; rgb_i++) {
+    for (u32 rgb_i = 0; rgb_i < 3; rgb_i++) {
         (*i) = *i + 1;
         token = T1_token_get_token_at(*i);
         
@@ -362,7 +362,7 @@ static void parse_rgb_token(
         if (
             token->enum_value != MTLTOKEN_STRINGLITERAL ||
             !T1_token_is_number(token) ||
-            !T1_token_fits_double(token))
+            !T1_token_fits_f64(token))
         {
             *good = 0;
             stack_string_64bytes[0] = (char)('0' + rgb_i);
@@ -373,7 +373,7 @@ static void parse_rgb_token(
             
             mtlparser_state->mtlparser_strlcat(
                 mtlparser_state->last_error_msg,
-                "Expected 3 floating point values (rgb values)"
+                "Expected 3 f32 values (rgb values)"
                 " after '",
                 ERROR_MSG_CAP);
             mtlparser_state->mtlparser_strlcat(
@@ -392,7 +392,7 @@ static void parse_rgb_token(
         }
         
         rgb_stat[rgb_i] =
-            (float)token->number_value->double_precision;
+            (f32)token->number_value->as_f64;
     }
     *good = 1;
 }
@@ -415,10 +415,10 @@ static void construct_material(ParsedMaterial * to_construct) {
 
 void mtlparser_parse(
     ParsedMaterial * recipient,
-    uint32_t * recipient_size,
-    const uint32_t recipient_cap,
+    u32 * recipient_size,
+    const u32 recipient_cap,
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     *recipient_size = 0;
@@ -652,7 +652,7 @@ void mtlparser_parse(
     T1_token_run(
         /* const char * input: */
             input,
-        /* uint8_t * good: */
+        /* u8 * good: */
             good);
     if (!*good) {
         mtlparser_state->last_error_msg[0] = '\0';
@@ -666,8 +666,8 @@ void mtlparser_parse(
     
     ParsedMaterial * current_material = NULL;
     
-    uint32_t tokens_count = T1_token_get_token_count();
-    for (uint32_t i = 0; i < tokens_count; i++) {
+    u32 tokens_count = T1_token_get_token_count();
+    for (u32 i = 0; i < tokens_count; i++) {
         T1Token * token = T1_token_get_token_at(i);
         mtlparser_state->last_error_msg[0] = '\0';
         char stack_string_64bytes[64];
@@ -791,19 +791,19 @@ void mtlparser_parse(
                     return;
                 }
                 
-                float * target_float = NULL;
+                f32 * target_f32 = NULL;
                 if (
                     T1_std_are_equal_strings(
                         token->string_value,
                         "uv_scroll[0]"))
                 {
-                    target_float = &current_material->T1_uv_scroll[0];
+                    target_f32 = &current_material->T1_uv_scroll[0];
                 } else if (
                     T1_std_are_equal_strings(
                         token->string_value,
                         "uv_scroll[1]"))
                 {
-                    target_float = &current_material->T1_uv_scroll[1];
+                    target_f32 = &current_material->T1_uv_scroll[1];
                 } else {
                     *good = 0;
                     mtlparser_state->last_error_msg[0] = '\0';
@@ -818,16 +818,16 @@ void mtlparser_parse(
                     return;
                 }
                 
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
-                        target_float,
-                    /* uint8_t * good: */
+                    /* f32 * f32_stat: */
+                        target_f32,
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -839,16 +839,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_NS: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->specular_exponent,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -859,16 +859,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_ALPHA_d: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->alpha,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -880,16 +880,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_ILLUM: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->illum,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -904,16 +904,16 @@ void mtlparser_parse(
                 // Reminder: 'Ni' means "optical density" or "refraction"
                 // in .mtl files
                 
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->refraction,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -927,17 +927,17 @@ void mtlparser_parse(
             case MTLTOKEN_AMBIENT_KA: {
 
                 parse_rgb_token(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * rgb_stat: */
+                    /* f32 * rgb_stat: */
                         current_material->ambient_rgb,
-                    /* uint32_t * already_set_flag: */
+                    /* u32 * already_set_flag: */
                         &mtlparser_state->ambient_set_for_current_mtl,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -950,17 +950,17 @@ void mtlparser_parse(
             }
             case MTLTOKEN_DIFFUSE_KD: {
                 parse_rgb_token(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * rgb_stat: */
+                    /* f32 * rgb_stat: */
                         current_material->diffuse_rgb,
-                    /* uint32_t * already_set_flag: */
+                    /* u32 * already_set_flag: */
                         &mtlparser_state->diffuse_set_for_current_mtl,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -973,17 +973,17 @@ void mtlparser_parse(
             }
             case MTLTOKEN_SPECULAR_KS: {
                 parse_rgb_token(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * rgb_stat: */
+                    /* f32 * rgb_stat: */
                         current_material->specular_rgb,
-                    /* uint32_t * already_set_flag: */
+                    /* u32 * already_set_flag: */
                         &mtlparser_state->specular_set_for_current_mtl,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -996,17 +996,17 @@ void mtlparser_parse(
             }
             case MTLTOKEN_EMISSIVE_KE: {
                 parse_rgb_token(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * rgb_stat: */
+                    /* f32 * rgb_stat: */
                         current_material->emissive_rgb,
-                    /* uint32_t * already_set_flag: */
+                    /* u32 * already_set_flag: */
                         &mtlparser_state->emissive_set_for_current_mtl,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1049,7 +1049,7 @@ void mtlparser_parse(
             case MTLTOKEN_AMBIENT_MAP: {
                 
                 parse_single_string_stat(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
@@ -1057,7 +1057,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->ambient_map,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1071,7 +1071,7 @@ void mtlparser_parse(
             case MTLTOKEN_DIFFUSE_MAP: {
                 
                 parse_single_string_stat(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
@@ -1079,7 +1079,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->diffuse_map,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1095,7 +1095,7 @@ void mtlparser_parse(
             }
             case MTLTOKEN_SPECULAR_EXPONENT_MAP: {
                 parse_single_string_stat(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
@@ -1103,7 +1103,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->specular_exponent_map,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (!*good) {
@@ -1139,23 +1139,23 @@ void mtlparser_parse(
                 if (peek->enum_value == MTLTOKEN_BUMP_MAP_ARG_INTENSITY) {
                     i++;
                     
-                    parse_single_float_stat(
-                        /* uint32_t * i: */
+                    parse_single_f32_stat(
+                        /* u32 * i: */
                             &i,
                         /* TokToken * token: */
                             token,
                         /* const char * material_name: */
                             current_material->name,
-                        /* float * float_stat: */
+                        /* f32 * f32_stat: */
                             &current_material->bump_map_intensity,
-                        /* uint8_t * good: */
+                        /* u8 * good: */
                             good);
                 } else {
                     current_material->bump_map_intensity = 1.0f;
                 }
                 
                 parse_single_string_stat(
-                    /* uint32_t * i: */
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
@@ -1163,7 +1163,7 @@ void mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->bump_or_normal_map,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1175,16 +1175,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_ROUGHNESS: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->roughness,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1196,16 +1196,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_METALLIC: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->metallic,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1217,16 +1217,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_SHEEN: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->sheen,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1238,16 +1238,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_CLEARCOAT: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->clearcoat,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1259,16 +1259,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_CLEARCOAT_ROUGHNESS: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->clearcoat_roughness,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1280,16 +1280,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_ANISOTROPY: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->anisotropy,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {
@@ -1301,16 +1301,16 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_ANISOTROPY_ROTATION: {
-                parse_single_float_stat(
-                    /* uint32_t * i: */
+                parse_single_f32_stat(
+                    /* u32 * i: */
                         &i,
                     /* TokToken * token: */
                         token,
                     /* const char * material_name: */
                         current_material->name,
-                    /* float * float_stat: */
+                    /* f32 * f32_stat: */
                         &current_material->anisotropy_rotation,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 
                 if (*good) {

@@ -1,6 +1,8 @@
 #ifndef T1_OBJPARSER_H
 #define T1_OBJPARSER_H
 
+#include "T1_stdint.h"
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -18,25 +20,25 @@ typedef struct {
 
 typedef struct {
     T1MaterialName * material_names;
-    float (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
-    float (* textures_vt_uv)[2]; // 'vt' in .obj files, 'uv' in 3d graphics
-    float (* normals_vn)[3];  // xyz, 'vn' in .obj files
+    f32 (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
+    f32 (* textures_vt_uv)[2]; // 'vt' in .obj files, 'uv' in 3d graphics
+    f32 (* normals_vn)[3];  // xyz, 'vn' in .obj files
     
     // vert1, vert2, vert3, smooth, material_i
-    unsigned int (* triangles)[5];
+    u32 (* triangles)[5];
     // vert1, vert2, vert3, vert4, smooth, material_i
-    unsigned int (* quads)[6];
-    unsigned int (* triangle_textures)[3]; // 3 indexes into this->textures?
-    unsigned int (* quad_textures)[4];
-    unsigned int (* triangle_normals)[3]; // 3 indexes into this->normals
-    unsigned int (* quad_normals)[4];
+    u32 (* quads)[6];
+    u32 (* triangle_textures)[3]; // 3 indexes into this->textures?
+    u32 (* quad_textures)[4];
+    u32 (* triangle_normals)[3]; // 3 indexes into this->normals
+    u32 (* quad_normals)[4];
     
-    unsigned int materials_count;
-    unsigned int vertices_count;
-    unsigned int textures_count;
-    unsigned int normals_count;
-    unsigned int triangles_count;
-    unsigned int quads_count;
+    u32 materials_count;
+    u32 vertices_count;
+    u32 textures_count;
+    u32 normals_count;
+    u32 triangles_count;
+    u32 quads_count;
 } T1ParsedObj;
 
 /*
@@ -54,7 +56,7 @@ init_obj_parser(
     free);
 */
 void T1_objparser_init(
-    void * (* malloc_function)       (size_t),
+    void * (* malloc_function) (u64),
     void   (* optional_free_function)(void *));
 
 /*
@@ -67,7 +69,7 @@ void T1_objparser_init(
 void T1_objparser_parse(
     T1ParsedObj * recipient,
     const char * raw_buffer,
-    uint8_t * success);
+    u8 * success);
 
 /*
 -> init_obj_parser() must run before this

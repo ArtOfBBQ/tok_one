@@ -5,34 +5,34 @@
 typedef struct {
     char * name;
     char * subnames[T1_META_SUBNAMES_CAP];
-    uint16_t subnames_enum_ids[T1_META_SUBNAMES_CAP];
+    u16 subnames_enum_ids[T1_META_SUBNAMES_CAP];
     
     union {
         char * struct_type_name;
         char * enum_type_name;
     };
     union {
-        uint64_t custom_uint_max;
-        int64_t  custom_int_max;
-        double   custom_float_max;
+        u64 custom_uint_max;
+        s64  custom_int_max;
+        f64   custom_f32_max;
     };
     union {
-        uint64_t custom_uint_min;
-        int64_t  custom_int_min;
-        double   custom_float_min;
+        u64 custom_uint_min;
+        s64  custom_int_min;
+        f64   custom_f32_min;
     };
-    uint32_t offset; // in field
-    uint16_t parent_enum_id;
-    uint16_t next_i;
-    uint16_t array_sizes[T1_META_ARRAY_SIZES_CAP];
+    u32 offset; // in field
+    u16 parent_enum_id;
+    u16 next_i;
+    u16 array_sizes[T1_META_ARRAY_SIZES_CAP];
     T1MetaType data_type;
-    uint8_t is_enum;
+    u8 is_enum;
 } MetaField;
 
 typedef struct {
     char * name;
-    int64_t value;
-    uint16_t metaenum_id;
+    s64 value;
+    u16 metaenum_id;
 } MetaEnumValue;
 
 typedef struct {
@@ -42,63 +42,63 @@ typedef struct {
 
 typedef struct {
     char * name;
-    uint32_t size_bytes;
-    uint16_t head_fields_i;
+    u32 size_bytes;
+    u16 head_fields_i;
 } MetaStruct;
 
 typedef struct {
     MetaStruct * internal_parent;
     MetaField * internal_field;
-    uint8_t subname_i;
+    u8 subname_i;
 } T1MetaFieldInternal;
 
 typedef struct {
-    uint32_t parent_offset;
-    uint16_t field_array_slices[T1_META_ARRAY_SIZES_CAP];
-    uint16_t prefix_start_i;
-    uint16_t field_i;
+    u32 parent_offset;
+    u16 field_array_slices[T1_META_ARRAY_SIZES_CAP];
+    u16 prefix_start_i;
+    u16 field_i;
 } StackedFieldEntry;
 
 #define T1_META_SERIAL_FIELD_PREFIX_CAP 256
 typedef struct {
     void * to_serialize;
     char * buffer;
-    uint32_t * buffer_size;
-    uint8_t * good;
-    uint32_t buffer_cap;
+    u32 * buffer_size;
+    u8 * good;
+    u32 buffer_cap;
     StackedFieldEntry field_stack[256];
-    uint16_t field_stack_size;
+    u16 field_stack_size;
     char field_prefix[T1_META_SERIAL_FIELD_PREFIX_CAP];
 } T1MetaSerializationState;
 
 typedef struct {
     T1MetaSerializationState ss;
-    void *(* memcpy)(void *, const void *, size_t);
-    void *(* memset)(void *, int, size_t);
-    int (* strcmp)(const char *, const char *);
-    size_t (* strlen)(const char *);
-    unsigned long long int (* strtoull)(const char*, char**, int);
+    void *(* fp_memcpy)(void *, const void *, u64);
+    void *(* fp_memset)(void *, s32, u64);
+    s32 (* fp_strcmp)(const char *, const char *);
+    u64 (* fp_strlen)(const char *);
+    u64 (* fp_strtoull)(const char*, char**, s32);
     char * ascii_store;
     MetaEnum * meta_enums;
     MetaEnumValue * meta_enum_vals;
     MetaField * metafields_store;
     MetaStruct * metastructs;
-    uint32_t ascii_store_cap;
-    uint16_t meta_fields_store_cap;
-    uint16_t meta_structs_cap;
-    uint16_t meta_enums_cap;
-    uint16_t meta_enum_vals_cap;
-    uint16_t meta_fields_size;
-    uint16_t meta_structs_size; // first memset target
-    uint16_t meta_enums_size;
-    uint16_t meta_enum_vals_size;
-    uint32_t ascii_store_next_i;
+    u32 ascii_store_cap;
+    u16 meta_fields_store_cap;
+    u16 meta_structs_cap;
+    u16 meta_enums_cap;
+    u16 meta_enum_vals_cap;
+    u16 meta_fields_size;
+    u16 meta_structs_size; // first memset target
+    u16 meta_enums_size;
+    u16 meta_enum_vals_size;
+    u32 ascii_store_next_i;
 } T1MetaState;
 
 static T1MetaState * t1ms = NULL;
 
 static void construct_metastruct(MetaStruct * to_construct) {
-    t1ms->memset(to_construct, 0, sizeof(MetaStruct));
+    t1ms->fp_memset(to_construct, 0, sizeof(MetaStruct));
     to_construct->head_fields_i = UINT16_MAX;
 }
 
@@ -113,7 +113,7 @@ metafield_construct(
     #error
     #endif
     
-    t1ms->memset(to_construct, 0, sizeof(MetaField));
+    t1ms->fp_memset(to_construct, 0, sizeof(MetaField));
     
     to_construct->next_i = UINT16_MAX;
     to_construct->data_type = T1_TYPE_NOTSET;
@@ -121,52 +121,52 @@ metafield_construct(
     to_construct->parent_enum_id = UINT16_MAX;
 }
 
-static MetaField * metafield_i_to_ptr(const uint16_t field_i) {
+static MetaField * metafield_i_to_ptr(const u16 field_i) {
     return field_i == UINT16_MAX ?
         NULL :
         &t1ms->metafields_store[field_i];
 }
 
 static void T1_meta_reset(void) {
-    t1ms->memset(
+    t1ms->fp_memset(
         (char *)t1ms +
             offsetof(T1MetaState, meta_structs_size),
             0,
             sizeof(T1MetaState) -
                 offsetof(T1MetaState, meta_structs_size));
     
-    t1ms->memset(
+    t1ms->fp_memset(
         t1ms->metastructs, 0, t1ms->meta_structs_cap);
-    t1ms->memset(
+    t1ms->fp_memset(
         t1ms->meta_enums, 0, t1ms->meta_enums_cap);
-    t1ms->memset(
+    t1ms->fp_memset(
         t1ms->ascii_store, 0, t1ms->ascii_store_cap);
     
-    for (uint32_t i = 0; i < t1ms->meta_fields_store_cap; i++) {
+    for (u32 i = 0; i < t1ms->meta_fields_store_cap; i++) {
         metafield_construct(&t1ms->metafields_store[i]);
     }
 }
 
 void T1_meta_init(
-    void *(* T1_meta_memcpy)(void *, const void *, size_t),
-    void *(* T1_meta_malloc_func)(size_t),
-    void *(* T1_meta_memset_func)(void *, int, size_t),
-    int (* T1_meta_strcmp_func)(const char *, const char *),
-    size_t (* T1_meta_strlen_func)(const char *),
-    unsigned long long int (* T1_meta_strtoull_func)(const char*, char**, int),
-    const uint32_t ascii_store_cap,
-    const uint16_t meta_structs_cap,
-    const uint16_t meta_fields_cap,
-    const uint16_t meta_enums_cap,
-    const uint16_t meta_enum_vals_cap)
+    void *(* T1_meta_memcpy)(void *, const void *, u64),
+    void *(* T1_meta_malloc_func)(u64),
+    void *(* T1_meta_memset_func)(void *, s32, u64),
+    s32 (* T1_meta_strcmp_func)(const char *, const char *),
+    u64 (* T1_meta_strlen_func)(const char *),
+    u64 (* T1_meta_strtoull_func)(const char*, char**, s32),
+    const u32 ascii_store_cap,
+    const u16 meta_structs_cap,
+    const u16 meta_fields_cap,
+    const u16 meta_enums_cap,
+    const u16 meta_enum_vals_cap)
 {
     t1ms = T1_meta_malloc_func(sizeof(T1MetaState));
     
-    t1ms->memcpy = T1_meta_memcpy;
-    t1ms->memset =  T1_meta_memset_func;
-    t1ms->strcmp = T1_meta_strcmp_func;
-    t1ms->strlen = T1_meta_strlen_func;
-    t1ms->strtoull = T1_meta_strtoull_func;
+    t1ms->fp_memcpy = T1_meta_memcpy;
+    t1ms->fp_memset =  T1_meta_memset_func;
+    t1ms->fp_strcmp = T1_meta_strcmp_func;
+    t1ms->fp_strlen = T1_meta_strlen_func;
+    t1ms->fp_strtoull = T1_meta_strtoull_func;
     
     t1ms->ascii_store_cap = ascii_store_cap;
     t1ms->ascii_store = T1_meta_malloc_func(t1ms->ascii_store_cap);
@@ -191,9 +191,9 @@ void T1_meta_init(
 }
 
 #if 0
-static uint64_t T1_meta_string_to_u64(
+static u64 T1_meta_string_to_u64(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
@@ -207,16 +207,16 @@ static uint64_t T1_meta_string_to_u64(
         return UINT64_MAX;
     }
     
-    uint64_t return_value = 0;
+    u64 return_value = 0;
     
-    uint32_t i = 0;
+    u32 i = 0;
     while (input[i] != '\0') {
         if (input[i] < '0' || input[i] > '9') {
             return UINT64_MAX;
         }
         
         return_value *= 10;
-        return_value += (uint64_t)(input[i] - '0');
+        return_value += (u64)(input[i] - '0');
         i++;
     }
     
@@ -225,9 +225,9 @@ static uint64_t T1_meta_string_to_u64(
 }
 #endif
 
-static double T1_meta_string_to_double(
+static f64 T1_meta_string_to_f64(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
@@ -241,11 +241,11 @@ static double T1_meta_string_to_double(
         return UINT64_MAX;
     }
     
-    double return_value = 0;
+    f64 return_value = 0;
     
-    uint32_t i = 0;
-    uint32_t dot_loc = UINT32_MAX;
-    float final_mult = 1.0f;
+    u32 i = 0;
+    u32 dot_loc = UINT32_MAX;
+    f32 final_mult = 1.0f;
     
     if (input[i] == '-') {
         final_mult = -1.0f;
@@ -259,8 +259,8 @@ static double T1_meta_string_to_double(
             return return_value;
         }
         
-        uint8_t val = (uint8_t)(input[i] - '0');
-        return_value += (float)val;
+        u8 val = (u8)(input[i] - '0');
+        return_value += (f32)val;
         
         i++;
         
@@ -272,18 +272,18 @@ static double T1_meta_string_to_double(
     }
     
     if (dot_loc < UINT32_MAX) {
-        float div = 1.0f;
+        f32 div = 1.0f;
         
-        float below_decimal = 0.0f;
+        f32 below_decimal = 0.0f;
         
         while (input[i] != '\0') {
             if (input[i] < '0' || input[i] > '9') {
                 return return_value;
             }
             
-            uint8_t val = (uint8_t)(input[i] - '0');
+            u8 val = (u8)(input[i] - '0');
             below_decimal *= 10.0f;
-            below_decimal += (float)val;
+            below_decimal += (f32)val;
             
             div *= 10.0f;
             i++;
@@ -307,20 +307,20 @@ static double T1_meta_string_to_double(
 
 
 static void T1_meta_uint_to_string(
-    const uint64_t input,
+    const u64 input,
     char * recipient,
-    const uint32_t recipient_cap,
-    uint8_t * good)
+    const u32 recipient_cap,
+    u8 * good)
 {
     *good = 0;
     
-    uint64_t mult = 1;
-    int32_t recip_i = 0;
+    u64 mult = 1;
+    s32 recip_i = 0;
     
     // store chars right to left
     while (mult == 1 || mult <= input) {
-        uint32_t rightmost = (input / mult) % 10;
-        if (recip_i + 1 >= (int32_t)recipient_cap) {
+        u32 rightmost = (input / mult) % 10;
+        if (recip_i + 1 >= (s32)recipient_cap) {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0);
             #elif T1_META_ASSERTS == T1_INACTIVE
@@ -340,13 +340,13 @@ static void T1_meta_uint_to_string(
             return;
         }
         
-        recipient[recip_i++] = '0' + (uint8_t)rightmost;
+        recipient[recip_i++] = '0' + (u8)rightmost;
         mult *= 10;
     }
     recipient[recip_i] = '\0';
     
     // reverse chars
-    int32_t j = recip_i-1;
+    s32 j = recip_i-1;
     recip_i = 0;
     
     while (recip_i < j) {
@@ -369,10 +369,10 @@ static void T1_meta_uint_to_string(
 }
 
 static void T1_meta_int_to_string(
-    int64_t input,
+    s64 input,
     char * recipient,
-    uint32_t recipient_cap,
-    uint8_t * good)
+    u32 recipient_cap,
+    u8 * good)
 {
     if (input < 0) {
         *recipient = '-';
@@ -381,15 +381,15 @@ static void T1_meta_int_to_string(
         input *= -1;
     }
     
-    T1_meta_uint_to_string((uint64_t)input, recipient, recipient_cap, good);
+    T1_meta_uint_to_string((u64)input, recipient, recipient_cap, good);
 }
 
-static void T1_meta_float_to_string(
-    float input,
-    const uint8_t precision,
+static void T1_meta_f32_to_string(
+    f32 input,
+    const u8 precision,
     char * recipient,
-    uint32_t recipient_cap,
-    uint8_t * good)
+    u32 recipient_cap,
+    u8 * good)
 {
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(precision <= 15);
@@ -400,7 +400,7 @@ static void T1_meta_float_to_string(
     
     *good = 0;
     
-    size_t rlen = 0;
+    u64 rlen = 0;
     
     if (input < 0.0f) {
         recipient[rlen++] = '-';
@@ -408,24 +408,24 @@ static void T1_meta_float_to_string(
         input *= -1.0f;
     }
     
-    uint32_t precision_mult = 1;
-    for (uint8_t _ = 0; _ < precision; _++) {
+    u32 precision_mult = 1;
+    for (u8 _ = 0; _ < precision; _++) {
         precision_mult *= 10;
     }
     
-    float temp_above_decimal = (float)(int32_t)input;
-    uint32_t above_decimal = (uint32_t)temp_above_decimal;
+    f32 temp_above_decimal = (f32)(s32)input;
+    u32 above_decimal = (u32)temp_above_decimal;
     // we're adding an extra '1' in front of the fractional part here, to
     // make it easier to work with leading zeros
-    uint32_t below_decimal =
-        (uint32_t)(((input - temp_above_decimal)+1.0f) * precision_mult);
+    u32 below_decimal =
+        (u32)(((input - temp_above_decimal)+1.0f) * precision_mult);
     
     T1_meta_uint_to_string(
         above_decimal,
         recipient + rlen,
         recipient_cap,
         good);
-    rlen = t1ms->strlen(recipient);
+    rlen = t1ms->fp_strlen(recipient);
     
     if (below_decimal > 0) {
         recipient[rlen++] = '.';
@@ -433,7 +433,7 @@ static void T1_meta_float_to_string(
         T1_meta_uint_to_string(
             below_decimal,
             recipient + rlen,
-            recipient_cap - (uint32_t)rlen,
+            recipient_cap - (u32)rlen,
             good);
         
         // We added a '1' at the start before, so we need to remove that
@@ -455,8 +455,8 @@ static void T1_meta_float_to_string(
 
 static void T1_meta_reverse_array(
     char * array,
-    size_t single_element_size,
-    uint32_t array_size)
+    u64 single_element_size,
+    u32 array_size)
 {
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(array_size > 0);
@@ -466,23 +466,23 @@ static void T1_meta_reverse_array(
     #error
     #endif
     
-    uint32_t i = 0;
-    uint32_t j = array_size-1;
+    u32 i = 0;
+    u32 j = array_size-1;
     
     char swap[single_element_size];
     
     while (i < j) {
-        t1ms->memcpy(
+        t1ms->fp_memcpy(
             swap,
             array + (i * single_element_size),
             single_element_size);
         
-        t1ms->memcpy(
+        t1ms->fp_memcpy(
             array + (i * single_element_size),
             array + (j * single_element_size),
             single_element_size);
         
-        t1ms->memcpy(
+        t1ms->fp_memcpy(
             array + (j * single_element_size),
             swap,
             single_element_size);
@@ -492,11 +492,11 @@ static void T1_meta_reverse_array(
     }
 }
 
-static uint8_t T1_meta_string_starts_with(
+static u8 T1_meta_string_starts_with(
     const char * string,
     const char * start_pattern)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (start_pattern[i] != '\0') {
         if (string[i] != start_pattern[i]) {
             return 0;
@@ -509,11 +509,11 @@ static uint8_t T1_meta_string_starts_with(
 
 static char * T1_meta_copy_str_to_store(
     const char * to_copy,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
-    size_t len = t1ms->strlen(to_copy);
+    u64 len = t1ms->fp_strlen(to_copy);
     
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(len > 0);
@@ -535,7 +535,7 @@ static char * T1_meta_copy_str_to_store(
     
     char * return_value = t1ms->ascii_store + t1ms->ascii_store_next_i;
     
-    t1ms->memcpy(return_value, to_copy, len);
+    t1ms->fp_memcpy(return_value, to_copy, len);
     
     return_value[len] = '\0';
     
@@ -550,11 +550,11 @@ static MetaStruct * find_struct_by_name(
 {
     MetaStruct * return_value = NULL;
     
-    for (int32_t i = 0; i < (int32_t)t1ms->meta_structs_size; i++) {
+    for (s32 i = 0; i < (s32)t1ms->meta_structs_size; i++) {
         if (
             t1ms->metastructs[i].name != NULL &&
             t1ms->metastructs[i].name[0] != '\0' &&
-            t1ms->strcmp(
+            t1ms->fp_strcmp(
                 t1ms->metastructs[i].name,
                 struct_name) == 0)
         {
@@ -575,7 +575,7 @@ static MetaStruct * find_struct_by_name(
 static MetaField * find_field_in_struct_by_name(
     const MetaStruct * in_struct,
     const char * property_name,
-    uint8_t * hit_subname_i)
+    u8 * hit_subname_i)
 {
     *hit_subname_i = UINT8_MAX;
     MetaField * return_value = NULL;
@@ -584,17 +584,17 @@ static MetaField * find_field_in_struct_by_name(
     
     while (i != NULL)
     {
-        uint8_t match_name =
+        u8 match_name =
             i->name != NULL &&
-                t1ms->strcmp(
+                t1ms->fp_strcmp(
                     i->name,
                     property_name) == 0;
         
-        for (uint8_t j = 0; j < T1_META_SUBNAMES_CAP; j++) {
+        for (u8 j = 0; j < T1_META_SUBNAMES_CAP; j++) {
             if (
                 i->subnames[j] != NULL &&
                 i->subnames[j][0] != '\0' &&
-                t1ms->strcmp(
+                t1ms->fp_strcmp(
                     i->subnames[j],
                     property_name) == 0)
             {
@@ -617,8 +617,8 @@ static MetaField * find_field_in_struct_by_name(
 void T1_meta_reg_enum(
     const char * enum_type_name,
     const T1MetaType T1_type,
-    const uint32_t type_size_check,
-    uint8_t * good)
+    const u32 type_size_check,
+    u8 * good)
 {
     *good = 0;
     
@@ -714,8 +714,8 @@ void T1_meta_reg_enum(
 void T1_meta_reg_enum_value(
     const char * enum_type_name,
     const char * value_name,
-    const int64_t value,
-    uint8_t * good)
+    const s64 value,
+    u8 * good)
 {
     *good = 0;
     
@@ -758,9 +758,9 @@ void T1_meta_reg_enum_value(
     
     new_value->value = value;
     new_value->metaenum_id = UINT16_MAX;
-    for (uint16_t i = 0; i < t1ms->meta_enums_size; i++) {
+    for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
         if (
-            t1ms->strcmp(
+            t1ms->fp_strcmp(
                 t1ms->meta_enums[i].name,
                 enum_type_name) == 0)
         {
@@ -784,8 +784,8 @@ void T1_meta_reg_enum_value(
 
 void T1_meta_reg_struct(
     const char * struct_name,
-    const uint32_t size_bytes,
-    uint8_t * good)
+    const u32 size_bytes,
+    u8 * good)
 {
     MetaStruct * target_mstruct = find_struct_by_name(struct_name);
     
@@ -831,14 +831,14 @@ void T1_meta_reg_struct(
 
 void T1_meta_reg_field(
     const char * field_name,
-    const uint32_t field_offset,
+    const u32 field_offset,
     const T1MetaType field_type,
     const char * field_struct_type_name_or_null,
-    const uint16_t field_array_size_1,
-    const uint16_t field_array_size_2,
-    const uint16_t field_array_size_3,
-    const uint8_t is_enum,
-    uint8_t * good)
+    const u16 field_array_size_1,
+    const u16 field_array_size_2,
+    const u16 field_array_size_3,
+    const u8 is_enum,
+    u8 * good)
 {
     *good = 0;
     
@@ -870,7 +870,7 @@ void T1_meta_reg_field(
     
     // There should be no '.' in the property, because substructs
     // should be registered separately
-    for (uint32_t i = 0; i < UINT16_MAX; i++) {
+    for (u32 i = 0; i < UINT16_MAX; i++) {
         if (field_name[i] == '.') {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0);
@@ -914,7 +914,7 @@ void T1_meta_reg_field(
     #endif
     
     // check for existing field name in that struct
-    uint8_t target_subname_i;
+    u8 target_subname_i;
     MetaField * target_mfield = find_field_in_struct_by_name(
         target_mstruct,
         field_name,
@@ -933,7 +933,7 @@ void T1_meta_reg_field(
         }
         
         target_mfield = t1ms->metafields_store + t1ms->meta_fields_size;
-        uint16_t target_mfield_i = t1ms->meta_fields_size;
+        u16 target_mfield_i = t1ms->meta_fields_size;
         t1ms->meta_fields_size += 1;
         
         metafield_construct(target_mfield);
@@ -1008,8 +1008,8 @@ void T1_meta_reg_field(
             target_mfield->custom_int_min = INT8_MIN;
         break;
         case T1_TYPE_F32:
-            target_mfield->custom_float_max = 3.40282347E+38f;
-            target_mfield->custom_float_min = -3.40282347E+38f;
+            target_mfield->custom_f32_max = 3.40282347E+38f;
+            target_mfield->custom_f32_min = -3.40282347E+38f;
         break;
     }
     target_mfield->offset = field_offset;
@@ -1029,7 +1029,7 @@ void T1_meta_reg_field(
     if (target_mfield->array_sizes[0] < 2) {
         assert(target_mfield->array_sizes[1] < 2);
     }
-    for (uint32_t i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
+    for (u32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
         assert(target_mfield->array_sizes[i] > 0);
     }
     #elif T1_META_ASSERTS == T1_INACTIVE
@@ -1062,7 +1062,7 @@ void T1_meta_reg_field(
             T1_meta_copy_str_to_store(
                 /* const char * to_copy: */
                     field_struct_type_name_or_null,
-                /* uint8_t * good: */
+                /* u8 * good: */
                     good);
         if (!*good) { return; }
         *good = 0;
@@ -1080,9 +1080,9 @@ void T1_meta_reg_field(
         }
         
         target_mfield->parent_enum_id = UINT16_MAX;
-        for (uint16_t i = 0; i < t1ms->meta_enums_size; i++) {
+        for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
             if (
-                t1ms->strcmp(
+                t1ms->fp_strcmp(
                     field_struct_type_name_or_null,
                     t1ms->meta_enums[i].name) == 0)
             {
@@ -1146,10 +1146,10 @@ void T1_meta_reg_field(
     *good = 1;
 }
 
-void T1_meta_reg_float_limits_for_last_field(
-    const double floating_min,
-    const double floating_max,
-    uint8_t * good)
+void T1_meta_reg_f32_limits_for_last_field(
+    const f64 min,
+    const f64 max,
+    u8 * good)
 {
     *good = 0;
     
@@ -1178,7 +1178,7 @@ void T1_meta_reg_float_limits_for_last_field(
     
     if (target_mfield->data_type != T1_TYPE_F32) {
         #if T1_META_ASSERTS == T1_ACTIVE
-        assert(0); // can't set float limits, not a floating point field
+        assert(0); // can't set f32 limits, not an f32/f64
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -1186,7 +1186,7 @@ void T1_meta_reg_float_limits_for_last_field(
         return;
     }
     
-    if (floating_min >= floating_max) {
+    if (min >= max) {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(0);
         #elif T1_META_ASSERTS == T1_INACTIVE
@@ -1196,16 +1196,16 @@ void T1_meta_reg_float_limits_for_last_field(
         return;
     }
     
-    target_mfield->custom_float_max = (float)floating_max;
-    target_mfield->custom_float_min = (float)floating_min;
+    target_mfield->custom_f32_max = (f32)max;
+    target_mfield->custom_f32_min = (f32)min;
     
     *good = 1;
 }
 
 void T1_meta_reg_int_limits_for_last_field(
-    const int64_t int_min,
-    const int64_t int_max,
-    uint8_t * good)
+    const s64 int_min,
+    const s64 int_max,
+    u8 * good)
 {
     *good = 0;
     
@@ -1240,7 +1240,7 @@ void T1_meta_reg_int_limits_for_last_field(
         target_mfield->data_type != T1_TYPE_I8)
     {
         #if T1_META_ASSERTS == T1_ACTIVE
-        assert(0); // can't set int limits, not an int field
+        assert(0); // can't set s32 limits, not an s32 field
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -1265,9 +1265,9 @@ void T1_meta_reg_int_limits_for_last_field(
 }
 
 void T1_meta_reg_uint_limits_for_last_field(
-    const uint64_t uint_min,
-    const uint64_t uint_max,
-    uint8_t * good)
+    const u64 uint_min,
+    const u64 uint_max,
+    u8 * good)
 {
     *good = 0;
     
@@ -1303,7 +1303,7 @@ void T1_meta_reg_uint_limits_for_last_field(
         target_mfield->data_type != T1_TYPE_U8)
     {
         #if T1_META_ASSERTS == T1_ACTIVE
-        assert(0); // can't set int limits, not an int field
+        assert(0); // can't set unsigned limits on field type
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -1331,8 +1331,8 @@ void
 T1_meta_reg_u4_subname_for_last_field(
     const char * subname,
     const char * enum_name_if_any,
-    const uint8_t is_right_nibble,
-    uint8_t * good)
+    const u8 is_right_nibble,
+    u8 * good)
 {
     *good = 0;
     
@@ -1371,13 +1371,13 @@ T1_meta_reg_u4_subname_for_last_field(
     }
     
     if (enum_name_if_any != NULL) {
-        uint16_t enum_i = UINT16_MAX;
+        u16 enum_i = UINT16_MAX;
         for (
-            uint16_t me_i = 0;
+            u16 me_i = 0;
             me_i < t1ms->meta_enums_size;
             me_i++)
         {
-            if (t1ms->strcmp(t1ms->meta_enums[me_i].name, enum_name_if_any) == 0)
+            if (t1ms->fp_strcmp(t1ms->meta_enums[me_i].name, enum_name_if_any) == 0)
             {
                 enum_i = me_i;
             }
@@ -1401,15 +1401,15 @@ T1_meta_reg_u4_subname_for_last_field(
 
 static void strip_array_brackets_and_get_array_indices(
     char * to_strip,
-    uint32_t * array_indices,
-    uint32_t * array_indices_found)
+    u32 * array_indices,
+    u32 * array_indices_found)
 {
-    size_t field_name_len = t1ms->strlen(to_strip);
-    uint8_t is_array = 0;
-    t1ms->memset(
+    u64 field_name_len = t1ms->fp_strlen(to_strip);
+    u8 is_array = 0;
+    t1ms->fp_memset(
         array_indices,
         0,
-        sizeof(uint32_t) * T1_META_ARRAY_SIZES_CAP);
+        sizeof(u32) * T1_META_ARRAY_SIZES_CAP);
     
     while (
         field_name_len > 3 &&
@@ -1417,20 +1417,20 @@ static void strip_array_brackets_and_get_array_indices(
         to_strip[field_name_len-2] >= '0' &&
         to_strip[field_name_len-2] <= '9')
     {
-        for (uint32_t i = T1_META_ARRAY_SIZES_CAP-1; i >= 1; i--) {
+        for (u32 i = T1_META_ARRAY_SIZES_CAP-1; i >= 1; i--) {
             array_indices[i] = array_indices[i-1];
         }
         
-        uint32_t mult = 1;
-        uint32_t total = 0;
+        u32 mult = 1;
+        u32 total = 0;
         
-        size_t i = field_name_len-2;
+        u64 i = field_name_len-2;
         while (
             to_strip[i] >= '0'
             && to_strip[i] <= '9' &&
             i > 2)
         {
-            total += ((uint32_t)(to_strip[i] - '0') * mult);
+            total += ((u32)(to_strip[i] - '0') * mult);
             mult *= 10;
             i--;
         }
@@ -1449,12 +1449,12 @@ static void strip_array_brackets_and_get_array_indices(
     return;
 }
 
-static uint32_t array_indices_to_flat_array_index(
-    uint32_t * array_indices,
+static u32 array_indices_to_flat_array_index(
+    u32 * array_indices,
     MetaField * field)
 {
     #if T1_META_ASSERTS == T1_ACTIVE
-    for (uint32_t i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
+    for (u32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
         assert(array_indices[i] < field->array_sizes[i]);
     }
     #elif T1_META_ASSERTS == T1_INACTIVE
@@ -1462,11 +1462,11 @@ static uint32_t array_indices_to_flat_array_index(
     #error
     #endif
     
-    uint32_t return_val = 0;
+    u32 return_val = 0;
     
-    for (int32_t i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
-        uint32_t offset_per_slice = 1;
-        for (int32_t j = i+1; j < T1_META_ARRAY_SIZES_CAP; j++) {
+    for (s32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
+        u32 offset_per_slice = 1;
+        for (s32 j = i+1; j < T1_META_ARRAY_SIZES_CAP; j++) {
             offset_per_slice *= field->array_sizes[j];
         }
         
@@ -1477,13 +1477,13 @@ static uint32_t array_indices_to_flat_array_index(
 }
 
 // returns cumulative offset
-static uint32_t T1_meta_get_field_recursive(
+static u32 T1_meta_get_field_recursive(
     T1MetaFieldInternal * return_value,
     const char * struct_name,
     const char * field_name,
-    uint8_t * good)
+    u8 * good)
 {
-    uint32_t out_cumul_offset = 0;
+    u32 out_cumul_offset = 0;
     
     *good = 0;
     
@@ -1498,7 +1498,7 @@ static uint32_t T1_meta_get_field_recursive(
     
     // The field name may include a dot, in which case we only
     // search for the first part, then do a recursion
-    uint32_t pop_ascii_store_next_i = t1ms->ascii_store_next_i;
+    u32 pop_ascii_store_next_i = t1ms->ascii_store_next_i;
     char * first_part = T1_meta_copy_str_to_store(
         field_name,
         good);
@@ -1510,7 +1510,7 @@ static uint32_t T1_meta_get_field_recursive(
     #endif
     *good = 0;
     
-    uint32_t dot_i = 0;
+    u32 dot_i = 0;
     while (first_part[dot_i] != '.' && first_part[dot_i] != '\0')
     {
         dot_i += 1;
@@ -1530,8 +1530,8 @@ static uint32_t T1_meta_get_field_recursive(
         *good = 0;
     }
     
-    uint32_t array_indices[T1_META_ARRAY_SIZES_CAP];
-    uint32_t array_indices_found = 0;
+    u32 array_indices[T1_META_ARRAY_SIZES_CAP];
+    u32 array_indices_found = 0;
     strip_array_brackets_and_get_array_indices(
         first_part,
         array_indices,
@@ -1549,11 +1549,11 @@ static uint32_t T1_meta_get_field_recursive(
     
     return_value->internal_field = metafield;
     
-    uint32_t flat_array_index = array_indices_to_flat_array_index(
+    u32 flat_array_index = array_indices_to_flat_array_index(
         array_indices,
         metafield);
     
-    int32_t offset_per_array_index = 0;
+    s32 offset_per_array_index = 0;
     if (flat_array_index > 0 ) {
         MetaStruct * substruct = NULL;
         switch (metafield->data_type) {
@@ -1587,7 +1587,7 @@ static uint32_t T1_meta_get_field_recursive(
                     t1ms->ascii_store_next_i = pop_ascii_store_next_i;
                     return UINT32_MAX;
                 }
-                offset_per_array_index = (int32_t)substruct->size_bytes;
+                offset_per_array_index = (s32)substruct->size_bytes;
                 break;
             case T1_TYPE_NOTSET:
             default:
@@ -1636,13 +1636,13 @@ static uint32_t T1_meta_get_field_recursive(
     out_cumul_offset +=
         metafield->offset +
             (
-                (uint32_t)offset_per_array_index *
+                (u32)offset_per_array_index *
                 flat_array_index
             );
     return out_cumul_offset;
 }
 
-static size_t T1_meta_shared_get_element_size_bytes(
+static u64 T1_meta_shared_get_element_size_bytes(
     T1MetaType data_type,
     const char * struct_name_or_null)
 {
@@ -1717,8 +1717,8 @@ static size_t T1_meta_shared_get_element_size_bytes(
 }
 
 #if 0
-static size_t T1_meta_field_get_element_size_bytes(T1MetaField * field) {
-    size_t return_value = 0;
+static u64 T1_meta_field_get_element_size_bytes(T1MetaField * field) {
+    u64 return_value = 0;
     
     switch (field->data_type) {
         case T1_TYPE_STRUCT:
@@ -1773,41 +1773,41 @@ static size_t T1_meta_field_get_element_size_bytes(T1MetaField * field) {
 }
 #endif
 
-static size_t T1_meta_internal_field_get_element_size_bytes(MetaField * field) {
+static u64 T1_meta_internal_field_get_element_size_bytes(MetaField * field) {
     return T1_meta_shared_get_element_size_bytes(
         field->data_type,
         field->struct_type_name);
 }
 
 typedef struct {
-    uint64_t value_u64;
-    int64_t  value_i64;
-    double   value_f64;
-    uint8_t  value_is_i64;
-    uint8_t  value_is_u64;
-    uint8_t  value_is_f64;
+    u64 value_u64;
+    s64  value_i64;
+    f64   value_f64;
+    u8  value_is_i64;
+    u8  value_is_u64;
+    u8  value_is_f64;
 } T1MetaParsedvalue;
 
 static void parse_string_to_value(
     T1MetaParsedvalue * recipient,
     const char * string)
 {
-    uint8_t is_f64 = 0;
-    recipient->value_f64 = T1_meta_string_to_double(string, &is_f64);
-    recipient->value_is_f64 = (uint8_t)is_f64;
+    u8 is_f64 = 0;
+    recipient->value_f64 = T1_meta_string_to_f64(string, &is_f64);
+    recipient->value_is_f64 = (u8)is_f64;
     
-    uint8_t val_starts_minus = string[0] == '-';
+    u8 val_starts_minus = string[0] == '-';
     if (val_starts_minus) { string++; }
     
     char * endptr = NULL;
-    recipient->value_u64 = (uint64_t)t1ms->strtoull(string, &endptr, 10);
+    recipient->value_u64 = (u64)t1ms->fp_strtoull(string, &endptr, 10);
     recipient->value_is_u64 = *endptr == '\0' && !val_starts_minus;
     
     recipient->value_is_i64 =
         *endptr == '\0' &&
         recipient->value_u64 < INT64_MAX;
     
-    recipient->value_i64 = (int64_t)recipient->value_u64;
+    recipient->value_i64 = (s64)recipient->value_u64;
     if (val_starts_minus) { recipient->value_i64 *= -1; }
 }
 
@@ -1816,7 +1816,7 @@ void T1_meta_write_to_known_field_str(
     const char * target_field_name,
     const char * value_to_write_str,
     void * target_parent_ptr,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
@@ -1839,9 +1839,9 @@ void T1_meta_write_to_known_field_str(
     
     // T1_meta_get_field_recursive() will push to the ascii store
     // as if it were stack memory
-    uint32_t before_recursion_ascii_store_next_i = t1ms->ascii_store_next_i;
+    u32 before_recursion_ascii_store_next_i = t1ms->ascii_store_next_i;
     
-    uint32_t total_offset = T1_meta_get_field_recursive(
+    u32 total_offset = T1_meta_get_field_recursive(
         &field,
         target_parent_type,
         target_field_name,
@@ -1871,11 +1871,11 @@ void T1_meta_write_to_known_field_str(
     
     MetaEnum * parent_enum = NULL;
     T1MetaType type_adj = field.internal_field->data_type;
-    uint8_t found_enum_field = 0;
+    u8 found_enum_field = 0;
         
     if (field.internal_field->is_enum)
     {
-        uint16_t enum_id = field.internal_field->parent_enum_id;
+        u16 enum_id = field.internal_field->parent_enum_id;
         
         if (
             field.subname_i < T1_META_SUBNAMES_CAP &&
@@ -1901,21 +1901,21 @@ void T1_meta_write_to_known_field_str(
         parent_enum = &t1ms->meta_enums[enum_id];
         
         for (
-            uint32_t i = 0;
+            u32 i = 0;
             i < t1ms->meta_enum_vals_size;
             i++)
         {
             if (
                 t1ms->meta_enum_vals[i].
                     metaenum_id == enum_id &&
-                t1ms->strcmp(
+                t1ms->fp_strcmp(
                     t1ms->meta_enum_vals[i].name,
                     value_adj) == 0)
             {
                 found_enum_field = 1;
                 parsed.value_i64 =
                     t1ms->meta_enum_vals[i].value;
-                parsed.value_u64 = (uint64_t)t1ms->meta_enum_vals[i].value;
+                parsed.value_u64 = (u64)t1ms->meta_enum_vals[i].value;
                 parsed.value_is_i64 = 1;
                 parsed.value_is_u64 = parsed.value_i64 >= 0;
                 break;
@@ -1948,7 +1948,7 @@ void T1_meta_write_to_known_field_str(
         return;
     }
     
-    int32_t rightmost_array_i = 2;
+    s32 rightmost_array_i = 2;
     switch (type_adj) {
         case T1_TYPE_NOTSET:
             #if T1_META_ASSERTS == T1_ACTIVE
@@ -1973,9 +1973,9 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
-            float value_f32 = (float)parsed.value_f64;
-            t1ms->memcpy(
-                (float *)((char *)target_parent_ptr + total_offset),
+            f32 value_f32 = (f32)parsed.value_f64;
+            t1ms->fp_memcpy(
+                (f32 *)((char *)target_parent_ptr + total_offset),
                 &value_f32,
                 4);
         break;
@@ -1993,9 +1993,9 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            int8_t value_i8 = (int8_t)parsed.value_i64;
-            t1ms->memcpy(
-                (int8_t *)((char *)target_parent_ptr + total_offset),
+            s8 value_i8 = (s8)parsed.value_i64;
+            t1ms->fp_memcpy(
+                (s8 *)((char *)target_parent_ptr + total_offset),
                 &value_i8,
                 1);
         break;
@@ -2013,9 +2013,9 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            int16_t value_i16 = (int16_t)parsed.value_i64;
-            t1ms->memcpy(
-                (int16_t *)((char *)target_parent_ptr + total_offset),
+            s16 value_i16 = (s16)parsed.value_i64;
+            t1ms->fp_memcpy(
+                (s16 *)((char *)target_parent_ptr + total_offset),
                 &value_i16,
                 2);
         break;
@@ -2033,10 +2033,10 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            int32_t value_i32 = (int32_t)parsed.value_i64;
-            t1ms->memcpy(
-                (int32_t *)((char *)target_parent_ptr + total_offset),
-                &value_i32,
+            s32 value_s32 = (s32)parsed.value_i64;
+            t1ms->fp_memcpy(
+                (s32 *)((char *)target_parent_ptr + total_offset),
+                &value_s32,
                 4);
         break;
         case T1_TYPE_I64:
@@ -2061,9 +2061,9 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
-            uint8_t value_u4 = (uint8_t)parsed.value_u64;
+            u8 value_u4 = (u8)parsed.value_u64;
             
-            int value_recip = *(uint8_t *)(
+            s32 value_recip = *(u8 *)(
                 (char *)target_parent_ptr + total_offset);
             
             if (field.subname_i == 0) {
@@ -2088,10 +2088,10 @@ void T1_meta_write_to_known_field_str(
                 return;
             } 
             
-            value_u4 = (uint8_t)value_recip;
+            value_u4 = (u8)value_recip;
             
-            t1ms->memcpy(
-                (uint8_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u4,
                 1);
         break;
@@ -2108,9 +2108,9 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            uint8_t value_u8 = (uint8_t)parsed.value_u64;
-            t1ms->memcpy(
-                (uint8_t *)((char *)target_parent_ptr + total_offset),
+            u8 value_u8 = (u8)parsed.value_u64;
+            t1ms->fp_memcpy(
+                (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u8,
                 1);
         break;
@@ -2127,9 +2127,9 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            uint16_t value_u16 = (uint16_t)parsed.value_u64;
-            t1ms->memcpy(
-                (uint16_t *)((char *)target_parent_ptr + total_offset),
+            u16 value_u16 = (u16)parsed.value_u64;
+            t1ms->fp_memcpy(
+                (u16 *)((char *)target_parent_ptr + total_offset),
                 &value_u16,
                 2);
         break;
@@ -2146,8 +2146,8 @@ void T1_meta_write_to_known_field_str(
                 #endif
                 return;
             }
-            t1ms->memcpy(
-                (uint32_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u32 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 4);
         break;
@@ -2164,8 +2164,8 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
-            t1ms->memcpy(
-                (uint64_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u64 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 8);
         break;
@@ -2178,7 +2178,7 @@ void T1_meta_write_to_known_field_str(
             }
             
             if (
-                t1ms->strlen(value_to_write_str) >
+                t1ms->fp_strlen(value_to_write_str) >
                     field.internal_field->array_sizes[rightmost_array_i])
             {
                 #if T1_META_ASSERTS == T1_ACTIVE
@@ -2191,12 +2191,12 @@ void T1_meta_write_to_known_field_str(
             }
             
             #if T1_META_ASSERTS == T1_ACTIVE
-            assert(t1ms->memcpy != NULL);
+            assert(t1ms->fp_memcpy != NULL);
             #elif T1_META_ASSERTS == T1_INACTIVE
             #else
             #error
             #endif
-            t1ms->memcpy(
+            t1ms->fp_memcpy(
                 ((char *)target_parent_ptr + total_offset),
                 value_to_write_str,
                 field.internal_field->array_sizes[rightmost_array_i]);
@@ -2217,9 +2217,9 @@ void T1_meta_write_to_known_field_str(
 void T1_meta_write_to_known_field_uint(
     const char * target_parent_type,
     const char * target_field_name,
-    const uint64_t value_to_write_uint,
+    const u64 value_to_write_uint,
     void * target_parent_ptr,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
@@ -2240,9 +2240,9 @@ void T1_meta_write_to_known_field_uint(
     
     // T1_meta_get_field_recursive() will push to the ascii store
     // as if it were stack memory
-    uint32_t before_recursion_ascii_store_next_i = t1ms->ascii_store_next_i;
+    u32 before_recursion_ascii_store_next_i = t1ms->ascii_store_next_i;
     
-    uint32_t total_offset = T1_meta_get_field_recursive(
+    u32 total_offset = T1_meta_get_field_recursive(
         &field,
         target_parent_type,
         target_field_name,
@@ -2328,9 +2328,9 @@ void T1_meta_write_to_known_field_uint(
                 return;
             }
             
-            uint8_t value_u4 = (uint8_t)parsed.value_u64;
+            u8 value_u4 = (u8)parsed.value_u64;
             
-            int value_recip = *(uint8_t *)(
+            s32 value_recip = *(u8 *)(
                 (char *)target_parent_ptr + total_offset);
             
             if (field.subname_i == 0) {
@@ -2355,10 +2355,10 @@ void T1_meta_write_to_known_field_uint(
                 return;
             } 
             
-            value_u4 = (uint8_t)value_recip;
+            value_u4 = (u8)value_recip;
             
-            t1ms->memcpy(
-                (uint8_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u4,
                 1);
         break;
@@ -2375,9 +2375,9 @@ void T1_meta_write_to_known_field_uint(
                 #endif
                 return;
             }
-            uint8_t value_u8 = (uint8_t)parsed.value_u64;
-            t1ms->memcpy(
-                (uint8_t *)((char *)target_parent_ptr + total_offset),
+            u8 value_u8 = (u8)parsed.value_u64;
+            t1ms->fp_memcpy(
+                (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u8,
                 1);
         break;
@@ -2394,9 +2394,9 @@ void T1_meta_write_to_known_field_uint(
                 #endif
                 return;
             }
-            uint16_t value_u16 = (uint16_t)parsed.value_u64;
-            t1ms->memcpy(
-                (uint16_t *)((char *)target_parent_ptr + total_offset),
+            u16 value_u16 = (u16)parsed.value_u64;
+            t1ms->fp_memcpy(
+                (u16 *)((char *)target_parent_ptr + total_offset),
                 &value_u16,
                 2);
         break;
@@ -2413,8 +2413,8 @@ void T1_meta_write_to_known_field_uint(
                 #endif
                 return;
             }
-            t1ms->memcpy(
-                (uint32_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u32 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 4);
         break;
@@ -2431,8 +2431,8 @@ void T1_meta_write_to_known_field_uint(
                 return;
             }
             
-            t1ms->memcpy(
-                (uint64_t *)((char *)target_parent_ptr + total_offset),
+            t1ms->fp_memcpy(
+                (u64 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 8);
         break;
@@ -2452,14 +2452,14 @@ void T1_meta_write_to_known_field_uint(
     *good = 1;
 }
 
-uint32_t internal_T1_meta_get_num_of_fields_in_struct(
+u32 internal_T1_meta_get_num_of_fields_in_struct(
     const char * struct_name)
 {
     MetaStruct * parent = find_struct_by_name(struct_name);
     
     if (parent == NULL) { return 0; }
     
-    uint32_t fields_size = 0;
+    u32 fields_size = 0;
     MetaField * field = metafield_i_to_ptr(parent->head_fields_i);
     while (field != NULL) {
         fields_size += 1;
@@ -2473,12 +2473,12 @@ void
 T1_meta_get_offset_and_type(
     const char * struct_name,
     const char * field_name,
-    int32_t * out_offset,
+    s32 * out_offset,
     T1MetaType * out_data_type)
 {
     T1MetaFieldInternal field;
     
-    uint8_t good = 0;
+    u8 good = 0;
     
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(field_name != NULL);
@@ -2495,7 +2495,7 @@ T1_meta_get_offset_and_type(
     
     if (good) {
         *out_data_type = field.internal_field->data_type;
-        *out_offset = (int32_t)field.internal_field->offset;
+        *out_offset = (s32)field.internal_field->offset;
     } else {
         *out_data_type = T1_TYPE_NOTSET;
         *out_offset = INT32_MAX;
@@ -2507,7 +2507,7 @@ static void T1_meta_serialize_cat_str_to_buf(
 {
     *t1ms->ss.good = 0;
     
-    size_t to_copy_len = t1ms->strlen(to_copy);
+    u64 to_copy_len = t1ms->fp_strlen(to_copy);
     
     if (*t1ms->ss.buffer_size + to_copy_len + 1 >= t1ms->ss.buffer_cap) {
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -2519,7 +2519,7 @@ static void T1_meta_serialize_cat_str_to_buf(
         return;
     }
     
-    t1ms->memcpy(
+    t1ms->fp_memcpy(
         t1ms->ss.buffer + *t1ms->ss.buffer_size,
         to_copy,
         to_copy_len);
@@ -2537,9 +2537,9 @@ static void T1_meta_serialize_cat_str_to_prefix(
 {
     *t1ms->ss.good = 0;
     
-    size_t to_copy_len = t1ms->strlen(to_copy);
+    u64 to_copy_len = t1ms->fp_strlen(to_copy);
     
-    size_t field_prefix_len = t1ms->strlen(t1ms->ss.field_prefix);
+    u64 field_prefix_len = t1ms->fp_strlen(t1ms->ss.field_prefix);
     
     if (
         to_copy_len + field_prefix_len + 1 >=
@@ -2554,7 +2554,7 @@ static void T1_meta_serialize_cat_str_to_prefix(
         return;
     }
     
-    t1ms->memcpy(
+    t1ms->fp_memcpy(
         t1ms->ss.field_prefix + field_prefix_len,
         to_copy,
         to_copy_len);
@@ -2567,9 +2567,9 @@ static void T1_meta_serialize_cat_str_to_prefix(
 static void T1_meta_serialize_add_struct_fields_to_stack(
     const char * struct_name,
     const char * field_text,
-    uint16_t field_array_sizes[T1_META_ARRAY_SIZES_CAP],
+    u16 field_array_sizes[T1_META_ARRAY_SIZES_CAP],
     const char * field_dot_or_arrow,
-    const uint32_t parent_offset)
+    const u32 parent_offset)
 {
     *t1ms->ss.good = 0;
     
@@ -2601,7 +2601,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
     
     char slice_text[32];
-    t1ms->memset(slice_text, 0, 32);
+    t1ms->fp_memset(slice_text, 0, 32);
     
     if (field_array_sizes[0] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[0] = '[';
@@ -2611,9 +2611,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
             31,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        slice_text[t1ms->strlen(slice_text)] = ']';
+        slice_text[t1ms->fp_strlen(slice_text)] = ']';
     }
-    size_t len = t1ms->strlen(slice_text);
+    u64 len = t1ms->fp_strlen(slice_text);
     if (field_array_sizes[1] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[len++] = '[';
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -2625,10 +2625,10 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
         T1_meta_int_to_string(
             field_array_sizes[1],
             slice_text+len,
-            32 - (uint32_t)len,
+            32 - (u32)len,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        len = t1ms->strlen(slice_text);
+        len = t1ms->fp_strlen(slice_text);
         slice_text[len++] = ']';
     }
     if (field_array_sizes[2] != T1_META_ARRAY_SLICE_NONE) {
@@ -2642,10 +2642,10 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
         T1_meta_int_to_string(
             field_array_sizes[2],
             slice_text+len,
-            32 - (uint32_t)len,
+            32 - (u32)len,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        len = t1ms->strlen(slice_text);
+        len = t1ms->fp_strlen(slice_text);
         slice_text[len++] = ']';
     }
     
@@ -2666,13 +2666,13 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
         return;
     }
     
-    uint32_t to_reverse_start_i = t1ms->ss.field_stack_size;
-    uint16_t prefix_start_i = (uint16_t)t1ms->strlen(
+    u32 to_reverse_start_i = t1ms->ss.field_stack_size;
+    u16 prefix_start_i = (u16)t1ms->fp_strlen(
         t1ms->ss.field_prefix);
     
-    uint16_t field_i = parent->head_fields_i;
+    u16 field_i = parent->head_fields_i;
     
-    uint32_t array_slices[T1_META_ARRAY_SIZES_CAP];
+    u32 array_slices[T1_META_ARRAY_SIZES_CAP];
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(T1_META_ARRAY_SIZES_CAP == 3);
     #elif T1_META_ASSERTS == T1_INACTIVE
@@ -2698,25 +2698,25 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
             array_slices[2] < field->array_sizes[2];
             array_slices[2]++)
         {
-            uint32_t flat_i = array_indices_to_flat_array_index(
+            u32 flat_i = array_indices_to_flat_array_index(
                 array_slices,
                 field);
             
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].parent_offset =
                 parent_offset + (
-                    flat_i * (uint32_t)
+                    flat_i * (u32)
                         T1_meta_internal_field_get_element_size_bytes(field));
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].
                 field_array_slices[0] = field->array_sizes[0] > 1 ?
-                    (uint16_t)array_slices[0] :
+                    (u16)array_slices[0] :
                     T1_META_ARRAY_SLICE_NONE;
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].
                 field_array_slices[1] = field->array_sizes[1] > 1 ?
-                    (uint16_t)array_slices[1] :
+                    (u16)array_slices[1] :
                     T1_META_ARRAY_SLICE_NONE;
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].
                 field_array_slices[2] = field->array_sizes[2] > 1 ?
-                    (uint16_t)array_slices[2] :
+                    (u16)array_slices[2] :
                     T1_META_ARRAY_SLICE_NONE;
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].field_i = field_i;
             t1ms->ss.field_stack[t1ms->ss.field_stack_size].prefix_start_i =
@@ -2742,9 +2742,9 @@ void T1_meta_serialize_instance_to_buffer(
     const char * struct_name,
     void * to_serialize,
     char * buffer,
-    uint32_t * buffer_size,
-    uint32_t buffer_cap,
-    uint8_t * good)
+    u32 * buffer_size,
+    u32 buffer_cap,
+    u8 * good)
 {
     *good = 0;
     *buffer_size = 0;
@@ -2793,7 +2793,7 @@ void T1_meta_serialize_instance_to_buffer(
     #else
     #error
     #endif
-    uint16_t slices_i[T1_META_ARRAY_SIZES_CAP];
+    u16 slices_i[T1_META_ARRAY_SIZES_CAP];
     slices_i[0] = T1_META_ARRAY_SLICE_NONE;
     slices_i[1] = T1_META_ARRAY_SLICE_NONE;
     slices_i[2] = T1_META_ARRAY_SLICE_NONE;
@@ -2806,9 +2806,9 @@ void T1_meta_serialize_instance_to_buffer(
         0);
     if (!*good) { return; } else { *good = 0; }
     
-    float value_f32;
-    uint64_t value_u64;
-    int64_t value_i64;
+    f32 value_f32;
+    u64 value_u64;
+    s64 value_i64;
     
     while (t1ms->ss.field_stack_size > 0) {
         
@@ -2837,7 +2837,7 @@ void T1_meta_serialize_instance_to_buffer(
             T1_meta_serialize_cat_str_to_buf(field->name);
             
             char value_as_str[128];
-            t1ms->memset(value_as_str, 0, 128);
+            t1ms->fp_memset(value_as_str, 0, 128);
             
             if (top.field_array_slices[0] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2845,14 +2845,14 @@ void T1_meta_serialize_instance_to_buffer(
                         top.field_array_slices[0],
                     /* char * recipient: */
                         value_as_str,
-                    /* uint32_t recipient_cap: */
+                    /* u32 recipient_cap: */
                         128,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->memset(value_as_str, 0, 128);
+                t1ms->fp_memset(value_as_str, 0, 128);
             }
             if (top.field_array_slices[1] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2860,14 +2860,14 @@ void T1_meta_serialize_instance_to_buffer(
                         top.field_array_slices[1],
                     /* char * recipient: */
                         value_as_str,
-                    /* uint32_t recipient_cap: */
+                    /* u32 recipient_cap: */
                         128,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->memset(value_as_str, 0, 128);
+                t1ms->fp_memset(value_as_str, 0, 128);
             }
             if (top.field_array_slices[2] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2875,23 +2875,23 @@ void T1_meta_serialize_instance_to_buffer(
                         top.field_array_slices[2],
                     /* char * recipient: */
                         value_as_str,
-                    /* uint32_t recipient_cap: */
+                    /* u32 recipient_cap: */
                         128,
-                    /* uint8_t * good: */
+                    /* u8 * good: */
                         good);
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->memset(value_as_str, 0, 128);
+                t1ms->fp_memset(value_as_str, 0, 128);
             }
             
             T1_meta_serialize_cat_str_to_buf(" = ");
             
             if (field->parent_enum_id != UINT16_MAX) {
-                uint8_t val_u8 = *(uint8_t *)(((char *)to_serialize) +
+                u8 val_u8 = *(u8 *)(((char *)to_serialize) +
                     field->offset + top.parent_offset);
                 for (
-                    uint32_t mev_i = 0;
+                    u32 mev_i = 0;
                     mev_i < t1ms->meta_enum_vals_size;
                     mev_i++)
                 {
@@ -2919,7 +2919,7 @@ void T1_meta_serialize_instance_to_buffer(
                         #error
                         #endif
                         
-                        size_t enumvalstrlen = t1ms->strlen(t1ms->meta_enum_vals[mev_i].name);
+                        u64 enumvalstrlen = t1ms->fp_strlen(t1ms->meta_enum_vals[mev_i].name);
                         
                         #if T1_META_ASSERTS == T1_ACTIVE
                         assert(enumvalstrlen > 0);
@@ -2928,7 +2928,7 @@ void T1_meta_serialize_instance_to_buffer(
                         #error
                         #endif
                         
-                        t1ms->memcpy(
+                        t1ms->fp_memcpy(
                             value_as_str,
                             t1ms->meta_enum_vals[mev_i].name,
                             enumvalstrlen);
@@ -2938,23 +2938,23 @@ void T1_meta_serialize_instance_to_buffer(
             } else {
                 switch (field->data_type) {
                     case T1_TYPE_F32:
-                        value_f32 = *(float *)(((char *)to_serialize) +
+                        value_f32 = *(f32 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
-                        T1_meta_float_to_string(
-                            /* float input: */
+                        T1_meta_f32_to_string(
+                            /* f32 input: */
                                 value_f32,
-                            /* const uint8_t precision: */
+                            /* const u8 precision: */
                                 4,
                             /* char * recipient: */
                                 value_as_str,
-                            /* uint32_t recipient_cap: */
+                            /* u32 recipient_cap: */
                                 128,
-                            /* uint8_t * good: */
+                            /* u8 * good: */
                                 good);
                         if (!*good) { return; } else { *good = 0; }
                         
-                        size_t vaslen = t1ms->strlen(value_as_str);
+                        u64 vaslen = t1ms->fp_strlen(value_as_str);
                         
                         if (vaslen + 1 >= 128) {
                             return;
@@ -2964,7 +2964,7 @@ void T1_meta_serialize_instance_to_buffer(
                         value_as_str[vaslen+1] = '\0';
                     break;
                     case T1_TYPE_U64:
-                        value_u64 = *(uint64_t *)(((char *)to_serialize) +
+                        value_u64 = *(u64 *)(((char *)to_serialize) +
                         field->offset + top.parent_offset);
                         
                         T1_meta_uint_to_string(
@@ -2973,49 +2973,49 @@ void T1_meta_serialize_instance_to_buffer(
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_U32:
-                        value_u64 = *(uint32_t *)(((char *)to_serialize) +
+                        value_u64 = *(u32 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_U16:
-                        value_u64 = *(uint16_t *)(((char *)to_serialize) +
+                        value_u64 = *(u16 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_U8:
-                        value_u64 = *(uint8_t *)(((char *)to_serialize) +
+                        value_u64 = *(u8 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_I64:
-                        value_i64 = *(int64_t *)(((char *)to_serialize) +
+                        value_i64 = *(s64 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_int_to_string(value_i64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_I32:
-                        value_i64 = *(int32_t *)(((char *)to_serialize) +
+                        value_i64 = *(s32 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_int_to_string(value_i64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_I16:
-                        value_i64 = *(int16_t *)(((char *)to_serialize) +
+                        value_i64 = *(s16 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_int_to_string(value_i64, value_as_str, 128, good);
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     case T1_TYPE_I8:
-                        value_i64 = *(int8_t *)(((char *)to_serialize) +
+                        value_i64 = *(s8 *)(((char *)to_serialize) +
                             field->offset + top.parent_offset);
                         
                         T1_meta_int_to_string(value_i64, value_as_str, 128, good);
@@ -3054,12 +3054,12 @@ void T1_meta_deserialize_instance_from_buffer(
     const char * struct_name,
     void * recipient,
     char * buffer,
-    const uint32_t buffer_size,
-    uint8_t * good)
+    const u32 buffer_size,
+    u8 * good)
 {
     *good = 0;
     
-    uint32_t at_i = 0;
+    u32 at_i = 0;
     if (!T1_meta_string_starts_with(buffer + at_i, "T1_META_START\n")) {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(0);
@@ -3082,7 +3082,7 @@ void T1_meta_deserialize_instance_from_buffer(
         *good = 0;
         return;
     }
-    at_i += t1ms->strlen(struct_name);
+    at_i += t1ms->fp_strlen(struct_name);
     
     if (!T1_meta_string_starts_with(buffer + at_i, "\n")) {
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -3098,7 +3098,7 @@ void T1_meta_deserialize_instance_from_buffer(
     
     char recursive_field_name[256];
     char value_to_assign[128];
-    uint32_t write_i;
+    u32 write_i;
     
     while (buffer[at_i] == 's') {
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -3191,7 +3191,7 @@ void T1_meta_deserialize_instance_from_buffer(
                 value_to_assign,
             /* void * target_parent_ptr: */
                 recipient,
-            /* uint8_t * good: */
+            /* u8 * good: */
                 good);
         if (!*good) { return; } else { *good = 1; }
         
@@ -3213,8 +3213,8 @@ void T1_meta_deserialize_instance_from_buffer(
 
 char * T1_meta_enum_uint_to_string(
     const char * enum_type_name,
-    const uint64_t value,
-    uint8_t * good)
+    const u64 value,
+    u8 * good)
 {
     *good = 0;
     
@@ -3229,10 +3229,10 @@ char * T1_meta_enum_uint_to_string(
         return NULL;
     }
     
-    uint16_t parent_enum_id = UINT16_MAX;
-    for (uint16_t i = 0; i < t1ms->meta_enums_size; i++) {
+    u16 parent_enum_id = UINT16_MAX;
+    for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
         if (
-            t1ms->strcmp(
+            t1ms->fp_strcmp(
                 t1ms->meta_enums[i].name,
                 enum_type_name) == 0)
         {
@@ -3251,10 +3251,10 @@ char * T1_meta_enum_uint_to_string(
         return NULL;
     }
     
-    for (uint16_t i = 0; i < t1ms->meta_enum_vals_size; i++) {
+    for (u16 i = 0; i < t1ms->meta_enum_vals_size; i++) {
         if (
             t1ms->meta_enum_vals[i].metaenum_id == parent_enum_id &&
-            t1ms->meta_enum_vals[i].value == (int64_t)value)
+            t1ms->meta_enum_vals[i].value == (s64)value)
         {
             *good = 1;
             return t1ms->meta_enum_vals[i].name;

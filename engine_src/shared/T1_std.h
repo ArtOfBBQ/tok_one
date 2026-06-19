@@ -1,8 +1,7 @@
 #ifndef T1_STD_H
 #define T1_STD_H
 
-#include <inttypes.h>
-#include <stddef.h>
+#include "T1_stdint.h"
 
 #ifndef __cplusplus
 #define true 1
@@ -12,9 +11,6 @@
 #ifndef NULL
 #define NULL 0
 #endif
-
-typedef uint8_t bool8_t;
-typedef uint8_t uint4x2;
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,41 +25,41 @@ extern "C" {
 void *
 T1_std_memset(
     void * input,
-    int value,
-    size_t size_bytes);
+    s32 value,
+    u64 size_bytes);
 
 void
 T1_std_memset_i16(
     void * input,
-    int16_t value,
-    unsigned int size_bytes);
+    s16 value,
+    u32 size_bytes);
 
 void
-T1_std_memset_i32(
+T1_std_memset_s32(
     void * input,
-    int32_t value,
-    unsigned int size_bytes);
+    s32 value,
+    u32 size_bytes);
 
 void
 T1_std_memset_f32(
     void * input,
-    float value,
-    unsigned int size_bytes);
+    f32 value,
+    u32 size_bytes);
 
 void *
 T1_std_memcpy(
     void * dest,
     const void * src,
-    size_t n_bytes);
+    u64 n_bytes);
 
-int
-T1_std_mini(const int x, const int y);
-int
-T1_std_maxi(const int x, const int y);
-float
-T1_std_minf(const float x, const float y);
-float
-T1_std_maxf(const float x, const float y);
+s32
+T1_std_mini(const s32 x, const s32 y);
+s32
+T1_std_maxi(const s32 x, const s32 y);
+f32
+T1_std_minf(const f32 x, const f32 y);
+f32
+T1_std_maxf(const f32 x, const f32 y);
 
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -76,13 +72,19 @@ T1_std_maxf(const float x, const float y);
 void
 T1_std_internal_strcat_cap(
     char * recipient,
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     const char * to_append);
 
 void
 T1_std_strcat(
     char * recipient,
     const char * to_append);
+
+u64
+T1_std_strlcat(
+    char * a,
+    const char * b,
+    u64 c);
 
 void
 T1_std_strcat_char_cap(
@@ -94,14 +96,14 @@ T1_std_strcat_char_cap(
 void
 T1_std_internal_strcat_int_cap(
     char * recipient,
-    const uint32_t recipient_size,
-    const int32_t to_append);
+    const u32 recipient_size,
+    const s32 to_append);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_std_strcat_int_cap(recip, recipsize, to_append) T1_std_internal_strcat_int_cap(recip, to_append);
 void
 T1_std_internal_strcat_int_cap(
     char * recipient,
-    const int32_t to_append);
+    const i32 to_append);
 #else
 #error
 #endif
@@ -111,37 +113,37 @@ T1_std_internal_strcat_int_cap(
 void
 T1_std_internal_strcat_uint_cap(
     char * recipient,
-    const uint32_t recipient_size,
-    const uint32_t to_append);
+    const u32 recipient_size,
+    const u32 to_append);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_std_strcat_uint_cap(recip, recipsize, to_append) T1_std_internal_strcat_uint_cap(recip, to_append);
 void
 T1_std_internal_strcat_uint_cap(
     char * recipient,
-    const uint32_t to_append);
+    const u32 to_append);
 #else
 #error
 #endif
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcat_float_cap(recip, recipsize, to_append) T1_std_internal_strcat_float_cap(recip, recipsize, to_append);
+#define T1_std_strcat_f32_cap(recip, recipsize, to_append) T1_std_internal_strcat_f32_cap(recip, recipsize, to_append);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcat_float_cap(recip, recipsize, to_append) T1_std_internal_strcat_float_cap(recip, UINT32_MAX, to_append);
+#define T1_std_strcat_f32_cap(recip, recipsize, to_append) T1_std_internal_strcat_f32_cap(recip, UINT32_MAX, to_append);
 #else
 #error
 #endif
 void
-T1_std_internal_strcat_float_cap(
+T1_std_internal_strcat_f32_cap(
     char * recipient,
-    const uint32_t recipient_size,
-    const float to_append);
+    const u32 recipient_size,
+    const f32 to_append);
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, recipsize, to_append);
 void
 T1_std_internal_strcpy_cap(
     char * recipient,
-    const uint32_t recipient_cap,
+    const u32 recipient_cap,
     const char * origin);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, to_append);
@@ -156,22 +158,21 @@ T1_std_internal_strcpy_cap(
 void
 T1_std_copy_strings(
     char * recipient,
-    const uint32_t recipient_size,
+    const u32 recipient_size,
     const char * origin,
-    const uint32_t origin_size);
+    const u32 origin_size);
 
-size_t
-T1_std_strlen(const char * null_terminated_string);
+u64 T1_std_strlen(const char * null_terminated_string);
 
 void
 T1_std_strtolower(char * in);
 
-uint8_t
+u8
 T1_std_string_starts_with(
     const char * str_to_check,
     const char * start);
 
-uint8_t
+u8
 T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending);
@@ -182,67 +183,67 @@ T1_std_strsub(
     const char * to_match,
     const char * replacement);
 
-uint8_t
+u8
 T1_std_are_equal_strings(
     const char * str1,
     const char * str2);
 
-uint8_t
+u8
 T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2);
 
-uint8_t
+u8
 T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
-    const uint64_t length);
+    const u64 length);
 
 void
-T1_std_int_to_string(
-    const int32_t input,
+T1_std_s32_to_string(
+    const s32 input,
     char * recipient);
 
 void
-T1_std_uint_to_string(
-    const uint32_t input,
+T1_std_u32_to_string(
+    const u32 input,
     char * recipient);
 
 void
-T1_std_float_to_string(
-    const float input,
+T1_std_f32_to_string(
+    const f32 input,
     char * recipient,
-    const uint32_t recipient_size);
+    const u32 recipient_size);
 
-int32_t
+s32
 T1_std_string_to_int32_validate(
     const char * input,
-    uint8_t * good);
+    u8 * good);
 
-int32_t
-T1_std_string_to_int32(const char * input);
+s32
+T1_std_string_to_s32(const char * input);
 
-uint32_t
+u32
 T1_std_string_to_uint32_validate(
     const char * input,
-    uint8_t * good);
+    u8 * good);
 
-uint32_t
+u32
 T1_std_string_to_uint32(const char * input);
 
-float
-T1_std_string_to_float_validate(
+f32
+T1_std_string_to_f32_validate(
     const char * input,
-    uint8_t * good);
+    u8 * good);
 
-float
-T1_std_string_to_float(const char * input);
+f32
+T1_std_string_to_f32(const char * input);
 
 void
-T1_std_float_to_string(
-    const float input,
+T1_std_f32_to_string(
+    const f32 input,
     char * recipient,
-    const uint32_t recipient_size);
+    const u32 recipient_size);
 
 #ifdef __cplusplus
 }

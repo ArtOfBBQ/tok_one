@@ -1,8 +1,6 @@
 #ifndef T1_H
 #define T1_H
 
-#include <stdint.h>
-
 #include "T1_public_types.h"
 
 /*
@@ -18,19 +16,6 @@ needing to understand the entire engine, but still overcomplicated.
 - "screen_x", "screen_y" are screenspace positions
 */
 
-typedef uint64_t u64;
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t   u8;
-typedef uint8_t   b8;
-typedef int64_t  i64;
-typedef int32_t  i32;
-typedef int16_t  i16;
-typedef int8_t    i8;
-typedef double   f64;
-typedef float    f32;
-typedef char      c8;
-
 /*
 GLOBAL SETTINGS
 TODO: remove this from the public API
@@ -40,21 +25,21 @@ extern T1Globals * T1_global;
 /*
 CAMERA MANIPULATION
 */
-void T1_cam_set_us_to_dest(i32 cam_i, const u64 us);
-void T1_cam_set_dest_xyz(i32 cam_i, i32 i, f32 newval);
-void T1_cam_add_dest_xyz(i32 cam_i, i32 i, f32 newval);
-void T1_cam_set_dest_angle_xyz(i32 cam_i, i32 i, f32 newval);
-void T1_cam_add_dest_angle_xyz(i32 cam_i, i32 i, f32 val);
-void T1_cam_set_min_xyz(i32 cam_i, i32 i, f32 val);
-void T1_cam_set_max_xyz(i32 cam_i, i32 i, f32 val);
+void T1_cam_set_us_to_dest(s32 cam_i, const u64 us);
+void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval);
+void T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval);
+void T1_cam_set_dest_angle_xyz(s32 cam_i, s32 i, f32 newval);
+void T1_cam_add_dest_angle_xyz(s32 cam_i, s32 i, f32 val);
+void T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val);
+void T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val);
 // to unclamp, clamp to T1_id = -1
-void T1_cam_set_clamped_to_T1_id(i32 cam_i, i32 T1_id);
-void T1_cam_set_movement_enabled(i32 cam_i, u8 newval);
-void T1_cam_delete(const i32 cam_i);
+void T1_cam_set_clamped_to_T1_id(s32 cam_i, s32 T1_id);
+void T1_cam_set_movement_enabled(s32 cam_i, u8 newval);
+void T1_cam_delete(const s32 cam_i);
 void T1_cam_delete_all(void);
-i32  T1_cam_get_write_array_i(i32 cam_i);
-i32  T1_cam_get_write_slice_i(i32 cam_i);
-void T1_cam_reset(i32 at_i);
+s16  T1_cam_get_write_array_i(s32 cam_i);
+s16  T1_cam_get_write_slice_i(s32 cam_i);
+void T1_cam_reset(s32 at_i);
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
@@ -72,7 +57,7 @@ f32 T1_screen_width_to_width_noz(const f32 screen_w);
 f32 T1_screen_height_to_height_noz(const f32 screen_h);
 
 void T1_make_shadowmap_and_attach_to_light(
-    const i32 T1_id, const u32 w, const u32 h);
+    const s32 T1_id, const u32 w, const u32 h);
 
 void T1_cam_create_main_view(const u32 new_w, const u32 new_h);
 void T1_make_reflection_cam(
@@ -94,7 +79,7 @@ void T1_png_decode(
     u8 * good);
 
 /*
-TEXTURES
+MANAGE TEXTURES
 */
 void T1_tex_files_prereg_png_res(const c8 * filename, b8 * good);
 void T1_tex_files_prereg_dds_res(const c8 * filename, b8 * good);
@@ -107,8 +92,25 @@ u16 T1_tex_array_reg_img(
     const u32 w, const u32 h,
     const b8 is_render_target, const b8 use_bc1_compression);
 void T1_tex_array_update_rgba(
-    const i32 array_i, const i32 slice_i,
+    const s32 array_i, const s32 slice_i,
     const u8 * rgba, const u32 rgba_size);
+
+/*
+MANAGE 3-D MODELS (.OBJ FILES)
+
+Each "mesh" you register will return a mesh_id (i32)
+
+When creating a T1 object later, you can set the mesh_id
+in the T1MakeRequest to this value to make an object with
+that mesh.
+*/
+s32 T1_objmodel_new_mesh_id_from_resources(
+    const c8 * filename,
+    const c8 * mtl_filename,
+    const u8 flip_uv_u,
+    const u8 flip_uv_v,
+    u8 * success,
+    c8 * error_message);
 
 /*
 TEXT LABELS
@@ -119,15 +121,15 @@ the font properties etc. for your next label
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_request_label_offset_around(
-    const i32 with_T1_id, const c8 * text,
+    const s32 with_T1_id, const c8 * text,
     const f32 mid_screen_x, const f32 mid_screen_y, const f32 z,
     const f32 max_width);
 void T1_text_request_label_leftx_toplinemidy(
-    const i32 with_T1_id, const c8 * text,
+    const s32 with_T1_id, const c8 * text,
     const f32 screen_left, const f32 topline_mid_screen_y, const f32 z,
     const f32 max_width);
 void T1_text_request_label_renderable(
-    const i32 with_T1_id,
+    const s32 with_T1_id,
     const c8 * text,
     const f32 left_x_pixelspace,
     const f32 top_y_pixelspace,
@@ -135,11 +137,11 @@ void T1_text_request_label_renderable(
     const f32 tab_width,
     const f32 max_width);
 void T1_text_request_label_around_x_at_top_y(
-    const i32 with_T1_id, const c8 * text_to_draw,
+    const s32 with_T1_id, const c8 * text_to_draw,
     const f32 screen_mid_x, const f32 screen_top_y, const f32 z,
     const f32 max_width);
 void T1_text_request_label_around(
-    const i32 with_T1_id, const c8 * text_to_draw,
+    const s32 with_T1_id, const c8 * text_to_draw,
     const f32 screen_mid_x, const f32 screen_mid_y, const f32 z,
     const f32 max_width);
 
@@ -166,8 +168,8 @@ typedef struct {
     f32 xyz[3];
     f32 wh[2];
     f32 rgba[4];
-    i32 T1_id;
-    i32 touch_id;
+    s32 T1_id;
+    s32 touch_id;
     u16 tex;
 } T1MakeRequest;
 void T1_makerequest_construct(T1MakeRequest * to_construct);
@@ -175,20 +177,20 @@ void T1_makerequest_construct(T1MakeRequest * to_construct);
 /*
 UI WIDGETS
 */
-void T1_ui_widget_delete(const i32 T1_id);
+void T1_ui_widget_delete(const s32 T1_id);
 
 /*
 3D models
 */
-f32 T1_get_x_mul_for_width(const i32 for_mesh_id, const f32 for_width);
-f32 T1_get_y_mul_for_height(const i32 for_mesh_id, const f32 for_height);
-f32 T1_get_z_mul_for_depth(const i32 for_mesh_id, const f32 for_depth);
+f32 T1_get_x_mul_for_width(const s32 for_mesh_id, const f32 for_width);
+f32 T1_get_y_mul_for_height(const s32 for_mesh_id, const f32 for_height);
+f32 T1_get_z_mul_for_depth(const s32 for_mesh_id, const f32 for_depth);
 
 /*
 TexQuads (textured 2D quads)
 */
 void T1_texquad_make(T1MakeRequest * request); // returns T1_id
-void T1_texquad_delete(const i32 T1_id);
+void T1_texquad_delete(const s32 T1_id);
 void T1_texquad_delete_all(void);
 
 /*
@@ -196,13 +198,13 @@ z-Lights (3D lights)
 */
 T1zLight * T1_zlight_next(void);
 void T1_zlight_commit(T1zLight * to_request);
-void T1_zlight_delete(const i32 T1_id);
+void T1_zlight_delete(const s32 T1_id);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
 */
-float T1_io_get_mouse_scroll_pos(void);
-void  T1_io_set_mouse_scroll_pos(float new_val);
+f32 T1_io_get_mouse_scroll_pos(void);
+void  T1_io_set_mouse_scroll_pos(f32 new_val);
 b8 T1_io_key_is_down_and_unhandled(T1IOKey key);
 void T1_io_key_mark_handled(T1IOKey key);
 
@@ -220,8 +222,8 @@ void T1_os_read_resource_file(
 void T1_os_get_app_dir(c8 * recip, const u32 recip_size);
 void T1_os_get_writables_dir(c8 * recip, const u32 recip_size);
 void T1_os_gpu_push_tex_slice_and_free_rgba(
-    const i32 tex_array_i,
-    const i32 tex_slice_i);
+    const s32 tex_array_i,
+    const s32 tex_slice_i);
 void T1_os_toggle_fullscreen(void);
 u64 T1_os_get_current_time_us(void);
 void T1_os_open_dir_in_window_if_possible(

@@ -1,4 +1,0 @@
-#ifndef T1_PUBLIC_GPU_TYPES_H
-#define T1_PUBLIC_GPU_TYPES_H
-
-#endif // T1_PUBLIC_GPU_TYPES_H

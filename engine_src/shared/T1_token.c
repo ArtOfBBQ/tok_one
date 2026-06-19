@@ -1,24 +1,27 @@
 #include "T1_token.h"
 
 #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
+#include <stddef.h>
 #include <assert.h>
 #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
+#include "T1_std.h"
+
 static void T1_token_strcat(
     char * recip,
-    const uint32_t cap,
+    const u32 cap,
     const char * to_cat)
 {
-    uint32_t i = 0;
+    u32 i = 0;
     while (recip[i] != '\0') {
         if (i >= cap) { break; }
         i++;
     }
     
-    uint32_t j = 0;
+    u32 j = 0;
     while (to_cat[j] != '\0') {
         if (i >= cap) { break; }
         recip[i++] = to_cat[j++];
@@ -34,57 +37,56 @@ These options apply to the next token you register.
 #define PATTERN_ASCII_CAP 128
 typedef struct T1TokenPattern {
     char ascii[PATTERN_ASCII_CAP];
-    uint8_t active;
+    u8 active;
 } T1TokenPattern;
 
 #define PATTERNS_CAP 5
 typedef struct T1TokenNextReg {
     T1TokenPattern start_pattern;
     T1TokenPattern stop_patterns[PATTERNS_CAP];
-    uint32_t middle_cap;
+    u32 middle_cap;
     T1TokenStoreMode store_mode;
-    uint8_t bitflags;
+    u8 bitflags;
 } T1TokenNextReg;
 
 typedef struct RegisteredToken {
-    uint32_t enum_value;
+    u32 enum_value;
     char * start_pattern;
     char * stop_patterns[PATTERNS_CAP];
-    uint32_t middle_cap;
+    u32 middle_cap;
     T1TokenStoreMode store_mode;
-    uint8_t bitflags;
+    u8 bitflags;
 } RegisteredToken;
 
 #define ASCII_STORE_CAP 300000
 #define REGISTERED_TOKENS_CAP 2000
 #define TOKENS_CAP 30000
 #define NUMBERS_CAP 10000
-typedef struct TokTokenState {
-    void * (* memset)(void *, int, size_t);
-    size_t (* strlen)(const char *);
+typedef struct {
+    void * (* memset)(void *, int, u64);
+    u64 (* strlen)(const char *);
     char * ascii_store;
     T1TokenNextReg next_reg;
     RegisteredToken regs[REGISTERED_TOKENS_CAP];
     T1Token tokens[TOKENS_CAP];
     T1TokenNumber numbers[NUMBERS_CAP];
-    uint32_t string_literal_enum_value;
-    uint32_t regs_size;
-    uint32_t tokens_size;
-    uint32_t numbers_size;
-    uint32_t ascii_store_next_i; // index to write the next string at
-    uint32_t good;
+    u32 string_literal_enum_value;
+    u32 regs_size;
+    u32 tokens_size;
+    u32 numbers_size;
+    u32 ascii_store_next_i; // index to write the next string at
+    u32 good;
     char previous_lit_chars[STRING_LITERAL_CAP];
-    uint8_t string_literal_bitflags;
+    u8 string_literal_bitflags;
 } TokTokenState;
 
 static TokTokenState * tts = NULL;
 
-
 void T1_token_init(
-    void * (* arg_memset_func)(void *, int, size_t),
-    size_t (* arg_strlen_func)(const char *),
-    void * (* arg_malloc_func)(size_t),
-    uint8_t * good)
+    void * (* arg_memset_func)(void *, int, u64),
+    u64 (* arg_strlen_func)(const char *),
+    void * (* arg_malloc_func)(u64),
+    u8 * good)
 {
     *good = 0;
     
@@ -126,7 +128,7 @@ void T1_token_deinit(
     tts = NULL;
 }
 
-void T1_token_reset(uint8_t * good) {
+void T1_token_reset(u8 * good) {
     *good = 0;
     if (tts == NULL) {
         // init() failed or wasn't called yet
@@ -139,10 +141,12 @@ void T1_token_reset(uint8_t * good) {
             0,
             ASCII_STORE_CAP);
     }
+    
+    u64 memset_size = sizeof(TokTokenState) - offsetof(TokTokenState, regs);
     tts->memset(
         tts->regs,
         0,
-        sizeof(TokTokenState) - offsetof(TokTokenState, regs));
+        memset_size);
     
     tts->next_reg.bitflags =
             T1_TOKEN_FLAG_IGNORE_CASE |
@@ -177,7 +181,7 @@ void T1_token_set_store_mode(const T1TokenStoreMode mode) {
 }
 
 void T1_token_set_reg_bitflags(
-    const uint8_t bitflags)
+    const u8 bitflags)
 {
     if (
         tts == NULL ||
@@ -235,7 +239,7 @@ void T1_token_clear_stop_patterns(void) {
         return;
     }
     
-    for (uint32_t i = 0; i < PATTERNS_CAP; i++) {
+    for (u32 i = 0; i < PATTERNS_CAP; i++) {
         
         tts->memset(
             tts->next_reg.stop_patterns[i].ascii,
@@ -248,7 +252,7 @@ void T1_token_clear_stop_patterns(void) {
 
 void T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
-    const uint32_t pattern_index)
+    const u32 pattern_index)
 {
     if (
         tts == NULL ||
@@ -267,7 +271,7 @@ void T1_token_set_reg_stop_pattern(
 }
 
 void T1_token_set_reg_middle_cap(
-    const uint32_t middle_cap)
+    const u32 middle_cap)
 {
     if (
         tts == NULL ||
@@ -281,8 +285,8 @@ void T1_token_set_reg_middle_cap(
 
 #if 0
 void toktoken_register_string_literal_enum(
-    const uint32_t enum_value,
-    uint8_t * good)
+    const u32 enum_value,
+    u8 * good)
 {
     *good = 0;
     if (
@@ -302,8 +306,8 @@ void toktoken_register_string_literal_enum(
 #endif
 
 void T1_token_set_string_literal(
-    const uint32_t enum_value,
-    uint8_t * good)
+    const u32 enum_value,
+    u8 * good)
 {
     *good = 0;
     
@@ -320,8 +324,8 @@ void T1_token_set_string_literal(
 
 static char * copy_string_to_ascii_store(
     const char * to_copy,
-    const uint32_t data_len,
-    uint8_t * good)
+    const u32 data_len,
+    u8 * good)
 {
     *good = 0;
     
@@ -335,7 +339,7 @@ static char * copy_string_to_ascii_store(
     }
     
     return_value[0] = '\0';
-    uint32_t i = 0;
+    u32 i = 0;
     for (; i < data_len; i++) {
         return_value[i] = to_copy[i];
     }
@@ -346,8 +350,8 @@ static char * copy_string_to_ascii_store(
 }
 
 void T1_token_register(
-    const uint32_t enum_value,
-    uint8_t * good)
+    const u32 enum_value,
+    u8 * good)
 {
     *good = 0;
     
@@ -372,17 +376,17 @@ void T1_token_register(
         new->start_pattern =
             copy_string_to_ascii_store(
                 tts->next_reg.start_pattern.ascii,
-                (uint32_t)tts->strlen(
+                (u32)tts->strlen(
                     tts->next_reg.start_pattern.ascii),
                 good);
     }
     
-    for (uint32_t i = 0; i < PATTERNS_CAP; i++) {
+    for (u32 i = 0; i < PATTERNS_CAP; i++) {
         if (tts->next_reg.stop_patterns[i].active) {
             new->stop_patterns[i] =
                 copy_string_to_ascii_store(
                     tts->next_reg.stop_patterns[i].ascii,
-                    (uint32_t)tts->strlen(
+                    (u32)tts->strlen(
                         tts->next_reg.stop_patterns[i].ascii),
                     good);
             if (*good) { *good = 0; } else { return; }
@@ -403,7 +407,7 @@ void T1_token_register(
     }
     
     // keep the ascii value in our persistent local store
-    //    uint32_t i = 0;
+    //    u32 i = 0;
     //    while (
     //        ascii_value[i] != '\0' &&
     //        tts->ascii_store_next_i < ASCII_STORE_CAP)
@@ -421,11 +425,11 @@ void T1_token_register(
     *good = 1;
 }
 
-static uint32_t T1_token_strmatch(
+static u32 T1_token_strmatch(
     const char * stream,
     const char * ascii_val)
 { 
-    uint32_t i = 0;
+    u32 i = 0;
     while (ascii_val[i] != '\0') {
         if (stream[i] != ascii_val[i]) { return 0; }
         i++;
@@ -438,17 +442,17 @@ static uint32_t T1_token_strmatch(
 
 static void toktoken_string_match_tokens(
     const char * input,
-    uint32_t * matching_token_i,
-    uint32_t * matched_chars_start,
-    uint32_t * matched_chars_mid,
-    uint32_t * matched_chars_stop)
+    u32 * matching_token_i,
+    u32 * matched_chars_start,
+    u32 * matched_chars_mid,
+    u32 * matched_chars_stop)
 {
     *matching_token_i = UINT32_MAX;
     *matched_chars_start = 0;
     *matched_chars_mid = 0;
     *matched_chars_stop = 0;
     
-    for (uint32_t i = 0; i < tts->regs_size; i++) {
+    for (u32 i = 0; i < tts->regs_size; i++) {
         if (tts->regs[i].start_pattern == NULL) { continue; }
         
         *matched_chars_start = T1_token_strmatch(
@@ -468,7 +472,7 @@ static void toktoken_string_match_tokens(
         // a hit. If so, there must also be 0 middle characters
         if (tts->regs[i].stop_patterns[0] == NULL) {
             #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
-            for (uint32_t pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
+            for (u32 pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
                 assert(tts->regs[i].stop_patterns[pat_i] == NULL);
             }
             assert(tts->regs[i].middle_cap == 0);
@@ -484,7 +488,7 @@ static void toktoken_string_match_tokens(
             *matched_chars_mid <= tts->regs[i].middle_cap;
             (*matched_chars_mid)++)
         {
-            for (uint32_t pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
+            for (u32 pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
                 if (tts->regs[i].stop_patterns[pat_i] == NULL) { continue; }
                 
                 *matched_chars_stop =
@@ -515,11 +519,11 @@ static void toktoken_string_match_tokens(
 static void T1_token_set_number_flags(
     T1Token * token)
 {
-    //    const uint8_t scientific_ok =
+    //    const u8 scientific_ok =
     //        (bitflags & T1_TOKEN_FLAG_SCIENTIFIC_OK) > 0;
-    //    const uint8_t lead_dot_ok =
+    //    const u8 lead_dot_ok =
     //        (bitflags & T1_TOKEN_FLAG_LEAD_DOT_OK) > 0;
-    //    const uint8_t precise =
+    //    const u8 precise =
     //        (bitflags & T1_TOKEN_FLAG_PRECISE) > 0;
     
     token->number_value = NULL;
@@ -531,15 +535,15 @@ static void T1_token_set_number_flags(
         return;
     }
     
-    uint32_t i = 0;
-    uint32_t has_leading_minus = 0;
-    uint32_t has_leading_nums = 0;
-    uint64_t leading_num_u64 = 0;
-    uint32_t has_dot = 0;
-    uint64_t trailing_num_u64 = 0;
-    uint32_t trailing_digit_count = 0;
-    uint32_t trailing_num_leading_zeros = 0;
-    uint32_t has_exponent = 0;
+    u32 i = 0;
+    u32 has_leading_minus = 0;
+    u32 has_leading_nums = 0;
+    u64 leading_num_u64 = 0;
+    u32 has_dot = 0;
+    u64 trailing_num_u64 = 0;
+    u32 trailing_digit_count = 0;
+    u32 trailing_num_leading_zeros = 0;
+    u32 has_exponent = 0;
     
     // UINT64_MAX as string (20 digits)
     const char *u64_max_str = "18446744073709551615";
@@ -570,8 +574,8 @@ static void T1_token_set_number_flags(
     }
     
     // Numerical characters (leading)
-    uint32_t mult = 1;
-    // uint32_t leading_digit_count = 0;
+    u32 mult = 1;
+    // u32 leading_digit_count = 0;
     while (
         i < token->string_value_size && token->string_value[i] >= '0' &&
         token->string_value[i] <= '9')
@@ -586,9 +590,9 @@ static void T1_token_set_number_flags(
                 !has_dot &&
                 token->string_value_size == (has_leading_minus ? 21 : 20))
             {
-                uint32_t start = has_leading_minus ? 1 : 0;
+                u32 start = has_leading_minus ? 1 : 0;
                 for (
-                    uint32_t j = start;
+                    u32 j = start;
                     j < token->string_value_size;
                     j++)
                 {
@@ -606,7 +610,7 @@ static void T1_token_set_number_flags(
         }
         
         leading_num_u64 *= mult;
-        leading_num_u64 += (uint64_t)(token->string_value[i] - '0');
+        leading_num_u64 += (u64)(token->string_value[i] - '0');
         mult = 10;
         // leading_digit_count++;
         i++;
@@ -632,7 +636,7 @@ static void T1_token_set_number_flags(
             token->string_value[i] <= '9')
         {
             trailing_num_u64 *= mult;
-            trailing_num_u64 += (uint64_t)(token->string_value[i] - '0');
+            trailing_num_u64 += (u64)(token->string_value[i] - '0');
             mult = 10;
             trailing_digit_count += 1;
             i++;
@@ -661,7 +665,7 @@ static void T1_token_set_number_flags(
             i++;
         }
         
-        uint32_t has_exponent_digits = 0;
+        u32 has_exponent_digits = 0;
         while (
             i < token->string_value_size &&
             token->string_value[i] >= '0' &&
@@ -689,42 +693,42 @@ static void T1_token_set_number_flags(
         token->castable_flags |= 1; // is number
         token->number_value = &tts->numbers[tts->numbers_size];
         tts->numbers_size += 1;
-        token->number_value->unsigned_int     = leading_num_u64;
-        token->number_value->signed_int       =
+        token->number_value->as_u64     = leading_num_u64;
+        token->number_value->as_i64       =
             ((int)leading_num_u64) * (has_leading_minus ? -1 : 1);
-        token->number_value->double_precision =
-            (double)leading_num_u64 * (has_leading_minus ? -1.0 : 1.0);
+        token->number_value->as_f64 =
+            (f64)leading_num_u64 * (has_leading_minus ? -1.0 : 1.0);
         if (has_dot) {
-            double divisor = 1.0;
-            for (uint32_t _ = 0; _ < trailing_digit_count; _++) {
+            f64 divisor = 1.0;
+            for (u32 _ = 0; _ < trailing_digit_count; _++) {
                 divisor *= 10.0;
             }
-            //            while ((double)trailing_num_u64 / divisor > 1.0) {
+            //            while ((f64)trailing_num_u64 / divisor > 1.0) {
             //                divisor *= 10.0;
             //            }
-            token->number_value->double_precision +=
-                ((double)trailing_num_u64 / divisor);
+            token->number_value->as_f64 +=
+                ((f64)trailing_num_u64 / divisor);
         }
         
         if (!has_dot && !has_exponent) {
-            // Integer: double always fits, float if ≤ 2²⁴
-            token->castable_flags |= 2; // fits double
+            // Integer: f64 always fits, f32 if ≤ 2²⁴
+            token->castable_flags |= 2; // fits f64
             if (leading_num_u64 <= (1ULL << 24)) { // 16,777,216
-                token->castable_flags |= 4; // fits float
+                token->castable_flags |= 4; // fits f32
             }
             
             if (has_leading_minus) {
                 // Negative integer
-                if (leading_num_u64 <= ((uint64_t)INT8_MAX + 1)) {
+                if (leading_num_u64 <= ((u64)INT8_MAX + 1)) {
                     token->castable_flags |= 128; // fits i8
                 }
-                if (leading_num_u64 <= ((uint64_t)INT16_MAX + 1)) {
+                if (leading_num_u64 <= ((u64)INT16_MAX + 1)) {
                     token->castable_flags |= 256; // fits i16
                 }
-                if (leading_num_u64 <= ((uint64_t)INT32_MAX + 1)) {
-                    token->castable_flags |= 512; // fits i32
+                if (leading_num_u64 <= ((u64)INT32_MAX + 1)) {
+                    token->castable_flags |= 512; // fits s32
                 }
-                if (leading_num_u64 <= ((uint64_t)INT64_MAX + 1)) {
+                if (leading_num_u64 <= ((u64)INT64_MAX + 1)) {
                     token->castable_flags |= 1024; // fits i64
                 }
             } else {
@@ -746,7 +750,7 @@ static void T1_token_set_number_flags(
                     token->castable_flags |= 256; // fits i16
                 }
                 if (leading_num_u64 <= INT32_MAX) {
-                    token->castable_flags |= 512; // fits i32
+                    token->castable_flags |= 512; // fits s32
                 }
                 if (leading_num_u64 <= INT64_MAX) {
                     token->castable_flags |= 1024; // fits i64
@@ -754,9 +758,9 @@ static void T1_token_set_number_flags(
             }
         } else {
             // Floating-point: count significant digits
-            uint32_t significant_digits = 0;
+            u32 significant_digits = 0;
             // Leading digits
-            uint64_t temp = leading_num_u64;
+            u64 temp = leading_num_u64;
             while (temp > 0) {
                 if (temp % 10 != 0 || significant_digits > 0) {
                     significant_digits++;
@@ -781,18 +785,18 @@ static void T1_token_set_number_flags(
                 }
             }
             
-            // double: ≤ 16 significant digits
+            // f64: ≤ 16 significant digits
             if (
                 significant_digits <= 16 || has_exponent)
             {
-                token->castable_flags |= 2; // fits double
+                token->castable_flags |= 2; // fits f64
             }
-            // float: ≤ 7 significant digits
+            // f32: ≤ 7 significant digits
             if (
                 significant_digits <= 7 ||
                 (has_exponent && significant_digits <= 8))
             {
-                token->castable_flags |= 4; // fits float
+                token->castable_flags |= 4; // fits f32
             }
         }
     }    
@@ -800,7 +804,7 @@ static void T1_token_set_number_flags(
 
 void T1_token_run(
     const char * input,
-    uint8_t * good)
+    u8 * good)
 {
     tts->tokens_size = 0;
     tts->numbers_size = 0;
@@ -823,15 +827,15 @@ void T1_token_run(
         return;
     }
     
-    uint32_t i = 0;
-    uint32_t matching_token_i = UINT32_MAX;
-    uint32_t line_number = 1;
+    u32 i = 0;
+    u32 matching_token_i = UINT32_MAX;
+    u32 line_number = 1;
     
     T1Token * previous_lit_token = NULL;
-    uint32_t previous_lit_ascii_i = 0;
-    uint32_t start_sz = 0;
-    uint32_t mid_sz = 0;
-    uint32_t stop_sz = 0;
+    u32 previous_lit_ascii_i = 0;
+    u32 start_sz = 0;
+    u32 mid_sz = 0;
+    u32 stop_sz = 0;
     
     while (input[i] != '\0') {
         
@@ -905,11 +909,11 @@ void T1_token_run(
             
             // Commit the previous string literal if it was going
             if (previous_lit_token) {
-                uint8_t copy_good = 0;
+                u8 copy_good = 0;
                 previous_lit_token->string_value =
                     copy_string_to_ascii_store(
                         previous_lit_token->string_value,
-                        (uint32_t)tts->strlen(
+                        (u32)tts->strlen(
                             previous_lit_token->string_value),
                         &copy_good);
                 
@@ -939,7 +943,7 @@ void T1_token_run(
             {
                 T1_token_strcat(
                     new->string_value,
-                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    (u32)start_sz + mid_sz + stop_sz,
                     tts->regs[matching_token_i].start_pattern);
                 #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(new->string_value[start_sz] == '\0');
@@ -960,7 +964,7 @@ void T1_token_run(
             {
                 T1_token_strcat(
                     new->string_value,
-                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    (u32)start_sz + mid_sz + stop_sz,
                     input + i + start_sz);
                 tts->ascii_store_next_i += mid_sz;
                 new->string_value_size  += mid_sz;
@@ -973,7 +977,7 @@ void T1_token_run(
             {
                 T1_token_strcat(
                     new->string_value + start_sz + mid_sz,
-                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    (u32)start_sz + mid_sz + stop_sz,
                     input + i + start_sz + mid_sz);
                 tts->ascii_store_next_i += stop_sz;
                 new->string_value_size  += stop_sz;
@@ -1000,13 +1004,13 @@ void T1_token_run(
         }
     }
     
-    for (uint32_t tok_i = 0; tok_i < tts->tokens_size; tok_i++) {
+    for (u32 tok_i = 0; tok_i < tts->tokens_size; tok_i++) {
         if (
             tts->tokens[tok_i].enum_value ==
                 tts->string_literal_enum_value)
         {
             tts->tokens[tok_i].string_value_size =
-                (uint16_t)tts->strlen(tts->tokens[tok_i].string_value);
+                (u16)tts->strlen(tts->tokens[tok_i].string_value);
             T1_token_set_number_flags(
                 &tts->tokens[tok_i]);
                 // tts->string_literal_bitflags);
@@ -1016,12 +1020,12 @@ void T1_token_run(
     *good = 1;
 }
 
-uint32_t T1_token_get_token_count(void) {
+u32 T1_token_get_token_count(void) {
     return tts->tokens_size;
 }
 
 T1Token * T1_token_get_token_at(
-    const uint32_t token_i)
+    const u32 token_i)
 {
     return &tts->tokens[token_i];
 }

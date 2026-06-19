@@ -9,8 +9,8 @@ void
 T1_global_init(void) {
     
     if (
-        T1_global->window_height < 50.0f ||
-        T1_global->window_width < 50.0f)
+        T1_global->window_wh[0] < 50.0f ||
+        T1_global->window_wh[1] < 50.0f)
     {
         return;
     }
@@ -22,9 +22,7 @@ T1_global_init(void) {
     T1_global->show_profiler          = false;
     T1_global->pause_profiler         = false;
     T1_global->block_mouse            = false;
-    
-    T1_global->pixelation_div = 1;
-    
+        
     T1_global->timedelta_mult = 1.0f;
     
     T1_global->postproc_consts.timestamp = 0;
@@ -55,8 +53,8 @@ T1_global_init(void) {
 
 void
 T1_global_update_window_pos(
-    float left,
-    float bottom)
+    f32 left,
+    f32 bottom)
 {
     T1_global->window_left = left;
     T1_global->window_bottom = bottom;
@@ -64,70 +62,70 @@ T1_global_update_window_pos(
 
 void
 T1_global_update_window_size(
-    float width,
-    float height,
-    uint64_t at_timestamp_us)
+    f32 width,
+    f32 height,
+    u64 at_timestamp_us)
 {
-    T1_global->window_height = height;
-    T1_global->window_width = width;
+    T1_global->window_wh[0] = width;
+    T1_global->window_wh[1] = height;
     
     T1_global->last_resize_request_us = at_timestamp_us;
 }
 
-float
+f32
 T1_global_get_z_mul_for_depth(
-    const int32_t for_mesh_id,
-    const float for_depth)
+    const s32 for_mesh_id,
+    const f32 for_depth)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (int32_t)T1_mesh_summary_list_size);
+    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    float return_value =
+    f32 return_value =
         for_depth / T1_mesh_summary_list[for_mesh_id].
             base_depth;
     
     return return_value;
 }
 
-float
+f32
 T1_global_get_y_mul_for_height(
-    const int32_t for_mesh_id,
-    const float for_height)
+    const s32 for_mesh_id,
+    const f32 for_height)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (int32_t)T1_mesh_summary_list_size);
+    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    float return_value =
+    f32 return_value =
         for_height / T1_mesh_summary_list[for_mesh_id].
             base_height;
     
     return return_value;
 }
 
-float
+f32
 T1_global_get_x_mul_for_width(
-    const int32_t for_mesh_id,
-    const float for_width)
+    const s32 for_mesh_id,
+    const f32 for_width)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (int32_t)T1_mesh_summary_list_size);
+    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    float return_value =
+    f32 return_value =
         for_width /
             T1_mesh_summary_list[for_mesh_id].
                 base_width;

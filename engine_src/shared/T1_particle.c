@@ -9,14 +9,14 @@
 
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
-#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
+#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((f32)(randnum % variance) * 0.01f); x -= ((f32)(randnum2 % variance) * 0.01f); }
 
 T1ParticleEffect * T1_particle_effects = NULL;
-uint32_t T1_particle_effects_size = 0;
+u32 T1_particle_effects_size = 0;
 
 #if 0
 T1ShatterEffect * T1_shatter_effects = NULL;
-uint32_t T1_shatter_effects_size = 0;
+u32 T1_shatter_effects_size = 0;
 #endif
 
 void T1_particle_init(void) {
@@ -49,10 +49,10 @@ void T1_particle_effect_construct(
     T1_std_memset(
         to_construct, 0, sizeof(T1ParticleEffect));
     
-    to_construct->zsprite_id = -1;
+    to_construct->T1_id = -1;
     
-    to_construct->random_seed = (uint32_t)
-        T1_rand() % (RANDOM_SEQUENCE_SIZE - 100);
+    to_construct->random_seed = (u32)T1_rand() %
+        (RANDOM_SEQUENCE_SIZE - 100);
     to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
     to_construct->modifiers_size = 1;
@@ -65,9 +65,9 @@ void T1_shatter_effect_construct(
     T1_std_memset(
         to_construct, 0, sizeof(T1ShatterEffect));
     
-    to_construct->zsprite_id = -1;
+    to_construct->T1_id = -1;
     
-    to_construct->random_seed = (uint32_t)
+    to_construct->random_seed = (u32)
         T1_rand() % (RANDOM_SEQUENCE_SIZE - 100);
     to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
@@ -79,7 +79,7 @@ T1ParticleEffect * T1_particle_get_next(void)
 {
     T1ParticleEffect * return_value = NULL;
     
-    for (uint32_t i = 0; i < T1_particle_effects_size; i++) {
+    for (u32 i = 0; i < T1_particle_effects_size; i++) {
         if (T1_particle_effects[i].deleted) {
             return_value = &T1_particle_effects[i];
             break;
@@ -148,7 +148,7 @@ T1ShatterEffect * T1_particle_shatter_get_next(void)
     T1ShatterEffect * return_value = NULL;
     
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_shatter_effects_size;
         i++)
     {
@@ -172,10 +172,10 @@ T1ShatterEffect * T1_particle_shatter_get_next(void)
 }
 #endif
 
-void T1_particle_delete(int32_t with_object_id)
+void T1_particle_delete(s32 with_object_id)
 {
-    for (uint32_t i = 0; i < T1_particle_effects_size; i++) {
-        if (T1_particle_effects[i].zsprite_id == with_object_id) {
+    for (u32 i = 0; i < T1_particle_effects_size; i++) {
+        if (T1_particle_effects[i].T1_id == with_object_id) {
             T1_particle_effects[i].deleted = true;
         }
     }
@@ -194,13 +194,13 @@ T1_particle_effects_delete_all(void)
     T1_particle_effects_size = 0;
 }
 
-static float T1_particle_get_height(
+static f32 T1_particle_get_height(
     T1ParticleEffect * pe)
 {
-    float out = 0.0f;
+    f32 out = 0.0f;
     
-    for (uint32_t mod_i = 0; mod_i < pe->modifiers_size; mod_i++) {
-        float t = T1_easing_t_to_eased_t(
+    for (u32 mod_i = 0; mod_i < pe->modifiers_size; mod_i++) {
+        f32 t = T1_easing_t_to_eased_t(
             /* const T1TPair t: */
                 1.0f,
             /* const T1EasingType easing_type: */
@@ -214,20 +214,20 @@ static float T1_particle_get_height(
 
 void T1_particle_resize_to_effect_height(
     T1ParticleEffect * to_resize,
-    const float new_height)
+    const f32 new_height)
 {
-    const float current_height = T1_particle_get_height(to_resize);
+    const f32 current_height = T1_particle_get_height(to_resize);
     
     T1_log_assert(current_height > 0.0f);
     
-    const float multiplier = new_height / current_height;
+    const f32 multiplier = new_height / current_height;
     
     for (
-        uint32_t mod_i = 0;
+        u32 mod_i = 0;
         mod_i < to_resize->modifiers_size;
         mod_i++)
     {
-        for (uint32_t _ = 0; _ < 3; _++) {
+        for (u32 _ = 0; _ < 3; _++) {
             to_resize->mods[mod_i].gpu_stats.xyz[_] *= multiplier;
         }
         to_resize->mods[mod_i].gpu_stats.size *=
@@ -240,7 +240,7 @@ void T1_particle_resize_to_effect_height(
 static void T1_particle_add_single_to_frame_data(
     T1GPUFrame * frame_data,
     T1ParticleEffect * pe,
-    const uint32_t spawn_i)
+    const u32 spawn_i)
 {
     if (
         frame_data->flat_bb_quads_size + 1 >=
@@ -258,13 +258,13 @@ static void T1_particle_add_single_to_frame_data(
     *tgt = pe->base;
     
     for (
-        uint32_t mod_i = 0;
+        u32 mod_i = 0;
         mod_i < pe->modifiers_size;
         mod_i++)
     {
-        double lifetime_so_far =
-            (double)pe->elapsed -
-            (double)(pe->pause_per_spawn * spawn_i);
+        f64 lifetime_so_far =
+            (f64)pe->elapsed -
+            (f64)(pe->pause_per_spawn * spawn_i);
         
         while (lifetime_so_far < 0.0) {
             lifetime_so_far += pe->loop_duration;
@@ -274,30 +274,30 @@ static void T1_particle_add_single_to_frame_data(
         
         if (lifetime_so_far < 0.0) { continue; }
         
-        float spawn_t = (float)(
+        f32 spawn_t = (f32)(
             lifetime_so_far /
-            (double)pe->mods[mod_i].duration);
+            (f64)pe->mods[mod_i].duration);
         
         if (spawn_t > 1.0f || spawn_t < 0.0f) { spawn_t = 1.0f;
         }
         
-        float * pertime_add_at = (float *)&pe->mods[mod_i].gpu_stats;
-        float * recipient_at = (float *)tgt;
+        f32 * pertime_add_at = (f32 *)&pe->mods[mod_i].gpu_stats;
+        f32 * recipient_at = (f32 *)tgt;
         
-        float t = T1_easing_t_to_eased_t(
+        f32 t = T1_easing_t_to_eased_t(
             /* const T1TPair t: */
                 spawn_t,
             /* const T1EasingType easing_type: */
                 pe->mods[mod_i].easing_type);
         
-        float add_pct =
-            (float)pe->mods[mod_i].rand_pct_add;
-        float sub_pct =
-            (float)pe->mods[mod_i].rand_pct_sub;
-        float one_percent = 0.01f;
-        float hundred_percent = 1.0f;
+        f32 add_pct =
+            (f32)pe->mods[mod_i].rand_pct_add;
+        f32 sub_pct =
+            (f32)pe->mods[mod_i].rand_pct_sub;
+        f32 one_percent = 0.01f;
+        f32 hundred_percent = 1.0f;
         
-        uint64_t rand_i =
+        u64 rand_i =
             (pe->random_seed +
                 (mod_i << 2) +
                 (spawn_i * 9)) %
@@ -306,66 +306,66 @@ static void T1_particle_add_single_to_frame_data(
         
         if (t < 0.0f) { continue; }
         
-        SIMD_FLOAT simdf_t = simd_set1_float(t);
+        SIMD_FLOAT simdf_t = simd_set1_f32(t);
         
         for (
-            uint32_t j = 0;
-            j < (sizeof(T1GPUFlatQuad) / sizeof(float));
+            u32 j = 0;
+            j < (sizeof(T1GPUFlatQuad) / sizeof(f32));
             j += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT fvar_add =
                 T1_rand_simd_at_i(
                     rand_i + j);
-            fvar_add = simd_mul_floats(
+            fvar_add = simd_mul_f32s(
                 fvar_add,
-                simd_set1_float(add_pct));
-            fvar_add = simd_mul_floats(
+                simd_set1_f32(add_pct));
+            fvar_add = simd_mul_f32s(
                 fvar_add,
-                simd_set1_float(one_percent));
-            fvar_add = simd_add_floats(
+                simd_set1_f32(one_percent));
+            fvar_add = simd_add_f32s(
                 fvar_add,
-                simd_set1_float(hundred_percent));
+                simd_set1_f32(hundred_percent));
             
             SIMD_FLOAT fvar_sub =
                 T1_rand_simd_at_i(
                     rand_i + j + 4);
-            fvar_sub = simd_mul_floats(
+            fvar_sub = simd_mul_f32s(
                 fvar_sub,
-                simd_set1_float(sub_pct));
-            fvar_sub = simd_mul_floats(
+                simd_set1_f32(sub_pct));
+            fvar_sub = simd_mul_f32s(
                 fvar_sub,
-                simd_set1_float(one_percent));
-            fvar_sub = simd_add_floats(
+                simd_set1_f32(one_percent));
+            fvar_sub = simd_add_f32s(
                 fvar_sub,
-                simd_set1_float(
+                simd_set1_f32(
                     hundred_percent));
             
             SIMD_FLOAT simdf_fullt_add =
-                simd_load_floats(
+                simd_load_f32s(
                     (pertime_add_at + j));
             
             // Convert per second values to per us effect
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add, simdf_t);
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add,
                 fvar_add);
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add,
                 fvar_sub);
             
             SIMD_FLOAT recip =
-                simd_load_floats(
+                simd_load_f32s(
                     recipient_at + j);
-            recip = simd_add_floats(
+            recip = simd_add_f32s(
                 recip, simdf_fullt_add);
-            simd_store_floats(
+            simd_store_f32s(
                 (recipient_at + j), recip);
         }
     }
     
-    float min_size = 0.001f;
-    float max_size = 1.0f;
+    f32 min_size = 0.001f;
+    f32 max_size = 1.0f;
     
     tgt->size =
         ((tgt->size >=  min_size) * tgt->size) +
@@ -374,8 +374,8 @@ static void T1_particle_add_single_to_frame_data(
         ((tgt->size >= max_size) * max_size) +
         ((tgt->size <  max_size) * tgt->size);
     
-    float min_alpha = 0.0f;
-    float max_alpha = 1.0f;
+    f32 min_alpha = 0.0f;
+    f32 max_alpha = 1.0f;
     tgt->rgba[3] = T1_std_maxf(tgt->rgba[3], min_alpha);
     tgt->rgba[3] = T1_std_minf(tgt->rgba[3], max_alpha);
 }
@@ -385,7 +385,7 @@ void
 T1_zsprite_add_single_shatter_to_frame_data(
     T1GPUFrame * frame_data,
     T1ShatterEffect * se,
-    const uint32_t spawn_i)
+    const u32 spawn_i)
 {
     if (
         frame_data->zsprite_list->size + 1 >=
@@ -408,13 +408,13 @@ T1_zsprite_add_single_shatter_to_frame_data(
     *tgt = se->zsprite_gpu;
     
     for (
-        uint32_t mod_i = 0;
+        u32 mod_i = 0;
         mod_i < se->modifiers_size;
         mod_i++)
     {
-        double lifetime_so_far =
-            (double)se->elapsed -
-            (double)(se->pause_per_spawn * spawn_i);
+        f64 lifetime_so_far =
+            (f64)se->elapsed -
+            (f64)(se->pause_per_spawn * spawn_i);
         
         while (lifetime_so_far < 0.0) {
             lifetime_so_far += se->loop_duration;
@@ -424,31 +424,31 @@ T1_zsprite_add_single_shatter_to_frame_data(
         
         if (lifetime_so_far < 0.0) { continue; }
         
-        float spawn_t = (float)(
+        f32 spawn_t = (f32)(
             lifetime_so_far /
-            (double)se->mods[mod_i].duration);
+            (f64)se->mods[mod_i].duration);
         
         if (spawn_t > 1.0f || spawn_t < 0.0f) { spawn_t = 1.0f;
         }
         
-        float * pertime_add_at = (float *)&se->
+        f32 * pertime_add_at = (f32 *)&se->
             mods[mod_i].gpu_stats.f32;
-        float * recipient_at = (float *)&tgt->f32;
+        f32 * recipient_at = (f32 *)&tgt->f32;
         
-        float t = T1_easing_t_to_eased_t(
+        f32 t = T1_easing_t_to_eased_t(
             /* const T1TPair t: */
                 spawn_t,
             /* const T1EasingType easing_type: */
                 se->mods[mod_i].easing_type);
         
-        float add_pct =
-            (float)se->mods[mod_i].rand_pct_add;
-        float sub_pct =
-            (float)se->mods[mod_i].rand_pct_sub;
-        float one_percent = 0.01f;
-        float hundred_percent = 1.0f;
+        f32 add_pct =
+            (f32)se->mods[mod_i].rand_pct_add;
+        f32 sub_pct =
+            (f32)se->mods[mod_i].rand_pct_sub;
+        f32 one_percent = 0.01f;
+        f32 hundred_percent = 1.0f;
         
-        uint64_t rand_i =
+        u64 rand_i =
             (se->random_seed +
                 (mod_i << 2) +
                 (spawn_i * 9)) %
@@ -457,66 +457,66 @@ T1_zsprite_add_single_shatter_to_frame_data(
         
         if (t < 0.0f) { continue; }
         
-        SIMD_FLOAT simdf_t = simd_set1_float(t);
+        SIMD_FLOAT simdf_t = simd_set1_f32(t);
         
         for (
-            uint32_t j = 0;
-            j < (sizeof(T1GPUzSpritef32) / sizeof(float));
+            u32 j = 0;
+            j < (sizeof(T1GPUzSpritef32) / sizeof(f32));
             j += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT fvar_add =
                 T1_rand_simd_at_i(
                     rand_i + j);
-            fvar_add = simd_mul_floats(
+            fvar_add = simd_mul_f32s(
                 fvar_add,
-                simd_set1_float(add_pct));
-            fvar_add = simd_mul_floats(
+                simd_set1_f32(add_pct));
+            fvar_add = simd_mul_f32s(
                 fvar_add,
-                simd_set1_float(one_percent));
-            fvar_add = simd_add_floats(
+                simd_set1_f32(one_percent));
+            fvar_add = simd_add_f32s(
                 fvar_add,
-                simd_set1_float(hundred_percent));
+                simd_set1_f32(hundred_percent));
             
             SIMD_FLOAT fvar_sub =
                 T1_rand_simd_at_i(
                     rand_i + j + 4);
-            fvar_sub = simd_mul_floats(
+            fvar_sub = simd_mul_f32s(
                 fvar_sub,
-                simd_set1_float(sub_pct));
-            fvar_sub = simd_mul_floats(
+                simd_set1_f32(sub_pct));
+            fvar_sub = simd_mul_f32s(
                 fvar_sub,
-                simd_set1_float(one_percent));
-            fvar_sub = simd_add_floats(
+                simd_set1_f32(one_percent));
+            fvar_sub = simd_add_f32s(
                 fvar_sub,
-                simd_set1_float(
+                simd_set1_f32(
                     hundred_percent));
             
             SIMD_FLOAT simdf_fullt_add =
-                simd_load_floats(
+                simd_load_f32s(
                     (pertime_add_at + j));
             
             // Convert per second values to per us effect
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add, simdf_t);
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add,
                 fvar_add);
-            simdf_fullt_add = simd_mul_floats(
+            simdf_fullt_add = simd_mul_f32s(
                 simdf_fullt_add,
                 fvar_sub);
             
             SIMD_FLOAT recip =
-                simd_load_floats(
+                simd_load_f32s(
                     recipient_at + j);
-            recip = simd_add_floats(
+            recip = simd_add_f32s(
                 recip, simdf_fullt_add);
-            simd_store_floats(
+            simd_store_f32s(
                 (recipient_at + j), recip);
         }
     }
     
-    float min_alpha = 0.0f;
-    float max_alpha = 1.0f;
+    f32 min_alpha = 0.0f;
+    f32 max_alpha = 1.0f;
     tgt->f32.alpha = T1_std_maxf(tgt->f32.alpha, min_alpha);
     tgt->f32.alpha = T1_std_minf(tgt->f32.alpha, max_alpha);
 }
@@ -524,11 +524,11 @@ T1_zsprite_add_single_shatter_to_frame_data(
 
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_us)
+    u64 elapsed_us)
 {
     // We expect padding to prevent out of bounds
     T1_log_assert(
-        sizeof(T1GPUFlatQuad) % sizeof(float) ==
+        sizeof(T1GPUFlatQuad) % sizeof(f32) ==
             0);
     T1_log_assert(
         (sizeof(T1GPUFlatQuad) %
@@ -536,7 +536,7 @@ void T1_particle_add_all_to_frame_data(
     
     #if 0
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_shatter_effects_size;
         i++)
     {
@@ -569,7 +569,7 @@ void T1_particle_add_all_to_frame_data(
         }
         
         for (
-            uint32_t spawn_i = 0;
+            u32 spawn_i = 0;
             spawn_i < T1_shatter_effects[i].
                 spawns_per_loop;
             spawn_i++)
@@ -615,7 +615,7 @@ void T1_particle_add_all_to_frame_data(
     #endif
     
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < T1_particle_effects_size;
         i++)
     {
@@ -648,7 +648,7 @@ void T1_particle_add_all_to_frame_data(
         }
         
         for (
-            uint32_t spawn_i = 0;
+            u32 spawn_i = 0;
             spawn_i < T1_particle_effects[i].spawns_per_loop;
             spawn_i++)
         {

@@ -1,7 +1,12 @@
 #ifndef T1_PUBLIC_TYPES_H
 #define T1_PUBLIC_TYPES_H
 
-typedef enum : unsigned char {
+#include "T1_stdint.h"
+
+#define T1_TEX_NONE UINT16_MAX
+typedef u16 T1Tex;
+
+typedef enum : u8 {
     T1_IO_KEY_LEFTARROW = 0,
     T1_IO_KEY_RIGHTARROW = 1,
     T1_IO_KEY_UPARROW = 2,
@@ -104,111 +109,101 @@ typedef enum : unsigned char {
 } T1IOKey;
 
 typedef struct {
-    int reserved_and_tex;
-    int touch_id;
-    int padding[2];
-} T1GPUTexQuadi32;
+    s32 reserved_and_tex;
+    s32 touch_id;
+    s32 padding[2];
+} T1GPUTexQuads32;
 
 typedef struct {
-    float xyz[3];
-    float offset_xy[2];
-    float wh[2];
-    float rgba[4];
-    float padding[5];
+    f32 xyz[3];
+    f32 offset_xy[2];
+    f32 wh[2];
+    f32 rgba[4];
+    f32 padding[5];
 } T1GPUTexQuadf32;
 
 typedef struct
 {
-    float rgb_add[3];
+    u64 timestamp;
+    u32 cam_rv_i;
+    u32 lights_size;
+    s32 perlin_texturearray_i;
+    s32 perlin_texture_i;
+    f32 rgb_add[3];
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    float fog_color[3];
+    f32 fog_color[3];
+    f32 fog_factor;
     #elif T1_FOG_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    // float screen_width;
-    // float screen_height;
-    float nonblur_pct;
-    float blur_pct;
-    float color_quantization;
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    float fog_factor;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    f32 nonblur_pct;
+    f32 blur_pct;
+    f32 color_quantization;
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    float in_shadow_multipliers[3];
+    f32 in_shadow_multipliers[3];
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    unsigned int cam_rv_i;
-    unsigned int timestamp;
-    unsigned int lights_size;
-    int perlin_texturearray_i;
-    int perlin_texture_i;
-    float padding[6];
+    f32 padding[6];
 } T1GPUPostProcConsts;
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
     
-    unsigned long elapsed;
-    unsigned long this_frame_timestamp_us;
-    unsigned long last_resize_request_us;
+    u64 elapsed;
+    u64 this_frame_timestamp_us;
+    u64 last_resize_request_us;
     
-    unsigned int startup_bytes_to_load;
-    unsigned int startup_bytes_loaded;
+    u32 startup_bytes_to_load;
+    u32 startup_bytes_loaded;
     
-    float last_clickray_origin[3];
-    float last_clickray_direction[3];
-    float last_clickray_collision[3];
+    f32 last_clickray_origin[3];
+    f32 last_clickray_direction[3];
+    f32 last_clickray_collision[3];
     
-    unsigned int pixelation_div;
+    f32 timedelta_mult;
+    f32 window_wh[2];
+    f32 window_left;
+    f32 window_bottom;
     
-    float timedelta_mult;
-    float window_height;
-    float window_width;
-    float window_left;
-    float window_bottom;
-    
-    unsigned char draw_mouseptr;
-    unsigned char draw_imputed_normals;
-    unsigned char draw_triangles;
-    unsigned char draw_axes;
-    unsigned char draw_fps;
-    unsigned char draw_top_touchable_id;
-    unsigned char show_profiler;
-    unsigned char pause_profiler;
-    unsigned char block_mouse;
-    unsigned char block_render_view_pos_updates;
-    unsigned char fullscreen;
-    unsigned char clientlogic_early_startup_finished;
-    unsigned char upcoming_fullscreen_request;
+    u8 draw_mouseptr;
+    u8 draw_imputed_normals;
+    u8 draw_triangles;
+    u8 draw_axes;
+    u8 draw_fps;
+    u8 draw_top_touchable_id;
+    u8 show_profiler;
+    u8 pause_profiler;
+    u8 block_mouse;
+    u8 block_render_view_pos_updates;
+    u8 fullscreen;
+    u8 clientlogic_early_startup_finished;
+    u8 upcoming_fullscreen_request;
 } T1Globals;
 
-typedef struct FontSettings {
-    T1GPUTexQuadf32 f32;
-    T1GPUTexQuadi32 i32;
-    float           font_height;
-    int             highlight_i;
-    int             highlight_size;
-    int             opaque_back_active;
+typedef struct {
+    T1GPUTexQuadf32 f32s;
+    T1GPUTexQuads32 s32s;
+    f32             font_height;
+    s32             highlight_i;
+    s32             highlight_size;
+    s32             opaque_back_active;
 } T1TextFontSettings;
 
 typedef struct {
-    float offset_xyz[3];
-    int T1_id;
-    unsigned char one_frame_only;
-    unsigned char committed;
-    unsigned char visible;
-    unsigned char deleted;
+    f32 offset_xyz[3];
+    s32 T1_id;
+    u8 one_frame_only;
+    u8 committed;
+    u8 visible;
+    u8 deleted;
 } T1CPUTexQuad;
 
 typedef struct {
-    T1GPUTexQuadf32 f32;
-    T1GPUTexQuadi32 i32;
+    T1GPUTexQuadf32 f32s;
+    T1GPUTexQuads32 s32s;
 } T1GPUTexQuad;
 
 typedef struct {
@@ -217,27 +212,27 @@ typedef struct {
     // ScheduledAnimations that affect the entire group
     // set to -1 to not be a party of any group
     union {
-        int T1_id;
-        float flt_T1_id;
+        s32 T1_id;
+        f32 flt_T1_id;
     };
     union {
-        unsigned int deleted;
-        float flt_deleted;
+        u32 deleted;
+        f32 flt_deleted;
     };
     union {
-        unsigned int committed;
-        float flt_committed;
+        u32 committed;
+        f32 flt_committed;
     };
-    float xyz[3];
-    float xyz_angle[3];
-    float xyz_offset[3];
-    float RGBA[4];
-    float reach; // light's reach
-    float diffuse;     // how much diffuse light does this radiate?
-    float specular;
-    int shadow_map_depth_texture_i;
-    int shadow_map_render_view_i;
-    float simd_padding[3];
-} T1zLight; // 17 floats = 68 bytes
+    f32 xyz[3];
+    f32 xyz_angle[3];
+    f32 xyz_offset[3];
+    f32 RGBA[4];
+    f32 reach; // light's reach
+    f32 diffuse;     // how much diffuse light does this radiate?
+    f32 specular;
+    s32 shadow_map_depth_texture_i;
+    s32 shadow_map_render_view_i;
+    f32 simd_padding[3];
+} T1zLight; // 17 f32s = 68 bytes
 
 #endif // T1_PUBLIC_TYPES_H

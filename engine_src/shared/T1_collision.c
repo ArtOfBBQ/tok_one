@@ -23,12 +23,12 @@
 #define col_printf(...)
 #endif
 
-static float dot(const float A[3], const float B[3])
+static f32 dot(const f32 A[3], const f32 B[3])
 {
     return (A[0]*B[0])+(A[1]*B[1])+(A[2]*B[2]);
 }
 
-static void cross(const float A[3], const float B[3], float * recipient)
+static void cross(const f32 A[3], const f32 B[3], f32 * recipient)
 {
     recipient[0] = (A[1]*B[2])-(A[2]*B[1]);
     recipient[1] = (A[2]*B[0])-(A[0]*B[2]);
@@ -37,10 +37,10 @@ static void cross(const float A[3], const float B[3], float * recipient)
     return;
 }
 
-int T1_collision_point_hits_AArect(
-    const float point[2],
-    const float rect_bounds_min[2],
-    const float rect_bounds_max[2])
+s32 T1_collision_point_hits_AArect(
+    const f32 point[2],
+    const f32 rect_bounds_min[2],
+    const f32 rect_bounds_max[2])
 {
     return
         point[0] >= (rect_bounds_min[0] - 0.001f) &&
@@ -50,13 +50,13 @@ int T1_collision_point_hits_AArect(
 }
 
 // returns distance to collision, or FLT_MAX if no hit, or
-// a negative float if hit is behind the ray
-float T1_collision_ray_hits_AArect(
-    const float ray_origin[2],
-    const float ray_direction[2],
-    const float rect_bounds_min[2],
-    const float rect_bounds_max[2],
-    float * collision_recipient)
+// a negative f32 if hit is behind the ray
+f32 T1_collision_ray_hits_AArect(
+    const f32 ray_origin[2],
+    const f32 ray_direction[2],
+    const f32 rect_bounds_min[2],
+    const f32 rect_bounds_max[2],
+    f32 * collision_recipient)
 {
     /*
                 y       -----
@@ -108,23 +108,23 @@ float T1_collision_ray_hits_AArect(
         rect_bounds_max[0],
         rect_bounds_max[1]);
     
-    float nearest_dist_found = T1_COL_FLT_MAX;
+    f32 nearest_dist_found = T1_COL_FLT_MAX;
     
-    for (int plane_i = 0; plane_i < 4; plane_i++) {
-        int axis_i = plane_i / 2;
+    for (s32 plane_i = 0; plane_i < 4; plane_i++) {
+        s32 axis_i = plane_i / 2;
         
-        const float * bounds = (plane_i % 2 == 1) ?
+        const f32 * bounds = (plane_i % 2 == 1) ?
             rect_bounds_min :
             rect_bounds_max;
         
-        float axis_diff =
+        f32 axis_diff =
             bounds[axis_i] - ray_origin[axis_i];
         
-        float steps_taken = axis_diff / ray_direction[axis_i];
+        f32 steps_taken = axis_diff / ray_direction[axis_i];
         col_printf("Plane %i steps taken: %f\n", plane_i,
             steps_taken);
         
-        float collision_point[2];
+        f32 collision_point[2];
         collision_point[0] = ray_origin[0];
         collision_point[1] = ray_origin[1];
         
@@ -140,7 +140,7 @@ float T1_collision_ray_hits_AArect(
                 rect_bounds_min,
                 rect_bounds_max))
         {
-            float dist_ray_to_hit =
+            f32 dist_ray_to_hit =
                 (
                     (ray_origin[0] - collision_point[0]) *
                     (ray_origin[0] - collision_point[0])) +
@@ -168,10 +168,10 @@ float T1_collision_ray_hits_AArect(
     return sqrtf(nearest_dist_found);
 }
 
-int T1_collision_point_hits_AAbox(
-    const float point[3],
-    const float rect_bounds_min[3],
-    const float rect_bounds_max[3])
+s32 T1_collision_point_hits_AAbox(
+    const f32 point[3],
+    const f32 rect_bounds_min[3],
+    const f32 rect_bounds_max[3])
 {
     return
         point[0] >= (rect_bounds_min[0] - 0.001f) &&
@@ -183,28 +183,28 @@ int T1_collision_point_hits_AAbox(
 }
 
 // returns distance to collision, or FLT_MAX if no hit, or
-// a negative float if hit is behind the ray
-float T1_collision_ray_hits_AAbox(
-    const float ray_origin[3],
-    const float ray_direction[3],
-    const float box_bounds_min[3],
-    const float box_bounds_max[3],
-    float * collision_recipient)
+// a negative f32 if hit is behind the ray
+f32 T1_collision_ray_hits_AAbox(
+    const f32 ray_origin[3],
+    const f32 ray_direction[3],
+    const f32 box_bounds_min[3],
+    const f32 box_bounds_max[3],
+    f32 * collision_recipient)
 {
-    float nearest_dist_found = T1_COL_FLT_MAX;
+    f32 nearest_dist_found = T1_COL_FLT_MAX;
     
-    for (int plane_i = 0; plane_i < 6; plane_i++) {
-        int axis_i = plane_i / 2;
+    for (s32 plane_i = 0; plane_i < 6; plane_i++) {
+        s32 axis_i = plane_i / 2;
         
-        const float * bounds = (plane_i % 2 == 1) ?
+        const f32 * bounds = (plane_i % 2 == 1) ?
             box_bounds_min :
             box_bounds_max;
         
-        float axis_diff = bounds[axis_i] - ray_origin[axis_i];
+        f32 axis_diff = bounds[axis_i] - ray_origin[axis_i];
         
-        float steps_taken = axis_diff / ray_direction[axis_i];
+        f32 steps_taken = axis_diff / ray_direction[axis_i];
         
-        float collision_point[3];
+        f32 collision_point[3];
         collision_point[0] = ray_origin[0];
         collision_point[1] = ray_origin[1];
         collision_point[2] = ray_origin[2];
@@ -219,7 +219,7 @@ float T1_collision_ray_hits_AAbox(
                 box_bounds_min,
                 box_bounds_max))
         {
-            float dist_ray_to_hit =
+            f32 dist_ray_to_hit =
                 (
                     (ray_origin[0] - collision_point[0]) *
                     (ray_origin[0] - collision_point[0])) +
@@ -242,12 +242,12 @@ float T1_collision_ray_hits_AAbox(
     return sqrtf(nearest_dist_found);
 }
 
-float T1_collision_normalized_ray_hits_sphere(
-    const float ray_origin[3],
-    const float normalized_ray_direction[3],
-    const float sphere_origin[3],
-    const float sphere_radius,
-    float * collision_recipient)
+f32 T1_collision_normalized_ray_hits_sphere(
+    const f32 ray_origin[3],
+    const f32 normalized_ray_direction[3],
+    const f32 sphere_origin[3],
+    const f32 sphere_radius,
+    f32 * collision_recipient)
 {
     #ifndef T1_COLLISION_IGNORE_ASSERTS
     assert(dot(normalized_ray_direction, normalized_ray_direction) < 1.02f);
@@ -347,34 +347,34 @@ float T1_collision_normalized_ray_hits_sphere(
     */
     
     // This translation allows us to pretend the sphere is at [0, 0, 0]
-    float ray_origin_translated[3];
+    f32 ray_origin_translated[3];
     ray_origin_translated[0] = ray_origin[0] - sphere_origin[0];
     ray_origin_translated[1] = ray_origin[1] - sphere_origin[1];
     ray_origin_translated[2] = ray_origin[2] - sphere_origin[2];
     
-    float b = (
+    f32 b = (
         (normalized_ray_direction[0] * ray_origin_translated[0]) +
         (normalized_ray_direction[1] * ray_origin_translated[1]) +
         (normalized_ray_direction[2] * ray_origin_translated[2]))
             * 2.0f;
     
-    float c = (
+    f32 c = (
         (ray_origin_translated[0] * ray_origin_translated[0]) +
         (ray_origin_translated[1] * ray_origin_translated[1]) +
         (ray_origin_translated[2] * ray_origin_translated[2])) -
         (sphere_radius * sphere_radius);
     
-    // float delta = b^2 - 4ac
+    // f32 delta = b^2 - 4ac
     // we know our a is 1, so that can be deleted
-    float discr = (b * b) - (4 * c);
+    f32 discr = (b * b) - (4 * c);
     
-    float t = T1_COL_FLT_MAX;
+    f32 t = T1_COL_FLT_MAX;
     
     if (discr >= 0.0f) {
         // 1 or more collisions exist, we pick the closest one
         
-        float result_1 = (-b + sqrtf(discr)) / 2.0f;
-        float result_2 = (-b - sqrtf(discr)) / 2.0f;
+        f32 result_1 = (-b + sqrtf(discr)) / 2.0f;
+        f32 result_2 = (-b - sqrtf(discr)) / 2.0f;
         
         t =
            ((result_1 <  t) * result_1) +
@@ -394,11 +394,11 @@ float T1_collision_normalized_ray_hits_sphere(
     return t;
 }
 
-int T1_collision_point_hits_triangle(
-    const float P[2],
-    const float A[2],
-    const float B[2],
-    const float C[2])
+s32 T1_collision_point_hits_triangle(
+    const f32 P[2],
+    const f32 A[2],
+    const f32 B[2],
+    const f32 C[2])
 {
     /*
     I copied this solution from this excellent video:
@@ -406,12 +406,12 @@ int T1_collision_point_hits_triangle(
     highly recommended if you want to learn why this works
     */
     
-    float w1 =
+    f32 w1 =
         (
         (A[0]*(C[1]-A[1])) + ((P[1]-A[1])*(C[0]-A[0])) - (P[0]*(C[1]-A[1]))) /
             (((B[1] - A[1])*(C[0] - A[0])) - ((B[0]-A[0])*(C[1]-A[1])));
     
-    float w2 = (P[1]-A[1]-(w1*(B[1]-A[1]))) / (C[1]-A[1]);
+    f32 w2 = (P[1]-A[1]-(w1*(B[1]-A[1]))) / (C[1]-A[1]);
     
     return
         w1 >= 0.0f &&
@@ -419,22 +419,22 @@ int T1_collision_point_hits_triangle(
         (w1 + w2) <= 1.0f;
 }
 
-static float triangle_get_area(
-    const float A[3],
-    const float B[3],
-    const float C[3])
+static f32 triangle_get_area(
+    const f32 A[3],
+    const f32 B[3],
+    const f32 C[3])
 {
-    float AB[3];
+    f32 AB[3];
     AB[0] = B[0] - A[0];
     AB[1] = B[1] - A[1];
     AB[2] = B[2] - A[2];
     
-    float AC[3];
+    f32 AC[3];
     AC[0] = C[0] - A[0];
     AC[1] = C[1] - A[1];
     AC[2] = C[2] - A[2];
     
-    float AB_cross_AC[3];
+    f32 AB_cross_AC[3];
     cross(AB, AC, AB_cross_AC);
     
     return 0.5f * sqrtf(
@@ -443,11 +443,11 @@ static float triangle_get_area(
         (AB_cross_AC[2]*AB_cross_AC[2]));
 }
 
-static int coplanar_point_hits_triangle_3D(
-    const float P[3],
-    const float A[3],
-    const float B[3],
-    const float C[3])
+static s32 coplanar_point_hits_triangle_3D(
+    const f32 P[3],
+    const f32 A[3],
+    const f32 B[3],
+    const f32 C[3])
 {
     /*
     We're assuming the point P is already determined to share a plane with
@@ -457,26 +457,26 @@ static int coplanar_point_hits_triangle_3D(
     ABC
     */
     
-    float entire_area = triangle_get_area(A, B, C);
+    f32 entire_area = triangle_get_area(A, B, C);
     
-    float diff = entire_area - (
+    f32 diff = entire_area - (
         triangle_get_area(A, B, P) +
         triangle_get_area(A, C, P) +
         triangle_get_area(B, C, P));
     
-    float threshold = entire_area * 0.00001f;
+    f32 threshold = entire_area * 0.00001f;
     
     return
         diff < threshold &&
         diff > -threshold;
 }
 
-float T1_collision_ray_hits_plane(
-    const float ray_origin[3],
-    const float ray_direction[3],
-    const float plane_point[3],
-    const float plane_normal[3],
-    float * collision_recipient)
+f32 T1_collision_ray_hits_plane(
+    const f32 ray_origin[3],
+    const f32 ray_direction[3],
+    const f32 plane_point[3],
+    const f32 plane_normal[3],
+    f32 * collision_recipient)
 {
     // Assuming vectors are all normalized
     #ifndef T1_COLLISION_IGNORE_ASSERTS
@@ -487,7 +487,7 @@ float T1_collision_ray_hits_plane(
     #endif
     
     /*
-    float denom = dot(n, raydir);
+    f32 denom = dot(n, raydir);
     if (denom > 1e-6) {
         Vec3f to_plane_point = plane_point - rayor;
         t = dot(to_plane_point, n) / denom;
@@ -498,13 +498,13 @@ float T1_collision_ray_hits_plane(
     */
     
     
-    float t;
+    f32 t;
     
-    float denom = dot(plane_normal, ray_direction);
+    f32 denom = dot(plane_normal, ray_direction);
     
     #define THRESHOLD 1e-6
     if (denom > THRESHOLD || denom < -THRESHOLD) {
-        float to_plane_point[3];
+        f32 to_plane_point[3];
         to_plane_point[0] = plane_point[0] - ray_origin[0];
         to_plane_point[1] = plane_point[1] - ray_origin[1];
         to_plane_point[2] = plane_point[2] - ray_origin[2];
@@ -521,42 +521,42 @@ float T1_collision_ray_hits_plane(
     return T1_COL_FLT_MAX;
 }
 
-float T1_collision_ray_hits_triangle(
-    const float ray_origin[3],
-    const float ray_direction[3],
-    const float triangle_vertex_1[3],
-    const float triangle_vertex_2[3],
-    const float triangle_vertex_3[3],
-    const float triangle_normal[3],
-    float * collision_recipient)
+f32 T1_collision_ray_hits_triangle(
+    const f32 ray_origin[3],
+    const f32 ray_direction[3],
+    const f32 triangle_vertex_1[3],
+    const f32 triangle_vertex_2[3],
+    const f32 triangle_vertex_3[3],
+    const f32 triangle_normal[3],
+    f32 * collision_recipient)
 {
     /*
-    float D = -(N.x * A.x + N.y * A.y + N.z * A.z);
+    f32 D = -(N.x * A.x + N.y * A.y + N.z * A.z);
     
-    float t = -(dot(N, orig) + D) / dot(N, dir);
+    f32 t = -(dot(N, orig) + D) / dot(N, dir);
     */
     
-    float nearest_dist_found = T1_collision_ray_hits_plane(
-        /* const float ray_origin[3]: */
+    f32 nearest_dist_found = T1_collision_ray_hits_plane(
+        /* const f32 ray_origin[3]: */
             ray_origin,
-        /* const float ray_direction[3]: */
+        /* const f32 ray_direction[3]: */
             ray_direction,
-        /* const float plane_point[3]: */
+        /* const f32 plane_point[3]: */
             triangle_vertex_1,
-        /* const float plane_normal[3]: */
+        /* const f32 plane_normal[3]: */
             triangle_normal,
-        /* float * collision_recipient: */
+        /* f32 * collision_recipient: */
             collision_recipient);
     
      if (
          coplanar_point_hits_triangle_3D(
-             /* const float P[2]: */
+             /* const f32 P[2]: */
                  collision_recipient,
-             /* const float A[2]: */
+             /* const f32 A[2]: */
                  triangle_vertex_1,
-             /* const float B[2]: */
+             /* const f32 B[2]: */
                  triangle_vertex_2,
-             /* const float C[2]: */
+             /* const f32 C[2]: */
                  triangle_vertex_3))
     {
         #ifndef T1_COLLISION_IGNORE_ASSERTS

@@ -19,7 +19,7 @@ Get a file's size. Returns -1 if no such file
 same as platform_get_filesize() except it assumes
 the resources directory
 */
-uint64_t T1_os_get_resource_size(const char * filename)
+u64 T1_os_get_resource_size(const char * filename)
 {
     char pathfile[512];
     T1_os_res_filename_to_pathfile(
@@ -30,7 +30,7 @@ uint64_t T1_os_get_resource_size(const char * filename)
     return T1_os_get_filesize(pathfile);
 }
 
-uint64_t T1_os_get_writable_size(const char * filename) {
+u64 T1_os_get_writable_size(const char * filename) {
     char pathfile[512];
     T1_os_writable_filename_to_pathfile(
         filename,
@@ -43,8 +43,8 @@ uint64_t T1_os_get_writable_size(const char * filename) {
 void T1_os_read_file_from_writables(
     const char * filepath_in_writables,
     char * recip,
-    const uint32_t recip_size,
-    uint8_t * good)
+    const u32 recip_size,
+    u8 * good)
 {
     *good = 0;
     
@@ -57,16 +57,16 @@ void T1_os_read_file_from_writables(
         /* recipient_capacity: */
             512);
     
-    uint32_t bytes_read = 0;
+    u32 bytes_read = 0;
     T1_os_read_file(
         /* const char * filepath: */
             filepath,
         /* char * recip: */
             recip,
             &bytes_read,
-        /* uint64_t * size_without_term: */
+        /* u64 * size_without_term: */
             recip_size,
-        /* uint8_t * good: */
+        /* u8 * good: */
             good);
     
     if (bytes_read != recip_size) {
@@ -81,8 +81,8 @@ void T1_os_read_file_from_writables(
 void T1_os_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
-    const uint32_t output_size,
-    uint8_t * good)
+    const u32 output_size,
+    u8 * good)
 {
     char recipient[500];
     T1_os_writable_filename_to_pathfile(
@@ -98,7 +98,7 @@ void T1_os_write_file_to_writables(
             recipient,
         /* const char * output: */
             output,
-        /* const uint32_t output_size: */
+        /* const u32 output_size: */
             output_size,
         /* bool32_t * good: */
             good);
@@ -107,18 +107,18 @@ void T1_os_write_file_to_writables(
 void
 T1_os_write_rgba_to_writables(
     const char * local_filename,
-    uint8_t * rgba,
-    const uint32_t rgba_size,
-    const uint32_t width,
-    const uint32_t height,
-    uint8_t * good)
+    u8 * rgba,
+    const u32 rgba_size,
+    const u32 width,
+    const u32 height,
+    u8 * good)
 {
-    uint32_t bmp_cap = rgba_size + 10000;
-    uint8_t * bmp = T1_mem_malloc_managed(bmp_cap);
-    uint32_t bmp_size = 0;
+    u32 bmp_cap = rgba_size + 10000;
+    u8 * bmp = T1_mem_malloc_managed(bmp_cap);
+    u32 bmp_size = 0;
     
     for (
-        uint32_t rgba_i = 0;
+        u32 rgba_i = 0;
         rgba_i < (width * height * 4);
         rgba_i += 4)
     {
@@ -133,17 +133,17 @@ T1_os_write_rgba_to_writables(
     }
     
     encode_BMP(
-        /* const uint8_t * rgba :*/
+        /* const u8 * rgba :*/
             rgba,
-        /* const uint64_t rgba_size: */
+        /* const u64 rgba_size: */
             rgba_size,
-        /* const uint32_t width: */
+        /* const u32 width: */
             width,
-        /* const uint32_t height: */
+        /* const u32 height: */
             height,
         /* char * recipient: */
             (char *)bmp,
-        /* uint32_t * recipient_size: */
+        /* u32 * recipient_size: */
             &bmp_size,
         /* const int64_t recipient_capacity: */
             bmp_cap);
@@ -153,14 +153,14 @@ T1_os_write_rgba_to_writables(
             local_filename,
         /* const char * output: */
             (const char *)bmp,
-        /* const uint32_t output_size: */
+        /* const u32 output_size: */
             bmp_size,
-        /* uint32_t * good: */
+        /* u32 * good: */
             good);
 }
 
 
-uint8_t T1_os_res_exists(const char * resource_name) {
+u8 T1_os_res_exists(const char * resource_name) {
     char pathfile[500];
     T1_os_res_filename_to_pathfile(
         resource_name,
@@ -174,8 +174,8 @@ uint8_t T1_os_res_exists(const char * resource_name) {
 void T1_os_read_resource_file(
     const char * filename,
     char * recip,
-    const uint64_t recip_cap,
-    uint8_t * good)
+    const u64 recip_cap,
+    u8 * good)
 {
     char pathfile[500];
     T1_os_res_filename_to_pathfile(
@@ -183,14 +183,14 @@ void T1_os_read_resource_file(
         /* recipient: */ pathfile,
         /* capacity: */ 500);
     
-    uint32_t bytes_read = 0;
+    u32 bytes_read = 0;
     T1_os_read_file(
         /* filepath :*/
             pathfile,
         /* out_preallocatedbuffer: */
             recip,
             &bytes_read,
-        /* const uint64_t recip_cap :*/
+        /* const u64 recip_cap :*/
             recip_cap,
         /* bool8_t * good: */
             good);
@@ -208,7 +208,7 @@ void T1_os_read_resource_file(
 void T1_os_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const uint32_t assert_capacity)
+    const u32 assert_capacity)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     // pass
@@ -227,7 +227,7 @@ void T1_os_res_filename_to_pathfile(
         recipient,
         assert_capacity,
         resource_path);
-    // uint32_t separator_size = platform_get_directory_separator_size();
+    // u32 separator_size = platform_get_directory_separator_size();
     char separator[MAX_SEPARATOR_SIZE];
     T1_os_get_dir_separator(
         /* recipient: */ separator);
@@ -246,7 +246,7 @@ void T1_os_res_filename_to_pathfile(
 void T1_os_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const uint32_t assert_capacity)
+    const u32 assert_capacity)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     // pass
@@ -260,8 +260,8 @@ void T1_os_writable_filename_to_pathfile(
     assert(recipient != NULL);
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t separator_size = T1_os_get_dir_separator_size();
-    uint32_t filename_length = (uint32_t)T1_std_strlen(filename);
+    u32 separator_size = T1_os_get_dir_separator_size();
+    u32 filename_length = (u32)T1_std_strlen(filename);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -284,9 +284,9 @@ void T1_os_writable_filename_to_pathfile(
     T1_os_get_writables_dir(writables_path, 256);
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    uint32_t writables_path_length =
-        (uint32_t)T1_std_strlen(writables_path);
-    uint32_t full_filename_size =
+    u32 writables_path_length =
+        (u32)T1_std_strlen(writables_path);
+    u32 full_filename_size =
         (filename_length
             + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
@@ -322,14 +322,14 @@ void T1_os_del_writable(
             writable_filename,
         /* char * recipient: */
             filepath,
-        /* const uint32_t assert_capacity: */
+        /* const u32 assert_capacity: */
             500);
     
     T1_os_del_file(writable_filename);
 }
 
 void T1_platform_layer_start_window_resize(
-    const uint64_t timestamp)
+    const u64 timestamp)
 {
     T1_global->last_resize_request_us = timestamp;
     

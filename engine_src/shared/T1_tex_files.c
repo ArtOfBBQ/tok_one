@@ -12,12 +12,12 @@
 static void malloc_img_from_resource_name(
     T1Img * recipient,
     const char * filename,
-    const uint32_t thread_id)
+    const u32 thread_id)
 {
-    uint64_t size_without_terminator =
+    u64 size_without_terminator =
         T1_os_get_resource_size(filename);
     char * contents = NULL;
-    bool8_t good = 0;
+    b8 good = 0;
     
     if (size_without_terminator < 1) {
         return;
@@ -38,7 +38,7 @@ static void malloc_img_from_resource_name(
         &good);
     
     if (!good) {
-        T1_mem_free_managed((uint8_t *)contents);
+        T1_mem_free_managed((u8 *)contents);
         return;
     }
     
@@ -48,20 +48,20 @@ static void malloc_img_from_resource_name(
         contents[3] == 'G')
     {
         decode_png_get_width_height(
-            /* const uint8_t * compressed_input: */
-                (uint8_t *)contents,
-            /* const uint64_t compressed_input_size: */
+            /* const u8 * compressed_input: */
+                (u8 *)contents,
+            /* const u64 compressed_input_size: */
                 size_without_terminator - 1,
-            /* uint32_t * out_width: */
+            /* u32 * out_width: */
                 &recipient->width,
-            /* uint32_t * out_height: */
+            /* u32 * out_height: */
                 &recipient->height,
-            /* uint32_t * out_good: */
+            /* u32 * out_good: */
                 &recipient->good);
         
         if (!recipient->good) {
             T1_log_assert(0);
-            T1_mem_free_managed((uint8_t *)contents);
+            T1_mem_free_managed((u8 *)contents);
             return;
         }
         
@@ -74,7 +74,7 @@ static void malloc_img_from_resource_name(
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
                 (void *)&recipient->rgba_values_page_aligned,
-            /* const size_t subptr_size: */
+            /* const u64 subptr_size: */
                 recipient->rgba_values_size);
         
         T1_std_memset(
@@ -83,37 +83,37 @@ static void malloc_img_from_resource_name(
             recipient->rgba_values_size);
         
         decode_png(
-            /* const uint8_t * compressed_input: */
-                (uint8_t *)contents,
-            /* const uint64_t compressed_input_size: */
+            /* const u8 * compressed_input: */
+                (u8 *)contents,
+            /* const u64 compressed_input_size: */
                 size_without_terminator - 1,
             /* out_rgba_values: */
                 recipient->rgba_values_page_aligned,
             /* rgba_values_size: */
                 recipient->rgba_values_size,
-            /* const uint32_t thread_id: */
+            /* const u32 thread_id: */
                 thread_id,
-            /* uint8_t * out_good: */
+            /* u8 * out_good: */
                 &recipient->good);
     } else if (
         contents[0] == 'B' &&
         contents[1] == 'M')
     {
         get_BMP_width_height(
-            /* const uint8_t * compressed_input: */
-                (uint8_t *)contents,
-            /* const uint64_t compressed_input_size: */
+            /* const u8 * compressed_input: */
+                (u8 *)contents,
+            /* const u64 compressed_input_size: */
                 size_without_terminator - 1,
-            /* uint32_t * out_width: */
+            /* u32 * out_width: */
                 &recipient->width,
-            /* uint32_t * out_height: */
+            /* u32 * out_height: */
                 &recipient->height,
-            /* uint32_t * out_good: */
+            /* u32 * out_good: */
                 &recipient->good);
         
         if (!recipient->good) {
             T1_log_assert(0);
-            T1_mem_free_managed((uint8_t *)contents);
+            T1_mem_free_managed((u8 *)contents);
             return;
         }
         
@@ -125,7 +125,7 @@ static void malloc_img_from_resource_name(
                 (void *)&recipient->rgba_values_freeable,
             /* void * aligned_subptr: */
                 (void *)&recipient->rgba_values_page_aligned,
-            /* const size_t subptr_size: */
+            /* const u64 subptr_size: */
                 recipient->rgba_values_size);
         T1_std_memset(
             recipient->rgba_values_page_aligned,
@@ -133,7 +133,7 @@ static void malloc_img_from_resource_name(
             recipient->rgba_values_size);
         
         decode_BMP(
-            /* raw_input: */ (uint8_t *)contents,
+            /* raw_input: */ (u8 *)contents,
             /* raw_input_size: */ size_without_terminator - 1,
             /* out_rgba_values: */ recipient->rgba_values_page_aligned,
             /* out_rgba_values_size: */ recipient->rgba_values_size,
@@ -149,13 +149,13 @@ static void malloc_img_from_resource_name(
         T1_log_assert(recipient->height > 0);
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size =
-            (uint32_t)size_without_terminator + 1;
+            (u32)size_without_terminator + 1;
         T1_mem_malloc_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
                 (void *)&recipient->rgba_values_page_aligned,
-            /* const size_t subptr_size: */
+            /* const u64 subptr_size: */
                 recipient->rgba_values_size);
         
         T1_std_memset(
@@ -168,7 +168,7 @@ static void malloc_img_from_resource_name(
                 recipient->rgba_values_page_aligned,
             /* const void * src: */
                 contents,
-            /* size_t n_bytes: */
+            /* u64 n_bytes: */
                 recipient->rgba_values_size);
         
         recipient->good = true;
@@ -189,8 +189,8 @@ static void malloc_img_from_resource_name(
 
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
-    const uint32_t rows,
-    const uint32_t columns)
+    const u32 rows,
+    const u32 columns)
 {
     T1Img stack_img;
     T1Img * img = &stack_img;
@@ -201,7 +201,7 @@ void T1_tex_files_reg_new_by_splitting_file(
     
     char filename_prefix[256];
     T1_std_strcpy_cap(filename_prefix, 256, filename);
-    uint32_t i = 0;
+    u32 i = 0;
     while (filename_prefix[i] != '\0' && filename_prefix[i] != '.') {
         i++;
     }
@@ -215,7 +215,7 @@ void T1_tex_files_reg_new_by_splitting_file(
 }
 
 void T1_tex_files_load_font_images(
-    uint8_t * success,
+    u8 * success,
     char * error_message)
 {
     *success = 0;
@@ -242,9 +242,9 @@ void T1_tex_files_load_font_images(
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
-    const uint32_t rows,
-    const uint32_t columns,
-    uint8_t * success,
+    const u32 rows,
+    const u32 columns,
+    u8 * success,
     char * error_message)
 {
     *success = 0;
@@ -268,7 +268,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     
     char filename_prefix[256];
     T1_std_strcpy_cap(filename_prefix, 256, filename);
-    uint32_t i = 0;
+    u32 i = 0;
     while (filename_prefix[i] != '\0' && filename_prefix[i] != '.') {
         i++;
     }
@@ -286,7 +286,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const char * filename,
-    uint8_t * good)
+    u8 * good)
 {
     *good = 0;
     
@@ -296,37 +296,37 @@ void T1_tex_files_runtime_reg_png_from_writables(
     T1_os_get_dir_separator(filepath + T1_std_strlen(filepath));
     T1_std_strcat_cap(filepath, 256, filename);
     
-    uint64_t contents_cap = T1_os_get_filesize(filepath);
+    u64 contents_cap = T1_os_get_filesize(filepath);
     if (contents_cap <= 28) {
         return;
     }
     char * contents = T1_mem_malloc_managed(contents_cap+1);
-    uint32_t contents_size = 0;
+    u32 contents_size = 0;
     
     T1_os_read_file(
         /* const char * filepath: */
             filepath,
         /* char * recip: */
             contents,
-        /* uint32_t * recip_size: */
+        /* u32 * recip_size: */
             &contents_size,
-        /* const uint64_t recip_cap: */
+        /* const u64 recip_cap: */
             contents_cap,
-        /* uint8_t * good: */
+        /* u8 * good: */
             good);
     
-    uint32_t width = 0;
-    uint32_t height = 0;
+    u32 width = 0;
+    u32 height = 0;
     decode_png_get_width_height(
-        /* const uint8_t *compressed_input: */
-            (uint8_t *)contents,
-        /* const uint64_t compressed_input_size: */
+        /* const u8 *compressed_input: */
+            (u8 *)contents,
+        /* const u64 compressed_input_size: */
             contents_size,
-        /* uint32_t *out_width: */
+        /* u32 *out_width: */
             &width,
-        /* uint32_t *out_height: */
+        /* u32 *out_height: */
             &height,
-        /* uint32_t *out_good: */
+        /* u32 *out_good: */
             good);
     if (!*good) {
         T1_mem_free_managed(contents);
@@ -336,13 +336,13 @@ void T1_tex_files_runtime_reg_png_from_writables(
     T1Tex loc = T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
-        /* const uint32_t height: */
+        /* const u32 height: */
             height,
-        /* const uint32_t width: */
+        /* const u32 width: */
             width,
-        /* const uint32_t is_render_target,: */
+        /* const u32 is_render_target,: */
             false,
-        /* const uint32_t is_dds_image: */
+        /* const u32 is_dds_image: */
             false);
     
     T1Img * recipient =
@@ -358,7 +358,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
             (void *)&recipient->rgba_values_freeable,
         /* void *aligned_subptr: */
             (void *)&recipient->rgba_values_page_aligned,
-        /* const size_t subptr_size: */
+        /* const u64 subptr_size: */
             recipient->rgba_values_size);
     
     T1_std_memset(
@@ -367,25 +367,25 @@ void T1_tex_files_runtime_reg_png_from_writables(
         recipient->rgba_values_size);
     
     decode_png(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)contents,
-        /* const uint64_t compressed_input_size: */
+        /* const u8 * compressed_input: */
+            (u8 *)contents,
+        /* const u64 compressed_input_size: */
             contents_size,
-        /* const uint8_t * out_rgba_values: */
+        /* const u8 * out_rgba_values: */
             T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.
                 rgba_values_freeable,
-        /* const uint64_t rgba_values_size: */
+        /* const u64 rgba_values_size: */
             T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.
                 rgba_values_size,
-        /* const uint32_t thread_id: */
+        /* const u32 thread_id: */
             0,
-        /* uint8_t * out_good: */
+        /* u8 * out_good: */
             &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.good);
     
     T1_os_gpu_push_tex_slice_and_free_rgba(
-        /* const int32_t texture_array_i: */
+        /* const s32 texture_array_i: */
             T1_tex_to_array_i(loc),
-        /* const int32_t texture_i: */
+        /* const s32 texture_i: */
             T1_tex_to_slice_i(loc));
     
     T1_mem_free_managed(contents);
@@ -398,11 +398,11 @@ void T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const char * filename,
-    bool8_t * good)
+    b8 * good)
 {
     *good = 0;
     
-    uint64_t contents_cap = T1_os_get_resource_size(filename);
+    u64 contents_cap = T1_os_get_resource_size(filename);
     if (contents_cap > 28) {
         contents_cap = 28;
     } else {
@@ -413,18 +413,18 @@ void T1_tex_files_prereg_png_res(
     T1_os_read_resource_file(filename, contents, contents_cap, good);
     if (!*good) { return; } else { *good = 0; }
     
-    uint32_t width = 0;
-    uint32_t height = 0;
+    u32 width = 0;
+    u32 height = 0;
     decode_png_get_width_height(
-        /* const uint8_t *compressed_input: */
-            (uint8_t *)contents,
-        /* const uint64_t compressed_input_size: */
+        /* const u8 *compressed_input: */
+            (u8 *)contents,
+        /* const u64 compressed_input_size: */
             contents_cap,
-        /* uint32_t *out_width: */
+        /* u32 *out_width: */
             &width,
-        /* uint32_t *out_height: */
+        /* u32 *out_height: */
             &height,
-        /* uint32_t *out_good: */
+        /* u32 *out_good: */
             good);
     if (!*good) {
         T1_mem_free_managed(contents);
@@ -434,13 +434,13 @@ void T1_tex_files_prereg_png_res(
     T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
-        /* const uint32_t width: */
+        /* const u32 width: */
             width,
-        /* const uint32_t height: */
+        /* const u32 height: */
             height,
-        /* const uint32_t is_render_target: */
+        /* const u32 is_render_target: */
             false,
-        /* const uint32_t is_dds_image: */
+        /* const u32 is_dds_image: */
             false);
     
     T1_mem_free_managed(contents);
@@ -449,24 +449,24 @@ void T1_tex_files_prereg_png_res(
 
 typedef struct {
     char     magic_number_dds[4];
-    uint32_t size;          // Size of the header (must be 124)
-    uint32_t flags;         // Header flags
-    uint32_t height;        // Image height in pixels
-    uint32_t width;         // Image width in pixels
-    uint32_t pitchOrLinearSize; // Pitch or linear size
-    uint32_t depth;         // Depth (for volume textures)
-    uint32_t mipMapCount;   // Number of mip levels
-    uint32_t reserved1[11]; // Reserved
+    u32 size;          // Size of the header (must be 124)
+    u32 flags;         // Header flags
+    u32 height;        // Image height in pixels
+    u32 width;         // Image width in pixels
+    u32 pitchOrLinearSize; // Pitch or linear size
+    u32 depth;         // Depth (for volume textures)
+    u32 mipMapCount;   // Number of mip levels
+    u32 reserved1[11]; // Reserved
     // ... other fields (pixel format, caps, etc.)
 } DDS_Header;
 
 void T1_tex_files_prereg_dds_res(
     const char * filename,
-    bool8_t * good)
+    b8 * good)
 {
     *good = 0;
     
-    uint64_t contents_cap = T1_os_get_resource_size(filename);
+    u64 contents_cap = T1_os_get_resource_size(filename);
     if (contents_cap > 28) {
         contents_cap = 28;
     } else {
@@ -499,13 +499,13 @@ void T1_tex_files_prereg_dds_res(
     T1_tex_array_reg_img(
         /* const char * filename: */
             filename,
-        /* const uint32_t width: */
+        /* const u32 width: */
             header->width,
-        /* const uint32_t height: */
+        /* const u32 height: */
             header->height,
-        /* const uint32_t is_render_target: */
+        /* const u32 is_render_target: */
             false,
-        /* const uint32_t is_dds_image: */
+        /* const u32 is_dds_image: */
             true);
     
     T1_mem_free_managed(contents);
@@ -513,20 +513,20 @@ void T1_tex_files_prereg_dds_res(
 }
 
 void T1_tex_files_decode_all_prereg(
-    const uint32_t thread_id,
-    const uint32_t using_num_threads)
+    const u32 thread_id,
+    const u32 using_num_threads)
 {
-    int32_t texture_arrays_to_init = (int32_t)T1_tex_arrays_size - 1;
-    int32_t texture_arrays_per_thread =
-        texture_arrays_to_init / (int32_t)using_num_threads;
+    s32 texture_arrays_to_init = (s32)T1_tex_arrays_size - 1;
+    s32 texture_arrays_per_thread =
+        texture_arrays_to_init / (s32)using_num_threads;
     if (texture_arrays_per_thread < 1) {
         texture_arrays_per_thread = 1;
     }
     
-    int32_t start_ta_i = 1 + ((int32_t)thread_id * texture_arrays_per_thread);
-    int32_t end_ta_i =
+    s32 start_ta_i = 1 + ((s32)thread_id * texture_arrays_per_thread);
+    s32 end_ta_i =
         thread_id + 1 >= using_num_threads ?
-            (int32_t)T1_tex_arrays_size :
+            (s32)T1_tex_arrays_size :
             start_ta_i + texture_arrays_per_thread;
     
     T1_log_append("Thread ");
@@ -542,7 +542,7 @@ void T1_tex_files_decode_all_prereg(
     T1_log_assert(using_num_threads > 0);
     T1_log_assert(using_num_threads < 7);
     
-    for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
+    for (s32 ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         T1_tex_arrays[ta_i].started_decoding =
             T1_os_get_current_time_us();
         if (T1_tex_arrays[ta_i].images_size < 1) {
@@ -554,7 +554,7 @@ void T1_tex_files_decode_all_prereg(
         T1_log_assert(T1_tex_arrays[ta_i].single_img_height > 0);
         
         for (
-            uint32_t t_i = 0;
+            u32 t_i = 0;
             t_i < T1_tex_arrays[ta_i].images_size;
             t_i++)
         {
@@ -582,7 +582,7 @@ void T1_tex_files_decode_all_prereg(
                     &T1_tex_arrays[ta_i].images[t_i].image,
                 /* const char * filename: */
                     T1_tex_arrays[ta_i].images[t_i].name,
-                /* const uint32_t thread_id: */
+                /* const u32 thread_id: */
                     thread_id);
             
             if (!T1_tex_arrays[ta_i].bc1_compressed) {
