@@ -3,6 +3,7 @@
 
 #include "T1_std.h"
 #include "T1_appinit.h"
+#include "T1_settings.h"
 #include "T1_log.h"
 #include "T1_rand.h"
 #include "T1_zsprite.h"
@@ -11,7 +12,7 @@
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_simd.h"
-#include "T1_clientlogic.h"
+#include "T1_client.h"
 #include "T1_gameloop.h"
 #include "T1_particle.h"
 #include "T1_platform_layer.h"
@@ -355,7 +356,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     T1_appinit_shutdown();
     
-    T1_clientlogic_shutdown();
+    T1_client_shutdown();
     
     uint8_t write_succesful = false;
     T1_log_dump(&write_succesful);
@@ -439,8 +440,8 @@ int main(int argc, const char * argv[]) {
     NSRect window_rect = NSMakeRect(
         /* x: */ T1_global->window_left,
         /* y: */ T1_global->window_bottom,
-        /* width: */ T1_settings_get_render_width(),
-        /* height: */ T1_settings_get_render_height());
+        /* width: */ T1_global->window_wh[0],
+        /* height: */ T1_global->window_wh[1]);
     
     window =
         [[NSWindowWithCustomResponder alloc]

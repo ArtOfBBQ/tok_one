@@ -1001,8 +1001,8 @@ u8 T1_apple_gpu_init(
     }
     
     id<MTLFunction> singlequad_fragment_shader =
-        [ags->lib
-            newFunctionWithName: @"single_quad_fragment_shader"];
+        [ags->lib newFunctionWithName:
+            @"single_quad_fragment_shader"];
     
     if (singlequad_fragment_shader == NULL) {
         T1_log_append("Missing function: downsampling_fragment_shader()!");
@@ -1018,7 +1018,8 @@ u8 T1_apple_gpu_init(
     
     // Set up pipeline for rendering the texture to the screen with a simple
     // quad
-    singlequad_pipeline_descriptor.label = @"single-quad pipeline";
+    singlequad_pipeline_descriptor.label =
+        @"single-quad pipeline";
     // singlequad_pipeline_descriptor.sampleCount = 1;
     [singlequad_pipeline_descriptor
         setVertexFunction: singlequad_vertex_shader];
@@ -1026,25 +1027,20 @@ u8 T1_apple_gpu_init(
         setFragmentFunction: singlequad_fragment_shader];
     singlequad_pipeline_descriptor.colorAttachments[0].pixelFormat =
         MTLPixelFormatBGRA8Unorm;
-    [singlequad_pipeline_descriptor
-        .colorAttachments[0]
+    [singlequad_pipeline_descriptor.colorAttachments[0]
         setBlendingEnabled: YES];
-    singlequad_pipeline_descriptor
-        .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorSourceAlpha;
-    singlequad_pipeline_descriptor.
-        colorAttachments[0].
-            destinationRGBBlendFactor =
-                MTLBlendFactorOneMinusSourceAlpha;
-    singlequad_pipeline_descriptor.
-        depthAttachmentPixelFormat =
-            MTLPixelFormatDepth32Float;
+    singlequad_pipeline_descriptor.colorAttachments[0].
+        sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+    singlequad_pipeline_descriptor.colorAttachments[0].
+        destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
+    singlequad_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
     singlequad_pipeline_descriptor.vertexBuffers[0].
-        mutability =
-            MTLMutabilityImmutable;
-    ags->singlequad_pls = [
-        with_metal_device
-        newRenderPipelineStateWithDescriptor:singlequad_pipeline_descriptor
+        mutability = MTLMutabilityImmutable;
+    ags->singlequad_pls = [with_metal_device
+        newRenderPipelineStateWithDescriptor:
+            singlequad_pipeline_descriptor
         error:NULL];
     
     ags->command_queue = [with_metal_device newCommandQueue];
@@ -1254,23 +1250,23 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
     if (
         screen_x < 0 ||
         screen_y < 0 ||
-        screen_x >= T1_settings_get_render_width() ||
-        screen_y >= T1_settings_get_render_height())
+        screen_x >= T1_global->window_wh[0] ||
+        screen_y >= T1_global->window_wh[1])
     {
         return -1;
     }
     
-    u32 rtt_width  =
-        (u32)ags->render_viewports[0].width;
-    u32 rtt_height =
-        (u32)ags->render_viewports[0].height;
+    u32 rtt_width  = (u32)ags->render_viewports[0].width;
+    u32 rtt_height = (u32)ags->render_viewports[0].height;
+    u32 win_width  = (u32)T1_global->window_wh[0];
+    u32 win_height = (u32)T1_global->window_wh[1];
     
     u32 screen_x_adj = (u32)(
         (screen_x * rtt_width) /
-            T1_settings_get_render_width());
+            win_width);
     u32 screen_y_adj = (u32)(
-        ((T1_settings_get_render_height() - screen_y) * rtt_height) /
-            T1_settings_get_render_height());
+        ((win_height - screen_y) * rtt_height) /
+            win_height);
     
     if (screen_x_adj >= rtt_width )
     {
@@ -1919,10 +1915,10 @@ static void set_defaults_for_encoder(
     ags->window_viewport.originX = 0;
     ags->window_viewport.originY = 0;
     ags->window_viewport.width =
-        T1_settings_get_render_width() *
+        T1_global->window_wh[0] *
             ags->retina_scaling_factor;
     ags->window_viewport.height  =
-        T1_settings_get_render_height() *
+        T1_global->window_wh[1] *
             ags->retina_scaling_factor;
     T1_log_assert(ags->window_viewport.width > 0.0f);
     T1_log_assert(ags->window_viewport.height > 0.0f);
@@ -1941,9 +1937,9 @@ static void set_defaults_for_encoder(
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
     camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
     camera_depth_texture_descriptor.width =
-        (unsigned long)ags->window_viewport.width;
+        (u64)ags->window_viewport.width;
     camera_depth_texture_descriptor.height =
-        (unsigned long)ags->window_viewport.height;
+        (u64)ags->window_viewport.height;
     camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
     camera_depth_texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
@@ -2543,10 +2539,6 @@ static void set_defaults_for_encoder(
         T1_cpu_to_gpu_data->triple_buffers + 
             ags->frame_i);
     
-    printf(
-        "T1_cpu_to_gpu_data->triple_buffers[ags->frame_i].postproc_consts->lights_size: %u\n",
-        T1_cpu_to_gpu_data->triple_buffers[ags->frame_i].postproc_consts->lights_size);
-    
     if (
         (f->postproc_consts->timestamp -
             T1_global->last_resize_request_us)
@@ -2555,10 +2547,7 @@ static void set_defaults_for_encoder(
         return;
     }
     
-    if (
-        !ags ||
-        !ags->metal_active ||
-        !ags->viewports_set[0])
+    if (!ags || !ags->metal_active || !ags->viewports_set[0])
     {
         return;
     }

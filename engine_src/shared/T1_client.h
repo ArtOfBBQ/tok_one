@@ -3,8 +3,8 @@ The functions declared here need to be implemented by your game or
 application.
 */
 
-#ifndef CLIENTLOGIC_H
-#define CLIENTLOGIC_H
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,12 +18,12 @@ extern "C" {
 extern u8 T1_log_app_running;
 
 
-void T1_clientlogic_init(void);
+void T1_client_init(void);
 
 /*
 will be called once when the app shuts down
 */
-void T1_clientlogic_shutdown(void);
+void T1_client_shutdown(void);
 
 
 /*
@@ -31,7 +31,7 @@ will be called once at startup, before rendering frame 1
 
 If you draw objects here they will be deleted by an automatic screen resize
 */
-void T1_clientlogic_early_startup(
+void T1_client_early_startup(
     u8 * success,
     char * error_message);
 
@@ -40,24 +40,24 @@ will be called once at startup, before rendering frame 1
 
 You can draw initial objects here and they will remain
 */
-void T1_clientlogic_late_startup(void);
+void T1_client_late_startup(void);
 
 /*
 will be called by the platform layer when you start a thread
 (see platform_layer.h -> start_thread(s32 threadmain_id);
 */
-void T1_clientlogic_threadmain(s32 threadmain_id);
+void T1_client_threadmain(s32 threadmain_id);
 
 /*
 will be called once per frame, before rendering that frame
 */
-void T1_clientlogic_update(
+void T1_client_update(
     u64 elapsed_us);
 
 /*
 will be called once per frame, after rendering that frame
 */
-void T1_clientlogic_update_after_render_pass(void);
+void T1_client_update_after_render_pass(void);
 
 /*
 Will be called when the debugging terminal receives a command, so you can make
@@ -66,7 +66,7 @@ your app respond to the commands of your choice
 You're expected to send a response by filling in 'response', and you must not
 exceed the character limit ('response_cap')
 */
-void T1_clientlogic_evaluate_terminal_command(
+void T1_client_evaluate_terminal_command(
     char * command,
     char * response,
     const u32 response_cap);
@@ -75,10 +75,10 @@ void T1_clientlogic_evaluate_terminal_command(
 this will be called whenever your app's window resizes - you can react by
 updating your layout to match the new window
 */
-void T1_clientlogic_window_resize(void);
+void T1_client_window_resize(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif // CLIENT_H

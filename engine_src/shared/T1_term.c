@@ -5,7 +5,7 @@
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_text.h"
-#include "T1_clientlogic.h"
+#include "T1_client.h"
 #include "T1_wav.h"
 #include "T1_audio.h"
 
@@ -678,7 +678,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Audio code is disabled! set AUDIO_CODE_ACTIVE to 1 in "
-            "clientlogic_macro_settings.h to enable it.");
+            "client_macro_settings.h to enable it.");
         #else
         #error
         #endif
@@ -1072,7 +1072,7 @@ void T1_term_commit_or_activate(void) {
                 T1_TERM_HIST_CAP,
                 "\n");
         } else {
-            T1_clientlogic_evaluate_terminal_command(
+            T1_client_evaluate_terminal_command(
                 T1_trms->cur_command,
                 client_response,
                 T1_TERM_SINGLE_LINE_MAX);

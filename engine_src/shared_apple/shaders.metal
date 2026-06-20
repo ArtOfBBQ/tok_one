@@ -2,7 +2,7 @@
 #include <simd/simd.h>
 
 #include "T1_cpu_gpu_shared_types.h"
-#include "clientlogic_macro_settings.h"
+#include "client_macro_settings.h"
 
 typedef uchar uint8_t;
 

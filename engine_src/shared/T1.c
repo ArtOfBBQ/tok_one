@@ -174,12 +174,12 @@ void T1_cam_create_main_view(
     T1_log_assert(
         !isnan(T1_render_views->cpu[rv_i].dest_xyz[2]));
     
-    
     T1_log_assert(rv_i == 0);
     T1_log_assert(T1_render_views->size > 0);
     
+    T1_os_gpu_update_internal_render_viewport(0);
     
-    (rv_i);
+    T1_os_gpu_update_window_viewport();
 }
 
 void T1_make_reflection_cam(

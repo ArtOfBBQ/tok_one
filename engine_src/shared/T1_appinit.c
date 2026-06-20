@@ -36,7 +36,7 @@
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
 
-#include "T1_clientlogic.h"
+#include "T1_client.h"
 #include "T1_platform_layer.h"
 
 
@@ -502,7 +502,7 @@ void T1_appinit_before_gpu_init(
     
     T1_render_init();
     
-    T1_clientlogic_init();
+    T1_client_init();
     
     T1_rand_init(
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -797,7 +797,7 @@ void T1_appinit_after_gpu_init_step2(
     errmsg[0] = '\0';
     
     if (T1_log_app_running) {
-        T1_clientlogic_early_startup(&success, errmsg);
+        T1_client_early_startup(&success, errmsg);
         
         if (!success) {
             if (errmsg[0] == '\0') {
@@ -1009,7 +1009,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_os_get_current_time_us());
     
     if (T1_log_app_running) {
-        T1_clientlogic_late_startup();
+        T1_client_late_startup();
     } else {
         T1_gameloop_active = true;
         return;

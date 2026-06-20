@@ -15,7 +15,7 @@
 #include "T1_zlight.h"
 #include "T1_zsprite_anim.h"
 #include "T1_texquad_anim.h"
-#include "T1_clientlogic.h"
+#include "T1_client.h"
 #include "T1_profiler.h"
 #include "T1_particle.h"
 #include "T1_frame_anim.h"
@@ -245,10 +245,8 @@ void T1_gameloop_update_before_render_pass(
                 T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
         if (
-            T1_global->
-                this_frame_timestamp_us -
-            T1_global->
-                last_resize_request_us < 200000)
+            T1_global->this_frame_timestamp_us -
+            T1_global->last_resize_request_us < 200000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
@@ -257,8 +255,7 @@ void T1_gameloop_update_before_render_pass(
             T1_log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end(
-                "T1_gameloop_update_b4_render_pass()");
+            T1_profiler_end("T1_gameloop_update_b4_render_pass()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
             #else
             #error "T1_PROFILER_ACTIVE undefined"
@@ -270,7 +267,7 @@ void T1_gameloop_update_before_render_pass(
             T1_global->last_resize_request_us = 0;
             T1_log_append("\nOK, resize window\n");
             
-            T1_clientlogic_window_resize();
+            T1_client_window_resize();
        }
     } else if (
         T1_log_app_running &&
@@ -330,7 +327,7 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
-        T1_clientlogic_update(T1_global->elapsed);
+        T1_client_update(T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_clientlogic_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
@@ -403,7 +400,7 @@ void T1_gameloop_update_after_render_pass(void) {
     #endif
     
     if (T1_log_app_running) {
-        T1_clientlogic_update_after_render_pass();
+        T1_client_update_after_render_pass();
     }
     
     T1_io->events[T1_IO_LAST_GPU_DATA].touch_id_top =
