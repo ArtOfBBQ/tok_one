@@ -37,8 +37,7 @@ void T1_cam_set_clamped_to_T1_id(s32 cam_i, s32 T1_id);
 void T1_cam_set_movement_enabled(s32 cam_i, u8 newval);
 void T1_cam_delete(const s32 cam_i);
 void T1_cam_delete_all(void);
-s16  T1_cam_get_write_array_i(s32 cam_i);
-s16  T1_cam_get_write_slice_i(s32 cam_i);
+T1Tex T1_cam_get_write_tex(s32 cam_i);
 void T1_cam_reset(s32 at_i);
 
 // To convert from our screenspace system to 'world x' that is used for
@@ -202,14 +201,32 @@ void T1_zlight_delete(const s32 T1_id);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
+
+Short taps and long taps will disappear when you "consume"
+them, but there may have been multiple short taps in a single
+frame, so check if you care about that 
+
+Short taps and long taps get cleared every frame, but a key
+being down does not. If you don't consume a tap on the frame
+when it ends, you will lose it
 */
-f32 T1_io_get_mouse_scroll_pos(void);
-void  T1_io_set_mouse_scroll_pos(f32 new_val);
-b8 T1_io_key_is_down_and_unhandled(T1IOKey key);
-void T1_io_key_mark_handled(T1IOKey key);
+b8 T1_io_key_is_down(T1IOKey key);
+b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key);
+b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key);
+f32 T1_io_get_mouse_x_this_frame(void);
+f32 T1_io_get_mouse_y_this_frame(void);
+s32 T1_io_get_mouse_touch_id_this_frame(void);
 
 /*
 OPERATING SYSTEM
+
+The "res dir" (resources directory) is a special directory
+that you're guaranteed to be allowed to read from, and
+where your assets are presumably stored
+
+The "writables" dir is a special directory where your app
+is allowed to write, so you can store files with data about
+your user's progress or preferences, etc.
 */
 void T1_os_get_res_dir(c8 * recip, const u32 recip_cap);
 void T1_os_get_filenames_in(
@@ -226,7 +243,7 @@ void T1_os_gpu_push_tex_slice_and_free_rgba(
     const s32 tex_slice_i);
 void T1_os_toggle_fullscreen(void);
 u64 T1_os_get_current_time_us(void);
-void T1_os_open_dir_in_window_if_possible(
+void T1_os_open_dir_in_file_explorer_window_if_possible(
     const c8 * folderpath);
 
 #endif // T1_H

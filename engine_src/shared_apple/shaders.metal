@@ -375,7 +375,7 @@ float4 get_lit(
         matf32->ambient_rgb[1],
         matf32->ambient_rgb[2],
         10.0f);
-    lit_color *= 0.10f;
+    lit_color *= 0.25f;
     #elif T1_AMBIENT_LIGHTING_ACTIVE == T1_INACTIVE
     float4 lit_color = vector_float4(
         0.0f, 0.0f, 0.0f, 1.0f);
@@ -438,12 +438,23 @@ float4 get_lit(
         int texarray_i = tex >> 11;
         int texslice_i = tex & 0x07FF;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    if (mati32->texturearray_i == 0)
+    if (tex >> 11 == 0)
     {
+        int texarray_i = tex >> 11;
+        int texslice_i = tex & 0x07FF;
     #else
     #error
     #endif
         // Sample the texture to obtain a color
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        if (texarray_i > 30) {
+            return float4(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+        #elif T1_LOG_ASSERST_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
         const half4 color_sample =
             color_textures[texarray_i].sample(
                 texture_sampler,
@@ -452,6 +463,7 @@ float4 get_lit(
         texture_base = float4(color_sample);
     }
     
+    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
     if ((zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != 0xFFFF) {
         
         int mix_rv = zsprite->s32.mix_rv_and_mix_tex >> 16;
@@ -494,6 +506,10 @@ float4 get_lit(
             (texture_base * (1.0h - mix_strength)) +
             (float4(color_sample) * mix_strength);
     }
+    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     float4 no_lighting_color = diffuse_base * texture_base;
     
@@ -513,8 +529,8 @@ float4 get_lit(
         
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
         if (
-            // render_views[camera_i].use_shadow_maps &&
-            lights[i].shadow_map_render_view_i >= 0)
+            lights[i].shadow_map_render_view_i >= 0 &&
+            lights[i].shadow_map_depth_tex_i >= 0)
         {
             float4 light_clip_pos =
                 worldspace_to_clipspace(
@@ -533,19 +549,19 @@ float4 get_lit(
                 min_filter::nearest,
                 address::clamp_to_edge);
             
+            int shadowmap_i = lights[i].shadow_map_depth_tex_i;
+            
             float shadow_depth =
-                shadow_maps[
-                    lights[i].shadow_map_depth_tex_i].
-                        sample(
-                            shadow_sampler,
-                            shadow_uv).r;
+                    shadow_maps[shadowmap_i].
+                            sample(
+                                shadow_sampler,
+                                shadow_uv).r;
             
             float frag_depth =
                 light_clip_pos.z / light_clip_pos.w;
             
             shadow_factors =
-                (frag_depth <= shadow_depth +
-                    SHADOW_BIAS) ?
+                (frag_depth <= shadow_depth + SHADOW_BIAS) ?
                 1.0f :
                 vector_float4(
                     globals->in_shadow_multipliers[0],
@@ -1354,8 +1370,7 @@ outlines_vertex_shader(
         lverts[locked_vertex_i].face_normal_xyz[1],
         lverts[locked_vertex_i].face_normal_xyz[2]);
     
-    out.outline_alpha =
-        polygons[polygon_i].f32.outline_alpha;
+    out.outline_alpha = polygons[polygon_i].f32s.outline_alpha;
     
     float4x4 m_4x4 = matrix_float4x4(
         matrices[polygon_i].m_4x4[ 0],

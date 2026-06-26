@@ -18,6 +18,9 @@ void T1_profiler_end(const char * function_name);
 /*
 GUI functions
 */
+// returns true if touch was overridden
+b8 T1_profiler_handle_lclick(
+    const s32 touch_id);
 void T1_profiler_handle_touches(void);
 
 void T1_profiler_draw_labels(void);

@@ -16,6 +16,7 @@
 #include "T1_objmodel.h"
 #include "T1_audio.h"
 #include "T1_zlight.h"
+#include "T1_particle.h"
 #include "T1_text.h"
 #include "T1_ui_widget.h"
 #include "T1_io.h"
@@ -416,10 +417,14 @@ void T1_appinit_before_gpu_init(
     T1_std_memset(
         T1_zlights,
         0,
-        sizeof(T1zLight) *
-            T1_ZLIGHTS_CAP);
+        sizeof(T1zLight) * T1_ZLIGHTS_CAP);
     
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_init();
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_gameloop_init();
     #if T1_TERM_ACTIVE == T1_ACTIVE

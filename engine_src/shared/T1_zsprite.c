@@ -347,7 +347,7 @@ void T1_zsprite_construct(
     to_construct->cpu_data->visible = true;
     
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    to_construct->gpu_data->f32.outline_alpha = -1.0f;
+    to_construct->gpu_data->f32s.outline_alpha = -1.0f;
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error

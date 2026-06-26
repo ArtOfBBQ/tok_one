@@ -62,7 +62,7 @@ T1_os_writable_filename_to_pathfile(
     const u32 recipient_capacity);
 
 void
-T1_os_open_dir_in_window_if_possible(
+T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath);
 
 // get current working directory
@@ -294,7 +294,7 @@ void T1_os_gpu_delete_depth_tex(
 #error
 #endif
 
-s32 T1_os_gpu_make_depth_tex(
+s16 T1_os_gpu_make_depth_tex(
     const u32 width,
     const u32 height);
 

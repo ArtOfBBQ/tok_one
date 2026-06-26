@@ -36,8 +36,7 @@ void T1_render_view_init(void) {
         sizeof(T1RenderViewCollection));
     
     for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
-        T1_render_views->cpu[i].write_array_i = -1;
-        T1_render_views->cpu[i].write_slice_i = -1;
+        T1_render_views->cpu[i].write_tex = T1_TEX_NONE;
         T1_render_views->cpu[i].clamped_to_T1_id = -1;
     }
 }
@@ -108,8 +107,7 @@ static void T1_render_view_construct(
     T1_std_memset(gpu, 0, sizeof(T1GPURenderView));
     
     cpu->clamped_to_T1_id = -1;
-    cpu->write_array_i = -1;
-    cpu->write_slice_i = -1;
+    cpu->write_tex = T1_TEX_NONE;
     
     cpu->height = height;
     cpu->width  = width;
@@ -260,6 +258,7 @@ void T1_render_view_update_positions(
         T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
         T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
         
+        #if T1_REFLECTION_ACTIVE == T1_ACTIVE
         if (rv->reflect_around_plane)
         {
             // Assuming the main camera is always at 0
@@ -283,6 +282,10 @@ void T1_render_view_update_positions(
             T1_render_views->gpu[rv_i].cull_above_z =
                 rv->refl_cam_around_plane_xyz[2];
         }
+        #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));
@@ -372,13 +375,11 @@ f32 T1_render_view_x_to_screen_x(
     const f32 x,
     const f32 given_z)
 {
-    const T1CPURenderView * cpu =
-        &T1_render_views->cpu[0];
+    const T1CPURenderView * cpu = &T1_render_views->cpu[0];
     
     f32 viewport_width  = (f32)cpu->width;
     f32 viewport_height = (f32)cpu->height;
-    f32 aspect_ratio =
-        viewport_width / viewport_height;
+    f32 aspect_ratio = viewport_width / viewport_height;
     
     const f32 vertical_fov_degrees = 75.0f;
     f32 half_fov_y_rad =

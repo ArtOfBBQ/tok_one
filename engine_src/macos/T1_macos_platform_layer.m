@@ -85,7 +85,7 @@ float T1_os_y_to_y(const float y) {
     return y;
 }
 
-void T1_os_open_dir_in_window_if_possible(
+void T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath)
 {
     T1_log_append("Trying to open folder: ");

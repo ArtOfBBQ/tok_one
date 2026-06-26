@@ -186,13 +186,13 @@ void T1_render_update(
     for (u32 rv_i = 0; rv_i < T1_render_views->size; rv_i++) {
         T1CPURenderView * rv = T1_render_views->cpu + rv_i;
         if (rv->clamped_to_T1_id >= 0) {
-            s32 zs_i = rv->clamped_to_T1_id;
+            s32 T1_id = rv->clamped_to_T1_id;
             
             T1_zsprite_get_pos_xyz(
-                zs_i,
-                &rv->dest_xyz[0],
-                &rv->dest_xyz[1],
-                &rv->dest_xyz[2]);
+                T1_id,
+                &rv->xyz[0],
+                &rv->xyz[1],
+                &rv->xyz[2]);
         }
     }
     

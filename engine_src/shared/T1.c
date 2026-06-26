@@ -12,6 +12,7 @@
 #include "T1_platform_layer.h"
 
 void T1_cam_set_us_to_dest(s32 cam_i, const u64 us) {
+    T1_log_assert(cam_i == 0); // TODO: remove this debug check
     T1_render_views->cpu[cam_i].us_to_destination = us; }
 void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval) {
     T1_render_views->cpu[cam_i].dest_xyz[i] = newval; }
@@ -29,30 +30,20 @@ void T1_cam_set_clamped_to_T1_id(s32 i, s32 T1_id) {
     T1_render_views->cpu[i].clamped_to_T1_id = T1_id; }
 void T1_cam_set_movement_enabled(s32 i, u8 newval) {
     T1_render_views->cpu[i].movement_enabled = newval; }
-s16 T1_cam_get_write_array_i(s32 i) {
-    return T1_render_views->cpu[i].write_array_i; }
-s16 T1_cam_get_write_slice_i(s32 i) {
-    return T1_render_views->cpu[i].write_slice_i; }
+T1Tex T1_cam_get_write_tex(s32 i) {
+    return T1_render_views->cpu[i].write_tex; }
 void T1_cam_reset(s32 at_i) {
     return T1_render_view_reset(at_i); }
 void T1_cam_delete(const s32 rv_i) {
-    if (
-        T1_render_views->cpu[rv_i].
-            write_array_i >= 0 &&
-        T1_render_views->cpu[rv_i].
-            write_slice_i >= 0)
+    T1Tex tex = T1_render_views->cpu[rv_i].write_tex;
+    if (tex != T1_TEX_NONE)
     {
         T1_tex_array_delete_slice(
             /* const s32 array_i: */
-                T1_render_views->cpu[rv_i].
-                    write_array_i,
+                T1_tex_to_array_i(tex),
             /* const s32 slice_i: */
-                T1_render_views->cpu[rv_i].
-                    write_slice_i);
-        T1_render_views->cpu[rv_i].
-            write_array_i = -1;
-        T1_render_views->cpu[rv_i].
-            write_slice_i = -1;
+                T1_tex_to_slice_i(tex));
+        T1_render_views->cpu[rv_i].write_tex = T1_TEX_NONE;
     }
     
     T1_render_view_delete(rv_i);
@@ -113,7 +104,7 @@ void T1_make_shadowmap_and_attach_to_light(
     T1_log_assert(new_rv_i >= 0);
     if (new_rv_i < 0) { return; }
     
-    s32 slice_i = T1_os_gpu_make_depth_tex(
+    s16 slice_i = T1_os_gpu_make_depth_tex(
         /* u32 width: */
             T1_render_views->cpu[new_rv_i].width,
         /* u32 height: */
@@ -127,28 +118,22 @@ void T1_make_shadowmap_and_attach_to_light(
     
     T1CPURenderView * shadowm_cpu =
         T1_render_views->cpu + new_rv_i;
-    T1_log_assert(shadowm_cpu->width == (u32)
-        new_cam_width);
-    T1_log_assert(shadowm_cpu->height == (u32)
-        new_cam_height);
-    shadowm_cpu->write_type =
-        T1RENDERVIEW_WRITE_DEPTH;
-    shadowm_cpu->write_array_i = T1_DEPTH_TEXTUREARRAYS_I;
-    shadowm_cpu->write_slice_i = slice_i;
+    T1_log_assert(shadowm_cpu->width == (u32)new_cam_width);
+    T1_log_assert(shadowm_cpu->height == (u32)new_cam_height);
+    shadowm_cpu->write_type = T1RENDERVIEW_WRITE_DEPTH;
+    shadowm_cpu->write_tex = 0;
+    T1_tex_set_array_i(&shadowm_cpu->write_tex, T1_DEPTH_TEXTUREARRAYS_I);
+    T1_tex_set_slice_i(&shadowm_cpu->write_tex, slice_i);
     
     shadowm_cpu->passes_size = 2;
-    shadowm_cpu->passes[0].type =
-        T1RENDERPASS_DIAMOND_ALPHA;
-    shadowm_cpu->passes[1].type =
-        T1RENDERPASS_ALPHA_BLEND;
+    shadowm_cpu->passes[0].type = T1RENDERPASS_DIAMOND_ALPHA;
+    shadowm_cpu->passes[1].type = T1RENDERPASS_ALPHA_BLEND;
     
-    T1_os_gpu_update_internal_render_viewport(
-        new_rv_i);
+    T1_os_gpu_update_internal_render_viewport(new_rv_i);
     
-    T1_zlights[zl_i].
-        shadow_map_depth_texture_i = slice_i;
-    T1_zlights[zl_i].
-        shadow_map_render_view_i = new_rv_i;
+    T1_log_assert(slice_i >= 0);
+    T1_zlights[zl_i].shadow_map_depth_texture_i = slice_i;
+    T1_zlights[zl_i].shadow_map_render_view_i = new_rv_i;
     
     T1_render_view_validate();
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
@@ -210,10 +195,12 @@ void T1_make_reflection_cam(
     
     T1_log_assert(refl_cpu->width == new_cam_w);
     T1_log_assert(refl_cpu->height == new_cam_h);
-    T1_log_assert(refl_cpu->write_array_i >= 0);
-    T1_log_assert(refl_cpu->write_array_i < T1_TEXARRAYS_CAP);
-    T1_log_assert(refl_cpu->write_slice_i >= 0);
-    T1_log_assert(refl_cpu->write_slice_i < (s32)T1_tex_arrays[refl_cpu->write_array_i].images_size);
+    T1_log_assert(refl_cpu->write_tex != T1_TEX_NONE);
+    
+    T1_log_assert(T1_tex_to_array_i(refl_cpu->write_tex) < T1_TEXARRAYS_CAP);
+    T1_log_assert(T1_tex_to_slice_i(refl_cpu->write_tex) >= 0);
+    T1_log_assert(T1_tex_to_slice_i(refl_cpu->write_tex) <
+        (s32)T1_tex_arrays[T1_tex_to_array_i(refl_cpu->write_tex)].images_size);
     
     refl_cpu->xyz[0]       = pos_x;
     refl_cpu->xyz[1]       = pos_y;
@@ -221,8 +208,13 @@ void T1_make_reflection_cam(
     refl_cpu->angle_xyz[0] = angle_x;
     refl_cpu->angle_xyz[1] = angle_y;
     refl_cpu->angle_xyz[2] = angle_z;
-        
+       
+    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
     refl_cpu->reflect_around_plane = true;
+    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     refl_cpu->refl_cam_around_plane_xyz[2] = reflection_z;
     
     refl_cpu->passes_size = 2;
@@ -287,25 +279,10 @@ void T1_texquad_make(T1MakeRequest * request) {
     tq_req.gpu->f32s.wh[0] = request->wh[0];
     tq_req.gpu->f32s.wh[1] = request->wh[1];
     tq_req.gpu->s32s.reserved_and_tex = 0x00000000 | request->tex;
+    tq_req.gpu->s32s.touch_id = request->touch_id;
     tq_req.gpu->f32s.rgba[0] = request->rgba[0];
     tq_req.gpu->f32s.rgba[1] = request->rgba[1];
     tq_req.gpu->f32s.rgba[2] = request->rgba[2];
     tq_req.gpu->f32s.rgba[3] = request->rgba[3];
     T1_texquad_commit(&tq_req);
-}
-
-/*
-INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
-*/
-f32 T1_io_get_mouse_scroll_pos(void) {
-    return T1_io->mouse_scroll_pos;
-}
-void  T1_io_set_mouse_scroll_pos(f32 new_val) {
-    T1_io->mouse_scroll_pos = new_val;
-}
-b8 T1_io_key_is_down_and_unhandled(T1IOKey key) {
-    return T1_io->keymap[key];
-}
-void T1_io_key_mark_handled(T1IOKey key) {
-    T1_io->keymap[key] = 0;
 }

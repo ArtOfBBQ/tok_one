@@ -17,34 +17,7 @@ typedef struct {
     f32 screen_x;
     f32 screen_y;
     u8 checked_touch_ids;
-    u8 handled;
 } T1IOEvent;
-
-// indexes in the interactions array
-#define T1_IO_LAST_GPU_DATA               0
-#define T1_IO_LAST_TOUCH_START            1
-#define T1_IO_LAST_TOUCH_END              2
-#define T1_IO_LAST_LCLICK_START           3
-#define T1_IO_LAST_LCLICK_END             4
-#define T1_IO_LAST_TOUCH_OR_LCLICK_START  5
-#define T1_IO_LAST_TOUCH_OR_LCLICK_END    6
-#define T1_IO_LAST_RCLICK_START           7
-#define T1_IO_LAST_RCLICK_END             8
-#define T1_IO_LAST_MOUSE_MOVE             9
-#define T1_IO_LAST_TOUCH_MOVE            10
-#define T1_IO_LAST_MOUSE_OR_TOUCH_MOVE   11
-
-// permanent size of the interactions array
-#define T1_IO_EVENTS_CAP 12
-#define T1_IO_KEYMAP_CAP 1000
-
-typedef struct {
-    T1IOEvent events[T1_IO_EVENTS_CAP];
-    f32 mouse_scroll_pos;
-    u8 keymap[T1_IO_KEYMAP_CAP];
-} T1IOState;
-
-extern T1IOState * T1_io;
 
 void
 T1_io_init(
@@ -59,13 +32,27 @@ T1_io_event_register(
     T1IOEvent * touch_record);
 
 void
-T1_io_register_keyup(u32 key_id);
+T1_io_register_keyup(const u32 key_id);
+void
+T1_io_register_keyup_force_up_short(const u32 key_id);
+void
+T1_io_register_keydown(const u32 key_id);
 
 void
-T1_io_register_keydown(u32 key_id);
+T1_io_register_mouse_move(const f32 screen_x, const f32 screen_y);
 
 void
-T1_io_register_mousescroll(const f32 amount);
+T1_io_update_and_clear_for_next_frame(void);
+
+/*
+Public functions (exposed via T1.h)
+*/
+b8  T1_io_key_is_down(T1IOKey key);
+b8  T1_io_key_consume_short_tap_this_frame(T1IOKey key);
+b8  T1_io_key_consume_long_tap_this_frame(T1IOKey key);
+f32 T1_io_get_mouse_x_this_frame(void);
+f32 T1_io_get_mouse_y_this_frame(void);
+s32 T1_io_get_mouse_touch_id_this_frame(void);
 
 #ifdef __cplusplus
 }

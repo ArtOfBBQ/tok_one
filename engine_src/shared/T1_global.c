@@ -17,7 +17,6 @@ T1_global_init(void) {
     
     T1_global->draw_imputed_normals   = false;
     T1_global->draw_fps               = false;
-    T1_global->draw_top_touchable_id  = false;
     T1_global->draw_triangles         =  true;
     T1_global->show_profiler          = false;
     T1_global->pause_profiler         = false;

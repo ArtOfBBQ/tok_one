@@ -19,7 +19,7 @@ u8 T1_apple_gpu_init(
     char * error_msg_string);
 
 // returns slice_i of new depth texture
-int32_t T1_apple_gpu_make_depth_tex(
+s16 T1_apple_gpu_make_depth_tex(
     u32 width,
     u32 height);
 

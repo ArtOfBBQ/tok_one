@@ -265,8 +265,11 @@ void T1_profiler_start(const char * function_name)
 
 void T1_profiler_end(const char * function_name)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     (void)function_name;
+    #elif T!_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if (
@@ -294,40 +297,26 @@ void T1_profiler_end(const char * function_name)
     }
 }
 
-void T1_profiler_handle_touches(void) {
+b8 T1_profiler_handle_lclick(
+    const s32 touch_id)
+{
     if (
-        !T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].handled)
+        touch_id == frame_selection_touch_ids[0])
     {
-        if (
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                touch_id_top == profiler_touch_id)
-        {
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                handled = true;
-            return;
-        }
-        
-        if (
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                touch_id_top == frame_selection_touch_ids[0])
-        {
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                handled = true;
-            gui_selected_frames[0] += 1;
-            gui_selected_frames[0] %= FRAMES_MAX;
-            return;
-        }
-        if (
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                touch_id_top == frame_selection_touch_ids[1])
-        {
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
-                handled = true;
-            gui_selected_frames[1] += 1;
-            gui_selected_frames[1] %= FRAMES_MAX;
-            return;
-        }
+        gui_selected_frames[0] += 1;
+        gui_selected_frames[0] %= FRAMES_MAX;
+        return true;
     }
+    
+    if (
+        touch_id == frame_selection_touch_ids[1])
+    {
+        gui_selected_frames[1] += 1;
+        gui_selected_frames[1] %= FRAMES_MAX;
+        return true;
+    }
+    
+    return false;
 }
 
 void T1_profiler_draw_labels(void) {

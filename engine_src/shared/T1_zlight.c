@@ -2,6 +2,7 @@
 
 #include "T1_simd.h"
 #include "T1_log.h"
+#include "T1_tex.h"
 #include "T1_render_view.h"
 
 T1zLight * T1_zlights = NULL;
@@ -197,9 +198,11 @@ T1_zlight_update_all_attached_render_views(void)
             i++)
         {
             if (
-                T1_render_views->cpu[i].write_array_i ==
-                    T1_DEPTH_TEXTUREARRAYS_I &&
-                T1_render_views->cpu[i].write_slice_i ==
+                T1_tex_to_array_i(
+                    T1_render_views->cpu[i].write_tex) ==
+                        T1_DEPTH_TEXTUREARRAYS_I &&
+                T1_tex_to_slice_i(
+                    T1_render_views->cpu[i].write_tex) ==
                     depth_i)
             {
                 rv_i = i;

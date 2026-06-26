@@ -46,7 +46,7 @@ typedef struct {
     id locked_mats32_buffer;
     id projection_constants_buffer;
     
-    id<MTLTexture> cam_depth_texture;
+    // id<MTLTexture> cam_depth_texture;
     id<MTLTexture> depth_textures[T1_RENDER_VIEW_CAP];
     
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
@@ -704,12 +704,12 @@ u8 T1_apple_gpu_init(
     }
     
     for (
-        u32 frame_i = 0;
-        frame_i < T1_FRAMES_CAP;
-        frame_i++)
+        u32 fram_i = 0;
+        fram_i < T1_FRAMES_CAP;
+        fram_i++)
     {
         T1GPUFrame * f = &T1_cpu_to_gpu_data->
-            triple_buffers[frame_i];
+            triple_buffers[fram_i];
         
         T1_log_assert(
             T1_cpu_to_gpu_data->
@@ -731,7 +731,7 @@ u8 T1_apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        ags->polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        ags->polygon_buffers[fram_i] = MTLBufferFramePolygons;
         
         id<MTLBuffer> MTLBufferFrameMatrices =
             [with_metal_device
@@ -746,7 +746,7 @@ u8 T1_apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        ags->matrix_buffers[frame_i] = MTLBufferFrameMatrices;
+        ags->matrix_buffers[fram_i] = MTLBufferFrameMatrices;
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
@@ -762,7 +762,7 @@ u8 T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->vertex_buffers[frame_i] = MTLBufferFrameVertices;
+        ags->vertex_buffers[fram_i] = MTLBufferFrameVertices;
         
         id<MTLBuffer> MTLBufferFrameCircles =
             [with_metal_device
@@ -778,7 +778,7 @@ u8 T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->flat_quad_buffers[frame_i] =
+        ags->flat_quad_buffers[fram_i] =
             MTLBufferFrameCircles;
         
         id<MTLBuffer> MTLBufferTexQuads =
@@ -796,7 +796,7 @@ u8 T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->flat_texquad_buffers[frame_i] =
+        ags->flat_texquad_buffers[fram_i] =
             MTLBufferTexQuads;
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
@@ -815,7 +815,7 @@ u8 T1_apple_gpu_init(
                         nil];
         T1_log_assert(MTLBufferPostProcessingConstants != nil);
         
-        ags->postprocessing_constants_buffers[frame_i] =
+        ags->postprocessing_constants_buffers[fram_i] =
             MTLBufferPostProcessingConstants;
         
         id<MTLBuffer> MTLBufferFrameLights =
@@ -832,7 +832,7 @@ u8 T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->light_buffers[frame_i] =
+        ags->light_buffers[fram_i] =
             MTLBufferFrameLights;
         
         T1_log_assert(
@@ -853,7 +853,7 @@ u8 T1_apple_gpu_init(
                 deallocator:
                     nil];
         
-        ags->cam_buffers[frame_i] =
+        ags->cam_buffers[fram_i] =
             MTLBufferFrameCamera;
     }
     
@@ -1104,7 +1104,7 @@ void T1_os_gpu_get_device_name(
 }
 
 void T1_os_gpu_update_capacity_if_needed(
-    const int32_t tex_array_i)
+    const s32 tex_array_i)
 {
     T1_log_assert(tex_array_i >=  0);
     T1_log_assert(tex_array_i <  31);
@@ -1167,15 +1167,14 @@ void T1_os_gpu_update_capacity_if_needed(
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
-    texture_descriptor.textureType =
-        MTLTextureType2DArray;
-    texture_descriptor.arrayLength =
-        T1_tex_arrays[tex_array_i].images_size;
-    texture_descriptor.pixelFormat = T1_tex_arrays[tex_array_i].bc1_compressed ?
-        MTLPixelFormatBC1_RGBA :
-        MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.storageMode =
-        MTLStorageModePrivate;
+    texture_descriptor.textureType = MTLTextureType2DArray;
+    texture_descriptor.arrayLength = T1_tex_arrays[tex_array_i].
+        images_size;
+    texture_descriptor.pixelFormat = T1_tex_arrays[tex_array_i].
+        bc1_compressed ?
+            MTLPixelFormatBC1_RGBA :
+            MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.storageMode = MTLStorageModePrivate;
     
     if (T1_tex_arrays[tex_array_i].is_render_target)
     {
@@ -1230,7 +1229,7 @@ void T1_os_gpu_update_capacity_if_needed(
 
 // returns the slice_i of the new depth texture
 // in the array of depth textures
-int32_t
+s16
 T1_os_gpu_make_depth_tex(
     const u32 width,
     const u32 height)
@@ -1261,15 +1260,13 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
     u32 win_width  = (u32)T1_global->window_wh[0];
     u32 win_height = (u32)T1_global->window_wh[1];
     
-    u32 screen_x_adj = (u32)(
-        (screen_x * rtt_width) /
-            win_width);
+    u32 screen_x_adj = (u32)((screen_x * rtt_width) /
+        win_width);
     u32 screen_y_adj = (u32)(
         ((win_height - screen_y) * rtt_height) /
-            win_height);
+        win_height);
     
-    if (screen_x_adj >= rtt_width )
-    {
+    if (screen_x_adj >= rtt_width ) {
         screen_x_adj = rtt_width;
     }
     if (screen_y_adj >= rtt_height)
@@ -1280,8 +1277,7 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
     u8 * data = (u8 *)[ags->touch_id_buffer contents];
     u64 size = [ags->touch_id_buffer allocatedSize];
     
-    u32 pixel_i =
-        (screen_y_adj * rtt_width) + screen_x_adj;
+    u32 pixel_i = (screen_y_adj * rtt_width) + screen_x_adj;
     
     if (((pixel_i * 4) + 3) >= size)
     {
@@ -1299,7 +1295,7 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
         (third_8bits  << 16) |
         (second_8bits << 8) |
         first_8bits;
-    int32_t final_id = *(int32_t *)&uid;
+    s32 final_id = *(s32 *)&uid;
     
     if (final_id < -1) { final_id = -1; }
     
@@ -1307,7 +1303,7 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
 }
 
 void T1_os_gpu_delete_texture_array(
-    const int32_t array_i)
+    const s32 array_i)
 {
     T1_log_assert(array_i != T1_DEPTH_TEXTUREARRAYS_I);
     
@@ -1315,7 +1311,7 @@ void T1_os_gpu_delete_texture_array(
 }
 
 void T1_os_gpu_delete_depth_tex(
-    const int32_t slice_i)
+    const s32 slice_i)
 {
     T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
     
@@ -1324,8 +1320,8 @@ void T1_os_gpu_delete_depth_tex(
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_os_gpu_fetch_rgba_at(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
+    const s32 texture_array_i,
+    const s32 texture_i,
     u8 * rgba_recipient,
     u32 * recipient_size,
     u32 * recipient_width,
@@ -1379,7 +1375,7 @@ void T1_os_gpu_fetch_rgba_at(
         return;
     }
     
-    if (texture_i >= (int32_t)texture.arrayLength) {
+    if (texture_i >= (s32)texture.arrayLength) {
         return;
     }
     
@@ -1445,7 +1441,7 @@ void T1_os_gpu_fetch_rgba_at(
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_os_gpu_generate_mipmaps_for_texture_array(
-    const int32_t texture_array_i)
+    const s32 texture_array_i)
 {
     // no mipmaps for font
     log_assert(texture_array_i != 0);
@@ -1482,8 +1478,8 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 
 void
 T1_os_gpu_push_tex_slice_and_free_rgba(
-    const int32_t tex_array_i,
-    const int32_t tex_slice_i)
+    const s32 tex_array_i,
+    const s32 tex_slice_i)
 {
     u8 * rgba_freeable =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_freeable;
@@ -1672,8 +1668,8 @@ void T1_os_gpu_copy_locked_materials(void)
 
 static id<MTLTexture>
 get_tex_slice(
-    const int32_t at_array_i,
-    const int32_t at_slice_i)
+    const s32 at_array_i,
+    const s32 at_slice_i)
 {
     T1_log_assert(at_array_i >= 0);
     T1_log_assert(at_array_i < T1_TEXARRAYS_CAP);
@@ -1704,23 +1700,19 @@ get_tex_slice(
 static void
 set_defaults_for_render_descriptor(
     MTLRenderPassDescriptor * desc,
-    const int32_t cam_i)
+    const s32 cam_i)
 {
     if (!ags->zbuf_cleared) {
-        desc.depthAttachment.
-            loadAction = MTLLoadActionClear;
-        desc.depthAttachment.
-            clearDepth = 1.0f;
+        desc.depthAttachment.loadAction = MTLLoadActionClear;
+        desc.depthAttachment.clearDepth = 1.0f;
         
         ags->zbuf_cleared = true;
     } else {
-        desc.depthAttachment.
-            loadAction = MTLLoadActionLoad;
+        desc.depthAttachment.loadAction = MTLLoadActionLoad;
     }
-    desc.depthAttachment.
-        storeAction = MTLStoreActionStore;
-    desc.depthAttachment.texture =
-        ags->cur_depth;
+    T1_log_assert(ags->cur_depth != nil);
+    desc.depthAttachment. storeAction = MTLStoreActionStore;
+    desc.depthAttachment.texture = ags->cur_depth;
     
     if (!ags->rtt_cleared) {
         desc.colorAttachments[0].loadAction = MTLLoadActionClear;
@@ -1932,6 +1924,7 @@ static void set_defaults_for_encoder(
     ags->window_viewport.znear = 0.001f;
     ags->window_viewport.zfar = 1.0f;
     
+    #if 0
     MTLTextureDescriptor * camera_depth_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
@@ -1948,9 +1941,10 @@ static void set_defaults_for_encoder(
     ags->cam_depth_texture =
         [ags->device newTextureWithDescriptor:
             camera_depth_texture_descriptor];
+    #endif
 }
 
-- (void) updateRenderViewSize: (int)at_i
+- (void) updateRenderViewSize: (s32)at_i
 {
     T1_log_assert(at_i >= 0);
     T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
@@ -1974,6 +1968,21 @@ static void set_defaults_for_encoder(
     ags->render_viewports[at_i].zfar = 1.0f;
     
     ags->viewports_set[at_i] = true;
+    
+    MTLTextureDescriptor * zbufer_desc =
+        [[MTLTextureDescriptor alloc] init];
+    zbufer_desc.textureType = MTLTextureType2D;
+    zbufer_desc.pixelFormat = MTLPixelFormatDepth32Float;
+    zbufer_desc.width = T1_render_views->cpu[at_i].width;
+    zbufer_desc.height = T1_render_views->cpu[at_i].height;
+    zbufer_desc.storageMode = MTLStorageModePrivate;
+    zbufer_desc.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    ags->depth_textures[at_i] =
+        [ags->device newTextureWithDescriptor:
+            zbufer_desc];
     
     if (at_i != 0) { return; }
     
@@ -2011,7 +2020,7 @@ static void set_defaults_for_encoder(
             touch_buffer_size_bytes
         options:
             MTLResourceStorageModeShared];
-    int32_t minus_one = -1;
+    s32 minus_one = -1;
     T1_std_memset_s32(
         ags->touch_id_buffer_all_zeros.contents,
         minus_one,
@@ -2062,8 +2071,8 @@ static void set_defaults_for_encoder(
     #endif
 }
 
--(void)drawSinglePass:(int32_t)pass_i
-    forCamera: (int32_t)cam_i
+-(void)drawSinglePass:(s32)pass_i
+    forCamera: (s32)cam_i
     withView: (MTKView *)view
     withComBuf: (id<MTLCommandBuffer>)combuf
 {
@@ -2518,10 +2527,7 @@ static void set_defaults_for_encoder(
     }
     
     T1_log_assert(
-        T1_render_views->cpu[0].write_array_i >= 0);
-    T1_log_assert(
-        T1_render_views->cpu[0].write_array_i <
-            (int)T1_tex_arrays_size);
+        T1_render_views->cpu[0].write_tex != T1_TEX_NONE);
     
     #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
@@ -2552,8 +2558,7 @@ static void set_defaults_for_encoder(
         return;
     }
     
-    id<MTLCommandBuffer> combuf =
-        [ags->command_queue commandBuffer];
+    id<MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
     if (combuf == nil) {
         #if T1_LOGGER_ASSERTS_ACTIVE
@@ -2598,8 +2603,8 @@ static void set_defaults_for_encoder(
     [clear_touch_tex_blit_enc endEncoding];
     
     for (
-        int32_t cam_i =
-            (int32_t)f->render_views_size - 1;
+        s32 cam_i =
+            (s32)f->render_views_size - 1;
         cam_i >= 0;
         cam_i--)
     {
@@ -2630,75 +2635,54 @@ static void set_defaults_for_encoder(
             break;
             case T1RENDERVIEW_WRITE_RENDER_TARGET:
             {
-                ags->cur_rtt =
-                    get_tex_slice(
-                        T1_render_views->cpu[cam_i].
-                            write_array_i,
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i);
+                ags->cur_rtt = get_tex_slice(
+                    T1_tex_to_array_i(
+                        T1_render_views->cpu[cam_i].write_tex),
+                    T1_tex_to_slice_i(
+                        T1_render_views->cpu[cam_i].write_tex));
                 if (ags->cur_rtt == nil) {
                     continue;
                 }
                 
-                ags->cur_depth =
-                    ags->cam_depth_texture;
-                ags->cur_opq_pls =
-                    ags->diamond_touch_pls;
-                ags->cur_blnd_pls =
-                    ags->blend_touch_pls;
-                ags->cur_bloom_pls =
-                    ags->blend_touch_pls;
-                ags->cur_bb_pls =
-                    ags->bb_touch_pls;
-                ags->cur_flat_texquad_pls =
-                    ags->flat_texquad_touch_pls;
+                ags->cur_depth = ags->depth_textures[0];
+                T1_log_assert(ags->cur_depth != nil);
+                ags->cur_opq_pls = ags->diamond_touch_pls;
+                ags->cur_blnd_pls = ags->blend_touch_pls;
+                ags->cur_bloom_pls = ags->blend_touch_pls;
+                ags->cur_bb_pls = ags->bb_touch_pls;
+                ags->cur_flat_texquad_pls = ags->flat_texquad_touch_pls;
             }
             break;
             case T1RENDERVIEW_WRITE_RGBA:
             {
                 ags->cur_rtt =
                     get_tex_slice(
-                        T1_render_views->cpu[cam_i].
-                            write_array_i,
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i);
+                        T1_tex_to_array_i(T1_render_views->cpu[cam_i].write_tex),
+                        T1_tex_to_slice_i(T1_render_views->cpu[cam_i].write_tex));
                 T1_log_assert(ags->cur_rtt != NULL);
-                ags->cur_depth =
-                    ags->cam_depth_texture;
-                ags->cur_opq_pls =
-                    ags->diamond_notouch_pls;
-                ags->cur_blnd_pls =
-                    ags->blend_notouch_pls;
-                ags->cur_bloom_pls =
-                    ags->blend_notouch_pls;
-                ags->cur_bb_pls =
-                    ags->bb_notouch_pls;
+                ags->cur_depth = ags->depth_textures[cam_i];
+                ags->cur_opq_pls = ags->diamond_notouch_pls;
+                ags->cur_blnd_pls = ags->blend_notouch_pls;
+                ags->cur_bloom_pls = ags->blend_notouch_pls;
+                ags->cur_bb_pls = ags->bb_notouch_pls;
             }
             break;
             case T1RENDERVIEW_WRITE_DEPTH:
             {
-                T1_log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_array_i ==
-                            T1_DEPTH_TEXTUREARRAYS_I);
-                T1_log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_slice_i >= 0);
-                T1_log_assert(
-                    T1_render_views->cpu[cam_i].
-                        write_slice_i <
-                            T1_RENDER_VIEW_CAP);
+                s16 array_i = T1_tex_to_array_i(
+                    T1_render_views->cpu[cam_i].write_tex);
+                s16 slice_i = T1_tex_to_slice_i(
+                    T1_render_views->cpu[cam_i].write_tex);
+                T1_log_assert(array_i == T1_DEPTH_TEXTUREARRAYS_I);
+                T1_log_assert(slice_i >= 0);
+                T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
                 ags->cur_rtt = nil;
-                ags->cur_depth = ags->
-                    depth_textures[
-                        T1_render_views->cpu[cam_i].
-                            write_slice_i];
+                ags->cur_depth = ags->depth_textures[slice_i];
                 
                 T1_log_assert(ags->cur_depth != nil);
                 T1_log_assert(
                     (ags->cur_depth.usage &
-                        MTLTextureUsageRenderTarget)
-                            > 0);
+                        MTLTextureUsageRenderTarget) > 0);
                 ags->cur_opq_pls =
                     ags->depth_only_pls;
                 ags->cur_blnd_pls =
@@ -2716,7 +2700,7 @@ static void set_defaults_for_encoder(
         }
         
         for (
-            int32_t pass_i = 0;
+            s32 pass_i = 0;
             pass_i < T1_render_views->
                 cpu[cam_i].passes_size;
             pass_i++)
@@ -2730,10 +2714,10 @@ static void set_defaults_for_encoder(
         
         T1_log_assert(ags->viewports_set[cam_i]);
         
-        T1_log_assert(T1_render_views->cpu[cam_i].
-            write_array_i >= 1);
-        T1_log_assert(T1_render_views->cpu[cam_i].
-            write_slice_i >= 0);
+        T1_log_assert(T1_tex_to_array_i(T1_render_views->cpu[cam_i].
+            write_tex) >= 1);
+        T1_log_assert(T1_tex_to_slice_i(T1_render_views->cpu[cam_i].
+            write_tex) >= 0);
     }
     
     // copy the touch id buffer for CPU use
@@ -2792,11 +2776,14 @@ static void set_defaults_for_encoder(
         atIndex:1];
     
     // The main camera must have a target to write to
-    T1_log_assert(T1_render_views->cpu[0].write_array_i >= 0);
-    T1_log_assert(T1_render_views->cpu[0].write_array_i < (int)T1_tex_arrays_size);
+    T1_log_assert(
+        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) >= 0);
+    T1_log_assert(
+        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) <
+            (s32)T1_tex_arrays_size);
     
     id<MTLTexture> arr_tex = ags->metal_textures[
-        T1_render_views->cpu[0].write_array_i];
+        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex)];
     id<MTLTexture> sliced_tex = [arr_tex
         newTextureViewWithPixelFormat:
             arr_tex.pixelFormat
@@ -2806,8 +2793,8 @@ static void set_defaults_for_encoder(
             NSMakeRange(0, arr_tex.mipmapLevelCount)
         slices:
             NSMakeRange(
-                (NSUInteger)T1_render_views->cpu[0].
-                    write_slice_i,
+                (NSUInteger)T1_tex_to_slice_i(
+                    T1_render_views->cpu[0].write_tex),
                 1)];
     [pass_5_comp
         setFragmentTexture: sliced_tex
@@ -2836,10 +2823,10 @@ static void set_defaults_for_encoder(
     #error
     #endif
     
-    int32_t perlin_ta_i =
+    s32 perlin_ta_i =
         f->postproc_consts->perlin_texturearray_i;
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    int32_t perlin_t_i =
+    s32 perlin_t_i =
         f->postproc_consts->perlin_texture_i;
     // log_assert(perlin_ta_i >= 1);
     T1_log_assert(perlin_t_i == 0);
@@ -2854,7 +2841,7 @@ static void set_defaults_for_encoder(
     #endif
     
     [pass_5_comp
-        setFragmentTexture: ags->cam_depth_texture
+        setFragmentTexture: ags->depth_textures[0]
         atIndex: T1_CAM_DEPTH_FRAGARG_I];
     [pass_5_comp
         drawPrimitives:MTLPrimitiveTypeTriangle
@@ -2890,7 +2877,7 @@ static void set_defaults_for_encoder(
 @end
 
 void T1_os_gpu_update_internal_render_viewport(
-    const int32_t at_i)
+    const s32 at_i)
 {
     T1_log_assert(at_i >= 0);
     T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
@@ -2904,11 +2891,11 @@ void T1_os_gpu_update_window_viewport(void)
     [apple_gpu_delegate updateFinalWindowSize];
 }
 
-int32_t T1_apple_gpu_make_depth_tex(
+s16 T1_apple_gpu_make_depth_tex(
     const u32 width,
     const u32 height)
 {
-    int32_t slice_i = 0;
+    s16 slice_i = 0;
     while (ags->depth_textures[slice_i] != nil) {
         slice_i += 1;
         T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);

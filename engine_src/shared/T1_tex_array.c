@@ -331,10 +331,8 @@ s32 T1_tex_array_create_new_render_view(
         /* const u32 use_bc1_compression: */
             false);
     
-    T1_render_views->cpu[rv_i].write_array_i = T1_tex_to_array_i(tex);
-    T1_render_views->cpu[rv_i].write_slice_i = T1_tex_to_slice_i(tex);
-    T1_log_assert(T1_render_views->cpu[rv_i].write_array_i >= 1);
-    T1_log_assert(T1_render_views->cpu[rv_i].write_slice_i >= 0);
+    T1_render_views->cpu[rv_i].write_tex = tex;
+    T1_log_assert(T1_render_views->cpu[rv_i].write_tex != T1_TEX_NONE);
     
     T1_log_assert((s32)T1_tex_arrays[T1_tex_to_array_i(tex)].images_size > T1_tex_to_slice_i(tex));
     T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].deleted);

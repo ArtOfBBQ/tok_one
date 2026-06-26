@@ -56,7 +56,10 @@ extern T1UIWidgetProps * T1_ui_widget_next_props;
 // allocates memory for state
 void T1_ui_widget_init(void);
 
+b8 T1_ui_widget_handle_lclick(void);
+#if 0
 void T1_ui_widget_handle_touches(u64 ms_elapsed);
+#endif
 
 /*
 A slider linked to a f32 of your choice, for the user to slide left/right to

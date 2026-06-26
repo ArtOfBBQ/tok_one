@@ -302,7 +302,7 @@ void T1_term_render(void) {
 
 void T1_term_sendchar(u32 to_send) {
     
-    if (to_send == T1_IO_KEY_ESCAPE) {
+    if (to_send == T1_IO_KEYBOARD_ESCAPE) {
         // ESC key
         T1_trms->cur_command[0] = '\0';
         T1_term_active = false;
@@ -318,7 +318,7 @@ void T1_term_sendchar(u32 to_send) {
         last_i++;
     }
     
-    if (to_send == T1_IO_KEY_SPACEBAR)
+    if (to_send == T1_IO_KEYBOARD_SPACEBAR)
     {
         T1_trms->cur_command[last_i] = ' ';
         last_i++;
@@ -327,7 +327,7 @@ void T1_term_sendchar(u32 to_send) {
     }
     
     if (
-        to_send == T1_IO_KEY_BACKSPACE &&
+        to_send == T1_IO_KEYBOARD_BACKSPACE &&
         last_i > 0)
     {
         T1_trms->cur_command[last_i - 1] = '\0';
@@ -782,30 +782,6 @@ static u8 T1_term_evaluate(
     }
     
     if (
-        T1_std_are_equal_strings(command, "DRAW TOP TOUCHABLE") ||
-        T1_std_are_equal_strings(command, "DRAW TOP") ||
-        T1_std_are_equal_strings(command, "SHOW TOP"))
-    {
-        T1_global->draw_top_touchable_id =
-            !T1_global->draw_top_touchable_id;
-        
-        if (T1_global->draw_top_touchable_id) {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Drawing the top touchable_id...");
-        } else {
-            T1_texquad_delete(T1_ID_FPS_COUNTER);
-            
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Stopped drawing the top touchable_id...");
-        }
-        return true;
-    }
-    
-    if (
         T1_std_are_equal_strings(command, "DRAW FPS") ||
         T1_std_are_equal_strings(command, "FPS") ||
         T1_std_are_equal_strings(command, "SHOW FPS"))
@@ -823,6 +799,28 @@ static u8 T1_term_evaluate(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the fps counter...");
+        }
+        return true;
+    }
+    
+    if (
+        T1_std_are_equal_strings(command, "DRAW TOUCH") ||
+        T1_std_are_equal_strings(command, "DRAW TOUCH ID") ||
+        T1_std_are_equal_strings(command, "DRAW TOUCH_ID"))
+    {
+        T1_global->draw_touch_id = !T1_global->draw_touch_id;
+        
+        if (T1_global->draw_touch_id) {
+            T1_std_strcpy_cap(
+                response,
+                T1_TERM_SINGLE_LINE_MAX,
+                "Drawing the touch_id...");
+        } else {
+            T1_texquad_delete(T1_ID_FPS_COUNTER);
+            T1_std_strcpy_cap(
+                response,
+                T1_TERM_SINGLE_LINE_MAX,
+                "Stopped drawing the touch_id...");
         }
         return true;
     }
@@ -925,7 +923,7 @@ static u8 T1_term_evaluate(
     {
         char writables_path[512];
         T1_os_get_writables_dir(writables_path, 512);
-        T1_os_open_dir_in_window_if_possible(writables_path);
+        T1_os_open_dir_in_file_explorer_window_if_possible(writables_path);
         
         return true;
     }

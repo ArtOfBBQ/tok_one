@@ -7,7 +7,13 @@
 #define T1_CAM_DEPTH_FRAGARG_I 30
 #define T1_SHADOW_MAPS_1ST_FRAGARG_I 31
 
-#define T1_DEPTH_TEXTUREARRAYS_I 1000
+/*
+This isn't a real texture array!
+it's used as the write_array_i of a render view that
+doesn't have an RGBA output but does output a depth
+texture, such as a shadow map
+*/
+#define T1_DEPTH_TEXTUREARRAYS_I 31 
 
 #define T1_DOWNSAMPLES_SIZE 5
 #define T1_DOWNSAMPLES_CUTOFF 4

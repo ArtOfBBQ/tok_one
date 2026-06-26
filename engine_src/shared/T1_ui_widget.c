@@ -441,6 +441,13 @@ static void redraw_dirty_labels(void) {
     }
 }
 
+b8 T1_ui_widget_handle_lclick(void) {
+    T1_log_assert(0);
+    
+    return false;
+}
+
+#if 0
 void T1_ui_widget_handle_touches(u64 ms_elapsed)
 {
     (void)ms_elapsed;
@@ -469,11 +476,11 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                 T1_ui_widget_list[elem_i].
                     slideable &&
                 T1_io->events
-                    [T1_IO_LAST_TOUCH_OR_LCLICK_START].touch_id_top ==
+                    [T1_IO_TOUCH_OR_LCLICK_START].touch_id_top ==
                 T1_ui_widget_list[elem_i].touch_id)
             {
                 T1_io->events
-                    [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                    [T1_IO_TOUCH_OR_LCLICK_START].
                         handled = true;
                 ui_elem_i = elem_i;
                 break;
@@ -494,7 +501,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                 T1_ui_widget_get_pin_pos_given_mouse(
                 T1_ui_widget_list + ui_elem_i,
                 T1_io->events
-                    [T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].screen_x,
+                    [T1_IO_MOUSE_OR_TOUCH_MOVE].screen_x,
                 &pin_pct);
             
             T1TexQuadAnim * slide = T1_texquad_anim_request_next(true);
@@ -587,7 +594,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
     }
     
     if (
-        !T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+        !T1_io->events[T1_IO_TOUCH_OR_LCLICK_END].
             handled)
     {
         if (T1_ui_widget_sliding_touch_id >= 0)
@@ -608,12 +615,12 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                     !T1_ui_widget_list[ui_elem_i].deleted &&
                     T1_ui_widget_list[ui_elem_i].
                         clicked_funcptr != NULL &&
-                    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                    T1_io->events[T1_IO_TOUCH_OR_LCLICK_END].
                         touch_id_top ==
                     T1_ui_widget_list[ui_elem_i].
                         touch_id)
                 {
-                    T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                    T1_io->events[T1_IO_TOUCH_OR_LCLICK_END].
                         handled = true;
                     T1_ui_widget_list[ui_elem_i].
                         clicked_funcptr(
@@ -627,13 +634,13 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
     }
     
     if (
-        !T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+        !T1_io->events[T1_IO_TOUCH_OR_LCLICK_START].
             handled)
     {
         if (
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+            T1_io->events[T1_IO_TOUCH_OR_LCLICK_START].
                 touch_id_top >= 0 &&
-            T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+            T1_io->events[T1_IO_TOUCH_OR_LCLICK_START].
                 touch_id_top < T1_ID_LAST_UI_TOUCH)
         {
             for (
@@ -644,7 +651,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                 if (
                     T1_ui_widget_list[i].deleted ||
                     T1_io->events
-                        [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                        [T1_IO_TOUCH_OR_LCLICK_START].
                             touch_id_top !=
                     T1_ui_widget_list[i].touch_id)
                 {
@@ -657,7 +664,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                         T1_ui_widget_list[i].
                             touch_id;
                     T1_io->events
-                        [T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                        [T1_IO_TOUCH_OR_LCLICK_END].
                             handled = true;
                 }
                 
@@ -683,7 +690,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                      #endif
                 }
                 
-                T1_io->events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                T1_io->events[T1_IO_TOUCH_OR_LCLICK_START].
                     handled = true;
             }
         }
@@ -691,6 +698,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
     
     redraw_dirty_labels();
 }
+#endif
 
 void T1_ui_widget_request_slider(
     const s32 back_T1_id,

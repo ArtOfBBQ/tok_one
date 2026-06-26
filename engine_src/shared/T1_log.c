@@ -281,7 +281,6 @@ T1_log_dump_and_crash(
     #error
     #endif
     
-    
     T1_log_app_running = false;
 }
 

@@ -53,10 +53,14 @@ typedef struct {
     s32 clamped_to_T1_id;
     u32 width;
     u32 height;
-    s16 write_array_i;
-    s16 write_slice_i;
+    T1Tex write_tex;
     u8  passes_size;
+    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
     u8  reflect_around_plane;
+    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     u8  movement_enabled;
     u8  deleted;
 } T1CPURenderView;
