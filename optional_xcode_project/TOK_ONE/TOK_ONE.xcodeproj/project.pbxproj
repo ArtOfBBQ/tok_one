@@ -82,10 +82,11 @@
 		EC2914A12EEE200B00D3873E /* T1_frame_anim.c in Sources */ = {isa = PBXBuildFile; fileRef = EC2914A02EEE200B00D3873E /* T1_frame_anim.c */; };
 		EC31932529DFAAFB00E320CD /* T1_particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* T1_particle.c */; };
 		EC3DF27A2F197AE40049AA47 /* T1_texquad.c in Sources */ = {isa = PBXBuildFile; fileRef = EC3DF2792F197AE40049AA47 /* T1_texquad.c */; };
-		EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */; };
+		EC4040DB2E5431C000264128 /* client_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4040D92E5431C000264128 /* client_particledesigner.c */; };
 		EC4186E82E8F0739007FF019 /* T1_easing.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4186E72E8F0739007FF019 /* T1_easing.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
+		EC5B9C7F2FEF6F3A00C35D26 /* T1_settings.c in Sources */ = {isa = PBXBuildFile; fileRef = EC5B9C7E2FEF6F3A00C35D26 /* T1_settings.c */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -100,7 +101,7 @@
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
 		EC6E12172A03BD90004E7BD1 /* T1_ui_widget.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */; };
-		EC6E121B2A04CE13004E7BD1 /* T1_zspriteid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */; };
+		EC6E121B2A04CE13004E7BD1 /* T1_id.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* T1_id.c */; };
 		EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
 		EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
@@ -168,7 +169,7 @@
 		6011286C2862511500F92967 /* T1_render.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_render.c; path = ../../engine_src/shared/T1_render.c; sourceTree = "<group>"; };
 		6011286E2862511600F92967 /* T1_global.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_global.c; path = ../../engine_src/shared/T1_global.c; sourceTree = "<group>"; };
 		6011286F2862511600F92967 /* T1_std.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_std.c; path = ../../engine_src/shared/T1_std.c; sourceTree = "<group>"; };
-		601128702862511600F92967 /* clientlogic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic.c; path = ../../sampleproject_src/clientlogic.c; sourceTree = "<group>"; };
+		601128702862511600F92967 /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = client.c; path = ../../sampleproject_src/client.c; sourceTree = "<group>"; };
 		601128712862511600F92967 /* T1_zlight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_zlight.h; path = ../../engine_src/shared/T1_zlight.h; sourceTree = "<group>"; };
 		601128742862511600F92967 /* T1_text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_text.c; path = ../../engine_src/shared/T1_text.c; sourceTree = "<group>"; };
 		601128752862511600F92967 /* T1_log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_log.h; path = ../../engine_src/shared/T1_log.h; sourceTree = "<group>"; };
@@ -214,20 +215,23 @@
 		EC18FF4129E3DC8B00ED785C /* blob1.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = blob1.png; path = ../../resources/blob1.png; sourceTree = "<group>"; };
 		EC18FF4429E3DD8900ED785C /* blob2.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = blob2.png; path = ../../resources/blob2.png; sourceTree = "<group>"; };
 		EC18FF4529E3DD8900ED785C /* blob3.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = blob3.png; path = ../../resources/blob3.png; sourceTree = "<group>"; };
-		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC29149C2EEE1FFB00D3873E /* T1_io.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_io.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_io.h; sourceTree = "<absolute>"; };
 		EC29149D2EEE1FFB00D3873E /* T1_io.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_io.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_io.c; sourceTree = "<absolute>"; };
 		EC29149F2EEE200B00D3873E /* T1_frame_anim.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_frame_anim.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_frame_anim.h; sourceTree = "<absolute>"; };
 		EC2914A02EEE200B00D3873E /* T1_frame_anim.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_frame_anim.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_frame_anim.c; sourceTree = "<absolute>"; };
-		EC2914A22EEE211300D3873E /* T1_clientlogic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_clientlogic.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_clientlogic.h; sourceTree = "<absolute>"; };
 		EC31932229DFAAFB00E320CD /* T1_particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_particle.h; path = ../../engine_src/shared/T1_particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* T1_particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_particle.c; path = ../../engine_src/shared/T1_particle.c; sourceTree = "<group>"; };
 		EC3DF2782F197AE40049AA47 /* T1_texquad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_texquad.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad.h; sourceTree = "<absolute>"; };
 		EC3DF2792F197AE40049AA47 /* T1_texquad.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_texquad.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_texquad.c; sourceTree = "<absolute>"; };
-		EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<absolute>"; };
+		EC4040D92E5431C000264128 /* client_particledesigner.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = client_particledesigner.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/client_particledesigner.c; sourceTree = "<absolute>"; };
 		EC4186E62E8F0739007FF019 /* T1_easing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_easing.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_easing.h; sourceTree = "<absolute>"; };
 		EC4186E72E8F0739007FF019 /* T1_easing.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_easing.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_easing.c; sourceTree = "<absolute>"; };
 		EC493BC42BEDA96D004D957F /* unitybuild_macos.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = unitybuild_macos.c; path = ../../unitybuild_macos.c; sourceTree = "<group>"; };
+		EC5B9C792FEF673F00C35D26 /* T1_client.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_client.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_client.h; sourceTree = "<absolute>"; };
+		EC5B9C7A2FEF67B300C35D26 /* client_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = client_macro_settings.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/client_macro_settings.h; sourceTree = "<absolute>"; };
+		EC5B9C7B2FEF685300C35D26 /* T1_public_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_public_types.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_public_types.h; sourceTree = "<absolute>"; };
+		EC5B9C7D2FEF6F3A00C35D26 /* T1_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_settings.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_settings.h; sourceTree = "<absolute>"; };
+		EC5B9C7E2FEF6F3A00C35D26 /* T1_settings.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_settings.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_settings.c; sourceTree = "<absolute>"; };
 		EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/T1_linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
@@ -244,11 +248,10 @@
 		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
-		EC6E12132A03BD8F004E7BD1 /* T1_clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_clientlogic.h; path = ../../engine_src/shared/T1_clientlogic.h; sourceTree = "<group>"; };
 		EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_ui_widget.c; path = ../../engine_src/shared/T1_ui_widget.c; sourceTree = "<group>"; };
 		EC6E12152A03BD8F004E7BD1 /* T1_ui_widget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_ui_widget.h; path = ../../engine_src/shared/T1_ui_widget.h; sourceTree = "<group>"; };
-		EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_zspriteid.c; path = ../../engine_src/shared/T1_zspriteid.c; sourceTree = "<group>"; };
-		EC6E12192A04CE13004E7BD1 /* T1_zspriteid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_zspriteid.h; path = ../../engine_src/shared/T1_zspriteid.h; sourceTree = "<group>"; };
+		EC6E12182A04CE12004E7BD1 /* T1_id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_id.c; path = ../../engine_src/shared/T1_id.c; sourceTree = "<group>"; };
+		EC6E12192A04CE13004E7BD1 /* T1_id.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_id.h; path = ../../engine_src/shared/T1_id.h; sourceTree = "<group>"; };
 		EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = guitar_simplified.mtl; path = ../../resources/guitar_simplified.mtl; sourceTree = "<group>"; };
 		EC74B51C2DE3BC070033206F /* 1001_normal.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_normal.png; path = ../../resources/1001_normal.png; sourceTree = "<group>"; };
 		EC74B51F2DE3BC070033206F /* guitar_simplified.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = guitar_simplified.obj; path = ../../resources/guitar_simplified.obj; sourceTree = "<group>"; };
@@ -339,7 +342,7 @@
 			children = (
 				ECD724412F367280000A6498 /* README.md */,
 				EC493BC42BEDA96D004D957F /* unitybuild_macos.c */,
-				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
+				EC5B9C7A2FEF67B300C35D26 /* client_macro_settings.h */,
 				601128B128625BC100F92967 /* resources */,
 				601128A42862540400F92967 /* src */,
 				6011281B28611F5100F92967 /* TOKONE_macos */,
@@ -385,8 +388,8 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				601128702862511600F92967 /* clientlogic.c */,
-				EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */,
+				601128702862511600F92967 /* client.c */,
+				EC4040D92E5431C000264128 /* client_particledesigner.c */,
 				EC61E2D32AFB029F004D316D /* shared_apple_linux */,
 				EC6441A829318B7900A0267B /* iphone_only */,
 				60A998DE287BD468003F7159 /* shared_macos_iphone */,
@@ -457,8 +460,7 @@
 				60112896286253C100F92967 /* T1_apple_platform_layer.m */,
 				EC914B7D2B8AD447007FCBFC /* T1_audio.h */,
 				EC914B7A2B8AD447007FCBFC /* T1_audio.c */,
-				EC6E12132A03BD8F004E7BD1 /* T1_clientlogic.h */,
-				EC2914A22EEE211300D3873E /* T1_clientlogic.h */,
+				EC5B9C792FEF673F00C35D26 /* T1_client.h */,
 				ECE759CD2C3FF1BE004B0847 /* T1_collision.h */,
 				ECE759CC2C3FF1BE004B0847 /* T1_collision.c */,
 				6011287A2862511600F92967 /* T1_cpu_gpu_shared_types.h */,
@@ -476,6 +478,7 @@
 				ECB05E48294F8B1300050BD4 /* T1_gpu.m */,
 				60A998DA287BD333003F7159 /* T1_img.h */,
 				60A998D9287BD332003F7159 /* T1_img.c */,
+				EC5B9C7B2FEF685300C35D26 /* T1_public_types.h */,
 				EC29149C2EEE1FFB00D3873E /* T1_io.h */,
 				EC29149D2EEE1FFB00D3873E /* T1_io.c */,
 				ECE530FF2EB229900035DC98 /* T1_linalg3d.h */,
@@ -522,6 +525,8 @@
 				EC3DF2782F197AE40049AA47 /* T1_texquad.h */,
 				EC3DF2792F197AE40049AA47 /* T1_texquad.c */,
 				EC9B70BD2F2A8A8E00EB3E02 /* T1_texquad_anim.h */,
+				EC5B9C7D2FEF6F3A00C35D26 /* T1_settings.h */,
+				EC5B9C7E2FEF6F3A00C35D26 /* T1_settings.c */,
 				EC9B70BE2F2A8A8E00EB3E02 /* T1_texquad_anim.c */,
 				601128672862511500F92967 /* T1_text.h */,
 				601128742862511600F92967 /* T1_text.c */,
@@ -539,8 +544,8 @@
 				6011287E2862511700F92967 /* T1_zsprite.c */,
 				6011286A2862511500F92967 /* T1_zsprite_anim.h */,
 				6011287D2862511700F92967 /* T1_zsprite_anim.c */,
-				EC6E12192A04CE13004E7BD1 /* T1_zspriteid.h */,
-				EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */,
+				EC6E12192A04CE13004E7BD1 /* T1_id.h */,
+				EC6E12182A04CE12004E7BD1 /* T1_id.c */,
 			);
 			name = shared_macos_iphone;
 			sourceTree = "<group>";
@@ -764,7 +769,7 @@
 				ECE531012EB229900035DC98 /* T1_linalg3d.c in Sources */,
 				6028DD342886EE54000E1E98 /* T1_appinit.c in Sources */,
 				EC083A3B2AFF727900234FE3 /* T1_objparser.c in Sources */,
-				EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */,
+				EC4040DB2E5431C000264128 /* client_particledesigner.c in Sources */,
 				ECF7CB182D53ADA400623C60 /* T1_profiler.c in Sources */,
 				EC78509B29E62CA800E6882A /* T1_objmodel.c in Sources */,
 				60A9990B287BD4C3003F7159 /* T1_img.h in Sources */,
@@ -776,6 +781,7 @@
 				6064C0C22892505000E8B3AD /* T1_gameloop.c in Sources */,
 				EC29149E2EEE1FFB00D3873E /* T1_io.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
+				EC5B9C7F2FEF6F3A00C35D26 /* T1_settings.c in Sources */,
 				EC6441A729318B6D00A0267B /* ViewController.m in Sources */,
 				EC676A3C2DE85210001FD4DE /* T1_cpu_to_gpu.c in Sources */,
 				ECDD9C232DE2157500721A48 /* T1_tex_files.c in Sources */,
@@ -787,7 +793,7 @@
 				60A998F5287BD4C3003F7159 /* T1_tex_array.h in Sources */,
 				EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */,
 				60A99911287BD4C4003F7159 /* T1_zsprite.c in Sources */,
-				EC6E121B2A04CE13004E7BD1 /* T1_zspriteid.c in Sources */,
+				EC6E121B2A04CE13004E7BD1 /* T1_id.c in Sources */,
 				60A9990C287BD4C3003F7159 /* decode_png.c in Sources */,
 				EC3DF27A2F197AE40049AA47 /* T1_texquad.c in Sources */,
 				60A99913287BD4C4003F7159 /* inflate.h in Sources */,
@@ -868,7 +874,7 @@
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../**";
 				MTL_LANGUAGE_REVISION = Metal20;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "\"-includeclientlogic_macro_settings.h\"";
+				OTHER_CFLAGS = "\"-includeclient_macro_settings.h\"";
 				TAPI_VERIFY_MODE = ErrorsOnly;
 			};
 			name = Debug;
@@ -933,7 +939,7 @@
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../**";
 				MTL_LANGUAGE_REVISION = Metal20;
-				OTHER_CFLAGS = "\"-includeclientlogic_macro_settings.h\"";
+				OTHER_CFLAGS = "\"-includeclient_macro_settings.h\"";
 				TAPI_VERIFY_MODE = ErrorsOnly;
 			};
 			name = Release;
@@ -1176,7 +1182,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "-includeclientlogic_macro_settings.h";
+				OTHER_CFLAGS = "-includeclient_macro_settings.h";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1255,7 +1261,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = "-includeclientlogic_macro_settings.h";
+				OTHER_CFLAGS = "-includeclient_macro_settings.h";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

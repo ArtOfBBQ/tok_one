@@ -865,13 +865,14 @@ alphablending_fragment_shader(
         discard_fragment();
     }
     
-    unsigned int mat_i =
-        locked_vertices[in.locked_vertex_i].parent_material_i;
+    unsigned int mat_i = locked_vertices[in.locked_vertex_i].
+        parent_material_i;
     
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].f32s.base_mat_f32 :
-            &locked_mats_f32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
+            &locked_mats_f32[locked_vertices[in.locked_vertex_i].
+                locked_materials_head_i + mat_i];
     const device T1GPUConstMats32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].s32.base_mat_s32 :

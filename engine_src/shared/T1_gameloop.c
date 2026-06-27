@@ -31,7 +31,8 @@ static s32  loading_text_sprite_id = -1;
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
     if (
-        T1_io_key_consume_short_tap_this_frame(T1_IO_KEYBOARD_ENTER) &&
+        T1_io_key_consume_short_tap_this_frame(
+            T1_IO_KEYBOARD_ENTER) &&
         !T1_io_key_is_down(T1_IO_KEYBOARD_CONTROL))
     {
         T1_term_commit_or_activate();

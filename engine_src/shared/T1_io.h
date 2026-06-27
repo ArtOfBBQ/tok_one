@@ -48,11 +48,14 @@ T1_io_update_and_clear_for_next_frame(void);
 Public functions (exposed via T1.h)
 */
 b8  T1_io_key_is_down(T1IOKey key);
+b8  T1_io_key_consume_tap_began_frame(T1IOKey key);
 b8  T1_io_key_consume_short_tap_this_frame(T1IOKey key);
 b8  T1_io_key_consume_long_tap_this_frame(T1IOKey key);
 f32 T1_io_get_mouse_x_this_frame(void);
 f32 T1_io_get_mouse_y_this_frame(void);
 s32 T1_io_get_mouse_touch_id_this_frame(void);
+b8  T1_io_consume_mouse_changed(void);
+b8  T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y);
 
 #ifdef __cplusplus
 }

@@ -49,7 +49,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_meta.c"
 #include "T1_log.c"
 #include "T1_collision.c"
-#include "T1_zspriteid.c"
+#include "T1_id.c"
 #include "T1_audio.c"
 #include "T1_global.c"
 #include "T1_triangle.c"
@@ -71,6 +71,8 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_objmodel.c"
 #include "T1_io.c"
 #include "T1_rand.c"
+#include "T1_settings.c"
+#include "T1.c"
 // 4. Platform layer part 2: metal
 #include "T1_gpu.m"
 // 5. Files that are dependent on the GPU platform layer
@@ -86,7 +88,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_ui_widget.c"
 #include "T1_profiler.c"
 #if 1
-#include "clientlogic.c" // requires text and uielement
+#include "client.c" // requires text and uielement
 #else
 #include "clientlogic_particledesigner.c" // requires text and uielement
 #endif

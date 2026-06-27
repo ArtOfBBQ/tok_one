@@ -1,5 +1,4 @@
 #include "T1_settings.h"
-
 #include "T1_global.h"
 
 PerfSettings * T1_perf_settings = NULL;

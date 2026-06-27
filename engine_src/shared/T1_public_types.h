@@ -131,7 +131,7 @@ typedef struct {
 
 typedef struct
 {
-    u64 timestamp;
+    u32 timestamp;
     u32 cam_rv_i;
     u32 lights_size;
     s32 perlin_texturearray_i;
