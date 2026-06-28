@@ -279,7 +279,7 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     
     if (modifiers & NSEventModifierFlagShift) {
         T1_io_register_keydown(T1_IO_KEYBOARD_SHIFT);
-    } else if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT)) {
+    } else if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, -1)) {
         T1_io_register_keyup(T1_IO_KEYBOARD_SHIFT);
     }
 }

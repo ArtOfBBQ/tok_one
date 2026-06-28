@@ -1,5 +1,7 @@
 #include "T1_term.h"
 
+#include "T1_public_types.h"
+
 #include "T1_mem.h"
 #include "T1_global.h"
 #include "T1_io.h"
@@ -28,11 +30,12 @@ typedef struct {
     f32 background_color[4];
     s32 back_object_id;
     s32 labels_object_id; // INT32_MAX - 1;
+    s32 scene_id;
     char cur_command[T1_TERM_SINGLE_LINE_MAX];
     char history[T1_TERM_HIST_CAP];
 } T1TermState;
 
-b8 T1_term_active = false;
+static b8 T1_term_active = false;
 static T1TermState * T1_trms = NULL;
 
 #define T1_TERM_WHITESPACE    7.0f
@@ -63,59 +66,7 @@ static void T1_term_describe_zpolygon(
     T1_std_strcat_uint_cap(append_to, cap, zp_i);
 }
 
-void T1_term_destroy_all(void) {
-    if (T1_trms->back_object_id >= 0) {
-        T1_texquad_delete(
-            T1_trms->back_object_id);
-    }
-    
-    if (T1_trms->labels_object_id >= 0) {
-        T1_texquad_delete(
-            T1_trms->labels_object_id);
-    }
-}
-
-static void T1_term_update_history_size(void) {
-    T1_trms->history_size = 0;
-    while (
-        T1_trms->history[T1_trms->history_size] != '\0')
-    {
-        T1_trms->history_size++;
-    }
-}
-
-void T1_term_init(
-    void (* enter_fullscreen_fncptr)(void))
-{
-    T1_trms = T1_mem_malloc_unmanaged(
-        sizeof(T1TermState));
-    T1_std_memset(T1_trms, 0, sizeof(T1TermState));
-    
-    T1_trms->to_fullscreen_fncptr = enter_fullscreen_fncptr;
-    
-    T1_std_strcpy_cap(
-        T1_trms->history,
-        T1_TERM_HIST_CAP,
-        "T1 debugging terminal\n");
-    
-    T1_term_update_history_size();
-    
-    T1_trms->font_color[0] = 10.0f;
-    T1_trms->font_color[1] = 10.0f;
-    T1_trms->font_color[2] = 10.0f;
-    T1_trms->font_color[3] = 1.0f;
-    
-    T1_trms->font_rgb_cap[0] = 1.0f;
-    T1_trms->font_rgb_cap[1] = 1.0f;
-    T1_trms->font_rgb_cap[2] = 1.0f;
-    
-    T1_trms->background_color[0] = 0.0f;
-    T1_trms->background_color[1] = 0.0f;
-    T1_trms->background_color[2] = 1.0f;
-    T1_trms->background_color[3] = 0.5f;
-}
-
-void T1_term_redraw_backgrounds(void) {
+static void T1_term_redraw_backgrounds(void) {
     T1_trms->back_object_id = INT32_MAX;
     
     f32 command_history_height =
@@ -184,7 +135,7 @@ void T1_term_redraw_backgrounds(void) {
     T1_texquad_commit(&history_req);
 }
 
-void T1_term_render(void) {
+static void T1_term_render(void) {
     if (!T1_term_active) {
         return;
     }
@@ -300,7 +251,19 @@ void T1_term_render(void) {
     requesting_label_update = false;
 }
 
-void T1_term_sendchar(u32 to_send) {
+static void T1_term_destroy_all(void) {
+    if (T1_trms->back_object_id >= 0) {
+        T1_texquad_delete(
+            T1_trms->back_object_id);
+    }
+    
+    if (T1_trms->labels_object_id >= 0) {
+        T1_texquad_delete(
+            T1_trms->labels_object_id);
+    }
+}
+
+static void T1_term_sendchar(u32 to_send) {
     
     if (to_send == T1_IO_KEYBOARD_ESCAPE) {
         // ESC key
@@ -462,7 +425,9 @@ static u8 T1_term_evaluate(
     }
     
     if (
-        T1_std_are_equal_strings(command, "PAUSE PROFILER"))
+        T1_std_are_equal_strings(
+            command,
+            "PAUSE PROFILER"))
     {
         if (!T1_global->pause_profiler) {
             T1_global->pause_profiler = true;
@@ -1031,7 +996,16 @@ static u8 T1_term_evaluate(
     return false;
 }
 
-void T1_term_commit_or_activate(void) {
+static void T1_term_update_history_size(void) {
+    T1_trms->history_size = 0;
+    while (
+        T1_trms->history[T1_trms->history_size] != '\0')
+    {
+        T1_trms->history_size++;
+    }
+}
+
+static void T1_term_commit_or_activate(void) {
     
     if (T1_trms->history_size > 200) {
         T1_trms->history[0] = '\0';
@@ -1094,9 +1068,73 @@ void T1_term_commit_or_activate(void) {
     T1_term_active = !T1_term_active;
     
     if (T1_term_active) {
+        T1_io_scene_stack_push(T1_trms->scene_id);
         T1_term_redraw_backgrounds();
         requesting_label_update = true;
+    } else {
+        T1_io_scene_stack_pop();
     }
+}
+
+void T1_term_update(void) {
+    if (
+        T1_io_key_consume_tap_began_frame(
+            T1_IO_KEYBOARD_ENTER,
+            -1) &&
+        !T1_io_key_is_down(
+            T1_IO_KEYBOARD_CONTROL,
+            -1))
+    {
+        T1_term_commit_or_activate();
+    }
+    
+    if (T1_term_active) {
+        for (T1IOKey i = 0; i < T1_IO_KEYBOARD_ABOVE_KEYBOARD_BOUNDS; i++) {
+            if (i == T1_IO_KEYBOARD_SHIFT) { continue; }
+            if (T1_io_key_consume_tap_began_frame(i, T1_trms->scene_id)) {
+                if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, T1_trms->scene_id)) {
+                    T1_term_sendchar('#');
+                } else {
+                    T1_term_sendchar(i);
+                }
+            }
+        }
+    }
+    
+    T1_term_render();
+}
+
+void T1_term_init(
+    void (* enter_fullscreen_fncptr)(void))
+{
+    T1_trms = T1_mem_malloc_unmanaged(
+        sizeof(T1TermState));
+    T1_std_memset(T1_trms, 0, sizeof(T1TermState));
+    
+    T1_trms->to_fullscreen_fncptr = enter_fullscreen_fncptr;
+    
+    T1_trms->scene_id = T1_io_create_scene_and_return_id();
+    
+    T1_std_strcpy_cap(
+        T1_trms->history,
+        T1_TERM_HIST_CAP,
+        "T1 debugging terminal\n");
+    
+    T1_term_update_history_size();
+    
+    T1_trms->font_color[0] = 10.0f;
+    T1_trms->font_color[1] = 10.0f;
+    T1_trms->font_color[2] = 10.0f;
+    T1_trms->font_color[3] = 1.0f;
+    
+    T1_trms->font_rgb_cap[0] = 1.0f;
+    T1_trms->font_rgb_cap[1] = 1.0f;
+    T1_trms->font_rgb_cap[2] = 1.0f;
+    
+    T1_trms->background_color[0] = 0.0f;
+    T1_trms->background_color[1] = 0.0f;
+    T1_trms->background_color[2] = 1.0f;
+    T1_trms->background_color[3] = 0.5f;
 }
 #elif T1_TERM_ACTIVE == T1_INACTIVE
 #else

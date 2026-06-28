@@ -26,32 +26,12 @@ u8 T1_gameloop_loading_texs = false;
 
 static u64 gameloop_previous_time = 0;
 static u64 gameloop_frame_no = 0;
-static s32  loading_text_sprite_id = -1;
+static s32 loading_text_sprite_id = -1;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
-    if (
-        T1_io_key_consume_short_tap_this_frame(
-            T1_IO_KEYBOARD_ENTER) &&
-        !T1_io_key_is_down(T1_IO_KEYBOARD_CONTROL))
-    {
-        T1_term_commit_or_activate();
-    }
     
-    if (T1_term_active) {
-        for (T1IOKey i = 0; i < T1_IO_KEYBOARD_ABOVE_KEYBOARD_BOUNDS; i++) {
-            if (i == T1_IO_KEYBOARD_SHIFT) { continue; }
-            if (T1_io_key_consume_short_tap_this_frame(i)) {
-                if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT)) {
-                    T1_term_sendchar('#');
-                } else {
-                    T1_term_sendchar(i);
-                }
-            }
-        }
-    }
-    
-    T1_term_render();
+    T1_term_update();
 }
 #elif T1_TERM_ACTIVE == T1_INACTIVE
 #else
@@ -368,6 +348,9 @@ void T1_gameloop_update_before_render_pass(
     else if (T1_global->draw_touch_id) {
         T1_text_request_top_touch_id(
             T1_io_get_mouse_touch_id_this_frame());
+    }
+    else if (T1_global->draw_scene_id) {
+        T1_log_assert(0);
     }
     
     frame_data->postproc_consts->timestamp =

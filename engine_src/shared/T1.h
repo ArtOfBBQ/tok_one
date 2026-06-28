@@ -210,10 +210,10 @@ Short taps and long taps get cleared every frame, but a key
 being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
-b8 T1_io_key_is_down(T1IOKey key);
-b8 T1_io_key_consume_tap_began_frame(T1IOKey key);
-b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key);
-b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key);
+b8 T1_io_key_is_down(T1IOKey key, const s32 scene_id);
+b8 T1_io_key_consume_tap_began_frame(T1IOKey key, const s32 scene_id);
+b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id);
+b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, const s32 scene_id);
 f32 T1_io_get_mouse_x_this_frame(void);
 f32 T1_io_get_mouse_y_this_frame(void);
 s32 T1_io_get_mouse_touch_id_this_frame(void);

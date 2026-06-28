@@ -403,6 +403,8 @@ void T1_appinit_before_gpu_init(
     
     T1_global_init();
     
+    T1_io_init(T1_mem_malloc_unmanaged);
+    
     T1_ui_widget_init();
     
     T1_texquad_init();
@@ -502,8 +504,6 @@ void T1_appinit_before_gpu_init(
     }
     
     T1_render_view_init();
-        
-    T1_io_init(T1_mem_malloc_unmanaged);
     
     T1_render_init();
     

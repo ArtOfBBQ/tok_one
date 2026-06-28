@@ -35,6 +35,7 @@ void T1_client_init(void) {
     return;
 }
 
+static s32 mainwindow_scene_id = -1;
 void T1_client_early_startup(
     b8 * success,
     char * error_message)
@@ -46,6 +47,8 @@ void T1_client_early_startup(
     T1_tex_files_prereg_png_res(
         "structuredart2.png", &good);
     assert(good);
+    
+    mainwindow_scene_id = T1_io_create_scene_and_return_id();
     
     *success = true;
 }
@@ -78,12 +81,14 @@ static void client_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (T1_io_key_consume_short_tap_this_frame(T1_IO_KEYBOARD_D))
+    if (T1_io_key_consume_short_tap_this_frame(
+        T1_IO_KEYBOARD_D, mainwindow_scene_id))
     {
         draw_test_quad();
     }
     
-    if (T1_io_key_consume_short_tap_this_frame(T1_IO_KEYBOARD_R))
+    if (T1_io_key_consume_short_tap_this_frame(
+        T1_IO_KEYBOARD_R, mainwindow_scene_id))
     {
         T1zSpriteAnim * rot = T1_zsprite_anim_request_next(true);
         rot->affected_T1_id = img_T1_id;
@@ -98,57 +103,82 @@ static void client_handle_keypresses(
         img_toggle = !img_toggle;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_LEFTARROW))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_LEFTARROW,
+        mainwindow_scene_id))
     {
         T1_cam->xyz[0] -= cam_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_RIGHTARROW))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_RIGHTARROW,
+        mainwindow_scene_id))
     {
         T1_cam->xyz[0] += cam_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_DOWNARROW))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_DOWNARROW,
+        mainwindow_scene_id))
     {
         T1_cam->xyz[1] -= cam_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_UPARROW))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_UPARROW,
+        mainwindow_scene_id))
     {
         T1_cam->xyz[1] += cam_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_A)) {
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_A,
+        mainwindow_scene_id))
+    {
         T1_cam->angle_xyz[0] +=
             cam_rotation_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_Z)) {
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_Z,
+        mainwindow_scene_id))
+    {
         T1_cam->angle_xyz[2] -= cam_rotation_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_X))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_X,
+        mainwindow_scene_id))
     {
         T1_cam->angle_xyz[2] += cam_rotation_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_Q))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_Q,
+        mainwindow_scene_id))
     {
         T1_cam->angle_xyz[0] -= cam_rotation_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_W)) {
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_W,
+        mainwindow_scene_id))
+    {
         T1_cam->angle_xyz[1] -=
             cam_rotation_speed;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_S)) {
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_S,
+        mainwindow_scene_id))
+    {
         T1_cam->angle_xyz[1] +=
             cam_rotation_speed;
     }
     
     if (T1_io_key_consume_short_tap_this_frame(
-        T1_IO_KEYBOARD_M))
+        T1_IO_KEYBOARD_M,
+        mainwindow_scene_id))
     {
         testswitch = !testswitch;
         
@@ -172,13 +202,18 @@ static void client_handle_keypresses(
         T1_texquad_anim_commit(anim);
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_BACKSLASH))
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_BACKSLASH,
+        mainwindow_scene_id))
     {
         // / key
         T1_cam->xyz[2] -= 0.01f;
     }
     
-    if (T1_io_key_is_down(T1_IO_KEYBOARD_FULLSTOP)) {
+    if (T1_io_key_is_down(
+        T1_IO_KEYBOARD_FULLSTOP,
+        mainwindow_scene_id))
+    {
         T1_cam->xyz[2] += 0.01f;
     }
 }
@@ -225,9 +260,11 @@ void T1_client_evaluate_terminal_command(
 }
 
 void T1_client_window_resize(void)
-{
-    T1_render_view_delete(0);
+{    
+    T1_texquad_delete_all();
+    T1_zsprite_anim_delete_all();
     
+    T1_cam_delete_all();
     T1_cam_create_main_view(
         T1_settings_get_render_width(),
         T1_settings_get_render_height());

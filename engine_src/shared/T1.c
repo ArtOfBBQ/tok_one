@@ -49,7 +49,10 @@ void T1_cam_delete(const s32 rv_i) {
     T1_render_view_delete(rv_i);
 }
 void T1_cam_delete_all(void) {
-    for (s32 i = 0; i < (int)T1_render_views->size; i++) {
+    // We want to delete even above T1_render_views->size
+    // to ensure that attached render target textures
+    // are also deleted
+    for (s32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         T1_cam_delete(i);
     }
 }

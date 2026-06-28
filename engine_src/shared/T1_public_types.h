@@ -181,6 +181,7 @@ typedef struct {
     u8 draw_axes;
     u8 draw_fps;
     u8 draw_touch_id;
+    u8 draw_scene_id;
     u8 show_profiler;
     u8 pause_profiler;
     u8 block_mouse;
