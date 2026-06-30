@@ -11,7 +11,11 @@
 #include "T1_io.h"
 #include "T1_platform_layer.h"
 
-void T1_cam_set_us_to_dest(s32 cam_i, const u64 us) {
+void T1_assert(b8 condition) {
+    T1_log_assert(condition);
+}
+
+void T1_cam_set_us_to_dest(s32 cam_i, u64 us) {
     T1_log_assert(cam_i == 0); // TODO: remove this debug check
     T1_render_views->cpu[cam_i].us_to_destination = us; }
 void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval) {
@@ -34,14 +38,14 @@ T1Tex T1_cam_get_write_tex(s32 i) {
     return T1_render_views->cpu[i].write_tex; }
 void T1_cam_reset(s32 at_i) {
     return T1_render_view_reset(at_i); }
-void T1_cam_delete(const s32 rv_i) {
+void T1_cam_delete(s32 rv_i) {
     T1Tex tex = T1_render_views->cpu[rv_i].write_tex;
     if (tex != T1_TEX_NONE)
     {
         T1_tex_array_delete_slice(
-            /* const s32 array_i: */
+            /* s32 array_i: */
                 T1_tex_to_array_i(tex),
-            /* const s32 slice_i: */
+            /* s32 slice_i: */
                 T1_tex_to_slice_i(tex));
         T1_render_views->cpu[rv_i].write_tex = T1_TEX_NONE;
     }
@@ -56,35 +60,35 @@ void T1_cam_delete_all(void) {
         T1_cam_delete(i);
     }
 }
-f32 T1_screen_x_to_x(const f32 ss_x, const f32 z) {
+f32 T1_screen_x_to_x(f32 ss_x, f32 z) {
     return T1_render_view_screen_x_to_x(ss_x, z); }
-f32 T1_screen_y_to_y(const f32 ss_y, const f32 z) {
+f32 T1_screen_y_to_y(f32 ss_y, f32 z) {
     return T1_render_view_screen_y_to_y(ss_y, z); }
-f32 T1_x_to_screen_x(const f32 x, const f32 z) {
+f32 T1_x_to_screen_x(f32 x, f32 z) {
     return T1_render_view_x_to_screen_x(x, z); }
-f32 T1_y_to_screen_y(const f32 y, const f32 z) {
+f32 T1_y_to_screen_y(f32 y, f32 z) {
     return T1_render_view_y_to_screen_y(y, z); }
-f32 T1_screen_x_to_x_noz(const f32 ss_x) {
+f32 T1_screen_x_to_x_noz(f32 ss_x) {
     return T1_render_view_screen_x_to_x_noz(ss_x); }
-f32 T1_screen_y_to_y_noz(const f32 ss_y) {
+f32 T1_screen_y_to_y_noz(f32 ss_y) {
     return T1_render_view_screen_y_to_y_noz(ss_y); }
-f32 T1_x_to_screen_x_noz(const f32 y) {
+f32 T1_x_to_screen_x_noz(f32 y) {
     return T1_render_view_x_to_screen_x_noz(y); }
-f32 T1_y_to_screen_y_noz(const f32 y) {
+f32 T1_y_to_screen_y_noz(f32 y) {
     return T1_render_view_y_to_screen_y_noz(y); }
-f32 T1_screen_width_to_width(const f32 ss_w, const f32 at_z) {
+f32 T1_screen_width_to_width(f32 ss_w, f32 at_z) {
     return T1_render_view_screen_width_to_width(ss_w, at_z); }
-f32 T1_screen_height_to_height(const f32 ss_h, const f32 at_z) {
+f32 T1_screen_height_to_height(f32 ss_h, f32 at_z) {
     return T1_render_view_screen_height_to_height(ss_h, at_z); }
-f32 T1_screen_width_to_width_noz(const f32 ss_w) {
+f32 T1_screen_width_to_width_noz(f32 ss_w) {
     return T1_render_view_screen_width_to_width_noz(ss_w); }
-f32 T1_screen_height_to_height_noz(const f32 ss_h) {
+f32 T1_screen_height_to_height_noz(f32 ss_h) {
     return T1_render_view_screen_height_to_height_noz(ss_h); }
 
 void T1_make_shadowmap_and_attach_to_light(
-    const s32 light_T1_id,
-    const u32 new_cam_width,
-    const u32 new_cam_height)
+    s32 light_T1_id,
+    u32 new_cam_width,
+    u32 new_cam_height)
 {
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     s32 zl_i = -1;
@@ -171,21 +175,21 @@ void T1_cam_create_main_view(
 }
 
 void T1_make_reflection_cam(
-    const u32 new_cam_w,
-    const u32 new_cam_h,
-    const f32 pos_x,
-    const f32 pos_y,
-    const f32 pos_z,
-    const f32 angle_x, 
-    const f32 angle_y,
-    const f32 angle_z,
-    const f32 reflection_z)
+    u32 new_cam_w,
+    u32 new_cam_h,
+    f32 pos_x,
+    f32 pos_y,
+    f32 pos_z,
+    f32 angle_x, 
+    f32 angle_y,
+    f32 angle_z,
+    f32 reflection_z)
 {
     s32 new_rv_i =
         T1_tex_array_create_new_render_view(
-            /* const u32 width: */
+            /* u32 width: */
                 new_cam_w,
-            /* const u32 height: */
+            /* u32 height: */
                 new_cam_h);
     
     T1_log_assert(new_rv_i >= 0);
@@ -236,9 +240,9 @@ void T1_make_reflection_cam(
 void
 T1_png_get_width_height(
     const u8 * compressed_input,
-    const u64 compressed_input_size,
-    u32 * out_width,
-    u32 * out_height,
+    u64 compressed_input_size,
+    u32 * const out_width,
+    u32 * const out_height,
     u8 * out_good)
 {
     decode_png_get_width_height(
@@ -250,10 +254,10 @@ T1_png_get_width_height(
 }
 void T1_png_decode(
     const u8 * compressed_input,
-    const u64 compressed_input_size,
-    const u8 * out_rgba_values,
-    const u64 rgba_values_size,
-    const u32 thread_id,
+    u64 compressed_input_size,
+    u8 * out_rgba_values,
+    u64 rgba_values_size,
+    u32 thread_id,
     u8 * out_good)
 {
     decode_png(

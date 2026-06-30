@@ -16,12 +16,12 @@ void T1_text_init(
     const u64 raw_fontmetrics_file_size);
 
 void T1_text_request_label_offset_around(
-    const s32 with_id,
+    s32 with_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width);
+    f32 mid_x_pixelspace,
+    f32 mid_y_pixelspace,
+    f32 z,
+    f32 max_width);
 
 void T1_text_request_label_around_x_at_top_y(
     const s32 with_object_id,

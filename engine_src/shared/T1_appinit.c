@@ -214,9 +214,9 @@ void T1_appinit_before_gpu_init(
     
     T1_mem_init(
         unmanaged_memory_store,
-        T1_platform_init_mutex_and_return_id,
-        T1_platform_mutex_lock,
-        T1_platform_mutex_unlock);
+        T1_os_init_mutex_and_return_id,
+        T1_os_mutex_lock,
+        T1_os_mutex_unlock);
     
     T1_settings_init(T1_mem_malloc_unmanaged);
     
@@ -283,11 +283,11 @@ void T1_appinit_before_gpu_init(
         /* void * arg_malloc_function(u64 size): */
             T1_mem_malloc_unmanaged,
         /* u32 (* arg_create_mutex_function)(void): */
-            T1_platform_init_mutex_and_return_id,
+            T1_os_init_mutex_and_return_id,
         /* void arg_mutex_lock_function(const u32 mutex_id): */
-            T1_platform_mutex_lock,
+            T1_os_mutex_lock,
         /* s32 arg_mutex_unlock_function(const u32 mutex_id): */
-            T1_platform_mutex_unlock);
+            T1_os_mutex_unlock);
     
     #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
     T1_frame_anim_init();
@@ -439,9 +439,9 @@ void T1_appinit_before_gpu_init(
     
     #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
     T1_zsprite_anim_init(
-        T1_platform_init_mutex_and_return_id,
-        T1_platform_mutex_lock,
-        T1_platform_mutex_unlock);
+        T1_os_init_mutex_and_return_id,
+        T1_os_mutex_lock,
+        T1_os_mutex_unlock);
     #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -450,9 +450,9 @@ void T1_appinit_before_gpu_init(
     
     #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
     T1_texquad_anim_init(
-        T1_platform_init_mutex_and_return_id,
-        T1_platform_mutex_lock,
-        T1_platform_mutex_unlock);
+        T1_os_init_mutex_and_return_id,
+        T1_os_mutex_lock,
+        T1_os_mutex_unlock);
     #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -1010,7 +1010,7 @@ void T1_appinit_after_gpu_init_step2(
         return;
     }
     
-    T1_platform_layer_start_window_resize(
+    T1_os_layer_start_window_resize(
         T1_os_get_current_time_us());
     
     if (T1_log_app_running) {

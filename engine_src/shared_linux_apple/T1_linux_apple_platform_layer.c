@@ -69,7 +69,7 @@ void T1_os_init(
 }
 
 u32
-T1_platform_init_mutex_and_return_id(void)
+T1_os_init_mutex_and_return_id(void)
 {
     T1_log_assert(
         next_mutex_id + 1 < T1_MUTEXES_SIZE);
@@ -99,7 +99,7 @@ T1_platform_init_mutex_and_return_id(void)
 /*
 Attempt to lock a mutex and return True if succesful
 */
-u8 T1_platform_mutex_trylock(const u32 mutex_id)
+u8 T1_os_mutex_trylock(const u32 mutex_id)
 {
     /*
     If successful, pthread_mutex_trylock() will return zero.
@@ -129,7 +129,7 @@ u8 T1_platform_mutex_trylock(const u32 mutex_id)
     return return_val == 0;
 }
 
-void T1_platform_assert_mutex_locked(
+void T1_os_assert_mutex_locked(
     const u32 mutex_id) 
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -146,7 +146,7 @@ void T1_platform_assert_mutex_locked(
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
-void T1_platform_mutex_lock(
+void T1_os_mutex_lock(
     const u32 mutex_id)
 {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
@@ -165,7 +165,7 @@ void T1_platform_mutex_lock(
     return;
 }
 
-void T1_platform_mutex_unlock(const u32 mutex_id) {
+void T1_os_mutex_unlock(const u32 mutex_id) {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
     

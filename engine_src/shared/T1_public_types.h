@@ -110,8 +110,12 @@ typedef enum : u16 {
     T1_IO_MOUSE_LCLICK = 153,
     T1_IO_MOUSE_MCLICK = 154,
     T1_IO_MOUSE_RCLICK = 155,
-    T1_IO_MOUSE_WHEEL_UP = 156,
-    T1_IO_MOUSE_WHEEL_DOWN = 157,
+    T1_IO_MOUSE_OTHERCLICK1 = 156,
+    T1_IO_MOUSE_OTHERCLICK2 = 157,
+    T1_IO_MOUSE_OTHERCLICK3 = 158,
+    T1_IO_MOUSE_OTHERCLICK4 = 159,
+    T1_IO_MOUSE_WHEEL_UP = 160,
+    T1_IO_MOUSE_WHEEL_DOWN = 161,
     T1_IO_KEY_ABOVEBOUNDS, // must be last
 } T1IOKey;
 
@@ -242,5 +246,34 @@ typedef struct {
     s32 shadow_map_render_view_i;
     f32 simd_padding[3];
 } T1zLight; // 17 f32s = 68 bytes
+
+/*
+TOKENIZATION
+*/
+typedef enum : u8 {
+    T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
+    T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
+    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
+    T1_TOKEN_STOREMODE_MIDDLE_STRING     // Register token, save string
+} T1TokenStoreMode;
+
+/*
+META TYPES aka "reflection"
+*/
+typedef enum : u8 {
+    T1_TYPE_NOTSET,
+    T1_TYPE_STRUCT,
+    T1_TYPE_F32,
+    T1_TYPE_U64,
+    T1_TYPE_U32,
+    T1_TYPE_U16,
+    T1_TYPE_U8,
+    T1_TYPE_U4x2,
+    T1_TYPE_I64,
+    T1_TYPE_I32,
+    T1_TYPE_I16,
+    T1_TYPE_I8,
+    T1_TYPE_CHAR,
+} T1MetaType;
 
 #endif // T1_PUBLIC_TYPES_H

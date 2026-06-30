@@ -36,8 +36,8 @@ typedef struct {
     s32 ondown_lclick_touch_id;
     s32 cur_mouse_touch_id;
     s32 next_scene_id;
+    s32 dragging_at_scene_id;
     u8 scene_ids_stack_i;
-    u8 dragging;
     u8 mouse_pos_changed;
 } T1IOState;
 
@@ -89,9 +89,9 @@ T1_io_register_keyup(const u32 key_id)
 {
     if (
         key_id == T1_IO_MOUSE_LCLICK &&
-        T1_io->dragging)
+        T1_io->dragging_at_scene_id >= 0)
     {
-        T1_io->dragging = false;
+        T1_io->dragging_at_scene_id = -1;
     }
     
     T1_io->frame_map[key_id].is_down_for_scene_id = -1;
@@ -146,9 +146,11 @@ void T1_io_register_keyup_force_up_short(
 void
 T1_io_register_keydown(const u32 key_id)
 {
-    if (key_id == T1_IO_MOUSE_LCLICK && !T1_io->dragging)
+    if (key_id == T1_IO_MOUSE_LCLICK &&
+        T1_io->dragging_at_scene_id < 0)
     {
-        T1_io->dragging = true;
+        T1_io->dragging_at_scene_id =
+            T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
         T1_io->last_drag_start_x = T1_io->mouse_x;
         T1_io->last_drag_start_y = T1_io->mouse_y;
         
@@ -336,9 +338,11 @@ b8 T1_io_consume_mouse_changed(const s32 scene_id) {
 }
 
 b8 T1_io_consume_mouse_drag(
-    f32 * delta_x, f32 * delta_y, const s32 scene_id)
+    f32 * delta_x,
+    f32 * delta_y,
+    const s32 scene_id)
 {
-    if (T1_io->dragging) {
+    if (T1_io->dragging_at_scene_id == scene_id) {
         *delta_x = T1_io->last_drag_start_x - T1_io->mouse_x;
         *delta_y = T1_io->last_drag_start_y - T1_io->mouse_y;
         T1_io->last_drag_start_x = T1_io->mouse_x;

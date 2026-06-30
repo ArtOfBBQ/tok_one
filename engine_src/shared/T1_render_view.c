@@ -217,7 +217,7 @@ void T1_render_view_update_positions(
         if (elapsed > rv->us_to_destination) {
             us_actual = rv->us_to_destination;
         } else {
-            us_actual = elapsed;
+            us_actual = elapsed + ((rv->us_to_destination - elapsed) / 7);
         }
         
         f32 elapsed_pct = (f32)us_actual / (f32)rv->us_to_destination;

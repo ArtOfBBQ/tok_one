@@ -307,18 +307,18 @@ void T1_platform_request_messagebox(const char * message);
 /*
 creates a mutex and return the ID of said mutex for you to store
 */
-u32 T1_platform_init_mutex_and_return_id(void);
+u32 T1_os_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
-u8 T1_platform_mutex_trylock(const u32 mutex_id);
+u8 T1_os_mutex_trylock(const u32 mutex_id);
 
-void T1_platform_assert_mutex_locked(const u32 mutex_id);
+void T1_os_assert_mutex_locked(const u32 mutex_id);
 
-void T1_platform_mutex_lock(const u32 mutex_id);
+void T1_os_mutex_lock(const u32 mutex_id);
 
-void T1_platform_mutex_unlock(const u32 mutex_id);
+void T1_os_mutex_unlock(const u32 mutex_id);
 
-void T1_platform_layer_start_window_resize(
+void T1_os_layer_start_window_resize(
     const u64 timestamp);
 
 #ifdef __cplusplus

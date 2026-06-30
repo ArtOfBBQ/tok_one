@@ -162,7 +162,7 @@ void T1_tex_array_init(void) {
     
     for (u32 i = 0; i < T1_TEXARRAYS_CAP; i++)
     {
-        tex_arrays_mutex_ids[i] = T1_platform_init_mutex_and_return_id();
+        tex_arrays_mutex_ids[i] = T1_os_init_mutex_and_return_id();
     }
 }
 
@@ -236,7 +236,7 @@ register_to_texturearray_by_splitting_image(
                 filenames[(row_i*(s32)columns)+col_i],
                 256,
                 "_");
-            T1_std_strcat_int_cap(
+            T1_std_strcat_s32_cap(
                 filenames[(row_i*(s32)columns)+col_i],
                 256,
                 col_i);
@@ -244,7 +244,7 @@ register_to_texturearray_by_splitting_image(
                 filenames[(row_i*(s32)columns)+col_i],
                 256,
                 "_");
-            T1_std_strcat_int_cap(
+            T1_std_strcat_s32_cap(
                 filenames[(row_i*(s32)columns)+col_i],
                 256,
                 row_i);
@@ -310,7 +310,7 @@ s32 T1_tex_array_create_new_render_view(
         tex_name,
         64,
         "__%T1%__renderview_");
-    T1_std_strcat_int_cap(
+    T1_std_strcat_s32_cap(
         tex_name,
         64,
         rv_i);
@@ -466,7 +466,7 @@ void T1_tex_array_reg_new_by_splitting_img(
 }
 
 T1Tex T1_tex_array_reg_img(
-    const char * filename,
+    const c8 * filename,
     const u32 width,
     const u32 height,
     const b8 is_render_target,
@@ -636,9 +636,9 @@ void T1_tex_array_debug_dump_to_writables(
         
         char filename[128];
         T1_std_strcpy_cap(filename, 128, "dumped_texturearray_");
-        T1_std_strcat_int_cap(filename, 128, texture_array_i);
+        T1_std_strcat_s32_cap(filename, 128, texture_array_i);
         T1_std_strcat_cap(filename, 128, "_");
-        T1_std_strcat_int_cap(filename, 128, texture_i);
+        T1_std_strcat_s32_cap(filename, 128, texture_i);
         T1_std_strcat_cap(filename, 128, ".bmp");
         
         u8 write_good = 0;

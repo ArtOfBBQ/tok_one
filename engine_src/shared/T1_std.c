@@ -282,7 +282,7 @@ T1_std_internal_strcat_cap(
 }
 
 void
-T1_std_strcat_char_cap(
+T1_std_strcat_c8_cap(
     char * recipient,
     char to_append)
 {
@@ -297,7 +297,7 @@ T1_std_strcat_char_cap(
 }
 
 void
-T1_std_internal_strcat_int_cap(
+T1_std_internal_strcat_s32_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_size,
@@ -322,7 +322,7 @@ T1_std_internal_strcat_int_cap(
 }
 
 void
-T1_std_internal_strcat_uint_cap(
+T1_std_internal_strcat_u32_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_size,
@@ -815,7 +815,7 @@ T1_std_string_to_int32_validate(
     // the maximum s32 is 2147483647
     
     if (input[0] == '-') {
-        u32 temp = T1_std_string_to_uint32(
+        u32 temp = T1_std_string_to_u32(
             /* input: */
                 input + 1);
         
@@ -829,7 +829,7 @@ T1_std_string_to_int32_validate(
         return (s32)temp * -1;
     }
     
-    u32 unsigned_return = T1_std_string_to_uint32_validate(input, good);
+    u32 unsigned_return = T1_std_string_to_u32_validate(input, good);
     
     if (!*good) {
         return 0;
@@ -855,7 +855,7 @@ T1_std_string_to_s32(const char * input)
 }
 
 u32
-T1_std_string_to_uint32_validate(
+T1_std_string_to_u32_validate(
     const char * input,
     u8 * good)
 {
@@ -900,11 +900,11 @@ T1_std_string_to_uint32_validate(
 }
 
 u32
-T1_std_string_to_uint32(
+T1_std_string_to_u32(
     const char * input)
 {
     u8 result_good = false;
-    u32 result = T1_std_string_to_uint32_validate(
+    u32 result = T1_std_string_to_u32_validate(
         input,
         &result_good);
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE

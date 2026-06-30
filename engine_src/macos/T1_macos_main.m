@@ -185,7 +185,7 @@ static u32 T1_apple_keycode_to_tokone_keycode(
         default:
             #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
-            T1_std_strcat_uint_cap(err_msg, 128, apple_key);
+            T1_std_strcat_u32_cap(err_msg, 128, apple_key);
             T1_std_strcat_cap(err_msg, 128, "\n");
             #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
             #else
@@ -261,12 +261,42 @@ static u32 T1_apple_keycode_to_tokone_keycode(
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    T1_io_register_keydown(T1_IO_MOUSE_LCLICK);
+    T1_io_register_keydown(T1_IO_MOUSE_RCLICK);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
     T1_io_register_keyup(T1_IO_MOUSE_RCLICK);
+}
+
+- (void)otherMouseDown:(NSEvent *)event
+{
+    s64 button_num = [event buttonNumber];
+    
+    T1_log_assert(button_num >= 2);
+    
+    if (button_num < 2) { return; }
+    button_num -= 2;
+    
+    if (button_num >= 4) { return; }
+    
+    T1_io_register_keydown(
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num);
+}
+
+- (void)otherMouseUp:(NSEvent *)event
+{
+    s64 button_num = [event buttonNumber];
+    
+    T1_log_assert(button_num >= 2);
+    
+    if (button_num < 2) { return; }
+    button_num -= 2;
+    
+    if (button_num >= 4) { return; }
+    
+    T1_io_register_keyup(
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num);
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -383,7 +413,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender
     toSize:(NSSize)frameSize
 {
-    T1_platform_layer_start_window_resize(
+    T1_os_layer_start_window_resize(
         T1_os_get_current_time_us());
     
     return frameSize;

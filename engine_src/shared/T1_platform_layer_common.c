@@ -328,7 +328,7 @@ void T1_os_del_writable(
     T1_os_del_file(writable_filename);
 }
 
-void T1_platform_layer_start_window_resize(
+void T1_os_layer_start_window_resize(
     const u64 timestamp)
 {
     T1_global->last_resize_request_us = timestamp;

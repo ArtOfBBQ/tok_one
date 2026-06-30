@@ -71,54 +71,54 @@ T1_std_maxf(const f32 x, const f32 y);
 #endif
 void
 T1_std_internal_strcat_cap(
-    char * recipient,
+    c8 * recipient,
     const u32 recipient_size,
-    const char * to_append);
+    const c8 * to_append);
 
 void
 T1_std_strcat(
-    char * recipient,
-    const char * to_append);
+    c8 * recipient,
+    const c8 * to_append);
 
 u64
 T1_std_strlcat(
-    char * a,
-    const char * b,
+    c8 * a,
+    const c8 * b,
     u64 c);
 
 void
-T1_std_strcat_char_cap(
+T1_std_strcat_c8_cap(
     char * recipient,
     char to_append);
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcat_int_cap(recip, recipsize, to_append) T1_std_internal_strcat_int_cap(recip, recipsize, to_append);
+#define T1_std_strcat_s32_cap(recip, recipsize, to_append) T1_std_internal_strcat_s32_cap(recip, recipsize, to_append);
 void
-T1_std_internal_strcat_int_cap(
+T1_std_internal_strcat_s32_cap(
     char * recipient,
     const u32 recipient_size,
     const s32 to_append);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcat_int_cap(recip, recipsize, to_append) T1_std_internal_strcat_int_cap(recip, to_append);
+#define T1_std_strcat_s32_cap(recip, recipsize, to_append) T1_std_internal_strcat_s32_cap(recip, to_append);
 void
-T1_std_internal_strcat_int_cap(
+T1_std_internal_strcat_s32_cap(
     char * recipient,
-    const i32 to_append);
+    const s32 to_append);
 #else
 #error
 #endif
 
 #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcat_uint_cap(recip, recipsize, to_append) T1_std_internal_strcat_uint_cap(recip, recipsize, to_append);
+#define T1_std_strcat_u32_cap(recip, recipsize, to_append) T1_std_internal_strcat_u32_cap(recip, recipsize, to_append);
 void
-T1_std_internal_strcat_uint_cap(
+T1_std_internal_strcat_u32_cap(
     char * recipient,
     const u32 recipient_size,
     const u32 to_append);
 #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcat_uint_cap(recip, recipsize, to_append) T1_std_internal_strcat_uint_cap(recip, to_append);
+#define T1_std_strcat_u32_cap(recip, recipsize, to_append) T1_std_internal_strcat_u32_cap(recip, to_append);
 void
-T1_std_internal_strcat_uint_cap(
+T1_std_internal_strcat_u32_cap(
     char * recipient,
     const u32 to_append);
 #else
@@ -224,12 +224,12 @@ s32
 T1_std_string_to_s32(const char * input);
 
 u32
-T1_std_string_to_uint32_validate(
+T1_std_string_to_u32_validate(
     const char * input,
     u8 * good);
 
 u32
-T1_std_string_to_uint32(const char * input);
+T1_std_string_to_u32(const char * input);
 
 f32
 T1_std_string_to_f32_validate(

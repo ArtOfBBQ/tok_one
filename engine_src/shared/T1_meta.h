@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "T1_stdint.h"
+#include "T1_public_types.h"
 
 #define T1_META_ASSERTS T1_ACTIVE
 #if T1_META_ASSERTS == T1_ACTIVE
@@ -12,22 +12,6 @@
 #else
 #error
 #endif
-
-typedef enum : u8 {
-    T1_TYPE_NOTSET,
-    T1_TYPE_STRUCT,
-    T1_TYPE_F32,
-    T1_TYPE_U64,
-    T1_TYPE_U32,
-    T1_TYPE_U16,
-    T1_TYPE_U8,
-    T1_TYPE_U4x2,
-    T1_TYPE_I64,
-    T1_TYPE_I32,
-    T1_TYPE_I16,
-    T1_TYPE_I8,
-    T1_TYPE_CHAR,
-} T1MetaType;
 
 void T1_meta_init(
     void *(* T1_meta_memcpy)(void *, const void *, u64),
@@ -144,7 +128,7 @@ void T1_meta_write_to_known_field_str(
 void T1_meta_write_to_known_field_uint(
     const char * target_parent_type,
     const char * target_field_name,
-    const u64 value_to_write_uint,
+    u64 value_to_write_uint,
     void * target_parent_ptr,
     u8 * good);
 

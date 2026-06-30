@@ -63,7 +63,7 @@ static void T1_term_describe_zpolygon(
     #endif
     
     T1_std_strcat_cap(append_to, cap, "\n***Zpolygon: ");
-    T1_std_strcat_uint_cap(append_to, cap, zp_i);
+    T1_std_strcat_u32_cap(append_to, cap, zp_i);
 }
 
 static void T1_term_redraw_backgrounds(void) {
@@ -403,7 +403,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Jumping to render view: ");
-        T1_std_strcat_int_cap(
+        T1_std_strcat_s32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             jump_rv);
@@ -695,7 +695,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "window height: ");
-        T1_std_strcat_uint_cap(
+        T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             (u32)T1_render_views->cpu[0].height);
@@ -703,7 +703,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             ", width: ");
-        T1_std_strcat_uint_cap(
+        T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             (u32)T1_render_views->cpu[0].width);
@@ -722,7 +722,7 @@ static u8 T1_term_evaluate(
         command[8] == ' ' &&
         command[9] >= '0' && command[9] <= '9')
     {
-        u32 zp_i = T1_std_string_to_uint32(command + 9);
+        u32 zp_i = T1_std_string_to_u32(command + 9);
         
         response[0] = '\0';
         T1_term_describe_zpolygon(
@@ -824,7 +824,7 @@ static u8 T1_term_evaluate(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
-            T1_std_strcat_uint_cap(
+            T1_std_strcat_u32_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 T1_TEXARRAYS_CAP);
@@ -840,7 +840,7 @@ static u8 T1_term_evaluate(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,
                     "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,
                     T1_TEXARRAYS_CAP);
@@ -855,7 +855,7 @@ static u8 T1_term_evaluate(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 "Attempting to dump texture array: ");
-            T1_std_strcat_int_cap(
+            T1_std_strcat_s32_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 texture_array_i);
@@ -957,7 +957,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "There are ");
-        T1_std_strcat_uint_cap(
+        T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_zlights_size);

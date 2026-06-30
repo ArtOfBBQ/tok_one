@@ -728,7 +728,7 @@ void T1_text_request_top_touch_id(
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
-    T1_std_strcat_int_cap(fps_string, 512, top_touchable_id);
+    T1_std_strcat_s32_cap(fps_string, 512, top_touchable_id);
     
     T1_text_props->font_height = 16.0f;
     T1_text_props->f32s.rgba[0] = 1.0f;

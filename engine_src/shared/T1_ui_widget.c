@@ -281,28 +281,28 @@ static void T1_ui_widget_set_label(
                         slider_linked_value);
             break;
             case T1_TYPE_U64:
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     recip,
                     recip_cap,
                     (u32)*(u64 *)widget->
                         slider_linked_value);
             break;
             case T1_TYPE_U32:
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     recip,
                     recip_cap,
                     *(u32 *)widget->
                         slider_linked_value);
             break;
             case T1_TYPE_U16:
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     recip,
                     recip_cap,
                     *(u16 *)widget->
                         slider_linked_value);
             break;
             case T1_TYPE_U8:
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     recip,
                     recip_cap,
                     *(u8 *)widget->

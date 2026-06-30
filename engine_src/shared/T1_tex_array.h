@@ -39,11 +39,11 @@ void
 T1_tex_array_push_all(void);
 
 T1Tex T1_tex_array_reg_img(
-    const char * filename,
-    const u32 width,
-    const u32 height,
-    const b8 is_render_target,
-    const b8 use_bc1_compression);
+    const c8 * filename,
+    u32 width,
+    u32 height,
+    b8 is_render_target,
+    b8 use_bc1_compression);
 
 s32 T1_tex_array_create_new_render_view(
     const u32 width,
@@ -57,10 +57,10 @@ void T1_tex_array_delete_slice(
     const s32 slice_i);
 
 void T1_tex_array_update_rgba(
-    const s32 array_i,
-    const s32 slice_i,
+    s32 array_i,
+    s32 slice_i,
     const u8 * rgba,
-    const u32 rgba_size);
+    u32 rgba_size);
 
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,

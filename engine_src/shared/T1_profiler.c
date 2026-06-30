@@ -141,7 +141,7 @@ void T1_profiler_new_frame(void) {
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             "PAUSED - frame ");
-        T1_std_strcat_uint_cap(
+        T1_std_strcat_u32_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             frame_i);
@@ -149,7 +149,7 @@ void T1_profiler_new_frame(void) {
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             " took ");
-        T1_std_strcat_uint_cap(
+        T1_std_strcat_u32_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             (u32)frames[frame_i].elapsed);
@@ -390,7 +390,7 @@ void T1_profiler_draw_labels(void) {
             
             char line_text[128];
             T1_std_strcpy_cap(line_text, 128, "Selected frame: ");
-            T1_std_strcat_int_cap(
+            T1_std_strcat_s32_cap(
                 line_text,
                 128,
                 f_i);
@@ -417,7 +417,7 @@ void T1_profiler_draw_labels(void) {
             
             cur_top -= (T1_text_props->font_height + 2.0f);
             T1_std_strcpy_cap(line_text, 128, "Cycles: ");
-            T1_std_strcat_uint_cap(
+            T1_std_strcat_u32_cap(
                 line_text,
                 128,
                 (u32)frames[f_i].elapsed);
@@ -494,7 +494,7 @@ void T1_profiler_draw_labels(void) {
                     line_text,
                     128,
                     " ");
-                T1_std_strcat_uint_cap(
+                T1_std_strcat_u32_cap(
                     line_text,
                     128,
                     (u32)frames[f_i].
@@ -505,7 +505,7 @@ void T1_profiler_draw_labels(void) {
                     " (");
                 
                 T1_log_assert(pct_elapsed >= 0.0f);
-                T1_std_strcat_int_cap(
+                T1_std_strcat_s32_cap(
                     line_text,
                     128,
                     (int)(pct_elapsed * 100.0f));

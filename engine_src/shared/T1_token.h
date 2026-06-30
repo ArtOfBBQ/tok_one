@@ -1,8 +1,7 @@
 #ifndef T1_TOKEN_H
 #define T1_TOKEN_H
 
-#include "T1_stdint.h"
-
+#include "T1_public_types.h"
 
 /*
 THE API FOR TRANSFORMING TEXT TO TOKENS (below)
@@ -43,19 +42,11 @@ are convenient for you.
 #define T1_TOKEN_FLAG_PRECISE 8
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
 
-typedef enum : u8 {
-    T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
-    T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
-    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
-    T1_TOKEN_STOREMODE_MIDDLE_STRING     // Register token, save string
-} T1TokenStoreMode;
+void
+T1_token_set_store_mode(T1TokenStoreMode mode);
 
 void
-T1_token_set_store_mode(const T1TokenStoreMode mode);
-
-void
-T1_token_set_reg_bitflags(
-    const u8 bitflags);
+T1_token_set_reg_bitflags(u8 bitflags);
 
 void
 T1_token_clear_start_pattern(void);
@@ -70,20 +61,18 @@ T1_token_clear_stop_patterns(void);
 void
 T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
-    const u32 pattern_index);
+    u32 pattern_index);
 
 void
-T1_token_set_reg_middle_cap(
-    const u32 middle_cap);
+T1_token_set_reg_middle_cap(u32 middle_cap);
 
-void
-T1_token_set_string_literal(
-    const u32 enum_value,
+void T1_token_set_string_literal(
+    u32 enum_value,
     u8 * good);
 
 void
 T1_token_register(
-    const u32 enum_value,
+    u32 enum_value,
     u8 * good);
 
 /*
@@ -95,6 +84,11 @@ T1_token_run(
     const char * input,
     u8 * good);
 
+u32 T1_token_get_token_count(void);
+u32 T1_token_get_enum_value(u16 token_i);
+char * T1_token_get_string_value(u16 token_i);
+u32 T1_token_get_string_value_size(u16 token_i);
+u32 T1_token_get_line_num(u16 token_i);
 
 /*
 THE API FOR QUERYING TOKEN DATA (below)
@@ -115,37 +109,20 @@ if (T1_token_is_u16(token)) {
 the T1_token_is_number(T1Token*) macro will return 0 if a number is too
 big for a uint64, even if it's composed of all numbers
 */
-typedef struct {
-    u64 as_u64;
-    s64 as_i64;
-    f64 as_f64;
-} T1TokenNumber;
+b8 T1_token_is_number(s32 at_i);
+b8 T1_token_fits_f64(s32 at_i);
+b8 T1_token_fits_f32(s32 at_i);
+b8 T1_token_fits_s64(s32 at_i);
+b8 T1_token_fits_s32(s32 at_i);
+b8 T1_token_fits_s16(s32 at_i);
+b8 T1_token_fits_s8(s32 at_i);
+b8 T1_token_fits_u64(s32 at_i);
+b8 T1_token_fits_u32(s32 at_i);
+b8 T1_token_fits_u16(s32 at_i);
+b8 T1_token_fits_u8(s32 at_i);
 
-#define T1_token_is_number(tokenptr) ((tokenptr)->castable_flags & 1)
-#define T1_token_fits_f64(tokenptr) (((tokenptr)->castable_flags & 2) > 0)
-#define T1_token_fits_f32(tokenptr) (((tokenptr)->castable_flags & 4) > 0)
-#define T1_token_fits_u8(tokenptr) (((tokenptr)->castable_flags & 8) > 0)
-#define T1_token_fits_u16(tokenptr) (((tokenptr)->castable_flags & 16) > 0)
-#define T1_token_fits_u32(tokenptr) (((tokenptr)->castable_flags & 32) > 0)
-#define T1_token_fits_u64(tokenptr) (((tokenptr)->castable_flags & 64) > 0)
-#define T1_token_fits_i8(tokenptr) (((tokenptr)->castable_flags & 128) > 0)
-#define T1_token_fits_i16(tokenptr) (((tokenptr)->castable_flags & 256) > 0)
-#define T1_token_fits_s32(tokenptr) (((tokenptr)->castable_flags & 512) > 0)
-#define T1_token_fits_i64(tokenptr) (((tokenptr)->castable_flags & 1024) > 0)
-typedef struct {
-    T1TokenNumber * number_value;
-    u32 enum_value;
-    u32 line_number;
-    char * string_value;
-    u16 string_value_size; // size in bytes
-    u16 castable_flags;
-} T1Token;
-
-u32
-T1_token_get_token_count(void);
-
-T1Token *
-T1_token_get_token_at(
-    const u32 token_i);
+u64 T1_token_as_number_unsigned(s32 at_i);
+s64 T1_token_as_number_signed(s32 at_i);
+f64 T1_token_as_number_floating(s32 at_i);
 
 #endif // T1_TOKEN_H

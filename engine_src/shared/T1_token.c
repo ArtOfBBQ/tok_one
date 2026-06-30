@@ -10,6 +10,21 @@
 
 #include "T1_std.h"
 
+typedef struct {
+    u64 as_u64;
+    s64 as_i64;
+    f64 as_f64;
+} T1TokenNumber;
+
+typedef struct {
+    T1TokenNumber * number_value;
+    u32 enum_value;
+    u32 line_number;
+    c8 * string_value;
+    u16 string_value_size; // size in bytes
+    u16 castable_flags;
+} T1Token;
+
 static void T1_token_strcat(
     char * recip,
     const u32 cap,
@@ -1020,13 +1035,80 @@ void T1_token_run(
     *good = 1;
 }
 
+u32 T1_token_get_enum_value(u16 token_i) {
+    return tts->tokens[token_i].enum_value;
+}
+
+char * T1_token_get_string_value(u16 token_i) {
+    return tts->tokens[token_i].string_value;
+}
+
+u32 T1_token_get_string_value_size(u16 token_i) {
+    return tts->tokens[token_i].string_value_size;
+}
+/*
+// #define T1_token_is_number(i) ((i)->castable_flags & 1)
+// b8 T1_token_fits_f64(s32 i); (((i)->castable_flags & 2) > 0)
+#define T1_token_fits_f32(i) (((i)->castable_flags & 4) > 0)
+//#define T1_token_fits_u8(i)  (((i)->castable_flags & 8) > 0)
+//#define T1_token_fits_u16(i) (((i)->castable_flags & 16) > 0)
+//#define T1_token_fits_u32(i) (((i)->castable_flags & 32) > 0)
+//#define T1_token_fits_u64(i) (((i)->castable_flags & 64) > 0)
+#define T1_token_fits_i8(i)  (((i)->castable_flags & 128) > 0)
+// #define T1_token_fits_i16(i) (((i)->castable_flags & 256) > 0)
+// #define T1_token_fits_s32(i) (((i)->castable_flags & 512) > 0)
+// #define T1_token_fits_i64(i) (((i)->castable_flags & 1024) > 0)
+*/
+
 u32 T1_token_get_token_count(void) {
     return tts->tokens_size;
 }
 
-T1Token * T1_token_get_token_at(
-    const u32 token_i)
-{
-    return &tts->tokens[token_i];
+u32 T1_token_get_line_num(u16 token_i) {
+    return tts->tokens[token_i].line_number;
+}
+b8 T1_token_is_number(s32 at_i) {
+    return tts->tokens[at_i].castable_flags & 1;
+}
+b8 T1_token_fits_f64(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 2) > 0;
+}
+b8 T1_token_fits_f32(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 4) > 0;
+}
+b8 T1_token_fits_s64(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 1024) > 0;
+}
+b8 T1_token_fits_s32(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 512) > 0;
+}
+b8 T1_token_fits_s16(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 256) > 0;
+}
+b8 T1_token_fits_s8(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 128) > 0;
+}
+b8 T1_token_fits_u64(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 64) > 0;
+}
+b8 T1_token_fits_u32(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 32) > 0;
+}
+b8 T1_token_fits_u16(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 16) > 0;
+}
+b8 T1_token_fits_u8(s32 at_i) {
+    return (tts->tokens[at_i].castable_flags & 8) > 0;
 }
 
+u64 T1_token_as_number_unsigned(s32 at_i) {
+    return tts->tokens[at_i].number_value->as_u64;
+}
+
+s64 T1_token_as_number_signed(s32 at_i) {
+    return tts->tokens[at_i].number_value->as_i64;
+}
+
+f64 T1_token_as_number_floating(s32 at_i) {
+    return tts->tokens[at_i].number_value->as_f64;
+}

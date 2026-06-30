@@ -56,7 +56,7 @@ void T1_mem_get_usage_summary_string(
         recipient,
         recipient_cap,
         "Unmanaged memory use: ");
-    T1_std_strcat_uint_cap(
+    T1_std_strcat_u32_cap(
         recipient,
         recipient_cap,
         T1_UNMANAGED_MEM_CAP - (u32)unmanaged_memory_size);
@@ -64,7 +64,7 @@ void T1_mem_get_usage_summary_string(
         recipient,
         recipient_cap,
         " of: ");
-    T1_std_strcat_uint_cap(
+    T1_std_strcat_u32_cap(
         recipient,
         recipient_cap,
         T1_UNMANAGED_MEM_CAP);
@@ -72,7 +72,7 @@ void T1_mem_get_usage_summary_string(
         recipient,
         recipient_cap,
         " (");
-    T1_std_strcat_uint_cap(
+    T1_std_strcat_u32_cap(
         recipient,
         recipient_cap,
         (u32)(

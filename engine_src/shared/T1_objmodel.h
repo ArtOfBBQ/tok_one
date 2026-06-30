@@ -20,13 +20,13 @@ s32 T1_objmodel_new_mesh_id_from_resources(
 s32 T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
 f32 T1_objmodel_get_x_multiplier_for_width(
-    const s32 mesh_id,
-    const f32 screenspace_width,
-    const f32 given_z);
+    s32 mesh_id,
+    f32 screenspace_width,
+    f32 given_z);
 f32 T1_objmodel_get_y_multiplier_for_height(
-    const s32 mesh_id,
-    const f32 screenspace_height,
-    const f32 given_z);
+    s32 mesh_id,
+    f32 screenspace_height,
+    f32 given_z);
 
 /*
 **********************************************************************

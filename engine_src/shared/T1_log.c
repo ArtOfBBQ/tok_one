@@ -346,7 +346,7 @@ T1_log_assert_internal(
         assert_failed_msg,
         512,
         ", line ");
-    T1_std_strcat_int_cap(
+    T1_std_strcat_s32_cap(
         assert_failed_msg,
         512,
         line_number);
