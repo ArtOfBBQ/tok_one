@@ -2761,7 +2761,6 @@ static void set_defaults_for_encoder(
     [pass_5_comp setCullMode: MTLCullModeNone];
     [pass_5_comp
         setRenderPipelineState: ags->singlequad_pls];
-    T1_log_assert(ags->quad_vertices != NULL);
     [pass_5_comp
         setVertexBytes:
             ags->quad_vertices

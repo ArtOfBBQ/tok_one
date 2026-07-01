@@ -239,11 +239,16 @@ void T1_os_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
+    T1_log_assert(filepath_source != NULL);
+    T1_log_assert(filepath_source[0] != '\0');   
+    T1_log_assert(filepath_destination != NULL);
+    T1_log_assert(filepath_destination[0] != '\0');
+    
     T1_log_append("trying to copy from: ");
     T1_log_append(filepath_source);
     T1_log_append(", to: ");
     T1_log_append(filepath_destination);
-    T1_log_append_char('\n');
+    T1_log_append_c8('\n');
     
     NSString * nsfilepath_source = [NSString
         stringWithCString:filepath_source

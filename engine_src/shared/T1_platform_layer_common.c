@@ -82,7 +82,7 @@ void T1_os_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const u32 output_size,
-    u8 * good)
+    b8 * good)
 {
     char recipient[500];
     T1_os_writable_filename_to_pathfile(

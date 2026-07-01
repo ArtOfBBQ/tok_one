@@ -245,7 +245,7 @@ void T1_appinit_before_gpu_init(
     
     decode_png_init(
         /* void *(*malloc_funcptr)(u64): */
-            T1_mem_malloc_managed_infoless,
+            T1_mem_malloc_managed,
         /* free_function: */
             T1_mem_free_managed,
         /* memset_function: */
@@ -269,14 +269,14 @@ void T1_appinit_before_gpu_init(
     T1_token_init(
         T1_std_memset,
         T1_std_strlen,
-        T1_mem_malloc_managed_infoless,
+        T1_mem_malloc_managed,
         &good);
     T1_log_assert(good);
     
-    T1_objparser_init(T1_mem_malloc_managed_infoless, T1_mem_free_managed);
+    T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
     mtlparser_init(
         T1_std_memset,
-        T1_mem_malloc_managed_infoless,
+        T1_mem_malloc_managed,
         T1_std_strlcat);
     
     T1_logger_init(
@@ -389,8 +389,8 @@ void T1_appinit_before_gpu_init(
     T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_s->music_volume  = 0.5f;
-    T1_audio_s->sfx_volume    = 0.5f;
+    T1_audio_state->music_volume  = 0.5f;
+    T1_audio_state->sfx_volume    = 0.5f;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -511,7 +511,7 @@ void T1_appinit_before_gpu_init(
     
     T1_rand_init(
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_os_get_current_time_us() % RANDOM_SEQUENCE_SIZE
+        T1_os_get_current_time_us() % T1_RAND_SEQUENCE_SIZE
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         0
         #else
@@ -674,7 +674,7 @@ T1_appinit_asset_loading_thread(
 {
     if (asset_thread_id > 0) {
         decode_png_init(
-            T1_mem_malloc_managed_infoless,
+            T1_mem_malloc_managed,
             T1_mem_free_managed,
             T1_std_memset,
             T1_std_memcpy,
@@ -976,7 +976,7 @@ void T1_appinit_after_gpu_init_step2(
     
     if (longest_ta_i >= 0) {
         T1_log_append("Slowest texture array: ");
-        T1_log_append_int(longest_ta_i);
+        T1_log_append_s32(longest_ta_i);
         T1_log_append("\nIncludes images: ");
         T1_log_append(T1_tex_arrays[longest_ta_i].images[0].name);
         for (

@@ -1,5 +1,8 @@
 #include "T1_wav.h"
 
+#include "T1_std.h"
+#include "T1_log.h"
+
 typedef struct {
     char     riff[4];
     u32 file_size; // described sometimes as "integer", assuming uint
@@ -53,7 +56,7 @@ static void
 T1_wav_check_strings_equal(
     char * actual,
     char * expected_nullterm,
-    u32 * good)
+    b8 * good)
 {
     u32 at_i = 0;
     while (expected_nullterm[at_i] != '\0') {
@@ -176,8 +179,10 @@ T1_wav_parse(
     const u32 recipient_cap,
     unsigned char * raw_file,
     const u32 data_size,
-    u32 * good)
+    b8 * good)
 {
+    T1_log_assert(raw_file != NULL);
+    
     *good = 1;
     
     unsigned char * raw_file_at = raw_file;
@@ -211,7 +216,7 @@ T1_wav_parse(
             file_header.wave,
         /* char * expected_nullterm: */
             "WAVE",
-        /* u32 * good: */
+        /* b8 * good: */
             good);
     if (!*good) { return; }
     

@@ -692,7 +692,7 @@ static f32 f32_sequence[FLOAT_SEQUENCE_SIZE] = {
 0.6303f,0.6682f,0.9014f,0.7644f,0.0533f,0.9712f,0.0872f,
 };
 
-static s32 random_sequence[RANDOM_SEQUENCE_SIZE] = {
+static s32 random_sequence[T1_RAND_SEQUENCE_SIZE] = {
     7654,24225,27992,18159,20634,15636,5558,31144,8709,22118,20922,9389,
     30361,10707,15619,11980,6984,7613,19899,5045,5080,5197,24123,26630,
     32019,10134,1597,20681,26118,30497,27601,20489,27155,24616,16182,32227,
@@ -785,7 +785,7 @@ void T1_rand_init(const u32 seed) {
 
 s32 T1_rand(void) {
     T1_rand_seed++;
-    if (T1_rand_seed >= RANDOM_SEQUENCE_SIZE) {
+    if (T1_rand_seed >= T1_RAND_SEQUENCE_SIZE) {
         T1_rand_seed = 0;
     }
     
@@ -801,7 +801,7 @@ s32 T1_rand(void) {
 
 s32 T1_rand_at_i(const u64 index) {
     #ifndef RANDOM_IGNORE_ASSERTS
-    assert(index < RANDOM_SEQUENCE_SIZE);
+    assert(index < T1_RAND_SEQUENCE_SIZE);
     #endif
     
     #ifndef RANDOM_IGNORE_ASSERTS

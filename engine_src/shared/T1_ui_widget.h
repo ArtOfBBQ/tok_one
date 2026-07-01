@@ -15,44 +15,18 @@ same for most buttons/sliders in the app and don't want to set every time.
 If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
-#define T1_UI_WIDGET_STR_CAP 128
-typedef struct {
-    char * meta_struct_name;
-    union {
-        u64 custom_umax;
-        s64 custom_smax;
-        f64 custom_fmax;
-    };
-    union {
-        u64 custom_umin;
-        s64 custom_smin;
-        f64 custom_fmin;
-    };
-    T1Tex       slider_pin_tex;
-    f32       width_screen;
-    f32       height_screen;
-    f32       pin_width_screen;
-    f32       pin_height_screen;
-    
-    f32       screen_x;
-    f32       screen_y;
-    f32       z;
-    
-    char        sfx_filename[T1_UI_WIDGET_STR_CAP];
-    char        label_prefix[T1_UI_WIDGET_STR_CAP];
-    b8     custom_min_max_vals;
-    b8     is_meta_enum;
-    T1MetaType  linked_type;
-    
-    f32       pin_rgba[4];
-    s32     tex_array_i;
-    s32     tex_slice_i;
-    f32       slider;
-    b8          label_shows_value;
-} T1UIWidgetProps;
-
-extern T1UIWidgetProps * T1_ui_widget_next_props;
-
+void T1_ui_widget_requester_set_pin_rgba(u8 rgba_i, f32 val);
+void T1_ui_widget_requester_set_screenspace_height(u32 height);
+void T1_ui_widget_requester_set_screenspace_width(u32 width);
+void T1_ui_widget_requester_set_screenspace_pin_height(u32 height);
+void T1_ui_widget_requester_set_screenspace_pin_width(u32 width);
+void T1_ui_widget_requester_set_sfx_filename(c8 * sfx_fn);
+void T1_ui_widget_requester_set_font_height(u32 to_val);
+void T1_ui_widget_requester_set_screen_x(s32 x);
+void T1_ui_widget_requester_set_screen_y(s32 y);
+void T1_ui_widget_requester_set_z(f32 z);
+void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max);
+void T1_ui_widget_requester_set_linked_type(T1MetaType type);
 // allocates memory for state
 void T1_ui_widget_init(void);
 

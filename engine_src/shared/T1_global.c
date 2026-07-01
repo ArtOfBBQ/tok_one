@@ -1,7 +1,7 @@
 #include "T1_global.h"
 
-#include "T1_log.h"
-#include "T1_mesh_summary.h"
+#include "T1.h"
+#include "T1_mesh_summary.h" // TODO: encapsulate me
 
 T1Globals * T1_global = NULL;
 
@@ -76,13 +76,8 @@ T1_global_get_z_mul_for_depth(
     const s32 for_mesh_id,
     const f32 for_depth)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    T1_assert(for_mesh_id >= 0);
+    T1_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     
     f32 return_value =
         for_depth / T1_mesh_summary_list[for_mesh_id].
@@ -97,8 +92,8 @@ T1_global_get_y_mul_for_height(
     const f32 for_height)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
+    T1_assert(for_mesh_id >= 0);
+    T1_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -116,13 +111,8 @@ T1_global_get_x_mul_for_width(
     const s32 for_mesh_id,
     const f32 for_width)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(for_mesh_id >= 0);
-    T1_log_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    T1_assert(for_mesh_id >= 0);
+    T1_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
     
     f32 return_value =
         for_width /

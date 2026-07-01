@@ -3,6 +3,14 @@
 
 #include "T1_stdint.h"
 
+// retired objects are unaffected by animations
+#define T1_ID_RETIRED_BUT_NOT_DELETED 20501
+
+// Basic quads and cubes are predefined, they can be used without registering
+// an .obj file.
+#define T1_BASIC_QUAD_MESH_ID 0
+#define T1_BASIC_CUBE_MESH_ID 1
+
 #define T1_TEX_NONE UINT16_MAX
 typedef u16 T1Tex;
 
@@ -275,5 +283,11 @@ typedef enum : u8 {
     T1_TYPE_I8,
     T1_TYPE_CHAR,
 } T1MetaType;
+
+typedef struct {
+    f32 volume;
+    f32 sfx_volume;
+    f32 music_volume;
+} T1AudioSettingsFullyPublic;
 
 #endif // T1_PUBLIC_TYPES_H

@@ -251,7 +251,7 @@ T1_std_maxi(const s32 x, const s32 y)
 }
 
 void
-T1_std_internal_strcat_cap(
+T1_std_strcat_cap(
     char * recipient,
     const u32 recipient_size,
     const char * to_append)
@@ -297,7 +297,7 @@ T1_std_strcat_c8_cap(
 }
 
 void
-T1_std_internal_strcat_s32_cap(
+T1_std_strcat_s32_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_size,
@@ -322,15 +322,10 @@ T1_std_internal_strcat_s32_cap(
 }
 
 void
-T1_std_internal_strcat_u32_cap(
+T1_std_strcat_u32_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    const u32 recipient_size,
-    #elif T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    #else
-    #error
-    #endif
-    const u32 to_append)
+    u32 recipient_size,
+    u32 to_append)
 {
     u32 i = 0;
     while (recipient[i] != '\0') {
@@ -631,7 +626,7 @@ T1_std_strsub(
     }
 }
 
-u8
+b8
 T1_std_are_equal_strings(
     const char * str1,
     const char * str2)

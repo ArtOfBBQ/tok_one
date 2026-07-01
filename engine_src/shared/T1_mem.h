@@ -41,12 +41,7 @@ void T1_mem_malloc_managed_page_aligned(
 
 b8 T1_mem_is_page_aligned(void * to_check);
 
-#define T1_mem_malloc_managed(size) T1_mem_malloc_managed_internal(size, (char *)__FILE__, (char *)__func__);
-void * T1_mem_malloc_managed_internal(
-    u64 size,
-    char * called_from_file,
-    char * called_from_func);
-void * T1_mem_malloc_managed_infoless(u64 size);
+void * T1_mem_malloc_managed(u64 size);
 
 void T1_mem_free_managed(void * to_free);
 

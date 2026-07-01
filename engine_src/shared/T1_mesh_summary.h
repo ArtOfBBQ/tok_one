@@ -5,11 +5,6 @@
 
 #include "T1_cpu_to_gpu.h"
 
-// Basic quads and cubes are predefined, they can be used without registering
-// an .obj file.
-#define T1_BASIC_QUAD_MESH_ID 0
-#define T1_BASIC_CUBE_MESH_ID 1
-
 #define T1_OBJ_STRING_SIZE 128
 typedef struct {
     char resource_name[T1_OBJ_STRING_SIZE]; // resource filename

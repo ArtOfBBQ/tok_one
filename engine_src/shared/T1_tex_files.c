@@ -175,7 +175,7 @@ static void malloc_img_from_resource_name(
     } else {
         T1_log_append("unrecognized file format in: ");
         T1_log_append(filename);
-        T1_log_append_char('\n');
+        T1_log_append_c8('\n');
         recipient->good = false;
     }
     T1_mem_free_managed(contents);
@@ -530,13 +530,13 @@ void T1_tex_files_decode_all_prereg(
             start_ta_i + texture_arrays_per_thread;
     
     T1_log_append("Thread ");
-    T1_log_append_uint(thread_id);
+    T1_log_append_u32(thread_id);
     T1_log_append("/");
-    T1_log_append_uint(using_num_threads);
+    T1_log_append_u32(using_num_threads);
     T1_log_append(" decoding texarrays ");
-    T1_log_append_int(start_ta_i);
+    T1_log_append_s32(start_ta_i);
     T1_log_append(" - ");
-    T1_log_append_int(end_ta_i);
+    T1_log_append_s32(end_ta_i);
     T1_log_append("...\n");
     
     T1_log_assert(using_num_threads > 0);

@@ -23,20 +23,11 @@ extern "C" {
 
 extern s32 T1_id_retired;
 
-s32
-T1_id_next_ui_element_id(void);
-
-s32
-T1_id_next_nonui_id(void);
-
-s32
-T1_id_next_ui_element_touch_id(void);
-
-void
-T1_id_clear_ui_element_touch_ids(void);
-
-s32
-T1_id_next_nonui_touch_id(void);
+s32 T1_id_next_ui_element_id(void);
+s32 T1_id_next_nonui_id(void);
+s32 T1_id_next_ui_element_touch_id(void);
+void T1_id_clear_ui_element_touch_ids(void);
+s32 T1_id_next_nonui_touch_id(void);
 
 #ifdef __cplusplus
 }

@@ -11,7 +11,7 @@
 
 
 u8 T1_log_app_running = false;
-char * T1_log_crash_msg = NULL;
+c8 * T1_log_crash_msg = NULL;
 
 #define T1_LOG_CRASH_STRING_SIZE 256
 #define LOG_SIZE 500000
@@ -21,7 +21,7 @@ typedef struct {
     void (* mutex_lock)(const u32);
     void (* mutex_unlock)(const u32);
     u32 mutex_id;
-    char * full;
+    c8 * full;
     u32 full_i;
 } T1LogState;
 
@@ -59,177 +59,62 @@ void T1_logger_init(
 
 #if T1_LOG_PRINTF == T1_ACTIVE
 void
-T1_log_internal_append_uint(
-    const u32 to_append,
-    const char * caller_function_name)
+T1_log_append_u32(const u32 to_append)
 {
-    char converted[1000];
+    c8 converted[1000];
     T1_std_u32_to_string(
         /* const u32 input: */
             to_append,
-        /* char * recipient: */
+        /* c8 * recipient: */
             converted);
     
-    T1_log_internal_append(
-        converted,
-        caller_function_name);
+    T1_log_append(converted);
 }
 
-void
-T1_log_internal_append_char(
-    const char to_append,
-    const char * caller_function_name)
+void T1_log_append_c8(c8 to_append)
 {
-    char to_append_array[2];
+    c8 to_append_array[2];
     to_append_array[0] = to_append;
     to_append_array[1] = '\0';
     
-    T1_log_internal_append(
-        to_append_array,
-        caller_function_name);
+    T1_log_append(to_append_array);
 }
 
-void
-T1_log_internal_append_int(
-    const s32 to_append,
-    const char * caller_function_name)
+void T1_log_append_s32(s32 to_append)
 {
-    char converted[1000];
+    c8 converted[1000];
     T1_std_s32_to_string(
         /* const s32 input: */
             to_append,
-        /* char * recipient: */
+        /* c8 * recipient: */
             converted);
     
-    T1_log_internal_append(
-        converted,
-        caller_function_name);
+    T1_log_append(converted);
 }
 
-void
-T1_log_internal_append_f32(
-    const f32 to_append,
-    const char * caller_function_name)
+void T1_log_append_f32(f32 to_append)
 {
-    char f32_str[1000];
+    c8 f32_str[1000];
     T1_std_f32_to_string(
         /* const s32 input: */
             to_append,
-        /* char * recipient: */
+        /* c8 * recipient: */
             f32_str,
         /* const u32 recipient_size: */
             1000);
     
-    T1_log_internal_append(
-        f32_str,
-        caller_function_name);
+    T1_log_append(
+        f32_str);
 }
 
-void
-T1_log_internal_append(
-    const char * to_append,
-    const char * caller_function_name)
+void T1_log_append(
+    const c8 * to_append)
 {
     (void)to_append;
     
     printf("%s", to_append);
     
     // logger_mutex_lock_func(logger_mutex_id);
-    
-    #if 1
-    (void)caller_function_name;
-    #else
-    if (
-        caller_function_name != NULL)
-    {
-        char * prefix = (char *)"[";
-        u32 prefix_length = common_get_string_length(prefix);
-        if (log_i + prefix_length >= LOG_SIZE) {
-            if (logger_mutex_unlock_func != NULL) {
-                // logger_mutex_unlock_func(logger_mutex_id);
-            }
-            return;
-        }
-        
-        T1_std_strcpy_cap(
-            /* recipient: */
-                app_log + log_i,
-            /* recipient_size: */
-                LOG_SIZE,
-            /* origin: */
-                prefix);
-        log_i += prefix_length;
-        if (log_i >= LOG_SIZE) {
-            // logger_mutex_unlock_func(logger_mutex_id);
-            return;
-        }
-        
-        u32 func_length = common_get_string_length(
-        caller_function_name);
-        if (log_i + func_length >= LOG_SIZE) {
-            // logger_mutex_unlock_func(logger_mutex_id);
-            return;
-        }
-        
-        T1_std_strcpy_cap(
-            /* recipient: */
-                app_log + log_i,
-            /* recipient_size: */
-                LOG_SIZE - log_i,
-            /* origin: */
-                caller_function_name);
-        log_i += func_length;
-        if (log_i >= LOG_SIZE) {
-            if (logger_mutex_unlock_func != NULL) {
-                // logger_mutex_unlock_func(logger_mutex_id);
-            }
-            return;
-        }
-        
-        char * glue = (char *)"]: ";
-        u32 glue_length = common_get_string_length(glue);
-        if (log_i + glue_length >= LOG_SIZE) {
-            if (logger_mutex_unlock_func != NULL) {
-                // logger_mutex_unlock_func(logger_mutex_id);
-            }
-            return;
-        }
-        T1_std_strcpy_cap(
-            /* recipient: */
-                app_log + log_i,
-            /* recipient_size: */
-                LOG_SIZE,
-            /* origin: */
-                glue);
-        log_i += glue_length;
-        if (log_i >= LOG_SIZE) {
-            if (logger_mutex_unlock_func != NULL) {
-                // logger_mutex_unlock_func(logger_mutex_id);
-            }
-            return;
-        }
-    }
-    
-    u32 to_append_length = common_get_string_length(to_append);
-    if (log_i + to_append_length >= LOG_SIZE) {
-        if (logger_mutex_unlock_func != NULL) {
-            // logger_mutex_unlock_func(logger_mutex_id);
-        }
-        return;
-    }
-    T1_std_strcpy_cap(
-        /* recipient: */
-            app_log + log_i,
-        /* recipient_size: */
-            LOG_SIZE,
-        /* origin: */
-            to_append);
-    log_i += to_append_length;
-    
-    if (logger_mutex_unlock_func != NULL) {
-        // logger_mutex_unlock_func(logger_mutex_id);
-    }
-    #endif
 }
 #elif T1_LOG_PRINTF == T1_INACTIVE
 #else
@@ -244,8 +129,8 @@ void T1_log_dump(u8 * good) {
     //
     //    platform_write_file_to_writables(
     //        /* filepath_destination : */
-    //            (char *)"log.txt",
-    //        /* const char * output  : */
+    //            (c8 *)"log.txt",
+    //        /* const c8 * output  : */
     //            app_log,
     //        /* output_size          : */
     //            log_i + 1,
@@ -257,7 +142,7 @@ void T1_log_dump(u8 * good) {
 
 void
 T1_log_dump_and_crash(
-    const char * crash_message)
+    const c8 * crash_message)
 {
     u8 log_dump_succesful = false;
     T1_log_dump(&log_dump_succesful);
@@ -286,12 +171,7 @@ T1_log_dump_and_crash(
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void
-T1_log_assert_internal(
-    u8 condition,
-    const char * str_condition,
-    const char * file_name,
-    const s32 line_number,
-    const char * func_name)
+T1_log_assert(u8 condition)
 {
     if (
         condition ||
@@ -300,89 +180,23 @@ T1_log_assert_internal(
         return;
     }
     
-    #if T1_LOG_PRINTF == T1_ACTIVE
-    printf(
-        "\n*****\nfailed condition (%s::%s::%i: %s\n*****\n",
-        file_name != NULL ? file_name : "NULL",
-        func_name != NULL ? func_name : "NULL",
-        line_number,
-        str_condition != NULL ? str_condition : "NULL");
-    #elif T1_LOG_PRINTF == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    assert(str_condition != NULL);
-    assert(str_condition[0] != '\0');
-    
     //Assertion failed: (0), function main, file test.c, line 6.
-    char assert_failed_msg[512];
+    c8 assert_failed_msg[512];
     
     T1_std_strcpy_cap(
         assert_failed_msg,
         512,
-        "Assertion failed: (");
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        512,
-        str_condition);
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        256,
-        "), function ");
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        512,
-        func_name);
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        512,
-        ", file ");
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        512,
-        file_name);
-    T1_std_strcat_cap(
-        assert_failed_msg,
-        512,
-        ", line ");
-    T1_std_strcat_s32_cap(
-        assert_failed_msg,
-        512,
-        line_number);
+        "Assertion failed.");
     
     T1_log_dump_and_crash(assert_failed_msg);
 }
 
 void
-T1_log_warn_internal(
-    u8 condition,
-    const char * str_condition,
-    const char * file_name,
-    const s32 line_number,
-    const char * func_name)
+T1_log_warn(u8 condition)
 {
     if (condition) { return; }
-    
-    #if T1_LOG_PRINTF == T1_ACTIVE
-    printf(
-        "\n*****\nWARN CONDITION (%s::%s::%i: %s\n*****\n",
-        file_name != NULL ? file_name : "NULL",
-        func_name != NULL ? func_name : "NULL",
-        line_number,
-        str_condition != NULL ? str_condition : "NULL");
-    #elif T1_LOG_PRINTF == T1_INACTIVE
-    (void)line_number;
-    (void)file_name;
-    (void)func_name;
-    (void)str_condition;
-    #else
-    #error
-    #endif
-    
-    T1_log_append("WARN CONDITION from function: ");
-    T1_log_append(str_condition);
-    T1_log_append("\n");
+        
+    T1_log_append("WARN CONDITION triggered\n");
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else

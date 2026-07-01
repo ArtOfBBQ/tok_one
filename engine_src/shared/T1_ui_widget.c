@@ -15,6 +15,41 @@
 #include "T1_profiler.h"
 #include "T1_render_view.h"
 
+#define T1_UI_WIDGET_STR_CAP 128
+typedef struct {
+    char meta_struct_name[T1_UI_WIDGET_STR_CAP];
+    union {
+        u64 custom_umax;
+        s64 custom_smax;
+        f64 custom_fmax;
+    };
+    union {
+        u64 custom_umin;
+        s64 custom_smin;
+        f64 custom_fmin;
+    };
+    
+    f32 width_screen;
+    f32 height_screen;
+    f32 pin_width_screen;
+    f32 pin_height_screen;
+    f32 screen_x;
+    f32 screen_y;
+    f32 z;
+    f32 pin_rgba[4];
+    s32 tex_array_i;
+    s32 tex_slice_i;
+    f32 slider;
+    
+    T1Tex slider_pin_tex;
+    
+    c8 sfx_filename[T1_UI_WIDGET_STR_CAP];
+    c8 label_prefix[T1_UI_WIDGET_STR_CAP];
+    b8 custom_min_max_vals;
+    b8 is_meta_enum;
+    T1MetaType linked_type;
+    b8 label_shows_value;
+} T1UIWidgetProps;
 
 static s32 T1_ui_widget_sliding_touch_id = -1;
 static s32 T1_ui_widget_clicking_T1_id = -1;
@@ -351,6 +386,48 @@ next_active_ui_element(void)
     
     return &T1_ui_widget_list[
         T1_ui_widget_list_size - 1];
+}
+
+void T1_ui_widget_requester_set_pin_rgba(u8 rgba_i, f32 val) {
+    T1_ui_widget_next_props->pin_rgba[rgba_i] = val;
+}
+void T1_ui_widget_requester_set_screenspace_height(u32 height) {
+    T1_ui_widget_next_props->height_screen = height;
+}
+void T1_ui_widget_requester_set_screenspace_width(u32 width) {
+    T1_ui_widget_next_props->width_screen = width;
+}
+void T1_ui_widget_requester_set_screenspace_pin_height(u32 height) {
+    T1_ui_widget_next_props->pin_height_screen = height;
+}
+void T1_ui_widget_requester_set_screenspace_pin_width(u32 width) {
+    T1_ui_widget_next_props->pin_width_screen = width;
+}
+void T1_ui_widget_requester_set_sfx_filename(c8 * sfx_fn) {
+    T1_std_strcpy_cap(
+        T1_ui_widget_next_props->sfx_filename,
+        T1_UI_WIDGET_STR_CAP,
+        sfx_fn);
+}
+void T1_ui_widget_requester_set_font_height(u32 to_val) {
+    T1_log_assert(0); // ???
+}
+void T1_ui_widget_requester_set_screen_x(s32 x) {
+    T1_ui_widget_next_props->screen_x = x;
+}
+void T1_ui_widget_requester_set_screen_y(s32 y) {
+    T1_ui_widget_next_props->screen_y = y;
+}
+void T1_ui_widget_requester_set_z(f32 z) {
+    T1_ui_widget_next_props->z = z;
+}
+void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max) {
+    T1_ui_widget_next_props->custom_min_max_vals = active;
+    T1_ui_widget_next_props->custom_fmin = min;
+    T1_ui_widget_next_props->custom_fmax = max;
+}
+void T1_ui_widget_requester_set_linked_type(T1MetaType type) {
+    T1_ui_widget_next_props->linked_type = type;
 }
 
 void T1_ui_widget_init(void) {

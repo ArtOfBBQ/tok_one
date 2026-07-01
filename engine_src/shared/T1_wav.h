@@ -1,9 +1,7 @@
 #ifndef T1_WAV_H
 #define T1_WAV_H
 
-#include "T1_std.h"
-
-#include <stdint.h>
+#include "T1_stdint.h"
 #include <stddef.h>
 
 #ifndef T1_WAV_SILENCE
@@ -26,9 +24,9 @@ void
 T1_wav_parse(
     s16 * recipient,
     u32 * recipient_size,
-    const u32 recipient_cap,
+    u32 recip_cap,
     unsigned char * raw_file,
-    const u32 data_size,
-    u32 * good);
+    u32 data_size,
+    b8 * good);
 
 #endif // T1_WAV_H

@@ -52,7 +52,7 @@ void T1_particle_effect_construct(
     to_construct->T1_id = -1;
     
     to_construct->random_seed = (u32)T1_rand() %
-        (RANDOM_SEQUENCE_SIZE - 100);
+        (T1_RAND_SEQUENCE_SIZE - 100);
     to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
     to_construct->modifiers_size = 1;
@@ -301,7 +301,7 @@ static void T1_particle_add_single_to_frame_data(
             (pe->random_seed +
                 (mod_i << 2) +
                 (spawn_i * 9)) %
-                (RANDOM_SEQUENCE_SIZE -
+                (T1_RAND_SEQUENCE_SIZE -
                     sizeof(T1GPUFlatQuad));
         
         if (t < 0.0f) { continue; }

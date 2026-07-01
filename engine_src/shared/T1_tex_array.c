@@ -3,10 +3,10 @@
 #include "debigulator/src/decode_png.h"
 #include "debigulator/src/decode_bmp.h"
 
-#include "T1_platform_layer.h"
 #include "T1_log.h"
 #include "T1_mem.h"
-#include "T1_cpu_gpu_shared_types.h"
+#include "T1_platform_layer.h"
+// #include "T1_cpu_gpu_shared_types.h"
 #include "T1_render_view.h"
 
 static u32
@@ -343,6 +343,27 @@ s32 T1_tex_array_create_new_render_view(
     T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
     
     return rv_i;
+}
+
+b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in) {
+    return
+        in != T1_TEX_NONE &&
+        (
+        T1_tex_to_array_i(in) >= (s32)T1_tex_arrays_size ||
+        T1_tex_to_slice_i(in) >= 
+            (s32)T1_tex_arrays[T1_tex_to_array_i(in)].images_size ||
+        T1_tex_arrays[T1_tex_to_array_i(in)].images[T1_tex_to_slice_i(in)].deleted
+        );
+}
+
+u32 T1_tex_array_get_img_height(s32 array_i) {
+    T1_log_assert(array_i < T1_tex_arrays_size);
+    return T1_tex_arrays[array_i].single_img_height;
+}
+
+u32 T1_tex_array_get_img_width(s32 array_i) {
+    T1_log_assert(array_i < T1_tex_arrays_size);
+    return T1_tex_arrays[array_i].single_img_height;
 }
 
 void T1_tex_array_delete_array(

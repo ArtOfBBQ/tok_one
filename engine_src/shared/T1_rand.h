@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define FLOAT_SEQUENCE_SIZE  4760
-#define RANDOM_SEQUENCE_SIZE  999
+#define T1_RAND_SEQUENCE_SIZE  999
 
 extern u32 T1_rand_seed;
 

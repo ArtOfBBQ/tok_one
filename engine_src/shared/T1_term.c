@@ -616,7 +616,7 @@ static u8 T1_term_evaluate(
             T1_TERM_SINGLE_LINE_MAX,
             "Dumping global sound buffer to disk...");
         
-        u32 good = 0;
+        b8 good = 0;
         T1_os_write_file_to_writables(
             /* const char * filepath_inside_writables: */
                 "global_sound_buffer.wav",

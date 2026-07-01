@@ -34,107 +34,86 @@ extern "C" {
 
 void T1_os_init(
     void ** unmanaged_memory_store,
-    const u32 aligned_to);
+    u32 aligned_to);
 
-void
-T1_os_close_app(void);
+void T1_os_close_app(void);
 
-void *
-T1_os_malloc_unaligned_block(
-    const u64 size);
+void * T1_os_malloc_unaligned_block(
+    u64 size);
 
-u32
-T1_os_get_dir_separator_size(void);
+u32 T1_os_get_dir_separator_size(void);
 
-void
-T1_os_get_dir_separator(char * recipient);
+void T1_os_get_dir_separator(c8 * recipient);
 
-void
-T1_os_res_filename_to_pathfile(
-    const char * filename,
-    char * recipient,
-    const u32 recipient_capacity);
+void T1_os_res_filename_to_pathfile(
+    const c8 * filename,
+    c8 * recipient,
+    u32 recipient_capacity);
 
-void
-T1_os_writable_filename_to_pathfile(
-    const char * filename,
-    char * recipient,
-    const u32 recipient_capacity);
+void T1_os_writable_filename_to_pathfile(
+    const c8 * filename,
+    c8 * recipient,
+    u32 recipient_capacity);
 
-void
-T1_os_open_dir_in_file_explorer_window_if_possible(
-    const char * folderpath);
+void T1_os_open_dir_in_file_explorer_window_if_possible(
+    const c8 * folderpath);
 
 // get current working directory
-void
-T1_os_get_app_dir(
-    char * recipient,
-    const u32 recipient_size);
+void T1_os_get_app_dir(
+    c8 * recipient,
+    u32 recipient_size);
 
-void
-T1_os_get_res_dir(
-    char * recip,
-    const u32 recip_cap);
+void T1_os_get_res_dir(
+    c8 * recip,
+    u32 recip_cap);
 
-void
-T1_os_get_cwd(
-    char * recipient,
-    const u32 recipient_size);
+void T1_os_get_cwd(
+    c8 * recipient,
+    u32 recipient_size);
 
 // a root directory where we're allowed to write
-void
-T1_os_get_writables_dir(
-    char * recipient,
-    const u32 recipient_size);
+void T1_os_get_writables_dir(
+    c8 * recipient,
+    u32 recipient_size);
 
-u8
-T1_os_res_exists(const char * resource_name);
+u8 T1_os_res_exists(const c8 * resource_name);
 
-u8
-T1_os_file_exists(const char * filepath);
+u8 T1_os_file_exists(const c8 * filepath);
 
-void
-T1_os_del_file(const char * filepath);
+void T1_os_del_file(const c8 * filepath);
 
-void
-T1_os_del_writable(const char * writable_filename);
+void T1_os_del_writable(const c8 * writable_filename);
 
-void
-T1_os_write_file(
-    const char * filepath_destination,
-    const char * output,
-    const u32 output_size,
+void T1_os_write_file(
+    const c8 * filepath_destination,
+    const c8 * output,
+    u32 output_size,
     u8 * good);
 
-void
-T1_os_write_file_to_writables(
-    const char * filepath_inside_writables,
-    const char * output,
-    const u32 output_size,
-    u8 * good);
+void T1_os_write_file_to_writables(
+    const c8 * filepath_inside_writables,
+    const c8 * output,
+    u32 output_size,
+    b8 * good);
 
-void
-T1_os_write_rgba_to_writables(
-    const char * local_filename,
+void T1_os_write_rgba_to_writables(
+    const c8 * local_filename,
     u8 * rgba,
-    const u32 rgba_size,
-    const u32 width,
-    const u32 height,
+    u32 rgba_size,
+    u32 width,
+    u32 height,
     u8 * good);
 
-void
-T1_os_copy_file(
-    const char * filepath_source,
-    const char * filepath_destination);
+void T1_os_copy_file(
+    const c8 * filepath_source,
+    const c8 * filepath_destination);
 
-void
-T1_os_mkdir_if_not_exist(
-    const char * dirname);
+void T1_os_mkdir_if_not_exist(
+    const c8 * dirname);
 
-void
-T1_os_get_filenames_in(
-    const char * directory,
-    char filenames[2000][500]);
+void T1_os_get_filenames_in(
+    const c8 * directory,
+    c8 filenames[2000][500]);
 
 /*
 Get a file's size. Returns 0 if no such file
@@ -144,21 +123,17 @@ A 'resource' is a file that's available in the typical folder for our platform
 
 A 'filepath' is a full explicit path to and including the filename
 */
-u64
-T1_os_get_resource_size(
-    const char * filename);
+u64 T1_os_get_resource_size(
+    const c8 * filename);
 
-u64
-T1_os_get_writable_size(
-    const char * filename);
+u64 T1_os_get_writable_size(
+    const c8 * filename);
 
-u64
-T1_os_get_filesize(
-    const char * filepath);
+u64 T1_os_get_filesize(
+    const c8 * filepath);
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-void
-T1_platform_audio_start_loop(void);
+void T1_platform_audio_start_loop(void);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else
 #error
@@ -179,38 +154,33 @@ end to make windows happy
 If there's an error reading the file, the buffer's 'good' field will be set to
 0, else to 1
 */
-void
-T1_os_read_resource_file(
-    const char * filename,
-    char * recip,
-    const u64 recip_cap,
+void T1_os_read_resource_file(
+    const c8 * filename,
+    c8 * recip,
+    u64 recip_cap,
     u8 * good);
 
-void
-T1_os_read_file(
-    const char * filepath,
-    char * recip,
+void T1_os_read_file(
+    const c8 * filepath,
+    c8 * recip,
     u32 * recip_size,
-    const u64 recip_cap,
+    u64 recip_cap,
     u8 * good);
 
-void
-T1_os_read_file_from_writables(
-    const char * filepath_inside_writables,
-    char * recipient,
-    const u32 recipient_size,
+void T1_os_read_file_from_writables(
+    const c8 * filepath_inside_writables,
+    c8 * recipient,
+    u32 recipient_size,
     u8 * good);
 
-void
-T1_os_gpu_get_device_name(
-    char * recipient,
+void T1_os_gpu_get_device_name(
+    c8 * recipient,
     const u32 recipient_cap);
 
 void T1_os_gpu_update_capacity_if_needed(
-    const s32 tex_array_i);
+    s32 tex_array_i);
 
-u32
-T1_os_get_cpu_logical_core_count(void);
+u32 T1_os_get_cpu_logical_core_count(void);
 
 /*
 Run a task in the background I only use this to pass clientlogic.c's
@@ -218,65 +188,51 @@ client_logic_threadmain() passing the threadmain_id to it you have to
 implement client_logic_threadmain() to do what you want it to do when it gets
 that id
 */
-void
-T1_os_start_thread(
+void T1_os_start_thread(
     void (*function_to_run)(s32),
     s32 argument);
 
-u64
-T1_os_get_current_time_us(void);
+u64 T1_os_get_current_time_us(void);
 
-u64
-T1_os_get_clock_frequency(void);
+u64 T1_os_get_clock_frequency(void);
 
-f32
-T1_os_x_to_x(const f32 x);
+f32 T1_os_x_to_x(f32 x);
 
-f32
-T1_os_y_to_y(const f32 y);
+f32 T1_os_y_to_y(f32 y);
 
-void
-T1_os_enter_fullscreen(void);
+void T1_os_enter_fullscreen(void);
 
-void
-T1_os_toggle_fullscreen(void);
+void T1_os_toggle_fullscreen(void);
 
-void
-T1_os_gpu_update_internal_render_viewport(
+void T1_os_gpu_update_internal_render_viewport(
     const s32 at_i);
 
-void
-T1_os_gpu_update_window_viewport(void);
+void T1_os_gpu_update_window_viewport(void);
 
-void
-T1_os_gpu_copy_locked_vertices(void);
+void T1_os_gpu_copy_locked_vertices(void);
 
-void
-T1_os_gpu_copy_locked_materials(void);
+void T1_os_gpu_copy_locked_materials(void);
 
-s32
-T1_os_gpu_get_touch_id_at_screen_pos(
-    const f32 screen_x,
-    const f32 screen_y);
+s32 T1_os_gpu_get_touch_id_at_screen_pos(
+    f32 screen_x,
+    f32 screen_y);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-void
-T1_os_gpu_generate_mipmaps_for_texture_array(
+void T1_os_gpu_generate_mipmaps_for_texture_array(
     const s32 texture_array_i);
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
-void
-T1_os_gpu_push_tex_slice_and_free_rgba(
-    const s32 texture_array_i,
-    const s32 texture_i);
+void T1_os_gpu_push_tex_slice_and_free_rgba(
+    s32 texture_array_i,
+    s32 texture_i);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_os_gpu_fetch_rgba_at(
-    const s32 texture_array_i,
-    const s32 texture_i,
+    s32 texture_array_i,
+    s32 texture_i,
     u8 * rgba_recipient,
     u32 * recipient_size,
     u32 * recipient_width,
@@ -285,24 +241,24 @@ void T1_os_gpu_fetch_rgba_at(
     u32 * good);
 
 void T1_os_gpu_delete_texture_array(
-    const s32 array_i);
+    s32 array_i);
 
 void T1_os_gpu_delete_depth_tex(
-    const s32 slice_i);
+    s32 slice_i);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
 s16 T1_os_gpu_make_depth_tex(
-    const u32 width,
-    const u32 height);
+    u32 width,
+    u32 height);
 
 void T1_platform_update_mouse_location(void);
 
 // This is used to communicate failure after failure to initialize GPU
 // acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
-void T1_platform_request_messagebox(const char * message);
+void T1_platform_request_messagebox(const c8 * message);
 
 /*
 creates a mutex and return the ID of said mutex for you to store
@@ -310,16 +266,15 @@ creates a mutex and return the ID of said mutex for you to store
 u32 T1_os_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
-u8 T1_os_mutex_trylock(const u32 mutex_id);
+u8 T1_os_mutex_trylock(u32 mutex_id);
 
-void T1_os_assert_mutex_locked(const u32 mutex_id);
+void T1_os_assert_mutex_locked(u32 mutex_id);
 
-void T1_os_mutex_lock(const u32 mutex_id);
+void T1_os_mutex_lock(u32 mutex_id);
 
-void T1_os_mutex_unlock(const u32 mutex_id);
+void T1_os_mutex_unlock(u32 mutex_id);
 
-void T1_os_layer_start_window_resize(
-    const u64 timestamp);
+void T1_os_layer_start_window_resize(u64 timestamp);
 
 #ifdef __cplusplus
 }

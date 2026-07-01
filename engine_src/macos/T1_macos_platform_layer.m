@@ -90,7 +90,7 @@ void T1_os_open_dir_in_file_explorer_window_if_possible(
 {
     T1_log_append("Trying to open folder: ");
     T1_log_append(folderpath);
-    T1_log_append_char('\n');
+    T1_log_append_c8('\n');
     
     if (folderpath == NULL || folderpath[0] == '\0') {
         return;

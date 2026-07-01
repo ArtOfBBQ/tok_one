@@ -115,9 +115,9 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
     void * return_value = unmanaged_memory;
     if (size >= unmanaged_memory_size) {
         T1_log_append("Tried to malloc_from_unamanged for: ");
-        T1_log_append_uint((u32)(size / 1000000));
+        T1_log_append_u32((u32)(size / 1000000));
         T1_log_append("MB, but you only had: ");
-        T1_log_append_uint((u32)(unmanaged_memory_size / 1000000));
+        T1_log_append_u32((u32)(unmanaged_memory_size / 1000000));
         T1_log_append("MB remaining");
         T1_log_assert(0);
         return NULL;
@@ -210,19 +210,10 @@ b8 T1_mem_is_page_aligned(void * to_check)
     return (uintptr_t)to_check % T1_mem_page_size == 0;
 }
 
-void * T1_mem_malloc_managed_infoless(u64 size) {
-    return T1_mem_malloc_managed_internal(size, "", "");
-}
-
-void * T1_mem_malloc_managed_internal(
-    u64 size,
-    char * called_from_file,
-    char * called_from_func)
+void * T1_mem_malloc_managed(
+    u64 size)
 {
     #if 1
-    (void)called_from_file;
-    (void)called_from_func;
-    
     return malloc(size);
     #else
     memstore_mutex_lock(malloc_mutex_id);

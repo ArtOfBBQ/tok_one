@@ -49,6 +49,10 @@ s32 T1_tex_array_create_new_render_view(
     const u32 width,
     const u32 height);
 
+b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in);
+u32 T1_tex_array_get_img_height(s32 array_i);
+u32 T1_tex_array_get_img_width(s32 array_i);
+
 void T1_tex_array_delete_array(
     const s32 array_i);
 

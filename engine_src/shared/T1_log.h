@@ -3,32 +3,6 @@
 
 #include "T1_stdint.h"
 
-#if T1_LOG_PRINTF == T1_ACTIVE
-#include <stdio.h>
-#define T1_log_append(string) T1_log_internal_append(string, __func__)
-#define T1_log_append_char(num) T1_log_internal_append_char(num, __func__)
-#define T1_log_append_f32(num) T1_log_internal_append_f32(num, __func__)
-#define T1_log_append_int(num) T1_log_internal_append_int(num, __func__)
-#define T1_log_append_uint(num) T1_log_internal_append_uint(num, __func__)
-#elif T1_LOG_PRINTF == T1_INACTIVE
-#define T1_log_append(string)
-#define T1_log_append_char(num)
-#define T1_log_append_f32(num)
-#define T1_log_append_int(num)
-#define T1_log_append_uint(num)
-#else
-#error
-#endif
-
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_log_warn(condition) T1_log_warn_internal(condition, #condition, __FILE__, __LINE__, __func__)
-#define T1_log_assert(condition) T1_log_assert_internal(condition, #condition, __FILE__, __LINE__, __func__)
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_log_assert(condition)
-#else
-#error
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,53 +22,11 @@ T1_logger_init(
     void (* mutex_unlock_function)(const u32 mutex_id));
 
 #if T1_LOG_PRINTF == T1_ACTIVE
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void T1_log_internal_append(
-    const char * to_append,
-    const char * caller_function_name);
-
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void
-T1_log_internal_append_int(
-    const s32 to_append,
-    const char * caller_function_name);
-
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void
-T1_log_internal_append_int(
-    const s32 to_append,
-    const char * caller_function_name);
-
-
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void
-T1_log_internal_append_uint(
-    const u32 to_append,
-    const char * caller_function_name);
-
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void
-T1_log_internal_append_char(
-    const char to_append,
-    const char * caller_function_name);
-
-/*
-don't use the internal_ functions, use the macros that call them.
-*/
-void
-T1_log_internal_append_f32(
-    const f32 to_append,
-    const char * caller_function_name);
+void T1_log_append(const char * to_append);
+void T1_log_append_s32(s32 to_append);
+void T1_log_append_u32(u32 to_append);
+void T1_log_append_f32(f32 to_append);
+void T1_log_append_c8(c8 to_append);
 #elif T1_LOG_PRINTF == T1_INACTIVE
 #else
 #error
@@ -118,20 +50,8 @@ T1_log_dump_and_crash(const char * crash_message);
 Assert something, but use the GUI to report on failure
 instead of crashing the app
 */
-void
-T1_log_assert_internal(
-    u8 condition,
-    const char * str_condition,
-    const char * file_name,
-    const s32 line_number,
-    const char * func_name);
-void
-T1_log_warn_internal(
-    u8 condition,
-    const char * str_condition,
-    const char * file_name,
-    const s32 line_number,
-    const char * func_name);
+void T1_log_assert(u8 condition);
+void T1_log_warn(u8 condition);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
