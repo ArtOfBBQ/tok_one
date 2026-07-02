@@ -51,6 +51,8 @@ T1_io_init(
         sizeof(T1IOState)));
     T1_std_memset(T1_io, 0, sizeof(T1IOState));
     
+    T1_io->dragging_at_scene_id = -1;
+    
     for (uint32_t i = 0; i < SCENE_IDS_STACK_CAP; i++) {
         T1_io->scene_ids_stack[i] = -1;    
     }
