@@ -17,7 +17,7 @@ typedef struct {
     b8  is_active;
 } T1IOFrameEvent;
 
-#define T1_IO_MAX_EVENTS_PER_FRAME 1
+#define T1_IO_MAX_EVENTS_PER_FRAME 10
 typedef struct {
     // T1IOKey key; // not needed, it's the index
     T1IOFrameEvent list[T1_IO_MAX_EVENTS_PER_FRAME];

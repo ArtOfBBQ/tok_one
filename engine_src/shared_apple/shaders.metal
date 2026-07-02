@@ -464,15 +464,25 @@ float4 get_lit(
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    if ((zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE) {
+    int mix_rv_i = zsprite->s32.mix_rv_and_mix_tex >> 16;
+    int mix_array_i =
+        (zsprite->s32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
+    int mix_slice_i = zsprite->s32.mix_rv_and_mix_tex & 0x000007FF;
+    if (
+        mix_rv_i >= 0 &&
+        (zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE &&
+        mix_array_i >= 0 &&
+        mix_slice_i >= 0)
+    {
+        const device T1GPURenderView * rfv = &render_views[mix_rv_i];
         
-        int mix_rv = zsprite->s32.mix_rv_and_mix_tex >> 16;
-        int mix_array_i =
-            (zsprite->s32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
-        int mix_slice_i =
-            zsprite->s32.mix_rv_and_mix_tex & 0x000007FF;
-        
-        const device T1GPURenderView * rfv = &render_views[mix_rv];
+        if (
+            mix_rv_i < 0 ||
+            mix_array_i < 0 ||
+            mix_slice_i < 0)
+        {
+            return vector_float4(0.0f, 1.0f, 0.0f, 1.0f);
+        }
         
         float4 refl_clipspace =
             worldspace_to_clipspace(

@@ -363,7 +363,7 @@ u32 T1_tex_array_get_img_height(s32 array_i) {
 
 u32 T1_tex_array_get_img_width(s32 array_i) {
     T1_log_assert(array_i < T1_tex_arrays_size);
-    return T1_tex_arrays[array_i].single_img_height;
+    return T1_tex_arrays[array_i].single_img_width;
 }
 
 void T1_tex_array_delete_array(
