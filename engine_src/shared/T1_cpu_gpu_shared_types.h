@@ -90,7 +90,10 @@ typedef struct {
 } T1GPUConstMatf32;
 
 typedef struct {
-    s32 normalmap_tex_and_tex;
+    union {
+        s32 normalmap_tex_and_tex;
+        u32 normalmap_tex_and_tex_u32;
+    };
 } T1GPUConstMats32;
 
 typedef struct {

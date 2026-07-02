@@ -433,7 +433,7 @@ float4 get_lit(
         1.0f, 1.0f, 1.0f, 1.0f);
     ushort tex = (mati32->normalmap_tex_and_tex & 0x0000FFFF);
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE 
-    if (tex != 0xFFFF)
+    if (tex != T1_TEX_NONE)
     {
         int texarray_i = tex >> 11;
         int texslice_i = tex & 0x07FF;
@@ -464,7 +464,7 @@ float4 get_lit(
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    if ((zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != 0xFFFF) {
+    if ((zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE) {
         
         int mix_rv = zsprite->s32.mix_rv_and_mix_tex >> 16;
         int mix_array_i =
@@ -551,11 +551,7 @@ float4 get_lit(
             
             int shadowmap_i = lights[i].shadow_map_depth_tex_i;
             
-            float shadow_depth =
-                    shadow_maps[shadowmap_i].
-                            sample(
-                                shadow_sampler,
-                                shadow_uv).r;
+            float shadow_depth = shadow_maps[shadowmap_i].sample(shadow_sampler,shadow_uv).r;
             
             float frag_depth =
                 light_clip_pos.z / light_clip_pos.w;

@@ -2,6 +2,7 @@
 
 #include "T1_std.h"
 #include "T1_log.h"
+#include "T1_tex.h"
 
 LockedMaterialCollection * all_mesh_materials = NULL;
 
@@ -33,13 +34,33 @@ void T1_material_construct(
     to_construct_f32->specular_rgb[2] = 0.50f;
     to_construct_f32->specular_exponent = 25.0f;
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    to_construct_s32->normalmap_tex_and_tex =
-        (T1_TEX_NONE << 16) & T1_TEX_NONE;
+    // this code is annoying & dangerous because
+    // it's doing bitwise ops with <4 byte primtives
+    // (integer promotion) and mixing signed/unsigned
+    // you should review it when normal mapping comes
+    // back online
+    T1_log_assert(0);
+    to_construct_s32->normalmap_tex_and_tex = 0;
+    T1Tex tex_none = T1_TEX_NONE;
+    u32 tex_none_u32 = tex_none;
+    s32 tex_none_s32;
+    T1_std_memcpy(&tex_none_s32, &tex_none_u32, sizeof(s32));
+     
+    to_construct_s32->normalmap_tex_and_tex |=
+        ((tex_none_s32 << 16) & tex_none_s32);
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    to_construct_s32->normalmap_tex_and_tex =
+        (T1_TEX_NONE << 16);
+    to_construct_s32->normalmap_tex_and_tex_u32 |=
+        T1_TEX_NONE;
+    T1Tex check_tex = (to_construct_s32->normalmap_tex_and_tex_u32 & 0x0000FFFF); 
+    s32 check_arr_i = T1_tex_to_array_i(check_tex);
+    T1_log_assert(check_arr_i == -1);
+    s32 check_slice_i = T1_tex_to_slice_i(check_tex);
+    T1_log_assert(check_slice_i == -1);
     #else
     #error
     #endif
-    to_construct_s32->normalmap_tex_and_tex = -1;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE

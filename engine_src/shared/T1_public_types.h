@@ -11,7 +11,7 @@
 #define T1_BASIC_QUAD_MESH_ID 0
 #define T1_BASIC_CUBE_MESH_ID 1
 
-#define T1_TEX_NONE UINT16_MAX
+#define T1_TEX_NONE 61234
 typedef u16 T1Tex;
 
 typedef enum : u16 {

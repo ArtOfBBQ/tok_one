@@ -130,13 +130,17 @@ T1_zsprite_commit(
         T1_mesh_summary_list[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
     
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    {
     // probably shouldn't be requesting sprites in africa
+    T1Tex tex = to_commit->gpu_data->s32.base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
+    T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] <  100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] <  100.0f);
+    }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     u32 all_mesh_vertices_tail_i =
         (u32)(
             T1_mesh_summary_list
