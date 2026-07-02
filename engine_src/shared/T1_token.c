@@ -1039,6 +1039,10 @@ u32 T1_token_get_enum_value(u16 token_i) {
     return tts->tokens[token_i].enum_value;
 }
 
+void T1_token_overwrite_enum_val(u16 token_i, u32 new_enum_val) {
+    tts->tokens[token_i].enum_value = new_enum_val;
+}
+
 char * T1_token_get_string_value(u16 token_i) {
     return tts->tokens[token_i].string_value;
 }

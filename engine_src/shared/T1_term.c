@@ -381,7 +381,7 @@ static u8 T1_term_evaluate(
             command, "TO RENDER VIEW "))
     {
         u8 rv_good = 0;
-        s32 jump_rv = T1_std_string_to_int32_validate(
+        s32 jump_rv = T1_std_string_to_s32_validate(
             command + 15,
             &rv_good);
         

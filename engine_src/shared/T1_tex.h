@@ -26,9 +26,8 @@ so the mask 0x7F will be key
 
 when the 5 leftmost bits of the first byte are all set, their value is 0xF8
 */
-#define T1_tex_to_array_i(x) (x == T1_TEX_NONE ? -1 : x >> 11)
-#define T1_tex_to_slice_i(x) (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-
+s16 T1_tex_to_array_i(T1Tex in);
+s16 T1_tex_to_slice_i(T1Tex in);
 void T1_tex_set_array_i(
     T1Tex * recip,
     const s16 newval);

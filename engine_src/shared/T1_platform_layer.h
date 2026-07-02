@@ -46,9 +46,9 @@ u32 T1_os_get_dir_separator_size(void);
 void T1_os_get_dir_separator(c8 * recipient);
 
 void T1_os_res_filename_to_pathfile(
-    const c8 * filename,
-    c8 * recipient,
-    u32 recipient_capacity);
+    const c8 * filen,
+    c8 * recip,
+    u32 recip_cap);
 
 void T1_os_writable_filename_to_pathfile(
     const c8 * filename,

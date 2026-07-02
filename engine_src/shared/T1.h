@@ -56,6 +56,12 @@ void T1_log_append_u32(u32 u32val);
 #endif
 
 /*
+PROFILER
+*/
+void T1_profiler_start(const c8 * func_name);
+void T1_profiler_end(const c8 * func_name);
+
+/*
 T1_std
 standard or commonly needed functions
 */
@@ -68,9 +74,12 @@ f32    T1_std_maxf(f32 x, f32 y);
 void * T1_std_memset(void * input, s32 value, u64 size_bytes);
 void   T1_std_memset_i16(void * input, s16 value, u32 size_bytes);
 void * T1_std_memcpy(void * dest, const void * src, u64 n_bytes);
+void   T1_std_strcpy_cap(c8 * recipient, u32 cap, const c8 * origin);
 void   T1_std_strcat_cap(c8 * recip, u32 cap, const c8 * to_append);
 void   T1_std_strcat_u32_cap(c8 * recip, u32 recip_size, u32 to_append);
 void   T1_std_strcat_s32_cap(c8 * recip, u32 cap, s32 to_append);
+void   T1_std_strcat_f32_cap(c8 * recipient, u32 cap, f32 to_append);
+void   T1_std_strcat_c8_cap(c8 * recipient, c8 to_append);
 u64    T1_std_strlen(const c8 * nullterm_str);
 b8     T1_std_string_starts_with(const c8 * to_check, const c8 * start);
 b8     T1_std_are_equal_strings(const c8 * str1, const c8 * str2);
@@ -78,24 +87,10 @@ void   T1_std_strsub(c8 * in, const c8 * to_match, const c8 * repl);
 void   T1_std_s32_to_string(s32 input, c8 * recip);
 void   T1_std_u32_to_string(u32 input, c8 * recipient);
 u32    T1_std_string_to_u32_validate(const c8 * input, b8 * good);
-s32    T1_std_string_to_int32_validate(const c8 * input, u8 * good);
+s32    T1_std_string_to_s32_validate(const c8 * input, u8 * good);
+f32    T1_std_string_to_f32_validate(const c8 * input, u8 * good);
 
-#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, recipsize, to_append);
-void
-T1_std_internal_strcpy_cap(
-    c8 * recipient,
-    const u32 recipient_cap,
-    const c8 * origin);
-#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, to_append);
-void
-T1_std_internal_strcpy_cap(
-    c8 * recipient,
-    const c8 * origin);
-#else
-#error
-#endif
+
 
 /*
 T1_mem - allocate memory
@@ -191,8 +186,8 @@ void T1_png_decode(
 /*
 MANAGE TEXTURES
 */
-#define T1_tex_to_array_i(x) (x == T1_TEX_NONE ? -1 : x >> 11)
-#define T1_tex_to_slice_i(x) (x == T1_TEX_NONE ? -1 : x & 0x07FF)
+s16  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
+s16  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
 void T1_tex_files_prereg_png_res(const c8 * filename, b8 * good);
 void T1_tex_files_prereg_dds_res(const c8 * filename, b8 * good);
 void T1_tex_files_reg_new_by_splitting_file(
@@ -359,7 +354,7 @@ being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
 s32  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(const s32 scene_id);
+void T1_io_scene_stack_push(s32 scene_id);
 void T1_io_scene_stack_pop(void);
 b8   T1_io_key_is_down(T1IOKey key, s32 scene_id);
 b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 scene_id);
@@ -369,8 +364,8 @@ f32  T1_io_get_mouse_x_this_frame(void);
 f32  T1_io_get_mouse_y_this_frame(void);
 s32  T1_io_get_mouse_touch_id_this_frame(void);
 s32  T1_io_create_scene_and_return_id(void);
-b8   T1_io_consume_mouse_changed(const s32 scene_id);
-b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, const s32 scene_id);
+b8   T1_io_consume_mouse_changed(s32 scene_id);
+b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 scene_id);
 
 /*
 TOKENIZER
@@ -391,11 +386,12 @@ void T1_token_set_reg_middle_cap(u32 middle_cap);
 void T1_token_set_reg_stop_pattern(
     const c8 * stop_pattern,
     u32 pattern_index);
-void T1_token_set_string_literal(u32 enum_value, u8 * good);
+void T1_token_set_string_literal(u32 enum_val, u8 * good);
 void T1_token_register(u32 enum_value, u8 * good);
 void T1_token_run(const c8 * input, u8 * good);
 u32 T1_token_get_token_count(void);
 u32 T1_token_get_enum_value(u16 token_i);
+void T1_token_overwrite_enum_val(u16 token_i, u32 new_enum_val);
 c8 * T1_token_get_string_value(u16 token_i);
 u32 T1_token_get_string_value_size(u16 token_i);
 u32 T1_token_get_line_num(u16 token_i);
@@ -415,7 +411,51 @@ s64 T1_token_as_number_signed(s32 at_i);
 f64 T1_token_as_number_floating(s32 at_i);
 
 /*
-META TYPES
+META TYPES (registration)
+*/
+#define T1_meta_struct(struct_name, good) T1_meta_reg_struct(#struct_name, sizeof(struct_name), good)
+void T1_meta_reg_struct(
+    const char * struct_name,
+    const u32 size_bytes,
+    u8 * good);
+#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, false, good)
+#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, true, good)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, true, good)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, false, good)
+#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, false, good)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, false, good)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, false, good)
+void T1_meta_reg_field(
+    const char * field_name,
+    const u32 field_offset,
+    const T1MetaType field_type,
+    const char * field_struct_type_name_or_null,
+    const u16 field_array_size_1,
+    const u16 field_array_size_2,
+    const u16 field_array_size_3,
+    const u8 is_enum,
+    u8 * good);
+#define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
+void T1_meta_reg_enum(
+    const char * enum_type_name,
+    const T1MetaType T1_type,
+    const u32 type_size_check,
+    u8 * good);
+#define T1_meta_enum_value(enum_type_name, enum_value, good) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, good)
+void T1_meta_reg_enum_value(
+    const char * enum_type_name,
+    const char * value_name,
+    const s64 value,
+    b8 * good);
+void
+T1_meta_reg_u4_subname_for_last_field(
+    const char * subname,
+    const char * enum_name_if_any,
+    b8 is_right_nibble,
+    b8 * good);
+
+/*
+META TYPES (querying)
 */
 void T1_meta_get_offset_and_type(
     const c8 * struct_name,
@@ -448,7 +488,7 @@ your user's progress or preferences, etc.
 */
 u64 T1_os_get_current_time_us(void);
 void T1_os_toggle_fullscreen(void);
-void T1_os_start_thread(void (*function_to_run)(s32), s32 argument);
+void T1_os_start_thread(void (*func_to_run)(s32), s32 argument);
 u32 T1_os_init_mutex_and_return_id(void);
 u8 T1_os_mutex_trylock(u32 mutex_id);
 void T1_os_assert_mutex_locked(const u32 mutex_id);
@@ -458,20 +498,33 @@ void T1_os_get_res_dir(c8 * recip, u32 recip_cap);
 void T1_os_get_filenames_in(
     const c8 * directory, c8 filenames[2000][500]);
 u8 T1_os_res_exists(const c8 * resource_name);
+u8 T1_os_file_exists(const c8 * filepath);
+void T1_os_del_file(const c8 * filepath);
+void T1_os_copy_file(
+    const c8 * filepath_src, const c8 * filepath_dest);
+u64 T1_os_get_filesize(const c8 * filepath);
 u64 T1_os_get_resource_size(const c8 * res_name);
+void T1_os_read_file(const c8 * filepath,
+    c8 * recip, u32 * recip_size, u64 recip_cap, u8 * good);
 void T1_os_read_resource_file(
-    const c8 * filename,
-    c8 * recip, u64 recip_cap,
-    u8 * good);
+    const c8 * filen, c8 * recip, u64 recip_cap, u8 * good);
+void T1_os_get_dir_separator(c8 * recip);
+u32 T1_os_get_dir_separator_size(void);
+void T1_os_writable_filename_to_pathfile(
+    const c8 * filen, c8 * recip, u32 recip_cap);
+void T1_os_res_filename_to_pathfile(
+    const c8 * filen, c8 * recip, u32 recip_cap);
 void T1_os_get_app_dir(c8 * recip, u32 recip_size);
 void T1_os_get_writables_dir(c8 * recip, u32 recip_size);
+void T1_os_write_file_to_writables(
+    const c8 * filepath_in_writables, const c8 * out,
+    u32 output_size, b8 * good);
 void T1_os_gpu_push_tex_slice_and_free_rgba(
     s32 tex_array_i,
     s32 tex_slice_i);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const c8 * folderpath);
-u64
-T1_os_get_current_time_us(void);
+u64 T1_os_get_current_time_us(void);
 
 /*
 AUDIO

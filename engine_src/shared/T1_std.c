@@ -342,7 +342,7 @@ T1_std_strcat_u32_cap(
 }
 
 void
-T1_std_internal_strcat_f32_cap(
+T1_std_strcat_f32_cap(
     char * recipient,
     const u32 recipient_size,
     const f32 to_append)
@@ -425,7 +425,7 @@ T1_std_strlcat(
 }
 
 void
-T1_std_internal_strcpy_cap(
+T1_std_strcpy_cap(
     char * recipient,
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_cap,
@@ -798,7 +798,7 @@ T1_std_u32_to_string(
 }
 
 s32
-T1_std_string_to_int32_validate(
+T1_std_string_to_s32_validate(
     const char * input,
     u8 * good)
 {
@@ -837,7 +837,7 @@ s32
 T1_std_string_to_s32(const char * input)
 {
     u8 result_good = false;
-    s32 result = T1_std_string_to_int32_validate(
+    s32 result = T1_std_string_to_s32_validate(
         input,
         &result_good);
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -996,7 +996,7 @@ T1_std_string_to_f32_validate(
     part1[part1_size] = '\0';
     
     u8 part1_valid = false;
-    s32 part1_s32 = T1_std_string_to_int32_validate(
+    s32 part1_s32 = T1_std_string_to_s32_validate(
         /* const char input: */ part1,
         &part1_valid);
     if (!part1_valid) {
@@ -1012,7 +1012,7 @@ T1_std_string_to_f32_validate(
         
         part2[part2_size] = '\0';
         u8 part2_valid = false;
-        s32 part2_s32 = T1_std_string_to_int32_validate(
+        s32 part2_s32 = T1_std_string_to_s32_validate(
             /* const char input: */ part2,
             &part2_valid);
         if (!part2_valid) {

@@ -411,7 +411,7 @@ T1_zsprite_anim_assert_anim_valid_before_commit(
             T1_log_assert(nonskips > 0);
             
             switch (parent->public.easing_type) {
-                case EASINGTYPE_ALWAYS_1:
+                case T1_EASINGTYPE_ALWAYS_1:
                     // this is always fine
                 break;
                 default:
@@ -620,7 +620,7 @@ void T1_zsprite_anim_shatter_and_destroy(
     scatter->gpu_vals.f32s.alpha = 0.0f;
     scatter->affected_T1_id = T1_id;
     scatter->duration_us = duration_us;
-    scatter->easing_type = EASINGTYPE_NONE;
+    scatter->easing_type = T1_EASINGTYPE_NONE;
     scatter->runs = 1;
     scatter->del_obj_on_finish = true;
     scatter->gpu_vals_f32_active = true;
@@ -668,7 +668,7 @@ void T1_zsprite_anim_evaporate_and_destroy(
     evap->gpu_vals.f32s.alpha = 0.0f;
     evap->affected_T1_id = T1_id;
     evap->duration_us = duration_us;
-    evap->easing_type = EASINGTYPE_NONE;
+    evap->easing_type = T1_EASINGTYPE_NONE;
     evap->runs = 1;
     evap->del_obj_on_finish = true;
     evap->gpu_vals_f32_active = true;
@@ -779,7 +779,7 @@ void T1_zsprite_anim_dud_dance(
 {
     T1zSpriteAnim * move_request =
         T1_zsprite_anim_request_next(false);
-    move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
+    move_request->easing_type = T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_T1_id = (s32)object_id;
     move_request->cpu_vals.xyz[0] = magnitude * 0.05f;
     move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
@@ -808,7 +808,7 @@ void T1_zsprite_anim_bump(
     
     T1zSpriteAnim * bump_request =
         T1_zsprite_anim_request_next(false);
-    bump_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
+    bump_request->easing_type = T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     bump_request->affected_T1_id = (s32)object_id;
     bump_request->cpu_vals.mul_xyz[0] = 0.05f;
     bump_request->cpu_vals.mul_xyz[1] = 0.05f;

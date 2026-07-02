@@ -195,7 +195,7 @@ void
 T1_log_warn(u8 condition)
 {
     if (condition) { return; }
-        
+    
     T1_log_append("WARN CONDITION triggered\n");
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE

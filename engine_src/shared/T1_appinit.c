@@ -308,21 +308,32 @@ void T1_appinit_before_gpu_init(
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     engine_save_file = (EngineSaveFile *)T1_mem_malloc_unmanaged(
         sizeof(EngineSaveFile));
+    T1_std_memset(engine_save_file, 0, sizeof(EngineSaveFile));
     
     char full_writable_pathfile[256];
-    T1_platform_writable_filename_to_pathfile(
+    T1_os_writable_filename_to_pathfile(
         "enginestate.dat",
         full_writable_pathfile,
         256);
-    T1FileBuffer engine_save;
-    engine_save.contents = NULL;
-    if (T1_platform_file_exists(full_writable_pathfile)) {
-        engine_save.size_without_terminator = T1_platform_get_filesize(
+    
+    c8 * engine_save_contents = NULL;
+    u32  engine_save_size = 0;
+    u64  engine_save_cap_noterm = 0;
+    b8   engine_save_good = 0;
+    if (T1_os_file_exists(full_writable_pathfile)) {
+        engine_save_cap_noterm = T1_os_get_filesize(
             full_writable_pathfile);
-        engine_save.contents = (char *)T1_mem_malloc_managed(
-            engine_save.size_without_terminator + 1);
-        T1_platform_read_file(full_writable_pathfile, &engine_save);
-        *engine_save_file = *(EngineSaveFile *)engine_save.contents;
+        engine_save_contents = (char *)T1_mem_malloc_managed(
+            engine_save_cap_noterm + 1);
+        T1_os_read_file(
+            full_writable_pathfile,
+            engine_save_contents,
+            &engine_save_size,
+            engine_save_cap_noterm,
+            &engine_save_good);
+        if (engine_save_good) {
+            *engine_save_file = *(EngineSaveFile *)engine_save_contents;
+        }
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     // Pass
@@ -346,16 +357,16 @@ void T1_appinit_before_gpu_init(
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     if (
-        engine_save.contents != NULL &&
+        engine_save_good &&
         engine_save_file->window_height > 20 &&
         engine_save_file->window_height < INITIAL_WINDOW_HEIGHT * 3 &&
         engine_save_file->window_width > 20 &&
         engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
     {
-        T1_global->window_height =
-            engine_save_file->window_height;
-        T1_global->window_width  =
-            engine_save_file->window_width;
+        T1_global_update_window_size(
+            engine_save_file->window_width,
+            engine_save_file->window_height,
+            T1_os_get_current_time_us());
         T1_global->window_left   = engine_save_file->window_left;
         T1_global->window_bottom = engine_save_file->window_bottom;
         T1_global->fullscreen = engine_save_file->window_fullscreen;
@@ -371,15 +382,16 @@ void T1_appinit_before_gpu_init(
         #endif // T1_AUDIO_ACTIVE
     } else {
         T1_global->fullscreen = false;
-        T1_global->window_height = INITIAL_WINDOW_HEIGHT;
-        T1_global->window_width  = INITIAL_WINDOW_WIDTH;
+        T1_global_update_window_size(
+            INITIAL_WINDOW_WIDTH,
+            INITIAL_WINDOW_HEIGHT,
+            T1_os_get_current_time_us());
         T1_global->window_left   = INITIAL_WINDOW_LEFT;
-        T1_global->window_bottom =
-            INITIAL_WINDOW_BOTTOM;
+        T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
     }
     
-    if (engine_save.contents != NULL) {
-        T1_mem_free_managed(engine_save.contents);
+    if (engine_save_contents != NULL) {
+        T1_mem_free_managed(engine_save_contents);
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     T1_global->fullscreen = false;
@@ -495,7 +507,7 @@ void T1_appinit_before_gpu_init(
             /* raw_fontmetrics_file_size: */
                 font_metrics_contents_cap);
     } else {
-        T1_std_internal_strcpy_cap(
+        T1_std_strcpy_cap(
             error_message,
             128,
             "Error - missing font.png at startup");
@@ -657,7 +669,7 @@ void T1_appinit_before_gpu_init(
     if (!initial_log_dump_succesful) {
         T1_log_dump_and_crash(
             "initial log dump unsuccesful, exiting app");
-        T1_std_internal_strcpy_cap(
+        T1_std_strcpy_cap(
             error_message,
             128,
             "Error - couldn't write the log file to "
@@ -1055,18 +1067,18 @@ void T1_appinit_shutdown(void)
     engine_save_file->window_bottom =
         T1_global->window_bottom;
     engine_save_file->window_height =
-        T1_global->window_height;
+        T1_global->window_wh[1];
     engine_save_file->window_left =
         T1_global->window_left;
     engine_save_file->window_width =
-        T1_global->window_width;
+        T1_global->window_wh[0];
     engine_save_file->window_fullscreen =
         T1_global->fullscreen;
     
-    u32 good = false;
-    T1_platform_del_writable("enginestate.dat");
+    b8 good = false;
+    T1_os_del_writable("enginestate.dat");
     
-    T1_platform_write_file_to_writables(
+    T1_os_write_file_to_writables(
         /* const char filepath_inside_writables: */
             "enginestate.dat",
         /* const char * output: */

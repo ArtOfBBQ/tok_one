@@ -82,35 +82,16 @@ T1_std_strcat_u32_cap(
     u32 recip_size,
     u32 to_append);
 
-#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcat_f32_cap(recip, recipsize, to_append) T1_std_internal_strcat_f32_cap(recip, recipsize, to_append);
-#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcat_f32_cap(recip, recipsize, to_append) T1_std_internal_strcat_f32_cap(recip, UINT32_MAX, to_append);
-#else
-#error
-#endif
 void
-T1_std_internal_strcat_f32_cap(
+T1_std_strcat_f32_cap(
     c8 * recipient,
     const u32 recipient_size,
     const f32 to_append);
 
-#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, recipsize, to_append);
-void
-T1_std_internal_strcpy_cap(
+void T1_std_strcpy_cap(
     c8 * recipient,
     const u32 recipient_cap,
     const c8 * origin);
-#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, to_append);
-void
-T1_std_internal_strcpy_cap(
-    c8 * recipient,
-    const c8 * origin);
-#else
-#error
-#endif
 
 void
 T1_std_copy_strings(
@@ -173,7 +154,7 @@ T1_std_f32_to_string(
     const u32 recipient_size);
 
 s32
-T1_std_string_to_int32_validate(
+T1_std_string_to_s32_validate(
     const c8 * input,
     u8 * good);
 

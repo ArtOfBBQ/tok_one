@@ -77,49 +77,49 @@ f32 T1_easing_t_to_eased_t(
     f32 return_val;
     
     switch (easing_type) {
-        case EASINGTYPE_NONE:
+        case T1_EASINGTYPE_NONE:
             return_val = t;
             break;
-        case EASINGTYPE_ALWAYS_1:
+        case T1_EASINGTYPE_ALWAYS_1:
             return_val = 1.0f;
             break;
-        case EASINGTYPE_INOUT_SINE:
+        case T1_EASINGTYPE_INOUT_SINE:
             return_val = T1_easing_in_out_sine(t);
             break;
-        case EASINGTYPE_OUT_QUADRATIC:
+        case T1_EASINGTYPE_OUT_QUADRATIC:
             return_val = T1_easing_out_quadratic(t);
             break;
-        case EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE:
+        case T1_EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE:
             return_val =
                 T1_easing_out_elastic_zero_to_one(
                     t);
             break;
-        case EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_bounce_zero_to_zero(
                     t, 1.0f);
             break;
-        case EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_bounce_zero_to_zero(
                     t, 2.0f);
             break;
-        case EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_bounce_zero_to_zero(
                     t, 4.0f);
             break;
-        case EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_bounce_zero_to_zero(
                     t, 8.0f);
             break;
-        case EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_pulse_zero_to_zero(
                     t, 1.0f);
             break;
-        case EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO:
+        case T1_EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO:
             return_val =
                 T1_easing_pulse_zero_to_zero(
                     t, 8.0f);

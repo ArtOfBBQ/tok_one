@@ -131,7 +131,6 @@ T1_zsprite_commit(
             vertices_size > 0);
     
     // probably shouldn't be requesting sprites in africa
-    T1_log_warn((to_commit->gpu_data->s32.base_mat_s32.normalmap_tex_and_tex & 0x0000FFFF) != UINT16_MAX);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] > -100.0f);
     T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] <  100.0f);

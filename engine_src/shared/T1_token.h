@@ -86,6 +86,7 @@ T1_token_run(
 
 u32 T1_token_get_token_count(void);
 u32 T1_token_get_enum_value(u16 token_i);
+void T1_token_overwrite_enum_val(u16 token_i, u32 new_val);
 char * T1_token_get_string_value(u16 token_i);
 u32 T1_token_get_string_value_size(u16 token_i);
 u32 T1_token_get_line_num(u16 token_i);

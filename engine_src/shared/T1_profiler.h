@@ -11,9 +11,8 @@ void T1_profiler_init(
 
 void T1_profiler_new_frame(void);
 
-void T1_profiler_start(const char * function_name);
-
-void T1_profiler_end(const char * function_name);
+void T1_profiler_start(const c8 * func_name);
+void T1_profiler_end(const c8 * func_name);
 
 /*
 GUI functions
