@@ -21,16 +21,11 @@ T1_logger_init(
     void (* mutex_lock_function)(const u32 mutex_id),
     void (* mutex_unlock_function)(const u32 mutex_id));
 
-#if T1_LOG_PRINTF == T1_ACTIVE
 void T1_log_append(const char * to_append);
 void T1_log_append_s32(s32 to_append);
 void T1_log_append_u32(u32 to_append);
 void T1_log_append_f32(f32 to_append);
 void T1_log_append_c8(c8 to_append);
-#elif T1_LOG_PRINTF == T1_INACTIVE
-#else
-#error
-#endif
 
 /*
 dump the entire debug log to debuglog.txt

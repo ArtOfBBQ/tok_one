@@ -39,8 +39,6 @@ assert_sanity_check_zsprite_vals(
     }
     
     if (recip_cpu) {
-        T1_log_assert(recip_cpu->scale_factor >    0.0f);
-        T1_log_assert(recip_cpu->scale_factor < 1000.0f);
         T1_log_assert(recip_cpu->mul_xyz[0] > 0.0f);
         T1_log_assert(recip_cpu->mul_xyz[1] > 0.0f);
         T1_log_assert(recip_cpu->mul_xyz[2] > 0.0f);
@@ -344,7 +342,6 @@ void T1_zsprite_construct(
     to_construct->gpu_data->s32.touch_id = -1;
     to_construct->gpu_data->f32s.alpha = 1.0f;
     
-    to_construct->cpu_data->simd_stats.scale_factor = 1.0f;
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->T1_id = -1;
     to_construct->cpu_data->visible = true;

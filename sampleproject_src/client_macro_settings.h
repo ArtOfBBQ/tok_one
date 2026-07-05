@@ -37,6 +37,8 @@ of the engine for your specific app.
 #define T1_LOG_SILENCE T1_INACTIVE
 #define T1_WAV_SILENCE T1_ACTIVE
 #define T1_TOKEN_ASSERTS_ACTIVE 1
+#define T1_GAMEPAD_ACTIVE 1
+
 #define T1_Z_PREPASS_ACTIVE 2
 #define T1_BLENDING_SHADER_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 1
@@ -54,7 +56,7 @@ of the engine for your specific app.
 #define T1_REFLECTION_ACTIVE 2
 #define T1_BLOOM_ACTIVE 2
 #define T1_PARTICLES_ACTIVE 2
-#define T1_OUTLINES_ACTIVE 2
+#define T1_OUTLINES_ACTIVE 1
 #define T1_AUDIO_ACTIVE 2
 #define T1_ENGINE_SAVEFILE_ACTIVE 2
 #define T1_PROFILER_ACTIVE 1

@@ -117,6 +117,11 @@ void T1_log_append(
     // logger_mutex_lock_func(logger_mutex_id);
 }
 #elif T1_LOG_PRINTF == T1_INACTIVE
+void T1_log_append_u32(const u32 to_append) {}
+void T1_log_append_c8(c8 to_append) {}
+void T1_log_append_s32(s32 to_append) {}
+void T1_log_append_f32(f32 to_append) {}
+void T1_log_append(const c8 * to_append) {}
 #else
 #error
 #endif
@@ -196,7 +201,12 @@ T1_log_warn(u8 condition)
 {
     if (condition) { return; }
     
+    // #if T1_LOG_PRINTF == T1_ACTIVE
     T1_log_append("WARN CONDITION triggered\n");
+    //    #elif T1_LOG_PRINTF == T1_INACTIVE
+    //    #else
+    //    #error
+    //    #endif
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else

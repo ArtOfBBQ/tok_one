@@ -30,7 +30,6 @@ static s32 loading_text_sprite_id = -1;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
-    
     T1_term_update();
 }
 #elif T1_TERM_ACTIVE == T1_INACTIVE
@@ -249,7 +248,8 @@ void T1_gameloop_update_before_render_pass(
        }
     } else if (
         T1_log_app_running &&
-        T1_global->clientlogic_early_startup_finished)
+        T1_global->clientlogic_early_startup_finished &&
+        !T1_gameloop_loading_texs)
     {
         #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
         T1_frame_anim_new_frame_starts();
@@ -292,6 +292,7 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_TERM_ACTIVE undefined"
         #endif
+
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_clientlogic_update()");
@@ -379,6 +380,7 @@ void T1_gameloop_update_after_render_pass(void) {
     }
     
     T1_io_update_and_clear_for_next_frame();
+    T1_os_poll_gamepad_events();
     
     if (T1_global->upcoming_fullscreen_request) {
         T1_global->upcoming_fullscreen_request = false;

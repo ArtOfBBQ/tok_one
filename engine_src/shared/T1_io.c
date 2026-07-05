@@ -89,6 +89,9 @@ T1_io_get_open_event(
 void
 T1_io_register_keyup(const u32 key_id)
 {
+    // We shouldn't be registering stuff when no scene is active
+    T1_log_assert(T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] >= 0);
+    
     if (
         key_id == T1_IO_MOUSE_LCLICK &&
         T1_io->dragging_at_scene_id >= 0)
@@ -148,6 +151,9 @@ void T1_io_register_keyup_force_up_short(
 void
 T1_io_register_keydown(const u32 key_id)
 {
+    // We shouldn't be registering stuff when no scene is active
+    T1_log_assert(T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] >= 0);
+    
     if (key_id == T1_IO_MOUSE_LCLICK &&
         T1_io->dragging_at_scene_id < 0)
     {
@@ -227,11 +233,19 @@ void T1_io_scene_stack_push(const s32 scene_id) {
 void T1_io_scene_stack_pop(void) {
     T1_log_assert(T1_io->scene_ids_stack_i > 0);
     T1_io->scene_ids_stack_i -= 1;
+    
+    return;
+}
+
+s32 T1_io_scene_stack_get_active_scene_id(void) {
+    return T1_io->scene_ids_stack_i < 0 ?
+        -1 :
+        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
 }
 
 b8 T1_io_key_is_down(T1IOKey key, const s32 scene_id)
 {
-    T1_log_assert(key < T1_IO_KEYBOARD_ABOVE_KEYBOARD_BOUNDS);
+    T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
     if (scene_id < 0) {
         T1_log_assert(scene_id == -1);

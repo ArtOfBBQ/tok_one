@@ -1079,11 +1079,9 @@ static void T1_term_commit_or_activate(void) {
 void T1_term_update(void) {
     if (
         T1_io_key_consume_tap_began_frame(
-            T1_IO_KEYBOARD_ENTER,
-            -1) &&
+            T1_IO_KEYBOARD_ENTER, -1) &&
         !T1_io_key_is_down(
-            T1_IO_KEYBOARD_CONTROL,
-            -1))
+            T1_IO_KEYBOARD_CONTROL, -1))
     {
         T1_term_commit_or_activate();
     }

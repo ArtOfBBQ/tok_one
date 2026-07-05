@@ -16,10 +16,9 @@ typedef struct  {
     f32 offset_xyz[3];
     f32 mul_xyz[3];
     f32 angle_xyz[3];
-    f32 scale_factor;
     f32 bloom_on;
     f32 alpha_blending_on;
-    f32 padding[1];
+    f32 padding[2];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {

@@ -182,6 +182,13 @@ void T1_os_gpu_update_capacity_if_needed(
 
 u32 T1_os_get_cpu_logical_core_count(void);
 
+#if T1_GAMEPAD_ACTIVE == T1_ACTIVE
+void T1_os_poll_gamepad_events(void);
+#elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 /*
 Run a task in the background I only use this to pass clientlogic.c's
 client_logic_threadmain() passing the threadmain_id to it you have to

@@ -19,30 +19,14 @@ typedef struct {
     u8 checked_touch_ids;
 } T1IOEvent;
 
-void
-T1_io_init(
-    void *(* arg_malloc_func)(u64));
-
-void
-T1_io_event_construct(
-    T1IOEvent * to_construct);
-
-void
-T1_io_event_register(
-    T1IOEvent * touch_record);
-
-void
-T1_io_register_keyup(const u32 key_id);
-void
-T1_io_register_keyup_force_up_short(const u32 key_id);
-void
-T1_io_register_keydown(const u32 key_id);
-
-void
-T1_io_register_mouse_move(const f32 screen_x, const f32 screen_y);
-
-void
-T1_io_update_and_clear_for_next_frame(void);
+void T1_io_init(void *(* arg_malloc_func)(u64));
+void T1_io_event_construct(T1IOEvent * to_construct);
+void T1_io_event_register(T1IOEvent * touch_record);
+void T1_io_register_keyup(u32 key_id);
+void T1_io_register_keyup_force_up_short(u32 key_id);
+void T1_io_register_keydown(u32 key_id);
+void T1_io_register_mouse_move(f32 screen_x, f32 screen_y);
+void T1_io_update_and_clear_for_next_frame(void);
 
 /*
 Public functions (exposed via T1.h)
@@ -50,6 +34,7 @@ Public functions (exposed via T1.h)
 s32  T1_io_create_scene_and_return_id(void);
 void T1_io_scene_stack_push(const s32 scene_id);
 void T1_io_scene_stack_pop(void);
+s32  T1_io_scene_stack_get_active_scene_id(void);
 b8   T1_io_key_is_down(T1IOKey key, const s32 scene_id);
 b8   T1_io_key_consume_tap_began_frame(T1IOKey key, const s32 scene_id);
 b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id);

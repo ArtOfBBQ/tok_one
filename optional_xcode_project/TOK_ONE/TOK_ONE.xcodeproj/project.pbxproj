@@ -147,6 +147,7 @@
 		ECDD9C232DE2157500721A48 /* T1_tex_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_tex_files.c */; };
 		ECE531012EB229900035DC98 /* T1_linalg3d.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE531002EB229900035DC98 /* T1_linalg3d.c */; };
 		ECE759CE2C3FF1BE004B0847 /* T1_collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* T1_collision.c */; };
+		ECF3D4982FF755BC0006B0E7 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF3D4972FF755BC0006B0E7 /* GameController.framework */; };
 		ECF7CB172D53ADA400623C60 /* T1_platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */; };
 		ECF7CB182D53ADA400623C60 /* T1_profiler.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB152D53ADA400623C60 /* T1_profiler.c */; };
 /* End PBXBuildFile section */
@@ -305,6 +306,7 @@
 		ECE531002EB229900035DC98 /* T1_linalg3d.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_linalg3d.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_linalg3d.c; sourceTree = "<absolute>"; };
 		ECE759CC2C3FF1BE004B0847 /* T1_collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_collision.c; path = ../../engine_src/shared/T1_collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* T1_collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_collision.h; path = ../../engine_src/shared/T1_collision.h; sourceTree = "<group>"; };
+		ECF3D4972FF755BC0006B0E7 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_platform_layer_common.c; path = ../../engine_src/shared/T1_platform_layer_common.c; sourceTree = "<group>"; };
 		ECF7CB152D53ADA400623C60 /* T1_profiler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_profiler.c; path = ../../engine_src/shared/T1_profiler.c; sourceTree = "<group>"; };
 		ECF7CB162D53ADA400623C60 /* T1_profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_profiler.h; path = ../../engine_src/shared/T1_profiler.h; sourceTree = "<group>"; };
@@ -315,6 +317,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECF3D4982FF755BC0006B0E7 /* GameController.framework in Frameworks */,
 				EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */,
 				601128A82862588900F92967 /* AppKit.framework in Frameworks */,
 				601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */,
@@ -371,6 +374,7 @@
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ECF3D4972FF755BC0006B0E7 /* GameController.framework */,
 				EC914B892B9199A1007FCBFC /* AudioToolbox.framework */,
 				EC6B1F4E293CA05500837369 /* MetalKit.framework */,
 				EC6B1F4C293CA04F00837369 /* Metal.framework */,

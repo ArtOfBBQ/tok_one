@@ -3,14 +3,19 @@
 #include "T1.h"
 #include "T1_settings.h"
 
-static int32_t img_T1_id;
-static uint8_t img_toggle = 0;
-static void draw_test_quad(void) {
-    img_T1_id = T1_id_next_nonui_id();;
+static s32 img_T1_id = -1;
+static f32 img_x, img_y;
+static u8  img_toggle = 0;
+static void redraw_test_quad(f32 x, f32 y) {
+    if (img_T1_id < 0) {
+        img_T1_id = T1_id_next_nonui_id();;
+    }
+    
+    T1_zsprite_delete(img_T1_id);
     
     T1zSpriteRequest img;
     T1_zsprite_fetch_next_noconstruct(&img);
-    T1_zsprite_construct_quad(0.2f, 0.2f, 0.50f, 0.25f, 0.25f, &img);
+    T1_zsprite_construct_quad(x, y, 0.50f, 0.25f, 0.25f, &img);
     T1_log_assert(img.cpu_data->mesh_id == T1_BASIC_QUAD_MESH_ID);
     T1Tex tex = T1_tex_array_get_filename_loc("structuredart1.png");
     img.gpu_data->s32.base_mat_s32.normalmap_tex_and_tex = tex;
@@ -49,6 +54,7 @@ void T1_client_early_startup(
     assert(good);
     
     mainwindow_scene_id = T1_io_create_scene_and_return_id();
+    T1_io_scene_stack_push(mainwindow_scene_id);
     
     *success = true;
 }
@@ -67,7 +73,7 @@ void T1_client_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         default:
             T1_log_append("unhandled threadmain_id: ");
-            T1_log_append_int(threadmain_id);
+            T1_log_append_s32(threadmain_id);
             T1_log_append("\n");
     }
 }
@@ -84,7 +90,16 @@ static void client_handle_keypresses(
     if (T1_io_key_consume_short_tap_this_frame(
         T1_IO_KEYBOARD_D, mainwindow_scene_id))
     {
-        draw_test_quad();
+        redraw_test_quad(img_x, img_y);
+    }
+    
+    
+    if (T1_io_key_consume_short_tap_this_frame(
+        T1_IO_GAMEPAD_DPAD_LEFT,
+        mainwindow_scene_id))
+    {
+        img_x -= 0.10f;
+        redraw_test_quad(img_x, img_y);
     }
     
     if (T1_io_key_consume_short_tap_this_frame(
@@ -194,7 +209,7 @@ static void client_handle_keypresses(
             testswitch ? 0.25f : 1.0f;
         anim->affect_T1_id = 21;
         anim->easing_type =
-            EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
+            T1_EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
         anim->duration_us = 250000;
         anim->gpu_f32_active = true;
         anim->gpu_s32_active = false;
@@ -269,7 +284,7 @@ void T1_client_window_resize(void)
         T1_settings_get_render_width(),
         T1_settings_get_render_height());
     
-    draw_test_quad();
+    redraw_test_quad(img_x, img_y);
 }
 
 void T1_client_shutdown(void) {

@@ -17,6 +17,7 @@
 #include "T1_particle.h"
 #include "T1_platform_layer.h"
 
+#import <GameController/GameController.h>
 
 void T1_macos_update_window_size(void);
 
@@ -603,3 +604,134 @@ void T1_os_enter_fullscreen(void) {
 void T1_os_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }
+
+#if T1_GAMEPAD_ACTIVE == T1_ACTIVE
+static void update_simple_key(
+    GCExtendedGamepad * g,
+    u8 ispressed,
+    T1IOKey T1_io_key)
+{
+    if (ispressed) {
+        if (!T1_io_key_is_down(T1_io_key, -1)) {
+            T1_io_register_keydown(T1_io_key);
+        }
+    } else {
+        if (T1_io_key_is_down(T1_io_key, -1)) {
+            T1_io_register_keyup(T1_io_key);
+        }
+    }
+}
+
+void T1_os_vibrate_gamepad(void) {
+    NSArray *controllers = [GCController controllers];
+    
+    if (controllers.count == 0) {
+        return; // No gamepads connected
+    }
+    
+    GCController * c = controllers[0];
+    
+    if (!c || !c.haptics) {
+        return;
+    }
+    
+    NSError * error = nil;    
+    CHHapticEngine * eng = [c.haptics
+        createEngineWithLocality: GCHapticsLocalityDefault];
+    
+    if (!eng) {
+        return;
+    }
+    
+    #if 0
+    // Start the haptic engine
+    [eng startAndReturnError: &error];
+    if (error) {
+        NSLog(@"Failed to start haptic engine: %@", error.localizedDescription);
+        return;
+    }
+    
+    // 1. Define haptic parameters (Intensity and Sharpness)
+    CHHapticEventParameter * inten = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticIntensity value:1.0];
+    CHHapticEventParameter * sharp = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticSharpness value:0.5];
+    
+    // 2. Create a continuous or transient haptic event (0.5-second duration)
+    CHHapticEvent *event = [[CHHapticEvent alloc]
+        initWithEventType:CHHapticEventTypeHapticContinuous
+        parameters:@[intensity, sharpness]
+        relativeTime:0.0
+        duration:0.5];
+    
+    // 3. Package the event into a pattern
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithEvents:@[event] parameters:@[] error:&error];
+    if (error) {
+        NSLog(@"Failed to create haptic pattern: %@", error.localizedDescription);
+        return;
+    }
+    
+    // 4. Create the player and start playback
+    id<CHHapticPatternPlayer> player = [eng makePlayerWithPattern:pattern error:&error];
+    if (error) {
+        NSLog(@"Failed to create haptic player: %@", error.localizedDescription);
+        return;
+    }
+    
+    [player startAtTime:0.0 error:&error];
+    if (error) {
+        NSLog(@"Failed to play haptic pattern: %@", error.localizedDescription);
+    }
+    #endif
+}
+
+void T1_os_poll_gamepad_events(void) {
+    NSArray *controllers = [GCController controllers];
+    
+    if (controllers.count == 0) {
+        return; // No gamepads connected
+    }
+    
+    // Grab the primary controller (like your EasySMX X05PRO)
+    GCController * c = controllers[0];
+    GCExtendedGamepad * g = c.extendedGamepad;
+    
+    if (g) {        
+        update_simple_key(g, g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
+        update_simple_key(g, g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
+        update_simple_key(g, g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
+        update_simple_key(g, g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
+        update_simple_key(g, g.leftShoulder.isPressed, T1_IO_GAMEPAD_LEFTSHOULDER);
+        update_simple_key(g, g.rightShoulder.isPressed, T1_IO_GAMEPAD_RIGHTSHOULDER);
+        update_simple_key(g, g.leftTrigger.isPressed, T1_IO_GAMEPAD_LEFTTRIGGER);
+        update_simple_key(g, g.rightTrigger.isPressed, T1_IO_GAMEPAD_RIGHTTRIGGER);
+        update_simple_key(g, g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LEFTTHUMBSTICKBUTTON);
+        update_simple_key(g, g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RIGHTTHUMBSTICKBUTTON);
+        update_simple_key(g, g.buttonA.isPressed, T1_IO_GAMEPAD_A);
+        update_simple_key(g, g.buttonB.isPressed, T1_IO_GAMEPAD_B);
+        update_simple_key(g, g.buttonX.isPressed, T1_IO_GAMEPAD_X);
+        update_simple_key(g, g.buttonY.isPressed, T1_IO_GAMEPAD_Y);
+        update_simple_key(g, g.buttonHome.isPressed, T1_IO_GAMEPAD_HOME);
+        update_simple_key(g, g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
+        update_simple_key(g, g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
+        
+        // 2. Read Analog Stick Values (returns a float from -1.0 to 1.0)
+        float lstick_x = g.leftThumbstick.xAxis.value;
+        float lstick_y = g.leftThumbstick.yAxis.value;
+        
+        // Pass these down to your UI Focus state machine or navigation handlers
+        if (lstick_x != 0.0 || lstick_y != 0.0) {
+            // printf("LEFT stick pos: [%f, %f]\n", lstick_x, lstick_y);
+        }
+        
+        float rstick_x = g.rightThumbstick.xAxis.value;
+        float rstick_y = g.rightThumbstick.yAxis.value;
+        
+        // Pass these down to your UI Focus state machine or navigation handlers
+        if (rstick_x != 0.0 || rstick_y != 0.0) {
+            // printf("RIGHT stick pos: [%f, %f]\n", rstick_x, rstick_y);
+        }
+    }
+}
+#elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
