@@ -231,9 +231,10 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_io_register_mouse_move(
-        (float)window_location.x,
-        (float)window_location.y);
+    T1_io_register_key_move_to_pos(
+        T1_IO_MOUSE,
+        (f32)window_location.x,
+        (f32)window_location.y);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -244,10 +245,10 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_io_register_mouse_move(
-        (float)window_location.x,
-        (float)window_location.y);
-
+    T1_io_register_key_move_to_pos(
+        T1_IO_MOUSE,
+        (f32)window_location.x,
+        (f32)window_location.y);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -694,7 +695,7 @@ void T1_os_poll_gamepad_events(void) {
     GCController * c = controllers[0];
     GCExtendedGamepad * g = c.extendedGamepad;
     
-    if (g) {        
+    if (g) {
         update_simple_key(g, g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
         update_simple_key(g, g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
         update_simple_key(g, g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
@@ -713,22 +714,14 @@ void T1_os_poll_gamepad_events(void) {
         update_simple_key(g, g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
         update_simple_key(g, g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
         
-        // 2. Read Analog Stick Values (returns a float from -1.0 to 1.0)
-        float lstick_x = g.leftThumbstick.xAxis.value;
-        float lstick_y = g.leftThumbstick.yAxis.value;
-        
-        // Pass these down to your UI Focus state machine or navigation handlers
-        if (lstick_x != 0.0 || lstick_y != 0.0) {
-            // printf("LEFT stick pos: [%f, %f]\n", lstick_x, lstick_y);
-        }
-        
-        float rstick_x = g.rightThumbstick.xAxis.value;
-        float rstick_y = g.rightThumbstick.yAxis.value;
-        
-        // Pass these down to your UI Focus state machine or navigation handlers
-        if (rstick_x != 0.0 || rstick_y != 0.0) {
-            // printf("RIGHT stick pos: [%f, %f]\n", rstick_x, rstick_y);
-        }
+        T1_io_register_key_move_to_pos(
+            T1_IO_GAMEPAD_LEFTTHUMBSTICK,
+                g.leftThumbstick.xAxis.value,
+                g.leftThumbstick.yAxis.value); 
+        T1_io_register_key_move_to_pos(
+            T1_IO_GAMEPAD_RIGHTTHUMBSTICK,
+                g.rightThumbstick.xAxis.value,
+                g.rightThumbstick.yAxis.value);
     }
 }
 #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE

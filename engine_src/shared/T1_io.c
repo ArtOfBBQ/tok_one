@@ -17,6 +17,14 @@ typedef struct {
     b8  is_active;
 } T1IOFrameEvent;
 
+typedef struct {
+    u64 timestamp;
+    f32 x;
+    f32 y;
+    T1IOKey key;
+    u8 changed;
+} T1IOFrameEventPosition;
+
 #define T1_IO_MAX_EVENTS_PER_FRAME 10
 typedef struct {
     // T1IOKey key; // not needed, it's the index
@@ -25,12 +33,12 @@ typedef struct {
     s32 is_down_for_scene_id;
 } T1IOFrameEventQueue;
 
+#define T1_IO_POS_EVENTS_CAP 50
 #define SCENE_IDS_STACK_CAP 20
 typedef struct {
+    T1IOFrameEventPosition pos_events[T1_IO_POS_EVENTS_CAP];
     T1IOFrameEventQueue frame_map[T1_IO_KEY_ABOVEBOUNDS];
     s32 scene_ids_stack[SCENE_IDS_STACK_CAP];
-    f32 mouse_x;
-    f32 mouse_y;
     f32 last_drag_start_x;
     f32 last_drag_start_y;
     s32 ondown_lclick_touch_id;
@@ -38,20 +46,22 @@ typedef struct {
     s32 next_scene_id;
     s32 dragging_at_scene_id;
     u8 scene_ids_stack_i;
-    u8 mouse_pos_changed;
+    u8 pos_events_size;
 } T1IOState;
 
 T1IOState * T1_io = NULL;
 
-void
-T1_io_init(
-    void *(* arg_malloc_func)(u64))
-{
-    T1_io = (T1IOState *)(arg_malloc_func(
-        sizeof(T1IOState)));
+void T1_io_init(void *(* arg_malloc_func)(u64)) {
+    T1_io = (T1IOState *)(arg_malloc_func(sizeof(T1IOState)));
     T1_std_memset(T1_io, 0, sizeof(T1IOState));
     
     T1_io->dragging_at_scene_id = -1;
+    
+    T1_io->pos_events[0].key = T1_IO_MOUSE;
+    T1_io->pos_events[0].timestamp = T1_os_get_current_time_us();
+    T1_io->pos_events[0].x = 0;
+    T1_io->pos_events[0].y = 0;
+    T1_io->pos_events_size = 1;
     
     for (uint32_t i = 0; i < SCENE_IDS_STACK_CAP; i++) {
         T1_io->scene_ids_stack[i] = -1;    
@@ -152,20 +162,26 @@ void
 T1_io_register_keydown(const u32 key_id)
 {
     // We shouldn't be registering stuff when no scene is active
-    T1_log_assert(T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] >= 0);
+    if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
+        T1_log_warn(1);
+        return;
+    }
+    
+    f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
+    f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
     
     if (key_id == T1_IO_MOUSE_LCLICK &&
         T1_io->dragging_at_scene_id < 0)
     {
         T1_io->dragging_at_scene_id =
             T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
-        T1_io->last_drag_start_x = T1_io->mouse_x;
-        T1_io->last_drag_start_y = T1_io->mouse_y;
+        T1_io->last_drag_start_x = mouse_x;
+        T1_io->last_drag_start_y = mouse_y;
         
         T1_io->ondown_lclick_touch_id =
             T1_os_gpu_get_touch_id_at_screen_pos(
-                T1_io->mouse_x,
-                T1_io->mouse_y);
+                mouse_x,
+                mouse_y);
     }
     
     T1_io->frame_map[key_id].is_down_for_scene_id =
@@ -184,23 +200,65 @@ T1_io_register_keydown(const u32 key_id)
     }
 }
 
-void
-T1_io_register_mouse_move(
-    const f32 screen_x,
-    const f32 screen_y)
+void T1_io_register_key_move_to_pos(
+    T1IOKey key_id, f32 x, f32 y)
 {
-    if (T1_io->mouse_x != screen_x ||
-        T1_io->mouse_y != screen_y)
-    {
-        T1_io->mouse_pos_changed = true;
-        T1_io->mouse_x = screen_x;
-        T1_io->mouse_y = screen_y;
+    T1IOFrameEventPosition * pos = NULL;
+    
+    for (u32 i = 0; i < T1_io->pos_events_size; i++) {
+        if (T1_io->pos_events[i].key == key_id) {
+            pos = &T1_io->pos_events[i];
+            break;
+        }
     }
+    
+    if (pos == NULL) {
+        if ((T1_io->pos_events_size + 1) >=
+            T1_IO_POS_EVENTS_CAP)
+        {
+            T1_log_assert(1); // not enough position events
+            return;
+        }
+        pos = T1_io->pos_events + T1_io->pos_events_size;
+        pos->key = key_id;
+        T1_io->pos_events_size += 1;
+    }
+    
+    pos->timestamp = T1_os_get_current_time_us();
+    pos->x = x;
+    pos->y = y;
+}
+
+static T1IOFrameEventPosition * get_pos(
+    T1IOKey key)
+{
+    for (uint32_t i = 0; i < T1_io->pos_events_size; i++) {
+        if (T1_io->pos_events[i].key == key)
+        {
+            return T1_io->pos_events + i;
+        }
+    }
+    
+    return NULL;
+}
+
+f32 T1_io_get_pos_x_this_frame(T1IOKey key) {
+    T1IOFrameEventPosition * pos = get_pos(key);
+    T1_log_assert(pos != NULL);
+    
+    return pos->x;
+}
+
+f32 T1_io_get_pos_y_this_frame(T1IOKey key) {
+    T1IOFrameEventPosition * pos = get_pos(key);
+    T1_log_assert(pos != NULL);
+    
+    return pos->y;
 }
 
 void
 T1_io_update_and_clear_for_next_frame(void)
-{   
+{
     // at the end, reset the frame data
     for (T1IOKey i = 0; i < T1_IO_KEY_ABOVEBOUNDS; i++) {
         for (uint32_t j = 0; j < T1_IO_MAX_EVENTS_PER_FRAME; j++) {
@@ -208,9 +266,11 @@ T1_io_update_and_clear_for_next_frame(void)
         }
     }
     
+    f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
+    f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
     T1_io->cur_mouse_touch_id = T1_os_gpu_get_touch_id_at_screen_pos(
-        T1_io->mouse_x,
-        T1_io->mouse_y);
+        mouse_x,
+        mouse_y);
 }
 
 /*
@@ -333,24 +393,15 @@ b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, const s32 scene_id) {
     return false;
 }
 
-f32 T1_io_get_mouse_x_this_frame(void) {
-    return T1_io->mouse_x;
-}
-
-f32 T1_io_get_mouse_y_this_frame(void) {
-    return T1_io->mouse_y;
-}
-
 s32 T1_io_get_mouse_touch_id_this_frame(void) {
     return T1_io->cur_mouse_touch_id;
 }
 
-b8 T1_io_consume_mouse_changed(const s32 scene_id) {
-    (void)scene_id; // TODO: implement me
-    
-    u8 out = T1_io->mouse_pos_changed;
-    T1_io->mouse_pos_changed = false;
-    return out;
+b8 T1_io_consume_mouse_changed(s32 scene_id) {
+    // TODO: implement me
+    // u8 out = T1_io->mouse_pos_changed;
+    // T1_io->mouse_pos_changed = false;
+    return false;
 }
 
 b8 T1_io_consume_mouse_drag(
@@ -358,11 +409,14 @@ b8 T1_io_consume_mouse_drag(
     f32 * delta_y,
     const s32 scene_id)
 {
+    f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
+    f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
+    
     if (T1_io->dragging_at_scene_id == scene_id) {
-        *delta_x = T1_io->last_drag_start_x - T1_io->mouse_x;
-        *delta_y = T1_io->last_drag_start_y - T1_io->mouse_y;
-        T1_io->last_drag_start_x = T1_io->mouse_x;
-        T1_io->last_drag_start_y = T1_io->mouse_y;
+        *delta_x = T1_io->last_drag_start_x - mouse_x;
+        *delta_y = T1_io->last_drag_start_y - mouse_y;
+        T1_io->last_drag_start_x = mouse_x;
+        T1_io->last_drag_start_y = mouse_y;
         return true;
     }
     
