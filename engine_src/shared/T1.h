@@ -492,7 +492,7 @@ void T1_os_toggle_fullscreen(void);
 void T1_os_start_thread(void (*func_to_run)(s32), s32 argument);
 u32 T1_os_init_mutex_and_return_id(void);
 u8 T1_os_mutex_trylock(u32 mutex_id);
-void T1_os_assert_mutex_locked(const u32 mutex_id);
+void T1_os_assert_mutex_locked(u32 mutex_id);
 void T1_os_mutex_lock(u32 mutex_id);
 void T1_os_mutex_unlock(u32 mutex_id);
 void T1_os_get_res_dir(c8 * recip, u32 recip_cap);

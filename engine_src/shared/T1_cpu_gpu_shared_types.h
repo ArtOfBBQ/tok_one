@@ -101,8 +101,8 @@ typedef struct {
     f32              bonus_rgb[3];
     f32              base_mat_uv_offsets[2];
     f32              alpha;
-    f32              no_lighting;
-    f32              no_camera;
+    f32              no_light;
+    f32              no_cam;
     f32              outline_alpha;
     f32              shadow_strength;
     f32              f32_padding[7];

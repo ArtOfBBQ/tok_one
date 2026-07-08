@@ -24,8 +24,8 @@ typedef struct {
     u64 pause_us;
     
     u32 runs;
-    s32 affected_T1_id;
-    s32 affected_touch_id;
+    s32 target_T1_id;
+    s32 target_touch_id;
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char original_func_name[128];

@@ -17,7 +17,7 @@
 #define T1_MUTEXES_SIZE 100
 
 #if T1_SHARED_APPLE_PLATFORM
-#import <Foundation/Foundation.h>
+#import  <Foundation/Foundation.h>
 #include <pthread.h>
 #include <errno.h> // for pthreads error codes
 #include <sys/time.h>
@@ -76,7 +76,7 @@ T1_os_init_mutex_and_return_id(void)
     T1_log_assert(
         !mutexes[next_mutex_id].initialized);
     
-    int mutex_init_error_value = pthread_mutex_init(
+    s32 mutex_init_error_value = pthread_mutex_init(
         &(mutexes[next_mutex_id].mutex),
         NULL);
     
@@ -107,7 +107,7 @@ u8 T1_os_mutex_trylock(const u32 mutex_id)
     */
     T1_log_assert(mutexes[mutex_id].initialized);
     
-    int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
+    s32 return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     if (return_val != 0) {
@@ -133,7 +133,7 @@ void T1_os_assert_mutex_locked(
     const u32 mutex_id) 
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
+    s32 return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     T1_log_assert(return_val == EBUSY);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)mutex_id;
@@ -146,12 +146,11 @@ void T1_os_assert_mutex_locked(
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
-void T1_os_mutex_lock(
-    const u32 mutex_id)
+void T1_os_mutex_lock(u32 mutex_id)
 {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
-    int return_value = 
+    s32 return_value = 
         pthread_mutex_lock(&(mutexes[mutex_id].mutex));
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -165,18 +164,17 @@ void T1_os_mutex_lock(
     return;
 }
 
-void T1_os_mutex_unlock(const u32 mutex_id) {
+void T1_os_mutex_unlock(u32 mutex_id) {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
     T1_log_assert(mutexes[mutex_id].initialized);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    int return_value =
-        pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
+    s32 out = pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
     #else
     #error
     #endif
     
-    T1_log_assert(return_value == 0);
+    T1_log_assert(out == 0);
 }

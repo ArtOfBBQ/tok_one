@@ -43,8 +43,8 @@ static T1TexQuadAnimState * tqas = NULL;
 
 void T1_texquad_anim_init(
     u32 (* funcptr_init_mutex_and_return_id)(void),
-    void (* funcptr_mutex_lock)(const u32),
-    void (* funcptr_mutex_unlock)(const u32))
+    void (* funcptr_mutex_lock)(u32),
+    void (* funcptr_mutex_unlock)(u32))
 {
     tqas = (T1TexQuadAnimState *)
         T1_mem_malloc_unmanaged(
@@ -107,9 +107,9 @@ static void T1_texquad_anim_construct(
         !to_construct->committed);
     
     to_construct->public.
-        affect_T1_id = -1;
+        target_T1_id = -1;
     to_construct->public.
-        affect_touch_id = -1;
+        target_touch_id = -1;
     to_construct->public.runs = 1;
     
     T1_log_assert(
@@ -191,14 +191,14 @@ static void T1_texquad_anim_resolve_single(
                     del_obj_on_finish)
             {
                 if (
-                    anim->public.affect_T1_id ==
+                    anim->public.target_T1_id ==
                     T1_TEXQUAD_ID_HIT_EVERYTHING)
                 {
                     T1_texquad_delete_all();
                 } else {
                     T1_texquad_delete(
                         anim->public.
-                            affect_T1_id);
+                            target_T1_id);
                 }
             }
         } else {
@@ -266,9 +266,9 @@ static void T1_texquad_anim_resolve_single(
         T1_texquad_apply_endpoint_anim(
             /* const s32 T1_id: */
                 anim->public.
-                    affect_T1_id,
+                    target_T1_id,
             /* const s32 touch_id: */
-                anim->public.affect_touch_id,
+                anim->public.target_touch_id,
             /* const f32 t_applied: */
                 t_applied,
             /* const f32 t_now: */
@@ -284,9 +284,9 @@ static void T1_texquad_anim_resolve_single(
     } else {
         T1_texquad_apply_anim_effects_to_id(
             /* const s32 T1_id: */
-                anim->public.affect_T1_id,
+                anim->public.target_T1_id,
             /* const s32 touch_id: */
-                anim->public.affect_touch_id,
+                anim->public.target_touch_id,
             /* const f32 t_applied: */
                 t_applied,
             /* const f32 t_now: */
@@ -324,10 +324,10 @@ void T1_texquad_anim_commit(
                 &tqas->anims[anim_i];
             
             if (
-                a->public.affect_T1_id ==
-                    to_commit->affect_T1_id &&
-                a->public.affect_touch_id ==
-                    to_commit->affect_touch_id &&
+                a->public.target_T1_id ==
+                    to_commit->target_T1_id &&
+                a->public.target_touch_id ==
+                    to_commit->target_touch_id &&
                 a->committed &&
                 !a->public.del_obj_on_finish &&
                 a->endpoints)
@@ -341,19 +341,19 @@ void T1_texquad_anim_commit(
     T1_log_assert(!parent->deleted);
     T1_log_assert(!parent->committed);
     
-    if (to_commit->affect_T1_id < 0) {
-        T1_log_assert(to_commit->affect_touch_id >= 0);
+    if (to_commit->target_T1_id < 0) {
+        T1_log_assert(to_commit->target_touch_id >= 0);
     } else {
         T1_log_assert(
-            to_commit->affect_touch_id == -1);
+            to_commit->target_touch_id == -1);
     }
     
-    if (to_commit->affect_touch_id < 0) {
+    if (to_commit->target_touch_id < 0) {
         T1_log_assert(
-            to_commit->affect_T1_id >= 0);
+            to_commit->target_T1_id >= 0);
     } else {
         T1_log_assert(
-            to_commit->affect_T1_id == -1);
+            to_commit->target_T1_id == -1);
     }
     
     T1_log_assert(parent->already_applied_t == 0.0f);
@@ -405,7 +405,7 @@ T1_texquad_anim_fade_to(
     
     // register scheduled animation
     T1TexQuadAnim * modify_alpha = T1_texquad_anim_request_next(true);
-    modify_alpha->affect_T1_id = T1_id;
+    modify_alpha->target_T1_id = T1_id;
     modify_alpha->duration_us = duration_us < 1 ? 1 : duration_us;
     modify_alpha->gpu_vals.f32s.rgba[3] = target_alpha;
     modify_alpha->gpu_f32_active = true;
@@ -425,7 +425,7 @@ void T1_texquad_anim_fade_and_destroy(
     // register scheduled animation
     T1TexQuadAnim * fade_destroy =
         T1_texquad_anim_request_next(true);
-    fade_destroy->affect_T1_id = T1_id;
+    fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.f32s.rgba[3] = 0.0f;
     fade_destroy->del_obj_on_finish = true;

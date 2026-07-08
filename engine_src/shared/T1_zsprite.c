@@ -20,13 +20,13 @@ assert_sanity_check_zsprite_vals(
 {
     if (recip_gpu) {
         T1_log_assert(recip_gpu->f32s.
-            no_camera >= -0.05f);
+            no_cam >= -0.05f);
         T1_log_assert(recip_gpu->f32s.
-            no_camera <= 1.05f);
+            no_cam <= 1.05f);
         T1_log_assert(recip_gpu->f32s.
-            no_lighting >= -0.05f);
+            no_light >= -0.05f);
         T1_log_assert(recip_gpu->f32s.
-            no_lighting <= 1.05f);
+            no_light <= 1.05f);
         T1_log_assert(recip_gpu->f32s.
             shadow_strength >= -0.1f);
         T1_log_assert(recip_gpu->f32s.
@@ -52,7 +52,7 @@ assert_sanity_check_zsprite_vals_by_id(
     assert_sanity_check_zsprite_vals(
         &T1_zsprite_list->gpu[zp_i],
         &T1_zsprite_list->cpu[zp_i].
-            simd_stats);
+            simd);
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x, y)
@@ -133,10 +133,10 @@ T1_zsprite_commit(
     // probably shouldn't be requesting sprites in africa
     T1Tex tex = to_commit->gpu_data->s32.base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
     T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
-    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[0] <  100.0f);
-    T1_log_warn(to_commit->cpu_data->simd_stats.xyz[1] <  100.0f);
+    T1_log_warn(to_commit->cpu_data->simd.xyz[0] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->simd.xyz[1] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->simd.xyz[0] <  100.0f);
+    T1_log_warn(to_commit->cpu_data->simd.xyz[1] <  100.0f);
     }
     
     u32 all_mesh_vertices_tail_i =
@@ -180,13 +180,13 @@ T1_zsprite_get_pos_xyz(
             
             *recip_x +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd_stats.xyz[0];
+                    simd.xyz[0];
             *recip_y +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd_stats.xyz[1];
+                    simd.xyz[1];
             *recip_z +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd_stats.xyz[2];
+                    simd.xyz[2];
         }
     }
     
@@ -267,9 +267,9 @@ T1_zsprite_scale_multipliers_to_width(
         /* const f32 for_height: */
             new_height);
     
-    cpu_data->simd_stats.mul_xyz[0] = new_multiplier;
-    cpu_data->simd_stats.mul_xyz[1] = new_multiplier;
-    cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
+    cpu_data->simd.mul_xyz[0] = new_multiplier;
+    cpu_data->simd.mul_xyz[1] = new_multiplier;
+    cpu_data->simd.mul_xyz[2] = new_multiplier;
 }
 
 void
@@ -286,9 +286,9 @@ T1_zsprite_scale_multipliers_to_height(
         /* const f32 for_height: */
             new_height);
     
-    cpu_data->simd_stats.mul_xyz[0] = new_multiplier;
-    cpu_data->simd_stats.mul_xyz[1] = new_multiplier;
-    cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
+    cpu_data->simd.mul_xyz[0] = new_multiplier;
+    cpu_data->simd.mul_xyz[1] = new_multiplier;
+    cpu_data->simd.mul_xyz[2] = new_multiplier;
 }
 
 void
@@ -336,9 +336,9 @@ void T1_zsprite_construct(
         0,
         sizeof(T1GPUzSprite));
     
-    to_construct->cpu_data->simd_stats.mul_xyz[0] = 1.0f;
-    to_construct->cpu_data->simd_stats.mul_xyz[1] = 1.0f;
-    to_construct->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
+    to_construct->cpu_data->simd.mul_xyz[0] = 1.0f;
+    to_construct->cpu_data->simd.mul_xyz[1] = 1.0f;
+    to_construct->cpu_data->simd.mul_xyz[2] = 1.0f;
     to_construct->gpu_data->s32.touch_id = -1;
     to_construct->gpu_data->f32s.alpha = 1.0f;
     
@@ -375,11 +375,11 @@ void T1_zsprite_construct_quad(
     const f32 mid_x = left_x + (width  / 2);
     const f32 mid_y = bottom_y + (height / 2);
     
-    stack_recipient->cpu_data->simd_stats.xyz[0] = mid_x;
-    stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
-    stack_recipient->cpu_data->simd_stats.xyz[2] = z;
+    stack_recipient->cpu_data->simd.xyz[0] = mid_x;
+    stack_recipient->cpu_data->simd.xyz[1] = mid_y;
+    stack_recipient->cpu_data->simd.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
-    stack_recipient->gpu_data->f32s.no_camera = false;
+    stack_recipient->gpu_data->f32s.no_cam = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     stack_recipient->cpu_data->mesh_id = 0;
@@ -388,11 +388,11 @@ void T1_zsprite_construct_quad(
     // so the current width is 2.0f
     f32 current_width = 2.0f;
     f32 current_height = 2.0f;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[0] =
+    stack_recipient->cpu_data->simd.mul_xyz[0] =
         width / current_width;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[1] =
+    stack_recipient->cpu_data->simd.mul_xyz[1] =
         height / current_height;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
+    stack_recipient->cpu_data->simd.mul_xyz[2] = 1.0f;
 }
 
 void T1_zsprite_construct_quad_around(
@@ -407,43 +407,39 @@ void T1_zsprite_construct_quad_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->cpu_data->simd_stats.xyz[0]  = mid_x;
-    stack_recipient->cpu_data->simd_stats.xyz[1]  = mid_y;
-    stack_recipient->cpu_data->simd_stats.xyz[2]  = z;
+    stack_recipient->cpu_data->simd.xyz[0] = mid_x;
+    stack_recipient->cpu_data->simd.xyz[1] = mid_y;
+    stack_recipient->cpu_data->simd.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
-    f32 current_width = 2.0f;
+    f32 current_width  = 2.0f;
     f32 current_height = 2.0f;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[0] =
+    stack_recipient->cpu_data->simd.mul_xyz[0] =
         width / current_width;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[1] =
+    stack_recipient->cpu_data->simd.mul_xyz[1] =
         height / current_height;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[2] =
-        stack_recipient->cpu_data->simd_stats.mul_xyz[1] / 20.0f;
+    stack_recipient->cpu_data->simd.mul_xyz[2] =
+        stack_recipient->cpu_data->simd.mul_xyz[1] / 20.0f;
     
     #define THRESH 0.00001f
     if (
-        stack_recipient->cpu_data->simd_stats.
-            mul_xyz[0] < THRESH)
+        stack_recipient->cpu_data->simd.mul_xyz[0] < THRESH)
     {
-        stack_recipient->cpu_data->simd_stats.mul_xyz[0] = THRESH;
+        stack_recipient->cpu_data->simd.mul_xyz[0] = THRESH;
     }
     if (
-        stack_recipient->cpu_data->simd_stats.
-            mul_xyz[1] < THRESH)
+        stack_recipient->cpu_data->simd.mul_xyz[1] < THRESH)
     {
-        stack_recipient->cpu_data->simd_stats.mul_xyz[1] = THRESH;
+        stack_recipient->cpu_data->simd.mul_xyz[1] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd_stats.
-        mul_xyz[2] < THRESH)
+    if (stack_recipient->cpu_data->simd.mul_xyz[2] < THRESH)
     {
-        stack_recipient->cpu_data->simd_stats.mul_xyz[2] = THRESH;
+        stack_recipient->cpu_data->simd.mul_xyz[2] = THRESH;
     }
     
-    stack_recipient->cpu_data->mesh_id =
-        T1_BASIC_QUAD_MESH_ID;
+    stack_recipient->cpu_data->mesh_id = T1_BASIC_QUAD_MESH_ID;
 }
 
 void
@@ -460,9 +456,9 @@ T1_zsprite_construct_cube_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->cpu_data->simd_stats.xyz[0]  = mid_x;
-    stack_recipient->cpu_data->simd_stats.xyz[1]  = mid_y;
-    stack_recipient->cpu_data->simd_stats.xyz[2]  = z;
+    stack_recipient->cpu_data->simd.xyz[0]  = mid_x;
+    stack_recipient->cpu_data->simd.xyz[1]  = mid_y;
+    stack_recipient->cpu_data->simd.xyz[2]  = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
@@ -470,9 +466,9 @@ T1_zsprite_construct_cube_around(
     f32 current_width = 2.0f;
     f32 current_height = 2.0f;
     f32 current_depth = 2.0f;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[0] = width / current_width;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[1] = height / current_height;
-    stack_recipient->cpu_data->simd_stats.mul_xyz[2] = depth / current_depth;
+    stack_recipient->cpu_data->simd.mul_xyz[0] = width / current_width;
+    stack_recipient->cpu_data->simd.mul_xyz[1] = height / current_height;
+    stack_recipient->cpu_data->simd.mul_xyz[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
 }
@@ -658,7 +654,7 @@ void T1_zsprite_apply_anim_effects_to_id(
                 &T1_zsprite_list->gpu[zp_i],
             /* T1CPUzSpriteSimdStats * recip_cpu: */
                 &T1_zsprite_list->cpu[zp_i].
-                    simd_stats);
+                    simd);
     }
 }
 
@@ -706,7 +702,7 @@ void T1_zsprite_apply_endpoint_anim(
         if (goal_cpu_vals) {
             f32 * recip_vals_cpu = (f32 *)
             &T1_zsprite_list->cpu[zp_i].
-                simd_stats;
+                simd;
             
             for (
                 u32 simd_step_i = 0;
@@ -960,19 +956,19 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
         }
     }
     
-    if (zs->f32s.no_camera == new_ignore_camera)
+    if (zs->f32s.no_cam == new_ignore_camera)
     {
         return;
     }
     
     // For now we're only supporting the easy case of a full toggle
     u8 is_near_zero =
-        zs->f32s.no_camera > -0.01f &&
-        zs->f32s.no_camera <  0.01f;
+        zs->f32s.no_cam > -0.01f &&
+        zs->f32s.no_cam <  0.01f;
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     u8 is_near_one =
-        zs->f32s.no_camera >  0.99f &&
-        zs->f32s.no_camera <  1.01f;
+        zs->f32s.no_cam >  0.99f &&
+        zs->f32s.no_cam <  1.01f;
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -982,40 +978,40 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         T1_log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->simd_stats.xyz[0] -= T1_cam->xyz[0];
-        zs_cpu->simd_stats.xyz[1] -= T1_cam->xyz[1];
-        zs_cpu->simd_stats.xyz[2] -= T1_cam->xyz[2];
-        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[0]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[1]);
-        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, -T1_cam->angle_xyz[2]);
+        zs_cpu->simd.xyz[0] -= T1_cam->xyz[0];
+        zs_cpu->simd.xyz[1] -= T1_cam->xyz[1];
+        zs_cpu->simd.xyz[2] -= T1_cam->xyz[2];
+        T1_triangle_x_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] -= T1_cam->angle_xyz[0];
-        zs_cpu->simd_stats.angle_xyz[1] -= T1_cam->angle_xyz[1];
-        zs_cpu->simd_stats.angle_xyz[2] -= T1_cam->angle_xyz[2];
+        zs_cpu->simd.angle_xyz[0] -= T1_cam->angle_xyz[0];
+        zs_cpu->simd.angle_xyz[1] -= T1_cam->angle_xyz[1];
+        zs_cpu->simd.angle_xyz[2] -= T1_cam->angle_xyz[2];
         #endif
         
-        zs->f32s.no_camera = 1.0f;
+        zs->f32s.no_cam = 1.0f;
     } else {
         T1_log_assert(is_near_one);
         
-        T1_triangle_z_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[2]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[1]);
-        T1_triangle_x_rotate_f3(zs_cpu->simd_stats.xyz, T1_cam->angle_xyz[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[0]);
         
-        zs_cpu->simd_stats.xyz[0] += T1_cam->xyz[0];
-        zs_cpu->simd_stats.xyz[1] += T1_cam->xyz[1];
-        zs_cpu->simd_stats.xyz[2] += T1_cam->xyz[2];
+        zs_cpu->simd.xyz[0] += T1_cam->xyz[0];
+        zs_cpu->simd.xyz[1] += T1_cam->xyz[1];
+        zs_cpu->simd.xyz[2] += T1_cam->xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd_stats.angle_xyz[0] += T1_cam->angle_xyz[0];
-        zs_cpu->simd_stats.angle_xyz[1] += T1_cam->angle_xyz[1];
-        zs_cpu->simd_stats.angle_xyz[2] += T1_cam->angle_xyz[2];
+        zs_cpu->simd.angle_xyz[0] += T1_cam->angle_xyz[0];
+        zs_cpu->simd.angle_xyz[1] += T1_cam->angle_xyz[1];
+        zs_cpu->simd.angle_xyz[2] += T1_cam->angle_xyz[2];
         #endif
         
-        zs->f32s.no_camera = 0.0f;
+        zs->f32s.no_cam = 0.0f;
     }
 }
 
@@ -1069,9 +1065,9 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
                 visible ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.alpha_blending_on < 0.5f ||
+                simd.alpha_on < 0.5f ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.bloom_on > 0.5f)
+                simd.bloom_on > 0.5f)
         {
             continue;
         }
@@ -1148,17 +1144,17 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             !T1_zsprite_list->cpu[cpu_zp_i].
                 committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.bloom_on < 0.5f)
+                simd.bloom_on < 0.5f)
         {
             continue;
         }
         
         T1_log_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.alpha_blending_on < 0.5f);
+                simd.alpha_on < 0.5f);
         T1_log_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.bloom_on > 0.5f);
+                simd.bloom_on > 0.5f);
         
         s32 mesh_id =
             T1_zsprite_list->cpu[cpu_zp_i].
@@ -1249,10 +1245,10 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
             !T1_zsprite_list->cpu[cpu_zp_i].visible ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
-            T1_zsprite_list->cpu[cpu_zp_i].simd_stats.
-                alpha_blending_on > 0.5f ||
+            T1_zsprite_list->cpu[cpu_zp_i].simd.
+                alpha_on > 0.5f ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd_stats.bloom_on > 0.5f)
+                simd.bloom_on > 0.5f)
         {
             continue;
         }
@@ -1338,7 +1334,7 @@ T1_zsprite_construct_model_and_normal_matrices(
     {
         T1CPUzSpriteSimdStats * s =
             &T1_zsprite_list->cpu[i].
-                simd_stats;
+                simd;
         
         T1_linal_f32x4x4_construct_identity(&result);
         

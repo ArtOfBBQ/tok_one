@@ -824,7 +824,7 @@ void T1_appinit_after_gpu_init_step2(
                     "client_logic_early_startup() returned failure "
                     "without an error message");
             }
-            T1_log_dump_and_crash(errmsg);
+            T1_log_warn(0);
             return;
         }
         

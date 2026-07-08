@@ -8,40 +8,32 @@ typedef uchar uint8_t;
 
 using namespace metal;
 
-float4 x_rotate(const float4 vertices, const float x_angle) {
-    float4 rotated_vertices = vertices;
-    float cos_angle = cos(x_angle);
-    float sin_angle = sin(x_angle);
+float4 x_rotate(const float4 verts, f32 x_angle) {
+    float4 rot_verts = verts;
+    f32 cos_angle = cos(x_angle);
+    f32 sin_angle = sin(x_angle);
     
-    rotated_vertices[1] =
-        vertices[1] * cos_angle -
-        vertices[2] * sin_angle;
-    rotated_vertices[2] =
-        vertices[1] * sin_angle +
-        vertices[2] * cos_angle;
+    rot_verts[1] = verts[1] * cos_angle - verts[2] * sin_angle;
+    rot_verts[2] = verts[1] * sin_angle + verts[2] * cos_angle;
     
-    return rotated_vertices;
+    return rot_verts;
 }
 
-float4 y_rotate(const float4 vertices, const float y_angle) {
-    float4 rotated_vertices = vertices;
-    float cos_angle = cos(y_angle);
-    float sin_angle = sin(y_angle);
+float4 y_rotate(const float4 verts, f32 y_angle) {
+    float4 rot_verts = verts;
+    f32 cos_angle = cos(y_angle);
+    f32 sin_angle = sin(y_angle);
     
-    rotated_vertices[0] =
-        vertices[0] * cos_angle +
-        vertices[2] * sin_angle;
-    rotated_vertices[2] =
-        vertices[2] * cos_angle -
-        vertices[0] * sin_angle;
+    rot_verts[0] = verts[0] * cos_angle + verts[2] * sin_angle;
+    rot_verts[2] = verts[2] * cos_angle - verts[0] * sin_angle;
     
-    return rotated_vertices;
+    return rot_verts;
 }
 
-float4 z_rotate(const float4 vertices, const float z_angle) {
+float4 z_rotate(const float4 vertices, f32 z_angle) {
     float4 rotated_vertices = vertices;
-    float cos_angle = cos(z_angle);
-    float sin_angle = sin(z_angle);
+    f32 cos_angle = cos(z_angle);
+    f32 sin_angle = sin(z_angle);
     
     rotated_vertices[0] =
         (vertices[0] * cos_angle) -
@@ -71,31 +63,31 @@ typedef struct
     float4 normal_viewspace;
     float4 tangent_viewspace;
     float4 bitangent_viewspace;
-    unsigned int locked_vertex_i [[ flat ]];
-    unsigned int polygon_i [[ flat ]];
-    int touchable_id [[ flat ]];
+    u32 locked_vertex_i [[ flat ]];
+    u32 polygon_i [[ flat ]];
+    s32 touchable_id [[ flat ]];
 } RasterizerPixel;
 
-float get_distance_f3(
+f32 get_distance_f3(
     const float3 a,
     const float3 b)
 {
     const float3 squared_diffs = (a-b)*(a-b);
     
-    const float sum_squares = dot(
+    const f32 sum_squares = dot(
         squared_diffs,
         vector_float3(1.0f,1.0f,1.0f));
     
     return sqrt(sum_squares);
 }
 
-float get_distance(
+f32 get_distance(
     float4 a,
     float4 b)
 {
     float4 squared_diffs = (a-b)*(a-b);
     
-    float sum_squares = dot(
+    f32 sum_squares = dot(
         squared_diffs,
         vector_float4(1.0f,1.0f,1.0f,1.0f));
     
@@ -104,12 +96,12 @@ float get_distance(
 
 vertex RasterizerPixel
 vertex_shader(
-    uint vertex_i [[ vertex_id ]],
+    u32 vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * zsprites [[ buffer(1) ]],
     const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
     const device T1GPURenderView * rv [[ buffer(3) ]],
-    constant uint32_t &rv_i [[buffer(4)]],
+    constant u32 &rv_i [[buffer(4)]],
     const device T1GPULockedVertex * lverts [[ buffer(5) ]])
 {
     RasterizerPixel out;
@@ -176,7 +168,7 @@ vertex_shader(
     out.worldpos = mesh_vertices * model;
     
     #if 0
-    float dist = distance(
+    f32 dist = distance(
         mesh_vertices,
         vector_float4(0.0f, 0.0f, 0.0f, 1.0f));
     #endif
@@ -189,7 +181,7 @@ vertex_shader(
     
     out.viewpos = out.worldpos * view;
     
-    float ic = clamp(zs->f32s.no_camera, 0.0f, 1.0f);
+    f32 ic = clamp(zs->f32s.no_cam, 0.0f, 1.0f);
     
     out.viewpos =
         (ic * out.worldpos) +
@@ -248,12 +240,12 @@ z_prepass_fragment_shader(
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
-    constant uint32_t &camera_i [[buffer(4)]],
+    constant u32 &camera_i [[buffer(4)]],
     const device T1GPUConstMatf32 * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     #if 0
-    unsigned int mat_i =
+    u32 mat_i =
         locked_vertices[in.locked_vertex_i].
             parent_material_i;
     
@@ -282,26 +274,26 @@ struct FragmentAndTouchableOut {
 };
 
 /*
-We want to output an int32 for 1 of our render targets (touchable_id), but
+We want to output an s32 for 1 of our render targets (touchable_id), but
 Metal enforces you use the same data type when you render to multiple targets
-simultaneously. That's why we're packing our int32 inside of RGBA8Unorm slots. On
-the CPU side we'll retrieve them and put them back together as an int32.
+simultaneously. That's why we're packing our s32 inside of RGBA8Unorm slots. On
+the CPU side we'll retrieve them and put them back together as an s32.
 */
 static FragmentAndTouchableOut pack_color_and_touchable_id(
     float4 color,
-    int32_t touchable_id)
+    s32 touchable_id)
 {
     FragmentAndTouchableOut out;
     
     out.color = (half4)color;
     
-    uint uid = as_type<uint>(touchable_id);
+    u32 uid = as_type<u32>(touchable_id);
     
     out.touchable_id = half4(
-        half((uid      ) & 0xFFu) / 255.0h,
-        half((uid >>  8) & 0xFFu) / 255.0h,
-        half((uid >> 16) & 0xFFu) / 255.0h,
-        half((uid >> 24) & 0xFFu) / 255.0h
+        f16((uid      ) & 0xFFu) / 255.0h,
+        f16((uid >>  8) & 0xFFu) / 255.0h,
+        f16((uid >> 16) & 0xFFu) / 255.0h,
+        f16((uid >> 24) & 0xFFu) / 255.0h
     );
     
     return out;
@@ -353,13 +345,13 @@ float4 worldspace_to_clipspace(
 // Gets the color given a material and lighting setup
 float4 get_lit(
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_maps,
+    array<texture2d<f32>, T1_RENDER_VIEW_CAP> shadow_maps,
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    array<texture2d_array<half>, T1_TEXARRAYS_CAP> color_textures,
-    const uint32_t cam_i,
+    array<texture2d_array<f16>, T1_TEXARRAYS_CAP> color_textures,
+    const u32 cam_i,
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
     const device T1GPUzSprite * zsprite,
@@ -498,11 +490,11 @@ float4 get_lit(
         
         refl_uv[1] = 1.0 - refl_uv[1];
         
-        float mix_strength = 0.95f;
+        f32 mix_strength = 0.95f;
         
-        float fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
-        float fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
-        float fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
+        f32 fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
+        f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
+        f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
         mix_strength *= fade;
         
         const half4 color_sample =
@@ -524,7 +516,7 @@ float4 get_lit(
     float4 no_lighting_color = diffuse_base * texture_base;
     
     for (
-        uint32_t i = 0;
+        u32 i = 0;
         i < globals->lights_size;
         i++)
     {
@@ -561,9 +553,9 @@ float4 get_lit(
             
             int shadowmap_i = lights[i].shadow_map_depth_tex_i;
             
-            float shadow_depth = shadow_maps[shadowmap_i].sample(shadow_sampler,shadow_uv).r;
+            f32 shadow_depth = shadow_maps[shadowmap_i].sample(shadow_sampler,shadow_uv).r;
             
-            float frag_depth =
+            f32 frag_depth =
                 light_clip_pos.z / light_clip_pos.w;
             
             shadow_factors =
@@ -606,13 +598,13 @@ float4 get_lit(
         
         float4 light_viewspace = light_pos_world * cam_v_4x4;
         
-        float distance = get_distance_f3(
+        f32 distance = get_distance_f3(
             (float3)light_viewspace,
             (float3)in.viewpos);
-        float distance_overflow = max(
+        f32 distance_overflow = max(
             distance - (lights[i].reach * 0.75f),
             0.0f);
-        float attenuation = 1.0f - (
+        f32 attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
@@ -663,7 +655,7 @@ float4 get_lit(
         #endif
         
         #if T1_DIFFUSE_LIGHTING_ACTIVE == T1_ACTIVE
-        float diffuse_dot = max(
+        f32 diffuse_dot = max(
             dot(
                 normal_viewspace,
                 object_to_light_viewspace),
@@ -692,7 +684,7 @@ float4 get_lit(
                 object_to_light_viewspace +
                 fragment_to_cam_viewspace);
         
-        float specular_dot = pow(
+        f32 specular_dot = pow(
             max(
                 dot(
                     normal_viewspace,
@@ -722,7 +714,7 @@ float4 get_lit(
     
     lit_color *= texture_base;
     
-    float no_lighting = clamp(zsprite->f32s.no_lighting, 0.0f, 1.0f);
+    f32 no_lighting = clamp(zsprite->f32s.no_light, 0.0f, 1.0f);
     lit_color =
         ((1.0f - no_lighting) * lit_color) +
         (no_lighting * no_lighting_color);
@@ -743,10 +735,10 @@ float4 get_lit(
 fragment FragmentAndTouchableOut
 fragment_shader(
     const RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, T1_TEXARRAYS_CAP>
+    array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
         color_textures[[ texture(0) ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    array<texture2d<float>, T1_RENDER_VIEW_CAP> shadow_map [[texture(T1_SHADOW_MAPS_1ST_FRAGARG_I)]],
+    array<texture2d<f32>, T1_RENDER_VIEW_CAP> shadow_map [[texture(T1_SHADOW_MAPS_1ST_FRAGARG_I)]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -759,13 +751,13 @@ fragment_shader(
         lights [[ buffer(2) ]],
     const device T1GPURenderView *
         render_views [[ buffer(3) ]],
-    constant uint32_t &camera_i [[buffer(4)]],
+    constant u32 &camera_i [[buffer(4)]],
     const device T1GPUConstMatf32 * const_mats_f32 [[ buffer(6) ]],
     const device T1GPUConstMats32 * const_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].f32s.no_camera < 0.05f &&
+        polygons[in.polygon_i].f32s.no_cam < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -775,7 +767,7 @@ fragment_shader(
         discard_fragment();
     }
     
-    unsigned int mat_i =
+    u32 mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     const device T1GPUConstMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
@@ -813,18 +805,18 @@ fragment_shader(
         /* const bool is_base_mtl: */
             mat_i == PARENT_MATERIAL_BASE);
     
-    int diamond_size = 35.0f;
-    int neghalfdiamond = -1.0f * (diamond_size / 2);
+    s32 diamond_size = 35.0f;
+    s32 neghalfdiamond = -1.0f * (diamond_size / 2);
     
-    int alpha_tresh = (int)(lit_color[3] * diamond_size);
+    s32 alpha_tresh = (s32)(lit_color[3] * diamond_size);
     
     if (
         lit_color[3] < 0.05f ||
         (
             lit_color[3] < 0.95f &&
             (
-                abs((neghalfdiamond + (int)in.projpos.x % diamond_size)) +
-                abs((neghalfdiamond + (int)in.projpos.y % diamond_size))
+                abs((neghalfdiamond + (s32)in.projpos.x % diamond_size)) +
+                abs((neghalfdiamond + (s32)in.projpos.y % diamond_size))
             ) > alpha_tresh
         ))
     {
@@ -842,10 +834,10 @@ fragment_shader(
 fragment FragmentAndTouchableOut
 alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, T1_TEXARRAYS_CAP>
+    array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
         color_textures[[ texture(0), maybe_unused ]],
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    array<texture2d<float>, T1_RENDER_VIEW_CAP>
+    array<texture2d<f32>, T1_RENDER_VIEW_CAP>
         shadow_maps[[ texture(T1_SHADOW_MAPS_1ST_FRAGARG_I), maybe_unused ]],
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
@@ -855,13 +847,13 @@ alphablending_fragment_shader(
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPURenderView * render_views [[ buffer(3) ]],
-    constant uint &camera_i [[buffer(4)]],
+    constant u32 &camera_i [[buffer(4)]],
     const device T1GPUConstMatf32 * locked_mats_f32 [[ buffer(6) ]],
     const device T1GPUConstMats32 * locked_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
-        polygons[in.polygon_i].f32s.no_camera < 0.05f &&
+        polygons[in.polygon_i].f32s.no_cam < 0.05f &&
         (
             in.worldpos.xyz[2] >=
                 render_views[camera_i].cull_above_z ||
@@ -871,7 +863,7 @@ alphablending_fragment_shader(
         discard_fragment();
     }
     
-    unsigned int mat_i = locked_vertices[in.locked_vertex_i].
+    u32 mat_i = locked_vertices[in.locked_vertex_i].
         parent_material_i;
     
     const device T1GPUConstMatf32 * matf32 =
@@ -886,7 +878,7 @@ alphablending_fragment_shader(
     
     float4 lit_color = get_lit(
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-        /* texture2d<float> shadow_map: */
+        /* texture2d<f32> shadow_map: */
             shadow_maps,
         #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
         #else
@@ -926,16 +918,16 @@ struct PostProcessingFragment
     half4 bonus_rgb;
     half4 fog_rgb;
     float2 texcoord;
-    float blur_pct;
-    float nonblur_pct;
-    float color_quantization;
-    float fog_factor;
-    unsigned int curtime;
+    f32 blur_pct;
+    f32 nonblur_pct;
+    f32 color_quantization;
+    f32 fog_factor;
+    u32 curtime;
 };
 
 vertex PostProcessingFragment
 single_quad_vertex_shader(
-    const uint vertexID [[ vertex_id ]],
+    const u32 vertexID [[ vertex_id ]],
     const device T1PostProcessingVertex * vertices [[ buffer(0) ]],
     const constant T1GPUPostProcConsts * constants [[ buffer(1) ]])
 {
@@ -983,24 +975,24 @@ single_quad_vertex_shader(
 fragment half4
 single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
-    texture2d<half> texture  [[texture(0)]],
+    texture2d<f16> texture  [[texture(0)]],
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    texture2d<half> downsampled_1  [[texture(1)]],
-    texture2d<half> downsampled_2  [[texture(2)]],
-    texture2d<half> downsampled_3  [[texture(3)]],
-    texture2d<half> downsampled_4  [[texture(4)]],
-    texture2d<half> downsampled_5  [[texture(5)]],
+    texture2d<f16> downsampled_1  [[texture(1)]],
+    texture2d<f16> downsampled_2  [[texture(2)]],
+    texture2d<f16> downsampled_3  [[texture(3)]],
+    texture2d<f16> downsampled_4  [[texture(4)]],
+    texture2d<f16> downsampled_5  [[texture(5)]],
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    texture2d_array<half> perlin_texture [[ texture(6) ]],
+    texture2d_array<f16> perlin_texture [[ texture(6) ]],
     #elif T1_FOG_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    depth2d<float> camera_depth_map
+    depth2d<f32> camera_depth_map
         [[texture(T1_CAM_DEPTH_FRAGARG_I)]])
 {
     constexpr sampler sampler(
@@ -1034,12 +1026,12 @@ single_quad_fragment_shader(
     color_sample += clamp(in.bonus_rgb, 0.0h, 0.25h);
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    float dist = camera_depth_map.sample(sampler, texcoord);
+    f32 dist = camera_depth_map.sample(sampler, texcoord);
     dist = clamp(dist - 0.96f, 0.0f, 0.04f) * 50.0f;
     dist = pow(dist, 2.0f);
     dist *= in.fog_factor;
     
-    float progress = sin(float(in.curtime) * 0.0000001f);
+    f32 progress = sin(float(in.curtime) * 0.0000001f);
     progress = (progress + 1.0f) * 0.5f;
     
     dist *= perlin_texture.sample(
@@ -1089,7 +1081,7 @@ single_quad_fragment_shader(
 }
 
 kernel void threshold_texture(
-    texture2d<half, access::read_write>
+    texture2d<f16, access::read_write>
         texture[[texture(0)]],
     uint2 grid_pos [[thread_position_in_grid]])
 {
@@ -1103,8 +1095,8 @@ kernel void threshold_texture(
 }
 
 kernel void downsample_texture(
-    texture2d<half, access::read> in_texture[[texture(0)]],
-    texture2d<half, access::write> out_texture[[texture(1)]],
+    texture2d<f16, access::read> in_texture[[texture(0)]],
+    texture2d<f16, access::write> out_texture[[texture(1)]],
     uint2 out_pos [[thread_position_in_grid]])
 {
     if (
@@ -1129,7 +1121,7 @@ kernel void downsample_texture(
 }
 
 kernel void boxblur_texture(
-    texture2d<half, access::read_write> texture[[texture(0)]],
+    texture2d<f16, access::read_write> texture[[texture(0)]],
     uint2 pos [[thread_position_in_grid]])
 {
     uint2 prev_pos = pos - vector_uint2(1, 1);
@@ -1156,14 +1148,14 @@ typedef struct
 
 vertex FlatQuadPixel
 flat_billboard_quad_vertex_shader(
-    uint vertex_i [[ vertex_id ]],
+    u32 vertex_i [[ vertex_id ]],
     const device T1GPUFlatQuad * quads [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]])
 {
-    uint quad_i = vertex_i / 6;
-    uint corner_id  = vertex_i % 6;
+    u32 quad_i = vertex_i / 6;
+    u32 corner_id  = vertex_i % 6;
     
-    float halfsize = quads[quad_i].size * 0.5f;
+    f32 halfsize = quads[quad_i].size * 0.5f;
     
     constexpr const float2 corners[6] = {
         float2(0.0f, 0.0f),
@@ -1243,20 +1235,20 @@ typedef struct
     float4 screenpos [[ position ]];
     float4 rgba [[ flat ]];
     float2 uv;
-    int array_i [[ flat ]];
-    int slice_i [[ flat ]];
-    int touch_id [[ flat ]];
+    s32 array_i [[ flat ]];
+    s32 slice_i [[ flat ]];
+    s32 touch_id [[ flat ]];
 } FlatTexQuadPixel;
 
 vertex FlatTexQuadPixel
 flat_texquad_vertex_shader(
-    uint vertex_i [[ vertex_id ]],
+    u32 vertex_i [[ vertex_id ]],
     const device T1GPUTexQuad * quads [[ buffer(0) ]],
-    const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
-    const device T1GPURenderView * camera [[ buffer(3) ]])
+    const device T1GPUzSpriteMatrices * mats [[ buffer(2) ]],
+    const device T1GPURenderView * cam [[ buffer(3) ]])
 {
-    uint quad_i = vertex_i / 6;
-    uint corner_id  = vertex_i % 6;
+    u32 quad_i = vertex_i / 6;
+    u32 corner_id  = vertex_i % 6;
     
     float2 size_xy = vector_float2(
         quads[quad_i].f32s.wh[0],
@@ -1292,8 +1284,7 @@ flat_texquad_vertex_shader(
     
     out.screenpos = worldpos; // * view * projection;
     
-    out.screenpos.xy +=
-        (corners[corner_id].xy * size_xy);
+    out.screenpos.xy += (corners[corner_id].xy * size_xy);
     
     out.rgba = vector_float4(
         quads[quad_i].f32s.rgba[0],
@@ -1305,15 +1296,21 @@ flat_texquad_vertex_shader(
     
     ushort tex = quads[quad_i].s32s.reserved_and_tex & 0x0000FFFF;
     
-    out.array_i = tex >> 11;
-    out.slice_i = tex & 0x07FF;
+    if (tex == T1_TEX_NONE) {
+        out.array_i = -1;
+        out.slice_i = -1;
+    } else {
+        out.array_i = tex >> 11;
+        out.slice_i = tex & 0x07FF;    
+    }
+    
     out.touch_id = quads[quad_i].s32s.touch_id;
     
     return out;
 }
 
 fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
-    array<texture2d_array<half>, T1_TEXARRAYS_CAP> color_textures,
+    array<texture2d_array<f16>, T1_TEXARRAYS_CAP> color_textures,
     const FlatTexQuadPixel in [[stage_in]])
 {
     constexpr sampler texture_sampler(
@@ -1347,23 +1344,23 @@ fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
 typedef struct
 {
     float4 pos [[position]];
-    float  outline_alpha [[ flat ]];
+    f32    outline_alpha [[ flat ]];
 } OutlinePixel;
 
 vertex OutlinePixel
 outlines_vertex_shader(
-    uint vertex_i [[ vertex_id ]],
+    u32 vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPUzSpriteMatrices * matrices [[ buffer(2) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
-    constant uint &rv_i [[buffer(4)]],
+    constant u32 &rv_i [[buffer(4)]],
     const device T1GPULockedVertex * lverts [[ buffer(5)]])
 {
     OutlinePixel out;
     
-    uint polygon_i = vertices[vertex_i].polygon_i;
-    uint locked_vertex_i =
+    u32 polygon_i = vertices[vertex_i].polygon_i;
+    u32 locked_vertex_i =
         vertices[vertex_i].locked_vertex_i;
     
     float4 vert = vector_float4(

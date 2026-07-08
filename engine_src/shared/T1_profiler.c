@@ -340,14 +340,14 @@ void T1_profiler_draw_labels(void) {
                 &profiler_backdrop);
         profiler_backdrop.cpu_data->T1_id = profiler_object_id;
         profiler_backdrop.gpu_data->
-            f32s.no_camera = 1.0f;
+            f32s.no_cam = 1.0f;
         profiler_backdrop.gpu_data->
-            f32s.no_lighting = 1.0f;
+            f32s.no_light = 1.0f;
         profiler_backdrop.gpu_data->f32s.base_mat_f32.diffuse_rgb[0] = 0.50f;
         profiler_backdrop.gpu_data->f32s.base_mat_f32.diffuse_rgb[1] = 0.50f;
         profiler_backdrop.gpu_data->f32s.base_mat_f32.diffuse_rgb[2] = 0.50f;
         profiler_backdrop.gpu_data->f32s.base_mat_f32.alpha = 0.75f;
-        profiler_backdrop.cpu_data->simd_stats.alpha_blending_on = true;
+        profiler_backdrop.cpu_data->simd.alpha_blending_on = true;
         profiler_backdrop.gpu_data->s32.touch_id = -1;
         T1_zsprite_commit(&profiler_backdrop);
         

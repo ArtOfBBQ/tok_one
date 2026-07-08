@@ -17,12 +17,12 @@ typedef struct  {
     f32 mul_xyz[3];
     f32 angle_xyz[3];
     f32 bloom_on;
-    f32 alpha_blending_on;
+    f32 alpha_on;
     f32 padding[2];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {
-    T1CPUzSpriteSimdStats simd_stats;
+    T1CPUzSpriteSimdStats simd;
     
     u64 next_occlusion_in_us;
     s32 mesh_id; // data in all_mesh_summaries[mesh_id]

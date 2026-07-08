@@ -111,8 +111,8 @@ static void construct_scheduled_animationA(
         sizeof(T1InternalzSpriteAnim));
     T1_log_assert(!to_construct->committed);
     
-    to_construct->public.affected_T1_id = -1;
-    to_construct->public.affected_touch_id = -1;
+    to_construct->public.target_T1_id = -1;
+    to_construct->public.target_touch_id = -1;
     to_construct->public.runs = 1;
     
     T1_log_assert(!to_construct->deleted);
@@ -194,14 +194,14 @@ static void T1_zsprite_anim_resolve_single(
             {
                 if (
                     anim->public.
-                        affected_T1_id ==
+                        target_T1_id ==
                     T1_ZSPRITE_ID_HIT_EVERYTHING)
                 {
                     T1_zsprite_delete_all();
                 } else {
                     T1_zsprite_delete(
                         anim->public.
-                            affected_T1_id);
+                            target_T1_id);
                 }
             }
         } else {
@@ -269,9 +269,9 @@ static void T1_zsprite_anim_resolve_single(
         
         T1_zsprite_apply_endpoint_anim(
             /* const s32 T1_id: */
-                anim->public.affected_T1_id,
+                anim->public.target_T1_id,
             /* const s32 touch_id: */
-                anim->public.affected_touch_id,
+                anim->public.target_touch_id,
             /* const f32 t_applied: */
                 t_applied,
             /* const f32 t_now: */
@@ -292,9 +292,9 @@ static void T1_zsprite_anim_resolve_single(
     } else {
         T1_zsprite_apply_anim_effects_to_id(
             /* const s32 T1_id: */
-                anim->public.affected_T1_id,
+                anim->public.target_T1_id,
             /* const s32 touch_id: */
-                anim->public.affected_touch_id,
+                anim->public.target_touch_id,
             /* const f32 t_applied: */
                 t_applied,
             /* const f32 t_now: */
@@ -542,12 +542,12 @@ void T1_zsprite_anim_commit(
             
             if (
                 (void *)a != (void *)to_commit &&
-                (a->public.affected_T1_id ==
-                    to_commit->affected_T1_id ||
-                a->public.affected_T1_id ==
+                (a->public.target_T1_id ==
+                    to_commit->target_T1_id ||
+                a->public.target_T1_id ==
                     T1_ZSPRITE_ID_HIT_EVERYTHING) &&
-                a->public.affected_touch_id ==
-                    to_commit->affected_touch_id &&
+                a->public.target_touch_id ==
+                    to_commit->target_touch_id &&
                 a->committed &&
                 a->endpoints_not_deltas)
             {
@@ -560,19 +560,19 @@ void T1_zsprite_anim_commit(
     T1_log_assert(!parent->deleted);
     T1_log_assert(!parent->committed);
     
-    if (to_commit->affected_T1_id < 0) {
-        T1_log_assert(to_commit->affected_touch_id >= 0);
+    if (to_commit->target_T1_id < 0) {
+        T1_log_assert(to_commit->target_touch_id >= 0);
     } else {
         T1_log_assert(
-            to_commit->affected_touch_id == -1);
+            to_commit->target_touch_id == -1);
     }
     
-    if (to_commit->affected_touch_id < 0) {
+    if (to_commit->target_touch_id < 0) {
         T1_log_assert(
-            to_commit->affected_T1_id >= 0);
+            to_commit->target_T1_id >= 0);
     } else {
         T1_log_assert(
-            to_commit->affected_T1_id == -1);
+            to_commit->target_T1_id == -1);
     }
     
     T1_log_assert(parent->already_applied_t == 0.0f);
@@ -602,8 +602,8 @@ void T1_zsprite_anim_shatter_and_destroy(
     
     T1zSpriteAnim * set_scatter_mesh =
         T1_zsprite_anim_request_next(true);
-    set_scatter_mesh->affected_T1_id = T1_id;
-    set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
+    set_scatter_mesh->target_T1_id = T1_id;
+    set_scatter_mesh->cpu_vals.alpha_on = 1.0f;
     set_scatter_mesh->cpu_vals_active = true;
     set_scatter_mesh->duration_us = 1;
     T1_zsprite_anim_commit_and_instarun(
@@ -618,7 +618,7 @@ void T1_zsprite_anim_shatter_and_destroy(
     
     T1zSpriteAnim * scatter = T1_zsprite_anim_request_next(true);
     scatter->gpu_vals.f32s.alpha = 0.0f;
-    scatter->affected_T1_id = T1_id;
+    scatter->target_T1_id = T1_id;
     scatter->duration_us = duration_us;
     scatter->easing_type = T1_EASINGTYPE_NONE;
     scatter->runs = 1;
@@ -649,8 +649,8 @@ void T1_zsprite_anim_evaporate_and_destroy(
     
     T1zSpriteAnim * set_scatter_mesh =
         T1_zsprite_anim_request_next(true);
-    set_scatter_mesh->affected_T1_id = T1_id;
-    set_scatter_mesh->cpu_vals.alpha_blending_on = 1.0f;
+    set_scatter_mesh->target_T1_id = T1_id;
+    set_scatter_mesh->cpu_vals.alpha_on = 1.0f;
     set_scatter_mesh->cpu_vals_active = true;
     set_scatter_mesh->duration_us = 1;
     T1_zsprite_anim_commit_and_instarun(
@@ -666,7 +666,7 @@ void T1_zsprite_anim_evaporate_and_destroy(
     T1zSpriteAnim * evap =
         T1_zsprite_anim_request_next(true);
     evap->gpu_vals.f32s.alpha = 0.0f;
-    evap->affected_T1_id = T1_id;
+    evap->target_T1_id = T1_id;
     evap->duration_us = duration_us;
     evap->easing_type = T1_EASINGTYPE_NONE;
     evap->runs = 1;
@@ -692,7 +692,7 @@ void T1_zsprite_anim_fade_and_destroy(
     // register scheduled animation
     T1zSpriteAnim * fade_destroy =
         T1_zsprite_anim_request_next(true);
-    fade_destroy->affected_T1_id = object_id;
+    fade_destroy->target_T1_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->gpu_vals.f32s.alpha = 0.0f;
     fade_destroy->del_obj_on_finish = true;
@@ -727,7 +727,7 @@ void T1_zsprite_anim_fade_to(
     
     // register scheduled animation
     T1zSpriteAnim * modify_alpha = T1_zsprite_anim_request_next(true);
-    modify_alpha->affected_T1_id = T1_id;
+    modify_alpha->target_T1_id = T1_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_vals.f32s.alpha = target_alpha;
     modify_alpha->gpu_vals_f32_active = true;
@@ -780,7 +780,7 @@ void T1_zsprite_anim_dud_dance(
     T1zSpriteAnim * move_request =
         T1_zsprite_anim_request_next(false);
     move_request->easing_type = T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->affected_T1_id = (s32)object_id;
+    move_request->target_T1_id = (s32)object_id;
     move_request->cpu_vals.xyz[0] = magnitude * 0.05f;
     move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
     move_request->cpu_vals.xyz[2] = magnitude * 0.005f;
@@ -809,7 +809,7 @@ void T1_zsprite_anim_bump(
     T1zSpriteAnim * bump_request =
         T1_zsprite_anim_request_next(false);
     bump_request->easing_type = T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
-    bump_request->affected_T1_id = (s32)object_id;
+    bump_request->target_T1_id = (s32)object_id;
     bump_request->cpu_vals.mul_xyz[0] = 0.05f;
     bump_request->cpu_vals.mul_xyz[1] = 0.05f;
     bump_request->cpu_vals.mul_xyz[2] = 0.05f;
@@ -844,10 +844,10 @@ void T1_zsprite_anim_delete_endpoint_anims_targeting(
             !T1_zsprite_anims[i].deleted &&
             T1_zsprite_anims[i].endpoints_not_deltas &&
             (T1_zsprite_anims[i].public.
-                affected_T1_id ==
+                target_T1_id ==
                     (s32)object_id ||
             T1_zsprite_anims[i].
-                public.affected_T1_id ==
+                public.target_T1_id ==
                     T1_ZSPRITE_ID_HIT_EVERYTHING))
         {
             T1_zsprite_anims[i].deleted = true;
@@ -867,8 +867,8 @@ void T1_zsprite_anim_delete_all_anims_targeting(
         if (
             !T1_zsprite_anims[i].deleted &&
             T1_zsprite_anims[i].committed &&
-            (a->affected_T1_id == object_id ||
-            a->affected_T1_id == T1_ZSPRITE_ID_HIT_EVERYTHING))
+            (a->target_T1_id == object_id ||
+            a->target_T1_id == T1_ZSPRITE_ID_HIT_EVERYTHING))
         {
             T1_zsprite_anims[i].deleted = true;
         }
