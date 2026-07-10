@@ -97,7 +97,10 @@ T1_io_get_open_event(
         insert_i++;
     }
     
-    if (T1_io->frame_map[for_key_id].list[insert_i].is_active) {
+    if (
+        insert_i >= T1_IO_MAX_EVENTS_PER_FRAME ||
+        T1_io->frame_map[for_key_id].list[insert_i].is_active)
+    {
         return NULL;
     }
     
