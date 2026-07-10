@@ -253,22 +253,26 @@ static u32 T1_apple_keycode_to_tokone_keycode(
 
 - (void)mouseDown:(NSEvent *)event
 {
-    T1_io_register_keydown(T1_IO_MOUSE_LCLICK);
+    T1_io_register_keydown(T1_IO_MOUSE_LCLICK, 0);
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
-    T1_io_register_keyup(T1_IO_MOUSE_LCLICK);
+    T1_io_register_keyup(
+        T1_IO_MOUSE_LCLICK,
+        /* debounces: */ 0);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    T1_io_register_keydown(T1_IO_MOUSE_RCLICK);
+    T1_io_register_keydown(T1_IO_MOUSE_RCLICK, 0);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    T1_io_register_keyup(T1_IO_MOUSE_RCLICK);
+    T1_io_register_keyup(
+        T1_IO_MOUSE_RCLICK,
+        /* debounces: */ 0);
 }
 
 - (void)otherMouseDown:(NSEvent *)event
@@ -283,7 +287,7 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     if (button_num >= 4) { return; }
     
     T1_io_register_keydown(
-        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num);
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num, 0);
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -298,11 +302,12 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     if (button_num >= 4) { return; }
     
     T1_io_register_keyup(
-        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num);
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num,
+        /* debounces: */ 0);
 }
 
 - (void)keyDown:(NSEvent *)event {
-    T1_io_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_io_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode), 0);
 }
 
 - (void)flagsChanged:(NSEvent *)event {
@@ -310,14 +315,18 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     NSEventModifierFlags modifiers = [event modifierFlags];
     
     if (modifiers & NSEventModifierFlagShift) {
-        T1_io_register_keydown(T1_IO_KEYBOARD_SHIFT);
+        T1_io_register_keydown(T1_IO_KEYBOARD_SHIFT, 0);
     } else if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, -1)) {
-        T1_io_register_keyup(T1_IO_KEYBOARD_SHIFT);
+        T1_io_register_keyup(
+            T1_IO_KEYBOARD_SHIFT,
+            /* debounces: */ 0);
     }
 }
 
 - (void)keyUp:(NSEvent *)event {
-    T1_io_register_keyup(T1_apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_io_register_keyup(
+        T1_apple_keycode_to_tokone_keycode(event.keyCode),
+        /* debounces: */ 0);
 }
 
 - (void)scrollWheel:(NSEvent *)event {
@@ -613,13 +622,13 @@ static void update_simple_key(
     T1IOKey T1_io_key)
 {
     if (ispressed) {
-        if (!T1_io_key_is_down(T1_io_key, -1)) {
-            T1_io_register_keydown(T1_io_key);
-        }
+        T1_io_register_keydown(
+            T1_io_key,
+            /* debounces: */ 1);
     } else {
-        if (T1_io_key_is_down(T1_io_key, -1)) {
-            T1_io_register_keyup(T1_io_key);
-        }
+        T1_io_register_keyup(
+            T1_io_key,
+            /* debounces: */ 1);
     }
 }
 
@@ -685,14 +694,18 @@ void T1_os_vibrate_gamepad(void) {
 }
 
 void T1_os_poll_gamepad_events(void) {
-    NSArray *controllers = [GCController controllers];
-    
-    if (controllers.count == 0) {
-        return; // No gamepads connected
-    }
+    //    NSArray *controllers = [GCController controllers];
+    //    
+    //    if (controllers.count == 0) {
+    //        return; // No gamepads connected
+    //    }
+    //    
+    //    if (controllers.count != 1) {
+    //        T1_log_warn(1); // potentially dangerous
+    //    }
     
     // Grab the primary controller (like your EasySMX X05PRO)
-    GCController * c = controllers[0];
+    GCController * c = [GCController current];
     GCExtendedGamepad * g = c.extendedGamepad;
     
     if (g) {

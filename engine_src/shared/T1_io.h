@@ -22,9 +22,9 @@ typedef struct {
 void T1_io_init(void *(* arg_malloc_func)(u64));
 void T1_io_event_construct(T1IOEvent * to_construct);
 void T1_io_event_register(T1IOEvent * touch_record);
-void T1_io_register_keyup(u32 key_id);
+void T1_io_register_keyup(u32 key_id, u8 debounces);
 void T1_io_register_keyup_force_up_short(u32 key_id);
-void T1_io_register_keydown(u32 key_id);
+void T1_io_register_keydown(u32 key_id, u8 debounces);
 void T1_io_register_key_move_to_pos(T1IOKey key_id, f32 x, f32 y);
 void T1_io_update_and_clear_for_next_frame(void);
 

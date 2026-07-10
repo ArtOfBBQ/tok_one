@@ -31,6 +31,8 @@ typedef struct {
     T1IOFrameEvent list[T1_IO_MAX_EVENTS_PER_FRAME];
     u64 last_down_timestamp;
     s32 is_down_for_scene_id;
+    u8  debounces_up;
+    u8  debounces_down;
 } T1IOFrameEventQueue;
 
 #define T1_IO_POS_EVENTS_CAP 50
@@ -111,10 +113,25 @@ T1_io_get_open_event(
 }
 
 void
-T1_io_register_keyup(const u32 key_id)
+T1_io_register_keyup(u32 key_id, u8 debounces)
 {
     // We shouldn't be registering stuff when no scene is active
-    T1_log_assert(T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] >= 0);
+    if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
+        return;
+    }
+    
+    T1_io->frame_map[key_id].debounces_down = 0;
+    
+    if (T1_io->frame_map[key_id].is_down_for_scene_id < 0) {
+        // already up
+        return;
+    }
+    
+    if (debounces > T1_io->frame_map[key_id].debounces_up) {
+        T1_io->frame_map[key_id].debounces_up += 1;
+        return;
+    }
+    T1_io->frame_map[key_id].debounces_up = 0;
     
     if (
         key_id == T1_IO_MOUSE_LCLICK &&
@@ -142,11 +159,10 @@ T1_io_register_keyup(const u32 key_id)
         next->is_active = true;
         next->timestamp = T1_os_get_current_time_us();
         
-        u64 since_down = next->timestamp - last_down;
         if (last_down >= next->timestamp) {
             next->is_up_short = 0;
             next->is_up_long = 0;
-        } else if (since_down > T1_IO_SHORT_DURATION) {
+        } else if ((next->timestamp - last_down) > T1_IO_SHORT_DURATION) {
             next->is_up_short = 0;
             next->is_up_long = 1;
         } else {
@@ -173,20 +189,32 @@ void T1_io_register_keyup_force_up_short(
 }
 
 void
-T1_io_register_keydown(const u32 key_id)
+T1_io_register_keydown(u32 key_id, u8 debounces)
 {
-    // We shouldn't be registering stuff when no scene is active
+    T1_io->frame_map[key_id].debounces_up = 0;
+    
     if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
-        T1_log_warn(1);
         return;
     }
     
-    f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
-    f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
+    if (T1_io->frame_map[key_id].is_down_for_scene_id >= 0) {
+        // already down
+        return;
+    }
     
-    if (key_id == T1_IO_MOUSE_LCLICK &&
+    if (debounces > T1_io->frame_map[key_id].debounces_down) {
+        T1_io->frame_map[key_id].debounces_down += 1;
+        return;
+    }
+    T1_io->frame_map[key_id].debounces_down = 0;
+    
+    if (
+        key_id == T1_IO_MOUSE_LCLICK &&
         T1_io->dragging_at_scene_id < 0)
     {
+        f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
+        f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
+        
         T1_io->dragging_at_scene_id =
             T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
         T1_io->last_drag_start_x = mouse_x;
@@ -317,7 +345,7 @@ s32 T1_io_scene_stack_get_active_scene_id(void) {
         T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
 }
 
-b8 T1_io_key_is_down(T1IOKey key, const s32 scene_id)
+b8 T1_io_key_is_down(T1IOKey key, s32 scene_id)
 {
     T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
