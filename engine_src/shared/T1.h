@@ -132,12 +132,15 @@ void T1_rand_shuf_array(void * array, u32 array_sz, u32 elem_sz);
 CAMERA MANIPULATION
 */
 void  T1_cam_set_us_to_dest(s32 cam_i, u64 us);
+f32   T1_cam_get_angle_xyz(s32 cam_i, s32 i);
 void  T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval);
 void  T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval);
 void  T1_cam_set_dest_angle_xyz(s32 cam_i, s32 i, f32 newval);
 void  T1_cam_add_dest_angle_xyz(s32 cam_i, s32 i, f32 val);
 void  T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val);
 void  T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val);
+void  T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val);
+void  T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val);
 // to unclamp, clamp to T1_id = -1
 void  T1_cam_set_clamped_to_T1_id(s32 cam_i, s32 T1_id);
 void  T1_cam_set_movement_enabled(s32 cam_i, u8 newval);
@@ -166,10 +169,7 @@ void T1_make_shadowmap_and_attach_to_light(
 
 void T1_cam_create_main_view(u32 new_w, u32 new_h);
 void T1_make_reflection_cam(
-    u32 new_w, u32 new_h,
-    f32 pos_x, f32 pos_y, f32 pos_z,
-    f32 angle_x, f32 angle_y, f32 angle_z,
-    f32 reflection_z);
+    u32 new_w, u32 new_h, f32 reflection_z);
 
 /*
 FILE PARSING

@@ -18,6 +18,8 @@ void T1_assert(b8 condition) {
 void T1_cam_set_us_to_dest(s32 cam_i, u64 us) {
     T1_log_assert(cam_i == 0); // TODO: remove this debug check
     T1_render_views->cpu[cam_i].us_to_destination = us; }
+f32  T1_cam_get_angle_xyz(s32 cam_i, s32 i) {
+    return T1_render_views->cpu[cam_i].angle_xyz[i]; }
 void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval) {
     T1_render_views->cpu[cam_i].dest_xyz[i] = newval; }
 void T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval) {
@@ -30,6 +32,10 @@ void T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].min_xyz[i] = val; }
 void T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].max_xyz[i] = val; }
+void T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val) {
+    T1_render_views->cpu[cam_i].min_angle_xyz[i] = val; }
+void T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val) {
+    T1_render_views->cpu[cam_i].max_angle_xyz[i] = val; }
 void T1_cam_set_clamped_to_T1_id(s32 i, s32 T1_id) {
     T1_render_views->cpu[i].clamped_to_T1_id = T1_id; }
 void T1_cam_set_movement_enabled(s32 i, u8 newval) {
@@ -40,13 +46,10 @@ void T1_cam_reset(s32 at_i) {
     return T1_render_view_reset(at_i); }
 void T1_cam_delete(s32 rv_i) {
     T1Tex tex = T1_render_views->cpu[rv_i].write_tex;
-    if (tex != T1_TEX_NONE)
-    {
+    if (tex != T1_TEX_NONE) {
         T1_tex_array_delete_slice(
-            /* s32 array_i: */
-                T1_tex_to_array_i(tex),
-            /* s32 slice_i: */
-                T1_tex_to_slice_i(tex));
+            T1_tex_to_array_i(tex),
+            T1_tex_to_slice_i(tex));
         T1_render_views->cpu[rv_i].write_tex = T1_TEX_NONE;
     }
     
@@ -175,15 +178,7 @@ void T1_cam_create_main_view(
 }
 
 void T1_make_reflection_cam(
-    u32 new_cam_w,
-    u32 new_cam_h,
-    f32 pos_x,
-    f32 pos_y,
-    f32 pos_z,
-    f32 angle_x, 
-    f32 angle_y,
-    f32 angle_z,
-    f32 reflection_z)
+    u32 new_cam_w, u32 new_cam_h, f32 reflection_z)
 {
     s32 new_rv_i =
         T1_tex_array_create_new_render_view(
@@ -197,7 +192,8 @@ void T1_make_reflection_cam(
     
     T1_log_assert(new_rv_i == 1);
     
-    T1CPURenderView * refl_cpu = T1_render_views->cpu + new_rv_i;
+    T1CPURenderView * refl_cpu = T1_render_views->cpu +
+        new_rv_i;
     refl_cpu->write_type = T1RENDERVIEW_WRITE_RGBA;
     
     T1_log_assert(refl_cpu->width == new_cam_w);
@@ -209,20 +205,13 @@ void T1_make_reflection_cam(
     T1_log_assert(T1_tex_to_slice_i(refl_cpu->write_tex) <
         (s32)T1_tex_arrays[T1_tex_to_array_i(refl_cpu->write_tex)].images_size);
     
-    refl_cpu->xyz[0]       = pos_x;
-    refl_cpu->xyz[1]       = pos_y;
-    refl_cpu->xyz[2]       = pos_z;
-    refl_cpu->angle_xyz[0] = angle_x;
-    refl_cpu->angle_xyz[1] = angle_y;
-    refl_cpu->angle_xyz[2] = angle_z;
-       
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    refl_cpu->reflect_around_plane = true;
+    refl_cpu->reflect_around_plane_z = true;
     #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    refl_cpu->refl_cam_around_plane_xyz[2] = reflection_z;
+    refl_cpu->refl_cam_around_plane_z = reflection_z;
     
     refl_cpu->passes_size = 2;
     refl_cpu->passes[0].type =

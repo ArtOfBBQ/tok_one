@@ -48,7 +48,14 @@ typedef struct {
     f32 dest_angle_xyz[3];
     f32 min_xyz[3];
     f32 max_xyz[3];
-    f32 refl_cam_around_plane_xyz[3];
+    f32 min_angle_xyz[3];
+    f32 max_angle_xyz[3];
+    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
+    f32 refl_cam_around_plane_z;
+    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     T1RenderViewWriteType write_type;
     s32 clamped_to_T1_id;
     u32 width;
@@ -56,7 +63,7 @@ typedef struct {
     T1Tex write_tex;
     u8  passes_size;
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    u8  reflect_around_plane;
+    u8  reflect_around_plane_z;
     #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
     #else
     #error

@@ -20,11 +20,6 @@ static u32 T1_render_active = false;
 
 void T1_render_init(void) {
     T1_render_active = true;
-    
-    T1_std_memset(
-        T1_cam,
-        0,
-        sizeof(T1GPURenderView));
 }
 
 static void

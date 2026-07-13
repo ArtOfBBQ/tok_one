@@ -35,6 +35,8 @@ void T1_render_view_init(void) {
         0,
         sizeof(T1RenderViewCollection));
     
+    T1_render_view_reset(0);
+    
     for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         T1_render_views->cpu[i].write_tex = T1_TEX_NONE;
         T1_render_views->cpu[i].clamped_to_T1_id = -1;
@@ -81,6 +83,13 @@ void T1_render_view_reset(s32 i)
     rv->max_xyz[1] = T1_F32_MAX;
     rv->max_xyz[2] = T1_F32_MAX;
     
+    rv->min_angle_xyz[0] = T1_F32_MIN;
+    rv->min_angle_xyz[1] = T1_F32_MIN;
+    rv->min_angle_xyz[2] = T1_F32_MIN;
+    rv->max_angle_xyz[0] = T1_F32_MAX;
+    rv->max_angle_xyz[1] = T1_F32_MAX;
+    rv->max_angle_xyz[2] = T1_F32_MAX;
+    
     T1_log_assert(!isnan(rv->dest_xyz[0]));
     T1_log_assert(!isnan(rv->dest_xyz[1]));
     T1_log_assert(!isnan(rv->dest_xyz[2]));
@@ -105,6 +114,13 @@ static void T1_render_view_construct(
     
     T1_std_memset(cpu, 0, sizeof(T1CPURenderView));
     T1_std_memset(gpu, 0, sizeof(T1GPURenderView));
+    
+    cpu->min_xyz[0] = T1_F32_MIN;
+    cpu->min_xyz[1] = T1_F32_MIN;
+    cpu->min_xyz[2] = T1_F32_MIN;
+    cpu->max_xyz[0] = T1_F32_MAX;
+    cpu->max_xyz[1] = T1_F32_MAX;
+    cpu->max_xyz[2] = T1_F32_MAX;
     
     cpu->clamped_to_T1_id = -1;
     cpu->write_tex = T1_TEX_NONE;
@@ -201,6 +217,36 @@ void T1_render_view_update_positions(
     {
         T1CPURenderView * rv = T1_render_views->cpu + rv_i;
         
+        #if T1_REFLECTION_ACTIVE == T1_ACTIVE
+        if (rv->reflect_around_plane_z)
+        {
+            // Assuming the main camera is always at 0
+            // Assuming the main camera can't be a
+            // reflection view
+            T1_log_assert(rv_i != 0);
+            T1_log_assert(!T1_render_views->cpu[0].reflect_around_plane_z);
+            
+            // Supporting only z-planes for now:
+            f32 plane_z = rv->refl_cam_around_plane_z;
+            
+            // Reflect position (flip Z over the plane)
+            rv->xyz[0] = T1_cam->xyz[0];
+            rv->xyz[1] = T1_cam->xyz[1];
+            rv->xyz[2] = 2.0f * plane_z - T1_cam->xyz[2];
+            
+            rv->angle_xyz[0] = -(3.14159f +
+                T1_cam->angle_xyz[0]);
+            rv->angle_xyz[1] = T1_cam->angle_xyz[1];
+            rv->angle_xyz[2] = T1_cam->angle_xyz[2];
+            
+            T1_render_views->gpu[rv_i].cull_above_z =
+                rv->refl_cam_around_plane_z;
+        }
+        #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
         if (rv->us_to_destination < 1) {
             continue;
         }
@@ -219,6 +265,24 @@ void T1_render_view_update_positions(
         } else {
             us_actual = elapsed + ((rv->us_to_destination - elapsed) / 7);
         }
+        
+        T1_log_assert(
+            T1_render_views->cpu[0].max_xyz[2] >
+                T1_render_views->cpu[0].min_xyz[2]);
+        
+        if (rv->dest_angle_xyz[0] < rv->min_angle_xyz[0]) { rv->dest_angle_xyz[0] = rv->min_angle_xyz[0]; } 
+        if (rv->dest_angle_xyz[0] > rv->max_angle_xyz[0]) { rv->dest_angle_xyz[0] = rv->max_angle_xyz[0]; }
+        if (rv->dest_angle_xyz[1] < rv->min_angle_xyz[1]) { rv->dest_angle_xyz[1] = rv->min_angle_xyz[1]; } 
+        if (rv->dest_angle_xyz[1] > rv->max_angle_xyz[1]) { rv->dest_angle_xyz[1] = rv->max_angle_xyz[1]; }
+        if (rv->dest_angle_xyz[2] < rv->min_angle_xyz[2]) { rv->dest_angle_xyz[2] = rv->min_angle_xyz[2]; } 
+        if (rv->dest_angle_xyz[2] > rv->max_angle_xyz[2]) { rv->dest_angle_xyz[2] = rv->max_angle_xyz[2]; }
+        
+        if (rv->dest_xyz[0] < rv->min_xyz[0]) { rv->dest_xyz[0] = rv->min_xyz[0]; } 
+        if (rv->dest_xyz[0] > rv->max_xyz[0]) { rv->dest_xyz[0] = rv->max_xyz[0]; }
+        if (rv->dest_xyz[1] < rv->min_xyz[1]) { rv->dest_xyz[1] = rv->min_xyz[1]; } 
+        if (rv->dest_xyz[1] > rv->max_xyz[1]) { rv->dest_xyz[1] = rv->max_xyz[1]; }
+        if (rv->dest_xyz[2] < rv->min_xyz[2]) { rv->dest_xyz[2] = rv->min_xyz[2]; } 
+        if (rv->dest_xyz[2] > rv->max_xyz[2]) { rv->dest_xyz[2] = rv->max_xyz[2]; }
         
         f32 elapsed_pct = (f32)us_actual / (f32)rv->us_to_destination;
         T1_log_assert(elapsed_pct >= 0.0f);
@@ -249,43 +313,6 @@ void T1_render_view_update_positions(
         rv->angle_xyz[2] =
             ((f32)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
             ((f32)rv->dest_angle_xyz[2] * elapsed_pct);
-        
-        T1_log_assert(!isnan(rv->dest_xyz[0]));
-        T1_log_assert(!isnan(rv->dest_xyz[1]));
-        T1_log_assert(!isnan(rv->dest_xyz[2]));
-        
-        T1_log_assert(!isnan(rv->dest_angle_xyz[0]));
-        T1_log_assert(!isnan(rv->dest_angle_xyz[1]));
-        T1_log_assert(!isnan(rv->dest_angle_xyz[2]));
-        
-        #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-        if (rv->reflect_around_plane)
-        {
-            // Assuming the main camera is always at 0
-            // Assuming the main camera can't be a
-            // reflection view
-            T1_log_assert(rv_i != 0);
-            
-            // Supporting only z-planes for now:
-            f32 plane_z = rv->refl_cam_around_plane_xyz[2];
-            
-            // Reflect position (flip Z over the plane)
-            rv->xyz[0] = T1_cam->xyz[0];
-            rv->xyz[1] = T1_cam->xyz[1];
-            rv->xyz[2] = 2.0f * plane_z - T1_cam->xyz[2];
-            
-            rv->angle_xyz[0] = -(3.14159f +
-                T1_cam->angle_xyz[0]);
-            rv->angle_xyz[1] = T1_cam->angle_xyz[1];
-            rv->angle_xyz[2] = T1_cam->angle_xyz[2];
-            
-            T1_render_views->gpu[rv_i].cull_above_z =
-                rv->refl_cam_around_plane_xyz[2];
-        }
-        #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));

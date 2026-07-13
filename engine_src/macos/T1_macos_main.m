@@ -22,7 +22,7 @@
 void T1_macos_update_window_size(void);
 
 static u32 T1_apple_keycode_to_tokone_keycode(
-    const u32 apple_key)
+    u32 apple_key)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
@@ -617,7 +617,6 @@ void T1_os_toggle_fullscreen(void) {
 
 #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
 static void update_simple_key(
-    GCExtendedGamepad * g,
     u8 ispressed,
     T1IOKey T1_io_key)
 {
@@ -709,23 +708,23 @@ void T1_os_poll_gamepad_events(void) {
     GCExtendedGamepad * g = c.extendedGamepad;
     
     if (g) {
-        update_simple_key(g, g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
-        update_simple_key(g, g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
-        update_simple_key(g, g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
-        update_simple_key(g, g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
-        update_simple_key(g, g.leftShoulder.isPressed, T1_IO_GAMEPAD_LEFTSHOULDER);
-        update_simple_key(g, g.rightShoulder.isPressed, T1_IO_GAMEPAD_RIGHTSHOULDER);
-        update_simple_key(g, g.leftTrigger.isPressed, T1_IO_GAMEPAD_LEFTTRIGGER);
-        update_simple_key(g, g.rightTrigger.isPressed, T1_IO_GAMEPAD_RIGHTTRIGGER);
-        update_simple_key(g, g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LEFTTHUMBSTICKBUTTON);
-        update_simple_key(g, g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RIGHTTHUMBSTICKBUTTON);
-        update_simple_key(g, g.buttonA.isPressed, T1_IO_GAMEPAD_A);
-        update_simple_key(g, g.buttonB.isPressed, T1_IO_GAMEPAD_B);
-        update_simple_key(g, g.buttonX.isPressed, T1_IO_GAMEPAD_X);
-        update_simple_key(g, g.buttonY.isPressed, T1_IO_GAMEPAD_Y);
-        update_simple_key(g, g.buttonHome.isPressed, T1_IO_GAMEPAD_HOME);
-        update_simple_key(g, g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
-        update_simple_key(g, g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
+        update_simple_key(g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
+        update_simple_key(g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
+        update_simple_key(g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
+        update_simple_key(g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
+        update_simple_key(g.leftShoulder.isPressed, T1_IO_GAMEPAD_LEFTSHOULDER);
+        update_simple_key(g.rightShoulder.isPressed, T1_IO_GAMEPAD_RIGHTSHOULDER);
+        update_simple_key(g.leftTrigger.isPressed, T1_IO_GAMEPAD_LEFTTRIGGER);
+        update_simple_key(g.rightTrigger.isPressed, T1_IO_GAMEPAD_RIGHTTRIGGER);
+        update_simple_key(g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LEFTTHUMBSTICKBUTTON);
+        update_simple_key(g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RIGHTTHUMBSTICKBUTTON);
+        update_simple_key(g.buttonA.isPressed, T1_IO_GAMEPAD_A);
+        update_simple_key(g.buttonB.isPressed, T1_IO_GAMEPAD_B);
+        update_simple_key(g.buttonX.isPressed, T1_IO_GAMEPAD_X);
+        update_simple_key(g.buttonY.isPressed, T1_IO_GAMEPAD_Y);
+        update_simple_key(g.buttonHome.isPressed, T1_IO_GAMEPAD_HOME);
+        update_simple_key(g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
+        update_simple_key(g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
         
         T1_io_register_key_move_to_pos(
             T1_IO_GAMEPAD_LEFTTHUMBSTICK,
