@@ -1,7 +1,7 @@
 #ifndef T1_PARTICLE_H
 #define T1_PARTICLE_H
 
-#include "T1_cpu_to_gpu.h"
+#include "T1_types_cpu_to_gpu.h"
 #include "T1_easing.h"
 
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE

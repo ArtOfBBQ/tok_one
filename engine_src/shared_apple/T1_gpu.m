@@ -1,7 +1,5 @@
 #import "T1_gpu.h"
 
-#include <stdio.h>
-
 #include "T1_global.h"
 #include "T1_mem.h"
 #include "T1_log.h"
@@ -2186,7 +2184,7 @@ static void set_defaults_for_encoder(
                 pass_2_opaque_tris_enc,
                 (u32)cam_i);
             
-            T1_log_assert((pass->verts_size + pass->vert_i) < MAX_VERTICES_PER_BUFFER);
+            T1_log_assert((pass->verts_size + pass->vert_i) < MAX_VERTS_PER_BUFFER);
             T1_log_assert(pass->verts_size % 3 == 0);
             
             [pass_2_opaque_tris_enc

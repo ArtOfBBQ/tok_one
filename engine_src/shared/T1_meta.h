@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 #define T1_META_ASSERTS T1_ACTIVE
 #if T1_META_ASSERTS == T1_ACTIVE

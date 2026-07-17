@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 #ifdef __cplusplus
 extern "C" {

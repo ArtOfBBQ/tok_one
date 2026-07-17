@@ -178,15 +178,11 @@ T1_log_dump_and_crash(
 void
 T1_log_assert(u8 condition)
 {
-    if (
-        condition ||
-        !T1_log_app_running)
-    {
-        return;
-    }
+    if (condition || !T1_log_app_running) { return; }
     
     //Assertion failed: (0), function main, file test.c, line 6.
     c8 assert_failed_msg[512];
+    assert_failed_msg[0] = '\0';
     
     T1_std_strcpy_cap(
         assert_failed_msg,

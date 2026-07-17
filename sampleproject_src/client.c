@@ -2,38 +2,52 @@
 
 #include "T1.h"
 #include "T1_settings.h"
+#include "T1_anim.h"
 
-static s32 img_T1_id = -1;
+static s32 img_T1_ids[2];
+static  b8 img_T1_ids_set = 0;
 static f32 img_x, img_y;
-static u8  img_toggle = 0;
-static void redraw_test_quad(f32 x, f32 y) {
-    if (img_T1_id < 0) {
-        img_T1_id = T1_id_next_nonui_id();;
+static void redraw_test_quads(f32 x, f32 y) {
+    if (!img_T1_ids_set) {
+        img_T1_ids[0] = T1_id_next_nonui_id();
+        img_T1_ids[1] = T1_id_next_nonui_id();
     }
     
-    T1_zsprite_delete(img_T1_id);
+    T1_zsprite_delete(img_T1_ids[0]);
+    T1_texquad_delete(img_T1_ids[1]);
     
     T1zSpriteRequest img;
     T1_zsprite_fetch_next_noconstruct(&img);
     T1_zsprite_construct_quad(x, y, 0.50f, 0.25f, 0.25f, &img);
     T1_log_assert(img.cpu_data->mesh_id == T1_BASIC_QUAD_MESH_ID);
     T1Tex tex = T1_tex_array_get_filename_loc("structuredart1.png");
-    img.gpu_data->s32.base_mat_s32.normalmap_tex_and_tex = tex;
-    T1_log_assert(img.gpu_data->f32s.base_mat_f32.alpha == 1.0f);
-    img.cpu_data->T1_id = img_T1_id;
-    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[0] > 0.02f);
-    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[1] > 0.02f);
-    T1_log_assert(img.cpu_data->simd_stats.mul_xyz[2] > 0.02f);
-    img.gpu_data->f32s.no_lighting = 1.0f;
+    img.gpu_data->base_mat_s32.normalmap_tex_and_tex = tex;
+    T1_log_assert(img.gpu_data->base_mat_f32.alpha == 1.0f);
+    img.cpu_data->T1_id = img_T1_ids[0];
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.mul_xyz[0] > 0.02f);
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.mul_xyz[1] > 0.02f);
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.mul_xyz[2] > 0.02f);
+    img.gpu_data->f32s.no_light = 1.0f;
     //    img.cpu_data->simd_stats.xyz[0] = 0.0f;
     //    img.cpu_data->simd_stats.xyz[1] = 0.0f;
     //    img.cpu_data->simd_stats.xyz[2] = 0.25f;
-    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[0] == 0.0f);
-    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[1] == 0.0f);
-    T1_log_assert(img.cpu_data->simd_stats.angle_xyz[2] == 0.0f);
-    T1_log_assert(img.cpu_data->simd_stats.scale_factor == 1.0f);
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.angle_xyz[0] == 0.0f);
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.angle_xyz[1] == 0.0f);
+    T1_log_assert(img.cpu_data->zs_cpu_f32s.angle_xyz[2] == 0.0f);
     T1_log_assert(img.gpu_data->f32s.alpha == 1.0f);
     T1_zsprite_commit(&img);
+    
+    T1TexQuadRequest tq_req;
+    T1_texquad_fetch_next(&tq_req);
+    tq_req.cpu->T1_id = img_T1_ids[1];
+    tq_req.cpu->one_frame_only = 0;
+    tq_req.gpu->f32s.xyz[0] = x - 0.2f;
+    tq_req.gpu->f32s.xyz[1] = y + 0.1f;
+    tq_req.gpu->f32s.xyz[2] = 0.5f;
+    tq_req.gpu->f32s.wh[0] = 0.2f;
+    tq_req.gpu->f32s.wh[1] = 0.2f;
+    tq_req.gpu->s32s.reserved_and_tex = tex;
+    T1_texquad_commit(&tq_req);
 }
 
 void T1_client_init(void) {
@@ -90,7 +104,7 @@ static void client_handle_keypresses(
     if (T1_io_key_consume_short_tap_this_frame(
         T1_IO_KEYBOARD_D, mainwindow_scene_id))
     {
-        redraw_test_quad(img_x, img_y);
+        redraw_test_quads(img_x, img_y);
     }
     
     
@@ -99,23 +113,44 @@ static void client_handle_keypresses(
         mainwindow_scene_id))
     {
         img_x -= 0.10f;
-        redraw_test_quad(img_x, img_y);
+        redraw_test_quads(img_x, img_y);
     }
     
     if (T1_io_key_consume_short_tap_this_frame(
         T1_IO_KEYBOARD_R, mainwindow_scene_id))
     {
-        T1zSpriteAnim * rot = T1_zsprite_anim_request_next(true);
-        rot->affected_T1_id = img_T1_id;
-        rot->cpu_vals.xyz[0] = -0.25f;
-        rot->cpu_vals.xyz[1] =  0.00f;
-        rot->cpu_vals.xyz[2] =  0.35f;
+        #if T1_ANIM_ACTIVE == T1_ACTIVE
+        T1Anim * rot = T1_anim_request_next(
+            /* b8 endpoints_not_delt: */ false,
+            /* b8 zs_gpu_f32s:        */ true,
+            /* b8 zs_cpu_f32s:        */ true,
+            /* b8 zs_gpu_s32s:        */ false,
+            /* b8 tq_gpu_f32s:        */ false,
+            /* b8 tq_gpu_s32s:        */ false);
+        rot->target_T1_id = img_T1_ids[0];
+        rot->easing_type = T1_EASINGTYPE_OUT_QUADRATIC;
         rot->duration_us = 250000;
-        rot->cpu_vals.angle_xyz[2] = img_toggle ? 3.14159f : 0.0f;
-        rot->cpu_vals_active = true;
-        T1_zsprite_anim_commit(rot, "get rid of this");
+        rot->zs_cpu_f32s->angle_xyz[2] = 3.14159f;
+        rot->zs_gpu_f32s->bonus_rgb[1] = 0.02f;
+        T1_anim_commit(rot, "get rid of this");
         
-        img_toggle = !img_toggle;
+        T1Anim * rot2 = T1_anim_request_next(
+            /* b8 endpoints_not_deltas: */ false,
+            /* b8 zs_gpu_f32s: */ false,
+            /* b8 zs_cpu_f32s: */ false,
+            /* b8 zs_gpu_s32s: */ false,
+            /* b8 tq_gpu_f32s: */ true,
+            /* b8 tq_gpu_s32s: */ false);
+        rot2->tq_gpu_f32s->xyz[0] = -0.2f;
+        rot2->tq_gpu_f32s->xyz[1] = -0.1f;
+        rot2->target_T1_id = img_T1_ids[1];
+        rot2->easing_type = T1_EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO;
+        rot2->duration_us = 225000;
+        T1_anim_commit(rot2, "delete me");
+        #elif T1_ANIM_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
     }
     
     if (T1_io_key_is_down(
@@ -187,34 +222,7 @@ static void client_handle_keypresses(
         T1_IO_KEYBOARD_S,
         mainwindow_scene_id))
     {
-        T1_cam->angle_xyz[1] +=
-            cam_rotation_speed;
-    }
-    
-    if (T1_io_key_consume_short_tap_this_frame(
-        T1_IO_KEYBOARD_M,
-        mainwindow_scene_id))
-    {
-        testswitch = !testswitch;
-        
-        T1TexQuadAnim * anim =
-            T1_texquad_anim_request_next(true);
-        anim->gpu_vals.f32s.xyz[0] =
-            testswitch ? -0.50f : 0.5f;
-        anim->gpu_vals.f32s.rgba[0] =
-            testswitch ? 1.0f : 0.25f;
-        anim->gpu_vals.f32s.rgba[1] =
-            testswitch ? 0.0f : 0.25f;
-        anim->gpu_vals.f32s.rgba[2] =
-            testswitch ? 0.25f : 1.0f;
-        anim->affect_T1_id = 21;
-        anim->easing_type =
-            T1_EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE;
-        anim->duration_us = 250000;
-        anim->gpu_f32_active = true;
-        anim->gpu_s32_active = false;
-        anim->del_conflict_anims = true;
-        T1_texquad_anim_commit(anim);
+        T1_cam->angle_xyz[1] += cam_rotation_speed;
     }
     
     if (T1_io_key_is_down(
@@ -277,14 +285,14 @@ void T1_client_evaluate_terminal_command(
 void T1_client_window_resize(void)
 {    
     T1_texquad_delete_all();
-    T1_zsprite_anim_delete_all();
+    T1_anim_delete_all();
     
     T1_cam_delete_all();
     T1_cam_create_main_view(
         T1_settings_get_render_width(),
         T1_settings_get_render_height());
     
-    redraw_test_quad(img_x, img_y);
+    redraw_test_quads(img_x, img_y);
 }
 
 void T1_client_shutdown(void) {

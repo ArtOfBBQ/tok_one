@@ -1,7 +1,7 @@
 #ifndef T1_TOKEN_H
 #define T1_TOKEN_H
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 /*
 THE API FOR TRANSFORMING TEXT TO TOKENS (below)

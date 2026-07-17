@@ -15,6 +15,7 @@
 #include "T1_rand.h"
 #include "T1_objmodel.h"
 #include "T1_audio.h"
+#include "T1_zsprite.h"
 #include "T1_zlight.h"
 #include "T1_particle.h"
 #include "T1_text.h"
@@ -23,14 +24,13 @@
 #include "T1_global.h"
 #include "T1_term.h"
 #include "T1_texquad.h"
-#include "T1_zsprite_anim.h"
+#include "T1_anim.h"
 #include "T1_render.h"
 #include "T1_gameloop.h"
 #include "T1_token.h"
 #include "T1_mtlparser.h"
 #include "T1_objparser.h"
 #include "T1_particle.h"
-#include "T1_texquad_anim.h"
 #include "T1_frame_anim.h"
 #include "T1_mesh_summary.h"
 #include "T1_material.h"
@@ -449,26 +449,15 @@ void T1_appinit_before_gpu_init(
     #error "T1_TERM_ACTIVE undefined!"
     #endif
     
-    #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-    T1_zsprite_anim_init(
+    #if T1_ANIM_ACTIVE == T1_ACTIVE
+    T1_anim_init(
         T1_os_init_mutex_and_return_id,
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
-    #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
+    #elif T1_ANIM_ACTIVE == T1_INACTIVE
     // Pass
     #else
-    #error "T1_ZSPRITE_ANIM_ACTIVE undefined!"
-    #endif
-    
-    #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
-    T1_texquad_anim_init(
-        T1_os_init_mutex_and_return_id,
-        T1_os_mutex_lock,
-        T1_os_mutex_unlock);
-    #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_TEXQUAD_ANIM_ACTIVE undefined!"
+    #error "T1_ANIM_ACTIVE undefined!"
     #endif
     
     T1_tex_array_init();
@@ -545,8 +534,7 @@ void T1_appinit_before_gpu_init(
     
     // init the buffers that contain our vertices to send to the GPU
     sd->vertices_alloc_size = pad_to_page_size(
-        sizeof(T1GPUVertexIndices) *
-            MAX_VERTICES_PER_BUFFER);
+        sizeof(T1GPUVertexIndices) * MAX_VERTS_PER_BUFFER);
     T1_log_assert(sd->vertices_alloc_size > 0);
     
     sd->flat_quads_alloc_size =
@@ -583,18 +571,17 @@ void T1_appinit_before_gpu_init(
     
     sd->const_matsf32_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMatf32) *
+            sizeof(T1GPUMatf32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->const_matss32_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUConstMats32) *
+            sizeof(T1GPUMats32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUVertexIndices) *
-                MAX_VERTICES_PER_BUFFER);
+            sizeof(T1GPUVertexIndices) * MAX_VERTS_PER_BUFFER);
     
     for (
         u32 cur_frame_i = 0;
@@ -654,12 +641,12 @@ void T1_appinit_before_gpu_init(
             sd->locked_vertices_alloc_size,
             T1_mem_page_size);
     
-    sd->const_mats_f32 = (T1GPUConstMatf32 *)
+    sd->const_mats_f32 = (T1GPUMatf32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
     
-    sd->const_mats_s32 = (T1GPUConstMats32 *)
+    sd->const_mats_s32 = (T1GPUMats32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matss32_alloc_size,
             T1_mem_page_size);
@@ -937,7 +924,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             all_mesh_materials->gpu_f32,
         /* u64 n: */
-            sizeof(T1GPUConstMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_std_memcpy(
         /* void * dst: */
             T1_cpu_to_gpu_data->
@@ -945,7 +932,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             all_mesh_materials->gpu_s32,
         /* u64 n: */
-            sizeof(T1GPUConstMats32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUMats32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_os_gpu_copy_locked_materials();
     
     if (!T1_log_app_running) {

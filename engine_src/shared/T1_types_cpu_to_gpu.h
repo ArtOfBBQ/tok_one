@@ -1,10 +1,10 @@
-#ifndef T1_CPU_TO_GPU_H
-#define T1_CPU_TO_GPU_H
+#ifndef T1_TYPES_CPU_TO_GPU_H
+#define T1_TYPES_CPU_TO_GPU_H
 
 #include <stdint.h>
 
-#include "T1_cpu_gpu_shared_types.h"
-
+#include "T1_types_gpucpu.h"
+#include "T1_types_public_gpucpu.h"
 
 typedef struct {
     s32 T1_id;
@@ -36,8 +36,8 @@ typedef struct
 {
     T1GPUFrame triple_buffers[T1_FRAMES_CAP];
     T1GPULockedVertex * locked_vertices;
-    T1GPUConstMatf32 * const_mats_f32;
-    T1GPUConstMats32 * const_mats_s32;
+    T1GPUMatf32 * const_mats_f32;
+    T1GPUMats32 * const_mats_s32;
     u32 locked_vertices_size;
     u32 const_mats_size;
     u32 const_matsf32_alloc_size;
@@ -57,4 +57,4 @@ typedef struct
 
 extern T1CPUToGPUData * T1_cpu_to_gpu_data;
 
-#endif // T1_CPU_TO_GPU_H
+#endif // T1_TYPES_CPU_TO_GPU_H

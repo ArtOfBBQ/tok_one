@@ -1,7 +1,6 @@
-#ifndef T1_CPU_GPU_SHARED_TYPES_H
-#define T1_CPU_GPU_SHARED_TYPES_H
+#ifndef T1_TYPES_GPUCPU_H
+#define T1_TYPES_GPUCPU_H
 
-#include "T1_public_types.h"
 #include "client_macro_settings.h"
 
 #define T1_CAM_DEPTH_FRAGARG_I 30
@@ -79,55 +78,9 @@ typedef struct {
 } T1GPURenderView;
 
 typedef struct {
-    f32 ambient_rgb[3];
-    f32 diffuse_rgb[3];
-    f32 specular_rgb[3];
-    f32 uv_scroll[2];
-    f32 specular_exponent;
-    f32 refraction;
-    f32 alpha;
-    f32 illum;
-} T1GPUConstMatf32;
-
-typedef struct {
-    union {
-        s32 normalmap_tex_and_tex;
-        u32 normalmap_tex_and_tex_u32;
-    };
-} T1GPUConstMats32;
-
-typedef struct {
-    T1GPUConstMatf32 base_mat_f32; // start f32 here
-    f32              bonus_rgb[3];
-    f32              base_mat_uv_offsets[2];
-    f32              alpha;
-    f32              no_light;
-    f32              no_cam;
-    f32              outline_alpha;
-    f32              shadow_strength;
-    f32              f32_padding[7];
-} T1GPUzSpritef32;
-
-typedef struct {
-    T1GPUConstMats32 base_mat_s32; // start of s32
-    s32 touch_id;
-    s32 mix_rv_and_mix_tex;
-} __attribute__((aligned(16))) T1GPUzSprites32;
-
-typedef struct {
-    T1GPUzSpritef32 f32s;
-    T1GPUzSprites32 s32;
-} __attribute__((aligned(16))) T1GPUzSprite;
-
-typedef struct {
     f32 m_4x4[16];
     f32 norm_3x3[9];
 } T1GPUzSpriteMatrices;
-
-typedef struct {
-    T1GPUzSprite polygons[T1_ZSPRITES_CAP];
-    u32 size;
-} T1GPUzSpriteList;
 
 typedef struct {
     f32 xyz[3];
@@ -161,4 +114,4 @@ typedef struct
 } T1PostProcessingVertex;
 #pragma pack(pop)
 
-#endif // T1_CPU_GPU_SHARED_TYPES_H
+#endif // T1_TYPES_GPUCPU_H

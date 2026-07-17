@@ -1,7 +1,7 @@
 #ifndef T1_H
 #define T1_H
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 /*
 This is an encapsulation header - it exposes the functions you
@@ -15,9 +15,6 @@ needing to understand the entire engine, but still overcomplicated.
 - "x", "y", or "z" positions indicate positions in world space
 - "screen_x", "screen_y" are screenspace positions
 */
-#define NULL 0
-#define true 1
-#define false 0
 
 /*
 GLOBAL SETTINGS
@@ -336,6 +333,17 @@ void T1_texquad_delete(s32 T1_id);
 void T1_texquad_delete_all(void);
 
 /*
+zSprites (a 3D object with a mesh, T1_id, pos/angle etc.)
+*/
+void T1_zsprite_delete_all(void);
+#if 0
+void T1_zsprite_construct_quad(
+    f32 left_x, f32 bottom_y, f32 z,
+    f32 width, f32 height,
+    T1zSpriteRequest * stack_recipient);
+#endif
+
+/*
 z-Lights (3D lights)
 */
 T1zLight * T1_zlight_next(void);
@@ -419,13 +427,13 @@ void T1_meta_reg_struct(
     const char * struct_name,
     const u32 size_bytes,
     u8 * good);
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, false, good)
-#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, true, good)
-#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, true, good)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, false, good)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, false, good)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, false, good)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, false, good)
+#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, good)
+#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, good)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, good)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, good)
+#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, good)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, good)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, good)
 void T1_meta_reg_field(
     const char * field_name,
     const u32 field_offset,

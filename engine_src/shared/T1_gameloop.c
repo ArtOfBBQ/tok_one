@@ -12,9 +12,9 @@
 #include "T1_text.h"
 #include "T1_ui_widget.h"
 #include "T1_render.h"
+#include "T1_zsprite.h"
 #include "T1_zlight.h"
-#include "T1_zsprite_anim.h"
-#include "T1_texquad_anim.h"
+#include "T1_anim.h"
 #include "T1_client.h"
 #include "T1_profiler.h"
 #include "T1_particle.h"
@@ -265,16 +265,9 @@ void T1_gameloop_update_before_render_pass(
         #error
         #endif
         
-        #if T1_ZSPRITE_ANIM_ACTIVE == T1_ACTIVE
-        T1_zsprite_anim_resolve();
-        #elif T1_ZSPRITE_ANIM_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        #if T1_TEXQUAD_ANIM_ACTIVE == T1_ACTIVE
-        T1_texquad_anim_resolve();
-        #elif T1_TEXQUAD_ANIM_ACTIVE == T1_INACTIVE
+        #if T1_ANIM_ACTIVE == T1_ACTIVE
+        T1_anim_resolve();
+        #elif T1_ANIM_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

@@ -1,6 +1,6 @@
 #include "T1_audio.h"
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 #include "T1_std.h"
 #include "T1_log.h"
 

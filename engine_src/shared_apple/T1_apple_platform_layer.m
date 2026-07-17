@@ -267,9 +267,9 @@ void T1_os_copy_file(
         toPath: nsfilepath_destination
         error: &error];
     
-    if (error != NULL) {
+    if (error != 0) {
         NSLog(@" error => %@ ", [error userInfo]);
-        assert(0);
+        T1_log_assert(1);
     }
 }
 

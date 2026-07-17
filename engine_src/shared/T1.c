@@ -1,7 +1,5 @@
 #include "T1.h"
 
-#include <stdio.h>
-
 #include "decode_png.h"
 #include "T1_log.h"
 #include "T1_tex_array.h"
@@ -206,12 +204,11 @@ void T1_make_reflection_cam(
         (s32)T1_tex_arrays[T1_tex_to_array_i(refl_cpu->write_tex)].images_size);
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    refl_cpu->reflect_around_plane_z = true;
+    refl_cpu->reflect_around_plane_z = reflection_z;
     #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    refl_cpu->refl_cam_around_plane_z = reflection_z;
     
     refl_cpu->passes_size = 2;
     refl_cpu->passes[0].type =
@@ -266,7 +263,7 @@ void T1_makerequest_construct(T1MakeRequest * to_construct) {
 TexQuads (textured 2D quads)
 */
 void T1_texquad_make(T1MakeRequest * request) {
-    T1FlatTexQuadRequest tq_req;
+    T1TexQuadRequest tq_req;
     T1_texquad_fetch_next(&tq_req);
     tq_req.cpu->T1_id = request->T1_id;
     tq_req.gpu->f32s.xyz[0] = request->xyz[0];

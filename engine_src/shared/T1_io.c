@@ -1,6 +1,6 @@
 #include "T1_io.h"
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 #include "T1_platform_layer.h"
 #include "T1_global.h"
 #include "T1_profiler.h"

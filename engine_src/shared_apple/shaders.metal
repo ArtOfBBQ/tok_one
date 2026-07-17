@@ -1,8 +1,9 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-#include "T1_cpu_gpu_shared_types.h"
-#include "client_macro_settings.h"
+#include "T1_stdint.h"
+#include "T1_types_gpucpu.h"
+#include "T1_types_public_gpucpu.h"
 
 typedef uchar uint8_t;
 
@@ -187,7 +188,7 @@ vertex_shader(
         (ic * out.worldpos) +
         (1.0f - ic) * out.viewpos;
     
-    out.touchable_id = zs->s32.touch_id;
+    out.touchable_id = zs->s32s.touch_id;
     
     out.texcoord = vector_float2(lv->uv[0], lv->uv[1]);
     
@@ -241,7 +242,7 @@ z_prepass_fragment_shader(
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPURenderView * camera [[ buffer(3) ]],
     constant u32 &camera_i [[buffer(4)]],
-    const device T1GPUConstMatf32 * const_mats [[ buffer(6) ]],
+    const device T1GPUMatf32 * const_mats [[ buffer(6) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     #if 0
@@ -249,7 +250,7 @@ z_prepass_fragment_shader(
         locked_vertices[in.locked_vertex_i].
             parent_material_i;
     
-    const device T1GPUConstMat * material =
+    const device T1GPUMat * material =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_mat :
             &const_mats[locked_vertices
@@ -355,8 +356,8 @@ float4 get_lit(
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
     const device T1GPUzSprite * zsprite,
-    const device T1GPUConstMatf32 * matf32,
-    const device T1GPUConstMats32 * mati32,
+    const device T1GPUMatf32 * matf32,
+    const device T1GPUMats32 * mati32,
     const device T1GPUPostProcConsts * globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
@@ -456,13 +457,13 @@ float4 get_lit(
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    int mix_rv_i = zsprite->s32.mix_rv_and_mix_tex >> 16;
+    int mix_rv_i = zsprite->s32s.mix_rv_and_mix_tex >> 16;
     int mix_array_i =
-        (zsprite->s32.mix_rv_and_mix_tex & 0x0000F800) >> 11;
-    int mix_slice_i = zsprite->s32.mix_rv_and_mix_tex & 0x000007FF;
+        (zsprite->s32s.mix_rv_and_mix_tex & 0x0000F800) >> 11;
+    int mix_slice_i = zsprite->s32s.mix_rv_and_mix_tex & 0x000007FF;
     if (
         mix_rv_i >= 0 &&
-        (zsprite->s32.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE &&
+        (zsprite->s32s.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE &&
         mix_array_i >= 0 &&
         mix_slice_i >= 0)
     {
@@ -752,8 +753,8 @@ fragment_shader(
     const device T1GPURenderView *
         render_views [[ buffer(3) ]],
     constant u32 &camera_i [[buffer(4)]],
-    const device T1GPUConstMatf32 * const_mats_f32 [[ buffer(6) ]],
-    const device T1GPUConstMats32 * const_mats_i32 [[ buffer(8) ]],
+    const device T1GPUMatf32 * const_mats_f32 [[ buffer(6) ]],
+    const device T1GPUMats32 * const_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -769,14 +770,14 @@ fragment_shader(
     
     u32 mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
-    const device T1GPUConstMatf32 * matf32 =
+    const device T1GPUMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].f32s.base_mat_f32 :
+            &polygons[in.polygon_i].base_mat_f32 :
             &const_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
-    const device T1GPUConstMats32 * mati32 =
+    const device T1GPUMats32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].s32.base_mat_s32 :
+            &polygons[in.polygon_i].base_mat_s32 :
             &const_mats_i32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     
@@ -848,8 +849,8 @@ alphablending_fragment_shader(
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPURenderView * render_views [[ buffer(3) ]],
     constant u32 &camera_i [[buffer(4)]],
-    const device T1GPUConstMatf32 * locked_mats_f32 [[ buffer(6) ]],
-    const device T1GPUConstMats32 * locked_mats_i32 [[ buffer(8) ]],
+    const device T1GPUMatf32 * locked_mats_f32 [[ buffer(6) ]],
+    const device T1GPUMats32 * locked_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -866,14 +867,14 @@ alphablending_fragment_shader(
     u32 mat_i = locked_vertices[in.locked_vertex_i].
         parent_material_i;
     
-    const device T1GPUConstMatf32 * matf32 =
+    const device T1GPUMatf32 * matf32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].f32s.base_mat_f32 :
+            &polygons[in.polygon_i].base_mat_f32 :
             &locked_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
-    const device T1GPUConstMats32 * mati32 =
+    const device T1GPUMats32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].s32.base_mat_s32 :
+            &polygons[in.polygon_i].base_mat_s32 :
             &locked_mats_i32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(

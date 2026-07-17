@@ -15,44 +15,37 @@ T1zSpriteCollection * T1_zsprite_list = NULL;
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void
 assert_sanity_check_zsprite_vals(
-    T1GPUzSprite * recip_gpu,
-    T1CPUzSpriteSimdStats * recip_cpu)
+    T1GPUzSpritef32 * recip_gpu_f32s,
+    T1GPUzSprites32 * recip_gpu_s32s,
+    T1CPUzSpritef32 * recip_cpu_f32s)
 {
-    if (recip_gpu) {
-        T1_log_assert(recip_gpu->f32s.
-            no_cam >= -0.05f);
-        T1_log_assert(recip_gpu->f32s.
-            no_cam <= 1.05f);
-        T1_log_assert(recip_gpu->f32s.
-            no_light >= -0.05f);
-        T1_log_assert(recip_gpu->f32s.
-            no_light <= 1.05f);
-        T1_log_assert(recip_gpu->f32s.
-            shadow_strength >= -0.1f);
-        T1_log_assert(recip_gpu->f32s.
-            shadow_strength <= 1.1f);
-        T1_log_assert(recip_gpu->f32s.alpha >= -0.1f);
-        T1_log_assert(recip_gpu->f32s.alpha <=  1.1f);
-        T1_log_assert(recip_gpu->f32s.bonus_rgb[0] < 3.0f);
-        T1_log_assert(recip_gpu->f32s.bonus_rgb[1] < 3.0f);
-        T1_log_assert(recip_gpu->f32s.bonus_rgb[2] < 3.0f);
+    if (recip_gpu_f32s) {
+        T1_log_assert(recip_gpu_f32s->no_cam >= -0.05f);
+        T1_log_assert(recip_gpu_f32s->no_cam <= 1.05f);
+        T1_log_assert(recip_gpu_f32s->no_light >= -0.05f);
+        T1_log_assert(recip_gpu_f32s->no_light <= 1.05f);
+        T1_log_assert(recip_gpu_f32s->shadow_strength >= -0.1f);
+        T1_log_assert(recip_gpu_f32s->shadow_strength <= 1.1f);
+        T1_log_assert(recip_gpu_f32s->alpha >= -0.1f);
+        T1_log_assert(recip_gpu_f32s->alpha <=  1.1f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] < 3.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] < 3.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 3.0f);
     }
     
-    if (recip_cpu) {
-        T1_log_assert(recip_cpu->mul_xyz[0] > 0.0f);
-        T1_log_assert(recip_cpu->mul_xyz[1] > 0.0f);
-        T1_log_assert(recip_cpu->mul_xyz[2] > 0.0f);
+    if (recip_cpu_f32s) {
+        T1_log_assert(recip_cpu_f32s->mul_xyz[0] > 0.0f);
+        T1_log_assert(recip_cpu_f32s->mul_xyz[1] > 0.0f);
+        T1_log_assert(recip_cpu_f32s->mul_xyz[2] > 0.0f);
     }
 }
 
 static void
-assert_sanity_check_zsprite_vals_by_id(
-    const s32 zp_i)
-{
+assert_sanity_check_zsprite_vals_by_id(s32 zp_i) {
     assert_sanity_check_zsprite_vals(
-        &T1_zsprite_list->gpu[zp_i],
-        &T1_zsprite_list->cpu[zp_i].
-            simd);
+        &T1_zsprite_list->gpu[zp_i].f32s,
+        &T1_zsprite_list->gpu[zp_i].s32s,
+        &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s);
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x, y)
@@ -131,12 +124,12 @@ T1_zsprite_commit(
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     {
     // probably shouldn't be requesting sprites in africa
-    T1Tex tex = to_commit->gpu_data->s32.base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
+    T1Tex tex = to_commit->gpu_data->base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
     T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
-    T1_log_warn(to_commit->cpu_data->simd.xyz[0] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->simd.xyz[1] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->simd.xyz[0] <  100.0f);
-    T1_log_warn(to_commit->cpu_data->simd.xyz[1] <  100.0f);
+    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f);
+    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f);
+    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f);
     }
     
     u32 all_mesh_vertices_tail_i =
@@ -180,13 +173,13 @@ T1_zsprite_get_pos_xyz(
             
             *recip_x +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd.xyz[0];
+                    zs_cpu_f32s.xyz[0];
             *recip_y +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd.xyz[1];
+                    zs_cpu_f32s.xyz[1];
             *recip_z +=
                 T1_zsprite_list->cpu[zs_i].
-                    simd.xyz[2];
+                    zs_cpu_f32s.xyz[2];
         }
     }
     
@@ -221,8 +214,7 @@ T1_zsprite_delete(
     }
 }
 
-void
-T1_zsprite_delete_all(void) {
+void T1_zsprite_delete_all(void) {
     T1_zsprite_list->size = 0;
 }
 
@@ -267,9 +259,9 @@ T1_zsprite_scale_multipliers_to_width(
         /* const f32 for_height: */
             new_height);
     
-    cpu_data->simd.mul_xyz[0] = new_multiplier;
-    cpu_data->simd.mul_xyz[1] = new_multiplier;
-    cpu_data->simd.mul_xyz[2] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[0] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[1] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[2] = new_multiplier;
 }
 
 void
@@ -286,9 +278,9 @@ T1_zsprite_scale_multipliers_to_height(
         /* const f32 for_height: */
             new_height);
     
-    cpu_data->simd.mul_xyz[0] = new_multiplier;
-    cpu_data->simd.mul_xyz[1] = new_multiplier;
-    cpu_data->simd.mul_xyz[2] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[0] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[1] = new_multiplier;
+    cpu_data->zs_cpu_f32s.mul_xyz[2] = new_multiplier;
 }
 
 void
@@ -310,14 +302,14 @@ T1_zsprite_construct_with_mesh_id(
                 T1_mesh_summary_list[mesh_id].
                     locked_material_base_offset;
         
-        to_construct->gpu_data->f32s.base_mat_f32 =
+        to_construct->gpu_data->base_mat_f32 =
             all_mesh_materials->gpu_f32[base_mat_i];
-        to_construct->gpu_data->s32.base_mat_s32 =
+        to_construct->gpu_data->base_mat_s32 =
             all_mesh_materials->gpu_s32[base_mat_i];
         
         T1_material_construct(
-            &to_construct->gpu_data->f32s.base_mat_f32,
-            &to_construct->gpu_data->s32.base_mat_s32);
+            &to_construct->gpu_data->base_mat_f32,
+            &to_construct->gpu_data->base_mat_s32);
     }
 }
 
@@ -336,10 +328,10 @@ void T1_zsprite_construct(
         0,
         sizeof(T1GPUzSprite));
     
-    to_construct->cpu_data->simd.mul_xyz[0] = 1.0f;
-    to_construct->cpu_data->simd.mul_xyz[1] = 1.0f;
-    to_construct->cpu_data->simd.mul_xyz[2] = 1.0f;
-    to_construct->gpu_data->s32.touch_id = -1;
+    to_construct->cpu_data->zs_cpu_f32s.mul_xyz[0] = 1.0f;
+    to_construct->cpu_data->zs_cpu_f32s.mul_xyz[1] = 1.0f;
+    to_construct->cpu_data->zs_cpu_f32s.mul_xyz[2] = 1.0f;
+    to_construct->gpu_data->s32s.touch_id = -1;
     to_construct->gpu_data->f32s.alpha = 1.0f;
     
     to_construct->cpu_data->mesh_id = -1;
@@ -353,19 +345,19 @@ void T1_zsprite_construct(
     #error
     #endif
     
-    to_construct->gpu_data->s32.mix_rv_and_mix_tex = -1;
+    to_construct->gpu_data->s32s.mix_rv_and_mix_tex = -1;
     
     T1_material_construct(
-        &to_construct->gpu_data->f32s.base_mat_f32,
-        &to_construct->gpu_data->s32.base_mat_s32);
+        &to_construct->gpu_data->base_mat_f32,
+        &to_construct->gpu_data->base_mat_s32);
 }
 
 void T1_zsprite_construct_quad(
-    const f32 left_x,
-    const f32 bottom_y,
-    const f32 z,
-    const f32 width,
-    const f32 height,
+    f32 left_x,
+    f32 bottom_y,
+    f32 z,
+    f32 width,
+    f32 height,
     T1zSpriteRequest * stack_recipient)
 {
     T1_log_assert(z > 0.0f);
@@ -375,9 +367,9 @@ void T1_zsprite_construct_quad(
     const f32 mid_x = left_x + (width  / 2);
     const f32 mid_y = bottom_y + (height / 2);
     
-    stack_recipient->cpu_data->simd.xyz[0] = mid_x;
-    stack_recipient->cpu_data->simd.xyz[1] = mid_y;
-    stack_recipient->cpu_data->simd.xyz[2] = z;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
     stack_recipient->gpu_data->f32s.no_cam = false;
     
@@ -388,11 +380,11 @@ void T1_zsprite_construct_quad(
     // so the current width is 2.0f
     f32 current_width = 2.0f;
     f32 current_height = 2.0f;
-    stack_recipient->cpu_data->simd.mul_xyz[0] =
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[0] =
         width / current_width;
-    stack_recipient->cpu_data->simd.mul_xyz[1] =
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] =
         height / current_height;
-    stack_recipient->cpu_data->simd.mul_xyz[2] = 1.0f;
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] = 1.0f;
 }
 
 void T1_zsprite_construct_quad_around(
@@ -407,36 +399,36 @@ void T1_zsprite_construct_quad_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->cpu_data->simd.xyz[0] = mid_x;
-    stack_recipient->cpu_data->simd.xyz[1] = mid_y;
-    stack_recipient->cpu_data->simd.xyz[2] = z;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
     f32 current_width  = 2.0f;
     f32 current_height = 2.0f;
-    stack_recipient->cpu_data->simd.mul_xyz[0] =
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[0] =
         width / current_width;
-    stack_recipient->cpu_data->simd.mul_xyz[1] =
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] =
         height / current_height;
-    stack_recipient->cpu_data->simd.mul_xyz[2] =
-        stack_recipient->cpu_data->simd.mul_xyz[1] / 20.0f;
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] =
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] / 20.0f;
     
     #define THRESH 0.00001f
     if (
-        stack_recipient->cpu_data->simd.mul_xyz[0] < THRESH)
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[0] < THRESH)
     {
-        stack_recipient->cpu_data->simd.mul_xyz[0] = THRESH;
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[0] = THRESH;
     }
     if (
-        stack_recipient->cpu_data->simd.mul_xyz[1] < THRESH)
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] < THRESH)
     {
-        stack_recipient->cpu_data->simd.mul_xyz[1] = THRESH;
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] = THRESH;
     }
-    if (stack_recipient->cpu_data->simd.mul_xyz[2] < THRESH)
+    if (stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] < THRESH)
     {
-        stack_recipient->cpu_data->simd.mul_xyz[2] = THRESH;
+        stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] = THRESH;
     }
     
     stack_recipient->cpu_data->mesh_id = T1_BASIC_QUAD_MESH_ID;
@@ -456,9 +448,9 @@ T1_zsprite_construct_cube_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->cpu_data->simd.xyz[0]  = mid_x;
-    stack_recipient->cpu_data->simd.xyz[1]  = mid_y;
-    stack_recipient->cpu_data->simd.xyz[2]  = z;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[0]  = mid_x;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[1]  = mid_y;
+    stack_recipient->cpu_data->zs_cpu_f32s.xyz[2]  = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
@@ -466,9 +458,9 @@ T1_zsprite_construct_cube_around(
     f32 current_width = 2.0f;
     f32 current_height = 2.0f;
     f32 current_depth = 2.0f;
-    stack_recipient->cpu_data->simd.mul_xyz[0] = width / current_width;
-    stack_recipient->cpu_data->simd.mul_xyz[1] = height / current_height;
-    stack_recipient->cpu_data->simd.mul_xyz[2] = depth / current_depth;
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[0] = width / current_width;
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] = height / current_height;
+    stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
 }
@@ -478,9 +470,10 @@ void T1_zsprite_anim_apply_effects_at_t(
     const f32 t_now,
     const f32 * anim_gpu_f32s,
     const s32 * anim_gpu_s32s,
-    const f32 * anim_cpu_vals,
-    T1GPUzSprite * recip_gpu,
-    T1CPUzSpriteSimdStats * recip_cpu)
+    const f32 * anim_cpu_f32s,
+    T1GPUzSpritef32 * recip_gpu_f32s,
+    T1GPUzSprites32 * recip_gpu_s32s,
+    T1CPUzSpritef32 * recip_cpu_f32s)
 {
     SIMD_FLOAT simd_t_now = simd_set1_f32(t_now);
     SIMD_FLOAT simd_t_b4  = simd_set1_f32(t_applied);
@@ -489,16 +482,16 @@ void T1_zsprite_anim_apply_effects_at_t(
         SIMD_FLOAT_LANES == 0);
     T1_log_assert((sizeof(T1GPUzSprites32) / 4) %
         SIMD_INT32_LANES == 0);
-    T1_log_assert((sizeof(T1CPUzSpriteSimdStats) / 4) %
+    T1_log_assert((sizeof(T1CPUzSpritef32) / 4) %
         SIMD_INT32_LANES == 0);
     
     assert_sanity_check_zsprite_vals(
-        recip_gpu,
-        recip_cpu);
+        recip_gpu_f32s,
+        recip_gpu_s32s,
+        recip_cpu_f32s);
     
     if (anim_gpu_f32s) {
-        f32 * target_vals_ptr =
-            (f32 *)(&recip_gpu->f32s);
+        f32 * target_vals_ptr = (f32 *)(recip_gpu_f32s);
         
         for (
             u32 simd_step_i = 0;
@@ -533,15 +526,15 @@ void T1_zsprite_anim_apply_effects_at_t(
         }
         
         assert_sanity_check_zsprite_vals(
-            recip_gpu,
-            recip_cpu);
+            recip_gpu_f32s,
+            recip_gpu_s32s,
+            recip_cpu_f32s);
     }
     
-    if (anim_gpu_s32s) {
+    if (anim_gpu_s32s && t_now >= 1.0f) {
         T1_log_assert(t_now == 1.0f);
         
-        s32 * target_s32s_ptr = (s32 *)
-            (&recip_gpu->s32);
+        s32 * target_s32s_ptr = (s32 *)(recip_gpu_s32s);
         
         // Int32 values
         for (
@@ -568,24 +561,25 @@ void T1_zsprite_anim_apply_effects_at_t(
         }
         
         assert_sanity_check_zsprite_vals(
-            recip_gpu,
-            recip_cpu);
+            recip_gpu_f32s,
+            recip_gpu_s32s,
+            recip_cpu_f32s);
     }
     
-    if (!anim_cpu_vals) { return; }
+    if (!anim_cpu_f32s) { return; }
     
-    f32 * target_vals_ptr = (f32 *)recip_cpu;
+    f32 * target_cpu_f32s_ptr = (f32 *)recip_cpu_f32s;
     
     for (
         u32 simd_step_i = 0;
         (simd_step_i * sizeof(f32)) <
-            sizeof(T1CPUzSpriteSimdStats);
+            sizeof(T1CPUzSpritef32);
         simd_step_i += SIMD_FLOAT_LANES)
     {
         SIMD_FLOAT simd_anim_vals =
-            simd_load_f32s((anim_cpu_vals + simd_step_i));
+            simd_load_f32s((anim_cpu_f32s + simd_step_i));
         SIMD_FLOAT simd_target_vals =
-            simd_load_f32s((target_vals_ptr + simd_step_i));
+            simd_load_f32s((target_cpu_f32s_ptr + simd_step_i));
         
         SIMD_FLOAT simd_t_now_deltas =
             simd_mul_f32s(
@@ -601,25 +595,24 @@ void T1_zsprite_anim_apply_effects_at_t(
             simd_t_previous_deltas);
         
         simd_store_f32s(
-            (target_vals_ptr + simd_step_i),
+            (target_cpu_f32s_ptr + simd_step_i),
             simd_add_f32s(
                 simd_target_vals,
                 simd_t_now_deltas));
     }
     
     assert_sanity_check_zsprite_vals(
-        recip_gpu,
-        recip_cpu);
+        recip_gpu_f32s,
+        recip_gpu_s32s,
+        recip_cpu_f32s);
 }
 
 void T1_zsprite_apply_anim_effects_to_id(
-    const s32 T1_id,
-    const s32 touch_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * anim_gpu_vals_f32,
-    const s32 * anim_gpu_vals_s32,
-    const f32 * anim_cpu_vals)
+    s32 T1_id, s32 touch_id,
+    f32 t_applied, f32 t_now,
+    const f32 * anim_gpu_f32s,
+    const s32 * anim_gpu_s32s,
+    const f32 * anim_cpu_f32s)
 {
     for (
         s32 zp_i = 0;
@@ -628,11 +621,10 @@ void T1_zsprite_apply_anim_effects_to_id(
     {
         if (
             (T1_id >= 0 &&
-            T1_zsprite_list->cpu[zp_i].
-                T1_id != T1_id &&
+            T1_zsprite_list->cpu[zp_i].T1_id != T1_id &&
             T1_id != T1_ZSPRITE_ID_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu[zp_i].s32.
+            T1_zsprite_list->gpu[zp_i].s32s.
                 touch_id != touch_id) ||
             T1_zsprite_list->cpu[zp_i].deleted)
         {
@@ -645,27 +637,25 @@ void T1_zsprite_apply_anim_effects_to_id(
             /* const f32 t_now: */
                 t_now,
             /* const f32 * anim_gpu_f32s: */
-                anim_gpu_vals_f32,
+                anim_gpu_f32s,
             /* const s32 * anim_gpu_s32s: */
-                anim_gpu_vals_s32,
-            /* const f32 * anim_cpu_vals: */
-                anim_cpu_vals,
-            /* T1GPUzSprite * recip_gpu: */
-                &T1_zsprite_list->gpu[zp_i],
-            /* T1CPUzSpriteSimdStats * recip_cpu: */
-                &T1_zsprite_list->cpu[zp_i].
-                    simd);
+                anim_gpu_s32s,
+            /* const f32 * anim_cpu_f32s: */
+                anim_cpu_f32s,
+            /* T1GPUzSpritef32 * recip_gpu_f32s: */
+                &T1_zsprite_list->gpu[zp_i].f32s,
+            /* T1GPUzSprites32 * recip_gpu_s32s: */
+                &T1_zsprite_list->gpu[zp_i].s32s,
+            /* T1CPUzSpritef32 * recip_cpu_f32s: */
+                &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s);
     }
 }
 
 void T1_zsprite_apply_endpoint_anim(
-    const s32 T1_id,
-    const s32 touch_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * goal_gpu_vals_f32,
-    const s32 * goal_gpu_vals_s32,
-    const f32 * goal_cpu_vals)
+    s32 T1_id, s32 touch_id, f32 t_applied, f32 t_now,
+    const f32 * zs_gpu_f32s,
+    const s32 * zs_gpu_s32s,
+    const f32 * zs_cpu_f32s)
 {
     // When t is 1.0f, all of our stats will
     // be exactly equal to target_delta
@@ -674,7 +664,7 @@ void T1_zsprite_apply_endpoint_anim(
     const f32 t_mult = did_now_t / was_left_t;
     SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
     
-    f32 no_effect = T1_ZSPRITEANIM_NO_EFFECT;
+    f32 no_effect = T1_ANIM_NO_EFFECT;
     SIMD_FLOAT simd_noeffect =
         simd_set1_f32(no_effect);
     
@@ -690,7 +680,7 @@ void T1_zsprite_apply_endpoint_anim(
             T1_zsprite_list->cpu[zp_i].
                 T1_id != T1_id) ||
             (touch_id >= 0 &&
-            T1_zsprite_list->gpu[zp_i].s32.
+            T1_zsprite_list->gpu[zp_i].s32s.
                 touch_id != touch_id) ||
             T1_zsprite_list->cpu[zp_i].deleted))
         {
@@ -699,21 +689,19 @@ void T1_zsprite_apply_endpoint_anim(
         
         assert_sanity_check_zsprite_vals_by_id(zp_i);
         
-        if (goal_cpu_vals) {
+        if (zs_cpu_f32s) {
             f32 * recip_vals_cpu = (f32 *)
-            &T1_zsprite_list->cpu[zp_i].
-                simd;
+                &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s;
             
             for (
                 u32 simd_step_i = 0;
                 (simd_step_i * sizeof(f32)) <
-                    sizeof(T1CPUzSpriteSimdStats);
+                    sizeof(T1CPUzSpritef32);
                 simd_step_i += SIMD_FLOAT_LANES)
             {
                 SIMD_FLOAT simd_goal_vals =
                     simd_load_f32s(
-                        goal_cpu_vals +
-                            simd_step_i);
+                        zs_cpu_f32s + simd_step_i);
                 
                 SIMD_FLOAT simd_cur_vals =
                     simd_load_f32s((recip_vals_cpu +
@@ -744,10 +732,9 @@ void T1_zsprite_apply_endpoint_anim(
             }
         }
         
-        if (goal_gpu_vals_f32) {
+        if (zs_gpu_f32s) {
             f32 * recip_vals_gpu = (f32 *)
-                &T1_zsprite_list->gpu[zp_i].
-                    f32s;
+                &T1_zsprite_list->gpu[zp_i].f32s;
             
             for (
                 u32 simd_step_i = 0;
@@ -756,8 +743,7 @@ void T1_zsprite_apply_endpoint_anim(
             {
                 SIMD_FLOAT simd_goal_vals =
                     simd_load_f32s(
-                        (goal_gpu_vals_f32 +
-                            simd_step_i));
+                        (zs_gpu_f32s + simd_step_i));
                 
                 SIMD_FLOAT simd_cur_vals =
                     simd_load_f32s(
@@ -793,15 +779,13 @@ void T1_zsprite_apply_endpoint_anim(
             assert_sanity_check_zsprite_vals_by_id(zp_i);
         }
         
-        if (goal_gpu_vals_s32) {
+        if (zs_gpu_s32s) {
             s32 zero_s32 = 0;
             SIMD_INT32 simd_all_zeros =
                 simd_set1_int32s(zero_s32);
             
             s32 * recip_vals_s32 = (s32 *)
-                &T1_zsprite_list->gpu[zp_i].s32;
-            T1_log_assert(recip_vals_s32[0] ==
-                T1_zsprite_list->gpu[zp_i].s32.base_mat_s32.normalmap_tex_and_tex);
+                &T1_zsprite_list->gpu[zp_i].s32s;
             T1_log_assert(t_applied == 0.0f);
             T1_log_assert(t_now == 1.0f);
             
@@ -813,8 +797,7 @@ void T1_zsprite_apply_endpoint_anim(
             {
                 SIMD_INT32 simd_goal_s32s =
                     simd_load_int32s(
-                        (goal_gpu_vals_s32 +
-                            simd_step_i));
+                        (zs_gpu_s32s + simd_step_i));
                 
                 SIMD_INT32 simd_cur_s32s =
                     simd_load_int32s(
@@ -822,7 +805,7 @@ void T1_zsprite_apply_endpoint_anim(
                 
                 SIMD_FLOAT simd_flags_f32 =
                     simd_load_f32s(
-                        ((f32 *)goal_gpu_vals_s32 + simd_step_i));
+                        ((f32 *)zs_gpu_s32s + simd_step_i));
                 
                 simd_flags_f32 = simd_cmpeq_f32s(
                     simd_flags_f32,
@@ -941,7 +924,7 @@ void T1_zsprite_handle_timed_occlusion(void)
     }
 }
 
-void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
+void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     const s32 T1_id,
     const f32 new_ignore_camera)
 {
@@ -978,37 +961,37 @@ void T1_zsprite_anim_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         T1_log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->simd.xyz[0] -= T1_cam->xyz[0];
-        zs_cpu->simd.xyz[1] -= T1_cam->xyz[1];
-        zs_cpu->simd.xyz[2] -= T1_cam->xyz[2];
-        T1_triangle_x_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[0]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[1]);
-        T1_triangle_z_rotate_f3(zs_cpu->simd.xyz, -T1_cam->angle_xyz[2]);
+        zs_cpu->zs_cpu_f32s.xyz[0] -= T1_cam->xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] -= T1_cam->xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] -= T1_cam->xyz[2];
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd.angle_xyz[0] -= T1_cam->angle_xyz[0];
-        zs_cpu->simd.angle_xyz[1] -= T1_cam->angle_xyz[1];
-        zs_cpu->simd.angle_xyz[2] -= T1_cam->angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] -= T1_cam->angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] -= T1_cam->angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] -= T1_cam->angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 1.0f;
     } else {
         T1_log_assert(is_near_one);
         
-        T1_triangle_z_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[2]);
-        T1_triangle_y_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[1]);
-        T1_triangle_x_rotate_f3(zs_cpu->simd.xyz, T1_cam->angle_xyz[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[0]);
         
-        zs_cpu->simd.xyz[0] += T1_cam->xyz[0];
-        zs_cpu->simd.xyz[1] += T1_cam->xyz[1];
-        zs_cpu->simd.xyz[2] += T1_cam->xyz[2];
+        zs_cpu->zs_cpu_f32s.xyz[0] += T1_cam->xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] += T1_cam->xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] += T1_cam->xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->simd.angle_xyz[0] += T1_cam->angle_xyz[0];
-        zs_cpu->simd.angle_xyz[1] += T1_cam->angle_xyz[1];
-        zs_cpu->simd.angle_xyz[2] += T1_cam->angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] += T1_cam->angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] += T1_cam->angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] += T1_cam->angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 0.0f;
@@ -1039,8 +1022,8 @@ void T1_zsprite_copy_to_frame_data(
         i++)
     {
         recip_ids[i].T1_id = T1_zsprite_list->cpu[i].T1_id;
-        recip_ids[i].touch_id = T1_zsprite_list->gpu[i].s32.
-                touch_id;
+        recip_ids[i].touch_id = T1_zsprite_list->gpu[i].
+            s32s.touch_id;
     }
     
     *recip_size = T1_zsprite_list->size;
@@ -1065,9 +1048,9 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
                 visible ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd.alpha_on < 0.5f ||
+                zs_cpu_f32s.alpha_on < 0.5f ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd.bloom_on > 0.5f)
+                zs_cpu_f32s.bloom_on > 0.5f)
         {
             continue;
         }
@@ -1079,7 +1062,7 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i +
                 T1_mesh_summary_list[mesh_id].vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
@@ -1092,8 +1075,7 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
                 polygon_i = cpu_zp_i;
             frame_data->verts_size += 1;
             T1_log_assert(
-                frame_data->verts_size <
-                    MAX_VERTICES_PER_BUFFER);
+                frame_data->verts_size < MAX_VERTS_PER_BUFFER);
         }
     }
     
@@ -1125,9 +1107,9 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
 }
 
 void T1_zsprite_add_bloom_zpolygons_to_workload(
-    T1GPUFrame * frame_data)
+    T1GPUFrame * f)
 {
-    s32 first_bloom_i = (s32)frame_data->
+    s32 first_bloom_i = (s32)f->
         verts_size;
     
     // Copy all vertices that do use bloom
@@ -1137,37 +1119,32 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
         cpu_zp_i++)
     {
         if (
+            T1_zsprite_list->cpu[cpu_zp_i].deleted ||
+            !T1_zsprite_list->cpu[cpu_zp_i].visible ||
+            !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                deleted ||
-            !T1_zsprite_list->cpu[cpu_zp_i].
-                visible ||
-            !T1_zsprite_list->cpu[cpu_zp_i].
-                committed ||
-            T1_zsprite_list->cpu[cpu_zp_i].
-                simd.bloom_on < 0.5f)
+                zs_cpu_f32s.bloom_on < 0.5f)
         {
             continue;
         }
         
         T1_log_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd.alpha_on < 0.5f);
+                zs_cpu_f32s.alpha_on < 1.5f);
         T1_log_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd.bloom_on > 0.5f);
+                zs_cpu_f32s.bloom_on > 0.5f);
         
         s32 mesh_id =
-            T1_zsprite_list->cpu[cpu_zp_i].
-                mesh_id;
+            T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
         T1_log_assert(mesh_id >= 0);
         T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
         
         s32 vert_tail_i =
-            T1_mesh_summary_list[mesh_id].
-                vertices_head_i +
-                    T1_mesh_summary_list[mesh_id].
-                        vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+            T1_mesh_summary_list[mesh_id].vertices_head_i +
+                T1_mesh_summary_list[mesh_id].
+                    vertices_size;
+        T1_log_assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i =
@@ -1176,14 +1153,12 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             vert_i < vert_tail_i;
             vert_i += 1)
         {
-            frame_data->verts[frame_data->verts_size].
+            f->verts[f->verts_size].
                 locked_vertex_i = vert_i;
-            frame_data->verts[frame_data->verts_size].
+            f->verts[f->verts_size].
                 polygon_i = cpu_zp_i;
-            frame_data->verts_size += 1;
-            T1_log_assert(
-                frame_data->verts_size <
-                    MAX_VERTICES_PER_BUFFER);
+            f->verts_size += 1;
+            T1_log_assert(f->verts_size < MAX_VERTS_PER_BUFFER);
         }
     }
     
@@ -1206,11 +1181,11 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].vert_i =
                         first_bloom_i;
-                T1_log_assert(frame_data->
+                T1_log_assert(f->
                     verts_size < INT32_MAX);
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (s32)frame_data->
+                        (s32)f->
                             verts_size -
                                 first_bloom_i;
             }
@@ -1245,10 +1220,10 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
             !T1_zsprite_list->cpu[cpu_zp_i].visible ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
-            T1_zsprite_list->cpu[cpu_zp_i].simd.
+            T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.
                 alpha_on > 0.5f ||
             T1_zsprite_list->cpu[cpu_zp_i].
-                simd.bloom_on > 0.5f)
+                zs_cpu_f32s.bloom_on > 0.5f)
         {
             continue;
         }
@@ -1260,7 +1235,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i + 
             T1_mesh_summary_list[mesh_id].vertices_size;
-        T1_log_assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        T1_log_assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
         
         /*
         We are free to overflow the vertices buffer, since its end is not
@@ -1332,9 +1307,9 @@ T1_zsprite_construct_model_and_normal_matrices(
         i < T1_zsprite_list->size;
         i++)
     {
-        T1CPUzSpriteSimdStats * s =
+        T1CPUzSpritef32 * s =
             &T1_zsprite_list->cpu[i].
-                simd;
+                zs_cpu_f32s;
         
         T1_linal_f32x4x4_construct_identity(&result);
         

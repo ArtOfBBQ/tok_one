@@ -1,4 +1,4 @@
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 #include "T1_text.h"
 #include "T1_log.h"
@@ -288,7 +288,7 @@ void T1_text_request_label_offset_around(
         &lines_size);
     T1_log_assert(lines_size < MAX_LINES);
     
-    T1FlatTexQuadRequest letter;
+    T1TexQuadRequest letter;
     
     f32 cur_y_offset_pixelspace =
         (T1_text_props->font_height * 0.42f) +
@@ -453,7 +453,7 @@ void T1_text_request_label_renderable(
         i++;
     }
     
-    T1FlatTexQuadRequest letter;
+    T1TexQuadRequest letter;
     
     f32 letter_width = 
         T1_render_view_screen_width_to_width_noz(
@@ -587,7 +587,7 @@ void T1_text_request_label_renderable(
         }
         
         if (T1_text_props->opaque_back_active) {
-            T1FlatTexQuadRequest back;
+            T1TexQuadRequest back;
             T1_texquad_fetch_next(&back);
             *back.cpu = *letter.cpu;
             *back.gpu = *letter.gpu;

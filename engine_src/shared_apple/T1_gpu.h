@@ -1,7 +1,7 @@
 #ifndef T1_GPU_H
 #define T1_GPU_H
 
-#include "T1_cpu_to_gpu.h"
+#include "T1_types_cpu_to_gpu.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>

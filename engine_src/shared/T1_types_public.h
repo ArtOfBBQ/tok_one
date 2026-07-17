@@ -2,9 +2,12 @@
 #define T1_PUBLIC_TYPES_H
 
 #include "T1_stdint.h"
+#include "T1_types_public_gpucpu.h"
 
 // retired objects are unaffected by animations
 #define T1_ID_RETIRED_BUT_NOT_DELETED 20501
+
+#define T1_ANIM_NO_EFFECT 0xFFFF
 
 // Basic quads and cubes are predefined, they can be used without registering
 // an .obj file.
@@ -147,12 +150,7 @@ typedef enum : u16 {
     T1_IO_KEY_ABOVEBOUNDS, // must be last
 } T1IOKey;
 
-typedef struct {
-    s32 reserved_and_tex;
-    s32 touch_id;
-    s32 padding[2];
-} T1GPUTexQuads32;
-
+#if 0
 typedef struct {
     f32 xyz[3];
     f32 offset_xy[2];
@@ -160,6 +158,11 @@ typedef struct {
     f32 rgba[4];
     f32 padding[5];
 } T1GPUTexQuadf32;
+
+typedef struct {
+    s32 touch_id;
+    s32 mix_rv_and_mix_tex;
+} __attribute__((aligned(16))) T1GPUzSprites32;
 
 typedef struct
 {
@@ -187,6 +190,7 @@ typedef struct
     #endif
     f32 padding[6];
 } T1GPUPostProcConsts;
+#endif
 
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
@@ -241,6 +245,7 @@ typedef struct {
     u8 deleted;
 } T1CPUTexQuad;
 
+#if 0
 typedef struct {
     T1GPUTexQuadf32 f32s;
     T1GPUTexQuads32 s32s;
@@ -274,6 +279,7 @@ typedef struct {
     s32 shadow_map_render_view_i;
     f32 simd_padding[3];
 } T1zLight; // 17 f32s = 68 bytes
+#endif
 
 /*
 TOKENIZATION

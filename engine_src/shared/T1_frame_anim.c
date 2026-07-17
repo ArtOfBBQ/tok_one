@@ -41,7 +41,7 @@ void T1_frame_anim_new_frame_starts(void) {
 }
 
 void T1_frame_anim_apply_all(
-    T1GPUFrame * frame_data)
+    T1GPUFrame * f)
 {
     for (
         u32 mod_i = 0;
@@ -54,13 +54,12 @@ void T1_frame_anim_apply_all(
                     gpu_stats.f32s);
         s32 * mod_ptr_s32 =
             (s32 *)(
-                &T1_frame_anims[mod_i].
-                    gpu_stats.s32);
+                &T1_frame_anims[mod_i].gpu_stats.s32s);
         
-        T1_log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
+        T1_log_assert(f->zsprite_list->size < T1_ZSPRITES_CAP);
         for (
             s32 i = 0;
-            i < (s32)frame_data->
+            i < (s32)f->
                 zsprite_list->size;
             i++)
         {
@@ -74,7 +73,7 @@ void T1_frame_anim_apply_all(
                 case T1FRAMEANIMFILTER_TOUCH_ID:
                 {
                     if (
-                        frame_data->id_pairs[i].T1_id ==
+                        f->id_pairs[i].T1_id ==
                         T1_frame_anims[mod_i].T1_id)
                     {
                         hit = 1;
@@ -84,7 +83,7 @@ void T1_frame_anim_apply_all(
                 case T1FRAMEANIMFILTER_ZSPRITE_ID:
                 {
                     if (
-                        frame_data->id_pairs[i].T1_id ==
+                        f->id_pairs[i].T1_id ==
                         T1_frame_anims[mod_i].T1_id)
                     {
                         hit = 1;
@@ -107,9 +106,11 @@ void T1_frame_anim_apply_all(
                         mod_ptr_s32,
                     /* const f32 * anim_cpu_vals: */
                         NULL,
-                    /* T1GPUzSprite * recip_gpu: */
-                        frame_data->zsprite_list->polygons + i,
-                    /* T1CPUzSpriteSimdStats * recip_cpu: */
+                    /* T1GPUzSpritef32 * recip_gpu_f32s: */
+                        &f->zsprite_list->polygons[i].f32s,
+                    /* T1GPUzSprites32 * recip_gpu_s32s: */
+                        &f->zsprite_list->polygons[i].s32s,
+                    /* T1CPUzSpritef32 * recip_cpu_f32s: */
                         NULL);
             }
         }

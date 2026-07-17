@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "T1_std.h"
-#include "T1_cpu_gpu_shared_types.h"
+#include "T1_types_gpucpu.h"
 
 /*
 Window sizes are a source of confusion because there are so many coordinate

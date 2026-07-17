@@ -1,20 +1,17 @@
 #include "T1_gpu.h"
 #include "T1_apple_audio.h"
 
-#include "T1_std.h"
 #include "T1_appinit.h"
 #include "T1_settings.h"
 #include "T1_log.h"
 #include "T1_rand.h"
-#include "T1_zsprite.h"
-#include "T1_zlight.h"
-#include "T1_ui_widget.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_simd.h"
-#include "T1_client.h"
+#include "T1_ui_widget.h"
 #include "T1_gameloop.h"
-#include "T1_particle.h"
+#include "T1_client.h"
+#include "T1_zsprite.h"
 #include "T1_platform_layer.h"
 
 #import <GameController/GameController.h>

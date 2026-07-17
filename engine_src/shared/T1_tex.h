@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 /*
 Can we use 2 bytes to specify a texture?

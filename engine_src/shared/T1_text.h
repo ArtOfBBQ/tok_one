@@ -1,7 +1,7 @@
 #ifndef T1_TEXT_H
 #define T1_TEXT_H
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 #include "T1_texquad.h"
 
 #ifdef __cplusplus

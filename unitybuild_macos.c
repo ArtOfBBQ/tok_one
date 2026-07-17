@@ -56,7 +56,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_material.c"
 #include "T1_render_view.c"
 #include "T1_zlight.c"
-#include "T1_cpu_to_gpu.c"
+#include "T1_types_cpu_to_gpu.c"
 #include "T1_texquad.c"
 // 2. Files that are part of the basic platform layer
 #include "T1_apple_audio.m"
@@ -82,8 +82,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_frame_anim.c"
 #include "T1_particle.c"
 #include "T1_easing.c"
-#include "T1_zsprite_anim.c"
-#include "T1_texquad_anim.c"
+#include "T1_anim.c"
 #include "T1_text.c"
 #include "T1_ui_widget.c"
 #include "T1_profiler.c"

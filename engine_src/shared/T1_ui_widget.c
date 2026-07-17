@@ -9,8 +9,7 @@
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_tex_array.h"
-#include "T1_zsprite_anim.h"
-#include "T1_texquad_anim.h"
+#include "T1_anim.h"
 #include "T1_text.h"
 #include "T1_profiler.h"
 #include "T1_render_view.h"
@@ -849,7 +848,7 @@ void T1_ui_widget_request_slider(
         next_ae,
         xyz_pos);
     
-    T1FlatTexQuadRequest slider_back;
+    T1TexQuadRequest slider_back;
     T1_texquad_fetch_next(&slider_back);
     
     slider_back.gpu->f32s.xyz[0] = xyz_pos[0];
@@ -874,7 +873,7 @@ void T1_ui_widget_request_slider(
         next_ae->back_T1_id;
     T1_texquad_commit(&slider_back);
     
-    T1FlatTexQuadRequest slider_pin;
+    T1TexQuadRequest slider_pin;
     T1_texquad_fetch_next(&slider_pin);
     f32 pin_z = next_ae->props.z - 0.00001f;
     slider_pin.gpu->f32s.xyz[0] = xyz_pos[0];
@@ -946,7 +945,7 @@ void T1_ui_widget_request_button(
         next_ae,
         btn_pos);
     
-    T1FlatTexQuadRequest button_request;
+    T1TexQuadRequest button_request;
     T1_texquad_fetch_next(&button_request);
     
     button_request.gpu->f32s.xyz[0] = btn_pos[0];

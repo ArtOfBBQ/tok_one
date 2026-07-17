@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 #include "T1_std.h"
 
 /*

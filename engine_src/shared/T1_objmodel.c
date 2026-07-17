@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include "T1_std.h"
-#include "T1_cpu_gpu_shared_types.h"
+#include "T1_types_gpucpu.h"
 #include "T1_global.h"
 #include "T1_mem.h"
 #include "T1_tex.h"
@@ -664,8 +664,8 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             T1_log_assert(
                 matching_parsed_materials_i  < (s32)parsed_materials_size);
             
-            T1GPUConstMatf32 * locked_mat_f32 = NULL;
-            T1GPUConstMats32 * locked_mat_s32 = NULL;
+            T1GPUMatf32 * locked_mat_f32 = NULL;
+            T1GPUMats32 * locked_mat_s32 = NULL;
             T1_material_fetch_ptrs(
                 &locked_mat_f32,
                 &locked_mat_s32,

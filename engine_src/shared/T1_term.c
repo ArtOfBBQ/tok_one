@@ -1,6 +1,6 @@
 #include "T1_term.h"
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 #include "T1_mem.h"
 #include "T1_global.h"
@@ -79,7 +79,7 @@ static void T1_term_redraw_backgrounds(void) {
             width - (T1_TERM_WHITESPACE
                 * 2.0f);
     
-    T1FlatTexQuadRequest input_req;
+    T1TexQuadRequest input_req;
     T1_texquad_fetch_next(&input_req);
     input_req.cpu->T1_id = T1_trms->back_object_id;
     input_req.gpu->f32s.xyz[0] = 0.0f;
@@ -106,7 +106,7 @@ static void T1_term_redraw_backgrounds(void) {
     T1_texquad_commit(&input_req);
     
     // The console history area
-    T1FlatTexQuadRequest history_req;
+    T1TexQuadRequest history_req;
     T1_texquad_fetch_next(&history_req);
     history_req.gpu->f32s.xyz[0] = 0.0f;
     history_req.gpu->f32s.xyz[1] =

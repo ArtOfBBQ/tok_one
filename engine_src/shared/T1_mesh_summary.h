@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "T1_cpu_to_gpu.h"
+#include "T1_types_cpu_to_gpu.h"
 
 #define T1_OBJ_STRING_SIZE 128
 typedef struct {

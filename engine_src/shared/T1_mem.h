@@ -8,7 +8,7 @@
 #error
 #endif
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 
 
 #ifdef __cplusplus

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "T1_cpu_gpu_shared_types.h"
+#include "T1_types_gpucpu.h"
 
 typedef struct {
     f32 aspect_ratio;

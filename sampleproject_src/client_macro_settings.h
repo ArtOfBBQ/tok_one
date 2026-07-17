@@ -43,8 +43,7 @@ of the engine for your specific app.
 #define T1_BLENDING_SHADER_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 1
 #define T1_OCCLUSION_ACTIVE 2
-#define T1_ZSPRITE_ANIM_ACTIVE 1
-#define T1_TEXQUAD_ANIM_ACTIVE 1
+#define T1_ANIM_ACTIVE 1
 #define T1_FRAME_ANIM_ACTIVE 2
 #define T1_TERM_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
@@ -95,7 +94,7 @@ Flat textured quads, mostly for UI text
 /*
 The maximum number of 'scheduled animations' simultaneously running
 */
-#define T1_ZSPRITE_ANIMS_CAP 180
+#define T1_ANIMS_CAP 180
 #define T1_TEXQUAD_ANIMS_CAP 500
 
 
