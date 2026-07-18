@@ -185,9 +185,16 @@ void T1_render_update(
             
             T1_zsprite_get_pos_xyz(
                 T1_id,
-                &rv->xyz[0],
-                &rv->xyz[1],
-                &rv->xyz[2]);
+                &rv->dest_xyz[0],
+                &rv->dest_xyz[1],
+                &rv->dest_xyz[2]);
+            rv->dest_xyz[2] -= 0.50f;
+            rv->min_xyz[0] = rv->dest_xyz[0];
+            rv->min_xyz[1] = rv->dest_xyz[1];
+            rv->min_xyz[2] = rv->dest_xyz[2];
+            rv->max_xyz[0] = rv->dest_xyz[0];
+            rv->max_xyz[1] = rv->dest_xyz[1];
+            rv->max_xyz[2] = rv->dest_xyz[2];
         }
     }
     
@@ -323,17 +330,7 @@ void T1_render_update(
         }
     }
     
-    // construct_light_matrices(frame_data);
-    
-    #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
-    T1_frame_anim_apply_all(frame_data);
-    #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
     frame_data->render_views_size = T1_render_views->size;
-    
     
     T1_log_assert(frame_data->render_views != NULL);
     T1_std_memcpy(

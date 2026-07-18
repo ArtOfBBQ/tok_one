@@ -247,7 +247,8 @@ void T1_render_view_update_positions(
         #error
         #endif
         
-        if (rv->us_to_destination < 1) {
+        if (rv->us_to_destination < 1)
+        {
             continue;
         }
         
@@ -267,7 +268,13 @@ void T1_render_view_update_positions(
         }
         
         T1_log_assert(
-            T1_render_views->cpu[0].max_xyz[2] >
+            T1_render_views->cpu[0].max_xyz[0] >=
+                T1_render_views->cpu[0].min_xyz[0]);
+        T1_log_assert(
+            T1_render_views->cpu[0].max_xyz[1] >=
+                T1_render_views->cpu[0].min_xyz[1]);
+        T1_log_assert(
+            T1_render_views->cpu[0].max_xyz[2] >=
                 T1_render_views->cpu[0].min_xyz[2]);
         
         if (rv->dest_angle_xyz[0] < rv->min_angle_xyz[0]) { rv->dest_angle_xyz[0] = rv->min_angle_xyz[0]; } 

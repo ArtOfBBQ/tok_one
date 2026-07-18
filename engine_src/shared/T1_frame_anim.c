@@ -5,6 +5,8 @@
 #include "T1_mem.h"
 #include "T1_zsprite.h"
 
+
+#if 0
 #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
 
 typedef enum : u8 {
@@ -200,3 +202,4 @@ void T1_frame_anim_gpu_mod_to_T1_id_by_offset(
 #error
 #endif
 
+#endif

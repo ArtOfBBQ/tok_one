@@ -45,8 +45,10 @@ static void T1_anim_sanity_check(T1AnimPrivate * a) {
     T1_log_assert(a->remaining_duration_us < 195000000);
     for (u32 i = 0; i < T1_anims_size; i++) {
         if (!a->endpoints_not_deltas) {
-            T1_log_assert(
-                a->public.zs_cpu_f32s->bloom_on != T1_ANIM_NO_EFFECT);
+            if (a->public.zs_cpu_f32s) {
+                T1_log_assert(
+                    a->public.zs_cpu_f32s->bloom_on != T1_ANIM_NO_EFFECT);
+            }
         }
     }
 }
@@ -528,9 +530,9 @@ static void T1_anim_resolve_single(
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)&a->public.tq_gpu_f32s,
+                    (f32 *)a->public.tq_gpu_f32s,
                 /* const s32 * goal_gpu_vals_s32: */
-                    (s32 *)&a->public.tq_gpu_s32s);
+                    (s32 *)a->public.tq_gpu_s32s);
         }
     } else {
         if (
@@ -886,6 +888,7 @@ void T1_anim_fade_and_destroy(
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->zs_gpu_f32s->alpha = 0.0f;
+    fade_destroy->zs_gpu_f32s->shadow_strength = 0.0f;
     fade_destroy->del_obj_on_finish = true;
     T1_anim_commit(
         fade_destroy

@@ -1,6 +1,7 @@
 #ifndef T1_FRAMEANIM_H
 #define T1_FRAMEANIM_H
 
+#if 0
 #include <stddef.h>
 
 #include "T1_types_cpu_to_gpu.h"
@@ -34,3 +35,4 @@ void T1_frame_anim_apply_all(T1GPUFrame * frame_data);
 
 #endif // T1_FRAMEANIM_H
 
+#endif

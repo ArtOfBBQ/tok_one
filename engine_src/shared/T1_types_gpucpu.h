@@ -73,8 +73,8 @@ typedef struct {
     f32    normv_3x3[9];
     f32    cull_below_z;
     f32    cull_above_z;
-    s32      read_from_shadow_maps;
-    s32      write_to_shadow_maps;
+    s32    read_from_shadow_maps;
+    s32    write_to_shadow_maps;
 } T1GPURenderView;
 
 typedef struct {

@@ -251,13 +251,6 @@ void T1_gameloop_update_before_render_pass(
         T1_global->clientlogic_early_startup_finished &&
         !T1_gameloop_loading_texs)
     {
-        #if T1_FRAME_ANIM_ACTIVE == T1_ACTIVE
-        T1_frame_anim_new_frame_starts();
-        #elif T1_FRAME_ANIM_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_render_view_validate();
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE

@@ -30,9 +30,6 @@ typedef struct {
     s32 target_T1_id;
     s32 target_touch_id;
     
-    u16 data_start_i;
-    u16 data_size;
-    
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char original_func_name[128];
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
