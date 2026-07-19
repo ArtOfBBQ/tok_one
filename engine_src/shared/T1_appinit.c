@@ -79,10 +79,16 @@ typedef struct SimdTestStruct {
 static void 
 test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
-    
+    T1_log_assert(sizeof(T1GPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1CPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUzSprites32) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1CPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUMatf32) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUMats32) % (SIMD_FLOAT_LANES * 4) == 0);    
     T1_log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUTexQuads32)   % (SIMD_INT32_LANES * 4) == 0);
+    
     
     T1_log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = T1_mem_malloc_managed(
@@ -352,9 +358,9 @@ void T1_appinit_before_gpu_init(
     if (
         engine_save_good &&
         engine_save_file->window_height > 20 &&
-        engine_save_file->window_height < INITIAL_WINDOW_HEIGHT * 3 &&
+        engine_save_file->window_height < T1_INITIAL_WINDOW_HEIGHT * 3 &&
         engine_save_file->window_width > 20 &&
-        engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
+        engine_save_file->window_width < T1_INITIAL_WINDOW_WIDTH * 3)
     {
         T1_global_update_window_size(
             engine_save_file->window_width,
@@ -376,11 +382,11 @@ void T1_appinit_before_gpu_init(
     } else {
         T1_global->fullscreen = false;
         T1_global_update_window_size(
-            INITIAL_WINDOW_WIDTH,
-            INITIAL_WINDOW_HEIGHT,
+            T1_INITIAL_WINDOW_WIDTH,
+            T1_INITIAL_WINDOW_HEIGHT,
             T1_os_get_current_time_us());
-        T1_global->window_left   = INITIAL_WINDOW_LEFT;
-        T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
+        T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
+        T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
     }
     
     if (engine_save_contents != NULL) {
@@ -527,16 +533,17 @@ void T1_appinit_before_gpu_init(
     
     // init the buffers that contain our vertices to send to the GPU
     sd->vertices_alloc_size = pad_to_page_size(
-        sizeof(T1GPUVertexIndices) * MAX_VERTS_PER_BUFFER);
+        sizeof(T1GPUVertexIndices) *
+            T1_MAX_VERTS_PER_BUFFER);
     T1_log_assert(sd->vertices_alloc_size > 0);
     
     sd->flat_quads_alloc_size =
         pad_to_page_size(sizeof(T1GPUFlatQuad) *
-            MAX_FLATQUADS_PER_BUFFER);
+            T1_MAX_FLATQUADS_PER_BUFFER);
     
     sd->flat_texquads_alloc_size =
         pad_to_page_size(sizeof(T1GPUTexQuad) *
-            MAX_TEXQUADS_PER_BUFFER);
+            T1_MAX_TEXQUADS_PER_BUFFER);
     
     sd->polygons_alloc_size =
         pad_to_page_size(
@@ -574,7 +581,8 @@ void T1_appinit_before_gpu_init(
     
     sd->postprocessing_constants_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUVertexIndices) * MAX_VERTS_PER_BUFFER);
+            sizeof(T1GPUVertexIndices) *
+                T1_MAX_VERTS_PER_BUFFER);
     
     for (
         u32 cur_frame_i = 0;
@@ -780,9 +788,9 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.in_shadow_multipliers[0] = 0.5f;
-    T1_global->postproc_consts.in_shadow_multipliers[1] = 0.5f;
-    T1_global->postproc_consts.in_shadow_multipliers[2] = 0.5f;
+    T1_global->postproc_consts.in_shadow_mults[0] = 0.5f;
+    T1_global->postproc_consts.in_shadow_mults[1] = 0.5f;
+    T1_global->postproc_consts.in_shadow_mults[2] = 0.5f;
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     // Pass
     #else

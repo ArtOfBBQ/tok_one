@@ -5,61 +5,79 @@
 
 #define T1_TEX_NONE 61234
 
-typedef struct {
-    s32 reserved_and_tex;
-    s32 touch_id;
-    s32 padding[2];
-} __attribute__((aligned(16))) T1GPUTexQuads32;
+typedef union {
+    struct {
+        s32 reserved_and_tex;
+        s32 touch_id;
+    };
+    u8 size_with_padding[16];
+} T1GPUTexQuads32;
 
-typedef struct {
-    f32 xyz[3];
-    f32 offset_xy[2];
-    f32 wh[2];
-    f32 rgba[4];
-    f32 padding[5];
+typedef union {
+    struct {
+        f32 xyz[3];
+        f32 offset_xy[2];
+        f32 wh[2];
+        f32 rgba[4];    
+    };
+    u8 size_with_padding[48];
 } __attribute__((aligned(16))) T1GPUTexQuadf32;
 
-typedef struct  {
-    f32 xyz[3];
-    f32 offset_xyz[3];
-    f32 mul_xyz[3];
-    f32 angle_xyz[3];
-    f32 bloom_on;
-    f32 alpha_on;
-    f32 padding[2];
-} __attribute__((aligned(16))) T1CPUzSpritef32;
+typedef union {
+    struct {
+        f32 xyz[3];
+        f32 offset_xyz[3];
+        f32 mul_xyz[3];
+        f32 angle_xyz[3];
+        f32 bloom_on;
+        f32 alpha_on;
+    };
+    u8 size_with_padding[64];
+} T1CPUzSpritef32;
 
-typedef struct {
-    f32 bonus_rgb[3];
-    f32 base_mat_uv_offsets[2];
-    f32 alpha;
-    f32 no_light;
-    f32 no_cam;
-    f32 outline_alpha;
-    f32 shadow_strength;
-} __attribute__((aligned(16))) T1GPUzSpritef32;
+typedef union {
+    struct {
+        f32 bonus_rgb[3];
+        f32 base_mat_uv_offsets[2];
+        f32 alpha;
+        f32 no_light;
+        f32 no_cam;
+        f32 outline_alpha;
+        f32 shadow_strength;
+    };
+    u8 size_with_padding[48];
+} T1GPUzSpritef32;
 
-typedef struct {
-    s32 touch_id;
-    s32 mix_rv_and_mix_tex;
-} __attribute__((aligned(16))) T1GPUzSprites32;
+typedef union {
+    struct {
+        s32 touch_id;
+        s32 mix_rv_and_mix_tex;
+    };
+    u8 size_with_padding[16];
+} T1GPUzSprites32;
 
-typedef struct {
-    f32 ambient_rgb[3];
-    f32 diffuse_rgb[3];
-    f32 specular_rgb[3];
-    f32 uv_scroll[2];
-    f32 specular_exponent;
-    f32 refraction;
-    f32 alpha;
-    f32 illum;
+typedef union {
+    struct {
+        f32 ambient_rgb[3];
+        f32 diffuse_rgb[3];
+        f32 specular_rgb[3];
+        f32 uv_scroll[2];
+        f32 specular_exponent;
+        f32 refraction;
+        f32 alpha;
+        f32 illum;
+    };
+    u8 size_with_padding[64];
 } T1GPUMatf32;
 
-typedef struct {
-    union {
-        s32 normalmap_tex_and_tex;
-        u32 normalmap_tex_and_tex_u32;
+typedef union {
+    struct {
+        union {
+            s32 normalmap_tex_and_tex;
+            u32 normalmap_tex_and_tex_u32;
+        };
     };
+    u8 size_with_padding[16];
 } T1GPUMats32;
 
 typedef struct {
@@ -93,7 +111,7 @@ typedef struct
     f32 blur_pct;
     f32 color_quantization;
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    f32 in_shadow_multipliers[3];
+    f32 in_shadow_mults[3];
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error

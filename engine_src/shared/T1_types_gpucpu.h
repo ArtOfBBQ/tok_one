@@ -1,6 +1,7 @@
 #ifndef T1_TYPES_GPUCPU_H
 #define T1_TYPES_GPUCPU_H
 
+#include "T1_stdint.h"
 #include "client_macro_settings.h"
 
 #define T1_CAM_DEPTH_FRAGARG_I 30
@@ -37,26 +38,29 @@ the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
-typedef struct {
-    f32 xyz            [3];
-    f32 norm_xyz[3];
-    f32        uv[2];
-    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    f32 face_normal_xyz[3];
-    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    f32 tan_xyz[3];
-    f32 bitan_xyz[3];
-    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    u32 locked_materials_head_i;
-    u32 parent_material_i;
-} __attribute__((aligned(16))) T1GPULockedVertex;
+typedef union {
+    struct {
+        f32 xyz[3];
+        f32 norm_xyz[3];
+        f32 uv[2];
+        #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+        f32 face_normal_xyz[3];
+        #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
+        f32 tan_xyz[3];
+        f32 bitan_xyz[3];
+        #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        u32 locked_materials_head_i;
+        u32 parent_material_i;
+    };
+    u8 target_size_with_padding[40];
+} T1GPULockedVertex;
 
 typedef enum : u32 {
     T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
@@ -66,15 +70,18 @@ typedef enum : u32 {
     T1RENDERVIEW_WRITE_ABOVEBOUNDS = 4,
 } T1RenderViewWriteType;
 
-typedef struct {
-    // v = view, p = projection
-    f32    v_4x4[16];
-    f32    p_4x4[16];
-    f32    normv_3x3[9];
-    f32    cull_below_z;
-    f32    cull_above_z;
-    s32    read_from_shadow_maps;
-    s32    write_to_shadow_maps;
+typedef union {
+    struct {
+        // v = view, p = projection
+        f32    v_4x4[16];
+        f32    p_4x4[16];
+        f32    normv_3x3[9]; // 16 + 16 + 9 = 41
+        f32    cull_below_z;
+        f32    cull_above_z;
+        s32    read_from_shadow_maps;
+        s32    write_to_shadow_maps;
+    };
+    u8 size_with_padding[192];
 } T1GPURenderView;
 
 typedef struct {
@@ -88,15 +95,18 @@ typedef struct {
     f32 rgba[4];
 } T1GPUFlatQuad;
 
-typedef struct {
-    f32 xyz[3];
-    f32 angle_xyz[3];
-    f32 diffuse;
-    f32 specular;
-    f32 reach;
-    f32 rgb[3];
-    s32   shadow_map_depth_tex_i;
-    s32   shadow_map_render_view_i;
+typedef union {
+    struct {
+        f32 xyz[3];
+        f32 angle_xyz[3];
+        f32 diffuse;
+        f32 specular;
+        f32 reach;
+        f32 rgb[3];
+        s32 shadow_map_depth_tex_i;
+        s32 shadow_map_render_view_i;
+    };
+    u8 target_size_with_padding[56];
 } T1GPULight;
 
 typedef struct

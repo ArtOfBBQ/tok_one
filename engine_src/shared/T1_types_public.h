@@ -159,10 +159,13 @@ typedef struct {
     f32 padding[5];
 } T1GPUTexQuadf32;
 
-typedef struct {
-    s32 touch_id;
-    s32 mix_rv_and_mix_tex;
-} __attribute__((aligned(16))) T1GPUzSprites32;
+typedef union {
+    struct {
+        s32 touch_id;
+        s32 mix_rv_and_mix_tex;
+    };
+    u8 size_with_padding[16];
+} T1GPUzSprites32;
 
 typedef struct
 {

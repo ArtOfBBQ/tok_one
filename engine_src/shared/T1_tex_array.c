@@ -331,6 +331,21 @@ s32 T1_tex_array_create_new_render_view(
         /* const u32 use_bc1_compression: */
             false);
     
+    #if T1_LOG_PRINTF == T1_ACTIVE
+    s32 tex_array_i = T1_tex_to_array_i(tex);
+    s32 tex_slice_i = T1_tex_to_slice_i(tex);
+    T1_log_append("Attaching texture array's ");
+    T1_log_append_s32(tex_array_i);
+    T1_log_append(" slice ");
+    T1_log_append_s32(tex_slice_i);
+    T1_log_append(" to render view ");
+    T1_log_append_s32(rv_i);
+    T1_log_append("\n");
+    #elif T1_LOG_PRINTF == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_render_views->cpu[rv_i].write_tex = tex;
     T1_log_assert(T1_render_views->cpu[rv_i].write_tex != T1_TEX_NONE);
     
@@ -357,12 +372,12 @@ b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in) {
 }
 
 u32 T1_tex_array_get_img_height(s32 array_i) {
-    T1_log_assert(array_i < T1_tex_arrays_size);
+    T1_log_assert((u32)array_i < T1_tex_arrays_size);
     return T1_tex_arrays[array_i].single_img_height;
 }
 
 u32 T1_tex_array_get_img_width(s32 array_i) {
-    T1_log_assert(array_i < T1_tex_arrays_size);
+    T1_log_assert((u32)array_i < T1_tex_arrays_size);
     return T1_tex_arrays[array_i].single_img_width;
 }
 

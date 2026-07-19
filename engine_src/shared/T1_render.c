@@ -158,19 +158,18 @@ static void construct_view_matrix(void) {
 }
 
 void T1_render_update(
-    T1GPUFrame * frame_data,
+    T1GPUFrame * f,
     u64 elapsed_us)
 {
     (void)elapsed_us;
     
     if (T1_render_active != true) {
-        T1_log_append("renderer not initialized, aborting...\n");
+        T1_log_append(
+            "renderer not initialized, aborting...\n");
         return;
     }
     
-    if (
-        frame_data == NULL ||
-        frame_data->verts == NULL)
+    if (f == NULL || f->verts == NULL)
     {
         T1_log_append(
             "ERROR: platform layer didnt "
@@ -198,7 +197,7 @@ void T1_render_update(
         }
     }
     
-    frame_data->zsprite_list->size = 0;
+    f->zsprite_list->size = 0;
     
     T1_zlight_update_all_attached_render_views();
     
@@ -207,25 +206,24 @@ void T1_render_update(
     construct_projection_matrix();
     
     T1_zsprite_copy_to_frame_data(
-        frame_data->zsprite_list->polygons,
-        frame_data->id_pairs,
-        &frame_data->zsprite_list->size);
+        f->zsprite_list->polygons,
+        f->id_pairs,
+        &f->zsprite_list->size);
     
-    T1_zsprite_construct_model_and_normal_matrices(
-        frame_data);
+    T1_zsprite_construct_model_and_normal_matrices(f);
     
     T1_texquad_copy_to_frame_data(
-        frame_data->flat_tex_quads,
-        &frame_data->flat_tex_quads_size);
+        f->flat_tex_quads,
+        &f->flat_tex_quads_size);
     
-    *frame_data->postproc_consts = T1_global->postproc_consts;
+    *f->postproc_consts = T1_global->postproc_consts;
     
-    T1_zsprite_add_opaque_zpolygons_to_workload(frame_data);
-    T1_log_assert(frame_data->zsprite_list->size < T1_ZSPRITES_CAP);
+    T1_zsprite_add_opaque_zpolygons_to_workload(f);
+    T1_log_assert(f->zsprite_list->size < T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-    T1_zsprite_add_alphablending_zpolygons_to_workload(frame_data);
-    T1_log_assert(frame_data->zsprite_list->size <
+    T1_zsprite_add_alphablending_zpolygons_to_workload(f);
+    T1_log_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
@@ -245,21 +243,19 @@ void T1_render_update(
         {
             if (
                 T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                        T1RENDERPASS_OUTLINES)
+                    T1RENDERPASS_OUTLINES)
             {
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (s32)frame_data->
-                            verts_size;
+                        (s32)f->verts_size;
             }
         }
     }
     
-    T1_zsprite_add_bloom_zpolygons_to_workload(
-        frame_data);
-    T1_log_assert(frame_data->zsprite_list->size <
+    T1_zsprite_add_bloom_zpolygons_to_workload(f);
+    T1_log_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -273,10 +269,10 @@ void T1_render_update(
     #endif
     T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
-            frame_data,
+            f,
         /* u64 elapsed_us: */
             elapsed_us);
-    T1_log_assert(frame_data->zsprite_list->size <
+    T1_log_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(
@@ -312,30 +308,28 @@ void T1_render_update(
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (s32)frame_data->
-                            flat_bb_quads_size;
+                        (s32)f->flat_bb_quads_size;
             }
             
             if (
                 T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                        T1RENDERPASS_FLAT_TEXQUADS)
+                    T1RENDERPASS_FLAT_TEXQUADS)
             {
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].vert_i = 0;
                 T1_render_views->cpu[cam_i].
                     passes[pass_i].verts_size =
-                        (s32)frame_data->
-                            flat_tex_quads_size;
+                        (s32)f->flat_tex_quads_size;
             }
         }
     }
     
-    frame_data->render_views_size = T1_render_views->size;
+    f->render_views_size = T1_render_views->size;
     
-    T1_log_assert(frame_data->render_views != NULL);
+    T1_log_assert(f->render_views != NULL);
     T1_std_memcpy(
-        frame_data->render_views,
+        f->render_views,
         T1_render_views->gpu,
         sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP);
-    T1_log_assert(frame_data->render_views != NULL);
+    T1_log_assert(f->render_views != NULL);
 }

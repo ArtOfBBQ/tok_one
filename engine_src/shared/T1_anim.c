@@ -1037,6 +1037,7 @@ void T1_anim_delete_all(void) {
     as->mutex_unlock(as->mutex_id);
 }
 
+#if 0
 void T1_anim_delete_endpoint_anims_targeting(
     s32 T1_id) {
     as->mutex_lock(as->mutex_id);
@@ -1056,6 +1057,7 @@ void T1_anim_delete_endpoint_anims_targeting(
     }
     as->mutex_unlock(as->mutex_id);
 }
+#endif
 
 void T1_anim_delete_all_anims_targeting(
     s32 T1_id) {

@@ -107,7 +107,7 @@ static void show_dead_simple_text(
 }
 
 void T1_gameloop_update_before_render_pass(
-    T1GPUFrame * frame_data)
+    T1GPUFrame * f)
 {
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_start("T1_gameloop_update_before_render_pass()");
@@ -127,11 +127,11 @@ void T1_gameloop_update_before_render_pass(
     
     gameloop_previous_time = T1_global->this_frame_timestamp_us;
     
-    frame_data->postproc_consts->lights_size = 0;
-    frame_data->verts_size = 0;
-    frame_data->flat_bb_quads_size = 0;
-    frame_data->flat_tex_quads_size = 0;
-    frame_data->zsprite_list->size = 0;
+    f->postproc_consts->lights_size = 0;
+    f->verts_size = 0;
+    f->flat_bb_quads_size = 0;
+    f->flat_tex_quads_size = 0;
+    f->zsprite_list->size = 0;
     
     if (
         !T1_gameloop_active && T1_gameloop_loading_texs)
@@ -159,7 +159,7 @@ void T1_gameloop_update_before_render_pass(
             loading_text,
             256,
             "%");
-        show_dead_simple_text(frame_data, loading_text, 1);
+        show_dead_simple_text(f, loading_text, 1);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end("T1_gameloop_update_before_render_pass()");
@@ -181,8 +181,8 @@ void T1_gameloop_update_before_render_pass(
         return;
     }
     
-    T1_log_assert(frame_data->lights != NULL);
-    T1_log_assert(frame_data->render_views != NULL);
+    T1_log_assert(f->lights != NULL);
+    T1_log_assert(f->render_views != NULL);
     
     T1_global->this_frame_timestamp_us =
         T1_os_get_current_time_us();
@@ -201,7 +201,7 @@ void T1_gameloop_update_before_render_pass(
     
     if (!T1_log_app_running) {
         show_dead_simple_text(
-            frame_data,
+            f,
             T1_log_crash_msg,
             T1_global->elapsed);
         
@@ -297,10 +297,11 @@ void T1_gameloop_update_before_render_pass(
         T1_zlight_clean_all_deleted();
         
         T1_zlight_copy_all(
-            frame_data->lights,
+            f->lights,
             &T1_global->postproc_consts.lights_size);
         
-        T1_render_view_update_positions(T1_global->elapsed);
+        T1_render_view_update_positions(
+            T1_global->elapsed);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start(
@@ -309,9 +310,7 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_PROFILER_ACTIVE undefined"
         #endif
-        T1_render_update(
-            frame_data,
-            T1_global->elapsed);
+        T1_render_update(f, T1_global->elapsed);
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_end(
             "T1_renderer_hardware_render()");
@@ -323,25 +322,21 @@ void T1_gameloop_update_before_render_pass(
         T1_texquad_defragment();
         T1_zsprite_defragment();
         
-        u32 overflow_vertices = frame_data->verts_size % 3;
-        frame_data->verts_size -= overflow_vertices;
+        u32 overflow_vertices = f->verts_size % 3;
+        f->verts_size -= overflow_vertices;
     }
     
     if (T1_global->draw_fps) {
-        T1_text_request_fps(
-            /* u64 elapsed_us: */
-                T1_global->elapsed);
-    }
-    else if (T1_global->draw_touch_id) {
+        T1_text_request_fps(T1_global->elapsed);
+    } else if (T1_global->draw_touch_id) {
         T1_text_request_top_touch_id(
             T1_io_get_mouse_touch_id_this_frame());
-    }
-    else if (T1_global->draw_scene_id) {
+    } else if (T1_global->draw_scene_id) {
         T1_log_assert(0);
     }
     
-    frame_data->postproc_consts->timestamp =
-        (u32)T1_global->this_frame_timestamp_us;
+    f->postproc_consts->timestamp = (u32)T1_global->
+        this_frame_timestamp_us;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end(

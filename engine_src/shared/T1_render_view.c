@@ -229,11 +229,13 @@ void T1_render_view_update_positions(
             // Supporting only z-planes for now:
             f32 plane_z = rv->refl_cam_around_plane_z;
             
+            rv->us_to_destination = 0;
+            
             // Reflect position (flip Z over the plane)
             rv->xyz[0] = T1_cam->xyz[0];
             rv->xyz[1] = T1_cam->xyz[1];
             rv->xyz[2] = 2.0f * plane_z - T1_cam->xyz[2];
-            
+                        
             rv->angle_xyz[0] = -(3.14159f +
                 T1_cam->angle_xyz[0]);
             rv->angle_xyz[1] = T1_cam->angle_xyz[1];
@@ -251,6 +253,8 @@ void T1_render_view_update_positions(
         {
             continue;
         }
+        
+        T1_log_assert(!rv->reflect_around_plane_z);
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));

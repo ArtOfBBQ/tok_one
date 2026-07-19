@@ -118,6 +118,7 @@ static void T1_ui_widget_get_pos(
     xyz[2] = ae->props.z;
 }
 
+#if 0
 static f32 T1_ui_widget_get_pin_pos_given_mouse(
     ActiveUIElement * ae,
     const f32 mouse_x,
@@ -148,7 +149,6 @@ static f32 T1_ui_widget_get_pin_pos_given_mouse(
             ae->props.width_screen / 2.0f);
 }
 
-#if 0
 static void T1_ui_widget_get_pin_pos(
     ActiveUIElement * ae,
     f32 * xyz)
@@ -408,9 +408,13 @@ void T1_ui_widget_requester_set_sfx_filename(c8 * sfx_fn) {
         T1_UI_WIDGET_STR_CAP,
         sfx_fn);
 }
-void T1_ui_widget_requester_set_font_height(u32 to_val) {
+void T1_ui_widget_requester_set_font_height(
+    u32 to_val)
+{
+    (void)to_val;
     T1_log_assert(0); // ???
 }
+
 void T1_ui_widget_requester_set_screen_x(s32 x) {
     T1_ui_widget_next_props->screen_x = x;
 }
@@ -517,13 +521,13 @@ static void redraw_dirty_labels(void) {
     }
 }
 
+#if 0
 b8 T1_ui_widget_handle_lclick(void) {
     T1_log_assert(0);
     
     return false;
 }
 
-#if 0
 void T1_ui_widget_handle_touches(u64 ms_elapsed)
 {
     (void)ms_elapsed;

@@ -42,7 +42,7 @@ void T1_texquad_apply_endpoint_anim(
     const f32 * goal_gpu_f32s,
     const s32 * goal_gpu_s32s);
 
-void T1_texquad_anim_apply_effects_at_t(
+void T1_texquad_apply_anim_effects_at_t(
     f32 t_applied, f32 t_now,
     const f32 * anim_gpu_f32s,
     const s32 * anim_gpu_s32s,

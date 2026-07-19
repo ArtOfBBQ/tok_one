@@ -5,7 +5,6 @@
 #include "T1_tex.h"
 #include "T1_img.h"
 
-
 #define T1_TEX_NAME_CAP 128
 typedef struct {
     T1Img image;

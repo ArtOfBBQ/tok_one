@@ -45,7 +45,7 @@ T1_img_overwrite_subregion(
     assert(at_row > 0);
     
     if (at_column > column_count) {
-        #ifndef DECODED_IMAGE_SILENCE
+        #ifndef T1_IMG_SILENCE
         printf(
             "can't write at [%u,%u], if only %u total columns\n",
             at_column,
@@ -56,7 +56,7 @@ T1_img_overwrite_subregion(
     }
     
     if (at_row > row_count) {
-        #ifndef DECODED_IMAGE_SILENCE
+        #ifndef T1_IMG_SILENCE
         printf(
             "can't write at [%u,%u], if only %u total rows\n",
             at_column,
@@ -76,7 +76,7 @@ T1_img_overwrite_subregion(
         ||
         (new_image->height != expected_height))
     {
-        #ifndef DECODED_IMAGE_SILENCE
+        #ifndef T1_IMG_SILENCE
         printf(
             "Error - can't overwrite chunk [%u,%u] of dimensions [%u,%u] for image (%u x %u) with new subimage sized [%u,%u], expected size [%u,%u]\n",
             at_column,

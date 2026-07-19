@@ -33,6 +33,10 @@ assert_sanity_check_zsprite_vals(
         T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 3.0f);
     }
     
+    if (recip_gpu_s32s) {
+        T1_log_assert(0);
+    }
+    
     if (recip_cpu_f32s) {
         T1_log_assert(recip_cpu_f32s->mul_xyz[0] > 0.0f);
         T1_log_assert(recip_cpu_f32s->mul_xyz[1] > 0.0f);
@@ -1062,7 +1066,7 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i +
                 T1_mesh_summary_list[mesh_id].vertices_size;
-        assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
+        assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
@@ -1075,7 +1079,8 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
                 polygon_i = cpu_zp_i;
             frame_data->verts_size += 1;
             T1_log_assert(
-                frame_data->verts_size < MAX_VERTS_PER_BUFFER);
+                frame_data->verts_size <
+                    T1_MAX_VERTS_PER_BUFFER);
         }
     }
     
@@ -1144,7 +1149,7 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             T1_mesh_summary_list[mesh_id].vertices_head_i +
                 T1_mesh_summary_list[mesh_id].
                     vertices_size;
-        T1_log_assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
+        T1_log_assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i =
@@ -1158,7 +1163,8 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             f->verts[f->verts_size].
                 polygon_i = cpu_zp_i;
             f->verts_size += 1;
-            T1_log_assert(f->verts_size < MAX_VERTS_PER_BUFFER);
+            T1_log_assert(f->verts_size <
+                T1_MAX_VERTS_PER_BUFFER);
         }
     }
     
@@ -1235,7 +1241,8 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i + 
             T1_mesh_summary_list[mesh_id].vertices_size;
-        T1_log_assert(vert_tail_i < MAX_VERTS_PER_BUFFER);
+        T1_log_assert(vert_tail_i <
+            T1_MAX_VERTS_PER_BUFFER);
         
         /*
         We are free to overflow the vertices buffer, since its end is not

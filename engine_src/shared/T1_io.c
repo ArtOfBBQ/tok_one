@@ -440,6 +440,7 @@ s32 T1_io_get_mouse_touch_id_this_frame(void) {
 }
 
 b8 T1_io_consume_mouse_changed(s32 scene_id) {
+    (void)scene_id;
     // TODO: implement me
     // u8 out = T1_io->mouse_pos_changed;
     // T1_io->mouse_pos_changed = false;

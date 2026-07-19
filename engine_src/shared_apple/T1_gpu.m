@@ -830,12 +830,13 @@ u8 T1_apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->light_buffers[fram_i] =
-            MTLBufferFrameLights;
+        ags->light_buffers[fram_i] = MTLBufferFrameLights;
         
         T1_log_assert(
             T1_cpu_to_gpu_data->
-                render_views_alloc_size >= (sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP));
+                render_views_alloc_size >=
+                    (sizeof(T1GPURenderView) *
+                        T1_RENDER_VIEW_CAP));
         id<MTLBuffer> MTLBufferFrameCamera =
         [with_metal_device
             /* needs to be page aligned */
@@ -2184,7 +2185,9 @@ static void set_defaults_for_encoder(
                 pass_2_opaque_tris_enc,
                 (u32)cam_i);
             
-            T1_log_assert((pass->verts_size + pass->vert_i) < MAX_VERTS_PER_BUFFER);
+            T1_log_assert(
+                (pass->verts_size + pass->vert_i) <
+                    T1_MAX_VERTS_PER_BUFFER);
             T1_log_assert(pass->verts_size % 3 == 0);
             
             [pass_2_opaque_tris_enc

@@ -356,7 +356,7 @@ float4 get_lit(
     const u32 cam_i,
     const device T1GPURenderView * render_views,
     const device T1GPULight * lights,
-    const device T1GPUzSprite * zsprite,
+    const device T1GPUzSprite * zs,
     const device T1GPUMatf32 * matf32,
     const device T1GPUMats32 * mati32,
     const device T1GPUPostProcConsts * globals,
@@ -396,10 +396,10 @@ float4 get_lit(
     
     float2 uv_orig =
         vector_float2(
-            zsprite->f32s.base_mat_uv_offsets[0],
-            zsprite->f32s.base_mat_uv_offsets[1]);
+            zs->f32s.base_mat_uv_offsets[0],
+            zs->f32s.base_mat_uv_offsets[1]);
     
-    float2 uv_adjusted =
+    float2 uv_adj =
         in.texcoord + (
         is_base_mtl *
         uv_orig);
@@ -408,9 +408,9 @@ float4 get_lit(
         matf32->uv_scroll[0],
         matf32->uv_scroll[1]);
     
-    uv_adjusted += globals->timestamp * 0.000001f * uv_scroll;
+    uv_adj += globals->timestamp * 0.000001f * uv_scroll;
     
-    uv_adjusted = fmod(uv_adjusted, 1.0f);
+    uv_adj = fmod(uv_adj, 1.0f);
     
     constexpr sampler texture_sampler(
         mag_filter::linear,
@@ -423,7 +423,7 @@ float4 get_lit(
         #endif
         );
     
-    float4 texture_base = vector_float4(
+    float4 tex_base = vector_float4(
         1.0f, 1.0f, 1.0f, 1.0f);
     ushort tex = (mati32->normalmap_tex_and_tex & 0x0000FFFF);
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE 
@@ -452,41 +452,42 @@ float4 get_lit(
         const half4 color_sample =
             color_textures[texarray_i].sample(
                 texture_sampler,
-                uv_adjusted,
+                uv_adj,
                 texslice_i);
-        texture_base = float4(color_sample);
+        tex_base = float4(color_sample);
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    int mix_rv_i = zsprite->s32s.mix_rv_and_mix_tex >> 16;
-    int mix_array_i =
-        (zsprite->s32s.mix_rv_and_mix_tex & 0x0000F800) >> 11;
-    int mix_slice_i = zsprite->s32s.mix_rv_and_mix_tex & 0x000007FF;
+    s16 mix_rv_i = zs->s32s.mix_rv_and_mix_tex >> 16;
+    u16 mix_tex = (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF);
+    s16 mix_array_i = mix_tex >> 11;
+    s16 mix_slice_i = mix_tex & 0x07FF;
     if (
         mix_rv_i >= 0 &&
-        (zsprite->s32s.mix_rv_and_mix_tex & 0x0000FFFF) != T1_TEX_NONE &&
+        (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF) !=
+            T1_TEX_NONE &&
         mix_array_i >= 0 &&
         mix_slice_i >= 0)
     {
-        const device T1GPURenderView * rfv = &render_views[mix_rv_i];
+        const device T1GPURenderView * rfv =
+            &render_views[mix_rv_i];
         
         if (
             mix_rv_i < 0 ||
             mix_array_i < 0 ||
-            mix_slice_i < 0)
+            mix_slice_i < 0 ||
+            mix_array_i >= T1_TEXARRAYS_CAP ||
+            mix_slice_i >= T1_TEX_SLICES_CAP)
         {
             return vector_float4(0.0f, 1.0f, 0.0f, 1.0f);
         }
         
-        float4 refl_clipspace =
-            worldspace_to_clipspace(
-                in.worldpos,
-                rfv);
+        float4 refl_clipspace = worldspace_to_clipspace(
+            in.worldpos,
+            rfv);
         
-        float2 refl_uv =
-                ((refl_clipspace.xy /
-                    refl_clipspace.w) * 0.5f) +
-                        0.5f;
+        float2 refl_uv = ((refl_clipspace.xy /
+            refl_clipspace.w) * 0.5f) + 0.5f;
         
         refl_uv = clamp(refl_uv, 0.0f, 1.0f);
         
@@ -494,10 +495,10 @@ float4 get_lit(
         
         f32 mix_strength = 0.95f;
         
-        f32 fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
-        f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
-        f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
-        mix_strength *= fade;
+        // f32 fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
+        // f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
+        // f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
+        // mix_strength *= fade;
         
         const half4 color_sample =
             color_textures[mix_array_i].
@@ -506,8 +507,8 @@ float4 get_lit(
                     refl_uv,
                     mix_slice_i);
         
-        texture_base =
-            (texture_base * (1.0h - mix_strength)) +
+        tex_base =
+            (tex_base * (1.0h - mix_strength)) +
             (float4(color_sample) * mix_strength);
     }
     #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
@@ -515,7 +516,7 @@ float4 get_lit(
     #error
     #endif
     
-    float4 no_lighting_color = diffuse_base * texture_base;
+    float4 no_light_color = diffuse_base * tex_base;
     
     for (
         u32 i = 0;
@@ -564,9 +565,9 @@ float4 get_lit(
                 (frag_depth <= shadow_depth + SHADOW_BIAS) ?
                 1.0f :
                 vector_float4(
-                    globals->in_shadow_multipliers[0],
-                    globals->in_shadow_multipliers[1],
-                    globals->in_shadow_multipliers[2],
+                    globals->in_shadow_mults[0],
+                    globals->in_shadow_mults[1],
+                    globals->in_shadow_mults[2],
                     1.0f);
         }
         #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
@@ -714,19 +715,19 @@ float4 get_lit(
         lit_color[3] = 1.0f;
     }
     
-    lit_color *= texture_base;
+    lit_color *= tex_base;
     
-    f32 no_lighting = clamp(zsprite->f32s.no_light, 0.0f, 1.0f);
+    f32 no_lighting = clamp(zs->f32s.no_light, 0.0f, 1.0f);
     lit_color =
         ((1.0f - no_lighting) * lit_color) +
-        (no_lighting * no_lighting_color);
+        (no_lighting * no_light_color);
     
-    lit_color[3] *= zsprite->f32s.alpha * matf32->alpha;
+    lit_color[3] *= zs->f32s.alpha * matf32->alpha;
     
     lit_color += vector_float4(
-        zsprite->f32s.bonus_rgb[0],
-        zsprite->f32s.bonus_rgb[1],
-        zsprite->f32s.bonus_rgb[2],
+        zs->f32s.bonus_rgb[0],
+        zs->f32s.bonus_rgb[1],
+        zs->f32s.bonus_rgb[2],
         0.0f);
     
     lit_color = clamp(lit_color, 0.1f, 1.0f);

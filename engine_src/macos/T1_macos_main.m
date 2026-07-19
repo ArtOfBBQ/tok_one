@@ -628,67 +628,6 @@ static void update_simple_key(
     }
 }
 
-void T1_os_vibrate_gamepad(void) {
-    NSArray *controllers = [GCController controllers];
-    
-    if (controllers.count == 0) {
-        return; // No gamepads connected
-    }
-    
-    GCController * c = controllers[0];
-    
-    if (!c || !c.haptics) {
-        return;
-    }
-    
-    NSError * error = nil;    
-    CHHapticEngine * eng = [c.haptics
-        createEngineWithLocality: GCHapticsLocalityDefault];
-    
-    if (!eng) {
-        return;
-    }
-    
-    #if 0
-    // Start the haptic engine
-    [eng startAndReturnError: &error];
-    if (error) {
-        NSLog(@"Failed to start haptic engine: %@", error.localizedDescription);
-        return;
-    }
-    
-    // 1. Define haptic parameters (Intensity and Sharpness)
-    CHHapticEventParameter * inten = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticIntensity value:1.0];
-    CHHapticEventParameter * sharp = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticSharpness value:0.5];
-    
-    // 2. Create a continuous or transient haptic event (0.5-second duration)
-    CHHapticEvent *event = [[CHHapticEvent alloc]
-        initWithEventType:CHHapticEventTypeHapticContinuous
-        parameters:@[intensity, sharpness]
-        relativeTime:0.0
-        duration:0.5];
-    
-    // 3. Package the event into a pattern
-    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithEvents:@[event] parameters:@[] error:&error];
-    if (error) {
-        NSLog(@"Failed to create haptic pattern: %@", error.localizedDescription);
-        return;
-    }
-    
-    // 4. Create the player and start playback
-    id<CHHapticPatternPlayer> player = [eng makePlayerWithPattern:pattern error:&error];
-    if (error) {
-        NSLog(@"Failed to create haptic player: %@", error.localizedDescription);
-        return;
-    }
-    
-    [player startAtTime:0.0 error:&error];
-    if (error) {
-        NSLog(@"Failed to play haptic pattern: %@", error.localizedDescription);
-    }
-    #endif
-}
-
 void T1_os_poll_gamepad_events(void) {
     //    NSArray *controllers = [GCController controllers];
     //    

@@ -43,8 +43,8 @@ static void assert_sanity_check_texquad_vals(
 #endif
 
 typedef struct {
-    T1CPUTexQuad cpu[MAX_FLATQUADS_PER_BUFFER];
-    T1GPUTexQuad gpu[MAX_FLATQUADS_PER_BUFFER];
+    T1CPUTexQuad cpu[T1_MAX_FLATQUADS_PER_BUFFER];
+    T1GPUTexQuad gpu[T1_MAX_FLATQUADS_PER_BUFFER];
     s32 size;
 } T1FlatTexQuadCollection;
 
@@ -77,7 +77,7 @@ static void T1_texquad_construct_at_i(
     const s32 i)
 {
     T1_log_assert(i >= 0);
-    T1_log_assert(i  < MAX_FLATQUADS_PER_BUFFER);
+    T1_log_assert(i  < T1_MAX_FLATQUADS_PER_BUFFER);
     
     if (!T1_log_app_running) {
         return;
@@ -195,7 +195,8 @@ void T1_texquad_fetch_next(
         T1_texquads->size += 1;
         
         T1_log_assert(T1_texquads->size > 0);
-        T1_log_assert(T1_texquads->size < MAX_FLATQUADS_PER_BUFFER);
+        T1_log_assert(T1_texquads->size <
+            T1_MAX_FLATQUADS_PER_BUFFER);
     }
     
     T1_log_assert(ret_i >= 0);
@@ -404,7 +405,7 @@ void T1_texquad_apply_endpoint_anim(
     }
 }
 
-void T1_texquad_anim_apply_effects_at_t(
+void T1_texquad_apply_anim_effects_at_t(
     f32 t_applied, f32 t_now,
     const f32 * anim_gpu_f32s,
     const s32 * anim_gpu_s32s,
@@ -516,7 +517,7 @@ void T1_texquad_apply_anim_effects_to_id(
             continue;
         }
         
-        T1_texquad_anim_apply_effects_at_t(
+        T1_texquad_apply_anim_effects_at_t(
             /* const f32 t_applied: */
                 t_applied,
             /* const f32 t_now: */

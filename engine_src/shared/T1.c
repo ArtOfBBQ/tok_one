@@ -145,6 +145,9 @@ void T1_make_shadowmap_and_attach_to_light(
     
     T1_render_view_validate();
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    (void)light_T1_id;
+    (void)new_cam_width;
+    (void)new_cam_height;
     #else
     #error
     #endif
@@ -175,8 +178,11 @@ void T1_cam_create_main_view(
     T1_os_gpu_update_window_viewport();
 }
 
+#if T1_REFLECTION_ACTIVE == T1_ACTIVE
 void T1_make_reflection_cam(
-    u32 new_cam_w, u32 new_cam_h, f32 reflection_z)
+    u32 new_cam_w,
+    u32 new_cam_h,
+    f32 reflection_z)
 {
     s32 new_rv_i =
         T1_tex_array_create_new_render_view(
@@ -190,8 +196,8 @@ void T1_make_reflection_cam(
     
     T1_log_assert(new_rv_i == 1);
     
-    T1CPURenderView * refl_cpu = T1_render_views->cpu +
-        new_rv_i;
+    T1CPURenderView * refl_cpu =
+        T1_render_views->cpu + new_rv_i;
     refl_cpu->write_type = T1RENDERVIEW_WRITE_RGBA;
     
     T1_log_assert(refl_cpu->width == new_cam_w);
@@ -203,25 +209,28 @@ void T1_make_reflection_cam(
     T1_log_assert(T1_tex_to_slice_i(refl_cpu->write_tex) <
         (s32)T1_tex_arrays[T1_tex_to_array_i(refl_cpu->write_tex)].images_size);
     
-    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    refl_cpu->reflect_around_plane_z = reflection_z;
-    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    refl_cpu->reflect_around_plane_z = true;
+    refl_cpu->refl_cam_around_plane_z = reflection_z;
     
     refl_cpu->passes_size = 2;
     refl_cpu->passes[0].type =
         T1RENDERPASS_DIAMOND_ALPHA;
     refl_cpu->passes[1].type =
         T1RENDERPASS_ALPHA_BLEND;
-    // refl_cpu->passes[2].type = T1RENDERPASS_BLOOM;
     
     T1_os_gpu_update_internal_render_viewport(
         new_rv_i);
-        
+    
     T1_render_view_validate();
 }
+#elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+void T1_make_reflection_cam(
+    u32 new_cam_w,
+    u32 new_cam_h,
+    f32 reflection_z) {}
+#else
+#error
+#endif
 
 void
 T1_png_get_width_height(
