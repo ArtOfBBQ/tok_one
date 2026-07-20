@@ -4,6 +4,7 @@
 #include "T1_mem.h"
 #include "T1_log.h"
 #include "T1_global.h"
+#include "T1_tex.h"
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_zlight.h"
@@ -28,13 +29,33 @@ assert_sanity_check_zsprite_vals(
         T1_log_assert(recip_gpu_f32s->shadow_strength <= 1.1f);
         T1_log_assert(recip_gpu_f32s->alpha >= -0.1f);
         T1_log_assert(recip_gpu_f32s->alpha <=  1.1f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] > -3.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] > -3.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] > -3.0f);
         T1_log_assert(recip_gpu_f32s->bonus_rgb[0] < 3.0f);
         T1_log_assert(recip_gpu_f32s->bonus_rgb[1] < 3.0f);
         T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 3.0f);
     }
     
     if (recip_gpu_s32s) {
-        T1_log_assert(0);
+        T1_log_assert(recip_gpu_s32s->touch_id >= -1);
+        s16 mix_rv_i;
+        T1_std_memcpy(&mix_rv_i, (u8*)&recip_gpu_s32s->mix_rv_and_mix_tex, 2);
+        T1_log_assert(mix_rv_i >= -1);
+        T1_log_assert(mix_rv_i < T1_RENDER_VIEW_CAP);
+        T1Tex mix_tex;
+        T1_std_memcpy(&mix_tex, ((u8 *)&recip_gpu_s32s->mix_rv_and_mix_tex)+2, 2);
+        s32 mix_tex_array_i = T1_tex_to_array_i(mix_tex);
+        s32 mix_tex_slice_i = T1_tex_to_slice_i(mix_tex);
+        if (mix_tex == T1_TEX_NONE) {
+            T1_log_assert(mix_tex_array_i == -1);
+            T1_log_assert(mix_tex_slice_i == -1);
+        } else {
+            T1_log_assert(mix_tex_array_i >= 0);
+            T1_log_assert(mix_tex_array_i < T1_TEXARRAYS_CAP);
+            T1_log_assert(mix_tex_slice_i >= 0);
+            T1_log_assert(mix_tex_slice_i < T1_TEX_SLICES_CAP);
+        }
     }
     
     if (recip_cpu_f32s) {
@@ -127,13 +148,13 @@ T1_zsprite_commit(
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     {
-    // probably shouldn't be requesting sprites in africa
-    T1Tex tex = to_commit->gpu_data->base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
-    T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
-    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f);
-    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f);
-    T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f);
+        // probably shouldn't be requesting sprites in africa
+        T1Tex tex = to_commit->gpu_data->base_mat_s32.normalmap_tex_and_tex_u32 & 0x0000FFFF;
+        T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
+        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f);
+        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f);
+        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f);
+        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f);
     }
     
     u32 all_mesh_vertices_tail_i =
@@ -148,6 +169,14 @@ T1_zsprite_commit(
     #else
     #error
     #endif
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &to_commit->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &to_commit->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &to_commit->cpu_data->zs_cpu_f32s);
     
     to_commit->cpu_data->committed = true;
 }
@@ -315,6 +344,14 @@ T1_zsprite_construct_with_mesh_id(
             &to_construct->gpu_data->base_mat_f32,
             &to_construct->gpu_data->base_mat_s32);
     }
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &to_construct->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &to_construct->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &to_construct->cpu_data->zs_cpu_f32s);
 }
 
 void T1_zsprite_construct(
@@ -349,11 +386,28 @@ void T1_zsprite_construct(
     #error
     #endif
     
-    to_construct->gpu_data->s32s.mix_rv_and_mix_tex = -1;
+    s16 mix_rv = -1;
+    T1Tex mix_tex = T1_TEX_NONE;
+    T1_std_memcpy(
+        &to_construct->gpu_data->s32s.mix_rv_and_mix_tex,
+        &mix_rv,
+        2);
+    T1_std_memcpy(
+        ((u8*)&to_construct->gpu_data->s32s.mix_rv_and_mix_tex)+2,
+        &mix_tex,
+        2);
     
     T1_material_construct(
         &to_construct->gpu_data->base_mat_f32,
         &to_construct->gpu_data->base_mat_s32);
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &to_construct->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &to_construct->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &to_construct->cpu_data->zs_cpu_f32s);
 }
 
 void T1_zsprite_construct_quad(
@@ -389,6 +443,14 @@ void T1_zsprite_construct_quad(
     stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[1] =
         height / current_height;
     stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] = 1.0f;
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &stack_recipient->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &stack_recipient->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &stack_recipient->cpu_data->zs_cpu_f32s);
 }
 
 void T1_zsprite_construct_quad_around(
@@ -436,6 +498,14 @@ void T1_zsprite_construct_quad_around(
     }
     
     stack_recipient->cpu_data->mesh_id = T1_BASIC_QUAD_MESH_ID;
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &stack_recipient->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &stack_recipient->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &stack_recipient->cpu_data->zs_cpu_f32s);
 }
 
 void
@@ -467,6 +537,14 @@ T1_zsprite_construct_cube_around(
     stack_recipient->cpu_data->zs_cpu_f32s.mul_xyz[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
+    
+    assert_sanity_check_zsprite_vals(
+        /* T1GPUzSpritef32 * recip_gpu_f32s: */
+            &stack_recipient->gpu_data->f32s,
+        /* T1GPUzSprites32 * recip_gpu_s32s: */
+            &stack_recipient->gpu_data->s32s,
+        /* T1CPUzSpritef32 * recip_cpu_f32s: */
+            &stack_recipient->cpu_data->zs_cpu_f32s);
 }
 
 void T1_zsprite_anim_apply_effects_at_t(
@@ -535,39 +613,10 @@ void T1_zsprite_anim_apply_effects_at_t(
             recip_cpu_f32s);
     }
     
-    if (anim_gpu_s32s && t_now >= 1.0f) {
-        T1_log_assert(t_now == 1.0f);
-        
-        s32 * target_s32s_ptr = (s32 *)(recip_gpu_s32s);
-        
-        // Int32 values
-        for (
-            u32 simd_step_i = 0;
-            (simd_step_i * sizeof(s32)) < sizeof(T1GPUzSprites32);
-            simd_step_i += SIMD_INT32_LANES)
-        {
-            SIMD_INT32 simd_add_s32s =
-                simd_load_int32s(
-                    (anim_gpu_s32s + simd_step_i));
-            
-            SIMD_INT32 simd_cur_s32s =
-                simd_load_int32s(
-                    (target_s32s_ptr +
-                        simd_step_i));
-                        
-            SIMD_INT32 result = simd_add_int32s(
-                simd_cur_s32s,
-                simd_add_s32s);
-            
-            simd_store_int32s(
-                target_s32s_ptr + simd_step_i,
-                result);
-        }
-        
-        assert_sanity_check_zsprite_vals(
-            recip_gpu_f32s,
-            recip_gpu_s32s,
-            recip_cpu_f32s);
+    if (anim_gpu_s32s) {
+        // non-endpoint anims shouldn't affect signed values
+        // for now
+        T1_log_assert(0);
     }
     
     if (!anim_cpu_f32s) { return; }
@@ -657,9 +706,9 @@ void T1_zsprite_apply_anim_effects_to_id(
 
 void T1_zsprite_apply_endpoint_anim(
     s32 T1_id, s32 touch_id, f32 t_applied, f32 t_now,
-    const f32 * zs_gpu_f32s,
-    const s32 * zs_gpu_s32s,
-    const f32 * zs_cpu_f32s)
+    const f32 * anim_zs_gpu_f32s,
+    const s32 * anim_zs_gpu_s32s,
+    const f32 * anim_zs_cpu_f32s)
 {
     // When t is 1.0f, all of our stats will
     // be exactly equal to target_delta
@@ -669,8 +718,7 @@ void T1_zsprite_apply_endpoint_anim(
     SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
     
     f32 no_effect = T1_ANIM_NO_EFFECT;
-    SIMD_FLOAT simd_noeffect =
-        simd_set1_f32(no_effect);
+    SIMD_FLOAT simd_noeffect = simd_set1_f32(no_effect);
     
     for (
         s32 zp_i = 0;
@@ -678,11 +726,9 @@ void T1_zsprite_apply_endpoint_anim(
         zp_i++)
     {
         if (
-            T1_id !=
-                T1_ZSPRITE_ID_HIT_EVERYTHING &&
+            T1_id != T1_ZSPRITE_ID_HIT_EVERYTHING &&
             ((T1_id >= 0 &&
-            T1_zsprite_list->cpu[zp_i].
-                T1_id != T1_id) ||
+            T1_zsprite_list->cpu[zp_i].T1_id != T1_id) ||
             (touch_id >= 0 &&
             T1_zsprite_list->gpu[zp_i].s32s.
                 touch_id != touch_id) ||
@@ -693,7 +739,7 @@ void T1_zsprite_apply_endpoint_anim(
         
         assert_sanity_check_zsprite_vals_by_id(zp_i);
         
-        if (zs_cpu_f32s) {
+        if (anim_zs_cpu_f32s) {
             f32 * recip_vals_cpu = (f32 *)
                 &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s;
             
@@ -705,7 +751,7 @@ void T1_zsprite_apply_endpoint_anim(
             {
                 SIMD_FLOAT simd_goal_vals =
                     simd_load_f32s(
-                        zs_cpu_f32s + simd_step_i);
+                        anim_zs_cpu_f32s + simd_step_i);
                 
                 SIMD_FLOAT simd_cur_vals =
                     simd_load_f32s((recip_vals_cpu +
@@ -736,7 +782,7 @@ void T1_zsprite_apply_endpoint_anim(
             }
         }
         
-        if (zs_gpu_f32s) {
+        if (anim_zs_gpu_f32s) {
             f32 * recip_vals_gpu = (f32 *)
                 &T1_zsprite_list->gpu[zp_i].f32s;
             
@@ -747,7 +793,7 @@ void T1_zsprite_apply_endpoint_anim(
             {
                 SIMD_FLOAT simd_goal_vals =
                     simd_load_f32s(
-                        (zs_gpu_f32s + simd_step_i));
+                        (anim_zs_gpu_f32s + simd_step_i));
                 
                 SIMD_FLOAT simd_cur_vals =
                     simd_load_f32s(
@@ -783,7 +829,10 @@ void T1_zsprite_apply_endpoint_anim(
             assert_sanity_check_zsprite_vals_by_id(zp_i);
         }
         
-        if (zs_gpu_s32s) {
+        // For signed values we don't interpolate,
+        // we just overwrite the target when a threshold
+        // is crossed
+        if (anim_zs_gpu_s32s && t_now >= 0.85f) {
             s32 zero_s32 = 0;
             SIMD_INT32 simd_all_zeros =
                 simd_set1_int32s(zero_s32);
@@ -801,7 +850,7 @@ void T1_zsprite_apply_endpoint_anim(
             {
                 SIMD_INT32 simd_goal_s32s =
                     simd_load_int32s(
-                        (zs_gpu_s32s + simd_step_i));
+                        (anim_zs_gpu_s32s + simd_step_i));
                 
                 SIMD_INT32 simd_cur_s32s =
                     simd_load_int32s(
@@ -809,7 +858,7 @@ void T1_zsprite_apply_endpoint_anim(
                 
                 SIMD_FLOAT simd_flags_f32 =
                     simd_load_f32s(
-                        ((f32 *)zs_gpu_s32s + simd_step_i));
+                        ((f32 *)anim_zs_gpu_s32s + simd_step_i));
                 
                 simd_flags_f32 = simd_cmpeq_f32s(
                     simd_flags_f32,

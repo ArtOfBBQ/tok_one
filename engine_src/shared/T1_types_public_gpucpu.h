@@ -3,7 +3,7 @@
 
 #include "T1_stdint.h"
 
-#define T1_TEX_NONE 61234
+#define T1_TEX_NONE 32109
 
 typedef union {
     struct {

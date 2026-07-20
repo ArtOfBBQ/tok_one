@@ -7,14 +7,13 @@
 // retired objects are unaffected by animations
 #define T1_ID_RETIRED_BUT_NOT_DELETED 20501
 
-#define T1_ANIM_NO_EFFECT 0xFFFF
+#define T1_ANIM_NO_EFFECT 0x0FFFFFFF
 
 // Basic quads and cubes are predefined, they can be used without registering
 // an .obj file.
 #define T1_BASIC_QUAD_MESH_ID 0
 #define T1_BASIC_CUBE_MESH_ID 1
 
-#define T1_TEX_NONE 61234
 typedef u16 T1Tex;
 
 typedef enum : u16 {

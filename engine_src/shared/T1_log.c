@@ -161,6 +161,7 @@ T1_log_dump_and_crash(
             T1_log_crash_msg[i] = crash_message[i];
             i++;
         }
+        
         T1_log_crash_msg[i] = '\0';
     }
     

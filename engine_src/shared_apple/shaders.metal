@@ -458,16 +458,16 @@ float4 get_lit(
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    s16 mix_rv_i = zs->s32s.mix_rv_and_mix_tex >> 16;
-    u16 mix_tex = (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF);
+    u16 mix_tex = zs->s32s.mix_rv_and_mix_tex >> 16;
+    s16 mix_rv_i = (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF);
     s16 mix_array_i = mix_tex >> 11;
     s16 mix_slice_i = mix_tex & 0x07FF;
     if (
         mix_rv_i >= 0 &&
         (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF) !=
             T1_TEX_NONE &&
-        mix_array_i >= 0 &&
-        mix_slice_i >= 0)
+         mix_array_i >= 0 &&
+         mix_slice_i >= 0)
     {
         const device T1GPURenderView * rfv =
             &render_views[mix_rv_i];
@@ -493,12 +493,12 @@ float4 get_lit(
         
         refl_uv[1] = 1.0 - refl_uv[1];
         
-        f32 mix_strength = 0.95f;
+        f32 mix_strength = 0.85f;
         
-        // f32 fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
-        // f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
-        // f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
-        // mix_strength *= fade;
+        f32 fade_x = refl_uv.x * (1.0f - refl_uv.x) * 8.0f;
+        f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
+        f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
+        mix_strength *= fade;
         
         const half4 color_sample =
             color_textures[mix_array_i].
@@ -562,7 +562,7 @@ float4 get_lit(
                 light_clip_pos.z / light_clip_pos.w;
             
             shadow_factors =
-                (frag_depth <= shadow_depth + SHADOW_BIAS) ?
+                (frag_depth <= shadow_depth + T1_SHADOW_BIAS) ?
                 1.0f :
                 vector_float4(
                     globals->in_shadow_mults[0],
