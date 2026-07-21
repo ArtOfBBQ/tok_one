@@ -263,12 +263,12 @@ static void prefetch_label_lines(
 }
 
 void T1_text_request_label_offset_around(
-    const s32 with_id,
+    u32 with_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width)
+    f32 mid_x_pixelspace,
+    f32 mid_y_pixelspace,
+    f32 z,
+    f32 max_width)
 {
     T1_log_assert(max_width > 0.0f);
     T1_log_assert(T1_text_props->font_height > 0);
@@ -319,7 +319,7 @@ void T1_text_request_label_offset_around(
             
             T1_texquad_fetch_next(&letter);
             
-            letter.gpu->s32s = T1_text_props->s32s;
+            letter.gpu->u32s = T1_text_props->s32s;
             letter.gpu->f32s = T1_text_props->f32s;
             
             letter.gpu->f32s.xyz[0] =
@@ -359,7 +359,7 @@ void T1_text_request_label_offset_around(
             T1_tex_set_array_i(&tex, 0);
             T1_tex_set_slice_i(
                 &tex, (s16)text_to_draw[j] - '!');
-            letter.gpu->s32s.reserved_and_tex = 0x00000000 | tex;
+            letter.gpu->u32s.reserved_and_tex = 0x00000000 | tex;
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
@@ -373,12 +373,12 @@ void T1_text_request_label_offset_around(
 
 void
 T1_text_request_label_around_x_at_top_y(
-    const s32 with_object_id,
+    u32 with_T1_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 top_y_pixelspace,
-    const f32 z,
-    const f32 max_width)
+    f32 mid_x_pixelspace,
+    f32 top_y_pixelspace,
+    f32 z,
+    f32 max_width)
 {
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -387,8 +387,8 @@ T1_text_request_label_around_x_at_top_y(
     T1_log_assert(lines_size < MAX_LINES);
     
     T1_text_request_label_offset_around(
-        /* const s32 with_id: */
-            with_object_id,
+        /* const u32 with_id: */
+            with_T1_id,
         /* const char * text_to_draw: */
             text_to_draw,
         /* const f32 mid_x_pixelspace: */
@@ -403,7 +403,7 @@ T1_text_request_label_around_x_at_top_y(
 }
 
 void T1_text_request_label_around(
-    const s32 with_id,
+    const u32 with_T1_id,
     const char * text_to_draw,
     const f32 mid_x_pixelspace,
     const f32 mid_y_pixelspace,
@@ -415,7 +415,7 @@ void T1_text_request_label_around(
     
     T1_text_request_label_offset_around(
         /* const s32 with_id: */
-            with_id,
+            with_T1_id,
         /* const char * text_to_draw: */
             text_to_draw,
         /* const f32 mid_x_pixelspace: */
@@ -429,7 +429,7 @@ void T1_text_request_label_around(
 }
 
 void T1_text_request_label_renderable(
-    const s32 with_id,
+    const u32 with_T1_id,
     const char * text_to_draw,
     const f32 left_x_pixelspace,
     const f32 top_y_pixelspace,
@@ -526,7 +526,7 @@ void T1_text_request_label_renderable(
         
         if (!T1_log_app_running) { return; }
         
-        letter.gpu->s32s = T1_text_props->s32s;
+        letter.gpu->u32s = T1_text_props->s32s;
         letter.gpu->f32s = T1_text_props->f32s;
         
         letter.gpu->f32s.xyz[0] =
@@ -540,7 +540,7 @@ void T1_text_request_label_renderable(
         letter.gpu->f32s.wh[0] = letter_width;
         letter.gpu->f32s.wh[1] = letter_height;
         
-        letter.cpu->T1_id = with_id;
+        letter.cpu->T1_id = with_T1_id;
         
         T1Tex tex;
         s16 charval = text_to_draw[i] - '!';
@@ -555,8 +555,8 @@ void T1_text_request_label_renderable(
             continue;
         }
         
-        letter.gpu->s32s.reserved_and_tex = tex;
-        letter.gpu->s32s.touch_id = T1_text_props->s32s.touch_id;
+        letter.gpu->u32s.reserved_and_tex = tex;
+        letter.gpu->u32s.touch_id = T1_text_props->s32s.touch_id;
         
         letter.cpu->offset_xyz[0] = 
             T1_render_view_screen_width_to_width_noz(
@@ -591,7 +591,7 @@ void T1_text_request_label_renderable(
             T1_texquad_fetch_next(&back);
             *back.cpu = *letter.cpu;
             *back.gpu = *letter.gpu;
-            back.gpu->s32s.reserved_and_tex = T1_TEX_NONE;
+            back.gpu->u32s.reserved_and_tex = T1_TEX_NONE;
             back.gpu->f32s.rgba[0] = 0.15f;
             back.gpu->f32s.rgba[1] = 0.15f;
             back.gpu->f32s.rgba[2] = 0.60f;
@@ -606,15 +606,15 @@ void T1_text_request_label_renderable(
 }
 
 void T1_text_request_label_leftx_toplinemidy(
-    const s32 with_object_id,
+    u32 with_T1_id,
     const char * text_to_draw,
-    const f32 left_pixelspace,
-    const f32 topline_mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width)
+    f32 left_pixelspace,
+    f32 topline_mid_y_pixelspace,
+    f32 z,
+    f32 max_width)
 {
     T1_text_request_label_renderable(
-        with_object_id,
+        with_T1_id,
         text_to_draw,
         left_pixelspace,
         topline_mid_y_pixelspace,
@@ -632,7 +632,7 @@ void T1_text_request_debug_text(const char * text)
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = -1;
+    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
     T1_text_request_label_renderable(
         /* with_id               : */
             T1_ID_DEBUG_TEXT,
@@ -702,7 +702,7 @@ void T1_text_request_fps(
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = -1;
+    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
     
     T1_text_request_label_renderable(
         /* with_id               : */
@@ -735,7 +735,7 @@ void T1_text_request_top_touch_id(
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = -1;
+    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
     
     T1_text_request_label_renderable(
         /* with_id               : */

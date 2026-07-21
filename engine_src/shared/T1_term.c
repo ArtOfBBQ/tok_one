@@ -28,8 +28,8 @@ typedef struct {
     f32 font_color[4];
     f32 font_rgb_cap[3];
     f32 background_color[4];
-    s32 back_object_id;
-    s32 labels_object_id; // INT32_MAX - 1;
+    u32 back_T1_id;
+    u32 labels_T1_id; // INT32_MAX - 1;
     s32 scene_id;
     char cur_command[T1_TERM_SINGLE_LINE_MAX];
     char history[T1_TERM_HIST_CAP];
@@ -67,7 +67,7 @@ static void T1_term_describe_zpolygon(
 }
 
 static void T1_term_redraw_backgrounds(void) {
-    T1_trms->back_object_id = INT32_MAX;
+    T1_trms->back_T1_id = INT32_MAX;
     
     f32 command_history_height =
         T1_render_views->cpu[0].height -
@@ -81,7 +81,7 @@ static void T1_term_redraw_backgrounds(void) {
     
     T1TexQuadRequest input_req;
     T1_texquad_fetch_next(&input_req);
-    input_req.cpu->T1_id = T1_trms->back_object_id;
+    input_req.cpu->T1_id = T1_trms->back_T1_id;
     input_req.gpu->f32s.xyz[0] = 0.0f;
     input_req.gpu->f32s.xyz[1] =
         T1_render_view_screen_y_to_y_noz(
@@ -93,7 +93,7 @@ static void T1_term_redraw_backgrounds(void) {
     input_req.gpu->f32s.wh[1] =
         T1_render_view_screen_height_to_height_noz(
             T1_TERM_INPUT_BOX_HEIGHT);
-    input_req.gpu->s32s.reserved_and_tex =
+    input_req.gpu->u32s.reserved_and_tex =
         0x00000000 | T1_TEX_NONE;
     input_req.gpu->f32s.rgba[0] =
         T1_trms->background_color[0];
@@ -123,7 +123,7 @@ static void T1_term_redraw_backgrounds(void) {
         T1_render_view_screen_height_to_height_noz(
             command_history_height);
     history_req.cpu->T1_id = INT32_MAX;
-    history_req.gpu->s32s.touch_id = -1;
+    history_req.gpu->u32s.touch_id = T1_TOUCH_ID_NONE;
     history_req.gpu->f32s.rgba[0] =
         T1_trms->background_color[0];
     history_req.gpu->f32s.rgba[1] =
@@ -140,11 +140,11 @@ static void T1_term_render(void) {
         return;
     }
     
-    T1_texquad_delete(T1_trms->back_object_id);
+    T1_texquad_delete(T1_trms->back_T1_id);
     
     T1_term_redraw_backgrounds();
     
-    T1_texquad_delete(T1_trms->labels_object_id);
+    T1_texquad_delete(T1_trms->labels_T1_id);
     
     f32 previous_font_height =
         T1_text_props->font_height;
@@ -195,12 +195,12 @@ static void T1_term_render(void) {
         T1_trms->font_color[2];
     T1_text_props->f32s.rgba[3] =
         T1_trms->font_color[3];
-    T1_text_props->s32s.touch_id = -1;
+    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
     
     if (T1_trms->history[char_offset] != '\0') {
         T1_text_request_label_renderable(
             /* const s32 with_object_id: */
-                T1_trms->labels_object_id,
+                T1_trms->labels_T1_id,
             /* const char * text_to_draw: */
                 T1_trms->history + char_offset,
             /* const f32 left_pixelspace: */
@@ -225,11 +225,11 @@ static void T1_term_render(void) {
         return;
     }
     
-    T1_text_props->s32s.touch_id = -1;
+    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
     // the terminal's current input as a label
     T1_text_request_label_renderable(
         /* with_object_id: */
-            T1_trms->labels_object_id,
+            T1_trms->labels_T1_id,
         /* const char * text_to_draw: */
             T1_trms->cur_command,
         /* const f32 left_pixelspace: */
@@ -252,14 +252,14 @@ static void T1_term_render(void) {
 }
 
 static void T1_term_destroy_all(void) {
-    if (T1_trms->back_object_id >= 0) {
+    if (T1_trms->back_T1_id >= 0) {
         T1_texquad_delete(
-            T1_trms->back_object_id);
+            T1_trms->back_T1_id);
     }
     
-    if (T1_trms->labels_object_id >= 0) {
+    if (T1_trms->labels_T1_id >= 0) {
         T1_texquad_delete(
-            T1_trms->labels_object_id);
+            T1_trms->labels_T1_id);
     }
 }
 

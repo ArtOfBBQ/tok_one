@@ -4,8 +4,11 @@
 #include "T1_stdint.h"
 #include "T1_types_public_gpucpu.h"
 
+#define T1_ID_NONE 0xFFFFFFFF
 // retired objects are unaffected by animations
 #define T1_ID_RETIRED_BUT_NOT_DELETED 20501
+
+#define T1_TOUCH_ID_NONE 0xFFFFFFFF
 
 #define T1_ANIM_NO_EFFECT 0x0FFFFFFF
 #define T1_ANIM_HIT_EVERYTHING 0x0AAAAAAA
@@ -232,7 +235,7 @@ typedef struct {
 
 typedef struct {
     T1GPUTexQuadf32 f32s;
-    T1GPUTexQuads32 s32s;
+    T1GPUTexQuadu32 s32s;
     f32             font_height;
     s32             highlight_i;
     s32             highlight_size;
@@ -241,7 +244,7 @@ typedef struct {
 
 typedef struct {
     f32 offset_xyz[3];
-    s32 T1_id;
+    u32 T1_id;
     u8 one_frame_only;
     u8 committed;
     u8 visible;

@@ -58,10 +58,10 @@ typedef struct ActiveUIElement {
     
     s64 clicked_arg;
     
-    s32 back_T1_id;
-    s32 pin_T1_id;
-    s32 label_T1_id;
-    s32 touch_id;
+    u32 back_T1_id;
+    u32 pin_T1_id;
+    u32 label_T1_id;
+    u32 touch_id;
     
     void * slider_linked_value;
     void (* clicked_funcptr)(s64);
@@ -424,7 +424,11 @@ void T1_ui_widget_requester_set_screen_y(s32 y) {
 void T1_ui_widget_requester_set_z(f32 z) {
     T1_ui_widget_next_props->z = z;
 }
-void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max) {
+void T1_ui_widget_requester_set_custom_minmax_f32(
+    b8 active,
+    f32 min,
+    f32 max)
+{
     T1_ui_widget_next_props->custom_min_max_vals = active;
     T1_ui_widget_next_props->custom_fmin = min;
     T1_ui_widget_next_props->custom_fmax = max;
@@ -781,9 +785,9 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
 #endif
 
 void T1_ui_widget_request_slider(
-    const s32 back_T1_id,
-    const s32 label_T1_id,
-    const s32 pin_T1_id,
+    const u32 back_T1_id,
+    const u32 label_T1_id,
+    const u32 pin_T1_id,
     void * linked_value_ptr)
 {
     T1_log_assert(T1_ui_widget_next_props != NULL);
@@ -893,7 +897,7 @@ void T1_ui_widget_request_slider(
                 pin_height_screen);
     slider_pin.cpu->T1_id = pin_T1_id;
     
-    slider_pin.gpu->s32s.reserved_and_tex =
+    slider_pin.gpu->u32s.reserved_and_tex =
         0x00000000 | next_ae->props.slider_pin_tex;
     
     slider_pin.gpu->f32s.rgba[0] =
@@ -904,7 +908,7 @@ void T1_ui_widget_request_slider(
         T1_ui_widget_next_props->pin_rgba[2];
     slider_pin.gpu->f32s.rgba[3] =
         T1_ui_widget_next_props->pin_rgba[3];
-    slider_pin.gpu->s32s.touch_id =
+    slider_pin.gpu->u32s.touch_id =
         next_ae->touch_id;
     
     slider_pin.gpu->f32s.xyz[0] = xyz_pos[0];
@@ -915,8 +919,8 @@ void T1_ui_widget_request_slider(
 }
 
 void T1_ui_widget_request_button(
-    const s32 button_object_id,
-    const s32 button_label_id,
+    const u32 button_object_id,
+    const u32 button_label_id,
     void (* onclick_funcptr)(s64),
     const s64 clicked_arg)
 {
@@ -937,7 +941,7 @@ void T1_ui_widget_request_button(
     next_ae->clicked_funcptr = onclick_funcptr;
     
     next_ae->back_T1_id = button_object_id;
-    next_ae->pin_T1_id = -1;
+    next_ae->pin_T1_id = T1_ID_NONE;
     next_ae->label_T1_id = button_label_id;
     
     next_ae->deleted = false;
@@ -965,7 +969,7 @@ void T1_ui_widget_request_button(
                 height_screen);
     
     button_request.cpu->T1_id = button_object_id;
-    button_request.gpu->s32s.touch_id = next_ae->touch_id;
+    button_request.gpu->u32s.touch_id = next_ae->touch_id;
     button_request.gpu->f32s.rgba[0] = 0.0f;
     button_request.gpu->f32s.rgba[1] = 0.0f;
     button_request.gpu->f32s.rgba[2] = 0.65f;
@@ -973,8 +977,7 @@ void T1_ui_widget_request_button(
     T1_texquad_commit(&button_request);
 }
 
-void T1_ui_widget_delete(const s32 with_T1_id)
-{
+void T1_ui_widget_delete(u32 with_T1_id) {
     for (
         u32 i = 0;
         i < T1_ui_widget_list_size;
@@ -983,7 +986,7 @@ void T1_ui_widget_delete(const s32 with_T1_id)
         if (T1_ui_widget_list[i].back_T1_id == with_T1_id)
         {
             T1_ui_widget_list[i].slider_linked_value = NULL;
-            T1_ui_widget_list[i].touch_id = -1;
+            T1_ui_widget_list[i].touch_id = T1_TOUCH_ID_NONE;
             T1_ui_widget_list[i].deleted = true;
         }
     }

@@ -66,7 +66,7 @@ typedef struct
     float4 bitangent_viewspace;
     u32 locked_vertex_i [[ flat ]];
     u32 polygon_i [[ flat ]];
-    s32 touchable_id [[ flat ]];
+    u32 touch_id [[ flat ]];
 } RasterizerPixel;
 
 f32 get_distance_f3(
@@ -189,7 +189,7 @@ vertex_shader(
         (ic * out.worldpos) +
         (1.0f - ic) * out.viewpos;
     
-    out.touchable_id = zs->s32s.touch_id;
+    out.touch_id = zs->u32s.touch_id;
     
     out.texcoord = vector_float2(lv->uv[0], lv->uv[1]);
     
@@ -268,30 +268,28 @@ z_prepass_fragment_shader(
     return lit_color;
 }
 
-
-
-struct FragmentAndTouchableOut {
+struct FragmentAndTouchOut {
     half4 color [[color(0)]];
-    half4 touchable_id [[color(1)]];
+    half4 touch_id [[color(1)]];
 };
 
 /*
-We want to output an s32 for 1 of our render targets (touchable_id), but
+We want to output an s32 for 1 of our render targets (touch_id), but
 Metal enforces you use the same data type when you render to multiple targets
 simultaneously. That's why we're packing our s32 inside of RGBA8Unorm slots. On
 the CPU side we'll retrieve them and put them back together as an s32.
 */
-static FragmentAndTouchableOut pack_color_and_touchable_id(
+static FragmentAndTouchOut pack_color_and_touch_id(
     float4 color,
-    s32 touchable_id)
+    u32 touch_id)
 {
-    FragmentAndTouchableOut out;
+    FragmentAndTouchOut out;
     
     out.color = (half4)color;
     
-    u32 uid = as_type<u32>(touchable_id);
+    u32 uid = as_type<u32>(touch_id);
     
-    out.touchable_id = half4(
+    out.touch_id = half4(
         f16((uid      ) & 0xFFu) / 255.0h,
         f16((uid >>  8) & 0xFFu) / 255.0h,
         f16((uid >> 16) & 0xFFu) / 255.0h,
@@ -358,7 +356,7 @@ float4 get_lit(
     const device T1GPULight * lights,
     const device T1GPUzSprite * zs,
     const device T1GPUMatf32 * matf32,
-    const device T1GPUMats32 * mati32,
+    const device T1GPUMatu32 * mati32,
     const device T1GPUPostProcConsts * globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
@@ -458,13 +456,13 @@ float4 get_lit(
     }
     
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    u16 mix_tex = zs->s32s.mix_rv_and_mix_tex >> 16;
-    s16 mix_rv_i = (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF);
+    u16 mix_tex = zs->u32s.mix_rv_and_mix_tex >> 16;
+    s16 mix_rv_i = (zs->u32s.mix_rv_and_mix_tex & 0x0000FFFF);
     s16 mix_array_i = mix_tex >> 11;
     s16 mix_slice_i = mix_tex & 0x07FF;
     if (
         mix_rv_i >= 0 &&
-        (zs->s32s.mix_rv_and_mix_tex & 0x0000FFFF) !=
+        (zs->u32s.mix_rv_and_mix_tex & 0x0000FFFF) !=
             T1_TEX_NONE &&
          mix_array_i >= 0 &&
          mix_slice_i >= 0)
@@ -735,7 +733,7 @@ float4 get_lit(
     return lit_color;
 }
 
-fragment FragmentAndTouchableOut
+fragment FragmentAndTouchOut
 fragment_shader(
     const RasterizerPixel in [[stage_in]],
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
@@ -756,7 +754,7 @@ fragment_shader(
         render_views [[ buffer(3) ]],
     constant u32 &camera_i [[buffer(4)]],
     const device T1GPUMatf32 * const_mats_f32 [[ buffer(6) ]],
-    const device T1GPUMats32 * const_mats_i32 [[ buffer(8) ]],
+    const device T1GPUMatu32 * const_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -777,9 +775,9 @@ fragment_shader(
             &polygons[in.polygon_i].base_mat_f32 :
             &const_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
-    const device T1GPUMats32 * mati32 =
+    const device T1GPUMatu32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_s32 :
+            &polygons[in.polygon_i].base_mat_u32 :
             &const_mats_i32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
     
@@ -828,13 +826,13 @@ fragment_shader(
     
     lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
     
-    FragmentAndTouchableOut packed_out =
-        pack_color_and_touchable_id(lit_color, in.touchable_id);
+    FragmentAndTouchOut packed_out =
+        pack_color_and_touch_id(lit_color, in.touch_id);
     
     return packed_out;
 }
 
-fragment FragmentAndTouchableOut
+fragment FragmentAndTouchOut
 alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
@@ -852,7 +850,7 @@ alphablending_fragment_shader(
     const device T1GPURenderView * render_views [[ buffer(3) ]],
     constant u32 &camera_i [[buffer(4)]],
     const device T1GPUMatf32 * locked_mats_f32 [[ buffer(6) ]],
-    const device T1GPUMats32 * locked_mats_i32 [[ buffer(8) ]],
+    const device T1GPUMatu32 * locked_mats_i32 [[ buffer(8) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -874,9 +872,9 @@ alphablending_fragment_shader(
             &polygons[in.polygon_i].base_mat_f32 :
             &locked_mats_f32[locked_vertices[in.locked_vertex_i].
                 locked_materials_head_i + mat_i];
-    const device T1GPUMats32 * mati32 =
+    const device T1GPUMatu32 * mati32 =
         mat_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_mat_s32 :
+            &polygons[in.polygon_i].base_mat_u32 :
             &locked_mats_i32[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
@@ -911,7 +909,7 @@ alphablending_fragment_shader(
     }
     
     lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
-    return pack_color_and_touchable_id(lit_color, in.touchable_id);
+    return pack_color_and_touch_id(lit_color, in.touch_id);
 }
 
 // TODO: just pass this directly to fragment shader
@@ -1240,7 +1238,7 @@ typedef struct
     float2 uv;
     s32 array_i [[ flat ]];
     s32 slice_i [[ flat ]];
-    s32 touch_id [[ flat ]];
+    u32 touch_id [[ flat ]];
 } FlatTexQuadPixel;
 
 vertex FlatTexQuadPixel
@@ -1297,7 +1295,7 @@ flat_texquad_vertex_shader(
     
     out.uv = uvs[corner_id];
     
-    ushort tex = quads[quad_i].s32s.reserved_and_tex & 0x0000FFFF;
+    ushort tex = quads[quad_i].u32s.reserved_and_tex & 0x0000FFFF;
     
     if (tex == T1_TEX_NONE) {
         out.array_i = -1;
@@ -1307,12 +1305,12 @@ flat_texquad_vertex_shader(
         out.slice_i = tex & 0x07FF;    
     }
     
-    out.touch_id = quads[quad_i].s32s.touch_id;
+    out.touch_id = quads[quad_i].u32s.touch_id;
     
     return out;
 }
 
-fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
+fragment FragmentAndTouchOut flat_texquad_fragment_shader(
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP> color_textures,
     const FlatTexQuadPixel in [[stage_in]])
 {
@@ -1335,8 +1333,8 @@ fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
     
     if (color_sample[3] < 0.03f) { discard_fragment(); }
     
-    FragmentAndTouchableOut packed_out =
-        pack_color_and_touchable_id(
+    FragmentAndTouchOut packed_out =
+        pack_color_and_touch_id(
             color_sample * in.rgba * in.rgba[3],
             in.touch_id);
     

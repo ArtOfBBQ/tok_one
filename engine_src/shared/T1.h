@@ -111,11 +111,11 @@ T1_id
 #define T1_ID_FIRST_NONUI 1011
 #define T1_ID_LAST_UI_TOUCH 1000
 #define T1_ID_FIRST_NONUI_TOUCH 1001
-s32  T1_id_next_ui_element_id(void);
-s32  T1_id_next_nonui_id(void);
-s32  T1_id_next_ui_element_touch_id(void);
+u32  T1_id_next_ui_element_id(void);
+u32  T1_id_next_nonui_id(void);
+u32  T1_id_next_ui_element_touch_id(void);
 void T1_id_clear_ui_element_touch_ids(void);
-s32  T1_id_next_nonui_touch_id(void);
+u32  T1_id_next_nonui_touch_id(void);
 
 /*
 RANDOM NUMBERS
@@ -139,7 +139,7 @@ void  T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val);
 void  T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val);
 void  T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val);
 // to unclamp, clamp to T1_id = -1
-void  T1_cam_set_clamped_to_T1_id(s32 cam_i, s32 T1_id);
+void  T1_cam_set_clamped_to_T1_id(s32 cam_i, u32 T1_id);
 void  T1_cam_set_movement_enabled(s32 cam_i, u8 newval);
 void  T1_cam_delete(s32 cam_i);
 void  T1_cam_delete_all(void);
@@ -162,7 +162,7 @@ f32 T1_screen_width_to_width_noz(f32 screen_w);
 f32 T1_screen_height_to_height_noz(f32 screen_h);
 
 void T1_make_shadowmap_and_attach_to_light(
-    s32 T1_id, u32 w, u32 h);
+    u32 T1_id, u32 w, u32 h);
 
 void T1_cam_create_main_view(u32 new_w, u32 new_h);
 void T1_make_reflection_cam(
@@ -234,15 +234,15 @@ the font properties etc. for your next label
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_request_label_offset_around(
-    s32 with_T1_id, const c8 * text,
+    u32 with_T1_id, const c8 * text,
     f32 mid_screen_x, f32 mid_screen_y, f32 z,
     f32 max_width);
 void T1_text_request_label_leftx_toplinemidy(
-    s32 with_T1_id, const c8 * text,
+    u32 with_T1_id, const c8 * text,
     f32 screen_left, f32 topline_mid_screen_y, f32 z,
     f32 max_width);
 void T1_text_request_label_renderable(
-    s32 with_T1_id,
+    u32 with_T1_id,
     const c8 * text,
     f32 left_x_pixelspace,
     f32 top_y_pixelspace,
@@ -250,11 +250,11 @@ void T1_text_request_label_renderable(
     f32 tab_width,
     f32 max_width);
 void T1_text_request_label_around_x_at_top_y(
-    s32 with_T1_id, const c8 * text_to_draw,
+    u32 with_T1_id, const c8 * text_to_draw,
     f32 screen_mid_x, f32 screen_top_y, f32 z,
     f32 max_width);
 void T1_text_request_label_around(
-    s32 with_T1_id, const c8 * text_to_draw,
+    u32 with_T1_id, const c8 * text_to_draw,
     f32 screen_mid_x, f32 screen_mid_y, f32 z,
     f32 max_width);
 
@@ -281,9 +281,9 @@ void T1_ui_widget_requester_set_z(f32 z);
 void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max);
 void T1_ui_widget_requester_set_linked_type(T1MetaType type);
 void T1_ui_widget_request_slider(
-    s32 background_T1_id, s32 label_T1_id, s32 pin_T1_id,
+    u32 background_T1_id, u32 label_T1_id, u32 pin_T1_id,
     void * linked_value_ptr);
-void T1_ui_widget_delete(s32 T1_id);
+void T1_ui_widget_delete(u32 T1_id);
 
 /*
 3D models
@@ -297,7 +297,7 @@ TexQuads (textured 2D quads)
 */
 void T1_texquad_fetch_next(T1TexQuadRequest * stack_recip);
 void T1_texquad_commit(T1TexQuadRequest * to_commit);
-void T1_texquad_delete(s32 T1_id);
+void T1_texquad_delete(u32 T1_id);
 void T1_texquad_delete_all(void);
 
 /*
@@ -316,7 +316,7 @@ z-Lights (3D lights)
 */
 T1zLight * T1_zlight_next(void);
 void T1_zlight_commit(T1zLight * to_request);
-void T1_zlight_delete(s32 T1_id);
+void T1_zlight_delete(u32 T1_id);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD

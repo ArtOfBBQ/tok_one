@@ -26,7 +26,7 @@ u8 T1_gameloop_loading_texs = false;
 
 static u64 gameloop_previous_time = 0;
 static u64 gameloop_frame_no = 0;
-static s32 loading_text_sprite_id = -1;
+static u32 loading_text_T1_id = T1_ID_NONE;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
@@ -136,8 +136,8 @@ void T1_gameloop_update_before_render_pass(
     if (
         !T1_gameloop_active && T1_gameloop_loading_texs)
     {
-        if (loading_text_sprite_id < 0) {
-            loading_text_sprite_id =
+        if (loading_text_T1_id < 0) {
+            loading_text_T1_id =
                 T1_id_next_ui_element_id();
         }
         

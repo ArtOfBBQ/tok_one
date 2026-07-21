@@ -19,16 +19,16 @@ void T1_anim_resolve(void);
 typedef struct {
     T1GPUzSpritef32 * zs_gpu_f32s;
     T1CPUzSpritef32 * zs_cpu_f32s;
-    T1GPUzSprites32 * zs_gpu_s32s;
+    T1GPUzSpriteu32 * zs_gpu_u32s;
     T1GPUTexQuadf32 * tq_gpu_f32s;
-    T1GPUTexQuads32 * tq_gpu_s32s;
+    T1GPUTexQuadu32 * tq_gpu_u32s;
     
     u64 duration_us;
     u64 pause_us;
     
     u32 runs;
-    s32 target_T1_id;
-    s32 target_touch_id;
+    u32 target_T1_id;
+    u32 target_touch_id;
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     char original_func_name[128];
@@ -73,39 +73,38 @@ void T1_anim_commit(
     );
 
 void T1_anim_shatter_and_destroy(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us);
 
 void T1_anim_evaporate_and_destroy(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us);
 
 void T1_anim_fade_and_destroy(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us);
 
 void T1_anim_fade_destroy_all(u64 duration_us);
 
 void T1_anim_fade_to(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us,
     f32 target_alpha);
 
 void T1_anim_dud_dance(
-    s32 T1_id,
+    u32 T1_id,
     f32 magnitude);
 
 void T1_anim_bump(
-    s32 T1_id,
+    u32 T1_id,
     u32 wait);
 
 void T1_anim_delete_all(void);
 
-void T1_anim_delete_all_anims_targeting(const
-    s32 T1_id);
+void T1_anim_delete_all_anims_targeting(u32 T1_id);
 
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
-    s32 T1_id,
+    u32 T1_id,
     f32 new_ignore_camera);
 
 #elif T1_ANIM_ACTIVE == T1_INACTIVE

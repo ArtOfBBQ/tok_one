@@ -10,6 +10,7 @@
 #include "T1_render_view.h"
 #include "T1_zsprite.h"
 #include "T1_texquad.h"
+#include "T1_zlight.h"
 
 #if T1_ANIM_ACTIVE == T1_ACTIVE
 
@@ -29,9 +30,9 @@ typedef struct {
     f32 already_applied_t;
     u16 zs_gpu_f32s_store_i;
     u16 zs_cpu_f32s_store_i;
-    u16 zs_gpu_s32s_store_i;
+    u16 zs_gpu_u32s_store_i;
     u16 tq_gpu_f32s_store_i;
-    u16 tq_gpu_s32s_store_i;
+    u16 tq_gpu_u32s_store_i;
     b8 endpoints_not_deltas;
     b8 deleted;
     b8 committed;
@@ -49,21 +50,21 @@ static void T1_anim_sanity_check(T1AnimPrivate * a) {
                 T1_log_assert(
                     a->public.zs_cpu_f32s->bloom_on != T1_ANIM_NO_EFFECT);
             }
-            T1_log_assert(a->public.zs_gpu_s32s == NULL);
+            T1_log_assert(a->public.zs_gpu_u32s == NULL);
         } else {
-            if (a->public.zs_gpu_s32s) {
+            if (a->public.zs_gpu_u32s) {
                 f32 mix_rv_and_mix_tex_f32;
                 T1_std_memcpy(
                     &mix_rv_and_mix_tex_f32,
-                    &a->public.zs_gpu_s32s->mix_rv_and_mix_tex,
+                    &a->public.zs_gpu_u32s->mix_rv_and_mix_tex,
                     4);
                 if (mix_rv_and_mix_tex_f32 != T1_ANIM_NO_EFFECT) {
-                    s32 mix_rv = a->public.zs_gpu_s32s->mix_rv_and_mix_tex >> 16;
+                    s32 mix_rv = a->public.zs_gpu_u32s->mix_rv_and_mix_tex >> 16;
                     T1_log_assert(mix_rv < T1_RENDER_VIEW_CAP);
                     T1_log_assert(mix_rv >= -1);    
                 }
                 
-                T1Tex mix_tex = a->public.zs_gpu_s32s->mix_rv_and_mix_tex & 0x0000FFFF;
+                T1Tex mix_tex = a->public.zs_gpu_u32s->mix_rv_and_mix_tex & 0x0000FFFF;
                 s16 mix_tex_array_i = T1_tex_to_array_i(mix_tex);
                 s16 mix_tex_slice_i = T1_tex_to_slice_i(mix_tex);
                 if (mix_tex != T1_TEX_NONE) {
@@ -71,7 +72,7 @@ static void T1_anim_sanity_check(T1AnimPrivate * a) {
                     T1_log_assert(mix_tex_slice_i < T1_TEX_SLICES_CAP);
                 }
                 
-                // T1_log_assert(a->public.zs_gpu_s32s->touch_id < 50000);
+                // T1_log_assert(a->public.zs_gpu_u32s->touch_id < 50000);
             }
         }
     }
@@ -85,10 +86,10 @@ static void T1_anim_sanity_check(T1AnimPrivate * a) {
 
 typedef struct {
     T1GPUzSpritef32 zs_gpu_f32s_store[T1_ANIMS_CAP];
-    T1GPUzSprites32 zs_gpu_s32s_store[T1_ANIMS_CAP];
+    T1GPUzSpriteu32 zs_gpu_u32s_store[T1_ANIMS_CAP];
     T1CPUzSpritef32 zs_cpu_f32s_store[T1_ANIMS_CAP];
     T1GPUTexQuadf32 tq_gpu_f32s_store[T1_ANIMS_CAP];
-    T1GPUTexQuads32 tq_gpu_s32s_store[T1_ANIMS_CAP];
+    T1GPUTexQuadu32 tq_gpu_u32s_store[T1_ANIMS_CAP];
     T1GPUzSprite final_vals;
     T1GPUzSprite deltas[2];
     T1CPUzSpritef32 zsprite_final_pos_cpu;
@@ -163,8 +164,8 @@ static void T1_anim_construct(
         sizeof(T1AnimPrivate));
     T1_log_assert(!to_construct->committed);
     
-    to_construct->public.target_T1_id = -1;
-    to_construct->public.target_touch_id = -1;
+    to_construct->public.target_T1_id = T1_ID_NONE;
+    to_construct->public.target_touch_id = T1_TOUCH_ID_NONE;
     to_construct->public.runs = 1;
     
     T1_log_assert(!to_construct->deleted);
@@ -209,8 +210,8 @@ T1_anim_fetch_next_store_zs_cpu_f32s(u16 * store_i) {
     return out;
 }
 
-static T1GPUzSprites32 *
-T1_anim_fetch_next_store_zs_gpu_s32s(u16 * store_i) {
+static T1GPUzSpriteu32 *
+T1_anim_fetch_next_store_zs_gpu_u32s(u16 * store_i) {
     u16 i = 0;
     while (
         ((as->store_taken[i] >> 2) & 1) &&
@@ -223,9 +224,9 @@ T1_anim_fetch_next_store_zs_gpu_s32s(u16 * store_i) {
     *store_i = i;
     as->store_taken[i] |= (1 << 2);
     
-    T1GPUzSprites32 * out = &as->zs_gpu_s32s_store[i];
+    T1GPUzSpriteu32 * out = &as->zs_gpu_u32s_store[i];
     
-    T1_std_memset(out, 0, sizeof(T1GPUzSprites32));
+    T1_std_memset(out, 0, sizeof(T1GPUzSpriteu32));
     return out;
 }
 
@@ -249,8 +250,8 @@ T1_anim_fetch_next_store_tq_gpu_f32s(u16 * store_i) {
     return out;
 }
 
-static T1GPUTexQuads32 *
-T1_anim_fetch_next_store_tq_gpu_s32s(u16 * store_i) {
+static T1GPUTexQuadu32 *
+T1_anim_fetch_next_store_tq_gpu_u32s(u16 * store_i) {
     u16 i = 0;
     while ((as->store_taken[i] & 1) && i < T1_ANIMS_CAP) {
         i++;
@@ -260,9 +261,9 @@ T1_anim_fetch_next_store_tq_gpu_s32s(u16 * store_i) {
     *store_i = i;
     as->store_taken[i] |= 1;
     
-    T1GPUTexQuads32 * out = &as->tq_gpu_s32s_store[i];
+    T1GPUTexQuadu32 * out = &as->tq_gpu_u32s_store[i];
     
-    T1_std_memset(out, 0, sizeof(T1GPUTexQuads32));
+    T1_std_memset(out, 0, sizeof(T1GPUTexQuadu32));
     return out;
 }
 
@@ -270,9 +271,9 @@ T1Anim * T1_anim_request_next(
     b8 endpoints_not_deltas,
     b8 zs_gpu_f32s,
     b8 zs_cpu_f32s,
-    b8 zs_gpu_s32s,
+    b8 zs_gpu_u32s,
     b8 tq_gpu_f32s,
-    b8 tq_gpu_s32s)
+    b8 tq_gpu_u32s)
 {
     as->mutex_lock(as->mutex_id);
     
@@ -316,10 +317,10 @@ T1Anim * T1_anim_request_next(
                 &out->zs_cpu_f32s_store_i);
     }
     
-    if (zs_gpu_s32s) {
-        out->public.zs_gpu_s32s =
-            T1_anim_fetch_next_store_zs_gpu_s32s(
-                &out->zs_gpu_s32s_store_i);
+    if (zs_gpu_u32s) {
+        out->public.zs_gpu_u32s =
+            T1_anim_fetch_next_store_zs_gpu_u32s(
+                &out->zs_gpu_u32s_store_i);
     }
     
     if (tq_gpu_f32s) {
@@ -328,10 +329,10 @@ T1Anim * T1_anim_request_next(
                 &out->tq_gpu_f32s_store_i);
     }
     
-    if (tq_gpu_s32s) {
-        out->public.tq_gpu_s32s =
-            T1_anim_fetch_next_store_tq_gpu_s32s(
-                &out->tq_gpu_s32s_store_i);
+    if (tq_gpu_u32s) {
+        out->public.tq_gpu_u32s =
+            T1_anim_fetch_next_store_tq_gpu_u32s(
+                &out->tq_gpu_u32s_store_i);
     }
     
     if (endpoints_not_deltas) {
@@ -348,11 +349,11 @@ T1Anim * T1_anim_request_next(
         //            out->public.zs_cpu_f32s->bloom_on :
         //            -12345.0f;
         // T1_log_assert(bloom_on_now == bloom_on_b4);
-        if (out->public.zs_gpu_s32s) {
+        if (out->public.zs_gpu_u32s) {
             T1_std_memset_f32(
-                out->public.zs_gpu_s32s,
+                out->public.zs_gpu_u32s,
                 T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUzSprites32));
+                sizeof(T1GPUzSpriteu32));
         }
         // bloom_on_now = out->public.zs_cpu_f32s ?
         //     out->public.zs_cpu_f32s->bloom_on :
@@ -377,11 +378,11 @@ T1Anim * T1_anim_request_next(
         //     out->public.zs_cpu_f32s->bloom_on :
         //     -12345.0f;
         // T1_log_assert(bloom_on_now == bloom_on_b4);
-        if (out->public.tq_gpu_s32s) {
+        if (out->public.tq_gpu_u32s) {
             T1_std_memset_f32(
-                out->public.tq_gpu_s32s,
+                out->public.tq_gpu_u32s,
                 T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUTexQuads32));
+                sizeof(T1GPUTexQuadu32));
         }
         //        bloom_on_now = out->public.zs_cpu_f32s ?
         //            out->public.zs_cpu_f32s->bloom_on :
@@ -405,14 +406,14 @@ static void T1_anim_delete(T1AnimPrivate * a) {
     if (a->public.zs_cpu_f32s) {
         as->store_taken[a->zs_cpu_f32s_store_i] &= ~(1 << 3);
     }
-    if (a->public.zs_gpu_s32s) {
-        as->store_taken[a->zs_gpu_s32s_store_i] &= ~(1 << 2);
+    if (a->public.zs_gpu_u32s) {
+        as->store_taken[a->zs_gpu_u32s_store_i] &= ~(1 << 2);
     }
     if (a->public.tq_gpu_f32s) {
         as->store_taken[a->tq_gpu_f32s_store_i] &= ~(1 << 1);
     }
-    if (a->public.tq_gpu_s32s) {
-        as->store_taken[a->tq_gpu_s32s_store_i] &= ~(1);
+    if (a->public.tq_gpu_u32s) {
+        as->store_taken[a->tq_gpu_u32s_store_i] &= ~(1);
     }
     
     a->deleted = true;
@@ -450,6 +451,7 @@ static void T1_anim_resolve_single(
                 {
                     T1_zsprite_delete_all();
                     T1_texquad_delete_all();
+                    T1_zlight_delete_all();
                 } else {
                     T1_zsprite_delete(
                         a->public.target_T1_id);
@@ -524,13 +526,13 @@ static void T1_anim_resolve_single(
     if (a->endpoints_not_deltas) {
         if (
             a->public.zs_gpu_f32s ||
-            a->public.zs_gpu_s32s ||
+            a->public.zs_gpu_u32s ||
             a->public.zs_cpu_f32s)
         {
             T1_zsprite_apply_endpoint_anim(
-                /* s32 T1_id: */
+                /* u32 T1_id: */
                     a->public.target_T1_id,
-                /* s32 touch_id: */
+                /* u32 touch_id: */
                     a->public.target_touch_id,
                 /* f32 t_applied: */
                     t_applied,
@@ -538,19 +540,19 @@ static void T1_anim_resolve_single(
                     t_now,
                 /* f32 * goal_gpu_vals_f32: */
                     (f32 *)a->public.zs_gpu_f32s,
-                /* const s32 * goal_gpu_vals_s32: */
-                    (s32 *)a->public.zs_gpu_s32s,
+                /* const u32 * goal_gpu_vals_u32: */
+                    (u32 *)a->public.zs_gpu_u32s,
                 /* const f32 * goal_cpu_vals: */
                     (f32 *)a->public.zs_cpu_f32s);
         }
         if (
             a->public.tq_gpu_f32s ||
-            a->public.tq_gpu_s32s)
+            a->public.tq_gpu_u32s)
         {
             T1_texquad_apply_endpoint_anim(
-                /* s32 T1_id: */
+                /* u32 T1_id: */
                     a->public.target_T1_id,
-                /* s32 touch_id: */
+                /* u32 touch_id: */
                     a->public.target_touch_id,
                 /* f32 t_applied: */
                     t_applied,
@@ -558,19 +560,19 @@ static void T1_anim_resolve_single(
                     t_now,
                 /* const f32 * goal_gpu_vals_f32: */
                     (f32 *)a->public.tq_gpu_f32s,
-                /* const s32 * goal_gpu_vals_s32: */
-                    (s32 *)a->public.tq_gpu_s32s);
+                /* const u32 * goal_gpu_vals_u32: */
+                    (u32 *)a->public.tq_gpu_u32s);
         }
     } else {
         if (
             a->public.zs_gpu_f32s ||
-            a->public.zs_gpu_s32s ||
+            a->public.zs_gpu_u32s ||
             a->public.zs_cpu_f32s)
         {
             T1_zsprite_apply_anim_effects_to_id(
-                /* s32 T1_id: */
+                /* u32 T1_id: */
                     a->public.target_T1_id,
-                /* s32 touch_id: */
+                /* u32 touch_id: */
                     a->public.target_touch_id,
                 /* f32 t_applied: */
                     t_applied,
@@ -578,19 +580,19 @@ static void T1_anim_resolve_single(
                     t_now,
                 /* const f32 * anim_gpu_f32s: */
                     (f32 *)a->public.zs_gpu_f32s,
-                /* const s32 * anim_gpu_s32s: */
-                    (s32 *)a->public.zs_gpu_s32s,
+                /* const u32 * anim_gpu_u32s: */
+                    (u32 *)a->public.zs_gpu_u32s,
                 /* const f32 * anim_cpu_f32s: */
                     (f32 *)a->public.zs_cpu_f32s);
         }
         if (
             a->public.tq_gpu_f32s ||
-            a->public.tq_gpu_s32s)
+            a->public.tq_gpu_u32s)
         {
             T1_texquad_apply_anim_effects_to_id(
-                /* s32 T1_id: */
+                /* u32 T1_id: */
                     a->public.target_T1_id,
-                /* s32 touch_id: */
+                /* u32 touch_id: */
                     a->public.target_touch_id,
                 /* f32 t_applied: */
                     t_applied,
@@ -598,8 +600,8 @@ static void T1_anim_resolve_single(
                     t_now,
                 /* const f32 * anim_gpu_vals_f32: */
                     (f32 *)a->public.tq_gpu_f32s,
-                /* const s32 *anim_gpu_vals_s32: */
-                    (s32 *)a->public.tq_gpu_s32s);
+                /* const u32 * anim_gpu_vals_u32: */
+                    (u32 *)a->public.tq_gpu_u32s);
         }
     }
 }
@@ -659,7 +661,7 @@ void T1_anim_assert_anim_valid_before_commit(
         // not an endpoint anim, regular deltas
         
         // signed ints don't play nice without endpoints
-        T1_log_assert(!parent->public.zs_gpu_s32s);
+        T1_log_assert(!parent->public.zs_gpu_u32s);
         
         if (parent->public.zs_gpu_f32s) {
             // don't reduce alpha by 1 to fade out, use
@@ -743,10 +745,10 @@ void T1_anim_commit(
                 T1_assert(((f32 *)parent->public.zs_gpu_f32s)[i] != 65535.0f);
             }
         }
-        if (parent->public.zs_gpu_s32s) {
-            for (u32 i = 0; i < (sizeof(T1GPUzSprites32) / 4); i++) {
+        if (parent->public.zs_gpu_u32s) {
+            for (u32 i = 0; i < (sizeof(T1GPUzSpriteu32) / 4); i++) {
                 f32 check;
-                T1_std_memcpy(&check, ((s32 *)parent->public.zs_gpu_s32s) + i, 4);
+                T1_std_memcpy(&check, ((u32 *)parent->public.zs_gpu_u32s) + i, 4);
                 T1_assert(check != T1_ANIM_NO_EFFECT);
                 T1_assert(check != 65535.0f);
             }
@@ -756,18 +758,16 @@ void T1_anim_commit(
     T1_log_assert(!parent->deleted);
     T1_log_assert(!parent->committed);
     
-    if (c->target_T1_id < 0) {
-        T1_log_assert(c->target_touch_id >= 0);
+    if (c->target_T1_id == T1_ID_NONE) {
+        T1_log_assert(c->target_touch_id != T1_TOUCH_ID_NONE);
     } else {
-        T1_log_assert(c->target_touch_id == -1);
+        T1_log_assert(c->target_touch_id == T1_TOUCH_ID_NONE);
     }
     
-    if (c->target_touch_id < 0) {
-        T1_log_assert(
-            c->target_T1_id >= 0);
+    if (c->target_touch_id == T1_TOUCH_ID_NONE) {
+        T1_log_assert(c->target_T1_id >= 0);
     } else {
-        T1_log_assert(
-            c->target_T1_id == -1);
+        T1_log_assert(c->target_T1_id == T1_ID_NONE);
     }
     
     T1_log_assert(parent->already_applied_t == 0.0f);
@@ -792,7 +792,7 @@ void T1_anim_commit(
 }
 
 void T1_anim_shatter_and_destroy(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us) {
     #if T1_LOGGER_ASSERTS_ACTIVE
     #else
@@ -807,9 +807,9 @@ void T1_anim_shatter_and_destroy(
         /* b8 endpoints_not_deltas: */ true,
         /* b8 zs_gpu_f32s: */ false,
         /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
@@ -827,9 +827,9 @@ void T1_anim_shatter_and_destroy(
         true,
         /* b8 zs_gpu_f32s: */ true,
         /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     scatter->zs_gpu_f32s->alpha = 0.0f;
     scatter->target_T1_id = T1_id;
     scatter->duration_us = duration_us;
@@ -848,7 +848,7 @@ void T1_anim_shatter_and_destroy(
 }
 
 void T1_anim_evaporate_and_destroy(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us) {
     #if T1_LOGGER_ASSERTS_ACTIVE
     #else
@@ -863,9 +863,9 @@ void T1_anim_evaporate_and_destroy(
         /* b8 endpoints_not_deltas: */ true,
         /* b8 zs_gpu_f32s: */ false,
         /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
@@ -883,9 +883,9 @@ void T1_anim_evaporate_and_destroy(
         /* b8 endpoints_not_deltas: */ true,
         /* b8 zs_gpu_f32s: */ true,
         /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     evap->zs_gpu_f32s->alpha = 0.0f;
     evap->target_T1_id = T1_id;
     evap->duration_us = duration_us;
@@ -904,7 +904,7 @@ void T1_anim_evaporate_and_destroy(
 }
 
 void T1_anim_fade_and_destroy(
-    s32  T1_id,
+    u32 T1_id,
     u64 duration_us) {
     T1_log_assert(duration_us > 0);
     
@@ -913,9 +913,9 @@ void T1_anim_fade_and_destroy(
         /* b8 endpoints_not_deltas: */  true,
         /* b8 zs_gpu_f32s: */ true,
         /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->zs_gpu_f32s->alpha = 0.0f;
@@ -935,14 +935,14 @@ void T1_anim_fade_and_destroy(
 void T1_anim_fade_destroy_all(
     u64 duration_us) {
     T1_anim_fade_and_destroy(
-        /* s32  T1_id: */
+        /* u32 T1_id: */
             T1_ANIM_HIT_EVERYTHING,
         /* u64 duration_us: */
             duration_us);
 }
 
 void T1_anim_fade_to(
-    s32 T1_id,
+    u32 T1_id,
     u64 duration_us,
     f32 target_alpha) {
     T1_log_assert(T1_id >= 0);
@@ -952,9 +952,9 @@ void T1_anim_fade_to(
         /* b8 endpoints_not_deltas: */ true,
         /* b8 zs_gpu_f32s: */ true,
         /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     modify_alpha->target_T1_id = T1_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->zs_gpu_f32s->alpha = target_alpha;
@@ -999,18 +999,19 @@ void T1_anim_resolve(void) {
 }
 
 void T1_anim_dud_dance(
-    s32 T1_id,
-    f32 magnitude) {
+    u32 T1_id,
+    f32 magnitude)
+{
     T1Anim * move_request =
     T1_anim_request_next(
         /* b8 endpoints_not_deltas: */ false,
         /* b8 zs_gpu_f32s: */ false,
         /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     move_request->easing_type = T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->target_T1_id = (s32)T1_id;
+    move_request->target_T1_id = T1_id;
     move_request->zs_cpu_f32s->xyz[0] = magnitude * 0.05f;
     move_request->zs_cpu_f32s->xyz[1] = magnitude * 0.035f;
     move_request->zs_cpu_f32s->xyz[2] = magnitude * 0.005f;
@@ -1027,8 +1028,9 @@ void T1_anim_dud_dance(
 }
 
 void T1_anim_bump(
-    s32 T1_id,
-    u32 wait) {
+    u32 T1_id,
+    u32 wait)
+{
     #if T1_LOGGER_ASSERTS_ACTIVE
     T1_log_assert(wait == 0.0f);
     #else
@@ -1039,12 +1041,12 @@ void T1_anim_bump(
         /* b8 endpoints_not_deltas: */ false,
         /* b8 zs_gpu_f32s: */ false,
         /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_s32s: */ false,
+        /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_s32s: */ false);
+        /* b8 tq_gpu_u32s: */ false);
     bump_req->easing_type =
         T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
-    bump_req->target_T1_id = (s32)T1_id;
+    bump_req->target_T1_id = T1_id;
     bump_req->zs_cpu_f32s->mul_xyz[0] = 0.05f;
     bump_req->zs_cpu_f32s->mul_xyz[1] = 0.05f;
     bump_req->zs_cpu_f32s->mul_xyz[2] = 0.05f;
@@ -1070,15 +1072,14 @@ void T1_anim_delete_all(void) {
 
 #if 0
 void T1_anim_delete_endpoint_anims_targeting(
-    s32 T1_id) {
+    u32 T1_id) {
     as->mutex_lock(as->mutex_id);
     for (u32 i = 0; i < T1_anims_size; i++) {
         if (
             !T1_anims[i].deleted &&
             T1_anims[i].endpoints_not_deltas &&
             (T1_anims[i].public.
-                target_T1_id ==
-                    (s32)T1_id ||
+                target_T1_id == T1_id ||
             T1_anims[i].
                 public.target_T1_id ==
                     T1_ZSPRITE_ID_HIT_EVERYTHING))
@@ -1090,8 +1091,7 @@ void T1_anim_delete_endpoint_anims_targeting(
 }
 #endif
 
-void T1_anim_delete_all_anims_targeting(
-    s32 T1_id) {
+void T1_anim_delete_all_anims_targeting(u32 T1_id) {
     as->mutex_lock(as->mutex_id);
     for (u32 i = 0; i < T1_anims_size; i++) {
         T1Anim * a = &T1_anims[i].public;

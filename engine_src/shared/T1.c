@@ -34,7 +34,7 @@ void T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].min_angle_xyz[i] = val; }
 void T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val) {
     T1_render_views->cpu[cam_i].max_angle_xyz[i] = val; }
-void T1_cam_set_clamped_to_T1_id(s32 i, s32 T1_id) {
+void T1_cam_set_clamped_to_T1_id(s32 i, u32 T1_id) {
     T1_render_views->cpu[i].clamped_to_T1_id = T1_id; }
 void T1_cam_set_movement_enabled(s32 i, u8 newval) {
     T1_render_views->cpu[i].movement_enabled = newval; }
@@ -87,7 +87,7 @@ f32 T1_screen_height_to_height_noz(f32 ss_h) {
     return T1_render_view_screen_height_to_height_noz(ss_h); }
 
 void T1_make_shadowmap_and_attach_to_light(
-    s32 light_T1_id,
+    u32 light_T1_id,
     u32 new_cam_width,
     u32 new_cam_height)
 {

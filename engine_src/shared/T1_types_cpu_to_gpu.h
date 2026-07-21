@@ -7,8 +7,8 @@
 #include "T1_types_public_gpucpu.h"
 
 typedef struct {
-    s32 T1_id;
-    s32 touch_id;
+    u32 T1_id;
+    u32 touch_id;
 } IdPair;
 
 /*
@@ -37,7 +37,7 @@ typedef struct
     T1GPUFrame triple_buffers[T1_FRAMES_CAP];
     T1GPULockedVertex * locked_vertices;
     T1GPUMatf32 * const_mats_f32;
-    T1GPUMats32 * const_mats_s32;
+    T1GPUMatu32 * const_mats_s32;
     u32 locked_vertices_size;
     u32 const_mats_size;
     u32 const_matsf32_alloc_size;

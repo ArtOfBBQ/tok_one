@@ -57,7 +57,7 @@ typedef struct {
     #error
     #endif
     T1RenderViewWriteType write_type;
-    s32 clamped_to_T1_id;
+    u32 clamped_to_T1_id;
     u32 width;
     u32 height;
     T1Tex write_tex;

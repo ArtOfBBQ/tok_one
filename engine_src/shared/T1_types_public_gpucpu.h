@@ -7,11 +7,11 @@
 
 typedef union {
     struct {
-        s32 reserved_and_tex;
-        s32 touch_id;
+        u32 reserved_and_tex;
+        u32 touch_id;
     };
     u8 size_with_padding[16];
-} T1GPUTexQuads32;
+} T1GPUTexQuadu32;
 
 typedef union {
     struct {
@@ -50,11 +50,11 @@ typedef union {
 
 typedef union {
     struct {
-        s32 touch_id;
-        s32 mix_rv_and_mix_tex;
+        u32 touch_id;
+        u32 mix_rv_and_mix_tex;
     };
     u8 size_with_padding[16];
-} T1GPUzSprites32;
+} T1GPUzSpriteu32;
 
 typedef union {
     struct {
@@ -72,19 +72,16 @@ typedef union {
 
 typedef union {
     struct {
-        union {
-            s32 normalmap_tex_and_tex;
-            u32 normalmap_tex_and_tex_u32;
-        };
+        u32 normalmap_tex_and_tex;
     };
     u8 size_with_padding[16];
-} T1GPUMats32;
+} T1GPUMatu32;
 
 typedef struct {
     T1GPUzSpritef32 f32s;
-    T1GPUzSprites32 s32s;
+    T1GPUzSpriteu32 u32s;
     T1GPUMatf32     base_mat_f32; // start f32 here
-    T1GPUMats32     base_mat_s32;
+    T1GPUMatu32     base_mat_u32;
 } T1GPUzSprite;
 
 typedef struct {
@@ -121,7 +118,7 @@ typedef struct
 
 typedef struct {
     T1GPUTexQuadf32 f32s;
-    T1GPUTexQuads32 s32s;
+    T1GPUTexQuadu32 u32s;
 } T1GPUTexQuad;
 
 typedef struct {
@@ -130,7 +127,7 @@ typedef struct {
     // ScheduledAnimations that affect the entire group
     // set to -1 to not be a party of any group
     union {
-        s32 T1_id;
+        u32 T1_id;
         f32 flt_T1_id;
     };
     union {

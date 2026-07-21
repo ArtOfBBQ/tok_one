@@ -665,7 +665,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 matching_parsed_materials_i  < (s32)parsed_materials_size);
             
             T1GPUMatf32 * locked_mat_f32 = NULL;
-            T1GPUMats32 * locked_mat_s32 = NULL;
+            T1GPUMatu32 * locked_mat_s32 = NULL;
             T1_material_fetch_ptrs(
                 &locked_mat_f32,
                 &locked_mat_s32,

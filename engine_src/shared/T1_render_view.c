@@ -39,7 +39,7 @@ void T1_render_view_init(void) {
     
     for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         T1_render_views->cpu[i].write_tex = T1_TEX_NONE;
-        T1_render_views->cpu[i].clamped_to_T1_id = -1;
+        T1_render_views->cpu[i].clamped_to_T1_id = T1_ID_NONE;
     }
 }
 
@@ -122,7 +122,7 @@ static void T1_render_view_construct(
     cpu->max_xyz[1] = T1_F32_MAX;
     cpu->max_xyz[2] = T1_F32_MAX;
     
-    cpu->clamped_to_T1_id = -1;
+    cpu->clamped_to_T1_id = T1_ID_NONE;
     cpu->write_tex = T1_TEX_NONE;
     
     cpu->height = height;

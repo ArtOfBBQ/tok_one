@@ -49,8 +49,9 @@ T1_zlight_translate_all(
     T1GPULight * lights,
     u32 * lights_size);
 
-void
-T1_zlight_delete(const s32 with_T1_id);
+void T1_zlight_delete(u32 with_T1_id);
+
+void T1_zlight_delete_all(void);
 
 void
 T1_zlight_point_light_to_location(

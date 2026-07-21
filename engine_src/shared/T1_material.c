@@ -15,7 +15,7 @@ void T1_material_init(
 
 void T1_material_construct(
     T1GPUMatf32 * to_construct_f32,
-    T1GPUMats32 * to_construct_s32)
+    T1GPUMatu32 * to_construct_u32)
 {
     T1_std_memset(
         to_construct_f32,
@@ -49,11 +49,11 @@ void T1_material_construct(
     to_construct_s32->normalmap_tex_and_tex |=
         ((tex_none_s32 << 16) & tex_none_s32);
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
-    to_construct_s32->normalmap_tex_and_tex =
+    to_construct_u32->normalmap_tex_and_tex =
         (T1_TEX_NONE << 16);
-    to_construct_s32->normalmap_tex_and_tex_u32 |=
+    to_construct_u32->normalmap_tex_and_tex |=
         T1_TEX_NONE;
-    T1Tex check_tex = (to_construct_s32->normalmap_tex_and_tex_u32 & 0x0000FFFF); 
+    T1Tex check_tex = (to_construct_u32->normalmap_tex_and_tex & 0x0000FFFF); 
     s32 check_arr_i = T1_tex_to_array_i(check_tex);
     T1_log_assert(check_arr_i == -1);
     s32 check_slice_i = T1_tex_to_slice_i(check_tex);
@@ -119,7 +119,7 @@ u32 T1_material_preappend_locked_material_i(
 
 void T1_material_fetch_ptrs(
     T1GPUMatf32 ** recip_f32,
-    T1GPUMats32 ** recip_s32,
+    T1GPUMatu32 ** recip_s32,
     const u32 material_i)
 {
     T1_log_assert(material_i < all_mesh_materials->size);

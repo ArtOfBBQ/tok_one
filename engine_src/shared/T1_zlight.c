@@ -104,9 +104,7 @@ T1_zlight_copy_all(
     }
 }
 
-void
-T1_zlight_delete(
-    const s32 with_object_id)
+void T1_zlight_delete(u32 with_T1_id)
 {
     for (
         u32 i = 0;
@@ -115,11 +113,18 @@ T1_zlight_delete(
     {
         if (
             T1_zlights[i].T1_id ==
-                with_object_id)
+                with_T1_id)
         {
-            T1_zlights[i].deleted   = true;
-            T1_zlights[i].T1_id = -1;
+            T1_zlights[i].deleted = true;
+            T1_zlights[i].T1_id = T1_ID_NONE;
         }
+    }
+}
+
+void T1_zlight_delete_all(void) {
+    for (u32 i = 0; i < T1_zlights_size; i++) {
+        T1_zlights[i].deleted   = true;
+        T1_zlights[i].T1_id = T1_ID_NONE;
     }
 }
 

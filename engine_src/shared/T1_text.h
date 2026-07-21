@@ -16,7 +16,7 @@ void T1_text_init(
     const u64 raw_fontmetrics_file_size);
 
 void T1_text_request_label_offset_around(
-    s32 with_id,
+    u32 with_id,
     const char * text_to_draw,
     f32 mid_x_pixelspace,
     f32 mid_y_pixelspace,
@@ -24,37 +24,37 @@ void T1_text_request_label_offset_around(
     f32 max_width);
 
 void T1_text_request_label_around_x_at_top_y(
-    const s32 with_object_id,
+    u32 with_object_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 top_y_pixelspace,
-    const f32 z,
-    const f32 max_width);
+    f32 mid_x_pixelspace,
+    f32 top_y_pixelspace,
+    f32 z,
+    f32 max_width);
 
 void T1_text_request_label_around(
-    const s32 with_object_id,
+    u32 with_object_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width);
+    f32 mid_x_pixelspace,
+    f32 mid_y_pixelspace,
+    f32 z,
+    f32 max_width);
 
 void T1_text_request_label_renderable(
-    const s32 with_object_id,
+    u32 with_object_id,
     const char * text_to_draw,
-    const f32 left_pixelspace,
-    const f32 top_y_pixelspace,
-    const f32 z,
-    const f32 tab_width,
-    const f32 max_width);
+    f32 left_pixelspace,
+    f32 top_y_pixelspace,
+    f32 z,
+    f32 tab_width,
+    f32 max_width);
 
 void T1_text_request_label_leftx_toplinemidy(
-    const s32 with_object_id,
+    u32 with_object_id,
     const char * text_to_draw,
-    const f32 left_pixelspace,
-    const f32 topline_mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width);
+    f32 left_pixelspace,
+    f32 topline_mid_y_pixelspace,
+    f32 z,
+    f32 max_width);
 
 void T1_text_request_debug_text(const char * text);
 void T1_text_request_fps(u64 elapsed_us);

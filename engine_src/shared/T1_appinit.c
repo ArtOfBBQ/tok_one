@@ -81,12 +81,12 @@ test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUzSprites32) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUzSpriteu32) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1CPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUMatf32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUMats32) % (SIMD_FLOAT_LANES * 4) == 0);    
+    T1_log_assert(sizeof(T1GPUMatu32) % (SIMD_FLOAT_LANES * 4) == 0);    
     T1_log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUTexQuads32)   % (SIMD_INT32_LANES * 4) == 0);
+    T1_log_assert(sizeof(T1GPUTexQuadu32)   % (SIMD_INT32_LANES * 4) == 0);
     
     
     T1_log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
@@ -575,7 +575,7 @@ void T1_appinit_before_gpu_init(
     
     sd->const_matss32_alloc_size =
         pad_to_page_size(
-            sizeof(T1GPUMats32) *
+            sizeof(T1GPUMatu32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
@@ -646,7 +646,7 @@ void T1_appinit_before_gpu_init(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
     
-    sd->const_mats_s32 = (T1GPUMats32 *)
+    sd->const_mats_s32 = (T1GPUMatu32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matss32_alloc_size,
             T1_mem_page_size);
@@ -932,7 +932,7 @@ void T1_appinit_after_gpu_init_step2(
         /* const void * src: */
             all_mesh_materials->gpu_s32,
         /* u64 n: */
-            sizeof(T1GPUMats32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUMatu32) * T1_ALL_LOCKED_MATERIALS_SIZE);
     T1_os_gpu_copy_locked_materials();
     
     if (!T1_log_app_running) {
