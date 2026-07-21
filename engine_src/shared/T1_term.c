@@ -195,7 +195,7 @@ static void T1_term_render(void) {
         T1_trms->font_color[2];
     T1_text_props->f32s.rgba[3] =
         T1_trms->font_color[3];
-    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
+    T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
     if (T1_trms->history[char_offset] != '\0') {
         T1_text_request_label_renderable(
@@ -225,7 +225,7 @@ static void T1_term_render(void) {
         return;
     }
     
-    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
+    T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     // the terminal's current input as a label
     T1_text_request_label_renderable(
         /* with_object_id: */

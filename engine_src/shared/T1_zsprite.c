@@ -845,12 +845,12 @@ void T1_zsprite_apply_endpoint_anim(
                     sizeof(T1GPUzSpriteu32);
                 simd_step_i += SIMD_FLOAT_LANES)
             {
-                SIMD_INT32 simd_goal_u32s =
-                    simd_load_int32s(
+                SIMD_U32 simd_goal_u32s =
+                    simd_load_uint32s(
                         (anim_zs_gpu_u32s + simd_step_i));
                 
-                SIMD_INT32 simd_cur_u32s =
-                    simd_load_int32s(
+                SIMD_U32 simd_cur_u32s =
+                    simd_load_uint32s(
                         (recip_vals_u32 + simd_step_i));
                 
                 SIMD_FLOAT simd_flags_f32 =
@@ -860,33 +860,33 @@ void T1_zsprite_apply_endpoint_anim(
                 simd_flags_f32 = simd_cmpeq_f32s(
                     simd_flags_f32,
                     simd_noeffect);
-                SIMD_INT32 simd_flags_u32;
+                SIMD_U32 simd_flags_u32;
                 T1_std_memcpy(
                     &simd_flags_u32,
                     &simd_flags_f32,
-                    sizeof(SIMD_INT32));
+                    sizeof(SIMD_U32));
                 
                 u32 t_now_u32 = (u32)t_now;
-                SIMD_INT32 simd_t_now_u32 = simd_set1_int32s(t_now_u32);
+                SIMD_INT32 simd_t_now_u32 = simd_set1_uint32s(t_now_u32);
                 
-                simd_t_now_u32 = simd_cmpgt_int32s(
+                simd_t_now_u32 = simd_cmpgt_uint32s(
                     simd_t_now_u32,
                     simd_all_zeros);
                 
-                simd_flags_u32 = simd_and_int32s(
+                simd_flags_u32 = simd_and_uint32s(
                     simd_flags_u32,
                     simd_t_now_u32);
                 
-                SIMD_INT32 results_u32 = simd_add_int32s(
-                    simd_and_int32s(
+                SIMD_U32 results_u32 = simd_add_uint32s(
+                    simd_and_uint32s(
                         simd_goal_u32s,
-                        simd_not_int32s(
+                        simd_not_uint32s(
                             simd_flags_u32)),
-                    simd_and_int32s(
+                    simd_and_uint32s(
                         simd_cur_u32s,
                         simd_flags_u32));
                 
-                simd_store_int32s(
+                simd_store_uint32s(
                     recip_vals_u32 + simd_step_i,
                     results_u32);
             }

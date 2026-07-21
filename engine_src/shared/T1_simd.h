@@ -114,7 +114,18 @@ because I don't know much about how that works or how reliable it is
 #if defined(__ARM_NEON)
 
 #include "arm_neon.h"
-#define SIMD_FLOAT_LANES 4
+
+#define SIMD_U32_LANES 4
+#define SIMD_U32 uint32x4_t
+#define simd_load_uint32s(u32ptr) vld1q_u32(u32ptr)
+#define simd_set1_uint32s(u32) vld1q_dup_u32(&u32)
+#define simd_cast_uint32s_to_f32s(u32vec) vcvtq_f32_u32((u32vec))
+#define simd_store_uint32s(u32ptr, from) vst1q_u32(u32ptr, from)
+#define simd_add_uint32s(a, b) vaddq_u32(a, b)
+#define simd_and_uint32s(a, b) (uint32x4_t)(vandq_u32(a, b))
+#define simd_not_uint32s(a) vmvnq_u32(a)
+#define simd_cmpgt_uint32s(a, b) vcgtq_u32(a, b)
+
 #define SIMD_INT32_LANES 4
 #define SIMD_INT32 int32x4_t
 #define simd_load_int32s(i32ptr) vld1q_s32(i32ptr)
@@ -124,8 +135,9 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_int32s(a, b) vaddq_s32(a, b)
 #define simd_and_int32s(a, b) (int32x4_t)(vandq_s32(a, b))
 #define simd_not_int32s(a) vmvnq_s32(a)
-#define simd_cmpgt_int32s(a, b)             vcgtq_s32(a, b)
+#define simd_cmpgt_int32s(a, b) vcgtq_s32(a, b)
 
+#define SIMD_FLOAT_LANES 4
 #define SIMD_FLOAT float32x4_t
 #define simd_load_f32s(f32sptr) vld1q_f32((f32sptr))
 #define simd_set1_f32(f32) vld1q_dup_f32(&f32)

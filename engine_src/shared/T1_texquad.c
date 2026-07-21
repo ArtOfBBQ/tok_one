@@ -356,12 +356,12 @@ void T1_texquad_apply_endpoint_anim(
                     sizeof(T1GPUTexQuadu32);
                 simd_step_i += SIMD_FLOAT_LANES)
             {
-                SIMD_INT32 simd_goal_u32s =
-                    simd_load_int32s(
+                SIMD_U32 simd_goal_u32s =
+                    simd_load_uint32s(
                         (tq_gpu_u32s + simd_step_i));
                 
                 SIMD_INT32 simd_cur_u32s =
-                    simd_load_int32s(
+                    simd_load_uint32s(
                         (recip_vals_u32 + simd_step_i));
                 
                 SIMD_FLOAT simd_flags_u32 =
@@ -373,26 +373,26 @@ void T1_texquad_apply_endpoint_anim(
                     simd_noeffect);
                 
                 u32 t_now_u32 = (u32)t_now;
-                SIMD_INT32 simd_t_now_u32 = simd_set1_int32s(t_now_u32);
+                SIMD_U32 simd_t_now_u32 = simd_set1_uint32s(t_now_u32);
                 
-                simd_t_now_u32 = simd_cmpgt_int32s(
+                simd_t_now_u32 = simd_cmpgt_uint32s(
                     simd_t_now_u32,
                     simd_all_zeros);
                 
-                simd_flags_u32 = simd_and_int32s(
+                simd_flags_u32 = simd_and_uint32s(
                     simd_flags_u32,
                     simd_t_now_u32);
                 
-                SIMD_INT32 results_u32 = simd_add_int32s(
-                        simd_and_int32s(
+                SIMD_INT32 results_u32 = simd_add_uint32s(
+                        simd_and_uint32s(
                             simd_goal_u32s,
-                            simd_not_int32s(
+                            simd_not_uint32s(
                                 simd_flags_u32)),
-                        simd_and_int32s(
+                        simd_and_uint32s(
                             simd_cur_u32s,
                             simd_flags_u32));
                 
-                simd_store_int32s(
+                simd_store_uint32s(
                     recip_vals_u32 + simd_step_i,
                     results_u32);
             }
@@ -463,19 +463,19 @@ void T1_texquad_apply_anim_effects_at_t(
             (simd_step_i * sizeof(s32)) < sizeof(T1GPUzSpriteu32);
             simd_step_i += SIMD_INT32_LANES)
         {
-            SIMD_INT32 simd_add_u32s =
-                simd_load_int32s(
+            SIMD_U32 simd_add_u32s =
+                simd_load_uint32s(
                     (anim_gpu_u32s + simd_step_i));
             
-            SIMD_INT32 simd_cur_u32s =
-                simd_load_int32s(
+            SIMD_U32 simd_cur_u32s =
+                simd_load_uint32s(
                     (recip_u32s_ptr + simd_step_i));
                         
-            SIMD_INT32 result = simd_add_int32s(
+            SIMD_U32 result = simd_add_uint32s(
                 simd_cur_u32s,
                 simd_add_u32s);
             
-            simd_store_int32s(
+            simd_store_uint32s(
                 recip_u32s_ptr + simd_step_i,
                 result);
         }

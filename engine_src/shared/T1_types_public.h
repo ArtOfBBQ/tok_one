@@ -153,51 +153,6 @@ typedef enum : u16 {
     T1_IO_KEY_ABOVEBOUNDS, // must be last
 } T1IOKey;
 
-#if 0
-typedef struct {
-    f32 xyz[3];
-    f32 offset_xy[2];
-    f32 wh[2];
-    f32 rgba[4];
-    f32 padding[5];
-} T1GPUTexQuadf32;
-
-typedef union {
-    struct {
-        s32 touch_id;
-        s32 mix_rv_and_mix_tex;
-    };
-    u8 size_with_padding[16];
-} T1GPUzSprites32;
-
-typedef struct
-{
-    u32 timestamp;
-    u32 cam_rv_i;
-    u32 lights_size;
-    s32 perlin_texturearray_i;
-    s32 perlin_texture_i;
-    f32 rgb_add[3];
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    f32 fog_color[3];
-    f32 fog_factor;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    f32 nonblur_pct;
-    f32 blur_pct;
-    f32 color_quantization;
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    f32 in_shadow_multipliers[3];
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    f32 padding[6];
-} T1GPUPostProcConsts;
-#endif
-
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
     
@@ -235,11 +190,11 @@ typedef struct {
 
 typedef struct {
     T1GPUTexQuadf32 f32s;
-    T1GPUTexQuadu32 s32s;
+    T1GPUTexQuadu32 u32s;
     f32             font_height;
-    s32             highlight_i;
-    s32             highlight_size;
-    s32             opaque_back_active;
+    u32             highlight_i;
+    u32             highlight_size;
+    u32             opaque_back_active;
 } T1TextFontSettings;
 
 typedef struct {

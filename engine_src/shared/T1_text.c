@@ -65,11 +65,11 @@ void T1_text_init(
         T1_text_props = arg_text_malloc_func(sizeof(T1TextFontSettings));
         T1_texquad_construct(
             &T1_text_props->f32s,
-            &T1_text_props->s32s);
+            &T1_text_props->u32s);
         
         T1_text_props->font_height = 30.0f;
         
-        T1_text_props->s32s.reserved_and_tex =
+        T1_text_props->u32s.reserved_and_tex =
             0x00000000 | T1_TEX_NONE;
         T1_text_props->f32s.rgba[0] = 1.0f;
         T1_text_props->f32s.rgba[1] = 1.0f;
@@ -319,7 +319,7 @@ void T1_text_request_label_offset_around(
             
             T1_texquad_fetch_next(&letter);
             
-            letter.gpu->u32s = T1_text_props->s32s;
+            letter.gpu->u32s = T1_text_props->u32s;
             letter.gpu->f32s = T1_text_props->f32s;
             
             letter.gpu->f32s.xyz[0] =
@@ -526,7 +526,7 @@ void T1_text_request_label_renderable(
         
         if (!T1_log_app_running) { return; }
         
-        letter.gpu->u32s = T1_text_props->s32s;
+        letter.gpu->u32s = T1_text_props->u32s;
         letter.gpu->f32s = T1_text_props->f32s;
         
         letter.gpu->f32s.xyz[0] =
@@ -556,7 +556,7 @@ void T1_text_request_label_renderable(
         }
         
         letter.gpu->u32s.reserved_and_tex = tex;
-        letter.gpu->u32s.touch_id = T1_text_props->s32s.touch_id;
+        letter.gpu->u32s.touch_id = T1_text_props->u32s.touch_id;
         
         letter.cpu->offset_xyz[0] = 
             T1_render_view_screen_width_to_width_noz(
@@ -576,8 +576,8 @@ void T1_text_request_label_renderable(
         }
         
         if (
-            (s32)i >= T1_text_props->highlight_i &&
-            (s32)i < T1_text_props->highlight_i + T1_text_props->highlight_size)
+            i >= T1_text_props->highlight_i &&
+            i < T1_text_props->highlight_i + T1_text_props->highlight_size)
         {
             letter.gpu->f32s.rgba[0] += 0.2f;
             letter.gpu->f32s.rgba[1] += 0.2f;
@@ -632,7 +632,7 @@ void T1_text_request_debug_text(const char * text)
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
+    T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     T1_text_request_label_renderable(
         /* with_id               : */
             T1_ID_DEBUG_TEXT,
@@ -702,7 +702,7 @@ void T1_text_request_fps(
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
+    T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
     T1_text_request_label_renderable(
         /* with_id               : */
@@ -735,7 +735,7 @@ void T1_text_request_top_touch_id(
     T1_text_props->f32s.rgba[1] = 1.0f;
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
-    T1_text_props->s32s.touch_id = T1_TOUCH_ID_NONE;
+    T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
     T1_text_request_label_renderable(
         /* with_id               : */
