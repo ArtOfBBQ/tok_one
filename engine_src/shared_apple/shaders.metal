@@ -1337,7 +1337,7 @@ fragment FragmentAndTouchableOut flat_texquad_fragment_shader(
     
     FragmentAndTouchableOut packed_out =
         pack_color_and_touchable_id(
-            color_sample * in.rgba,
+            color_sample * in.rgba * in.rgba[3],
             in.touch_id);
     
     return packed_out;

@@ -44,8 +44,9 @@ static void redraw_test_quads(f32 x, f32 y) {
     tq_req.gpu->f32s.xyz[0] = x - 0.2f;
     tq_req.gpu->f32s.xyz[1] = y + 0.1f;
     tq_req.gpu->f32s.xyz[2] = 0.5f;
-    tq_req.gpu->f32s.wh[0] = 0.2f;
-    tq_req.gpu->f32s.wh[1] = 0.2f;
+    tq_req.gpu->f32s.wh[0] = 0.5f;
+    tq_req.gpu->f32s.wh[1] = 0.5f;
+    tq_req.gpu->f32s.rgba[3] = 0.75f;
     tq_req.gpu->s32s.reserved_and_tex = tex;
     T1_texquad_commit(&tq_req);
 }
@@ -117,6 +118,29 @@ static void client_handle_keypresses(
     }
     
     if (T1_io_key_consume_short_tap_this_frame(
+        T1_IO_KEYBOARD_T, mainwindow_scene_id))
+    {
+        #if T1_ANIM_ACTIVE == T1_ACTIVE  
+        testswitch = !testswitch;      
+        T1Anim * alpha = T1_anim_request_next(
+            /* b8 endpoints_not_deltas: */ true,
+            /* b8 zs_gpu_f32s: */ false,
+            /* b8 zs_cpu_f32s: */ false,
+            /* b8 zs_gpu_s32s: */ false,
+            /* b8 tq_gpu_f32s: */ true,
+            /* b8 tq_gpu_s32s: */ false);
+        alpha->tq_gpu_f32s->rgba[3] =
+            testswitch ? 1.00f : 0.25f;
+        alpha->target_T1_id = img_T1_ids[1];
+        alpha->duration_us = 225000;
+        T1_anim_commit(alpha, "delete me");
+        #elif T1_ANIM_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+    }
+    
+    if (T1_io_key_consume_short_tap_this_frame(
         T1_IO_KEYBOARD_R, mainwindow_scene_id))
     {
         #if T1_ANIM_ACTIVE == T1_ACTIVE
@@ -143,6 +167,7 @@ static void client_handle_keypresses(
             /* b8 tq_gpu_s32s: */ false);
         rot2->tq_gpu_f32s->xyz[0] = -0.2f;
         rot2->tq_gpu_f32s->xyz[1] = -0.1f;
+        rot2->tq_gpu_f32s->rgba[3] = -0.5f;
         rot2->target_T1_id = img_T1_ids[1];
         rot2->easing_type = T1_EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO;
         rot2->duration_us = 225000;

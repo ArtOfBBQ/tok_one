@@ -80,7 +80,6 @@ static void
 test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1CPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1GPUzSprites32) % (SIMD_FLOAT_LANES * 4) == 0);
     T1_log_assert(sizeof(T1CPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);

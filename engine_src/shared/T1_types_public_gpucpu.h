@@ -18,9 +18,9 @@ typedef union {
         f32 xyz[3];
         f32 offset_xy[2];
         f32 wh[2];
-        f32 rgba[4];    
+        f32 rgba[4];
     };
-    u8 size_with_padding[48];
+    u8 size_with_padding[64];
 } __attribute__((aligned(16))) T1GPUTexQuadf32;
 
 typedef union {

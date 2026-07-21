@@ -254,7 +254,12 @@ void T1_render_view_update_positions(
             continue;
         }
         
+        #if T1_REFLECTION_ACTIVE == T1_ACTIVE
         T1_log_assert(!rv->reflect_around_plane_z);
+        #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));

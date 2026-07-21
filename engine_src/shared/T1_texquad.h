@@ -5,9 +5,6 @@
 #include "T1_std.h"
 #include "T1_types_public.h"
 
-#define T1_TEXQUADANIM_NO_EFFECT 0xFFFF
-#define T1_TEXQUAD_ID_HIT_EVERYTHING INT32_MAX
-
 void T1_texquad_construct(
     T1GPUTexQuadf32 * f32,
     T1GPUTexQuads32 * s32);
@@ -24,11 +21,6 @@ void T1_texquad_get_avg_xyz(
     b8 * found);
 
 void T1_texquad_delete_all(void);
-
-typedef struct {
-    T1CPUTexQuad * cpu;
-    T1GPUTexQuad * gpu;
-} T1TexQuadRequest;
 
 void T1_texquad_fetch_next(
     T1TexQuadRequest * request);

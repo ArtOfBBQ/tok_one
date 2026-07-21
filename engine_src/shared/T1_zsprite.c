@@ -675,7 +675,7 @@ void T1_zsprite_apply_anim_effects_to_id(
         if (
             (T1_id >= 0 &&
             T1_zsprite_list->cpu[zp_i].T1_id != T1_id &&
-            T1_id != T1_ZSPRITE_ID_HIT_EVERYTHING) ||
+            T1_id != T1_ANIM_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
             T1_zsprite_list->gpu[zp_i].s32s.
                 touch_id != touch_id) ||
@@ -726,7 +726,7 @@ void T1_zsprite_apply_endpoint_anim(
         zp_i++)
     {
         if (
-            T1_id != T1_ZSPRITE_ID_HIT_EVERYTHING &&
+            T1_id != T1_ANIM_HIT_EVERYTHING &&
             ((T1_id >= 0 &&
             T1_zsprite_list->cpu[zp_i].T1_id != T1_id) ||
             (touch_id >= 0 &&

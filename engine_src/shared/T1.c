@@ -213,13 +213,10 @@ void T1_make_reflection_cam(
     refl_cpu->refl_cam_around_plane_z = reflection_z;
     
     refl_cpu->passes_size = 2;
-    refl_cpu->passes[0].type =
-        T1RENDERPASS_DIAMOND_ALPHA;
-    refl_cpu->passes[1].type =
-        T1RENDERPASS_ALPHA_BLEND;
+    refl_cpu->passes[0].type = T1RENDERPASS_DIAMOND_ALPHA;
+    refl_cpu->passes[1].type = T1RENDERPASS_ALPHA_BLEND;
     
-    T1_os_gpu_update_internal_render_viewport(
-        new_rv_i);
+    T1_os_gpu_update_internal_render_viewport(new_rv_i);
     
     T1_render_view_validate();
 }
@@ -262,29 +259,4 @@ void T1_png_decode(
         rgba_values_size,
         thread_id,
         out_good);
-}
-
-void T1_makerequest_construct(T1MakeRequest * to_construct) {
-    T1_std_memset(to_construct, 0, sizeof(T1MakeRequest));
-}
-
-/*
-TexQuads (textured 2D quads)
-*/
-void T1_texquad_make(T1MakeRequest * request) {
-    T1TexQuadRequest tq_req;
-    T1_texquad_fetch_next(&tq_req);
-    tq_req.cpu->T1_id = request->T1_id;
-    tq_req.gpu->f32s.xyz[0] = request->xyz[0];
-    tq_req.gpu->f32s.xyz[1] = request->xyz[1];
-    tq_req.gpu->f32s.xyz[2] = request->xyz[2];
-    tq_req.gpu->f32s.wh[0] = request->wh[0];
-    tq_req.gpu->f32s.wh[1] = request->wh[1];
-    tq_req.gpu->s32s.reserved_and_tex = 0x00000000 | request->tex;
-    tq_req.gpu->s32s.touch_id = request->touch_id;
-    tq_req.gpu->f32s.rgba[0] = request->rgba[0];
-    tq_req.gpu->f32s.rgba[1] = request->rgba[1];
-    tq_req.gpu->f32s.rgba[2] = request->rgba[2];
-    tq_req.gpu->f32s.rgba[3] = request->rgba[3];
-    T1_texquad_commit(&tq_req);
 }

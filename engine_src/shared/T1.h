@@ -206,10 +206,6 @@ u32 T1_tex_array_get_img_width(s32 array_i);
 MANAGE 3-D MODELS (.OBJ FILES)
 
 Each "mesh" you register will return a mesh_id (i32)
-
-When creating a T1 object later, you can set the mesh_id
-in the T1MakeRequest to this value to make an object with
-that mesh.
 */
 s32 T1_objmodel_new_mesh_id_from_resources(
     const c8 * filename,
@@ -263,35 +259,6 @@ void T1_text_request_label_around(
     f32 max_width);
 
 /*
-Creating T1 objects
-each object has a "T1_id", set it and store it to interact
-with it later. If you give multiple objects the same T1_id, you
-can move and delete them together as a group
-
-You can use a T1MakeRequest to request objects
-
-Example:
-T1MakeRequest req;
-T1_makerequest_construct(&req);
-req.xyz[2] = 2.0f; // put our object at z position 2.0f
-req.wh[1] = 0.5f; // give our object a height of 0.5f
-req.rgba[3] = 1.0f; // make our object fully transparent
-...
-T1_texquad_make(&req); // make an object, in this case a texquad
-
-there are other functions to make other stuff
-*/
-typedef struct {
-    f32 xyz[3];
-    f32 wh[2];
-    f32 rgba[4];
-    s32 T1_id;
-    s32 touch_id;
-    u16 tex;
-} T1MakeRequest;
-void T1_makerequest_construct(T1MakeRequest * to_construct);
-
-/*
 UI WIDGETS
 
 For now this just has sliders
@@ -328,7 +295,8 @@ f32 T1_get_z_mul_for_depth(s32 for_mesh_id, f32 for_depth);
 /*
 TexQuads (textured 2D quads)
 */
-void T1_texquad_make(T1MakeRequest * request); // returns T1_id
+void T1_texquad_fetch_next(T1TexQuadRequest * stack_recip);
+void T1_texquad_commit(T1TexQuadRequest * to_commit);
 void T1_texquad_delete(s32 T1_id);
 void T1_texquad_delete_all(void);
 

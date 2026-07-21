@@ -446,13 +446,15 @@ static void T1_anim_resolve_single(
             {
                 if (
                     a->public.target_T1_id ==
-                    T1_ZSPRITE_ID_HIT_EVERYTHING)
+                    T1_ANIM_HIT_EVERYTHING)
                 {
                     T1_zsprite_delete_all();
+                    T1_texquad_delete_all();
                 } else {
                     T1_zsprite_delete(
-                        a->public.
-                            target_T1_id);
+                        a->public.target_T1_id);
+                    T1_texquad_delete(
+                        a->public.target_T1_id);
                 }
             }
         } else {
@@ -547,7 +549,7 @@ static void T1_anim_resolve_single(
         {
             T1_texquad_apply_endpoint_anim(
                 /* s32 T1_id: */
-                    a->public.target_T1_id ,
+                    a->public.target_T1_id,
                 /* s32 touch_id: */
                     a->public.target_touch_id,
                 /* f32 t_applied: */
@@ -716,7 +718,7 @@ void T1_anim_commit(
                 (a->public.target_T1_id ==
                     c->target_T1_id ||
                 a->public.target_T1_id ==
-                    T1_ZSPRITE_ID_HIT_EVERYTHING) &&
+                    T1_ANIM_HIT_EVERYTHING) &&
                 a->public.target_touch_id ==
                     c->target_touch_id &&
                 a->committed &&
@@ -934,7 +936,7 @@ void T1_anim_fade_destroy_all(
     u64 duration_us) {
     T1_anim_fade_and_destroy(
         /* s32  T1_id: */
-            T1_ZSPRITE_ID_HIT_EVERYTHING,
+            T1_ANIM_HIT_EVERYTHING,
         /* u64 duration_us: */
             duration_us);
 }
@@ -1098,7 +1100,7 @@ void T1_anim_delete_all_anims_targeting(
             !T1_anims[i].deleted &&
             T1_anims[i].committed &&
             (a->target_T1_id == T1_id ||
-            a->target_T1_id == T1_ZSPRITE_ID_HIT_EVERYTHING))
+            a->target_T1_id == T1_ANIM_HIT_EVERYTHING))
         {
             T1_anim_delete(T1_anims + i);
         }

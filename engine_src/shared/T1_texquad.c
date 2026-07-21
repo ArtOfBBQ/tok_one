@@ -264,7 +264,7 @@ void T1_texquad_apply_endpoint_anim(
     const f32 t_mult = did_now_t / was_left_t;
     SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
     
-    f32 no_effect = T1_TEXQUADANIM_NO_EFFECT;
+    f32 no_effect = T1_ANIM_NO_EFFECT;
     SIMD_FLOAT simd_noeffect = simd_set1_f32(no_effect);
     
     for (
@@ -273,7 +273,7 @@ void T1_texquad_apply_endpoint_anim(
         zp_i++)
     {
         if (
-            T1_id != T1_TEXQUAD_ID_HIT_EVERYTHING &&
+            T1_id != T1_ANIM_HIT_EVERYTHING &&
             ((T1_id >= 0 &&
             T1_texquads->cpu[zp_i].T1_id != T1_id) ||
             (touch_id >= 0 &&
@@ -508,7 +508,7 @@ void T1_texquad_apply_anim_effects_to_id(
             (T1_id >= 0 &&
             T1_texquads->cpu[tq_i].
                 T1_id != T1_id &&
-            T1_id != T1_TEXQUAD_ID_HIT_EVERYTHING) ||
+            T1_id != T1_ANIM_HIT_EVERYTHING) ||
             (touch_id >= 0 &&
             T1_texquads->gpu[tq_i].s32s.
                 touch_id != touch_id) ||

@@ -1,8 +1,6 @@
 #ifndef ZSPRITE_H
 #define ZSPRITE_H
 
-#define T1_ZSPRITE_ID_HIT_EVERYTHING INT32_MAX
-
 #include <math.h>
 #include <inttypes.h>
 

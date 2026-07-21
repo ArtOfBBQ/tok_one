@@ -66,13 +66,13 @@ of the engine for your specific app.
 #define T1_WAV_PRINTF 2
 #define T1_FRAMES_CAP 3 // 3 for triple-buffering
 
-#define MAX_VERTICES_PER_BUFFER 840000
+#define T1_MAX_VERTS_PER_BUFFER 840000
 #define T1_ZLIGHTS_CAP 3
 
 #define T1_TEXARRAYS_CAP 29
 #define T1_TEX_SLICES_CAP 100
 
-#define SHADOW_BIAS 0.0001f
+#define T1_SHADOW_BIAS 0.0001f
 
 #define T1_ZFAR 8.0f
 
@@ -84,12 +84,12 @@ The maximum number of sprites in your app.
 /*
 The maximum number of 'flat quads' (particles)
 */
-#define MAX_FLATQUADS_PER_BUFFER 300000
+#define T1_MAX_FLATQUADS_PER_BUFFER 300000
 
 /*
 Flat textured quads, mostly for UI text
 */
-#define MAX_TEXQUADS_PER_BUFFER 50000
+#define T1_MAX_TEXQUADS_PER_BUFFER 50000
 
 /*
 The maximum number of 'scheduled animations' simultaneously running
