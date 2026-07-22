@@ -4,7 +4,7 @@
 #include "T1_settings.h"
 #include "T1_anim.h"
 
-static s32 img_T1_ids[2];
+static u32 img_T1_ids[2];
 static  b8 img_T1_ids_set = 0;
 static f32 img_x, img_y;
 static void redraw_test_quads(f32 x, f32 y) {
@@ -21,7 +21,7 @@ static void redraw_test_quads(f32 x, f32 y) {
     T1_zsprite_construct_quad(x, y, 0.50f, 0.25f, 0.25f, &img);
     T1_log_assert(img.cpu_data->mesh_id == T1_BASIC_QUAD_MESH_ID);
     T1Tex tex = T1_tex_array_get_filename_loc("structuredart1.png");
-    img.gpu_data->base_mat_s32.normalmap_tex_and_tex = tex;
+    img.gpu_data->base_mat_u32.normalmap_tex_and_tex = tex;
     T1_log_assert(img.gpu_data->base_mat_f32.alpha == 1.0f);
     img.cpu_data->T1_id = img_T1_ids[0];
     T1_log_assert(img.cpu_data->zs_cpu_f32s.mul_xyz[0] > 0.02f);
@@ -47,7 +47,7 @@ static void redraw_test_quads(f32 x, f32 y) {
     tq_req.gpu->f32s.wh[0] = 0.5f;
     tq_req.gpu->f32s.wh[1] = 0.5f;
     tq_req.gpu->f32s.rgba[3] = 0.75f;
-    tq_req.gpu->s32s.reserved_and_tex = tex;
+    tq_req.gpu->u32s.reserved_and_tex = tex;
     T1_texquad_commit(&tq_req);
 }
 
@@ -124,14 +124,16 @@ static void client_handle_keypresses(
         testswitch = !testswitch;      
         T1Anim * alpha = T1_anim_request_next(
             /* b8 endpoints_not_deltas: */ true,
-            /* b8 zs_gpu_f32s: */ false,
+            /* b8 zs_gpu_f32s: */ true,
             /* b8 zs_cpu_f32s: */ false,
             /* b8 zs_gpu_s32s: */ false,
             /* b8 tq_gpu_f32s: */ true,
             /* b8 tq_gpu_s32s: */ false);
+        alpha->zs_gpu_f32s->alpha =
+            testswitch ? 1.0f : 0.0f;
         alpha->tq_gpu_f32s->rgba[3] =
-            testswitch ? 1.00f : 0.25f;
-        alpha->target_T1_id = img_T1_ids[1];
+            testswitch ? 1.00f : 0.0f;
+        alpha->target_T1_id = img_T1_ids[0];
         alpha->duration_us = 225000;
         T1_anim_commit(alpha, "delete me");
         #elif T1_ANIM_ACTIVE == T1_INACTIVE

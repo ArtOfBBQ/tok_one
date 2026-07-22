@@ -236,8 +236,7 @@ vertex_shader(
     return out;
 }
 
-fragment float4
-z_prepass_fragment_shader(
+fragment float4 z_prepass_frag_shader(
     const RasterizerPixel in [[stage_in]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
@@ -366,7 +365,7 @@ float4 get_lit(
         matf32->ambient_rgb[0],
         matf32->ambient_rgb[1],
         matf32->ambient_rgb[2],
-        10.0f);
+        4.0f);
     lit_color *= 0.25f;
     #elif T1_AMBIENT_LIGHTING_ACTIVE == T1_INACTIVE
     float4 lit_color = vector_float4(
@@ -713,6 +712,7 @@ float4 get_lit(
         lit_color[3] = 1.0f;
     }
     
+    lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
     lit_color *= tex_base;
     
     f32 no_lighting = clamp(zs->f32s.no_light, 0.0f, 1.0f);
@@ -728,13 +728,13 @@ float4 get_lit(
         zs->f32s.bonus_rgb[2],
         0.0f);
     
-    lit_color = clamp(lit_color, 0.1f, 1.0f);
+    lit_color = clamp(lit_color, 0.0f, 1.0f);
     
     return lit_color;
 }
 
 fragment FragmentAndTouchOut
-fragment_shader(
+frag_shader(
     const RasterizerPixel in [[stage_in]],
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
         color_textures[[ texture(0) ]],
@@ -833,7 +833,7 @@ fragment_shader(
 }
 
 fragment FragmentAndTouchOut
-alphablending_fragment_shader(
+alphablending_frag_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP>
         color_textures[[ texture(0), maybe_unused ]],
@@ -974,7 +974,7 @@ single_quad_vertex_shader(
 }
 
 fragment half4
-single_quad_fragment_shader(
+single_quad_frag_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<f16> texture  [[texture(0)]],
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
@@ -1225,7 +1225,7 @@ flat_billboard_quad_vertex_shader(
     return out;
 }
 
-fragment float4 flat_billboard_quad_fragment_shader(
+fragment float4 flat_billboard_quad_frag_shader(
     const FlatQuadPixel in [[stage_in]])
 {
     return in.rgba * in.rgba[3];
@@ -1310,7 +1310,7 @@ flat_texquad_vertex_shader(
     return out;
 }
 
-fragment FragmentAndTouchOut flat_texquad_fragment_shader(
+fragment FragmentAndTouchOut flat_texquad_frag_shader(
     array<texture2d_array<f16>, T1_TEXARRAYS_CAP> color_textures,
     const FlatTexQuadPixel in [[stage_in]])
 {
@@ -1453,7 +1453,7 @@ outlines_vertex_shader(
     return out;
 }
 
-fragment float4 outlines_fragment_shader(
+fragment float4 outlines_frag_shader(
     const OutlinePixel in [[stage_in]])
 {
     if (in.outline_alpha < 0.0f) {

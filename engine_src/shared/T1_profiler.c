@@ -34,9 +34,9 @@ static char gui_top_message[GUI_TOP_MESSAGE_MAX];
 static b8 profiler_paused = false;
 
 s32 profiler_object_id = INT32_MAX;
-s32 profiler_touch_id = -1;
+u32 profiler_touch_id = T1_TOUCH_ID_NONE;
 
-s32 frame_selection_touch_ids[2];
+u32 frame_selection_touch_ids[2];
 
 s32 gui_selected_frames[2];
 
@@ -348,7 +348,7 @@ void T1_profiler_draw_labels(void) {
         profiler_backdrop.gpu_data->base_mat_f32.diffuse_rgb[2] = 0.50f;
         profiler_backdrop.gpu_data->base_mat_f32.alpha = 0.75f;
         profiler_backdrop.cpu_data->zs_cpu_f32s.alpha_on = true;
-        profiler_backdrop.gpu_data->s32s.touch_id = -1;
+        profiler_backdrop.gpu_data->u32s.touch_id = T1_TOUCH_ID_NONE;
         T1_zsprite_commit(&profiler_backdrop);
         
         T1_text_props->f32s.rgba[0] = 0.1f;
@@ -394,7 +394,7 @@ void T1_profiler_draw_labels(void) {
                 line_text,
                 128,
                 f_i);
-            T1_text_props->s32s.touch_id = frame_selection_touch_ids[
+            T1_text_props->u32s.touch_id = frame_selection_touch_ids[
                 gui_frame_i];
             
             T1_text_request_label_renderable(
@@ -413,7 +413,7 @@ void T1_profiler_draw_labels(void) {
                 /* const f32 max_width: */
                     T1_settings_get_render_width());
             
-            T1_text_props->s32s.touch_id = -1;
+            T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
             
             cur_top -= (T1_text_props->font_height + 2.0f);
             T1_std_strcpy_cap(line_text, 128, "Cycles: ");

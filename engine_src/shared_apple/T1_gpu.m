@@ -257,19 +257,19 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> fragment_shader =
         [ags->lib newFunctionWithName:
-            @"fragment_shader"];
+            @"frag_shader"];
     if (fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: alphablending_fragment_shader()");
+            "Missing function: alphablending_frag_shader()");
         return false;
     }
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     id<MTLFunction> alphablending_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"alphablending_fragment_shader"];
+            @"alphablending_frag_shader"];
     if (alphablending_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
@@ -296,11 +296,11 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> z_prepass_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"z_prepass_fragment_shader"];
+            @"z_prepass_frag_shader"];
     if (
         z_prepass_fragment_shader == NULL)
     {
-        T1_log_append("Missing function: z_prepass_fragment_shader()!");
+        T1_log_append("Missing function: z_prepass_frag_shader()!");
         
         T1_std_strcpy_cap(
             error_msg_string,
@@ -347,12 +347,12 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> outlines_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"outlines_fragment_shader"];
+            @"outlines_frag_shader"];
     if (outlines_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: outlines_fragment_shader()");
+            "Missing function: outlines_frag_shader()");
         return false;
     }
     
@@ -407,7 +407,7 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> flat_billboard_quad_frag_shader =
         [ags->lib newFunctionWithName:
-            @"flat_billboard_quad_fragment_shader"];
+            @"flat_billboard_quad_frag_shader"];
     if (flat_billboard_quad_frag_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
@@ -481,7 +481,7 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> flat_texquad_frag_shader =
         [ags->lib newFunctionWithName:
-            @"flat_texquad_fragment_shader"];
+            @"flat_texquad_frag_shader"];
     if (flat_texquad_frag_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
@@ -1001,10 +1001,10 @@ u8 T1_apple_gpu_init(
     
     id<MTLFunction> singlequad_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"single_quad_fragment_shader"];
+            @"single_quad_frag_shader"];
     
     if (singlequad_fragment_shader == NULL) {
-        T1_log_append("Missing function: downsampling_fragment_shader()!");
+        T1_log_append("Missing function: downsampling_frag_shader()!");
         T1_std_strcpy_cap(
             error_msg_string,
             512,
