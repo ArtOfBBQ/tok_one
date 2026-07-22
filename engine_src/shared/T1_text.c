@@ -52,7 +52,7 @@ T1TextFontSettings * T1_text_props = NULL;
 void T1_text_init(
     void * (* arg_text_malloc_func)(u64 size),
     const char * raw_fontmetrics_file_contents,
-    const u64 raw_fontmetrics_file_size)
+    u64 raw_fontmetrics_file_size)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     (void)raw_fontmetrics_file_size;
@@ -103,7 +103,7 @@ static f32 get_newline_advance(void) {
     return T1_text_props->font_height * 1.1f;
 }
 
-static f32 get_advance_width(const char input) {
+static f32 get_advance_width(char input) {
     if (input == ' ') {
         return T1_text_props->font_height * 0.5f;
     }
@@ -125,7 +125,7 @@ static f32 get_advance_width(const char input) {
                     global_font_metrics->font_size;
 }
 
-static f32 get_left_side_bearing(const char input) {
+static f32 get_left_side_bearing(char input) {
     if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
     u32 i = (u32)(input - '!');
@@ -186,7 +186,7 @@ static f32 get_next_word_width(
 
 static void prefetch_label_lines(
     const char * text_to_draw,
-    const f32 max_width,
+    f32 max_width,
     PrefetchedLine * recipient,
     u32 * recipient_size)
 {
@@ -263,7 +263,7 @@ static void prefetch_label_lines(
 }
 
 void T1_text_request_label_offset_around(
-    u32 with_id,
+    u32 with_T1_id,
     const char * text_to_draw,
     f32 mid_x_pixelspace,
     f32 mid_y_pixelspace,
@@ -337,7 +337,7 @@ void T1_text_request_label_offset_around(
                 T1_render_view_screen_height_to_height_noz(
                     T1_text_props->font_height);
             
-            letter.cpu->T1_id = with_id;
+            letter.cpu->T1_id = with_T1_id;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -387,28 +387,28 @@ T1_text_request_label_around_x_at_top_y(
     T1_log_assert(lines_size < MAX_LINES);
     
     T1_text_request_label_offset_around(
-        /* const u32 with_id: */
+        /* u32 with_id: */
             with_T1_id,
         /* const char * text_to_draw: */
             text_to_draw,
-        /* const f32 mid_x_pixelspace: */
+        /* f32 mid_x_pixelspace: */
             mid_x_pixelspace,
         /* const f32 mid_y_pixelspace: */
             top_y_pixelspace -
                 ((((lines_size-1) * (get_newline_advance()))) / 2),
-        /* const f32 z: */
+        /* f32 z: */
             z,
         /* const f32 max_width: */
             max_width);
 }
 
 void T1_text_request_label_around(
-    const u32 with_T1_id,
+    u32 with_T1_id,
     const char * text_to_draw,
-    const f32 mid_x_pixelspace,
-    const f32 mid_y_pixelspace,
-    const f32 z,
-    const f32 max_width)
+    f32 mid_x_pixelspace,
+    f32 mid_y_pixelspace,
+    f32 z,
+    f32 max_width)
 {
     T1_log_assert(text_to_draw != NULL);
     T1_log_assert(text_to_draw[0] != '\0');
@@ -418,24 +418,24 @@ void T1_text_request_label_around(
             with_T1_id,
         /* const char * text_to_draw: */
             text_to_draw,
-        /* const f32 mid_x_pixelspace: */
+        /* f32 mid_x_pixelspace: */
             mid_x_pixelspace,
         /* const f32 mid_y_pixelspace: */
             mid_y_pixelspace,
-        /* const f32 z: */
+        /* f32 z: */
             z,
         /* const f32 max_width: */
             max_width);
 }
 
 void T1_text_request_label_renderable(
-    const u32 with_T1_id,
+    u32 with_T1_id,
     const char * text_to_draw,
-    const f32 left_x_pixelspace,
-    const f32 top_y_pixelspace,
-    const f32 z,
-    const f32 tab_width,
-    const f32 max_width)
+    f32 left_x_pixelspace,
+    f32 top_y_pixelspace,
+    f32 z,
+    f32 tab_width,
+    f32 max_width)
 {
     T1_log_assert(max_width > 0.005f);
     T1_log_assert(z >= 0.0f);
@@ -722,13 +722,13 @@ void T1_text_request_fps(
 }
 
 void T1_text_request_top_touch_id(
-    s32 top_touchable_id)
+    u32 top_touchable_id)
 {
     T1_texquad_delete(T1_ID_FPS_COUNTER);
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
-    T1_std_strcat_s32_cap(fps_string, 512, top_touchable_id);
+    T1_std_strcat_u32_cap(fps_string, 512, top_touchable_id);
     
     T1_text_props->font_height = 16.0f;
     T1_text_props->f32s.rgba[0] = 1.0f;

@@ -337,11 +337,10 @@ b8   T1_io_key_is_down(T1IOKey key, s32 scene_id);
 b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 scene_id);
 b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 scene_id);
 b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id);
-s32  T1_io_get_mouse_touch_id_this_frame(void);
+u32  T1_io_get_mouse_touch_id_this_frame(void);
 f32  T1_io_get_pos_x_this_frame(T1IOKey key); 
 f32  T1_io_get_pos_y_this_frame(T1IOKey key);
 s32  T1_io_create_scene_and_return_id(void);
-b8   T1_io_consume_mouse_changed(s32 scene_id);
 b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 scene_id);
 
 /*
@@ -404,13 +403,13 @@ void T1_meta_reg_struct(
 #define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, good)
 void T1_meta_reg_field(
     const char * field_name,
-    const u32 field_offset,
-    const T1MetaType field_type,
+    u32 field_offset,
+    T1MetaType field_type,
     const char * field_struct_type_name_or_null,
-    const u16 field_array_size_1,
-    const u16 field_array_size_2,
-    const u16 field_array_size_3,
-    const u8 is_enum,
+    u16 field_array_size_1,
+    u16 field_array_size_2,
+    u16 field_array_size_3,
+    u8 is_enum,
     u8 * good);
 #define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
 void T1_meta_reg_enum(

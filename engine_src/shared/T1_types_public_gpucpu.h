@@ -148,7 +148,7 @@ typedef struct {
     s32 shadow_map_depth_texture_i;
     s32 shadow_map_render_view_i;
     f32 simd_padding[3];
-} T1zLight; // 17 f32s = 68 bytes
+} T1zLight;
 
 #endif // T1_TYPES_PUBLIC_GPUCPU_H
 

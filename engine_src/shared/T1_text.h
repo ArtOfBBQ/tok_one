@@ -40,7 +40,7 @@ void T1_text_request_label_around(
     f32 max_width);
 
 void T1_text_request_label_renderable(
-    u32 with_object_id,
+    u32 with_T1_id,
     const char * text_to_draw,
     f32 left_pixelspace,
     f32 top_y_pixelspace,
@@ -60,7 +60,7 @@ void T1_text_request_debug_text(const char * text);
 void T1_text_request_fps(u64 elapsed_us);
 
 void T1_text_request_top_touch_id(
-    s32 top_touchable_id);
+    u32 top_touchable_id);
 
 #ifdef __cplusplus
 }

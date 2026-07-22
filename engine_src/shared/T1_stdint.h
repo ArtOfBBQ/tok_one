@@ -6,7 +6,7 @@
 typedef long   s64;
 typedef int    s32;
 typedef short  s16;
-typedef char   s8;
+typedef char    s8;
 
 typedef ulong  u64;
 typedef uint   u32;

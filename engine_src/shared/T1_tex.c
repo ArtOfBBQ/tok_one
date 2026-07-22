@@ -2,16 +2,16 @@
 
 #include "T1_log.h"
 
-s16 T1_tex_to_array_i(T1Tex in) {
-    return in == T1_TEX_NONE ? -1 : in >> 11;
+s16 T1_tex_to_array_i(T1Tex tex) {
+    return tex == T1_TEX_NONE ? -1 : tex >> 11;
 }
-s16 T1_tex_to_slice_i(T1Tex in) {
-    return in == T1_TEX_NONE ? -1 : (in & 0x07FF);
+s16 T1_tex_to_slice_i(T1Tex tex) {
+    return tex == T1_TEX_NONE ? -1 : (tex & 0x07FF);
 }
 
 void T1_tex_set_array_i(
     T1Tex * recip,
-    const s16 newval)
+    s16 newval)
 {
     // 31 itself is possible but reserved for
     // "write to depth array"
@@ -22,7 +22,7 @@ void T1_tex_set_array_i(
 
 void T1_tex_set_slice_i(
     T1Tex * recip,
-    const s16 newval)
+    s16 newval)
 {
     T1_log_assert(newval <= 2047);
     *recip &= 0xF800;

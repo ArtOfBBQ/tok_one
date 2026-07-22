@@ -43,8 +43,8 @@ typedef struct {
     s32 scene_ids_stack[SCENE_IDS_STACK_CAP];
     f32 last_drag_start_x;
     f32 last_drag_start_y;
-    s32 ondown_lclick_touch_id;
-    s32 cur_mouse_touch_id;
+    u32 ondown_lclick_touch_id;
+    u32 cur_mouse_touch_id;
     s32 next_scene_id;
     s32 dragging_at_scene_id;
     u8 scene_ids_stack_i;
@@ -394,7 +394,8 @@ b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id) {
         i++)
     {
         b8 scene_hit =
-            (scene_id == T1_io->frame_map[key].list[i].scene_id) ||
+            (scene_id == T1_io->frame_map[key].
+                list[i].scene_id) ||
             scene_id == -1;
         
         if (
@@ -435,16 +436,8 @@ b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, const s32 scene_id) {
     return false;
 }
 
-s32 T1_io_get_mouse_touch_id_this_frame(void) {
+u32 T1_io_get_mouse_touch_id_this_frame(void) {
     return T1_io->cur_mouse_touch_id;
-}
-
-b8 T1_io_consume_mouse_changed(s32 scene_id) {
-    (void)scene_id;
-    // TODO: implement me
-    // u8 out = T1_io->mouse_pos_changed;
-    // T1_io->mouse_pos_changed = false;
-    return false;
 }
 
 b8 T1_io_consume_mouse_drag(

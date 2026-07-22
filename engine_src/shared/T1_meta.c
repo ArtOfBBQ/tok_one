@@ -831,13 +831,13 @@ void T1_meta_reg_struct(
 
 void T1_meta_reg_field(
     const char * field_name,
-    const u32 field_offset,
-    const T1MetaType field_type,
+    u32 field_offset,
+    T1MetaType field_type,
     const char * field_struct_type_name_or_null,
-    const u16 field_array_size_1,
-    const u16 field_array_size_2,
-    const u16 field_array_size_3,
-    const u8 is_enum,
+    u16 field_array_size_1,
+    u16 field_array_size_2,
+    u16 field_array_size_3,
+    u8 is_enum,
     u8 * good)
 {
     *good = 0;
@@ -915,12 +915,12 @@ void T1_meta_reg_field(
     
     // check for existing field name in that struct
     u8 target_subname_i;
-    MetaField * target_mfield = find_field_in_struct_by_name(
+    MetaField * tgt_mfield = find_field_in_struct_by_name(
         target_mstruct,
         field_name,
         &target_subname_i);
     
-    if (target_mfield == NULL) {
+    if (tgt_mfield == NULL) {
         if (t1ms->meta_fields_size + 1 >= t1ms->meta_fields_store_cap)
         {
             #if T1_META_ASSERTS == T1_ACTIVE
@@ -932,11 +932,11 @@ void T1_meta_reg_field(
             return;
         }
         
-        target_mfield = t1ms->metafields_store + t1ms->meta_fields_size;
+        tgt_mfield = t1ms->metafields_store + t1ms->meta_fields_size;
         u16 target_mfield_i = t1ms->meta_fields_size;
         t1ms->meta_fields_size += 1;
         
-        metafield_construct(target_mfield);
+        metafield_construct(tgt_mfield);
         
         MetaField * previous_link = metafield_i_to_ptr(
             target_mstruct->head_fields_i);
@@ -954,9 +954,9 @@ void T1_meta_reg_field(
         }
     }
     
-    target_mfield->data_type = field_type;
-    target_mfield->is_enum = is_enum;
-    switch (target_mfield->data_type) {
+    tgt_mfield->data_type = field_type;
+    tgt_mfield->is_enum = is_enum;
+    switch (tgt_mfield->data_type) {
         case T1_TYPE_NOTSET:
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0); // field type should have been set on registration
@@ -967,83 +967,83 @@ void T1_meta_reg_field(
         break;
         case T1_TYPE_STRUCT:
             // no min/max needed
-            target_mfield->custom_uint_max = 0;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = 0;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_U64:
-            target_mfield->custom_uint_max = UINT64_MAX;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = UINT64_MAX;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_U32:
-            target_mfield->custom_uint_max = UINT32_MAX;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = UINT32_MAX;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_U16:
-            target_mfield->custom_uint_max = UINT16_MAX;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = UINT16_MAX;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_U8:
-            target_mfield->custom_uint_max = UINT8_MAX;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = UINT8_MAX;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_U4x2:
-            target_mfield->custom_uint_max = 15;
-            target_mfield->custom_uint_min = 0;
+            tgt_mfield->custom_uint_max = 15;
+            tgt_mfield->custom_uint_min = 0;
         break;
         case T1_TYPE_I64:
-            target_mfield->custom_int_max = INT64_MAX;
-            target_mfield->custom_int_min = INT64_MIN;
+            tgt_mfield->custom_int_max = INT64_MAX;
+            tgt_mfield->custom_int_min = INT64_MIN;
         break;
         case T1_TYPE_I32:
-            target_mfield->custom_int_max = INT32_MAX;
-            target_mfield->custom_int_min = INT32_MIN;
+            tgt_mfield->custom_int_max = INT32_MAX;
+            tgt_mfield->custom_int_min = INT32_MIN;
         break;
         case T1_TYPE_I16:
-            target_mfield->custom_int_max = INT16_MAX;
-            target_mfield->custom_int_min = INT16_MIN;
+            tgt_mfield->custom_int_max = INT16_MAX;
+            tgt_mfield->custom_int_min = INT16_MIN;
         break;
         case T1_TYPE_I8:
         case T1_TYPE_CHAR:
-            target_mfield->custom_int_max = INT8_MAX;
-            target_mfield->custom_int_min = INT8_MIN;
+            tgt_mfield->custom_int_max = INT8_MAX;
+            tgt_mfield->custom_int_min = INT8_MIN;
         break;
         case T1_TYPE_F32:
-            target_mfield->custom_f32_max = 3.40282347E+38f;
-            target_mfield->custom_f32_min = -3.40282347E+38f;
+            tgt_mfield->custom_f32_max = 3.40282347E+38f;
+            tgt_mfield->custom_f32_min = -3.40282347E+38f;
         break;
     }
-    target_mfield->offset = field_offset;
+    tgt_mfield->offset = field_offset;
     #if T1_META_ASSERTS == T1_ACTIVE
-    assert(target_mfield->offset < (1 << 24));
+    assert(tgt_mfield->offset < (1 << 24));
     #elif T1_META_ASSERTS == T1_INACTIVE
     #else
     #error
     #endif
-    target_mfield->array_sizes[0] = field_array_size_1;
-    target_mfield->array_sizes[1] = field_array_size_2;
-    target_mfield->array_sizes[2] = field_array_size_3;
+    tgt_mfield->array_sizes[0] = field_array_size_1;
+    tgt_mfield->array_sizes[1] = field_array_size_2;
+    tgt_mfield->array_sizes[2] = field_array_size_3;
     #if T1_META_ASSERTS == T1_ACTIVE
-    if (target_mfield->array_sizes[1] < 2) {
-        assert(target_mfield->array_sizes[2] < 2);
+    if (tgt_mfield->array_sizes[1] < 2) {
+        assert(tgt_mfield->array_sizes[2] < 2);
     }
-    if (target_mfield->array_sizes[0] < 2) {
-        assert(target_mfield->array_sizes[1] < 2);
+    if (tgt_mfield->array_sizes[0] < 2) {
+        assert(tgt_mfield->array_sizes[1] < 2);
     }
     for (u32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
-        assert(target_mfield->array_sizes[i] > 0);
+        assert(tgt_mfield->array_sizes[i] > 0);
     }
     #elif T1_META_ASSERTS == T1_INACTIVE
     #else
     #error
     #endif
     
-    target_mfield->name = T1_meta_copy_str_to_store(
+    tgt_mfield->name = T1_meta_copy_str_to_store(
         field_name,
         good);
     if (!*good) { return; }
     *good = 0;
     
-    if (target_mfield->data_type == T1_TYPE_STRUCT) {
+    if (tgt_mfield->data_type == T1_TYPE_STRUCT) {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(field_struct_type_name_or_null != NULL);
         #elif T1_META_ASSERTS == T1_INACTIVE
@@ -1058,7 +1058,7 @@ void T1_meta_reg_field(
             return;
         }
         
-        target_mfield->struct_type_name =
+        tgt_mfield->struct_type_name =
             T1_meta_copy_str_to_store(
                 /* const char * to_copy: */
                     field_struct_type_name_or_null,
@@ -1069,7 +1069,7 @@ void T1_meta_reg_field(
     } else if (is_enum) {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(field_struct_type_name_or_null != NULL);
-        assert(target_mfield->is_enum);
+        assert(tgt_mfield->is_enum);
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -1079,19 +1079,19 @@ void T1_meta_reg_field(
             return;
         }
         
-        target_mfield->parent_enum_id = UINT16_MAX;
+        tgt_mfield->parent_enum_id = UINT16_MAX;
         for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
             if (
                 t1ms->fp_strcmp(
                     field_struct_type_name_or_null,
                     t1ms->meta_enums[i].name) == 0)
             {
-                target_mfield->enum_type_name =
+                tgt_mfield->enum_type_name =
                     t1ms->meta_enums[i].name;
-                target_mfield->parent_enum_id = i;
+                tgt_mfield->parent_enum_id = i;
                 if (
                     t1ms->meta_enums[i].T1_type != 
-                        target_mfield->data_type)
+                        tgt_mfield->data_type)
                 {
                     #if T1_META_ASSERTS == T1_ACTIVE
                     assert(0); // enum's data type is mismatched
@@ -1105,7 +1105,7 @@ void T1_meta_reg_field(
             }
         }
         
-        if (target_mfield->parent_enum_id >= UINT16_MAX) {
+        if (tgt_mfield->parent_enum_id >= UINT16_MAX) {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0); // no such parent enum
             #elif T1_META_ASSERTS == T1_INACTIVE
@@ -3054,7 +3054,7 @@ void T1_meta_deserialize_instance_from_buffer(
     const char * struct_name,
     void * recipient,
     char * buffer,
-    const u32 buffer_size,
+    u32 buffer_size,
     u8 * good)
 {
     *good = 0;

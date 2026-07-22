@@ -220,7 +220,7 @@ void T1_os_gpu_copy_locked_vertices(void);
 
 void T1_os_gpu_copy_locked_materials(void);
 
-s32 T1_os_gpu_get_touch_id_at_screen_pos(
+u32 T1_os_gpu_get_touch_id_at_screen_pos(
     f32 screen_x,
     f32 screen_y);
 

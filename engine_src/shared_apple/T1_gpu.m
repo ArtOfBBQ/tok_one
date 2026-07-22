@@ -1241,7 +1241,7 @@ T1_os_gpu_make_depth_tex(
         height);
 }
 
-s32 T1_os_gpu_get_touch_id_at_screen_pos(
+u32 T1_os_gpu_get_touch_id_at_screen_pos(
     const f32 screen_x,
     const f32 screen_y)
 {
@@ -1251,7 +1251,7 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
         screen_x >= T1_global->window_wh[0] ||
         screen_y >= T1_global->window_wh[1])
     {
-        return -1;
+        return T1_TOUCH_ID_NONE;
     }
     
     u32 rtt_width  = (u32)ags->render_viewports[0].width;
@@ -1280,7 +1280,7 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
     
     if (((pixel_i * 4) + 3) >= size)
     {
-        return -1;
+        return T1_TOUCH_ID_NONE;
     }
     
     // See shaders for the packing logic
@@ -1294,11 +1294,8 @@ s32 T1_os_gpu_get_touch_id_at_screen_pos(
         (third_8bits  << 16) |
         (second_8bits << 8) |
         first_8bits;
-    s32 final_id = *(s32 *)&uid;
     
-    if (final_id < -1) { final_id = -1; }
-    
-    return final_id;
+    return uid;
 }
 
 void T1_os_gpu_delete_texture_array(

@@ -7,12 +7,9 @@
 extern "C" {
 #endif
 
-void
-T1_term_init(
-    void (* enter_fullscreen_fncptr)(void));
+void T1_term_init(void (* enter_fullscreen_fncptr)(void));
 
-void
-T1_term_update(void);
+void T1_term_update(void);
 
 #ifdef __cplusplus
 }

@@ -391,6 +391,7 @@ T1Anim * T1_anim_request_next(
         out->endpoints_not_deltas = endpoints_not_deltas;
     }
     
+    T1_log_assert(out != NULL);
     T1_log_assert(!out->committed);
     T1_log_assert(!out->deleted);
     
