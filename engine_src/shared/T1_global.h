@@ -5,6 +5,7 @@
 
 #include "T1_std.h"
 #include "T1_types_gpucpu.h"
+#include "T1_types_public.h"
 
 /*
 Window sizes are a source of confusion because there are so many coordinate

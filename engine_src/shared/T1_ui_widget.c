@@ -50,8 +50,8 @@ typedef struct {
     b8 label_shows_value;
 } T1UIWidgetProps;
 
-static s32 T1_ui_widget_sliding_touch_id = -1;
-static s32 T1_ui_widget_clicking_T1_id = -1;
+static s32 T1_ui_widget_sliding_touch_id = T1_TOUCH_ID_NONE;
+static s32 T1_ui_widget_clicking_T1_id = T1_TOUCH_ID_NONE;
 
 typedef struct ActiveUIElement {
     T1UIWidgetProps props;
@@ -259,6 +259,7 @@ static void T1_ui_widget_get_pin_pos(
 }
 #endif
 
+#if 0
 static void T1_ui_widget_set_label(
     char * recip,
     const u32 recip_cap,
@@ -352,6 +353,7 @@ static void T1_ui_widget_set_label(
         }
     }
 }
+#endif
 
 static ActiveUIElement *
 next_active_ui_element(void)
@@ -459,6 +461,7 @@ void T1_ui_widget_init(void) {
             ACTIVE_UI_ELEMENTS_SIZE);
 }
 
+#if 0
 static void redraw_dirty_labels(void) {
     // redraw dirty labels
     for (
@@ -524,6 +527,7 @@ static void redraw_dirty_labels(void) {
         }
     }
 }
+#endif
 
 #if 0
 b8 T1_ui_widget_handle_lclick(void) {

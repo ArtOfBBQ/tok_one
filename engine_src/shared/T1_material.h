@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 #include "T1_types_gpucpu.h"
+#include "T1_types_public_gpucpu.h"
 
-typedef struct LockedMaterialCollection {
+typedef struct {
     T1GPUMatf32 gpu_f32[T1_ALL_LOCKED_MATERIALS_SIZE];
     T1GPUMatu32 gpu_s32[T1_ALL_LOCKED_MATERIALS_SIZE];
     char material_names[T1_ALL_LOCKED_MATERIALS_SIZE][T1_MATERIAL_NAME_CAP];
