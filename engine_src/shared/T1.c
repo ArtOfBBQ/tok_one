@@ -163,6 +163,18 @@ void T1_cam_create_main_view(
         new_cam_width,
         new_cam_height);
     
+    T1CPURenderView * rv = T1_render_views->cpu + rv_i;
+    
+    // We're assuming the default constructor doesn't
+    // have bloom or outlines
+    for (u32 i = 0; i < rv->passes_size; i++) {
+        T1_log_assert(rv->passes[i].type != T1RENDERPASS_OUTLINES);
+        T1_log_assert(rv->passes[i].type != T1RENDERPASS_BLOOM);
+    }
+    
+    rv->passes[rv->passes_size++].type = T1RENDERPASS_BLOOM;
+    rv->passes[rv->passes_size++].type = T1RENDERPASS_OUTLINES;
+    
     T1_log_assert(
         !isnan(T1_render_views->cpu[rv_i].dest_xyz[0]));
     T1_log_assert(

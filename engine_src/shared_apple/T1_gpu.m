@@ -2106,8 +2106,7 @@ static void set_defaults_for_encoder(
                 outlines_desc,
                 cam_i);
             
-            outlines_desc.colorAttachments[1].texture =
-                nil;
+            outlines_desc.colorAttachments[1].texture = nil;
             
             id<MTLRenderCommandEncoder>
                 pass_1_outline_enc =

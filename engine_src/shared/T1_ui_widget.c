@@ -50,8 +50,8 @@ typedef struct {
     b8 label_shows_value;
 } T1UIWidgetProps;
 
-static s32 T1_ui_widget_sliding_touch_id = T1_TOUCH_ID_NONE;
-static s32 T1_ui_widget_clicking_T1_id = T1_TOUCH_ID_NONE;
+static u32 T1_ui_widget_sliding_touch_id = T1_TOUCH_ID_NONE;
+static u32 T1_ui_widget_clicking_T1_id = T1_TOUCH_ID_NONE;
 
 typedef struct ActiveUIElement {
     T1UIWidgetProps props;
