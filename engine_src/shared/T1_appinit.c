@@ -279,12 +279,12 @@ void T1_appinit_before_gpu_init(
     T1_log_assert(good);
     
     T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
-    mtlparser_init(
+    T1_mtlparser_init(
         T1_std_memset,
         T1_mem_malloc_managed,
         T1_std_strlcat);
     
-    T1_logger_init(
+    T1_log_init(
         /* void * arg_malloc_function(u64 size): */
             T1_mem_malloc_unmanaged,
         /* u32 (* arg_create_mutex_function)(void): */

@@ -444,11 +444,15 @@ static void T1_anim_resolve_single(
         if (delete) {
             T1_anim_delete(a);
             
+            if (a->public.run_func_on_finish) {
+                a->public.run_func_on_finish();
+            }
+            
             if (a->public.del_obj_on_finish)
             {
                 if (
                     a->public.target_T1_id ==
-                    T1_ANIM_HIT_EVERYTHING)
+                        T1_ANIM_HIT_EVERYTHING)
                 {
                     T1_zsprite_delete_all();
                     T1_texquad_delete_all();
@@ -725,7 +729,9 @@ void T1_anim_commit(
                 a->public.target_touch_id ==
                     c->target_touch_id &&
                 a->committed &&
-                a->endpoints_not_deltas)
+                a->endpoints_not_deltas &&
+                !a->public.del_obj_on_finish &&
+                !a->public.run_func_on_finish)
             {
                 T1_anim_delete(T1_anims + anim_i);
             }
@@ -759,16 +765,19 @@ void T1_anim_commit(
     T1_log_assert(!parent->deleted);
     T1_log_assert(!parent->committed);
     
-    if (c->target_T1_id == T1_ID_NONE) {
-        T1_log_assert(c->target_touch_id != T1_TOUCH_ID_NONE);
-    } else {
-        T1_log_assert(c->target_touch_id == T1_TOUCH_ID_NONE);
-    }
-    
-    if (c->target_touch_id == T1_TOUCH_ID_NONE) {
-        T1_log_assert(c->target_T1_id >= 0);
-    } else {
-        T1_log_assert(c->target_T1_id == T1_ID_NONE);
+    if (!c->run_func_on_finish) {
+        if (c->target_T1_id == T1_ID_NONE) {
+            T1_log_assert(c->target_touch_id != T1_TOUCH_ID_NONE);
+        } else {
+            T1_log_assert(c->target_touch_id == T1_TOUCH_ID_NONE);
+        }
+        
+        if (c->target_touch_id == T1_TOUCH_ID_NONE) {
+            T1_log_assert(c->target_T1_id >= 0);
+        } else {
+            T1_log_assert(c->target_T1_id == T1_ID_NONE);
+        }
+
     }
     
     T1_log_assert(parent->already_applied_t == 0.0f);
@@ -906,7 +915,8 @@ void T1_anim_evaporate_and_destroy(
 
 void T1_anim_fade_and_destroy(
     u32 T1_id,
-    u64 duration_us) {
+    u64 duration_us)
+{
     T1_log_assert(duration_us > 0);
     
     // register scheduled animation
@@ -915,12 +925,13 @@ void T1_anim_fade_and_destroy(
         /* b8 zs_gpu_f32s: */ true,
         /* b8 zs_cpu_f32s: */ false,
         /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
+        /* b8 tq_gpu_f32s: */ true,
         /* b8 tq_gpu_u32s: */ false);
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
-    fade_destroy->zs_gpu_f32s->alpha = 0.0f;
+    fade_destroy->zs_gpu_f32s->alpha = -0.1f;
     fade_destroy->zs_gpu_f32s->shadow_strength = 0.0f;
+    fade_destroy->tq_gpu_f32s->rgba[3] = -0.1f;
     fade_destroy->del_obj_on_finish = true;
     T1_anim_commit(
         fade_destroy
@@ -934,7 +945,8 @@ void T1_anim_fade_and_destroy(
 }
 
 void T1_anim_fade_destroy_all(
-    u64 duration_us) {
+    u64 duration_us)
+{
     T1_anim_fade_and_destroy(
         /* u32 T1_id: */
             T1_ANIM_HIT_EVERYTHING,

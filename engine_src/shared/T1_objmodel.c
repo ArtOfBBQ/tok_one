@@ -611,7 +611,7 @@ static void assert_objmodel_validity(s32 mesh_id) {
 static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
      const char * original_obj_filename,
      T1ParsedObj * arg_parsed_obj,
-     ParsedMaterial * parsed_materials,
+     T1ParsedMaterial * parsed_materials,
      const u32 parsed_materials_size)
 {
     f32 invert_z_axis_modifier = -1.0f;
@@ -1205,15 +1205,15 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     good = 0;
     
     u32 parsed_materials_cap = 20;
-    ParsedMaterial * parsed_materials = T1_mem_malloc_managed(
-        sizeof(ParsedMaterial) * parsed_materials_cap);
+    T1ParsedMaterial * parsed_materials = T1_mem_malloc_managed(
+        sizeof(T1ParsedMaterial) * parsed_materials_cap);
     T1_std_memset(
         parsed_materials,
         0,
-        sizeof(ParsedMaterial) * parsed_materials_cap);
+        sizeof(T1ParsedMaterial) * parsed_materials_cap);
     u32 parsed_materials_size = 0;
     
-    mtlparser_parse(
+    T1_mtlparser_parse(
         /* ParsedMaterial * recipient: */
             parsed_materials,
         /* u32 * recipient_size: */
@@ -1227,7 +1227,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     
     if (!good) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_dump_and_crash(mtlparser_get_last_error_msg());
+        T1_log_dump_and_crash(T1_mtlparser_get_last_error_msg());
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error

@@ -1,17 +1,17 @@
 #include "T1_settings.h"
 #include "T1_global.h"
 
-PerfSettings * T1_perf_settings = NULL;
+T1PerfSettings * T1_perf_settings = NULL;
 
 void T1_settings_init(void * arg_malloc_func(u64))
 {
-    T1_perf_settings = (PerfSettings *)
-    arg_malloc_func(sizeof(PerfSettings));
+    T1_perf_settings = (T1PerfSettings *)
+    arg_malloc_func(sizeof(T1PerfSettings));
     
     T1_std_memset(
         T1_perf_settings,
         0,
-        sizeof(PerfSettings));
+        sizeof(T1PerfSettings));
     
     T1_perf_settings->render_width_max  = 2160;
     T1_perf_settings->skip_background_shading = false;

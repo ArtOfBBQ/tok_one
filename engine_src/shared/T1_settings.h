@@ -3,12 +3,12 @@
 
 #include "T1_stdint.h"
 
-typedef struct PerfSettings {
+typedef struct {
     u32 render_width_max;
     u8 skip_background_shading;
-} PerfSettings;
+} T1PerfSettings;
 
-extern PerfSettings * T1_perf_settings;
+extern T1PerfSettings * T1_perf_settings;
 
 void T1_settings_init(void * arg_malloc_func(u64));
 

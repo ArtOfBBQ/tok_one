@@ -31,7 +31,7 @@ static T1LogState * T1_log_s = NULL;
 extern "C" {
 #endif
 
-void T1_logger_init(
+void T1_log_init(
     void * (* arg_logger_malloc_func)(u64 size),
     u32 (* arg_logger_create_mutex_func)(void),
     void (* arg_logger_mutex_lock_func)(const u32 mutex_id),
@@ -174,6 +174,7 @@ T1_log_dump_and_crash(
     
     T1_log_app_running = false;
 }
+
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void

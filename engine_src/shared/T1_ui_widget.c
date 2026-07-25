@@ -121,7 +121,7 @@ static void T1_ui_widget_get_pos(
 #if 0
 static f32 T1_ui_widget_get_pin_pos_given_mouse(
     ActiveUIElement * ae,
-    const f32 mouse_x,
+    f32 mouse_x,
     f64 * recip_pin_pct)
 {
     T1_ui_widget_update_pos_if_needed(ae);
@@ -238,7 +238,7 @@ static void T1_ui_widget_get_pin_pos(
     
     f32 slider_width =
     T1_render_view_screen_width_to_width_noz(
-        /* const f32 screen_width: */
+        /* f32 screen_width: */
             ae->props.width_screen);
     
     f32 new_x_offset =
@@ -262,7 +262,7 @@ static void T1_ui_widget_get_pin_pos(
 #if 0
 static void T1_ui_widget_set_label(
     char * recip,
-    const u32 recip_cap,
+    u32 recip_cap,
     ActiveUIElement * widget)
 {
     if (
@@ -509,18 +509,17 @@ static void redraw_dirty_labels(void) {
             
             if (full_label[0] != '\0') {
                 T1_text_request_label_around(
-                    /* const s32 with_object_id: */
-                        T1_ui_widget_list[i].
-                            label_T1_id,
+                    /* s32 with_object_id: */
+                        T1_ui_widget_list[i].label_T1_id,
                     /* const char * text_to_draw: */
                         full_label,
-                    /* const f32 mid_x_pixelspace: */
+                    /* f32 mid_x_pixelspace: */
                         xy_screen[0],
-                    /* const f32 mid_y_pixelspace: */
+                    /* f32 mid_y_pixelspace: */
                         xy_screen[1],
-                    /* const f32 z: */
+                    /* f32 z: */
                         z,
-                    /* const f32 max_width: */
+                    /* f32 max_width: */
                         T1_ui_widget_list[i].props.
                             width_screen);
             }
@@ -789,9 +788,9 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
 #endif
 
 void T1_ui_widget_request_slider(
-    const u32 back_T1_id,
-    const u32 label_T1_id,
-    const u32 pin_T1_id,
+    u32 back_T1_id,
+    u32 label_T1_id,
+    u32 pin_T1_id,
     void * linked_value_ptr)
 {
     T1_log_assert(T1_ui_widget_next_props != NULL);
@@ -923,10 +922,10 @@ void T1_ui_widget_request_slider(
 }
 
 void T1_ui_widget_request_button(
-    const u32 button_object_id,
-    const u32 button_label_id,
+    u32 button_object_id,
+    u32 button_label_id,
     void (* onclick_funcptr)(s64),
-    const s64 clicked_arg)
+    s64 clicked_arg)
 {
     T1_log_assert(T1_ui_widget_next_props->
         width_screen > 5.0f);
@@ -1011,9 +1010,9 @@ void T1_ui_widget_delete_all(void) {
 /*
 3D models
 */
-f32 T1_get_x_mul_for_width(const s32 for_mesh_id, const f32 for_width) {
+f32 T1_get_x_mul_for_width(s32 for_mesh_id, f32 for_width) {
     return T1_global_get_x_mul_for_width(for_mesh_id, for_width); }
-f32 T1_get_y_mul_for_height(const s32 for_mesh_id, const f32 for_height) {
+f32 T1_get_y_mul_for_height(s32 for_mesh_id, f32 for_height) {
     return T1_global_get_y_mul_for_height(for_mesh_id, for_height); }
-f32 T1_get_z_mul_for_depth(const s32 for_mesh_id, const f32 for_depth) {
+f32 T1_get_z_mul_for_depth(s32 for_mesh_id, f32 for_depth) {
     return T1_global_get_z_mul_for_depth(for_mesh_id, for_depth); }

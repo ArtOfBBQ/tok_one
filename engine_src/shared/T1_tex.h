@@ -28,12 +28,8 @@ when the 5 leftmost bits of the first byte are all set, their value is 0xF8
 */
 s16 T1_tex_to_array_i(T1Tex tex);
 s16 T1_tex_to_slice_i(T1Tex tex);
-void T1_tex_set_array_i(
-    T1Tex * recip,
-    s16 newval);
+void T1_tex_set_array_i(T1Tex * recip, s16 newval);
 
-void T1_tex_set_slice_i(
-    T1Tex * recip,
-    s16 newval);
+void T1_tex_set_slice_i(T1Tex * recip, s16 newval);
 
 #endif // T1_TEX_H

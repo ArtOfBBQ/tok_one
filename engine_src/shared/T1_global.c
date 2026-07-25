@@ -22,7 +22,7 @@ T1_global_init(void) {
     T1_global->pause_profiler         = false;
     T1_global->block_mouse            = false;
         
-    T1_global->timedelta_mult = 1.0f;
+    T1_global->timedelta_mult = 1.00f;
     
     T1_global->postproc_consts.timestamp = 0;
     T1_global->postproc_consts.blur_pct = 0.18f;

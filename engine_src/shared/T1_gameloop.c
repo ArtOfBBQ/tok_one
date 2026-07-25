@@ -43,7 +43,7 @@ void T1_gameloop_init(void) {
 static void show_dead_simple_text(
     T1GPUFrame * frame_data,
     const char * text_message,
-    const u64 elapsed)
+    u64 elapsed)
 {
     T1_ui_widget_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE

@@ -11,15 +11,13 @@ THE API FOR TRANSFORMING TEXT TO TOKENS (below)
 The tokenizer uses memory, so you need to initialize it (with malloc or your
 own malloc function) before doing anything else.
 */
-void
-T1_token_init(
+void T1_token_init(
     void * (* arg_memset_func)(void *, int, u64),
     u64 (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(u64),
     u8 * good);
 
-void
-T1_token_deinit(
+void T1_token_deinit(
     void (* arg_free_func)(void *));
 
 /*
@@ -28,8 +26,7 @@ reset() function in between each run to clear all registered tokens.
 
 You don't need to do this the 1st time, the init() also does a reset().
 */
-void
-T1_token_reset(u8 * good);
+void T1_token_reset(u8 * good);
 
 /*
 Before running the tokenizer, register your enums with some ascii values that
@@ -42,36 +39,28 @@ are convenient for you.
 #define T1_TOKEN_FLAG_PRECISE 8
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
 
-void
-T1_token_set_store_mode(T1TokenStoreMode mode);
+void T1_token_set_store_mode(T1TokenStoreMode mode);
 
-void
-T1_token_set_reg_bitflags(u8 bitflags);
+void T1_token_set_reg_bitflags(u8 bitflags);
 
-void
-T1_token_clear_start_pattern(void);
+void T1_token_clear_start_pattern(void);
 
-void
-T1_token_set_reg_start_pattern(
-    const char * start_pattern);
+void T1_token_set_reg_start_pattern(
+    const c8 * start_pattern);
 
-void
-T1_token_clear_stop_patterns(void);
+void T1_token_clear_stop_patterns(void);
 
-void
-T1_token_set_reg_stop_pattern(
-    const char * stop_pattern,
+void T1_token_set_reg_stop_pattern(
+    const c8 * stop_pattern,
     u32 pattern_index);
 
-void
-T1_token_set_reg_middle_cap(u32 middle_cap);
+void T1_token_set_reg_middle_cap(u32 middle_cap);
 
 void T1_token_set_string_literal(
     u32 enum_value,
     u8 * good);
 
-void
-T1_token_register(
+void T1_token_register(
     u32 enum_value,
     u8 * good);
 
@@ -79,8 +68,7 @@ T1_token_register(
 After setting everything up, run this function to actually do the work of
 transforming text into the tokens you specified
 */
-void
-T1_token_run(
+void T1_token_run(
     const char * input,
     u8 * good);
 

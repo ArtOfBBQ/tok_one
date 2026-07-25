@@ -40,16 +40,16 @@ A slider linked to a f32 of your choice, for the user to slide left/right to
 get the value of their choosing
 */
 void T1_ui_widget_request_slider(
-    const u32 background_T1_id,
-    const u32 label_T1_id,
-    const u32 pin_T1_id,
+    u32 background_T1_id,
+    u32 label_T1_id,
+    u32 pin_T1_id,
     void * linked_value_ptr);
 
 void T1_ui_widget_request_button(
-    const u32 button_T1_id,
-    const u32 button_label_T1_id,
+    u32 button_T1_id,
+    u32 button_label_T1_id,
     void (* onclick_funcptr)(s64),
-    const s64 clicked_arg);
+    s64 clicked_arg);
 
 void T1_ui_widget_delete(u32 with_T1_id);
 

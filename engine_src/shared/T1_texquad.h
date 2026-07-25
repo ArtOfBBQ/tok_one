@@ -51,8 +51,8 @@ void T1_texquad_apply_anim_effects_to_id(
     const u32 * anim_gpu_vals_u32);
 
 void T1_texquad_draw_test(
-    const f32 width,
-    const f32 height);
+    f32 width,
+    f32 height);
 
 void T1_texquad_copy_to_frame_data(
     T1GPUTexQuad * recip_frame_data,

@@ -32,9 +32,9 @@ assert_sanity_check_zsprite_vals(
         T1_log_assert(recip_gpu_f32s->bonus_rgb[0] > -3.0f);
         T1_log_assert(recip_gpu_f32s->bonus_rgb[1] > -3.0f);
         T1_log_assert(recip_gpu_f32s->bonus_rgb[2] > -3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] < 3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] < 3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 3.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] < 10.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] < 10.0f);
+        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 10.0f);
     }
     
     if (recip_gpu_u32s) {

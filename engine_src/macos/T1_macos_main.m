@@ -557,7 +557,7 @@ int main(int argc, const char * argv[]) {
         T1_std_strcpy_cap(
             errmsg2,
             512,
-            "Critical failure: couldn't configure Metal graphics."
+            "Critical fail: couldn't configure Metal graphics."
             " Looked for shader in: ");
         T1_std_strcat_cap(
             errmsg2,

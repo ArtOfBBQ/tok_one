@@ -263,7 +263,7 @@ s16 T1_os_gpu_make_depth_tex(
 
 void T1_platform_update_mouse_location(void);
 
-// This is used to communicate failure after failure to initialize GPU
+// This is used to communicate failure after failure to init GPU
 // acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
 void T1_platform_request_messagebox(const c8 * message);
 

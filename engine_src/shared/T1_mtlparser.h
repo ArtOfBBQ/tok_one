@@ -6,7 +6,7 @@
 
 #include "T1_stdint.h"
 
-typedef struct ParsedMaterial {
+typedef struct {
     char name[T1_MATERIAL_NAME_CAP];
     char ambient_map[T1_MATERIAL_NAME_CAP];
     char diffuse_map[T1_MATERIAL_NAME_CAP];
@@ -31,17 +31,17 @@ typedef struct ParsedMaterial {
     f32 emissive_rgb[3];
     f32 T1_uv_scroll[2];
     u8 use_base_mtl_flag;
-} ParsedMaterial;
+} T1ParsedMaterial;
 
-void mtlparser_init(
+void T1_mtlparser_init(
     void * (* memset_func)(void *, int, u64),
     void * (* malloc_func)(u64),
     u64 (* strlcat)(char *, const char *, u64));
 
-const char * mtlparser_get_last_error_msg(void);
+const char * T1_mtlparser_get_last_error_msg(void);
 
-void mtlparser_parse(
-    ParsedMaterial * recipient,
+void T1_mtlparser_parse(
+    T1ParsedMaterial * recipient,
     u32 * recipient_size,
     const u32 recipient_cap,
     const char * input,

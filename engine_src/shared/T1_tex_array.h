@@ -31,11 +31,9 @@ typedef struct {
 extern T1TexArray * T1_tex_arrays;
 extern u32 T1_tex_arrays_size;
 
-void
-T1_tex_array_init(void);
+void T1_tex_array_init(void);
 
-void
-T1_tex_array_push_all(void);
+void T1_tex_array_push_all(void);
 
 T1Tex T1_tex_array_reg_img(
     const c8 * filename,
@@ -52,12 +50,9 @@ b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in);
 u32 T1_tex_array_get_img_height(s32 array_i);
 u32 T1_tex_array_get_img_width(s32 array_i);
 
-void T1_tex_array_delete_array(
-    const s32 array_i);
+void T1_tex_array_delete_array(s32 array_i);
 
-void T1_tex_array_delete_slice(
-    const s32 array_i,
-    const s32 slice_i);
+void T1_tex_array_delete_slice(s32 array_i, s32 slice_i);
 
 void T1_tex_array_update_rgba(
     s32 array_i,
@@ -68,17 +63,16 @@ void T1_tex_array_update_rgba(
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
-    const u32 rows,
-    const u32 columns);
+    u32 rows,
+    u32 columns);
 
-T1Tex T1_tex_array_create_new_in_array(
-    const s32 array_i);
+T1Tex T1_tex_array_create_new_in_array(s32 array_i);
 
 T1Tex T1_tex_array_get_filename_loc(
     const char * for_filename);
 
 void T1_tex_array_debug_dump_to_writables(
-    const s32 texture_array_i,
+    s32 texture_array_i,
     u32 * success);
 
 #endif // T1_TEX_ARRAY_H

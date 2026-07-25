@@ -23,6 +23,7 @@ typedef struct {
     T1GPUTexQuadf32 * tq_gpu_f32s;
     T1GPUTexQuadu32 * tq_gpu_u32s;
     
+    void (* run_func_on_finish)(void);
     u64 duration_us;
     u64 pause_us;
     

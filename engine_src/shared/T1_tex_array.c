@@ -32,9 +32,9 @@ void T1_tex_array_push_all(void)
                 T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_freeable != NULL)
             {
                 T1_os_gpu_push_tex_slice_and_free_rgba(
-                    /* const s32 texture_array_i: */
+                    /* s32 texture_array_i: */
                         ta_i,
-                    /* const s32 texture_i: */
+                    /* s32 texture_i: */
                         sl_i);
             }
         }
@@ -47,10 +47,10 @@ void T1_tex_array_push_all(void)
 
 static T1Img * extract_image(
     const T1Img * original,
-    const u32 sprite_columns,
-    const u32 sprite_rows,
-    const u32 x,
-    const u32 y)
+    u32 sprite_columns,
+    u32 sprite_rows,
+    u32 x,
+    u32 y)
 {
     T1_log_assert(x > 0);
     T1_log_assert(y > 0);
@@ -99,7 +99,7 @@ static T1Img * extract_image(
             (void *)&new_image->rgba_values_freeable,
         /* void * aligned_subptr: */
             (void *)&new_image->rgba_values_page_aligned,
-        /* const u64 subptr_size: */
+        /* u64 subptr_size: */
             new_image->rgba_values_size);
     T1_std_memset(
         new_image->rgba_values_page_aligned,
@@ -170,9 +170,9 @@ static void
 register_to_texturearray_by_splitting_image(
     T1Img * new_image,
     const char * filename_prefix,
-    const s32 ta_i,
-    const u32 rows,
-    const u32 columns)
+    s32 ta_i,
+    u32 rows,
+    u32 columns)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -207,13 +207,13 @@ register_to_texturearray_by_splitting_image(
             T1Img * split_img = extract_image(
                 /* const DecodedImage * original: */
                     new_image,
-                /* const u32 sprite_columns: */
+                /* u32 sprite_columns: */
                     columns,
-                /* const u32 sprite_rows: */
+                /* u32 sprite_rows: */
                     rows,
-                /* const u32 x: */
+                /* u32 x: */
                     (u32)col_i + 1,
-                /* const u32 y: */
+                /* u32 y: */
                     (u32)row_i + 1);
             
             if (split_img == NULL ||
@@ -267,9 +267,9 @@ register_to_texturearray_by_splitting_image(
                 split_img->rgba_values_page_aligned;
             
             T1_os_gpu_push_tex_slice_and_free_rgba(
-                /* const s32 texture_array_i: */
+                /* s32 texture_array_i: */
                     ta_i,
-                /* const s32 texture_i: */
+                /* s32 texture_i: */
                     t_i);
         }
     }
@@ -280,8 +280,8 @@ register_to_texturearray_by_splitting_image(
 }
 
 s32 T1_tex_array_create_new_render_view(
-    const u32 width,
-    const u32 height)
+    u32 width,
+    u32 height)
 {
     T1_log_assert(T1_render_views != NULL);
     
@@ -322,13 +322,13 @@ s32 T1_tex_array_create_new_render_view(
     T1Tex tex = T1_tex_array_reg_img(
         /* const char * filename: */
             tex_name,
-        /* const u32 width: */
+        /* u32 width: */
             T1_render_views->cpu[rv_i].width,
-        /* const u32 height: */
+        /* u32 height: */
             T1_render_views->cpu[rv_i].height,
-        /* const u32 is_render_target: */
+        /* u32 is_render_target: */
             true,
-        /* const u32 use_bc1_compression: */
+        /* u32 use_bc1_compression: */
             false);
     
     #if T1_LOG_PRINTF == T1_ACTIVE
@@ -382,7 +382,7 @@ u32 T1_tex_array_get_img_width(s32 array_i) {
 }
 
 void T1_tex_array_delete_array(
-    const s32 array_i)
+    s32 array_i)
 {
     T1_log_assert(array_i != 0);
     
@@ -396,8 +396,8 @@ void T1_tex_array_delete_array(
 }
 
 void T1_tex_array_delete_slice(
-    const s32 array_i,
-    const s32 slice_i)
+    s32 array_i,
+    s32 slice_i)
 {
     T1_log_assert(array_i >= 0);
     T1_log_assert(slice_i >= 0);
@@ -441,10 +441,10 @@ void T1_tex_array_delete_slice(
 }
 
 void T1_tex_array_update_rgba(
-    const s32 array_i,
-    const s32 slice_i,
+    s32 array_i,
+    s32 slice_i,
     const u8 * rgba,
-    const u32 rgba_size)
+    u32 rgba_size)
 {
     T1_log_assert(T1_tex_arrays[array_i].single_img_width * T1_tex_arrays[array_i].single_img_height * 4 == rgba_size);
     
@@ -464,7 +464,7 @@ void T1_tex_array_update_rgba(
                 (void **)&T1_tex_arrays[array_i].
                     images[slice_i].image.
                         rgba_values_page_aligned,
-            /* const u64 subptr_size: */
+            /* u64 subptr_size: */
                 rgba_size);
     }
     T1_std_memcpy(
@@ -477,8 +477,8 @@ void T1_tex_array_update_rgba(
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
-    const u32 rows,
-    const u32 columns)
+    u32 rows,
+    u32 columns)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -493,20 +493,20 @@ void T1_tex_array_reg_new_by_splitting_img(
             new_image,
         /* filename_prefix: */
             filename_prefix,
-        /* const s32 texture_array_i: */
+        /* s32 texture_array_i: */
             new_texture_array_i,
-        /* const u32 rows: */
+        /* u32 rows: */
             rows,
-        /* const u32 columns: */
+        /* u32 columns: */
             columns);
 }
 
 T1Tex T1_tex_array_reg_img(
     const c8 * filename,
-    const u32 width,
-    const u32 height,
-    const b8 is_render_target,
-    const b8 use_bc1_compression)
+    u32 width,
+    u32 height,
+    b8 is_render_target,
+    b8 use_bc1_compression)
 {
     T1Tex retval = T1_TEX_NONE;
     
@@ -626,7 +626,7 @@ T1Tex T1_tex_array_get_filename_loc(
 }
 
 void T1_tex_array_debug_dump_to_writables(
-    const s32 texture_array_i,
+    s32 texture_array_i,
     u32 * success)
 {
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -640,9 +640,9 @@ void T1_tex_array_debug_dump_to_writables(
         u32 height = 0;
         
         T1_os_gpu_fetch_rgba_at(
-            /* const s32 texture_array_i: */
+            /* s32 texture_array_i: */
                 texture_array_i,
-            /* const s32 texture_i: */
+            /* s32 texture_i: */
                 texture_i,
             /* u8 *rgba_recipient: */
                 rgba,
@@ -683,11 +683,11 @@ void T1_tex_array_debug_dump_to_writables(
                 filename,
             /* u8 * rgba: */
                 rgba,
-            /* const u32 rgba_size: */
+            /* u32 rgba_size: */
                 rgba_size,
-            /* const u32 width: */
+            /* u32 width: */
                 width,
-            /* const u32 height: */
+            /* u32 height: */
                 height,
             /* u32 * good: */
                 &write_good);
