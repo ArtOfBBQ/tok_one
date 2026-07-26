@@ -929,9 +929,9 @@ void T1_anim_fade_and_destroy(
         /* b8 tq_gpu_u32s: */ false);
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
-    fade_destroy->zs_gpu_f32s->alpha = -0.1f;
+    fade_destroy->zs_gpu_f32s->alpha = 0.0f;
     fade_destroy->zs_gpu_f32s->shadow_strength = 0.0f;
-    fade_destroy->tq_gpu_f32s->rgba[3] = -0.1f;
+    fade_destroy->tq_gpu_f32s->rgba[3] = 0.0f;
     fade_destroy->del_obj_on_finish = true;
     T1_anim_commit(
         fade_destroy
