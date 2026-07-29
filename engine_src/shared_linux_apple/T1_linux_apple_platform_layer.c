@@ -43,7 +43,7 @@
 #endif
 
 
-typedef struct OSMutexID {
+typedef struct {
     pthread_mutex_t mutex;
     b8 initialized;
 } OSMutexID;

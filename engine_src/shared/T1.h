@@ -330,18 +330,18 @@ being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
 s32  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(const s32 scene_id);
+void T1_io_scene_stack_push(const s32 T1_scene_id);
 void T1_io_scene_stack_pop(void);
-s32  T1_io_scene_stack_get_active_scene_id(void);
-b8   T1_io_key_is_down(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id);
+s32  T1_io_scene_stack_get_active_T1_scene_id(void);
+b8   T1_io_key_is_down(T1IOKey key, s32 T1_scene_id);
+b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 T1_scene_id);
+b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 T1_scene_id);
+b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 T1_scene_id);
 u32  T1_io_get_mouse_touch_id_this_frame(void);
 f32  T1_io_get_pos_x_this_frame(T1IOKey key); 
 f32  T1_io_get_pos_y_this_frame(T1IOKey key);
 s32  T1_io_create_scene_and_return_id(void);
-b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 scene_id);
+b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 T1_scene_id);
 
 /*
 TOKENIZER

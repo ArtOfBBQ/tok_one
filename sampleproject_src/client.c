@@ -84,7 +84,7 @@ void T1_client_late_startup(void) {
     T1_cam->angle_xyz[2] =  0.0f;
 }
 
-void T1_client_threadmain(int32_t threadmain_id) {
+void T1_client_threadmain(s32 threadmain_id) {
     switch (threadmain_id) {
         default:
             T1_log_append("unhandled threadmain_id: ");
@@ -93,9 +93,9 @@ void T1_client_threadmain(int32_t threadmain_id) {
     }
 }
 
-static uint32_t testswitch = 0;
+static u32 testswitch = 0;
 static void client_handle_keypresses(
-    uint64_t microseconds_elapsed)
+    u64 microseconds_elapsed)
 {
     float elapsed_mod = (float)(
         (double)microseconds_elapsed / (double)16666);
@@ -107,7 +107,6 @@ static void client_handle_keypresses(
     {
         redraw_test_quads(img_x, img_y);
     }
-    
     
     if (T1_io_key_consume_short_tap_this_frame(
         T1_IO_GAMEPAD_DPAD_LEFT,
@@ -268,7 +267,7 @@ static void client_handle_keypresses(
     }
 }
 
-void T1_client_update(uint64_t microseconds_elapsed)
+void T1_client_update(u64 microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
 }
@@ -281,7 +280,7 @@ void T1_client_update_after_render_pass(void) {
 void T1_client_evaluate_terminal_command(
     char * command,
     char * response,
-    const uint32_t response_cap)
+    const u32 response_cap)
 {
     if (T1_std_are_equal_strings(command, "EXAMPLE COMMAND")) {
         T1_std_strcpy_cap(response, response_cap, "Hello from client!");

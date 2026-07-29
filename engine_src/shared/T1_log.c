@@ -18,8 +18,8 @@ c8 * T1_log_crash_msg = NULL;
 typedef struct {
     void * (* malloc)(u64);
     u32 (* create_mutex)(void);
-    void (* mutex_lock)(const u32);
-    void (* mutex_unlock)(const u32);
+    void (* mutex_lock)(u32);
+    void (* mutex_unlock)(u32);
     u32 mutex_id;
     c8 * full;
     u32 full_i;
@@ -58,8 +58,7 @@ void T1_log_init(
 }
 
 #if T1_LOG_PRINTF == T1_ACTIVE
-void
-T1_log_append_u32(const u32 to_append)
+void T1_log_append_u32(u32 to_append)
 {
     c8 converted[1000];
     T1_std_u32_to_string(
@@ -117,7 +116,7 @@ void T1_log_append(
     // logger_mutex_lock_func(logger_mutex_id);
 }
 #elif T1_LOG_PRINTF == T1_INACTIVE
-void T1_log_append_u32(const u32 to_append) {}
+void T1_log_append_u32(u32 to_append) {}
 void T1_log_append_c8(c8 to_append) {}
 void T1_log_append_s32(s32 to_append) {}
 void T1_log_append_f32(f32 to_append) {}
@@ -145,8 +144,7 @@ void T1_log_dump(u8 * good) {
     *good = true;
 }
 
-void
-T1_log_dump_and_crash(
+void T1_log_dump_and_crash(
     const c8 * crash_message)
 {
     u8 log_dump_succesful = false;
@@ -174,7 +172,6 @@ T1_log_dump_and_crash(
     
     T1_log_app_running = false;
 }
-
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void
