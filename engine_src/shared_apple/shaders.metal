@@ -555,8 +555,7 @@ float4 get_lit(
             
             f32 shadow_depth = shadow_maps[shadowmap_i].sample(shadow_sampler,shadow_uv).r;
             
-            f32 frag_depth =
-                light_clip_pos.z / light_clip_pos.w;
+            f32 frag_depth = light_clip_pos.z / light_clip_pos.w;
             
             shadow_factors =
                 (frag_depth <= shadow_depth + T1_SHADOW_BIAS) ?
@@ -730,6 +729,18 @@ float4 get_lit(
     
     lit_color = clamp(lit_color, 0.0f, 1.0f);
     
+    float4 lit_color2 = lit_color;
+    lit_color2[0] = (lit_color[0] * 0.6f) + (lit_color[1] * 0.4f);
+    lit_color2[1] = (lit_color[1] * 0.6f) + (lit_color[0] * 0.4f);
+    lit_color2[2] -= 0.05f;
+    
+    f32 pos_sum = ((in.worldpos.x * 0.30f) + in.worldpos.y + (in.worldpos.z*0.2f)) * 1.8f;
+    f32 val_f32 = sin(pos_sum) * 0.5f + 0.5f;
+    
+    lit_color =
+        ((1.0f - val_f32) * lit_color) +
+        (val_f32 * lit_color2);
+    
     return lit_color;
 }
 
@@ -782,12 +793,12 @@ frag_shader(
                 locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
-        #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+            #if T1_SHADOWS_ACTIVE == T1_ACTIVE
             shadow_map,
-        #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
+            #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
             color_textures,
             camera_i,
         /* const device T1GPURenderView * rvs: */

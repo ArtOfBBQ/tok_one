@@ -317,6 +317,7 @@ z-Lights (3D lights)
 T1zLight * T1_zlight_next(void);
 void T1_zlight_commit(T1zLight * to_request);
 void T1_zlight_delete(u32 T1_id);
+void T1_zlight_delete_all(void);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD

@@ -32,22 +32,22 @@ extern "C" {
 #endif
 
 void T1_log_init(
-    void * (* arg_logger_malloc_func)(u64 size),
-    u32 (* arg_logger_create_mutex_func)(void),
-    void (* arg_logger_mutex_lock_func)(const u32 mutex_id),
-    void (* arg_logger_mutex_unlock_func)(const u32 mutex_id))
+    void * (* arg_log_malloc_func)(u64 size),
+    u32 (* arg_log_create_mutex_func)(void),
+    void (* arg_log_mutex_lock_func)(const u32 mutex_id),
+    void (* arg_log_mutex_unlock_func)(const u32 mutex_id))
 {
-    T1_log_s = arg_logger_malloc_func(sizeof(T1LogState));
+    T1_log_s = arg_log_malloc_func(sizeof(T1LogState));
     T1_std_memset(T1_log_s, 0, sizeof(T1LogState));
     
-    T1_log_crash_msg = arg_logger_malloc_func(
+    T1_log_crash_msg = arg_log_malloc_func(
         T1_LOG_CRASH_STRING_SIZE);
     T1_std_memset(T1_log_crash_msg, 0, T1_LOG_CRASH_STRING_SIZE);
     
-    T1_log_s->malloc = arg_logger_malloc_func;
-    T1_log_s->create_mutex = arg_logger_create_mutex_func;
-    T1_log_s->mutex_lock = arg_logger_mutex_lock_func;
-    T1_log_s->mutex_unlock = arg_logger_mutex_unlock_func;
+    T1_log_s->malloc = arg_log_malloc_func;
+    T1_log_s->create_mutex = arg_log_create_mutex_func;
+    T1_log_s->mutex_lock = arg_log_mutex_lock_func;
+    T1_log_s->mutex_unlock = arg_log_mutex_unlock_func;
     
     // create a log for debug text
     T1_log_s->full_i = 0;

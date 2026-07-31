@@ -787,9 +787,9 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.in_shadow_mults[0] = 0.5f;
-    T1_global->postproc_consts.in_shadow_mults[1] = 0.5f;
-    T1_global->postproc_consts.in_shadow_mults[2] = 0.5f;
+    T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;
+    T1_global->postproc_consts.in_shadow_mults[1] = T1_SHADOW_MULT;
+    T1_global->postproc_consts.in_shadow_mults[2] = T1_SHADOW_MULT;
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     // Pass
     #else

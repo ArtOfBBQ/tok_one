@@ -122,12 +122,12 @@ static void client_handle_keypresses(
         #if T1_ANIM_ACTIVE == T1_ACTIVE  
         testswitch = !testswitch;      
         T1Anim * alpha = T1_anim_request_next(
-            /* b8 endpoints_not_deltas: */ true,
-            /* b8 zs_gpu_f32s: */ true,
-            /* b8 zs_cpu_f32s: */ false,
-            /* b8 zs_gpu_s32s: */ false,
-            /* b8 tq_gpu_f32s: */ true,
-            /* b8 tq_gpu_s32s: */ false);
+            /* b8 endps_not_deltas: */ true,
+            /* b8 zs_gpu_f32s:      */ true,
+            /* b8 zs_cpu_f32s:      */ false,
+            /* b8 zs_gpu_s32s:      */ false,
+            /* b8 tq_gpu_f32s:      */ true,
+            /* b8 tq_gpu_s32s:      */ false);
         alpha->zs_gpu_f32s->alpha =
             testswitch ? 1.0f : 0.0f;
         alpha->tq_gpu_f32s->rgba[3] =

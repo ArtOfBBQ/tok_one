@@ -73,6 +73,7 @@ of the engine for your specific app.
 #define T1_TEX_SLICES_CAP 100
 
 #define T1_SHADOW_BIAS 0.0001f
+#define T1_SHADOW_MULT 0.35f
 
 #define T1_ZFAR 8.0f
 

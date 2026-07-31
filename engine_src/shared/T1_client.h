@@ -69,7 +69,7 @@ exceed the character limit ('response_cap')
 void T1_client_evaluate_terminal_command(
     char * command,
     char * response,
-    const u32 response_cap);
+    u32 response_cap);
 
 /*
 this will be called whenever your app's window resizes - you can react by
