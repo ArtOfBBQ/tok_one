@@ -1182,9 +1182,6 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
         T1_log_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.alpha_on < 1.5f);
-        T1_log_assert(
-            T1_zsprite_list->cpu[cpu_zp_i].
-                zs_cpu_f32s.bloom_on > 0.5f);
         
         s32 mesh_id =
             T1_zsprite_list->cpu[cpu_zp_i].mesh_id;

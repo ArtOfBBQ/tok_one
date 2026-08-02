@@ -331,7 +331,7 @@ being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
 s32  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(const s32 T1_scene_id);
+void T1_io_scene_stack_push(s32 T1_scene_id);
 void T1_io_scene_stack_pop(void);
 s32  T1_io_scene_stack_get_active_T1_scene_id(void);
 b8   T1_io_key_is_down(T1IOKey key, s32 T1_scene_id);

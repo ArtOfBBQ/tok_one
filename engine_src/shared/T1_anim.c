@@ -915,6 +915,7 @@ void T1_anim_evaporate_and_destroy(
 
 void T1_anim_fade_and_destroy(
     u32 T1_id,
+    u64 pause_first,
     u64 duration_us)
 {
     T1_log_assert(duration_us > 0);
@@ -923,15 +924,24 @@ void T1_anim_fade_and_destroy(
     T1Anim * fade_destroy = T1_anim_request_next(
         /* b8 endpoints_not_deltas: */  true,
         /* b8 zs_gpu_f32s: */ true,
-        /* b8 zs_cpu_f32s: */ false,
+        /* b8 zs_cpu_f32s: */ true,
         /* b8 zs_gpu_u32s: */ false,
         /* b8 tq_gpu_f32s: */ true,
         /* b8 tq_gpu_u32s: */ false);
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->zs_gpu_f32s->alpha = 0.0f;
+    fade_destroy->zs_gpu_f32s->bonus_rgb[0] = -0.25f;
+    fade_destroy->zs_gpu_f32s->bonus_rgb[1] = -0.25f;
+    fade_destroy->zs_gpu_f32s->bonus_rgb[2] = -0.25f;
     fade_destroy->zs_gpu_f32s->shadow_strength = 0.0f;
+    fade_destroy->zs_cpu_f32s->bloom_on = 0.0f;
+    fade_destroy->zs_cpu_f32s->angle_xyz[2] = 0.33f;
+    fade_destroy->tq_gpu_f32s->rgba[0] = 0.0f;
+    fade_destroy->tq_gpu_f32s->rgba[1] = 0.0f;
+    fade_destroy->tq_gpu_f32s->rgba[2] = 0.0f;
     fade_destroy->tq_gpu_f32s->rgba[3] = 0.0f;
+    fade_destroy->pause_us = pause_first;
     fade_destroy->del_obj_on_finish = true;
     T1_anim_commit(
         fade_destroy
@@ -945,11 +955,14 @@ void T1_anim_fade_and_destroy(
 }
 
 void T1_anim_fade_destroy_all(
+    u64 pause_first,
     u64 duration_us)
 {
     T1_anim_fade_and_destroy(
         /* u32 T1_id: */
             T1_ANIM_HIT_EVERYTHING,
+        /* u64 pause_first_us: */
+            pause_first,
         /* u64 duration_us: */
             duration_us);
 }

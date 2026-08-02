@@ -83,9 +83,12 @@ void T1_anim_evaporate_and_destroy(
 
 void T1_anim_fade_and_destroy(
     u32 T1_id,
+    u64 pause_first,
     u64 duration_us);
 
-void T1_anim_fade_destroy_all(u64 duration_us);
+void T1_anim_fade_destroy_all(
+    u64 pause_first,
+    u64 duration_us);
 
 void T1_anim_fade_to(
     u32 T1_id,

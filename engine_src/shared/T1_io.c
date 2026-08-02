@@ -323,7 +323,7 @@ s32 T1_io_create_scene_and_return_id(void) {
     return T1_io->next_scene_id;
 }
 
-void T1_io_scene_stack_push(const s32 scene_id) {
+void T1_io_scene_stack_push(s32 scene_id) {
     T1_log_assert(T1_io->scene_ids_stack[
         T1_io->scene_ids_stack_i] != scene_id);
     T1_log_assert((T1_io->scene_ids_stack_i + 1) <
@@ -412,7 +412,7 @@ b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id) {
     return false;
 }
 
-b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, const s32 scene_id) {        
+b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id) {        
     // T1_log_assert(0);
     for (
         s32 i = 0;
