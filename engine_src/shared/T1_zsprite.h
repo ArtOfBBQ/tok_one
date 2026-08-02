@@ -25,11 +25,9 @@ typedef struct {
     u32       gpu_data_size;
 } T1zSpriteRequest;
 
-void
-T1_zsprite_init(void);
+void T1_zsprite_init(void);
 
-void
-T1_zsprite_defragment(void);
+void T1_zsprite_defragment(void);
 
 void T1_zsprite_construct_with_mesh_id(
     T1zSpriteRequest * to_construct,
@@ -44,8 +42,7 @@ void T1_zsprite_fetch_next_noconstruct(
 
 void T1_zsprite_commit(T1zSpriteRequest * to_commit);
 
-void
-T1_zsprite_get_pos_xyz(
+void T1_zsprite_get_pos_xyz(
     u32 T1_id,
     f32 * recip_x,
     f32 * recip_y,
@@ -55,20 +52,17 @@ void T1_zsprite_delete(u32 with_T1_id);
 
 void T1_zsprite_delete_all(void);
 
-void
-T1_zsprite_scale_multipliers_to_width(
+void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     f32 new_width);
 
-void
-T1_zsprite_scale_multipliers_to_height(
+void T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
-    const f32 new_height);
+    f32 new_height);
 
-void
-T1_zsprite_construct_quad_around(
+void T1_zsprite_construct_quad_around(
     f32 mid_x, f32 mid_y, f32 z,
     f32 width, f32 height,
     T1zSpriteRequest * stack_recipient);
@@ -81,8 +75,7 @@ void T1_zsprite_construct_quad(
     f32 height,
     T1zSpriteRequest * stack_recipient);
 
-void
-T1_zsprite_construct_cube_around(
+void T1_zsprite_construct_cube_around(
     f32 mid_x, f32 mid_y, f32 z,
     f32 width, f32 height, f32 depth,
     T1zSpriteRequest * stack_recipient);
@@ -120,8 +113,7 @@ void T1_zsprite_set_occlusion(
 #error
 #endif
 
-void
-T1_zsprite_handle_timed_occlusion(void);
+void T1_zsprite_handle_timed_occlusion(void);
 
 // TODO: encapsulate collection instead of externing
 typedef struct {
@@ -132,34 +124,27 @@ typedef struct {
     u32 size;
 } T1zSpriteCollection;
 
-void
-T1_anim_set_ignore_camera_but_retain_screenspace_pos(
+void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     u32 T1_id, f32 new_ignore_camera);
 
-void
-T1_zsprite_copy_to_frame_data(
+void T1_zsprite_copy_to_frame_data(
     T1GPUzSprite * recip,
     IdPair * recip_ids,
     u32 * recip_size);
 
-void
-T1_zsprite_add_alphablending_zpolygons_to_workload(
+void T1_zsprite_add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
-void
-T1_zsprite_add_bloom_zpolygons_to_workload(
+void T1_zsprite_add_bloom_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
-void
-T1_zsprite_add_opaque_zpolygons_to_workload(
+void T1_zsprite_add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data);
 
-void
-T1_zsprite_construct_model_and_normal_matrices(
+void T1_zsprite_construct_model_and_normal_matrices(
     T1GPUFrame * frame_data);
     
-void
-T1_zsprite_copy_data_for_shatter_effect(
+void T1_zsprite_copy_data_for_shatter_effect(
     u32 T1_id,
     T1GPUzSprite * gpu_recip,
     T1CPUzSprite * cpu_recip);

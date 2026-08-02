@@ -8,29 +8,27 @@
 T1zLight * T1_zlights = NULL;
 u32 T1_zlights_size = 0;
 
-static void
-T1_zlight_construct(T1zLight * to_construct)
+static void T1_zlight_construct(T1zLight * to_construct)
 {
-    to_construct->xyz[0]        = 0.0f;
-    to_construct->xyz[1]        = 0.0f;
-    to_construct->xyz[2]        = 0.0f;
-    to_construct->xyz_offset[0] = 0.0f;
-    to_construct->xyz_offset[1] = 0.0f;
-    to_construct->xyz_offset[2] = 0.0f;
-    to_construct->RGBA[0]       = 1.0f;
-    to_construct->RGBA[1]       = 1.0f;
-    to_construct->RGBA[2]       = 1.0f;
-    to_construct->RGBA[3]       = 1.0f;
-    to_construct->diffuse       = 1.00f;
-    to_construct->specular      = 0.50f; // mimics blender's behavior
-    to_construct->deleted       = false;
-    to_construct->committed     = false;
+    to_construct->f32s.xyz[0]        = 0.0f;
+    to_construct->f32s.xyz[1]        = 0.0f;
+    to_construct->f32s.xyz[2]        = 0.0f;
+    to_construct->f32s.xyz_offset[0] = 0.0f;
+    to_construct->f32s.xyz_offset[1] = 0.0f;
+    to_construct->f32s.xyz_offset[2] = 0.0f;
+    to_construct->f32s.RGBA[0]       = 1.0f;
+    to_construct->f32s.RGBA[1]       = 1.0f;
+    to_construct->f32s.RGBA[2]       = 1.0f;
+    to_construct->f32s.RGBA[3]       = 1.0f;
+    to_construct->f32s.diffuse       = 1.00f;
+    to_construct->f32s.specular      = 0.50f; // mimics blender's behavior
+    to_construct->deleted            = false;
+    to_construct->committed          = false;
     
     to_construct->shadow_map_depth_texture_i = -1;
 }
 
-T1zLight *
-T1_zlight_next(void)
+T1zLight * T1_zlight_next(void)
 {
     T1zLight * return_value = NULL;
     for (u32 i = 0; i < T1_zlights_size; i++) {
@@ -51,15 +49,13 @@ T1_zlight_next(void)
     return return_value;
 }
 
-void
-T1_zlight_commit(T1zLight * to_request)
+void T1_zlight_commit(T1zLight * to_request)
 {
     T1_log_assert(!to_request->deleted);
     to_request->committed = true;
 }
 
-void
-T1_zlight_clean_all_deleted(void)
+void T1_zlight_clean_all_deleted(void)
 {
     while (
         T1_zlights_size > 0
@@ -69,8 +65,7 @@ T1_zlight_clean_all_deleted(void)
     }
 }
 
-void
-T1_zlight_copy_all(
+void T1_zlight_copy_all(
     T1GPULight * l,
     u32 * l_size)
 {
@@ -78,21 +73,21 @@ T1_zlight_copy_all(
     for (u32 i = 0; i < T1_zlights_size; i++)
     {
         if (!T1_zlights[i].deleted) {
-            l[*l_size].xyz[0] = T1_zlights[i].xyz[0] + T1_zlights[i].xyz_offset[0];
-            l[*l_size].xyz[1] = T1_zlights[i].xyz[1] + T1_zlights[i].xyz_offset[1];
-            l[*l_size].xyz[2] = T1_zlights[i].xyz[2] + T1_zlights[i].xyz_offset[2];
+            l[*l_size].xyz[0] = T1_zlights[i].f32s.xyz[0] + T1_zlights[i].f32s.xyz_offset[0];
+            l[*l_size].xyz[1] = T1_zlights[i].f32s.xyz[1] + T1_zlights[i].f32s.xyz_offset[1];
+            l[*l_size].xyz[2] = T1_zlights[i].f32s.xyz[2] + T1_zlights[i].f32s.xyz_offset[2];
             
-            l[*l_size].angle_xyz[0] = T1_zlights[i].xyz_angle[0];
-            l[*l_size].angle_xyz[1] = T1_zlights[i].xyz_angle[1];
-            l[*l_size].angle_xyz[2] = T1_zlights[i].xyz_angle[2];
+            l[*l_size].angle_xyz[0] = T1_zlights[i].f32s.xyz_angle[0];
+            l[*l_size].angle_xyz[1] = T1_zlights[i].f32s.xyz_angle[1];
+            l[*l_size].angle_xyz[2] = T1_zlights[i].f32s.xyz_angle[2];
             
-            l[*l_size].diffuse = T1_zlights[i].diffuse;
-            l[*l_size].specular = T1_zlights[i].specular;
-            l[*l_size].reach = T1_zlights[i].reach;
+            l[*l_size].diffuse = T1_zlights[i].f32s.diffuse;
+            l[*l_size].specular = T1_zlights[i].f32s.specular;
+            l[*l_size].reach = T1_zlights[i].f32s.reach;
             
-            l[*l_size].rgb[0] = T1_zlights[i].RGBA[0];
-            l[*l_size].rgb[1] = T1_zlights[i].RGBA[1];
-            l[*l_size].rgb[2] = T1_zlights[i].RGBA[2];
+            l[*l_size].rgb[0] = T1_zlights[i].f32s.RGBA[0];
+            l[*l_size].rgb[1] = T1_zlights[i].f32s.RGBA[1];
+            l[*l_size].rgb[2] = T1_zlights[i].f32s.RGBA[2];
             
             l[*l_size].shadow_map_depth_tex_i =
                 T1_zlights[i].shadow_map_depth_texture_i;
@@ -135,8 +130,7 @@ to look at point_to_xyz instead
 
 from_pos_xyz is the current position of the light
 */
-void
-T1_zlight_point_light_to_location(
+void T1_zlight_point_light_to_location(
     f32 * recipient_xyz_angle,
     const f32 * from_pos_xyz,
     const f32 * point_to_xyz)
@@ -180,8 +174,7 @@ T1_zlight_point_light_to_location(
     recipient_xyz_angle[2] = roll;  // Z rotation (roll)
 }
 
-void
-T1_zlight_update_all_attached_render_views(void)
+void T1_zlight_update_all_attached_render_views(void)
 {
     for (
         u32 zl_i = 0;
@@ -223,16 +216,95 @@ T1_zlight_update_all_attached_render_views(void)
         T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
         
         T1_render_views->cpu[rv_i].xyz[0] =
-            T1_zlights[zl_i].xyz[0];
+            T1_zlights[zl_i].f32s.xyz[0];
         T1_render_views->cpu[rv_i].xyz[1] =
-            T1_zlights[zl_i].xyz[1];
+            T1_zlights[zl_i].f32s.xyz[1];
         T1_render_views->cpu[rv_i].xyz[2] =
-            T1_zlights[zl_i].xyz[2];
+            T1_zlights[zl_i].f32s.xyz[2];
         T1_render_views->cpu[rv_i].angle_xyz[0] =
-            T1_zlights[zl_i].xyz_angle[0];
+            T1_zlights[zl_i].f32s.xyz_angle[0];
         T1_render_views->cpu[rv_i].angle_xyz[1] =
-            T1_zlights[zl_i].xyz_angle[1];
+            T1_zlights[zl_i].f32s.xyz_angle[1];
         T1_render_views->cpu[rv_i].angle_xyz[2] =
-            T1_zlights[zl_i].xyz_angle[2];
+            T1_zlights[zl_i].f32s.xyz_angle[2];
+    }
+}
+
+void T1_zlight_apply_endpoint_anim(
+    u32 T1_id, f32 t_applied, f32 t_now,
+    const f32 * end_vals_f32)
+{
+    T1_log_assert((sizeof(T1zLightf32) / 4) %
+        SIMD_FLOAT_LANES == 0);
+    
+    // When t is 1.0f, all of our stats will
+    // be exactly equal to target_delta
+    const f32 was_left_t = 1.0f - t_applied;
+    const f32 did_now_t = t_now - t_applied;
+    const f32 t_mult = did_now_t / was_left_t;
+    SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
+    
+    f32 no_effect = T1_ANIM_NO_EFFECT;
+    SIMD_FLOAT simd_noeffect = simd_set1_f32(no_effect);
+    
+    for (
+        s32 zl_i = 0;
+        zl_i < (s32)T1_zlights_size;
+        zl_i++)
+    {
+        if (
+            T1_zlights[zl_i].deleted ||
+            (
+                T1_id != T1_ANIM_HIT_EVERYTHING &&
+                T1_zlights[zl_i].T1_id != T1_id
+            )
+        )
+        {
+            continue;
+        }
+        
+        if (end_vals_f32) {
+            f32 * recip_vals_gpu = (f32 *)&T1_zlights[zl_i].f32s;
+            
+            for (
+                u32 simd_step_i = 0;
+                (simd_step_i * sizeof(f32)) < sizeof(T1zLightf32);
+                simd_step_i += SIMD_FLOAT_LANES)
+            {
+                SIMD_FLOAT simd_goal_vals =
+                    simd_load_f32s(
+                        (end_vals_f32 + simd_step_i));
+                
+                SIMD_FLOAT simd_cur_vals =
+                    simd_load_f32s(
+                        (recip_vals_gpu +
+                            simd_step_i));
+                
+                SIMD_FLOAT delta_to_goal =
+                    simd_sub_f32s(
+                        simd_goal_vals,
+                            simd_cur_vals);
+                
+                delta_to_goal = simd_mul_f32s(
+                    delta_to_goal,
+                    simd_t);
+                
+                SIMD_FLOAT flags = simd_not_f32s(
+                    simd_cmpeq_f32s(
+                        simd_goal_vals,
+                        simd_noeffect));
+                
+                delta_to_goal = simd_and_f32s(
+                    delta_to_goal, flags);
+                
+                simd_cur_vals = simd_add_f32s(
+                    simd_cur_vals,
+                    delta_to_goal);
+                
+                simd_store_f32s(
+                    recip_vals_gpu + simd_step_i,
+                    simd_cur_vals);
+            }
+        }
     }
 }

@@ -22,6 +22,7 @@ typedef struct {
     T1GPUzSpriteu32 * zs_gpu_u32s;
     T1GPUTexQuadf32 * tq_gpu_f32s;
     T1GPUTexQuadu32 * tq_gpu_u32s;
+    T1zLightf32     * zl_gpu_f32s;
     
     void (* run_func_on_finish)(void);
     u64 duration_us;
@@ -49,7 +50,8 @@ T1Anim * T1_anim_request_next(
     b8 zs_cpu_f32s,
     b8 zs_gpu_s32s,
     b8 tq_gpu_f32s,
-    b8 tq_gpu_s32s);
+    b8 tq_gpu_s32s,
+    b8 zl_gpu_f32s);
 
 void T1_anim_commit_and_instarun(
     T1Anim * to_commit

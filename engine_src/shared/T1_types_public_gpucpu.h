@@ -122,22 +122,6 @@ typedef struct {
 } T1GPUTexQuad;
 
 typedef struct {
-    // you can make a group of lights and/or texquads by
-    // giving them the same positive object_id, then make
-    // ScheduledAnimations that affect the entire group
-    // set to -1 to not be a party of any group
-    union {
-        u32 T1_id;
-        f32 flt_T1_id;
-    };
-    union {
-        u32 deleted;
-        f32 flt_deleted;
-    };
-    union {
-        u32 committed;
-        f32 flt_committed;
-    };
     f32 xyz[3];
     f32 xyz_angle[3];
     f32 xyz_offset[3];
@@ -145,6 +129,17 @@ typedef struct {
     f32 reach; // light's reach
     f32 diffuse;     // how much diffuse light does this radiate?
     f32 specular;
+} T1zLightf32;
+
+typedef struct {
+    T1zLightf32 f32s;
+    // you can make a group of lights and/or texquads by
+    // giving them the same positive object_id, then make
+    // ScheduledAnimations that affect the entire group
+    // set to -1 to not be a party of any group
+    u32 T1_id;
+    u32 deleted;
+    u32 committed;
     s32 shadow_map_depth_texture_i;
     s32 shadow_map_render_view_i;
     f32 simd_padding[3];
