@@ -1342,11 +1342,13 @@ fragment FragmentAndTouchOut flat_texquad_frag_shader(
                     in.slice_i));
     }
     
+    color_sample = color_sample * in.rgba * in.rgba[3];
+    
     if (color_sample[3] < 0.03f) { discard_fragment(); }
     
     FragmentAndTouchOut packed_out =
         pack_color_and_touch_id(
-            color_sample * in.rgba * in.rgba[3],
+            color_sample,
             in.touch_id);
     
     return packed_out;
