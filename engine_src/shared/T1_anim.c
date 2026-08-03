@@ -174,8 +174,9 @@ static void T1_anim_construct(
     T1_log_assert(!to_construct->committed);
 }
 
-static T1zLightf32 *
-T1_anim_fetch_next_store_zl_gpu_f32s(u16 * store_i) {
+static T1zLightf32 * T1_anim_fetch_next_store_zl_gpu_f32s(
+    u16 * store_i)
+{
     u16 i = 0;
     while (
         ((as->store_taken[i] >> 5) & 1) &&
@@ -186,7 +187,7 @@ T1_anim_fetch_next_store_zl_gpu_f32s(u16 * store_i) {
     T1_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
-    as->store_taken[i] |= (1 << 4);
+    as->store_taken[i] |= (1 << 5);
     T1zLightf32 * out = &as->zl_gpu_f32s_store[i];
     T1_std_memset(out, 0, sizeof(T1zLightf32));
     return out;
@@ -363,58 +364,42 @@ T1Anim * T1_anim_request_next(
     }
     
     if (endpoints_not_deltas) {
-        //        f32 bloom_on_b4 = out->public.zs_cpu_f32s ?
-        //            out->public.zs_cpu_f32s->bloom_on :
-        //            -12345.0f;
         if (out->pub.zs_gpu_f32s) {
             T1_std_memset_f32(
                 out->pub.zs_gpu_f32s,
                 T1_ANIM_NO_EFFECT,
                 sizeof(T1GPUzSpritef32));
         }
-        //        f32 bloom_on_now = out->public.zs_cpu_f32s ?
-        //            out->public.zs_cpu_f32s->bloom_on :
-        //            -12345.0f;
-        // T1_log_assert(bloom_on_now == bloom_on_b4);
         if (out->pub.zs_gpu_u32s) {
             T1_std_memset_f32(
                 out->pub.zs_gpu_u32s,
                 T1_ANIM_NO_EFFECT,
                 sizeof(T1GPUzSpriteu32));
         }
-        // bloom_on_now = out->public.zs_cpu_f32s ?
-        //     out->public.zs_cpu_f32s->bloom_on :
-        //     -12345.0f;
-        // T1_log_assert(bloom_on_now == bloom_on_b4);
         if (out->pub.zs_cpu_f32s) {
             T1_std_memset_f32(
                 out->pub.zs_cpu_f32s,
                 T1_ANIM_NO_EFFECT,
                 sizeof(T1CPUzSpritef32));    
         }
-        //bloom_on_b4 = out->public.zs_cpu_f32s ?
-        //    out->public.zs_cpu_f32s->bloom_on :
-        //    -12345.0f;
         if (out->pub.tq_gpu_f32s) {
             T1_std_memset_f32(
                 out->pub.tq_gpu_f32s,
                 T1_ANIM_NO_EFFECT,
                 sizeof(T1GPUTexQuadf32));
         }
-        // bloom_on_now = out->public.zs_cpu_f32s ?
-        //     out->public.zs_cpu_f32s->bloom_on :
-        //     -12345.0f;
-        // T1_log_assert(bloom_on_now == bloom_on_b4);
         if (out->pub.tq_gpu_u32s) {
             T1_std_memset_f32(
                 out->pub.tq_gpu_u32s,
                 T1_ANIM_NO_EFFECT,
                 sizeof(T1GPUTexQuadu32));
         }
-        //        bloom_on_now = out->public.zs_cpu_f32s ?
-        //            out->public.zs_cpu_f32s->bloom_on :
-        //            -12345.0f;
-        // T1_log_assert(bloom_on_now == bloom_on_b4);
+        if (out->pub.zl_gpu_f32s) {
+            T1_std_memset_f32(
+                out->pub.zl_gpu_f32s,
+                T1_ANIM_NO_EFFECT,
+                sizeof(T1zLightf32));
+        }
         out->endpoints_not_deltas = endpoints_not_deltas;
     }
     
@@ -428,6 +413,9 @@ T1Anim * T1_anim_request_next(
 }
 
 static void T1_anim_delete(T1AnimPrivate * a) {
+    if (a->pub.zl_gpu_f32s) {
+        as->store_taken[a->zl_f32s_store_i] &= ~(1 << 5);
+    }
     if (a->pub.zs_gpu_f32s) {
         as->store_taken[a->zs_gpu_f32s_store_i] &= ~(1 << 4);
     }
@@ -797,6 +785,14 @@ void T1_anim_commit(
             for (u32 i = 0; i < (sizeof(T1GPUzSpriteu32) / 4); i++) {
                 f32 check;
                 T1_std_memcpy(&check, ((u32 *)parent->pub.zs_gpu_u32s) + i, 4);
+                T1_assert(check != T1_ANIM_NO_EFFECT);
+                T1_assert(check != 65535.0f);
+            }
+        }
+        if (parent->pub.zl_gpu_f32s) {
+            for (u32 i = 0; i < (sizeof(T1zLightf32) / 4); i++) {
+                f32 check;
+                T1_std_memcpy(&check, parent->pub.zl_gpu_f32s + i, 4);
                 T1_assert(check != T1_ANIM_NO_EFFECT);
                 T1_assert(check != 65535.0f);
             }

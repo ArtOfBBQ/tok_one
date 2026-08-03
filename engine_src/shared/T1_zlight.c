@@ -276,34 +276,25 @@ void T1_zlight_apply_endpoint_anim(
                         (end_vals_f32 + simd_step_i));
                 
                 SIMD_FLOAT simd_cur_vals =
-                    simd_load_f32s(
-                        (recip_vals_gpu +
-                            simd_step_i));
+                    simd_load_f32s((recip_vals_gpu + simd_step_i));
                 
                 SIMD_FLOAT delta_to_goal =
-                    simd_sub_f32s(
-                        simd_goal_vals,
-                            simd_cur_vals);
+                    simd_sub_f32s(simd_goal_vals, simd_cur_vals);
                 
                 delta_to_goal = simd_mul_f32s(
-                    delta_to_goal,
-                    simd_t);
+                    delta_to_goal, simd_t);
                 
                 SIMD_FLOAT flags = simd_not_f32s(
-                    simd_cmpeq_f32s(
-                        simd_goal_vals,
-                        simd_noeffect));
+                    simd_cmpeq_f32s(simd_goal_vals, simd_noeffect));
                 
                 delta_to_goal = simd_and_f32s(
                     delta_to_goal, flags);
                 
                 simd_cur_vals = simd_add_f32s(
-                    simd_cur_vals,
-                    delta_to_goal);
+                    simd_cur_vals, delta_to_goal);
                 
                 simd_store_f32s(
-                    recip_vals_gpu + simd_step_i,
-                    simd_cur_vals);
+                    recip_vals_gpu + simd_step_i, simd_cur_vals);
             }
         }
     }

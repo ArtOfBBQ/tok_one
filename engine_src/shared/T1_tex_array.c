@@ -9,8 +9,7 @@
 // #include "T1_cpu_gpu_shared_types.h"
 #include "T1_render_view.h"
 
-static u32
-tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
+static u32 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
 
 T1TexArray * T1_tex_arrays = NULL;
 u32 T1_tex_arrays_size = 0;
