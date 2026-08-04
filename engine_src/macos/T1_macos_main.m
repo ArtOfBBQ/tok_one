@@ -29,157 +29,103 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     #endif
     
     switch (apple_key) {
-        case (24):
-            return T1_IO_KEYBOARD_HAT;
-        case (29):
-            return T1_IO_KEYBOARD_0;
-        case (27):
-            return T1_IO_KEYBOARD_MINUS;
-        case (36):
-            return T1_IO_KEYBOARD_ENTER;
-        case (123):
-            return T1_IO_KEYBOARD_LEFTARROW;
-        case (124):
-            return T1_IO_KEYBOARD_RIGHTARROW;
-        case (125):
-            return T1_IO_KEYBOARD_DOWNARROW;
-        case (126):
-            return T1_IO_KEYBOARD_UPARROW;
-        case (18):
-            return T1_IO_KEYBOARD_1;
-        case (19):
-            return T1_IO_KEYBOARD_2;
-        case (20):
-            return T1_IO_KEYBOARD_3;
-        case (21):
-            return T1_IO_KEYBOARD_4;
-        case (23):
-            return T1_IO_KEYBOARD_5;
-        case (22):
-            return T1_IO_KEYBOARD_6;
-        case (26):
-            return T1_IO_KEYBOARD_7;
-        case (28):
-            return T1_IO_KEYBOARD_8;
-        case (25):
-            return T1_IO_KEYBOARD_9;
-        case (0):
-            return T1_IO_KEYBOARD_A;
-        case (1):
-            return T1_IO_KEYBOARD_S;
-        case (2):
-            return T1_IO_KEYBOARD_D;
-        case (3):
-            return T1_IO_KEYBOARD_F;
-        case (4):
-            return T1_IO_KEYBOARD_H;
-        case (5):
-            return T1_IO_KEYBOARD_G;
-        case (6):
-            return T1_IO_KEYBOARD_Z;
-        case (7):
-            return T1_IO_KEYBOARD_X;
-        case (8):
-            return T1_IO_KEYBOARD_C;
-        case (9):
-            return T1_IO_KEYBOARD_V;
-        case (12):
-            return T1_IO_KEYBOARD_Q;
-        case (13):
-            return T1_IO_KEYBOARD_W;
-        case (14):
-            return T1_IO_KEYBOARD_E;
-        case (15):
-            return T1_IO_KEYBOARD_R;
-        case (17):
-            return T1_IO_KEYBOARD_T;
-        case (16):
-            return T1_IO_KEYBOARD_Y;
-        case (32):
-            return T1_IO_KEYBOARD_U;
-        case (34):
-            return T1_IO_KEYBOARD_I;
-        case (31):
-            return T1_IO_KEYBOARD_O;
-        case (35):
-            return T1_IO_KEYBOARD_P;
-        case (37):
-            return T1_IO_KEYBOARD_L;
-        case (38):
-            return T1_IO_KEYBOARD_J;
-        case (40):
-            return T1_IO_KEYBOARD_K;
-        case (41):
-            return T1_IO_KEYBOARD_SEMICOLON;
-        case (39):
-            return T1_IO_KEYBOARD_COLON;
-        case (30):
-            return T1_IO_KEYBOARD_OPENSQUAREBRACKET;
-        case (33):
-            return T1_IO_KEYBOARD_AT;
-        case (42):
-            return T1_IO_KEYBOARD_CLOSESQUAREBRACKET;
-        case (11):
-            return T1_IO_KEYBOARD_B;
-        case (45):
-            return T1_IO_KEYBOARD_N;
-        case (46):
-            return T1_IO_KEYBOARD_M;
-        case (43):
-            return T1_IO_KEYBOARD_COMMA;
-        case (47):
-            // TODO: rename me to period
-            return T1_IO_KEYBOARD_FULLSTOP;
-        case (48):
-            return T1_IO_KEYBOARD_TAB;
-        case (44):
-            return T1_IO_KEYBOARD_BACKSLASH;
-        case (49):
-            return T1_IO_KEYBOARD_SPACEBAR;
-        case (51):
-            return T1_IO_KEYBOARD_BACKSPACE;
-        case (53):
-            return T1_IO_KEYBOARD_ESCAPE;
-        case (93):
-            return T1_IO_KEYBOARD_YENSIGN;
-        case (94):
-            return T1_IO_KEYBOARD_UNDERSCORE;
-        case (122):
-            return T1_IO_KEYBOARD_F1;
-        case (120):
-            return T1_IO_KEYBOARD_F2;
-        case (99):
-            return T1_IO_KEYBOARD_F3;
-        case (118):
-            return T1_IO_KEYBOARD_F4;
-        case (96):
-            return T1_IO_KEYBOARD_F5;
-        case (97):
-            return T1_IO_KEYBOARD_F6;
-        case (98):
-            return T1_IO_KEYBOARD_F7;
-        case (100):
-            return T1_IO_KEYBOARD_F8;
-        case (101):
-            return T1_IO_KEYBOARD_F9;
-        case (109):
-            return T1_IO_KEYBOARD_F10;
-        case (103):
-            return T1_IO_KEYBOARD_F11;
-        case (111):
-            return T1_IO_KEYBOARD_F12;
-        case (102):
-            return T1_IO_KEYBOARD_ROMAJIBUTTON;
-        case (104):
-            return T1_IO_KEYBOARD_KANABUTTON;
-        case (115):
-            return T1_IO_KEYBOARD_HOME;
-        case (116):
-            return T1_IO_KEYBOARD_PAGEUP;
-        case (119):
-            return T1_IO_KEYBOARD_END;
-        case (121):
-            return T1_IO_KEYBOARD_PAGEDOWN;
+        case   0: return T1_IO_KEYBOARD_A;
+        case   1: return T1_IO_KEYBOARD_S;
+        case   2: return T1_IO_KEYBOARD_D;
+        case   3: return T1_IO_KEYBOARD_F;
+        case   4: return T1_IO_KEYBOARD_H;
+        case   5: return T1_IO_KEYBOARD_G;
+        case   6: return T1_IO_KEYBOARD_Z;
+        case   7: return T1_IO_KEYBOARD_X;
+        case   8: return T1_IO_KEYBOARD_C;
+        case   9: return T1_IO_KEYBOARD_V;
+        case  10: return T1_IO_KEYBOARD_UNKNOWNBUTTON;
+        case  11: return T1_IO_KEYBOARD_B;
+        case  12: return T1_IO_KEYBOARD_Q;
+        case  13: return T1_IO_KEYBOARD_W;
+        case  14: return T1_IO_KEYBOARD_E;
+        case  15: return T1_IO_KEYBOARD_R;
+        case  16: return T1_IO_KEYBOARD_Y;
+        case  17: return T1_IO_KEYBOARD_T;
+        case  18: return T1_IO_KEYBOARD_1;
+        case  19: return T1_IO_KEYBOARD_2;
+        case  20: return T1_IO_KEYBOARD_3;
+        case  21: return T1_IO_KEYBOARD_4;
+        case  22: return T1_IO_KEYBOARD_6;
+        case  23: return T1_IO_KEYBOARD_5;
+        case  24: return T1_IO_KEYBOARD_HAT;
+        case  25: return T1_IO_KEYBOARD_9;
+        case  26: return T1_IO_KEYBOARD_7;
+        case  27: return T1_IO_KEYBOARD_MINUS;
+        case  28: return T1_IO_KEYBOARD_8;
+        case  29: return T1_IO_KEYBOARD_0;
+        case  30: return T1_IO_KEYBOARD_OPENSQUARE;
+        case  31: return T1_IO_KEYBOARD_O;
+        case  32: return T1_IO_KEYBOARD_U;
+        case  33: return T1_IO_KEYBOARD_AT;
+        case  34: return T1_IO_KEYBOARD_I;
+        case  35: return T1_IO_KEYBOARD_P;
+        case  36: return T1_IO_KEYBOARD_ENTER;
+        case  37: return T1_IO_KEYBOARD_L;
+        case  38: return T1_IO_KEYBOARD_J;
+        case  39: return T1_IO_KEYBOARD_COLON;
+        case  40: return T1_IO_KEYBOARD_K;
+        case  41: return T1_IO_KEYBOARD_SEMICOLON;
+        case  42: return T1_IO_KEYBOARD_CLOSESQUARE;
+        case  45: return T1_IO_KEYBOARD_N;
+        case  46: return T1_IO_KEYBOARD_M;
+        case  43: return T1_IO_KEYBOARD_COMMA;
+        case  47: return T1_IO_KEYBOARD_FULLSTOP;
+        case  48: return T1_IO_KEYBOARD_TAB;
+        case  44: return T1_IO_KEYBOARD_BACKSLASH;
+        case  49: return T1_IO_KEYBOARD_SPACEBAR;
+        case  50: return T1_IO_KEYBOARD_TILDE;
+        case  51: return T1_IO_KEYBOARD_BACKSPACE;
+        case  53: return T1_IO_KEYBOARD_ESCAPE;
+        // NUMPAD
+        case  65: return T1_IO_KEYBOARD_FULLSTOP;
+        case  67: return T1_IO_KEYBOARD_ASTERISK;
+        case  69: return T1_IO_KEYBOARD_PLUS;	
+        case  71: return T1_IO_KEYBOARD_NUMPADCLEAR;
+        case  75: return T1_IO_KEYBOARD_YENSIGN;
+        case  76: return T1_IO_KEYBOARD_ENTER;
+        case  78: return T1_IO_KEYBOARD_MINUS;
+        // NUMPAD NUMBERS
+        case  82: return T1_IO_KEYBOARD_0;
+        case  83: return T1_IO_KEYBOARD_1;
+        case  84: return T1_IO_KEYBOARD_2;
+        case  85: return T1_IO_KEYBOARD_3;
+        case  86: return T1_IO_KEYBOARD_4;
+        case  87: return T1_IO_KEYBOARD_5;
+        case  88: return T1_IO_KEYBOARD_6;
+        case  89: return T1_IO_KEYBOARD_7;
+        case  91: return T1_IO_KEYBOARD_8;
+        case  92: return T1_IO_KEYBOARD_9;
+        case  93: return T1_IO_KEYBOARD_YENSIGN;
+        case  94: return T1_IO_KEYBOARD_UNDERSCORE;
+        case  99: return T1_IO_KEYBOARD_F3;
+        case  96: return T1_IO_KEYBOARD_F5;
+        case  97: return T1_IO_KEYBOARD_F6;
+        case  98: return T1_IO_KEYBOARD_F7;
+        case 100: return T1_IO_KEYBOARD_F8;
+        case 101: return T1_IO_KEYBOARD_F9;
+        case 103: return T1_IO_KEYBOARD_F11;
+        case 102: return T1_IO_KEYBOARD_ROMAJIBUTTON;
+        case 104: return T1_IO_KEYBOARD_KANABUTTON;
+        case 109: return T1_IO_KEYBOARD_F10;
+        case 111: return T1_IO_KEYBOARD_F12;
+        case 114: return T1_IO_KEYBOARD_INSERT;
+        case 115: return T1_IO_KEYBOARD_HOME;
+        case 116: return T1_IO_KEYBOARD_PAGEUP;
+        case 118: return T1_IO_KEYBOARD_F4;
+        case 119: return T1_IO_KEYBOARD_END;
+        case 120: return T1_IO_KEYBOARD_F2;
+        case 121: return T1_IO_KEYBOARD_PAGEDOWN;
+        case 122: return T1_IO_KEYBOARD_F1;
+        case 123: return T1_IO_KEYBOARD_LEFTARROW;
+        case 124: return T1_IO_KEYBOARD_RIGHTARROW;
+        case 125: return T1_IO_KEYBOARD_DOWNARROW;
+        case 126: return T1_IO_KEYBOARD_UPARROW;
         default:
             #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");

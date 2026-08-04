@@ -333,7 +333,7 @@ when it ends, you will lose it
 s32  T1_io_create_scene_and_return_id(void);
 void T1_io_scene_stack_push(s32 T1_scene_id);
 void T1_io_scene_stack_pop(void);
-s32  T1_io_scene_stack_get_active_T1_scene_id(void);
+s32  T1_io_scene_stack_get_active_scene_id(void);
 b8   T1_io_key_is_down(T1IOKey key, s32 T1_scene_id);
 b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 T1_scene_id);
 b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 T1_scene_id);

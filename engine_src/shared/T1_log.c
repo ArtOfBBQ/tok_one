@@ -168,9 +168,7 @@ void T1_log_dump_and_crash(
     #elif T1_LOG_PRINTF == T1_INACTIVE
     #else
     #error
-    #endif
-    
-    T1_log_app_running = false;
+    #endif T1_log_app_running = false;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
