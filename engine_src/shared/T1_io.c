@@ -64,12 +64,12 @@ void T1_io_init(void *(* arg_malloc_func)(u64)) {
     T1_io->pos_events[0].x = 0;
     T1_io->pos_events[0].y = 0;
     
-    T1_io->pos_events[1].key = T1_IO_GAMEPAD_LEFTTHUMBSTICK;
+    T1_io->pos_events[1].key = T1_IO_GAMEPAD_LTHUMBSTICK;
     T1_io->pos_events[1].timestamp = T1_io->pos_events[0].timestamp;
     T1_io->pos_events[1].x = 0;
     T1_io->pos_events[1].y = 0;
     
-    T1_io->pos_events[2].key = T1_IO_GAMEPAD_RIGHTTHUMBSTICK;
+    T1_io->pos_events[2].key = T1_IO_GAMEPAD_RTHUMBSTICK;
     T1_io->pos_events[2].timestamp = T1_io->pos_events[0].timestamp;
     T1_io->pos_events[2].x = 0;
     T1_io->pos_events[2].y = 0;

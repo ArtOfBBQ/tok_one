@@ -5,9 +5,7 @@
 
 T1Globals * T1_global = NULL;
 
-void
-T1_global_init(void) {
-    
+void T1_global_init(void) {
     if (
         T1_global->window_wh[0] < 50.0f ||
         T1_global->window_wh[1] < 50.0f)
@@ -41,17 +39,9 @@ T1_global_init(void) {
     #else
     #error
     #endif
-    
-    T1_global->last_clickray_origin[0]    = 0.0f;
-    T1_global->last_clickray_origin[1]    = 0.0f;
-    T1_global->last_clickray_origin[2]    = 0.0f;
-    T1_global->last_clickray_direction[0] = 0.0f;
-    T1_global->last_clickray_direction[1] = 0.0f;
-    T1_global->last_clickray_direction[2] = 1.0f;
 }
 
-void
-T1_global_update_window_pos(
+void T1_global_update_window_pos(
     f32 left,
     f32 bottom)
 {
@@ -59,8 +49,7 @@ T1_global_update_window_pos(
     T1_global->window_bottom = bottom;
 }
 
-void
-T1_global_update_window_size(
+void T1_global_update_window_size(
     f32 width,
     f32 height,
     u64 at_timestamp_us)
@@ -71,10 +60,9 @@ T1_global_update_window_size(
     T1_global->last_resize_request_us = at_timestamp_us;
 }
 
-f32
-T1_global_get_z_mul_for_depth(
-    const s32 for_mesh_id,
-    const f32 for_depth)
+f32 T1_global_get_z_mul_for_depth(
+    s32 for_mesh_id,
+    f32 for_depth)
 {
     T1_assert(for_mesh_id >= 0);
     T1_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);
@@ -86,10 +74,9 @@ T1_global_get_z_mul_for_depth(
     return return_value;
 }
 
-f32
-T1_global_get_y_mul_for_height(
-    const s32 for_mesh_id,
-    const f32 for_height)
+f32 T1_global_get_y_mul_for_height(
+    s32 for_mesh_id,
+    f32 for_height)
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_assert(for_mesh_id >= 0);
@@ -106,10 +93,9 @@ T1_global_get_y_mul_for_height(
     return return_value;
 }
 
-f32
-T1_global_get_x_mul_for_width(
-    const s32 for_mesh_id,
-    const f32 for_width)
+f32 T1_global_get_x_mul_for_width(
+    s32 for_mesh_id,
+    f32 for_width)
 {
     T1_assert(for_mesh_id >= 0);
     T1_assert(for_mesh_id < (s32)T1_mesh_summary_list_size);

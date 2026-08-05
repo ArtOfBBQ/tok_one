@@ -39,7 +39,7 @@ static u32 T1_apple_keycode_to_tokone_keycode(
         case   7: return T1_IO_KEYBOARD_X;
         case   8: return T1_IO_KEYBOARD_C;
         case   9: return T1_IO_KEYBOARD_V;
-        case  10: return T1_IO_KEYBOARD_UNKNOWNBUTTON;
+        case  10: return T1_IO_KEYBOARD_UNKNOWNBTN;
         case  11: return T1_IO_KEYBOARD_B;
         case  12: return T1_IO_KEYBOARD_Q;
         case  13: return T1_IO_KEYBOARD_W;
@@ -110,8 +110,8 @@ static u32 T1_apple_keycode_to_tokone_keycode(
         case 100: return T1_IO_KEYBOARD_F8;
         case 101: return T1_IO_KEYBOARD_F9;
         case 103: return T1_IO_KEYBOARD_F11;
-        case 102: return T1_IO_KEYBOARD_ROMAJIBUTTON;
-        case 104: return T1_IO_KEYBOARD_KANABUTTON;
+        case 102: return T1_IO_KEYBOARD_ROMAJI;
+        case 104: return T1_IO_KEYBOARD_KANA;
         case 109: return T1_IO_KEYBOARD_F10;
         case 111: return T1_IO_KEYBOARD_F12;
         case 114: return T1_IO_KEYBOARD_INSERT;
@@ -594,12 +594,12 @@ void T1_os_poll_gamepad_events(void) {
         update_simple_key(g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
         update_simple_key(g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
         update_simple_key(g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
-        update_simple_key(g.leftShoulder.isPressed, T1_IO_GAMEPAD_LEFTSHOULDER);
-        update_simple_key(g.rightShoulder.isPressed, T1_IO_GAMEPAD_RIGHTSHOULDER);
-        update_simple_key(g.leftTrigger.isPressed, T1_IO_GAMEPAD_LEFTTRIGGER);
-        update_simple_key(g.rightTrigger.isPressed, T1_IO_GAMEPAD_RIGHTTRIGGER);
-        update_simple_key(g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LEFTTHUMBSTICKBUTTON);
-        update_simple_key(g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RIGHTTHUMBSTICKBUTTON);
+        update_simple_key(g.leftShoulder.isPressed, T1_IO_GAMEPAD_LSHOULDER);
+        update_simple_key(g.rightShoulder.isPressed, T1_IO_GAMEPAD_RSHOULDER);
+        update_simple_key(g.leftTrigger.isPressed, T1_IO_GAMEPAD_LTRIGGER);
+        update_simple_key(g.rightTrigger.isPressed, T1_IO_GAMEPAD_RTRIGGER);
+        update_simple_key(g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
+        update_simple_key(g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
         update_simple_key(g.buttonA.isPressed, T1_IO_GAMEPAD_A);
         update_simple_key(g.buttonB.isPressed, T1_IO_GAMEPAD_B);
         update_simple_key(g.buttonX.isPressed, T1_IO_GAMEPAD_X);
@@ -609,11 +609,11 @@ void T1_os_poll_gamepad_events(void) {
         update_simple_key(g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
         
         T1_io_register_key_move_to_pos(
-            T1_IO_GAMEPAD_LEFTTHUMBSTICK,
+            T1_IO_GAMEPAD_LTHUMBSTICK,
                 g.leftThumbstick.xAxis.value,
                 g.leftThumbstick.yAxis.value); 
         T1_io_register_key_move_to_pos(
-            T1_IO_GAMEPAD_RIGHTTHUMBSTICK,
+            T1_IO_GAMEPAD_RTHUMBSTICK,
                 g.rightThumbstick.xAxis.value,
                 g.rightThumbstick.yAxis.value);
     }

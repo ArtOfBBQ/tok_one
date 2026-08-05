@@ -41,33 +41,27 @@ platform layer doesn't need to do anything and can just record values directly
 
 extern T1Globals * T1_global;
 
-void
-T1_global_init(void);
+void T1_global_init(void);
 
-void
-T1_global_update_window_pos(
+void T1_global_update_window_pos(
     f32 left,
     f32 bottom);
 
-void
-T1_global_update_window_size(
+void T1_global_update_window_size(
     f32 width,
     f32 height,
     u64 at_timestamp_us);
 
-f32
-T1_global_get_x_mul_for_width(
-    const s32 for_mesh_id,
-    const f32 for_width);
+f32 T1_global_get_x_mul_for_width(
+    s32 for_mesh_id,
+    f32 for_width);
 
-f32
-T1_global_get_y_mul_for_height(
-    const s32 for_mesh_id,
-    const f32 for_height);
+f32 T1_global_get_y_mul_for_height(
+    s32 for_mesh_id,
+    f32 for_height);
 
-f32
-T1_global_get_z_mul_for_depth(
-    const s32 for_mesh_id,
-    const f32 for_depth);
+f32 T1_global_get_z_mul_for_depth(
+    s32 for_mesh_id,
+    f32 for_depth);
 
 #endif // T1_GLOBAL_H

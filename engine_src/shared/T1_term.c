@@ -1087,7 +1087,7 @@ void T1_term_update(void) {
     }
     
     if (T1_term_active) {
-        for (T1IOKey i = 0; i < T1_IO_KEYBOARD_ABOVE_KEYBOARD_BOUNDS; i++) {
+        for (T1IOKey i = 0; i < T1_IO_KEYBOARD_ABOVEBOUNDS; i++) {
             if (i == T1_IO_KEYBOARD_SHIFT) { continue; }
             if (T1_io_key_consume_tap_began_frame(i, T1_trms->scene_id)) {
                 if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, T1_trms->scene_id)) {
