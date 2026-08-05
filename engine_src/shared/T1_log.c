@@ -126,21 +126,6 @@ void T1_log_append(const c8 * to_append) {}
 #endif
 
 void T1_log_dump(u8 * good) {
-    
-    // TODO: move this elsewhere so logger can avoid #including platform_layer.h
-    //    if (app_log == NULL) { return; }
-    //    app_log[log_i + 1] = '\0';
-    //
-    //    platform_write_file_to_writables(
-    //        /* filepath_destination : */
-    //            (c8 *)"log.txt",
-    //        /* const c8 * output  : */
-    //            app_log,
-    //        /* output_size          : */
-    //            log_i + 1,
-    //        /* good                 : */
-    //            good);
-    
     *good = true;
 }
 
@@ -168,12 +153,13 @@ void T1_log_dump_and_crash(
     #elif T1_LOG_PRINTF == T1_INACTIVE
     #else
     #error
-    #endif T1_log_app_running = false;
+    #endif
+    
+    T1_log_app_running = false;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-void
-T1_log_assert(u8 condition)
+void T1_log_assert(u8 condition)
 {
     if (condition || !T1_log_app_running) { return; }
     
@@ -189,8 +175,7 @@ T1_log_assert(u8 condition)
     T1_log_dump_and_crash(assert_failed_msg);
 }
 
-void
-T1_log_warn(u8 condition)
+void T1_log_warn(u8 condition)
 {
     if (condition) { return; }
     
