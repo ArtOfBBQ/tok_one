@@ -524,8 +524,6 @@ void T1_text_request_label_renderable(
         T1_log_assert(letter.cpu != NULL);
         T1_log_assert(letter.gpu != NULL);
         
-        if (!T1_log_app_running) { return; }
-        
         letter.gpu->u32s = T1_text_props->u32s;
         letter.gpu->f32s = T1_text_props->f32s;
         

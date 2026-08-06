@@ -2698,8 +2698,8 @@ static void set_defaults_for_encoder(
         
         for (
             s32 pass_i = 0;
-            pass_i < T1_render_views->
-                cpu[cam_i].passes_size;
+            pass_i < T1_render_views->cpu[cam_i].
+                passes_size;
             pass_i++)
         {
             [self

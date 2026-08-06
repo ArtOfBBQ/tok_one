@@ -54,6 +54,7 @@ static void show_dead_simple_text(
     #error "T1_PARTICLES_ACTIVE undefined"
     #endif
     T1_zlights_size = 0;
+    T1_texquad_delete_all();
     T1_zsprite_delete_all();
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
@@ -134,7 +135,8 @@ void T1_gameloop_update_before_render_pass(
     f->zsprite_list->size = 0;
     
     if (
-        !T1_gameloop_active && T1_gameloop_loading_texs)
+        !T1_gameloop_active &&
+        T1_gameloop_loading_texs)
     {
         if (loading_text_T1_id < 0) {
             loading_text_T1_id =

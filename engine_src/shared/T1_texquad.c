@@ -79,10 +79,6 @@ static void T1_texquad_construct_at_i(
     T1_log_assert(i >= 0);
     T1_log_assert(i  < T1_MAX_FLATQUADS_PER_BUFFER);
     
-    if (!T1_log_app_running) {
-        return;
-    }
-    
     T1_std_memset(
         &T1_texquads->cpu[i],
         0,
@@ -176,7 +172,6 @@ void T1_texquad_fetch_next(
 {
     s32 ret_i = -1;
     
-    #if 0
     for (
         s32 i = 0;
         i < (s32)T1_texquads->size;
@@ -188,7 +183,6 @@ void T1_texquad_fetch_next(
             ret_i = i;
         }
     }
-    #endif
     
     if (ret_i < 0) {
         ret_i = T1_texquads->size;

@@ -811,12 +811,11 @@ void T1_appinit_after_gpu_init_step2(
                     "client_logic_early_startup() returned failure "
                     "without an error message");
             }
-            T1_log_warn(0);
+            T1_log_dump_and_crash(errmsg);
             return;
         }
         
-        T1_global->
-            clientlogic_early_startup_finished = 1;
+        T1_global->clientlogic_early_startup_finished = 1;
         
         u32 core_count = T1_os_get_cpu_logical_core_count();
         T1_log_assert(core_count > 0);
