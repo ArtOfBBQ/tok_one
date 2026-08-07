@@ -54,6 +54,10 @@ void T1_tex_array_delete_array(s32 array_i);
 
 void T1_tex_array_delete_slice(s32 array_i, s32 slice_i);
 
+const u8 * T1_tex_array_get_const_rgba(
+    s32 array_i,
+    s32 slice_i);
+
 void T1_tex_array_update_rgba(
     s32 array_i,
     s32 slice_i,

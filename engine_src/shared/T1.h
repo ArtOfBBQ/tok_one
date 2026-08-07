@@ -171,14 +171,11 @@ void T1_make_reflection_cam(
 /*
 FILE PARSING
 */
-void T1_png_get_width_height(
-    const u8 * compressed_input, u64 compressed_input_size,
-    u32 * out_width, u32 * out_height,
+u8 * T1_png_malloc_managed_from_resource(
+    const char * resource_name,
+    u32 * out_width,
+    u32 * out_height,
     u8 * out_good);
-void T1_png_decode(
-    const u8 * compressed_input, u64 compressed_input_size,
-    u8 * out_rgba, u64 out_rgba_cap, u32 thread_id,
-    u8 * good);
 
 /*
 MANAGE TEXTURES
@@ -199,6 +196,9 @@ void T1_tex_array_update_rgba(
     s32 array_i, s32 slice_i,
     const u8 * rgba, u32 rgba_size);
 b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
+const u8 * T1_tex_array_get_const_rgba(
+    s32 array_i,
+    s32 slice_i);
 u32 T1_tex_array_get_img_height(s32 array_i);
 u32 T1_tex_array_get_img_width(s32 array_i);
 

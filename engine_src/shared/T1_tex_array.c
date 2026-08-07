@@ -439,6 +439,18 @@ void T1_tex_array_delete_slice(
     }
 }
 
+const u8 * T1_tex_array_get_const_rgba(
+    s32 array_i,
+    s32 slice_i)
+{
+    T1_log_assert(array_i < (s32)T1_tex_arrays_size);
+    T1_log_assert(array_i < T1_TEXARRAYS_CAP);
+    T1_log_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
+    
+    return T1_tex_arrays[array_i].
+        images[slice_i].image.rgba_values_freeable;
+}
+
 void T1_tex_array_update_rgba(
     s32 array_i,
     s32 slice_i,
