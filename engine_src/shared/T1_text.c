@@ -9,7 +9,7 @@
 
 
 #pragma pack(push, 1)
-typedef struct FontMetrics {
+typedef struct {
     f32 ascent;
     f32 descent;
     s32 line_gap;
@@ -24,7 +24,7 @@ typedef struct FontMetrics {
     s32 codepoints_in_font;
 } FontMetrics;
 
-typedef struct FontCodepoint {
+typedef struct {
     char character;
     s32 x0;
     s32 x1;
@@ -41,7 +41,7 @@ FontMetrics * global_font_metrics = NULL;
 FontCodepoint * codepoint_metrics = NULL;
 u32 codepoint_metrics_size = 0;
 
-typedef struct PrefetchedLine {
+typedef struct {
     f32 width;
     s32 start_i;
     s32 end_i;
@@ -371,8 +371,7 @@ void T1_text_request_label_offset_around(
     }
 }
 
-void
-T1_text_request_label_around_x_at_top_y(
+void T1_text_request_label_around_x_at_top_y(
     u32 with_T1_id,
     const char * text_to_draw,
     f32 mid_x_pixelspace,
@@ -600,6 +599,198 @@ void T1_text_request_label_renderable(
         
         i++;
         T1_texquad_commit(&letter);
+    }
+}
+
+typedef struct {
+    f32 xy[2];
+    f32 wh[2];
+    f32 offset_xy[2];
+    f32 rgba[4];
+} DrawLetter;
+
+void T1_text_draw_label(
+    u8 * on_rgba, u32 rgba_w, u32 rgba_h,
+    const char * text_to_draw,
+    f32 left_x_pixelspace, f32 top_y_pixelspace,
+    f32 tab_width, f32 max_width)
+{
+    T1_log_assert(max_width > 0.005f);
+    
+    T1_log_assert(text_to_draw[0] != '\0');
+    f32 cur_x_offset = 0;
+    
+    f32 tab_x_width  = (get_advance_width('D') * tab_width) * 1.01f;
+    f32 cur_y_offset = 0;
+    
+    u32 i = 0;
+    // ignore leading ' '
+    while (text_to_draw[i] == ' ') {
+        i++;
+    }
+    
+    DrawLetter letter;
+    
+    f32 letter_width = T1_text_props->font_height;
+    f32 letter_height = T1_text_props->font_height;
+    
+    while (text_to_draw[i] != '\0') {
+        if (text_to_draw[i] == ' ') {
+            cur_x_offset += T1_text_props->font_height / 2;
+            i++;
+            
+            f32 next_word_width = get_next_word_width(
+                /* const char * text: */
+                    text_to_draw + i);
+            
+            if (
+                (left_x_pixelspace +
+                    cur_x_offset +
+                    next_word_width -
+                    left_x_pixelspace) > max_width
+                && (next_word_width < max_width))
+            {
+                cur_x_offset = 0;
+                cur_y_offset -= get_newline_advance();
+            }
+            
+            continue;
+        }
+        
+        if (text_to_draw[i] == '\t') {
+            f32 next_tabstop = 0.0f;
+            while (next_tabstop <= cur_x_offset)
+            {
+                next_tabstop += tab_x_width;
+            }
+            cur_x_offset = next_tabstop;
+            i++;
+            
+            f32 next_word_width = get_next_word_width(
+                /* const char * text: */
+                    text_to_draw + i);
+            
+            if (
+                (left_x_pixelspace +
+                    cur_x_offset +
+                    next_word_width -
+                    left_x_pixelspace) > max_width
+                && (next_word_width < max_width))
+            {
+                cur_x_offset = 0;
+                cur_y_offset -= get_newline_advance();
+            }
+            
+            continue;
+        }
+        
+        if (text_to_draw[i] == '\n') {
+            cur_x_offset = 0;
+            cur_y_offset -= get_newline_advance();
+            i++;
+            continue;
+        }
+        
+        T1_std_memset(&letter, 0, sizeof(DrawLetter));
+        letter.rgba[0] = T1_text_props->f32s.rgba[0];
+        letter.rgba[1] = T1_text_props->f32s.rgba[1];
+        letter.rgba[2] = T1_text_props->f32s.rgba[2];
+        letter.rgba[3] = T1_text_props->f32s.rgba[3];
+        
+        letter.xy[0] = left_x_pixelspace + (T1_text_props->font_height / 2);
+        letter.xy[1] = top_y_pixelspace; // (get_newline_advance() / 2)
+        
+        letter.wh[0] = letter_width;
+        letter.wh[1] = letter_height;
+        
+        T1Tex tex;
+        s16 charval = text_to_draw[i] - '!';
+        T1_tex_set_array_i(&tex, 0);
+        T1_tex_set_slice_i(&tex, charval);
+        
+        if (
+            T1_tex_to_slice_i(tex) < 0 ||
+            T1_tex_to_slice_i(tex) > 100)
+        {
+            i++;
+            continue;
+        }
+        
+        letter.offset_xy[0] = cur_x_offset +
+            get_left_side_bearing(text_to_draw[i]);
+        f32 y_offset = cur_y_offset -
+            get_y_offset(text_to_draw[i]);
+        letter.offset_xy[1] = y_offset;
+        
+        cur_x_offset += get_advance_width(text_to_draw[i]);
+        
+        if (cur_x_offset + get_advance_width('w') >= max_width)
+        {
+            cur_x_offset = 0;
+            cur_y_offset -= get_newline_advance();
+        }
+        
+        if (
+            i >= T1_text_props->highlight_i &&
+            i  < T1_text_props->highlight_i +
+                T1_text_props->highlight_size)
+        {
+            letter.rgba[0] += 0.2f;
+            letter.rgba[1] += 0.2f;
+            letter.rgba[2] += 0.2f;
+            letter.wh[0] *= 1.12f;
+            letter.wh[1] *= 1.12f;
+        }
+        
+        if (T1_text_props->opaque_back_active) {
+            T1_assert(0); // TODO: implement me
+        }
+        
+        i++;
+        
+        const u32 src_w = T1_tex_array_get_img_width(
+            T1_tex_to_array_i(tex));
+        const u32 src_h = T1_tex_array_get_img_height(
+            T1_tex_to_array_i(tex));
+        for (u32 x = 0; x < letter.wh[0]; x++)
+        {
+            for (u32 y = 0; y < letter.wh[1]; y++)
+            {
+                if (x >= rgba_w || y >= rgba_h)
+                {
+                    continue;
+                }
+                
+                u32 tgt_x = (u32)(letter.xy[0] + letter.offset_xy[0]) + x;
+                u32 tgt_y = (u32)(letter.xy[1] - letter.offset_xy[1]) + y;
+                
+                const u8 * src_rgba =
+                    T1_tex_array_get_const_rgba(
+                        0, charval);
+                T1_assert(src_rgba != NULL);
+                
+                u32 src_x = (u32)(((f32)x / (f32)letter.wh[0]) * src_w);
+                u32 src_y = (u32)(((f32)y / (f32)letter.wh[1]) * src_h);
+                
+                u32 src_pix_i = ((src_y * src_w) + src_x) * 4;
+                
+                u32 pix_i = ((tgt_y * rgba_w) + tgt_x) * 4;
+                
+                // TODO: handle alpha
+                if (src_rgba[src_pix_i + 3] > 0) {
+                    on_rgba[pix_i + 0] = 255;
+//                        (u8)(letter.rgba[0] *
+//                            src_rgba[src_pix_i + 0]);
+                    on_rgba[pix_i + 1] = 255;
+//                        (u8)(letter.rgba[1] *
+//                            src_rgba[src_pix_i + 1]);
+                    on_rgba[pix_i + 2] = 255;
+//                        (u8)(letter.rgba[2] *
+//                            src_rgba[src_pix_i + 2]);
+                    on_rgba[pix_i + 3] = 255;
+                }
+            }
+        }
     }
 }
 

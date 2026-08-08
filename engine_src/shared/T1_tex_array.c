@@ -30,11 +30,13 @@ void T1_tex_array_push_all(void)
             if (
                 T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_freeable != NULL)
             {
-                T1_os_gpu_push_tex_slice_and_free_rgba(
+                T1_os_gpu_push_tex_slice(
                     /* s32 texture_array_i: */
                         ta_i,
                     /* s32 texture_i: */
-                        sl_i);
+                        sl_i,
+                    /* free_rgba: */
+                        true);
             }
         }
     }
@@ -171,7 +173,8 @@ register_to_texturearray_by_splitting_image(
     const char * filename_prefix,
     s32 ta_i,
     u32 rows,
-    u32 columns)
+    u32 columns,
+    b8 free_rgba)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -265,11 +268,13 @@ register_to_texturearray_by_splitting_image(
             T1_tex_arrays[ta_i].images[t_i].image.rgba_values_page_aligned =
                 split_img->rgba_values_page_aligned;
             
-            T1_os_gpu_push_tex_slice_and_free_rgba(
+            T1_os_gpu_push_tex_slice(
                 /* s32 texture_array_i: */
                     ta_i,
                 /* s32 texture_i: */
-                    t_i);
+                    t_i,
+                /* free_rgba: */
+                    free_rgba);
         }
     }
     
@@ -489,7 +494,8 @@ void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
     u32 rows,
-    u32 columns)
+    u32 columns,
+    b8 free_rgba)
 {
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -500,16 +506,12 @@ void T1_tex_array_reg_new_by_splitting_img(
     T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
     
     register_to_texturearray_by_splitting_image(
-        /* DecodedImage * new_image: */
-            new_image,
-        /* filename_prefix: */
-            filename_prefix,
-        /* s32 texture_array_i: */
-            new_texture_array_i,
-        /* u32 rows: */
-            rows,
-        /* u32 columns: */
-            columns);
+        /* DecodedImage * new_img: */ new_image,
+        /* filename_prefix: */ filename_prefix,
+        /* s32 texture_array_i: */ new_texture_array_i,
+        /* u32 rows: */ rows,
+        /* u32 columns: */ columns,
+        /* b8 free_rgba: */ free_rgba);
 }
 
 T1Tex T1_tex_array_reg_img(

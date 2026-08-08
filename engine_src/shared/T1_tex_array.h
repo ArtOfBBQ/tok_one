@@ -68,7 +68,8 @@ void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
     const char * filename_prefix,
     u32 rows,
-    u32 columns);
+    u32 columns,
+    b8 free_rgba);
 
 T1Tex T1_tex_array_create_new_in_array(s32 array_i);
 

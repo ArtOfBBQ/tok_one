@@ -232,9 +232,10 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 #error
 #endif
 
-void T1_os_gpu_push_tex_slice_and_free_rgba(
-    s32 texture_array_i,
-    s32 texture_i);
+void T1_os_gpu_push_tex_slice(
+    s32 tex_array_i,
+    s32 tex_slice_i,
+    b8 free_rgba);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_os_gpu_fetch_rgba_at(

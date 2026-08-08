@@ -10,24 +10,24 @@
 For "client" use in clientlogic.c or similar
 */
 void T1_tex_files_reg_new_by_splitting_file(
-    const char * filename,
-    const u32 rows,
-    const u32 columns);
+    const c8 * filename,
+    u32 rows,
+    u32 columns,
+    b8 free_rgba);
 
 void T1_tex_files_load_font_images(
     u8 * success,
-    char * error_message);
+    c8 * error_message);
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
-    const char * filename,
-    u32 rows,
-    u32 columns,
-    u8 * success,
-    char * error_message);
+    const c8 * filename,
+    u32 rows, u32 columns,
+    b8 free_rgba,
+    u8 * success, char * error_message);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
-    const char * filename,
+    const c8 * filename,
     u8 * good);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
@@ -35,11 +35,11 @@ void T1_tex_files_runtime_reg_png_from_writables(
 #endif
 
 void T1_tex_files_prereg_png_res(
-    const char * filename,
+    const c8 * filename,
     b8 * good);
 
 void T1_tex_files_prereg_dds_res(
-    const char * filename,
+    const c8 * filename,
     b8 * good);
 
 /*

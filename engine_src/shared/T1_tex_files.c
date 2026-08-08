@@ -189,8 +189,9 @@ static void malloc_img_from_resource_name(
 
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
-    const u32 rows,
-    const u32 columns)
+    u32 rows,
+    u32 columns,
+    b8 free_rgba)
 {
     T1Img stack_img;
     T1Img * img = &stack_img;
@@ -211,7 +212,8 @@ void T1_tex_files_reg_new_by_splitting_file(
         img,
         filename_prefix,
         rows,
-        columns);
+        columns,
+        free_rgba);
 }
 
 void T1_tex_files_load_font_images(
@@ -235,6 +237,7 @@ void T1_tex_files_load_font_images(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10,
+        false,
         success,
         error_message);
     T1_tex_arrays[0].request_init = false;
@@ -242,8 +245,9 @@ void T1_tex_files_load_font_images(
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
-    const u32 rows,
-    const u32 columns,
+    u32 rows,
+    u32 columns,
+    b8 free_rgba,
     u8 * success,
     char * error_message)
 {
@@ -278,7 +282,8 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
         img,
         filename_prefix,
         rows,
-        columns);
+        columns,
+        free_rgba);
     
     *success = 1;
 }
@@ -382,11 +387,13 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* u8 * out_good: */
             &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.good);
     
-    T1_os_gpu_push_tex_slice_and_free_rgba(
+    T1_os_gpu_push_tex_slice(
         /* const s32 texture_array_i: */
             T1_tex_to_array_i(loc),
         /* const s32 texture_i: */
-            T1_tex_to_slice_i(loc));
+            T1_tex_to_slice_i(loc),
+        /* free_rgba: */
+            true);
     
     T1_mem_free_managed(contents);
     *good = 1;

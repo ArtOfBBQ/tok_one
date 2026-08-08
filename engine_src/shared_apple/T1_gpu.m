@@ -1472,10 +1472,10 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 #error
 #endif
 
-void
-T1_os_gpu_push_tex_slice_and_free_rgba(
-    const s32 tex_array_i,
-    const s32 tex_slice_i)
+void T1_os_gpu_push_tex_slice(
+    s32 tex_array_i,
+    s32 tex_slice_i,
+    b8 free_rgba)
 {
     u8 * rgba_freeable =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_freeable;
@@ -1587,11 +1587,13 @@ T1_os_gpu_push_tex_slice_and_free_rgba(
     
     vm_deallocate(mach_task_self(), vm_ptr, vm_size);
     
-    T1_mem_free_managed(rgba_freeable);
-    T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
-        rgba_values_freeable = NULL;
-    T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
-        rgba_values_page_aligned = NULL;
+    if (free_rgba) {
+        T1_mem_free_managed(rgba_freeable);
+        T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
+            rgba_values_freeable = NULL;
+        T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
+            rgba_values_page_aligned = NULL;    
+    }
 }
 
 void T1_os_gpu_copy_locked_vertices(void)

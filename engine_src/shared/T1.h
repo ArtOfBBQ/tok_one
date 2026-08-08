@@ -185,7 +185,9 @@ s16  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
 void T1_tex_files_prereg_png_res(const c8 * filename, b8 * good);
 void T1_tex_files_prereg_dds_res(const c8 * filename, b8 * good);
 void T1_tex_files_reg_new_by_splitting_file(
-    const c8 * filename, u32 rows, u32 cols);
+    const c8 * filename,
+    u32 rows, u32 cols,
+    b8 free_rgba);
 
 u16 T1_tex_array_get_filename_loc(const c8 * for_filename);
 u16 T1_tex_array_reg_img(
@@ -233,6 +235,11 @@ the font properties etc. for your next label
 */
 extern T1TextFontSettings * T1_text_props;
 
+void T1_text_draw_label(
+    u8 * on_rgba, u32 rgba_w, u32 rgba_h,
+    const char * text_to_draw,
+    f32 left_x_pixelspace, f32 top_y_pixelspace,
+    f32 tab_width, f32 max_width);
 void T1_text_request_label_offset_around(
     u32 with_T1_id, const c8 * text,
     f32 mid_screen_x, f32 mid_screen_y, f32 z,
@@ -496,9 +503,10 @@ void T1_os_get_writables_dir(c8 * recip, u32 recip_size);
 void T1_os_write_file_to_writables(
     const c8 * filepath_in_writables, const c8 * out,
     u32 output_size, b8 * good);
-void T1_os_gpu_push_tex_slice_and_free_rgba(
+void T1_os_gpu_push_tex_slice(
     s32 tex_array_i,
-    s32 tex_slice_i);
+    s32 tex_slice_i,
+    b8 free_rgba);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const c8 * folderpath);
 u64 T1_os_get_current_time_us(void);
