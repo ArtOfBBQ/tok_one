@@ -102,8 +102,7 @@ void T1_log_append_f32(f32 to_append)
         /* const u32 recipient_size: */
             1000);
     
-    T1_log_append(
-        f32_str);
+    T1_log_append(f32_str);
 }
 
 void T1_log_append(

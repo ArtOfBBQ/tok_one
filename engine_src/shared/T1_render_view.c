@@ -273,7 +273,8 @@ void T1_render_view_update_positions(
         if (elapsed > rv->us_to_destination) {
             us_actual = rv->us_to_destination;
         } else {
-            us_actual = elapsed + ((rv->us_to_destination - elapsed) / 7);
+            us_actual = elapsed + ((rv->us_to_destination -
+                elapsed) / 7);
         }
         
         T1_log_assert(
@@ -307,28 +308,30 @@ void T1_render_view_update_positions(
         rv->us_to_destination -= us_actual;
         T1_log_assert(rv->us_to_destination < 5000000);
         
-        rv->xyz[0] =
-            (rv->xyz[0]      * (1.0f - elapsed_pct)) +
-            (rv->dest_xyz[0] * elapsed_pct);
-        rv->xyz[1] =
-            (rv->xyz[1]      * (1.0f - elapsed_pct)) +
-            (rv->dest_xyz[1] * elapsed_pct);
-        rv->xyz[2] =
-            (rv->xyz[2]      * (1.0f - elapsed_pct)) +
-            (rv->dest_xyz[2] * elapsed_pct);
-        T1_log_assert(!isnan(rv->xyz[0]));
-        T1_log_assert(!isnan(rv->xyz[1]));
-        T1_log_assert(!isnan(rv->xyz[2]));
-        
-        rv->angle_xyz[0] =
-            ((f32)rv->angle_xyz[0] * (1.0f - elapsed_pct)) +
-            ((f32)rv->dest_angle_xyz[0] * elapsed_pct);
-        rv->angle_xyz[1] =
-            ((f32)rv->angle_xyz[1] * (1.0f - elapsed_pct)) +
-            ((f32)rv->dest_angle_xyz[1] * elapsed_pct);
-        rv->angle_xyz[2] =
-            ((f32)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
-            ((f32)rv->dest_angle_xyz[2] * elapsed_pct);
+        if (rv->movement_enabled) {
+            rv->xyz[0] =
+                (rv->xyz[0]      * (1.0f - elapsed_pct)) +
+                (rv->dest_xyz[0] * elapsed_pct);
+            rv->xyz[1] =
+                (rv->xyz[1]      * (1.0f - elapsed_pct)) +
+                (rv->dest_xyz[1] * elapsed_pct);
+            rv->xyz[2] =
+                (rv->xyz[2]      * (1.0f - elapsed_pct)) +
+                (rv->dest_xyz[2] * elapsed_pct);
+            T1_log_assert(!isnan(rv->xyz[0]));
+            T1_log_assert(!isnan(rv->xyz[1]));
+            T1_log_assert(!isnan(rv->xyz[2]));
+            
+            rv->angle_xyz[0] =
+                ((f32)rv->angle_xyz[0] * (1.0f - elapsed_pct)) +
+                ((f32)rv->dest_angle_xyz[0] * elapsed_pct);
+            rv->angle_xyz[1] =
+                ((f32)rv->angle_xyz[1] * (1.0f - elapsed_pct)) +
+                ((f32)rv->dest_angle_xyz[1] * elapsed_pct);
+            rv->angle_xyz[2] =
+                ((f32)rv->angle_xyz[2] * (1.0f - elapsed_pct)) +
+                ((f32)rv->dest_angle_xyz[2] * elapsed_pct);
+        }
         
         T1_log_assert(!isnan(rv->dest_xyz[0]));
         T1_log_assert(!isnan(rv->dest_xyz[1]));
