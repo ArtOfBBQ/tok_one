@@ -280,7 +280,6 @@ void T1_gameloop_update_before_render_pass(
         #else
         #error "T1_TERM_ACTIVE undefined"
         #endif
-
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
         T1_profiler_start("T1_clientlogic_update()");

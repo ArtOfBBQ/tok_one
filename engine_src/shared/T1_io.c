@@ -8,6 +8,7 @@
 #include "T1_log.h"
 
 #define T1_IO_SHORT_DURATION 300000
+#define T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US 80000
 
 typedef struct {
     u64 timestamp;
@@ -40,6 +41,7 @@ typedef struct {
 typedef struct {
     T1IOFrameEventPosition pos_events[T1_IO_POS_EVENTS_CAP];
     T1IOFrameEventQueue frame_map[T1_IO_KEY_ABOVEBOUNDS];
+    u64 last_scene_swap_us;
     s32 scene_ids_stack[SCENE_IDS_STACK_CAP];
     f32 last_drag_start_x;
     f32 last_drag_start_y;
@@ -115,6 +117,13 @@ T1_io_get_open_event(
 void
 T1_io_register_keyup(u32 key_id, u8 debounces)
 {
+    if (
+        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
+            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
+    {
+        return;
+    
+    }
     // We shouldn't be registering stuff when no scene is active
     if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
         return;
@@ -175,7 +184,16 @@ T1_io_register_keyup(u32 key_id, u8 debounces)
 void T1_io_register_keyup_force_up_short(
     u32 key_id)
 {
-    T1_io->frame_map[key_id].is_down_for_scene_id = -1;
+    if (
+        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
+            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
+    {
+        return;
+    
+    }
+    
+    T1_io->frame_map[key_id].is_down_for_scene_id =
+        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
     
     T1IOFrameEvent * next = T1_io_get_open_event(key_id);
     
@@ -191,6 +209,14 @@ void T1_io_register_keyup_force_up_short(
 void
 T1_io_register_keydown(u32 key_id, u8 debounces)
 {
+    if (
+        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
+            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
+    {
+        return;
+    
+    }
+    
     T1_io->frame_map[key_id].debounces_up = 0;
     
     if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
@@ -245,6 +271,14 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
 void T1_io_register_key_move_to_pos(
     T1IOKey key_id, f32 x, f32 y)
 {
+    if (
+        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
+            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
+    {
+        return;
+    
+    }
+    
     T1IOFrameEventPosition * pos = NULL;
     
     for (u32 i = 0; i < T1_io->pos_events_size; i++) {
@@ -330,11 +364,15 @@ void T1_io_scene_stack_push(s32 scene_id) {
         SCENE_IDS_STACK_CAP);
     T1_io->scene_ids_stack_i++;
     T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] = scene_id;
+    
+    T1_io->last_scene_swap_us = T1_os_get_current_time_us();
 }
 
 void T1_io_scene_stack_pop(void) {
     T1_log_assert(T1_io->scene_ids_stack_i > 0);
     T1_io->scene_ids_stack_i -= 1;
+    
+    T1_io->last_scene_swap_us = T1_os_get_current_time_us();
     
     return;
 }

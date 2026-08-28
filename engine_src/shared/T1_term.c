@@ -1065,13 +1065,16 @@ static void T1_term_commit_or_activate(void) {
         return;
     }
     
+    b8 T1_term_active_b4 = T1_term_active;
     T1_term_active = !T1_term_active;
     
     if (T1_term_active) {
+        T1_assert(!T1_term_active_b4);
         T1_io_scene_stack_push(T1_trms->scene_id);
         T1_term_redraw_backgrounds();
         requesting_label_update = true;
     } else {
+        T1_assert(T1_term_active_b4);
         T1_io_scene_stack_pop();
     }
 }
@@ -1100,6 +1103,14 @@ void T1_term_update(void) {
     }
     
     T1_term_render();
+}
+
+void T1_term_manually_deactivate(void) {
+    T1_term_active = false;
+    
+    T1_term_destroy_all();
+    
+    T1_io_scene_stack_pop();
 }
 
 void T1_term_init(

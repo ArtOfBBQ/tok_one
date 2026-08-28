@@ -149,11 +149,11 @@ T1_zsprite_commit(
     {
         // probably shouldn't be requesting sprites in africa
         T1Tex tex = to_commit->gpu_data->base_mat_u32.normalmap_tex_and_tex & 0x0000FFFF;
-        T1_log_warn(tex != UINT16_MAX); // use T1_TEX_NONE instead!
-        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f);
-        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f);
-        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f);
-        T1_log_warn(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f);
+        T1_log_warn_if_false(tex != UINT16_MAX, "Bad sprite request"); // use T1_TEX_NONE instead!
+        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f, "Bad sprite request");
+        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f, "Bad sprite request");
+        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f, "Bad sprite request");
+        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f, "Bad sprite request");
     }
     
     u32 all_mesh_vertices_tail_i =
@@ -1483,4 +1483,3 @@ T1_zsprite_copy_data_for_shatter_effect(
         T1_zsprite_list->cpu[zp_i].deleted = true;
     }
 }
-

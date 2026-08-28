@@ -174,16 +174,13 @@ void T1_log_assert(u8 condition)
     T1_log_dump_and_crash(assert_failed_msg);
 }
 
-void T1_log_warn(u8 condition)
+void T1_log_warn_if_false(u8 condition, const char * msg)
 {
     if (condition) { return; }
     
-    // #if T1_LOG_PRINTF == T1_ACTIVE
-    T1_log_append("WARN CONDITION triggered\n");
-    //    #elif T1_LOG_PRINTF == T1_INACTIVE
-    //    #else
-    //    #error
-    //    #endif
+    T1_log_append("*** WARNING ***\n");
+    T1_log_append(msg);
+    T1_log_append("\n*** --- ***\n");
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else

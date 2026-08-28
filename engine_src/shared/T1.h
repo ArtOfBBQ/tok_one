@@ -27,7 +27,7 @@ DEBUG MODE
 */
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void T1_assert(b8 condition);
-void T1_log_warn(u8 condition);
+void T1_log_warn_if_false(u8 condition, const char * msg);
 void T1_log_dump_and_crash(const c8 * crash_message);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
@@ -510,6 +510,11 @@ void T1_os_gpu_push_tex_slice(
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const c8 * folderpath);
 u64 T1_os_get_current_time_us(void);
+
+/*
+TERMINAL
+*/
+void T1_term_manually_deactivate(void);
 
 /*
 AUDIO

@@ -11,6 +11,8 @@ void T1_term_init(void (* enter_fullscreen_fncptr)(void));
 
 void T1_term_update(void);
 
+void T1_term_manually_deactivate(void);
+
 #ifdef __cplusplus
 }
 #endif
