@@ -264,7 +264,7 @@ void T1_zlight_apply_endpoint_anim(
         }
         
         if (end_vals_f32) {
-            f32 * recip_vals_gpu = (f32 *)&T1_zlights[zl_i].f32s;
+            f32 * recip_vals_gpu = (f32 *)(&T1_zlights[zl_i].f32s);
             
             for (
                 u32 simd_step_i = 0;

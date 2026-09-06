@@ -124,6 +124,7 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
     }
     
     unmanaged_memory = ((char *)unmanaged_memory + size);
+    T1_log_assert(unmanaged_memory_size >= size);
     unmanaged_memory_size -= size;
     
     return return_value;
@@ -150,6 +151,7 @@ void * T1_mem_malloc_unmanaged_aligned(
     if (padding == aligned_to) padding = 0;
     
     unmanaged_memory = ((char *)unmanaged_memory + padding);
+    T1_log_assert(unmanaged_memory_size >= padding);
     unmanaged_memory_size -= padding;
     
     T1_log_assert(padding < aligned_to);
@@ -171,7 +173,6 @@ void * T1_mem_malloc_unmanaged(u64 size) {
     void * return_value = T1_mem_malloc_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
-    
     return return_value;
 }
 

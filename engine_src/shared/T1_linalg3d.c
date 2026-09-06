@@ -348,6 +348,7 @@ void T1_linal_f32x4x4_extract_f32x3x3(
             continue;
         }
         
+        assert(write_row_i < 3);
         out->rows[write_row_i].data[0] =
             in->rows[row_i].data[0 + (omit_col_i < 1)];
         out->rows[write_row_i].data[1] =
@@ -446,12 +447,14 @@ void T1_linal_f32x3x3_inverse_transpose_inplace(
                 m->rows[r1].data[c2] * m->rows[r2].data[c1];
             
             f32 sign = ((r + c) % 2 == 0) ? 1.0f : -1.0f;
+            assert((r*3 + c) < 9);
             minors[r*3 + c] = sign * cofactor;
         }
     }
     
     for (int row_i = 0; row_i < 3; row_i++) {
         for (int col_i = 0; col_i < 3; col_i++) {
+            assert((row_i*3 + col_i) < 9);
             m->rows[row_i].data[col_i] =
                 minors[row_i*3 + col_i] * det_recip;
         }
