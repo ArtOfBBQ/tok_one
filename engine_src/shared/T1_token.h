@@ -14,7 +14,7 @@ own malloc function) before doing anything else.
 void T1_token_init(
     void * (* arg_memset_func)(void *, int, u64),
     u64 (* arg_strlen_func)(const char *),
-    void * (* arg_malloc_func)(u64),
+    void * (* arg_malloc_func)(size_t),
     u8 * good);
 
 void T1_token_deinit(

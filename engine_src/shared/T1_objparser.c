@@ -7,11 +7,11 @@
 #error
 #endif
 
-static void * (* objparser_malloc_func)(u64);
+static void * (* objparser_malloc_func)(size_t);
 static void   (*   objparser_free_func)(void *);
 
 void T1_objparser_init(
-    void * (* arg_objparser_malloc_func)(u64),
+    void * (* arg_objparser_malloc_func)(size_t),
     void (* arg_objparser_free_func)(void *))
 {
     objparser_malloc_func = arg_objparser_malloc_func;

@@ -16,7 +16,7 @@ c8 * T1_log_crash_msg = NULL;
 #define T1_LOG_CRASH_STRING_SIZE 256
 #define LOG_SIZE 500000
 typedef struct {
-    void * (* malloc)(u64);
+    void * (* malloc)(size_t);
     u32 (* create_mutex)(void);
     void (* mutex_lock)(u32);
     void (* mutex_unlock)(u32);
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 void T1_log_init(
-    void * (* arg_log_malloc_func)(u64 size),
+    void * (* arg_log_malloc_func)(size_t size),
     u32 (* arg_log_create_mutex_func)(void),
     void (* arg_log_mutex_lock_func)(const u32 mutex_id),
     void (* arg_log_mutex_unlock_func)(const u32 mutex_id))

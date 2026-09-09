@@ -92,8 +92,8 @@ f32    T1_std_string_to_f32_validate(const c8 * input, u8 * good);
 /*
 T1_mem - allocate memory
 */
-void * T1_mem_malloc_unmanaged(u64 size);
-void * T1_mem_malloc_managed(u64 size);
+void * T1_mem_malloc_unmanaged(size_t size);
+void * T1_mem_malloc_managed(size_t size);
 void T1_mem_free_managed(void * to_free);
 
 /*

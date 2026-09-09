@@ -149,7 +149,7 @@ static void T1_meta_reset(void) {
 
 void T1_meta_init(
     void *(* T1_meta_memcpy)(void *, const void *, u64),
-    void *(* T1_meta_malloc_func)(u64),
+    void *(* T1_meta_malloc_func)(size_t),
     void *(* T1_meta_memset_func)(void *, s32, u64),
     s32 (* T1_meta_strcmp_func)(const char *, const char *),
     u64 (* T1_meta_strlen_func)(const char *),

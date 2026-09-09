@@ -11,7 +11,7 @@ extern "C" {
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_init(
-    void * (* arg_text_malloc_func)(u64 size),
+    void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     const u64 raw_fontmetrics_file_size);
 

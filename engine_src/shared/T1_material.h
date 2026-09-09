@@ -17,7 +17,7 @@ typedef struct {
 extern LockedMaterialCollection * all_mesh_materials;
 
 void T1_material_init(
-    void * (* arg_malloc_function)(u64 size));
+    void * (* arg_malloc_function)(size_t size));
 
 void T1_material_construct(
     T1GPUMatf32 * to_construct_f32,

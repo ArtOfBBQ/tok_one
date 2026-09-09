@@ -50,7 +50,7 @@ typedef struct {
 T1TextFontSettings * T1_text_props = NULL;
 
 void T1_text_init(
-    void * (* arg_text_malloc_func)(u64 size),
+    void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     u64 raw_fontmetrics_file_size)
 {

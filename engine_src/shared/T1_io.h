@@ -19,7 +19,7 @@ typedef struct {
     u8 checked_touch_ids;
 } T1IOEvent;
 
-void T1_io_init(void *(* arg_malloc_func)(u64));
+void T1_io_init(void *(* arg_malloc_func)(size_t));
 void T1_io_event_construct(T1IOEvent * to_construct);
 void T1_io_event_register(T1IOEvent * touch_record);
 void T1_io_register_keyup(u32 key_id, u8 debounces);

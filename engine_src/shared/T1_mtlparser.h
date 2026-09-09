@@ -35,7 +35,7 @@ typedef struct {
 
 void T1_mtlparser_init(
     void * (* memset_func)(void *, int, u64),
-    void * (* malloc_func)(u64),
+    void * (* malloc_func)(size_t),
     u64 (* strlcat)(char *, const char *, u64));
 
 const char * T1_mtlparser_get_last_error_msg(void);

@@ -56,7 +56,7 @@ init_obj_parser(
     free);
 */
 void T1_objparser_init(
-    void * (* malloc_function) (u64),
+    void * (* malloc_function) (size_t),
     void   (* optional_free_function)(void *));
 
 /*

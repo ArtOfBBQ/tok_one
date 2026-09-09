@@ -55,7 +55,7 @@ typedef struct {
 
 T1IOState * T1_io = NULL;
 
-void T1_io_init(void *(* arg_malloc_func)(u64)) {
+void T1_io_init(void *(* arg_malloc_func)(size_t)) {
     T1_io = (T1IOState *)(arg_malloc_func(sizeof(T1IOState)));
     T1_std_memset(T1_io, 0, sizeof(T1IOState));
     

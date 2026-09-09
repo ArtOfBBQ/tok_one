@@ -63,7 +63,7 @@ static void T1_mtlparser_reset(void) {
 
 void T1_mtlparser_init(
     void * (* arg_memset_func)(void *, int, u64),
-    void * (* arg_malloc_func)(u64),
+    void * (* arg_malloc_func)(size_t),
     u64 (* arg_strlcat_func)(char *, const char *, u64))
 {
     T1_mtlparser_s = arg_malloc_func(sizeof(T1MTLParserState));

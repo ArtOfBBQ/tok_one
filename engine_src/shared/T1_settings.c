@@ -3,7 +3,7 @@
 
 T1PerfSettings * T1_perf_settings = NULL;
 
-void T1_settings_init(void * arg_malloc_func(u64))
+void T1_settings_init(void * arg_malloc_func(size_t))
 {
     T1_perf_settings = (T1PerfSettings *)
     arg_malloc_func(sizeof(T1PerfSettings));

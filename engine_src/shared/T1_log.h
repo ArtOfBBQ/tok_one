@@ -15,7 +15,7 @@ Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
 example with c standard library: setup_log(malloc(LOG_SIZE));
 */
 void T1_log_init(
-    void * (* malloc_func)(u64 size),
+    void * (* malloc_func)(size_t size),
     u32 (* create_mutex_func)(void),
     void (* mutex_lock_func)(const u32 mutex_id),
     void (* mutex_unlock_func)(const u32 mutex_id));

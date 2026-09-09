@@ -32,7 +32,7 @@ void * T1_mem_malloc_unmanaged_aligned(
     const u32 aligned_to);
 
 // __attribute__((used, noinline))
-void * T1_mem_malloc_unmanaged(u64 size);
+void * T1_mem_malloc_unmanaged(size_t size);
 
 void T1_mem_malloc_managed_page_aligned(
     void ** base_pointer_for_freeing,
@@ -41,7 +41,7 @@ void T1_mem_malloc_managed_page_aligned(
 
 b8 T1_mem_is_page_aligned(void * to_check);
 
-void * T1_mem_malloc_managed(u64 size);
+void * T1_mem_malloc_managed(size_t size);
 
 void T1_mem_free_managed(void * to_free);
 

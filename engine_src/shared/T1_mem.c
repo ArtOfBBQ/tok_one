@@ -131,8 +131,8 @@ static void * T1_mem_malloc_from_unmanaged_without_aligning(
 }
 
 void * T1_mem_malloc_unmanaged_aligned(
-    const u64 size,
-    const u32 aligned_to)
+    u64 size,
+    u32 aligned_to)
 {
     T1_mem_mutex_lock(malloc_mutex_id);
     
@@ -167,7 +167,7 @@ void * T1_mem_malloc_unmanaged_aligned(
 }
 
 // __attribute__((used, noinline))
-void * T1_mem_malloc_unmanaged(u64 size) {
+void * T1_mem_malloc_unmanaged(size_t size) {
     T1_log_assert(size > 0);
     
     void * return_value = T1_mem_malloc_unmanaged_aligned(
@@ -212,7 +212,7 @@ b8 T1_mem_is_page_aligned(void * to_check)
 }
 
 void * T1_mem_malloc_managed(
-    u64 size)
+    size_t size)
 {
     #if 1
     return malloc(size);
