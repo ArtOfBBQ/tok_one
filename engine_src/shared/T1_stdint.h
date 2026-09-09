@@ -17,6 +17,7 @@ typedef float  f32;
 typedef half   f16;
 #else
 #include <stdint.h>
+#include <stddef.h>
 
 typedef int64_t  s64;
 typedef int32_t  s32;
