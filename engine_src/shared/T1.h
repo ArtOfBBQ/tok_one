@@ -1,6 +1,9 @@
 #ifndef T1_H
 #define T1_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "T1_types_public.h"
 
 /*
@@ -26,9 +29,9 @@ extern T1Globals * T1_global;
 DEBUG MODE
 */
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-void T1_assert(b8 condition);
-void T1_log_warn_if_false(u8 condition, const char * msg);
-void T1_log_dump_and_crash(const c8 * crash_message);
+void T1_assert(uint8_t condition);
+void T1_log_warn_if_false(uint8_t condition, const char * msg);
+void T1_log_dump_and_crash(const char * crash_message);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #define T1_assert(x)
@@ -37,11 +40,11 @@ void T1_log_dump_and_crash(const c8 * crash_message);
 #endif
 
 #if T1_LOG_PRINTF == T1_ACTIVE
-void T1_log_append(const c8 *);
-void T1_log_append_c8(c8 c8val);
-void T1_log_append_f32(f32 f32val);
-void T1_log_append_s32(s32 s32val);
-void T1_log_append_u32(u32 u32val);
+void T1_log_append(const char *);
+void T1_log_append_c8(char c8val);
+void T1_log_append_f32(float f32val);
+void T1_log_append_s32(int32_t s32val);
+void T1_log_append_u32(uint32_t u32val);
 #elif T1_LOG_PRINTF == T1_INACTIVE
 #define T1_log_append(string)
 #define T1_log_append_c8(num)
@@ -55,37 +58,37 @@ void T1_log_append_u32(u32 u32val);
 /*
 PROFILER
 */
-void T1_profiler_start(const c8 * func_name);
-void T1_profiler_end(const c8 * func_name);
+void T1_profiler_start(const char * func_name);
+void T1_profiler_end(const char * func_name);
 
 /*
 T1_std
 standard or commonly needed functions
 */
-#define T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
-#define T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
-s32    T1_std_mini(s32 x, s32 y);
-s32    T1_std_maxi(s32 x, s32 y);
-f32    T1_std_minf(f32 x, f32 y);
-f32    T1_std_maxf(f32 x, f32 y);
-void * T1_std_memset(void * input, s32 value, u64 size_bytes);
-void   T1_std_memset_i16(void * input, s16 value, u32 size_bytes);
-void * T1_std_memcpy(void * dest, const void * src, u64 n_bytes);
-void   T1_std_strcpy_cap(c8 * recipient, u32 cap, const c8 * origin);
-void   T1_std_strcat_cap(c8 * recip, u32 cap, const c8 * to_append);
-void   T1_std_strcat_u32_cap(c8 * recip, u32 recip_size, u32 to_append);
-void   T1_std_strcat_s32_cap(c8 * recip, u32 cap, s32 to_append);
-void   T1_std_strcat_f32_cap(c8 * recipient, u32 cap, f32 to_append);
-void   T1_std_strcat_c8_cap(c8 * recipient, c8 to_append);
-u64    T1_std_strlen(const c8 * nullterm_str);
-b8     T1_std_string_starts_with(const c8 * to_check, const c8 * start);
-b8     T1_std_are_equal_strings(const c8 * str1, const c8 * str2);
-void   T1_std_strsub(c8 * in, const c8 * to_match, const c8 * repl);
-void   T1_std_s32_to_string(s32 input, c8 * recip);
-void   T1_std_u32_to_string(u32 input, c8 * recipient);
-u32    T1_std_string_to_u32_validate(const c8 * input, b8 * good);
-s32    T1_std_string_to_s32_validate(const c8 * input, u8 * good);
-f32    T1_std_string_to_f32_validate(const c8 * input, u8 * good);
+#define  T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
+#define  T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
+int32_t  T1_std_mini(int32_t x, int32_t y);
+int32_t  T1_std_maxi(int32_t x, int32_t y);
+float    T1_std_minf(float x, float y);
+float    T1_std_maxf(float x, float y);
+void *   T1_std_memset(void * input, int32_t value, uint64_t size_bytes);
+void     T1_std_memset_i16(void * input, int16_t value, uint32_t size_bytes);
+void *   T1_std_memcpy(void * dest, const void * src, uint64_t n_bytes);
+void     T1_std_strcpy_cap(char * recipient, uint32_t cap, const char * origin);
+void     T1_std_strcat_cap(char * recip, uint32_t cap, const char * to_append);
+void     T1_std_strcat_u32_cap(char * recip, uint32_t recip_size, uint32_t to_append);
+void     T1_std_strcat_s32_cap(char * recip, uint32_t cap, int32_t to_append);
+void     T1_std_strcat_f32_cap(char * recipient, uint32_t cap, float to_append);
+void     T1_std_strcat_c8_cap(char * recipient, char to_append);
+uint64_t T1_std_strlen(const char * nullterm_str);
+uint8_t  T1_std_string_starts_with(const char * to_check, const char * start);
+uint8_t  T1_std_are_equal_strings(const char * str1, const char * str2);
+void     T1_std_strsub(char * in, const char * to_match, const char * repl);
+void     T1_std_s32_to_string(int32_t input, char * recip);
+void     T1_std_u32_to_string(uint32_t input, char * recipient);
+uint32_t T1_std_string_to_u32_validate(const char * input, uint8_t * good);
+int32_t  T1_std_string_to_s32_validate(const char * input, uint8_t * good);
+float    T1_std_string_to_f32_validate(const char * input, uint8_t * good);
 
 
 
@@ -99,8 +102,8 @@ void T1_mem_free_managed(void * to_free);
 /*
 User settings
 */
-u32 T1_settings_get_render_width(void);
-u32 T1_settings_get_render_height(void);
+uint32_t T1_settings_get_render_width(void);
+uint32_t T1_settings_get_render_height(void);
 
 /*
 T1_id
@@ -111,121 +114,121 @@ T1_id
 #define T1_ID_FIRST_NONUI 1011
 #define T1_ID_LAST_UI_TOUCH 1000
 #define T1_ID_FIRST_NONUI_TOUCH 1001
-u32  T1_id_next_ui_element_id(void);
-u32  T1_id_next_nonui_id(void);
-u32  T1_id_next_ui_element_touch_id(void);
+uint32_t  T1_id_next_ui_element_id(void);
+uint32_t  T1_id_next_nonui_id(void);
+uint32_t  T1_id_next_ui_element_touch_id(void);
 void T1_id_clear_ui_element_touch_ids(void);
-u32  T1_id_next_nonui_touch_id(void);
+uint32_t  T1_id_next_nonui_touch_id(void);
 
 /*
 RANDOM NUMBERS
 */
 #define T1_RAND_SEQUENCE_SIZE 999
-s32 T1_rand(void);
-s32 T1_rand_at_i(u64 index);
-void T1_rand_shuf_array(void * array, u32 array_sz, u32 elem_sz);
+int32_t  T1_rand(void);
+int32_t  T1_rand_at_i(uint64_t index);
+void T1_rand_shuf_array(void * array, uint32_t array_sz, uint32_t elem_sz);
 
 /*
 CAMERA MANIPULATION
 */
-void  T1_cam_set_us_to_dest(s32 cam_i, u64 us);
-f32   T1_cam_get_angle_xyz(s32 cam_i, s32 i);
-void  T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval);
-void  T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval);
-void  T1_cam_set_dest_angle_xyz(s32 cam_i, s32 i, f32 newval);
-void  T1_cam_add_dest_angle_xyz(s32 cam_i, s32 i, f32 val);
-void  T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val);
-void  T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val);
-void  T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val);
-void  T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val);
+void  T1_cam_set_us_to_dest(int32_t cam_i, uint64_t us);
+float   T1_cam_get_angle_xyz(int32_t cam_i, int32_t i);
+void  T1_cam_set_dest_xyz(int32_t cam_i, int32_t i, float newval);
+void  T1_cam_add_dest_xyz(int32_t cam_i, int32_t i, float newval);
+void  T1_cam_set_dest_angle_xyz(int32_t cam_i, int32_t i, float newval);
+void  T1_cam_add_dest_angle_xyz(int32_t cam_i, int32_t i, float val);
+void  T1_cam_set_min_xyz(int32_t cam_i, int32_t i, float val);
+void  T1_cam_set_max_xyz(int32_t cam_i, int32_t i, float val);
+void  T1_cam_set_angle_xyz_min(int32_t cam_i, int32_t i, float val);
+void  T1_cam_set_angle_xyz_max(int32_t cam_i, int32_t i, float val);
 // to unclamp, clamp to T1_id = -1
-void  T1_cam_set_clamped_to_T1_id(s32 cam_i, u32 T1_id);
-void  T1_cam_set_movement_enabled(s32 cam_i, u8 newval);
-void  T1_cam_delete(s32 cam_i);
+void  T1_cam_set_clamped_to_T1_id(int32_t cam_i, uint32_t T1_id);
+void  T1_cam_set_movement_enabled(int32_t cam_i, uint8_t newval);
+void  T1_cam_delete(int32_t cam_i);
 void  T1_cam_delete_all(void);
-T1Tex T1_cam_get_write_tex(s32 cam_i);
-void  T1_cam_reset(s32 at_i);
+T1Tex T1_cam_get_write_tex(int32_t cam_i);
+void  T1_cam_reset(int32_t at_i);
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
-f32 T1_screen_x_to_x(f32 screen_x, f32 given_z);
-f32 T1_screen_y_to_y(f32 screen_y, f32 at_z);
-f32 T1_x_to_screen_x(f32 screen_x, f32 at_z);
-f32 T1_y_to_screen_y(f32 y, f32 given_z);
-f32 T1_screen_x_to_x_noz(f32 screen_x);
-f32 T1_screen_y_to_y_noz(f32 screen_y);
-f32 T1_x_to_screen_x_noz(f32 y);
-f32 T1_y_to_screen_y_noz(f32 y);
-f32 T1_screen_height_to_height(f32 screen_h, f32 at_z);
-f32 T1_screen_width_to_width(f32 screen_w, f32 at_z);
-f32 T1_screen_width_to_width_noz(f32 screen_w);
-f32 T1_screen_height_to_height_noz(f32 screen_h);
+float T1_screen_x_to_x(float screen_x, float given_z);
+float T1_screen_y_to_y(float screen_y, float at_z);
+float T1_x_to_screen_x(float screen_x, float at_z);
+float T1_y_to_screen_y(float y, float given_z);
+float T1_screen_x_to_x_noz(float screen_x);
+float T1_screen_y_to_y_noz(float screen_y);
+float T1_x_to_screen_x_noz(float y);
+float T1_y_to_screen_y_noz(float y);
+float T1_screen_height_to_height(float screen_h, float at_z);
+float T1_screen_width_to_width(float screen_w, float at_z);
+float T1_screen_width_to_width_noz(float screen_w);
+float T1_screen_height_to_height_noz(float screen_h);
 
 void T1_make_shadowmap_and_attach_to_light(
-    u32 T1_id, u32 w, u32 h);
+    uint32_t T1_id, uint32_t w, uint32_t h);
 
-void T1_cam_create_main_view(u32 new_w, u32 new_h);
+void T1_cam_create_main_view(uint32_t new_w, uint32_t new_h);
 void T1_make_reflection_cam(
-    u32 new_w, u32 new_h, f32 reflection_z);
+    uint32_t new_w, uint32_t new_h, float reflection_z);
 
 /*
 FILE PARSING
 */
-u8 * T1_png_malloc_managed_from_resource(
+uint8_t * T1_png_malloc_managed_from_resource(
     const char * resource_name,
-    u32 * out_width,
-    u32 * out_height,
-    u8 * out_good);
+    uint32_t * out_width,
+    uint32_t * out_height,
+    uint8_t * out_good);
 
 /*
 MANAGE TEXTURES
 */
-s16  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
-s16  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const c8 * filename, b8 * good);
-void T1_tex_files_prereg_dds_res(const c8 * filename, b8 * good);
+int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
+int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
+void T1_tex_files_prereg_png_res(const char * filename, uint8_t * good);
+void T1_tex_files_prereg_dds_res(const char * filename, uint8_t * good);
 void T1_tex_files_reg_new_by_splitting_file(
-    const c8 * filename,
-    u32 rows, u32 cols,
-    b8 free_rgba);
+    const char * filename,
+    uint32_t rows, uint32_t cols,
+    uint8_t free_rgba);
 
-u16 T1_tex_array_get_filename_loc(const c8 * for_filename);
-u16 T1_tex_array_reg_img(
-    const c8 * filename,
-    u32 w, u32 h,
-    b8 is_render_target, b8 use_bc1_compression);
+uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
+uint16_t T1_tex_array_reg_img(
+    const char * filename,
+    uint32_t w, uint32_t h,
+    uint8_t is_render_target, uint8_t use_bc1_compression);
 void T1_tex_array_update_rgba(
-    s32 array_i, s32 slice_i,
-    const u8 * rgba, u32 rgba_size);
-b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
-const u8 * T1_tex_array_get_const_rgba(
-    s32 array_i,
-    s32 slice_i);
-u32 T1_tex_array_get_img_height(s32 array_i);
-u32 T1_tex_array_get_img_width(s32 array_i);
+    int32_t array_i, int32_t slice_i,
+    const uint8_t * rgba, uint32_t rgba_size);
+uint8_t T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
+const uint8_t * T1_tex_array_get_const_rgba(
+    int32_t array_i,
+    int32_t slice_i);
+uint32_t T1_tex_array_get_img_height(int32_t array_i);
+uint32_t T1_tex_array_get_img_width(int32_t array_i);
 
 /*
 MANAGE 3-D MODELS (.OBJ FILES)
 
 Each "mesh" you register will return a mesh_id (i32)
 */
-s32 T1_objmodel_new_mesh_id_from_resources(
-    const c8 * filename,
-    const c8 * mtl_filename,
-    u8 flip_uv_u,
-    u8 flip_uv_v,
-    u8 * success,
-    c8 * error_message);
-s32 T1_objmodel_resource_name_to_mesh_id(
-    const c8 * obj_filename);
-f32 T1_objmodel_get_x_multiplier_for_width(
-    s32 mesh_id,
-    f32 screenspace_width,
-    f32 given_z);
-f32 T1_objmodel_get_y_multiplier_for_height(
-    s32 mesh_id,
-    f32 screenspace_height,
-    f32 given_z);
+int32_t T1_objmodel_new_mesh_id_from_resources(
+    const char * filename,
+    const char * mtl_filename,
+    uint8_t flip_uv_u,
+    uint8_t flip_uv_v,
+    uint8_t * success,
+    char * error_message);
+int32_t T1_objmodel_resource_name_to_mesh_id(
+    const char * obj_filename);
+float T1_objmodel_get_x_multiplier_for_width(
+    int32_t mesh_id,
+    float screenspace_width,
+    float given_z);
+float T1_objmodel_get_y_multiplier_for_height(
+    int32_t mesh_id,
+    float screenspace_height,
+    float given_z);
 
 /*
 TEXT LABELS
@@ -236,34 +239,34 @@ the font properties etc. for your next label
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_draw_label(
-    u8 * on_rgba, u32 rgba_w, u32 rgba_h,
+    uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
     const char * text_to_draw,
-    f32 left_x_pixelspace, f32 top_y_pixelspace,
-    f32 tab_width, f32 max_width);
+    float left_x_pixelspace, float top_y_pixelspace,
+    float tab_width, float max_width);
 void T1_text_request_label_offset_around(
-    u32 with_T1_id, const c8 * text,
-    f32 mid_screen_x, f32 mid_screen_y, f32 z,
-    f32 max_width);
+    uint32_t with_T1_id, const char * text,
+    float mid_screen_x, float mid_screen_y, float z,
+    float max_width);
 void T1_text_request_label_leftx_toplinemidy(
-    u32 with_T1_id, const c8 * text,
-    f32 screen_left, f32 topline_mid_screen_y, f32 z,
-    f32 max_width);
+    uint32_t with_T1_id, const char * text,
+    float screen_left, float topline_mid_screen_y, float z,
+    float max_width);
 void T1_text_request_label_renderable(
-    u32 with_T1_id,
-    const c8 * text,
-    f32 left_x_pixelspace,
-    f32 top_y_pixelspace,
-    f32 z,
-    f32 tab_width,
-    f32 max_width);
+    uint32_t with_T1_id,
+    const char * text,
+    float left_x_pixelspace,
+    float top_y_pixelspace,
+    float z,
+    float tab_width,
+    float max_width);
 void T1_text_request_label_around_x_at_top_y(
-    u32 with_T1_id, const c8 * text_to_draw,
-    f32 screen_mid_x, f32 screen_top_y, f32 z,
-    f32 max_width);
+    uint32_t with_T1_id, const char * text_to_draw,
+    float screen_mid_x, float screen_top_y, float z,
+    float max_width);
 void T1_text_request_label_around(
-    u32 with_T1_id, const c8 * text_to_draw,
-    f32 screen_mid_x, f32 screen_mid_y, f32 z,
-    f32 max_width);
+    uint32_t with_T1_id, const char * text_to_draw,
+    float screen_mid_x, float screen_mid_y, float z,
+    float max_width);
 
 /*
 UI WIDGETS
@@ -275,55 +278,79 @@ arguments, but they persist over repeated calls to
 T1_ui_widget_request_slider(). So you can set your style
 once and keep using it if you want 
 */
-void T1_ui_widget_requester_set_pin_rgba(u8 rgba_i, f32 val);
-void T1_ui_widget_requester_set_screenspace_height(u32 height);
-void T1_ui_widget_requester_set_screenspace_width(u32 width);
-void T1_ui_widget_requester_set_screenspace_pin_height(u32 height);
-void T1_ui_widget_requester_set_screenspace_pin_width(u32 width);
-void T1_ui_widget_requester_set_sfx_filename(c8 * sfx_fn);
-void T1_ui_widget_requester_set_font_height(u32 to_val);
-void T1_ui_widget_requester_set_screen_x(s32 x);
-void T1_ui_widget_requester_set_screen_y(s32 y);
-void T1_ui_widget_requester_set_z(f32 z);
-void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max);
+void T1_ui_widget_requester_set_pin_rgba(uint8_t rgba_i, float val);
+void T1_ui_widget_requester_set_screenspace_height(uint32_t height);
+void T1_ui_widget_requester_set_screenspace_width(uint32_t width);
+void T1_ui_widget_requester_set_screenspace_pin_height(uint32_t height);
+void T1_ui_widget_requester_set_screenspace_pin_width(uint32_t width);
+void T1_ui_widget_requester_set_sfx_filename(char * sfx_fn);
+void T1_ui_widget_requester_set_font_height(uint32_t to_val);
+void T1_ui_widget_requester_set_screen_x(int32_t x);
+void T1_ui_widget_requester_set_screen_y(int32_t y);
+void T1_ui_widget_requester_set_z(float z);
+void T1_ui_widget_requester_set_custom_minmax_f32(uint8_t active, float min, float max);
 void T1_ui_widget_requester_set_linked_type(T1MetaType type);
 void T1_ui_widget_request_slider(
-    u32 background_T1_id, u32 label_T1_id, u32 pin_T1_id,
+    uint32_t background_T1_id, uint32_t label_T1_id, uint32_t pin_T1_id,
     void * linked_value_ptr);
-void T1_ui_widget_delete(u32 T1_id);
+void T1_ui_widget_delete(uint32_t T1_id);
 
 /*
 3D models
 */
-f32 T1_get_x_mul_for_width(s32 for_mesh_id, f32 for_width);
-f32 T1_get_y_mul_for_height(s32 for_mesh_id, f32 for_height);
-f32 T1_get_z_mul_for_depth(s32 for_mesh_id, f32 for_depth);
+float T1_get_x_mul_for_width(int32_t for_mesh_id, float for_width);
+float T1_get_y_mul_for_height(int32_t for_mesh_id, float for_height);
+float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
 
 /*
 TexQuads (textured 2D quads)
 */
 void T1_texquad_fetch_next(T1TexQuadRequest * stack_recip);
 void T1_texquad_commit(T1TexQuadRequest * to_commit);
-void T1_texquad_delete(u32 T1_id);
+void T1_texquad_delete(uint32_t T1_id);
 void T1_texquad_delete_all(void);
 
 /*
 zSprites (a 3D object with a mesh, T1_id, pos/angle etc.)
 */
 void T1_zsprite_delete_all(void);
-#if 0
-void T1_zsprite_construct_quad(
-    f32 left_x, f32 bottom_y, f32 z,
-    f32 width, f32 height,
+void T1_zsprite_fetch_next_noconstruct(
     T1zSpriteRequest * stack_recipient);
+void T1_zsprite_construct_with_mesh_id(
+    T1zSpriteRequest * to_construct,
+    int32_t mesh_id);
+void T1_zsprite_construct_quad_around(
+    float mid_x,
+    float mid_y,
+    float z,
+    float width,
+    float height,
+    T1zSpriteRequest * stack_recipient);
+void T1_zsprite_commit(T1zSpriteRequest * to_commit);
+void T1_zsprite_delete(uint32_t with_T1_id);
+#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
+void T1_zsprite_set_occlusion(
+    s32 T1_id,
+    s32 new_visible_stat,
+    u64 wait_before_invis_us);
+#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
+#define T1_zsprite_set_occlusion(a, b, c)
+#else
+#error
 #endif
+//#if 0
+//void T1_zsprite_construct_quad(
+//    float left_x, float bottom_y, float z,
+//    float width, float height,
+//    T1zSpriteRequest * stack_recipient);
+//#endif
 
 /*
 z-Lights (3D lights)
 */
 T1zLight * T1_zlight_next(void);
 void T1_zlight_commit(T1zLight * to_request);
-void T1_zlight_delete(u32 T1_id);
+void T1_zlight_delete(uint32_t T1_id);
 void T1_zlight_delete_all(void);
 
 /*
@@ -337,62 +364,62 @@ Short taps and long taps get cleared every frame, but a key
 being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
-s32  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(s32 T1_scene_id);
+int32_t  T1_io_create_scene_and_return_id(void);
+void T1_io_scene_stack_push(int32_t T1_scene_id);
 void T1_io_scene_stack_pop(void);
-s32  T1_io_scene_stack_get_active_scene_id(void);
-b8   T1_io_key_is_down(T1IOKey key, s32 T1_scene_id);
-b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 T1_scene_id);
-b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 T1_scene_id);
-b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 T1_scene_id);
-u32  T1_io_get_mouse_touch_id_this_frame(void);
-f32  T1_io_get_pos_x_this_frame(T1IOKey key); 
-f32  T1_io_get_pos_y_this_frame(T1IOKey key);
-s32  T1_io_create_scene_and_return_id(void);
-b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 T1_scene_id);
+int32_t  T1_io_scene_stack_get_active_scene_id(void);
+uint8_t   T1_io_key_is_down(T1IOKey key, int32_t T1_scene_id);
+uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key, int32_t T1_scene_id);
+uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
+uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
+uint32_t  T1_io_get_mouse_touch_id_this_frame(void);
+float  T1_io_get_pos_x_this_frame(T1IOKey key); 
+float  T1_io_get_pos_y_this_frame(T1IOKey key);
+int32_t  T1_io_create_scene_and_return_id(void);
+uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
 
 /*
 TOKENIZER
 */
-void T1_token_reset(u8 * good);
+void T1_token_reset(uint8_t * good);
 #define T1_TOKEN_FLAG_IGNORE_CASE 1
 #define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
 #define T1_TOKEN_FLAG_LEAD_DOT_OK 4
 #define T1_TOKEN_FLAG_PRECISE 8
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
-void T1_token_set_reg_bitflags(u8 bitflags);
+void T1_token_set_reg_bitflags(uint8_t bitflags);
 void T1_token_clear_start_pattern(void);
 void T1_token_set_reg_start_pattern(
-    const c8 * start_pattern);
+    const char * start_pattern);
 void T1_token_clear_stop_patterns(void);
 void T1_token_set_store_mode(T1TokenStoreMode mode);
-void T1_token_set_reg_middle_cap(u32 middle_cap);
+void T1_token_set_reg_middle_cap(uint32_t middle_cap);
 void T1_token_set_reg_stop_pattern(
-    const c8 * stop_pattern,
-    u32 pattern_index);
-void T1_token_set_string_literal(u32 enum_val, u8 * good);
-void T1_token_register(u32 enum_value, u8 * good);
-void T1_token_run(const c8 * input, u8 * good);
-u32 T1_token_get_token_count(void);
-u32 T1_token_get_enum_value(u16 token_i);
-void T1_token_overwrite_enum_val(u16 token_i, u32 new_enum_val);
-c8 * T1_token_get_string_value(u16 token_i);
-u32 T1_token_get_string_value_size(u16 token_i);
-u32 T1_token_get_line_num(u16 token_i);
-b8 T1_token_is_number(s32 at_i);
-b8 T1_token_fits_f64(s32 at_i);
-b8 T1_token_fits_f32(s32 at_i);
-b8 T1_token_fits_s64(s32 at_i);
-b8 T1_token_fits_s32(s32 at_i);
-b8 T1_token_fits_s16(s32 at_i);
-b8 T1_token_fits_s8(s32 at_i);
-b8 T1_token_fits_u64(s32 at_i);
-b8 T1_token_fits_u32(s32 at_i);
-b8 T1_token_fits_u16(s32 at_i);
-b8 T1_token_fits_u8(s32 at_i);
-u64 T1_token_as_number_unsigned(s32 at_i);
-s64 T1_token_as_number_signed(s32 at_i);
-f64 T1_token_as_number_floating(s32 at_i);
+    const char * stop_pattern,
+    uint32_t pattern_index);
+void T1_token_set_string_literal(uint32_t enum_val, uint8_t * good);
+void T1_token_register(uint32_t enum_value, uint8_t * good);
+void T1_token_run(const char * input, uint8_t * good);
+uint32_t T1_token_get_token_count(void);
+uint32_t T1_token_get_enum_value(uint16_t token_i);
+void T1_token_overwrite_enum_val(uint16_t token_i, uint32_t new_enum_val);
+char * T1_token_get_string_value(uint16_t token_i);
+uint32_t T1_token_get_string_value_size(uint16_t token_i);
+uint32_t T1_token_get_line_num(uint16_t token_i);
+uint8_t T1_token_is_number(int32_t at_i);
+uint8_t T1_token_fits_f64(int32_t at_i);
+uint8_t T1_token_fits_f32(int32_t at_i);
+uint8_t T1_token_fits_s64(int32_t at_i);
+uint8_t T1_token_fits_s32(int32_t at_i);
+uint8_t T1_token_fits_s16(int32_t at_i);
+uint8_t T1_token_fits_s8(int32_t at_i);
+uint8_t T1_token_fits_u64(int32_t at_i);
+uint8_t T1_token_fits_u32(int32_t at_i);
+uint8_t T1_token_fits_u16(int32_t at_i);
+uint8_t T1_token_fits_u8(int32_t at_i);
+uint64_t T1_token_as_number_unsigned(int32_t at_i);
+int64_t T1_token_as_number_signed(int32_t at_i);
+double T1_token_as_number_floating(int32_t at_i);
 
 /*
 META TYPES (registration)
@@ -400,8 +427,8 @@ META TYPES (registration)
 #define T1_meta_struct(struct_name, good) T1_meta_reg_struct(#struct_name, sizeof(struct_name), good)
 void T1_meta_reg_struct(
     const char * struct_name,
-    const u32 size_bytes,
-    u8 * good);
+    const uint32_t size_bytes,
+    uint8_t * good);
 #define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, good)
 #define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, good)
 #define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, good)
@@ -411,53 +438,53 @@ void T1_meta_reg_struct(
 #define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, good)
 void T1_meta_reg_field(
     const char * field_name,
-    u32 field_offset,
+    uint32_t field_offset,
     T1MetaType field_type,
     const char * field_struct_type_name_or_null,
-    u16 field_array_size_1,
-    u16 field_array_size_2,
-    u16 field_array_size_3,
-    u8 is_enum,
-    u8 * good);
+    uint16_t field_array_size_1,
+    uint16_t field_array_size_2,
+    uint16_t field_array_size_3,
+    uint8_t is_enum,
+    uint8_t * good);
 #define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
 void T1_meta_reg_enum(
     const char * enum_type_name,
     const T1MetaType T1_type,
-    const u32 type_size_check,
-    u8 * good);
+    const uint32_t type_size_check,
+    uint8_t * good);
 #define T1_meta_enum_value(enum_type_name, enum_value, good) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, good)
 void T1_meta_reg_enum_value(
     const char * enum_type_name,
     const char * value_name,
-    const s64 value,
-    b8 * good);
+    int64_t value,
+    uint8_t * good);
 void
 T1_meta_reg_u4_subname_for_last_field(
     const char * subname,
     const char * enum_name_if_any,
-    b8 is_right_nibble,
-    b8 * good);
+    uint8_t is_right_nibble,
+    uint8_t * good);
 
 /*
 META TYPES (querying)
 */
 void T1_meta_get_offset_and_type(
-    const c8 * struct_name,
-    const c8 * field_name,
-    s32 * out_offset,
+    const char * struct_name,
+    const char * field_name,
+    int32_t * out_offset,
     T1MetaType * out_data_type);
 void T1_meta_write_to_known_field_uint(
-    const c8 * target_parent_type,
-    const c8 * target_field_name,
-    u64 value_to_write_uint,
+    const char * target_parent_type,
+    const char * target_field_name,
+    uint64_t value_to_write_uint,
     void * target_parent_ptr,
-    u8 * good);
+    uint8_t * good);
 void T1_meta_write_to_known_field_str(
-    const c8 * target_parent_type,
-    const c8 * target_field_name,
-    const c8 * value_to_write_str,
+    const char * target_parent_type,
+    const char * target_field_name,
+    const char * value_to_write_str,
     void * target_parent_ptr,
-    b8 * good);
+    uint8_t * good);
 
 /*
 OPERATING SYSTEM
@@ -470,46 +497,46 @@ The "writables" dir is a special directory where your app
 is allowed to write, so you can store files with data about
 your user's progress or preferences, etc.
 */
-u64 T1_os_get_current_time_us(void);
+uint64_t T1_os_get_current_time_us(void);
 void T1_os_toggle_fullscreen(void);
-void T1_os_start_thread(void (*func_to_run)(s32), s32 argument);
-u32 T1_os_init_mutex_and_return_id(void);
-u8 T1_os_mutex_trylock(u32 mutex_id);
-void T1_os_assert_mutex_locked(u32 mutex_id);
-void T1_os_mutex_lock(u32 mutex_id);
-void T1_os_mutex_unlock(u32 mutex_id);
-void T1_os_get_res_dir(c8 * recip, u32 recip_cap);
+void T1_os_start_thread(void (*func_to_run)(int32_t), int32_t argument);
+uint32_t T1_os_init_mutex_and_return_id(void);
+uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
+void T1_os_assert_mutex_locked(uint32_t mutex_id);
+void T1_os_mutex_lock(uint32_t mutex_id);
+void T1_os_mutex_unlock(uint32_t mutex_id);
+void T1_os_get_res_dir(char * recip, uint32_t recip_cap);
 void T1_os_get_filenames_in(
-    const c8 * directory, c8 filenames[2000][500]);
-u8 T1_os_res_exists(const c8 * resource_name);
-u8 T1_os_file_exists(const c8 * filepath);
-void T1_os_del_file(const c8 * filepath);
+    const char * directory, char filenames[2000][500]);
+uint8_t T1_os_res_exists(const char * resource_name);
+uint8_t T1_os_file_exists(const char * filepath);
+void T1_os_del_file(const char * filepath);
 void T1_os_copy_file(
-    const c8 * filepath_src, const c8 * filepath_dest);
-u64 T1_os_get_filesize(const c8 * filepath);
-u64 T1_os_get_resource_size(const c8 * res_name);
-void T1_os_read_file(const c8 * filepath,
-    c8 * recip, u32 * recip_size, u64 recip_cap, u8 * good);
+    const char * filepath_src, const char * filepath_dest);
+uint64_t T1_os_get_filesize(const char * filepath);
+uint64_t T1_os_get_resource_size(const char * res_name);
+void T1_os_read_file(const char * filepath,
+    char * recip, uint32_t * recip_size, uint64_t recip_cap, uint8_t * good);
 void T1_os_read_resource_file(
-    const c8 * filen, c8 * recip, u64 recip_cap, u8 * good);
-void T1_os_get_dir_separator(c8 * recip);
-u32 T1_os_get_dir_separator_size(void);
+    const char * filen, char * recip, uint64_t recip_cap, uint8_t * good);
+void T1_os_get_dir_separator(char * recip);
+uint32_t T1_os_get_dir_separator_size(void);
 void T1_os_writable_filename_to_pathfile(
-    const c8 * filen, c8 * recip, u32 recip_cap);
+    const char * filen, char * recip, uint32_t recip_cap);
 void T1_os_res_filename_to_pathfile(
-    const c8 * filen, c8 * recip, u32 recip_cap);
-void T1_os_get_app_dir(c8 * recip, u32 recip_size);
-void T1_os_get_writables_dir(c8 * recip, u32 recip_size);
+    const char * filen, char * recip, uint32_t recip_cap);
+void T1_os_get_app_dir(char * recip, uint32_t recip_size);
+void T1_os_get_writables_dir(char * recip, uint32_t recip_size);
 void T1_os_write_file_to_writables(
-    const c8 * filepath_in_writables, const c8 * out,
-    u32 output_size, b8 * good);
+    const char * filepath_in_writables, const char * out,
+    uint32_t output_size, uint8_t * good);
 void T1_os_gpu_push_tex_slice(
-    s32 tex_array_i,
-    s32 tex_slice_i,
-    b8 free_rgba);
+    int32_t tex_array_i,
+    int32_t tex_slice_i,
+    uint8_t free_rgba);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
-    const c8 * folderpath);
-u64 T1_os_get_current_time_us(void);
+    const char * folderpath);
+uint64_t T1_os_get_current_time_us(void);
 
 /*
 TERMINAL
@@ -521,29 +548,29 @@ AUDIO
 */
 extern T1AudioSettingsFullyPublic * T1_audio_state;
 void T1_wav_parse(
-    s16 * recipient, u32 * recipient_size,
-    u32 recip_cap, u8 * raw_file,
-    u32 data_size, b8 * good);
+    int16_t * recipient, uint32_t * recipient_size,
+    uint32_t recip_cap, uint8_t * raw_file,
+    uint32_t data_size, uint8_t * good);
 void T1_audio_register_samples_to_permasound(
-    s32 permasound_id,
-    s16 * samples,
-    s32 samples_size);
-s32 T1_audio_get_permasound_id_or_register_new(
-    const c8 * for_res_name);
+    int32_t permasound_id,
+    int16_t * samples,
+    int32_t samples_size);
+int32_t T1_audio_get_permasound_id_or_register_new(
+    const char * for_res_name);
 void T1_audio_add_permasound_to_global_buffer(
-    s32 permasound_id,
-    f32 volume_f32);
+    int32_t permasound_id,
+    float volume_f32);
 void T1_audio_add_permasound_to_global_buffer_at_offset(
-    s32 permasound_id,
-    u64 play_cursor_offset,
-    f32 volume_mult);
+    int32_t permasound_id,
+    uint64_t play_cursor_offset,
+    float volume_mult);
 void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
-    s32 permasound_id,
-    u64 permasound_offset,
-    u64 play_cursor_offset,
-    u32 samples_to_copy_size,
-    b8 is_music);
-u64 T1_audio_get_play_cursor(void);
+    int32_t  permasound_id,
+    uint64_t permasound_offset,
+    uint64_t play_cursor_offset,
+    uint32_t samples_to_copy_size,
+    uint8_t  is_music);
+uint64_t T1_audio_get_play_cursor(void);
 void T1_audio_clear_global_buffer(void);
 
 #endif // T1_H

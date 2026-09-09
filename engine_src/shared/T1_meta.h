@@ -1,7 +1,7 @@
 #ifndef T1_META_H
 #define T1_META_H
 
-#include <stddef.h>
+#include "T1_stdint.h"
 
 #include "T1_types_public.h"
 

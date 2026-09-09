@@ -1,80 +1,78 @@
 #ifndef T1_TYPES_PUBLIC_GPUCPU_H
 #define T1_TYPES_PUBLIC_GPUCPU_H
 
-#include "T1_stdint.h"
-
 #define T1_TEX_NONE 32109
 
 typedef union {
     struct {
-        u32 reserved_and_tex;
-        u32 touch_id;
+        uint32_t reserved_and_tex;
+        uint32_t touch_id;
     };
-    u8 size_with_padding[16];
+    uint8_t size_with_padding[16];
 } T1GPUTexQuadu32;
 
 typedef union {
     struct {
-        f32 xyz[3];
-        f32 offset_xy[2];
-        f32 wh[2];
-        f32 rgba[4];
+        float xyz[3];
+        float offset_xy[2];
+        float wh[2];
+        float rgba[4];
     };
-    u8 size_with_padding[64];
+    uint8_t size_with_padding[64];
 } __attribute__((aligned(16))) T1GPUTexQuadf32;
 
 typedef union {
     struct {
-        f32 xyz[3];
-        f32 offset_xyz[3];
-        f32 mul_xyz[3];
-        f32 angle_xyz[3];
-        f32 bloom_on;
-        f32 alpha_on;
+        float xyz[3];
+        float offset_xyz[3];
+        float mul_xyz[3];
+        float angle_xyz[3];
+        float bloom_on;
+        float alpha_on;
     };
-    u8 size_with_padding[64];
+    uint8_t size_with_padding[64];
 } T1CPUzSpritef32;
 
 typedef union {
     struct {
-        f32 bonus_rgb[3];
-        f32 base_mat_uv_offsets[2];
-        f32 alpha;
-        f32 no_light;
-        f32 no_cam;
-        f32 outline_alpha;
-        f32 shadow_strength;
+        float bonus_rgb[3];
+        float base_mat_uv_offsets[2];
+        float alpha;
+        float no_light;
+        float no_cam;
+        float outline_alpha;
+        float shadow_strength;
     };
-    u8 size_with_padding[48];
+    uint8_t size_with_padding[48];
 } T1GPUzSpritef32;
 
 typedef union {
     struct {
-        u32 touch_id;
-        u32 mix_rv_and_mix_tex;
+        uint32_t touch_id;
+        uint32_t mix_rv_and_mix_tex;
     };
-    u8 size_with_padding[16];
+    uint8_t size_with_padding[16];
 } T1GPUzSpriteu32;
 
 typedef union {
     struct {
-        f32 ambient_rgb[3];
-        f32 diffuse_rgb[3];
-        f32 specular_rgb[3];
-        f32 uv_scroll[2];
-        f32 specular_exponent;
-        f32 refraction;
-        f32 alpha;
-        f32 illum;
+        float ambient_rgb[3];
+        float diffuse_rgb[3];
+        float specular_rgb[3];
+        float uv_scroll[2];
+        float specular_exponent;
+        float refraction;
+        float alpha;
+        float illum;
     };
-    u8 size_with_padding[64];
+    uint8_t size_with_padding[64];
 } T1GPUMatf32;
 
 typedef union {
     struct {
-        u32 normalmap_tex_and_tex;
+        uint32_t normalmap_tex_and_tex;
     };
-    u8 size_with_padding[16];
+    uint8_t size_with_padding[16];
 } T1GPUMatu32;
 
 typedef struct {
@@ -86,34 +84,34 @@ typedef struct {
 
 typedef struct {
     T1GPUzSprite polygons[T1_ZSPRITES_CAP];
-    u32 size;
+    uint32_t size;
 } T1GPUzSpriteList;
 
 typedef struct
 {
-    u32 timestamp;
-    u32 cam_rv_i;
-    u32 lights_size;
-    s32 perlin_texturearray_i;
-    s32 perlin_texture_i;
-    f32 rgb_add[3];
+    uint32_t timestamp;
+    uint32_t cam_rv_i;
+    uint32_t lights_size;
+    int32_t perlin_texturearray_i;
+    int32_t perlin_texture_i;
+    float rgb_add[3];
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    f32 fog_color[3];
-    f32 fog_factor;
+    float fog_color[3];
+    float fog_factor;
     #elif T1_FOG_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    f32 nonblur_pct;
-    f32 blur_pct;
-    f32 color_quantization;
+    float nonblur_pct;
+    float blur_pct;
+    float color_quantization;
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    f32 in_shadow_mults[3];
+    float in_shadow_mults[3];
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
-    f32 padding[6];
+    float padding[6];
 } T1GPUPostProcConsts;
 
 typedef struct {
@@ -122,13 +120,13 @@ typedef struct {
 } T1GPUTexQuad;
 
 typedef struct {
-    f32 xyz[3];
-    f32 xyz_angle[3];
-    f32 xyz_offset[3];
-    f32 RGBA[4];
-    f32 reach; // light's reach
-    f32 diffuse;     // how much diffuse light does this radiate?
-    f32 specular;
+    float xyz[3];
+    float xyz_angle[3];
+    float xyz_offset[3];
+    float RGBA[4];
+    float reach; // light's reach
+    float diffuse;     // how much diffuse light does this radiate?
+    float specular;
 } T1zLightf32;
 
 typedef struct {
@@ -137,13 +135,12 @@ typedef struct {
     // giving them the same positive object_id, then make
     // ScheduledAnimations that affect the entire group
     // set to -1 to not be a party of any group
-    u32 T1_id;
-    u32 deleted;
-    u32 committed;
-    s32 shadow_map_depth_texture_i;
-    s32 shadow_map_render_view_i;
-    f32 simd_padding[3];
+    uint32_t T1_id;
+    uint32_t deleted;
+    uint32_t committed;
+    int32_t shadow_map_depth_texture_i;
+    int32_t shadow_map_render_view_i;
+    float simd_padding[3];
 } T1zLight;
 
 #endif // T1_TYPES_PUBLIC_GPUCPU_H
-

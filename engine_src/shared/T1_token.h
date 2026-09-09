@@ -1,6 +1,8 @@
 #ifndef T1_TOKEN_H
 #define T1_TOKEN_H
 
+#include "T1_stdint.h"
+
 #include "T1_types_public.h"
 
 /*

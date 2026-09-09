@@ -1,9 +1,9 @@
 #ifndef T1_IO_H
 #define T1_IO_H
 
-#include <stdint.h>
 #include <stddef.h>
 
+#include "T1_stdint.h"
 #include "T1_types_public.h"
 
 #ifdef __cplusplus

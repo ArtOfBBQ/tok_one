@@ -1,7 +1,7 @@
 #ifndef T1_TEX_H
 #define T1_TEX_H
 
-#include <stdint.h>
+#include "T1_stdint.h"
 
 #include "T1_types_public.h"
 

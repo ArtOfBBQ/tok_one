@@ -1,7 +1,8 @@
 #ifndef T1_PUBLIC_TYPES_H
 #define T1_PUBLIC_TYPES_H
 
-#include "T1_stdint.h"
+#include <stdint.h>
+
 #include "T1_types_public_gpucpu.h"
 
 #define T1_ID_NONE 0xFFFFFFFF
@@ -18,9 +19,9 @@
 #define T1_BASIC_QUAD_MESH_ID 0
 #define T1_BASIC_CUBE_MESH_ID 1
 
-typedef u16 T1Tex;
+typedef uint16_t T1Tex;
 
-typedef enum : u16 {
+typedef enum : uint16_t {
     T1_IO_KEYBOARD_LEFTARROW     =  0,
     T1_IO_KEYBOARD_RIGHTARROW    =  1,
     T1_IO_KEYBOARD_UPARROW       =  2,
@@ -159,50 +160,50 @@ typedef enum : u16 {
 typedef struct {
     T1GPUPostProcConsts postproc_consts;
     
-    u64 elapsed;
-    u64 this_frame_timestamp_us;
-    u64 last_resize_request_us;
+    uint64_t elapsed;
+    uint64_t this_frame_timestamp_us;
+    uint64_t last_resize_request_us;
     
-    u32 startup_bytes_to_load;
-    u32 startup_bytes_loaded;
+    uint32_t startup_bytes_to_load;
+    uint32_t startup_bytes_loaded;
     
-    f32 timedelta_mult;
-    f32 window_wh[2];
-    f32 window_left;
-    f32 window_bottom;
+    float timedelta_mult;
+    float window_wh[2];
+    float window_left;
+    float window_bottom;
     
-    u8 draw_mouseptr;
-    u8 draw_imputed_normals;
-    u8 draw_triangles;
-    u8 draw_axes;
-    u8 draw_fps;
-    u8 draw_touch_id;
-    u8 draw_scene_id;
-    u8 show_profiler;
-    u8 pause_profiler;
-    u8 block_mouse;
-    u8 block_render_view_pos_updates;
-    u8 fullscreen;
-    u8 clientlogic_early_startup_finished;
-    u8 upcoming_fullscreen_request;
+    uint8_t draw_mouseptr;
+    uint8_t draw_imputed_normals;
+    uint8_t draw_triangles;
+    uint8_t draw_axes;
+    uint8_t draw_fps;
+    uint8_t draw_touch_id;
+    uint8_t draw_scene_id;
+    uint8_t show_profiler;
+    uint8_t pause_profiler;
+    uint8_t block_mouse;
+    uint8_t block_render_view_pos_updates;
+    uint8_t fullscreen;
+    uint8_t clientlogic_early_startup_finished;
+    uint8_t upcoming_fullscreen_request;
 } T1Globals;
 
 typedef struct {
     T1GPUTexQuadf32 f32s;
     T1GPUTexQuadu32 u32s;
-    f32             font_height;
-    u32             highlight_i;
-    u32             highlight_size;
-    u32             opaque_back_active;
+    float             font_height;
+    uint32_t             highlight_i;
+    uint32_t             highlight_size;
+    uint32_t             opaque_back_active;
 } T1TextFontSettings;
 
 typedef struct {
-    f32 offset_xyz[3];
-    u32 T1_id;
-    u8 one_frame_only;
-    u8 committed;
-    u8 visible;
-    u8 deleted;
+    float offset_xyz[3];
+    uint32_t T1_id;
+    uint8_t one_frame_only;
+    uint8_t committed;
+    uint8_t visible;
+    uint8_t deleted;
 } T1CPUTexQuad;
 
 typedef struct {
@@ -210,10 +211,28 @@ typedef struct {
     T1GPUTexQuad * gpu;
 } T1TexQuadRequest;
 
+typedef struct {
+    T1CPUzSpritef32 zs_cpu_f32s;
+    
+    uint64_t next_occlusion_in_us;
+    int32_t  mesh_id; // data in all_mesh_summaries[mesh_id]
+    uint32_t T1_id;
+    
+    uint8_t committed;
+    uint8_t deleted;
+    uint8_t visible;
+} T1CPUzSprite;
+
+typedef struct {
+    T1GPUzSprite * gpu_data;
+    T1CPUzSprite * cpu_data;
+    uint32_t       gpu_data_size;
+} T1zSpriteRequest;
+
 /*
 TOKENIZATION
 */
-typedef enum : u8 {
+typedef enum : uint8_t {
     T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
     T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
     T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
@@ -223,7 +242,7 @@ typedef enum : u8 {
 /*
 META TYPES aka "reflection"
 */
-typedef enum : u8 {
+typedef enum : uint8_t {
     T1_TYPE_NOTSET,
     T1_TYPE_STRUCT,
     T1_TYPE_F32,
@@ -240,9 +259,9 @@ typedef enum : u8 {
 } T1MetaType;
 
 typedef struct {
-    f32 volume;
-    f32 sfx_volume;
-    f32 music_volume;
+    float volume;
+    float sfx_volume;
+    float music_volume;
 } T1AudioSettingsFullyPublic;
 
 #endif // T1_PUBLIC_TYPES_H

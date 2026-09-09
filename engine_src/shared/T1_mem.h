@@ -8,6 +8,8 @@
 #error
 #endif
 
+#include "T1_stdint.h"
+
 #include "T1_types_public.h"
 
 

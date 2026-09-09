@@ -7,24 +7,6 @@
 #include "T1_types_cpu_to_gpu.h"
 #include "T1_types_public.h"
 
-typedef struct {
-    T1CPUzSpritef32 zs_cpu_f32s;
-    
-    u64 next_occlusion_in_us;
-    s32 mesh_id; // data in all_mesh_summaries[mesh_id]
-    u32 T1_id;
-    
-    b8 committed;
-    b8 deleted;
-    b8 visible;
-} T1CPUzSprite;
-
-typedef struct {
-    T1GPUzSprite * gpu_data;
-    T1CPUzSprite * cpu_data;
-    u32       gpu_data_size;
-} T1zSpriteRequest;
-
 void T1_zsprite_init(void);
 
 void T1_zsprite_defragment(void);

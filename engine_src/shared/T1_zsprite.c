@@ -451,11 +451,11 @@ void T1_zsprite_construct_quad(
 }
 
 void T1_zsprite_construct_quad_around(
-    const f32 mid_x,
-    const f32 mid_y,
-    const f32 z,
-    const f32 width,
-    const f32 height,
+    f32 mid_x,
+    f32 mid_y,
+    f32 z,
+    f32 width,
+    f32 height,
     T1zSpriteRequest * stack_recipient)
 {
     // T1_log_assert(z > 0.0f);
