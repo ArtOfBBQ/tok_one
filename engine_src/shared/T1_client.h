@@ -10,12 +10,10 @@ application.
 extern "C" {
 #endif
 
-#include "T1_stdint.h"
-
 #include <string.h>
 #include <stdint.h>
 
-extern u8 T1_log_app_running;
+extern uint8_t T1_log_app_running;
 
 
 void T1_client_init(void);
@@ -32,7 +30,7 @@ will be called once at startup, before rendering frame 1
 If you draw objects here they will be deleted by an automatic screen resize
 */
 void T1_client_early_startup(
-    u8 * success,
+    uint8_t * success,
     char * error_message);
 
 /*
@@ -46,13 +44,13 @@ void T1_client_late_startup(void);
 will be called by the platform layer when you start a thread
 (see platform_layer.h -> start_thread(s32 threadmain_id);
 */
-void T1_client_threadmain(s32 threadmain_id);
+void T1_client_threadmain(int32_t threadmain_id);
 
 /*
 will be called once per frame, before rendering that frame
 */
 void T1_client_update(
-    u64 elapsed_us);
+    uint64_t elapsed_us);
 
 /*
 will be called once per frame, after rendering that frame
@@ -69,7 +67,7 @@ exceed the character limit ('response_cap')
 void T1_client_evaluate_terminal_command(
     char * command,
     char * response,
-    u32 response_cap);
+    uint32_t response_cap);
 
 /*
 this will be called whenever your app's window resizes - you can react by

@@ -16,34 +16,6 @@ void T1_anim_init(
 
 void T1_anim_resolve(void);
 
-typedef struct {
-    T1GPUzSpritef32 * zs_gpu_f32s;
-    T1CPUzSpritef32 * zs_cpu_f32s;
-    T1GPUzSpriteu32 * zs_gpu_u32s;
-    T1GPUTexQuadf32 * tq_gpu_f32s;
-    T1GPUTexQuadu32 * tq_gpu_u32s;
-    T1zLightf32     * zl_gpu_f32s;
-    
-    void (* run_func_on_finish)(void);
-    u64 duration_us;
-    u64 pause_us;
-    
-    u32 runs;
-    u32 target_T1_id;
-    u32 target_touch_id;
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    char original_func_name[128];
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1EasingType easing_type; // u8
-    b8 del_obj_on_finish;
-    b8 del_conflict_anims;
-} T1Anim;
-
 T1Anim * T1_anim_request_next(
     b8 endpoints_not_deltas,
     b8 zs_gpu_f32s,
@@ -112,7 +84,6 @@ void T1_anim_delete_all_anims_targeting(u32 T1_id);
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     u32 T1_id,
     f32 new_ignore_camera);
-
 #elif T1_ANIM_ACTIVE == T1_INACTIVE
 #else
 #error

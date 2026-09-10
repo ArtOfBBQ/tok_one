@@ -972,8 +972,8 @@ void T1_zsprite_handle_timed_occlusion(void)
 }
 
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
-    const u32 T1_id,
-    const f32 new_ignore_camera)
+    u32 T1_id,
+    f32 new_ignore_camera)
 {
     T1GPUzSprite * zs = NULL;
     T1CPUzSprite * zs_cpu = NULL;

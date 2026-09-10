@@ -87,9 +87,9 @@ void     T1_std_strsub(char * in, const char * to_match, const char * repl);
 void     T1_std_s32_to_string(int32_t input, char * recip);
 void     T1_std_u32_to_string(uint32_t input, char * recipient);
 uint32_t T1_std_string_to_u32_validate(const char * input, uint8_t * good);
+int32_t  T1_std_string_to_s32(const char * input);
 int32_t  T1_std_string_to_s32_validate(const char * input, uint8_t * good);
 float    T1_std_string_to_f32_validate(const char * input, uint8_t * good);
-
 
 
 /*
@@ -354,6 +354,64 @@ void T1_zlight_delete(uint32_t T1_id);
 void T1_zlight_delete_all(void);
 
 /*
+T1Anim (animations affecting various T1 objects)
+*/
+T1Anim * T1_anim_request_next(
+    uint8_t endpoints_not_deltas,
+    uint8_t zs_gpu_f32s,
+    uint8_t zs_cpu_f32s,
+    uint8_t zs_gpu_u32s,
+    uint8_t tq_gpu_f32s,
+    uint8_t tq_gpu_u32s,
+    uint8_t zl_gpu_f32s);
+void T1_anim_commit(
+    T1Anim * c
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    );
+void T1_anim_commit_and_instarun(
+    T1Anim * to_commit
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    ,const char * original_func_name
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    );
+void T1_anim_fade_destroy_all(
+    uint64_t pause_first,
+    uint64_t duration_us);
+void T1_anim_bump(
+    uint32_t T1_id,
+    uint32_t wait);
+void T1_anim_dud_dance(
+    uint32_t T1_id,
+    float magnitude);
+void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
+    uint32_t T1_id,
+    float new_ignore_camera);
+void T1_anim_shatter_and_destroy(
+    uint32_t T1_id,
+    uint64_t duration_us);
+void T1_anim_evaporate_and_destroy(
+    uint32_t T1_id,
+    uint64_t duration_us);
+void T1_anim_fade_and_destroy(
+    uint32_t T1_id,
+    uint64_t pause_first,
+    uint64_t duration_us);
+void T1_anim_fade_to(
+    uint32_t T1_id,
+    uint64_t duration_us,
+    float target_alpha);
+void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
+void T1_anim_delete_all(void);
+
+/*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
 
 Short taps and long taps will disappear when you "consume"
@@ -364,18 +422,18 @@ Short taps and long taps get cleared every frame, but a key
 being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
-int32_t  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(int32_t T1_scene_id);
-void T1_io_scene_stack_pop(void);
-int32_t  T1_io_scene_stack_get_active_scene_id(void);
+int32_t   T1_io_create_scene_and_return_id(void);
+void      T1_io_scene_stack_push(int32_t T1_scene_id);
+void      T1_io_scene_stack_pop(void);
+int32_t   T1_io_scene_stack_get_active_scene_id(void);
 uint8_t   T1_io_key_is_down(T1IOKey key, int32_t T1_scene_id);
 uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key, int32_t T1_scene_id);
 uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
 uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
 uint32_t  T1_io_get_mouse_touch_id_this_frame(void);
-float  T1_io_get_pos_x_this_frame(T1IOKey key); 
-float  T1_io_get_pos_y_this_frame(T1IOKey key);
-int32_t  T1_io_create_scene_and_return_id(void);
+float     T1_io_get_pos_x_this_frame(T1IOKey key); 
+float     T1_io_get_pos_y_this_frame(T1IOKey key);
+int32_t   T1_io_create_scene_and_return_id(void);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
 
 /*

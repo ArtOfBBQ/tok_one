@@ -264,4 +264,47 @@ typedef struct {
     float music_volume;
 } T1AudioSettingsFullyPublic;
 
+typedef enum : uint8_t {
+    T1_EASINGTYPE_NONE = 0,
+    T1_EASINGTYPE_ALWAYS_1,
+    T1_EASINGTYPE_INOUT_SINE,
+    T1_EASINGTYPE_OUT_QUADRATIC,
+    T1_EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
+    T1_EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
+    T1_EASINGTYPE_OUTOFBOUNDS
+} T1EasingType;
+
+typedef struct {
+    T1GPUzSpritef32 * zs_gpu_f32s;
+    T1CPUzSpritef32 * zs_cpu_f32s;
+    T1GPUzSpriteu32 * zs_gpu_u32s;
+    T1GPUTexQuadf32 * tq_gpu_f32s;
+    T1GPUTexQuadu32 * tq_gpu_u32s;
+    T1zLightf32     * zl_gpu_f32s;
+    
+    void (* run_func_on_finish)(void);
+    uint64_t duration_us;
+    uint64_t pause_us;
+    
+    uint32_t runs;
+    uint32_t target_T1_id;
+    uint32_t target_touch_id;
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    char original_func_name[128];
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1EasingType easing_type; // u8
+    uint8_t del_obj_on_finish;
+    uint8_t del_conflict_anims;
+} T1Anim;
+
 #endif // T1_PUBLIC_TYPES_H
