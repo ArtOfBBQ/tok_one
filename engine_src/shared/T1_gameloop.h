@@ -12,8 +12,11 @@ extern "C" {
 extern u8 T1_gameloop_active;
 extern u8 T1_gameloop_loading_texs;
 
-void
-T1_gameloop_init(void);
+void T1_gameloop_init(
+    void *(* arg_malloc_fptr)(size_t),
+    void (* client_update_fptr)(u64),
+    void (* client_callback_after_render_fptr)(void),
+    void (* client_callback_update_window_resize)(void));
 
 void
 T1_gameloop_update_before_render_pass(

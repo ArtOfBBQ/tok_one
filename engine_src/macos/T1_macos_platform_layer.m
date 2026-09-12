@@ -1,8 +1,95 @@
 #import "Appkit/Appkit.h"
 
+#import <GameController/GameController.h>
+
 #include "T1_std.h"
 #include "T1_log.h"
+#include "T1_io.h"
+#include "T1_global.h"
+#include "T1_ui_widget.h"
+#include "T1_zsprite.h"
+#include "T1_client.h"
 #include "T1_platform_layer.h"
+#include "T1_gpu.h"
+#include "T1_gameloop.h"
+
+void T1_os_request_messagebox(const char * message) {
+    NSAlert * alert = [[NSAlert alloc] init];
+    NSString * NSmsg = [NSString
+        stringWithCString:message
+        encoding:NSASCIIStringEncoding];
+    [alert setMessageText: NSmsg];
+    [[alert window] setLevel:NSModalPanelWindowLevel];
+    [[alert window] makeKeyAndOrderFront:nil];
+    
+    [alert runModal];
+}
+
+#if T1_GAMEPAD_ACTIVE == T1_ACTIVE
+static void update_simple_key(
+    u8 ispressed,
+    T1IOKey T1_io_key)
+{
+    if (ispressed) {
+        T1_io_register_keydown(
+            T1_io_key,
+            /* debounces: */ 1);
+    } else {
+        T1_io_register_keyup(
+            T1_io_key,
+            /* debounces: */ 1);
+    }
+}
+
+void T1_os_poll_gamepad_events(void) {
+    //    NSArray *controllers = [GCController controllers];
+    //    
+    //    if (controllers.count == 0) {
+    //        return; // No gamepads connected
+    //    }
+    //    
+    //    if (controllers.count != 1) {
+    //        T1_log_warn(1); // potentially dangerous
+    //    }
+    
+    // Grab the primary controller (like your EasySMX X05PRO)
+    GCController * c = [GCController current];
+    GCExtendedGamepad * g = c.extendedGamepad;
+    
+    if (g) {
+        update_simple_key(g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
+        update_simple_key(g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
+        update_simple_key(g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
+        update_simple_key(g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
+        update_simple_key(g.leftShoulder.isPressed, T1_IO_GAMEPAD_LSHOULDER);
+        update_simple_key(g.rightShoulder.isPressed, T1_IO_GAMEPAD_RSHOULDER);
+        update_simple_key(g.leftTrigger.isPressed, T1_IO_GAMEPAD_LTRIGGER);
+        update_simple_key(g.rightTrigger.isPressed, T1_IO_GAMEPAD_RTRIGGER);
+        update_simple_key(g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
+        update_simple_key(g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
+        update_simple_key(g.buttonA.isPressed, T1_IO_GAMEPAD_A);
+        update_simple_key(g.buttonB.isPressed, T1_IO_GAMEPAD_B);
+        update_simple_key(g.buttonX.isPressed, T1_IO_GAMEPAD_X);
+        update_simple_key(g.buttonY.isPressed, T1_IO_GAMEPAD_Y);
+        update_simple_key(g.buttonHome.isPressed, T1_IO_GAMEPAD_HOME);
+        update_simple_key(g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
+        update_simple_key(g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
+        
+        T1_io_register_key_move_to_pos(
+            T1_IO_GAMEPAD_LTHUMBSTICK,
+                g.leftThumbstick.xAxis.value,
+                g.leftThumbstick.yAxis.value); 
+        T1_io_register_key_move_to_pos(
+            T1_IO_GAMEPAD_RTHUMBSTICK,
+                g.rightThumbstick.xAxis.value,
+                g.rightThumbstick.yAxis.value);
+    }
+}
+#elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 
 void T1_os_get_writables_dir(
     char * recipient,
@@ -99,4 +186,519 @@ void T1_os_open_dir_in_file_explorer_window_if_possible(
     NSString * folderpath_ns = [NSString stringWithUTF8String:folderpath];
     NSURL * folderURL = [NSURL fileURLWithPath: folderpath_ns];
     [[NSWorkspace sharedWorkspace] openURL: folderURL];
+}
+
+static u32 T1_apple_keycode_to_tokone_keycode(
+    u32 apple_key)
+{
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    char err_msg[128];
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    switch (apple_key) {
+        case   0: return T1_IO_KEYBOARD_A;
+        case   1: return T1_IO_KEYBOARD_S;
+        case   2: return T1_IO_KEYBOARD_D;
+        case   3: return T1_IO_KEYBOARD_F;
+        case   4: return T1_IO_KEYBOARD_H;
+        case   5: return T1_IO_KEYBOARD_G;
+        case   6: return T1_IO_KEYBOARD_Z;
+        case   7: return T1_IO_KEYBOARD_X;
+        case   8: return T1_IO_KEYBOARD_C;
+        case   9: return T1_IO_KEYBOARD_V;
+        case  10: return T1_IO_KEYBOARD_UNKNOWNBTN;
+        case  11: return T1_IO_KEYBOARD_B;
+        case  12: return T1_IO_KEYBOARD_Q;
+        case  13: return T1_IO_KEYBOARD_W;
+        case  14: return T1_IO_KEYBOARD_E;
+        case  15: return T1_IO_KEYBOARD_R;
+        case  16: return T1_IO_KEYBOARD_Y;
+        case  17: return T1_IO_KEYBOARD_T;
+        case  18: return T1_IO_KEYBOARD_1;
+        case  19: return T1_IO_KEYBOARD_2;
+        case  20: return T1_IO_KEYBOARD_3;
+        case  21: return T1_IO_KEYBOARD_4;
+        case  22: return T1_IO_KEYBOARD_6;
+        case  23: return T1_IO_KEYBOARD_5;
+        case  24: return T1_IO_KEYBOARD_HAT;
+        case  25: return T1_IO_KEYBOARD_9;
+        case  26: return T1_IO_KEYBOARD_7;
+        case  27: return T1_IO_KEYBOARD_MINUS;
+        case  28: return T1_IO_KEYBOARD_8;
+        case  29: return T1_IO_KEYBOARD_0;
+        case  30: return T1_IO_KEYBOARD_OPENSQUARE;
+        case  31: return T1_IO_KEYBOARD_O;
+        case  32: return T1_IO_KEYBOARD_U;
+        case  33: return T1_IO_KEYBOARD_AT;
+        case  34: return T1_IO_KEYBOARD_I;
+        case  35: return T1_IO_KEYBOARD_P;
+        case  36: return T1_IO_KEYBOARD_ENTER;
+        case  37: return T1_IO_KEYBOARD_L;
+        case  38: return T1_IO_KEYBOARD_J;
+        case  39: return T1_IO_KEYBOARD_COLON;
+        case  40: return T1_IO_KEYBOARD_K;
+        case  41: return T1_IO_KEYBOARD_SEMICOLON;
+        case  42: return T1_IO_KEYBOARD_CLOSESQUARE;
+        case  45: return T1_IO_KEYBOARD_N;
+        case  46: return T1_IO_KEYBOARD_M;
+        case  43: return T1_IO_KEYBOARD_COMMA;
+        case  47: return T1_IO_KEYBOARD_FULLSTOP;
+        case  48: return T1_IO_KEYBOARD_TAB;
+        case  44: return T1_IO_KEYBOARD_BACKSLASH;
+        case  49: return T1_IO_KEYBOARD_SPACEBAR;
+        case  50: return T1_IO_KEYBOARD_TILDE;
+        case  51: return T1_IO_KEYBOARD_BACKSPACE;
+        case  53: return T1_IO_KEYBOARD_ESCAPE;
+        // NUMPAD
+        case  65: return T1_IO_KEYBOARD_FULLSTOP;
+        case  67: return T1_IO_KEYBOARD_ASTERISK;
+        case  69: return T1_IO_KEYBOARD_PLUS;	
+        case  71: return T1_IO_KEYBOARD_NUMPADCLEAR;
+        case  75: return T1_IO_KEYBOARD_YENSIGN;
+        case  76: return T1_IO_KEYBOARD_ENTER;
+        case  78: return T1_IO_KEYBOARD_MINUS;
+        // NUMPAD NUMBERS
+        case  82: return T1_IO_KEYBOARD_0;
+        case  83: return T1_IO_KEYBOARD_1;
+        case  84: return T1_IO_KEYBOARD_2;
+        case  85: return T1_IO_KEYBOARD_3;
+        case  86: return T1_IO_KEYBOARD_4;
+        case  87: return T1_IO_KEYBOARD_5;
+        case  88: return T1_IO_KEYBOARD_6;
+        case  89: return T1_IO_KEYBOARD_7;
+        case  91: return T1_IO_KEYBOARD_8;
+        case  92: return T1_IO_KEYBOARD_9;
+        case  93: return T1_IO_KEYBOARD_YENSIGN;
+        case  94: return T1_IO_KEYBOARD_UNDERSCORE;
+        case  99: return T1_IO_KEYBOARD_F3;
+        case  96: return T1_IO_KEYBOARD_F5;
+        case  97: return T1_IO_KEYBOARD_F6;
+        case  98: return T1_IO_KEYBOARD_F7;
+        case 100: return T1_IO_KEYBOARD_F8;
+        case 101: return T1_IO_KEYBOARD_F9;
+        case 103: return T1_IO_KEYBOARD_F11;
+        case 102: return T1_IO_KEYBOARD_ROMAJI;
+        case 104: return T1_IO_KEYBOARD_KANA;
+        case 109: return T1_IO_KEYBOARD_F10;
+        case 111: return T1_IO_KEYBOARD_F12;
+        case 114: return T1_IO_KEYBOARD_INSERT;
+        case 115: return T1_IO_KEYBOARD_HOME;
+        case 116: return T1_IO_KEYBOARD_PAGEUP;
+        case 118: return T1_IO_KEYBOARD_F4;
+        case 119: return T1_IO_KEYBOARD_END;
+        case 120: return T1_IO_KEYBOARD_F2;
+        case 121: return T1_IO_KEYBOARD_PAGEDOWN;
+        case 122: return T1_IO_KEYBOARD_F1;
+        case 123: return T1_IO_KEYBOARD_LEFTARROW;
+        case 124: return T1_IO_KEYBOARD_RIGHTARROW;
+        case 125: return T1_IO_KEYBOARD_DOWNARROW;
+        case 126: return T1_IO_KEYBOARD_UPARROW;
+        default:
+            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+            T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
+            T1_std_strcat_u32_cap(err_msg, 128, apple_key);
+            T1_std_strcat_cap(err_msg, 128, "\n");
+            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
+            break;
+    }
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_log_dump_and_crash(err_msg);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    return T1_IO_KEYBOARD_ESCAPE;
+}
+
+@interface NSWindowWithCustomResponder: NSWindow
+// @property (nonatomic, readwrite, retain) NSWindow * baseclass_window;
+@end
+
+@implementation NSWindowWithCustomResponder
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+- (BOOL)canBecomeMainWindow {
+    return YES;
+}
+- (BOOL)acceptsFirstResponder
+{
+    return YES;
+}
+- (void)mouseMoved:(NSEvent *)event
+{
+    if (T1_global->block_mouse) {
+        return;
+    }
+    
+    NSPoint window_location = [event locationInWindow];
+    
+    T1_io_register_key_move_to_pos(
+        T1_IO_MOUSE,
+        (f32)window_location.x,
+        (f32)window_location.y);
+}
+- (void)mouseDragged:(NSEvent *)event
+{
+    if (T1_global->block_mouse) {
+        return;
+    }
+    
+    NSPoint window_location = [event locationInWindow];
+    
+    T1_io_register_key_move_to_pos(
+        T1_IO_MOUSE,
+        (f32)window_location.x,
+        (f32)window_location.y);
+}
+- (void)mouseDown:(NSEvent *)event
+{
+    T1_io_register_keydown(T1_IO_MOUSE_LCLICK, 0);
+}
+- (void)mouseUp:(NSEvent *)event
+{
+    T1_io_register_keyup(
+        T1_IO_MOUSE_LCLICK,
+        /* debounces: */ 0);
+}
+- (void)rightMouseDown:(NSEvent *)event
+{
+    T1_io_register_keydown(T1_IO_MOUSE_RCLICK, 0);
+}
+- (void)rightMouseUp:(NSEvent *)event
+{
+    T1_io_register_keyup(
+        T1_IO_MOUSE_RCLICK,
+        /* debounces: */ 0);
+}
+- (void)otherMouseDown:(NSEvent *)event
+{
+    s64 button_num = [event buttonNumber];
+    
+    T1_log_assert(button_num >= 2);
+    
+    if (button_num < 2) { return; }
+    button_num -= 2;
+    
+    if (button_num >= 4) { return; }
+    
+    T1_io_register_keydown(
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num, 0);
+}
+- (void)otherMouseUp:(NSEvent *)event
+{
+    s64 button_num = [event buttonNumber];
+    
+    T1_log_assert(button_num >= 2);
+    
+    if (button_num < 2) { return; }
+    button_num -= 2;
+    
+    if (button_num >= 4) { return; }
+    
+    T1_io_register_keyup(
+        T1_IO_MOUSE_OTHERCLICK1 + (u32)button_num,
+        /* debounces: */ 0);
+}
+- (void)keyDown:(NSEvent *)event {
+    T1_io_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode), 0);
+}
+- (void)flagsChanged:(NSEvent *)event {
+    NSEventModifierFlags modifiers = [event modifierFlags];
+    
+    if (modifiers & NSEventModifierFlagShift) {
+        T1_io_register_keydown(T1_IO_KEYBOARD_SHIFT, 0);
+    } else if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, -1)) {
+        T1_io_register_keyup(
+            T1_IO_KEYBOARD_SHIFT,
+            /* debounces: */ 0);
+    }
+}
+- (void)keyUp:(NSEvent *)event {
+    T1_io_register_keyup(
+        T1_apple_keycode_to_tokone_keycode(event.keyCode),
+        /* debounces: */ 0);
+}
+- (void)scrollWheel:(NSEvent *)event {
+    f32 delta = (float)[event deltaY];
+    f32 step = 0.1f;
+    
+    if (delta > 0.0f) {
+        while (delta > step) {
+            T1_io_register_keyup_force_up_short(
+                T1_IO_MOUSE_WHEEL_UP);
+            delta -= step;
+        }
+    } else {
+        while (delta < -step) {
+            T1_io_register_keyup_force_up_short(
+                T1_IO_MOUSE_WHEEL_DOWN);
+            delta += step;
+        }
+    }
+}
+- (float)getWidth {
+    return (float)[[self contentView] frame].size.width;
+}
+- (float)getHeight {
+    return (float)[[self contentView] frame].size.height;
+}
+@end
+
+NSWindowWithCustomResponder * window = NULL;
+
+@interface
+GameWindowDelegate: NSObject<NSWindowDelegate>
+@end
+
+@implementation GameWindowDelegate
+- (void)windowWillClose:(NSNotification *)notification {
+    T1_log_append("window will close, terminating app..\n");
+    
+    T1_os_shutdown();
+    
+    if (T1_os_s->appwillclose_fptr) {
+        T1_os_s->appwillclose_fptr();
+    }
+    
+    uint8_t write_succesful = false;
+    T1_log_dump(&write_succesful);
+    
+    if (!write_succesful) {
+        T1_log_append(
+            "ERROR - failed to store "
+            " the log file on app "
+            " close..\n");
+    }
+    
+    T1_os_close_app();
+}
+
+- (void)
+    windowWillEnterFullScreen:(NSNotification *)notification
+{
+    T1_ui_widget_delete_all();
+    T1_zsprite_delete_all();
+    T1_global->fullscreen = true;
+}
+
+- (void)
+    windowWillExitFullScreen:(NSNotification *)notification
+{
+    T1_ui_widget_delete_all();
+    T1_zsprite_delete_all();
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
+    T1_particle_effects_delete_all();
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    T1_global->fullscreen = false;
+}
+
+- (void)windowDidMove:(NSNotification *)notification
+{
+    T1_global_update_window_pos(
+        (float)(((NSWindow *)[notification object]).frame.origin.x),
+        (float)(((NSWindow *)[notification object]).frame.origin.y));
+}
+
+- (NSSize)
+    windowWillResize:(NSWindow *)sender
+    toSize:(NSSize)frameSize
+{
+    T1_os_layer_start_window_resize(
+        T1_os_get_current_time_us());
+    
+    return frameSize;
+}
+
+- (void)windowDidResize:
+    (NSNotification *)notification
+{
+    T1_global_update_window_size(
+        /* float width: */
+            [window getWidth],
+        /* float height */
+            [window getHeight],
+        /* u64 at_timestamp_us: */
+            T1_os_get_current_time_us());
+    
+    [apple_gpu_delegate updateFinalWindowSize];
+}
+@end
+
+void T1_os_enter_fullscreen(void) {
+    if ((window.styleMask & NSWindowStyleMaskFullScreen) == 0) {
+        [window toggleFullScreen: window];
+    }
+}
+
+void T1_os_toggle_fullscreen(void) {
+    [window toggleFullScreen: window];
+}
+
+void T1_os_create_main_window(
+    b8 * good)
+{
+    *good = 0;
+    
+    if (!T1_global) { return; }
+    
+    @try {
+    // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+    NSRect window_rect = NSMakeRect(
+        /* x: */ T1_global->window_left,
+        /* y: */ T1_global->window_bottom,
+        /* width: */ T1_global->window_wh[0],
+        /* height: */ T1_global->window_wh[1]);
+    
+    window = [
+        [NSWindowWithCustomResponder alloc]
+            initWithContentRect: window_rect
+            styleMask:
+                NSWindowStyleMaskTitled    |
+                NSWindowStyleMaskClosable  |
+                NSWindowStyleMaskResizable
+            backing: NSBackingStoreBuffered 
+            defer: NO];
+    
+    window.animationBehavior =
+        NSWindowAnimationBehaviorNone;
+    
+    GameWindowDelegate * window_delegate = [
+        [GameWindowDelegate alloc] init];
+    
+    NSString * nsstring_app_name =
+        [NSString stringWithUTF8String:
+            T1_APP_NAME];
+    [window setDelegate: window_delegate];
+    [window setTitle: nsstring_app_name];
+    [window makeMainWindow];
+    [window setAcceptsMouseMovedEvents:YES];
+    [window setOrderedIndex:0];
+    [window makeKeyAndOrderFront: nil];
+    } @catch (NSException * exception) {
+        return;
+    }
+    
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    
+    *good = 1;
+}
+
+void T1_os_destroy_main_window_if_possible(void) {
+    if (window) {
+        [window close];
+    }
+}
+
+static MTKView * mtk_view = NULL;
+
+void T1_os_link_gpu_to_main_window(
+    c8 * errmsg,
+    u32 errmsg_cap,
+    b8 * good)
+{
+    *good = 0;
+    
+    id<MTLDevice> metal_device_for_window = MTLCreateSystemDefaultDevice();
+    
+    NSRect window_rect = NSMakeRect(
+        /* x: */ T1_global->window_left,
+        /* y: */ T1_global->window_bottom,
+        /* width: */ T1_global->window_wh[0],
+        /* height: */ T1_global->window_wh[1]);
+    
+    mtk_view = [[MTKView alloc]
+        initWithFrame: window_rect
+        device: metal_device_for_window];
+    
+    mtk_view.autoResizeDrawable = true;
+    
+    mtk_view.preferredFramesPerSecond = 120;
+    mtk_view.enableSetNeedsDisplay = false;
+    
+    // Indicate that each pixel in the depth buffer is a 32-bit floating point
+    // value.
+    mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
+    
+    // Indicate that Metal should clear all values in the depth buffer to x
+    // when you create a render command encoder with the MetalKit view's
+    // `currentRenderPassDescriptor` property.
+    mtk_view.clearDepth = T1_GLOBAL_CLEARDEPTH;
+    [mtk_view setPaused: false];
+    [mtk_view setNeedsDisplay: false];
+    
+    window.contentView = mtk_view;
+    
+    apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
+    [mtk_view setDelegate: apple_gpu_delegate];
+    
+    char shader_lib_path_cstr[2000];
+    T1_os_get_res_dir(
+        shader_lib_path_cstr,
+        2000);
+    
+    T1_std_strcat_cap(
+        shader_lib_path_cstr,
+        1000,
+        "/Shaders.metallib");
+    
+    NSString * shader_lib_path =
+        [NSString
+            stringWithCString:shader_lib_path_cstr
+            encoding:NSASCIIStringEncoding];
+    
+    b8 result = T1_apple_gpu_init(
+        /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
+            T1_gameloop_update_before_render_pass,
+            T1_gameloop_update_after_render_pass,
+        /* id<MTLDevice> with_metal_device: */
+            metal_device_for_window,
+        /* NSString *shader_lib_filepath: */
+            shader_lib_path,
+        /* bool32_t has_retina_screen: */
+            T1_os_get_screen_backing_scale_factor(),
+            // (float)[[window screen] backingScaleFactor],
+        /* char * error_msg_string: */
+            errmsg);
+    
+    if (!result || !T1_log_app_running) {
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_log_dump_and_crash("Can't draw anything to the screen...\n");
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
+        char errmsg2[512];
+        T1_std_strcpy_cap(
+            errmsg2,
+            512,
+            "Critical fail: couldn't configure Metal graphics."
+            " Looked for shader in: ");
+        T1_std_strcat_cap(
+            errmsg2,
+            512,
+            shader_lib_path_cstr);
+        T1_std_strcat_cap(
+            errmsg2,
+            512,
+            " Metal error description: ");
+        T1_std_strcat_cap(
+            errmsg,
+            512,
+            errmsg2);
+    }
+    
+    *good = 1;
 }

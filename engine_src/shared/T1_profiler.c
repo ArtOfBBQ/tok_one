@@ -81,7 +81,7 @@ static u16 frame_i = 0;
 
 void T1_profiler_init(
     const u64 clock_frequency,
-    void * (* profiler_malloc_function)(u64))
+    void * (* profiler_malloc_function)(size_t))
 {
     acceptable_frame_clock_cycles = clock_frequency / 60;
     

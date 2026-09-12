@@ -1,4 +1,4 @@
-APP_NAME="ParticlEd"
+APP_NAME="Example"
 
 COMPILER_PATHS="
 -I engine_src/macos/
@@ -8,10 +8,9 @@ COMPILER_PATHS="
 -I engine_src/shared_linux_apple/
 -I engine_src/shared_windows_macos/
 -I sampleproject_src/
--include clientlogic_macro_settings.h
 "
 
-COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -g -O2 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -g -O2 -objC -include sampleproject_src/client_macro_settings.h"
 # COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -O0 -objC"
 
 if [[ $1 = "DEBUG" ]]; then
@@ -26,7 +25,8 @@ MAC_FRAMEWORKS="
     -framework AppKit 
     -framework MetalKit 
     -framework Metal
-    -framework AudioToolbox"
+    -framework AudioToolbox
+    -framework GameController"
 
 echo "create build folder..>"
 sudo mkdir -p build/macos/$APP_NAME.app

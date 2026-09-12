@@ -10,6 +10,10 @@
 #include "T1_log.h"
 #include "T1_apple_audio.h"
 
+f32 T1_os_get_screen_backing_scale_factor(void) {
+    return 1.0f;
+}
+
 u32 T1_os_get_dir_separator_size(void) {
     return 1;
 }
@@ -62,8 +66,7 @@ T1_platform_audio_start_loop(void)
 /*
 Get a file's size. Returns 0 if no such file
 */
-u64
-T1_os_get_filesize(
+u64 T1_os_get_filesize(
     const char * filepath)
 {
     u64 return_value;
@@ -273,11 +276,10 @@ void T1_os_copy_file(
     }
 }
 
-void
-T1_os_write_file(
+void T1_os_write_file(
     const char * filepath,
     const char * output,
-    const u32 output_size,
+    u32 output_size,
     u8 * good)
 {
     T1_log_append("write file data to: ");
@@ -348,8 +350,7 @@ void T1_os_get_filenames_in(
     }
 }
 
-void
-T1_os_get_app_dir(
+void T1_os_get_app_dir(
     char * recipient,
     const u32 recipient_size)
 {

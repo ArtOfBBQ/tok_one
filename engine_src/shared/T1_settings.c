@@ -3,10 +3,14 @@
 
 T1PerfSettings * T1_perf_settings = NULL;
 
-void T1_settings_init(void * arg_malloc_func(size_t))
+void T1_settings_init(
+    void * arg_malloc_func(size_t),
+    b8 * good)
 {
+    *good = false;
+    
     T1_perf_settings = (T1PerfSettings *)
-    arg_malloc_func(sizeof(T1PerfSettings));
+        arg_malloc_func(sizeof(T1PerfSettings));
     
     T1_std_memset(
         T1_perf_settings,
@@ -15,6 +19,8 @@ void T1_settings_init(void * arg_malloc_func(size_t))
     
     T1_perf_settings->render_width_max  = 2160;
     T1_perf_settings->skip_background_shading = false;
+    
+    *good = true;
 }
 
 static f32 T1_settings_get_render_mult(void) {

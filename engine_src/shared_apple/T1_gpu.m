@@ -1,4 +1,4 @@
-#import "T1_gpu.h"
+#include "T1_gpu.h"
 
 #include "T1_global.h"
 #include "T1_mem.h"
@@ -1105,6 +1105,8 @@ void T1_os_gpu_get_device_name(
 void T1_os_gpu_update_capacity_if_needed(
     const s32 tex_array_i)
 {
+    if (!ags || !ags->metal_active) { return; }
+    
     T1_log_assert(tex_array_i >=  0);
     T1_log_assert(tex_array_i <  31);
     u8 copy_prev = false;
@@ -1477,6 +1479,8 @@ void T1_os_gpu_push_tex_slice(
     s32 tex_slice_i,
     b8 free_rgba)
 {
+    if (!ags || !ags->metal_active) { return; }
+    
     u8 * rgba_freeable =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_freeable;
     u8 * rgba_page_aligned =
@@ -1598,6 +1602,8 @@ void T1_os_gpu_push_tex_slice(
 
 void T1_os_gpu_copy_locked_vertices(void)
 {
+    if (!ags || !ags->metal_active) { return; }
+    
     T1_cpu_to_gpu_data->locked_vertices_size = T1_mesh_summary_all_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
@@ -2877,6 +2883,8 @@ static void set_defaults_for_encoder(
 void T1_os_gpu_update_internal_render_viewport(
     const s32 at_i)
 {
+    if (!ags || !ags->metal_active) { return; }
+    
     T1_log_assert(at_i >= 0);
     T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
     

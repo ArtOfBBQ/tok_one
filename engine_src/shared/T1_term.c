@@ -23,6 +23,8 @@
 #define T1_TERM_HIST_CAP 500000
 #define T1_TERM_SINGLE_LINE_MAX 1024
 typedef struct {
+    void (* callback_evaluate_terminal_command)(
+        char *, char *, u32);
     void (* to_fullscreen_fncptr)(void);
     u32 history_size;
     f32 font_color[4];
@@ -1044,7 +1046,7 @@ static void T1_term_commit_or_activate(void) {
                 T1_TERM_HIST_CAP,
                 "\n");
         } else {
-            T1_client_evaluate_terminal_command(
+            T1_trms->callback_evaluate_terminal_command(
                 T1_trms->cur_command,
                 client_response,
                 T1_TERM_SINGLE_LINE_MAX);

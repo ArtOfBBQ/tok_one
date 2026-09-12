@@ -10,7 +10,9 @@ typedef struct {
 
 extern T1PerfSettings * T1_perf_settings;
 
-void T1_settings_init(void * arg_malloc_func(size_t));
+void T1_settings_init(
+    void * arg_malloc_func(size_t),
+    b8 * good);
 
 u32 T1_settings_get_render_width(void);
 u32 T1_settings_get_render_height(void);

@@ -11,7 +11,6 @@ COMPILER_PATHS="
 "
 
 COMPILER_ARGS="
--include clientlogic_macro_settings.h
 -ferror-limit=2 
 -march=native 
 -Wall 
@@ -124,7 +123,6 @@ engine_src/shared/T1_particle.c
 engine_src/shared/T1_scheduled_animations.c
 engine_src/shared/T1_text.c
 engine_src/shared/T1_uielement.c
-sampleproject_src/clientlogic.c
 engine_src/shared/T1_terminal.c
 engine_src/shared/T1_renderer.c
 engine_src/shared/T1_gameloop.c

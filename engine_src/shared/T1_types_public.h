@@ -184,7 +184,6 @@ typedef struct {
     uint8_t block_mouse;
     uint8_t block_render_view_pos_updates;
     uint8_t fullscreen;
-    uint8_t clientlogic_early_startup_finished;
     uint8_t upcoming_fullscreen_request;
 } T1Globals;
 

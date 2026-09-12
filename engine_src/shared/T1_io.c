@@ -360,8 +360,9 @@ s32 T1_io_create_scene_and_return_id(void) {
 void T1_io_scene_stack_push(s32 scene_id) {
     T1_log_assert(T1_io->scene_ids_stack[
         T1_io->scene_ids_stack_i] != scene_id);
-    T1_log_assert((T1_io->scene_ids_stack_i + 1) <
-        SCENE_IDS_STACK_CAP);
+    T1_log_assert(
+        (T1_io->scene_ids_stack_i + 1) <
+            SCENE_IDS_STACK_CAP);
     T1_io->scene_ids_stack_i++;
     T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] = scene_id;
     

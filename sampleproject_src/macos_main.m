@@ -1,8 +1,17 @@
-#include "T1_client.h"
-
 #include "T1.h"
-#include "T1_settings.h"
-#include "T1_anim.h"
+
+static int main_errorbox_then_exit(
+    const char * error_message,
+    int argc,
+    const char * argv[])
+{
+    // T1_os_destroy_main_window_if_possible();
+    T1_os_request_messagebox(error_message);
+    
+    @autoreleasepool {
+        return NSApplicationMain(argc, argv);
+    }
+}
 
 static u32 img_T1_ids[2];
 static  b8 img_T1_ids_set = 0;
@@ -51,40 +60,21 @@ static void redraw_test_quads(f32 x, f32 y) {
     T1_texquad_commit(&tq_req);
 }
 
-void T1_client_init(void) {
-    return;
+
+static void example_callback_windowwillresize(void)
+{    
+    T1_texquad_delete_all();
+    T1_anim_delete_all();
+    
+    T1_cam_delete_all();
+    T1_cam_create_main_view(
+        T1_settings_get_render_width(),
+        T1_settings_get_render_height());
+    
+    redraw_test_quads(img_x, img_y);
 }
 
-static s32 mainwindow_scene_id = -1;
-void T1_client_early_startup(
-    b8 * success,
-    char * error_message)
-{
-    b8 good;
-    T1_tex_files_prereg_png_res(
-        "structuredart1.png", &good);
-    assert(good);
-    T1_tex_files_prereg_png_res(
-        "structuredart2.png", &good);
-    assert(good);
-    
-    mainwindow_scene_id = T1_io_create_scene_and_return_id();
-    T1_io_scene_stack_push(mainwindow_scene_id);
-    
-    *success = true;
-}
-
-void T1_client_late_startup(void) {
-    
-    T1_cam->xyz[0] =  0.00f;
-    T1_cam->xyz[1] =  0.00f;
-    T1_cam->xyz[2] = -0.50f;
-    T1_cam->angle_xyz[0] =  0.0f;
-    T1_cam->angle_xyz[1] =  0.0f;
-    T1_cam->angle_xyz[2] =  0.0f;
-}
-
-void T1_client_threadmain(s32 threadmain_id) {
+static void example_callback_threadstart(s32 threadmain_id) {
     switch (threadmain_id) {
         default:
             T1_log_append("unhandled threadmain_id: ");
@@ -93,9 +83,10 @@ void T1_client_threadmain(s32 threadmain_id) {
     }
 }
 
+static s32 mainwindow_scene_id = -1;
 static u32 testswitch = 0;
-static void client_handle_keypresses(
-    u64 microseconds_elapsed)
+
+static void example_callback_update(u64 microseconds_elapsed)
 {
     float elapsed_mod = (float)(
         (double)microseconds_elapsed / (double)16666);
@@ -127,7 +118,8 @@ static void client_handle_keypresses(
             /* b8 zs_cpu_f32s:      */ false,
             /* b8 zs_gpu_s32s:      */ false,
             /* b8 tq_gpu_f32s:      */ true,
-            /* b8 tq_gpu_s32s:      */ false);
+            /* b8 tq_gpu_s32s:      */ false,
+            /* b8 zl_gpu_f32s:      */ false);
         alpha->zs_gpu_f32s->alpha =
             testswitch ? 1.0f : 0.0f;
         alpha->tq_gpu_f32s->rgba[3] =
@@ -151,7 +143,8 @@ static void client_handle_keypresses(
             /* b8 zs_cpu_f32s:        */ true,
             /* b8 zs_gpu_s32s:        */ false,
             /* b8 tq_gpu_f32s:        */ false,
-            /* b8 tq_gpu_s32s:        */ false);
+            /* b8 tq_gpu_s32s:        */ false,
+            /* b8 zl_gpu_f32s:        */ false);
         rot->target_T1_id = img_T1_ids[0];
         rot->easing_type = T1_EASINGTYPE_OUT_QUADRATIC;
         rot->duration_us = 250000;
@@ -165,7 +158,8 @@ static void client_handle_keypresses(
             /* b8 zs_cpu_f32s: */ false,
             /* b8 zs_gpu_s32s: */ false,
             /* b8 tq_gpu_f32s: */ true,
-            /* b8 tq_gpu_s32s: */ false);
+            /* b8 tq_gpu_s32s: */ false,
+            /* b8 zl_gpu_f32s: */ false);
         rot2->tq_gpu_f32s->xyz[0] = -0.2f;
         rot2->tq_gpu_f32s->xyz[1] = -0.1f;
         rot2->tq_gpu_f32s->rgba[3] = -0.5f;
@@ -267,20 +261,10 @@ static void client_handle_keypresses(
     }
 }
 
-void T1_client_update(u64 microseconds_elapsed)
-{
-    client_handle_keypresses(microseconds_elapsed);
-}
-
-void T1_client_update_after_render_pass(void) {
-    // you can make edits after the objects are copied to the framebuffer
-    // and rendered
-}
-
-void T1_client_evaluate_terminal_command(
+static void example_callback_evaluate_terminal_command(
     char * command,
     char * response,
-    const u32 response_cap)
+    u32 response_cap)
 {
     if (T1_std_are_equal_strings(command, "EXAMPLE COMMAND")) {
         T1_std_strcpy_cap(response, response_cap, "Hello from client!");
@@ -308,19 +292,76 @@ void T1_client_evaluate_terminal_command(
         "in client.c");
 }
 
-void T1_client_window_resize(void)
-{    
-    T1_texquad_delete_all();
-    T1_anim_delete_all();
-    
-    T1_cam_delete_all();
-    T1_cam_create_main_view(
-        T1_settings_get_render_width(),
-        T1_settings_get_render_height());
-    
-    redraw_test_quads(img_x, img_y);
+static void example_callback_onappclose(void) {
+    // do stuff!
 }
 
-void T1_client_shutdown(void) {
-    // You're notified that your application is about to shut down
+int main(int argc, const char * argv[]) {
+    
+    {
+    char errmsg[512];
+    uint8_t success = 0;
+    T1_appinit_before_gpu_init(
+        example_callback_threadstart,
+        example_callback_update,
+        example_callback_windowwillresize,
+        example_callback_onappclose,
+        example_callback_evaluate_terminal_command,
+        &success,
+        errmsg,
+        512);
+    
+    if (!success) {
+        return main_errorbox_then_exit(errmsg, argc, argv);
+    }
+    
+    T1_os_create_main_window(&success);
+    if (!success) {
+        return main_errorbox_then_exit(errmsg, argc, argv);
+    }
+    
+    if (!success) {
+        return main_errorbox_then_exit(errmsg, argc, argv);
+    }
+    
+    T1_os_link_gpu_to_main_window(errmsg, 512, &success);
+    if (!success) {
+        return main_errorbox_then_exit(errmsg, argc, argv);
+    }
+    
+    T1_appinit_after_gpu_init_step1(
+        &success,
+        errmsg,
+        512);
+    
+    if (!success) {
+        main_errorbox_then_exit(errmsg, argc, argv);
+    }
+    }
+    
+    T1_cam->xyz[0] =  0.00f;
+    T1_cam->xyz[1] =  0.00f;
+    T1_cam->xyz[2] = -0.50f;
+    T1_cam->angle_xyz[0] =  0.0f;
+    T1_cam->angle_xyz[1] =  0.0f;
+    T1_cam->angle_xyz[2] =  0.0f;
+    
+    b8 good;
+    T1_tex_files_prereg_png_res(
+        "structuredart1.png", &good);
+    assert(good);
+    T1_tex_files_prereg_png_res(
+        "structuredart2.png", &good);
+    assert(good);
+    
+    mainwindow_scene_id = T1_io_create_scene_and_return_id();
+    T1_io_scene_stack_push(mainwindow_scene_id);
+    
+    T1_os_start_thread(
+        T1_appinit_after_gpu_init_step2,
+        0);
+    
+    @autoreleasepool {
+        return NSApplicationMain(argc, argv);
+    }
 }

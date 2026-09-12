@@ -32,9 +32,31 @@ on each platform
 extern "C" {
 #endif
 
+#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
+typedef struct {
+    f32 window_left;
+    f32 window_width;
+    f32 window_bottom;
+    f32 window_height;
+    f32 music_volume;
+    f32 sound_volume;
+    b8 window_fullscreen;
+} EngineSaveFile;
+
+extern EngineSaveFile * engine_save_file;
+#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
+#endif
+
 void T1_os_init(
+    void (* newthread_main_fptr)(s32),
+    void (* appwillclose_fptr)(void),
     void ** unmanaged_memory_store,
     u32 aligned_to);
+
+f32 T1_os_get_screen_backing_scale_factor(void);
 
 void T1_os_close_app(void);
 
@@ -266,7 +288,7 @@ void T1_platform_update_mouse_location(void);
 
 // This is used to communicate failure after failure to init GPU
 // acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
-void T1_platform_request_messagebox(const c8 * message);
+void T1_os_request_messagebox(const c8 * message);
 
 /*
 creates a mutex and return the ID of said mutex for you to store
@@ -283,6 +305,16 @@ void T1_os_mutex_lock(u32 mutex_id);
 void T1_os_mutex_unlock(u32 mutex_id);
 
 void T1_os_layer_start_window_resize(u64 timestamp);
+
+void T1_os_create_main_window(b8 * good);
+void T1_os_destroy_main_window_if_possible(void);
+
+void T1_os_link_gpu_to_main_window(
+    c8 * errmsg,
+    u32 errmsg_cap,
+    b8 * good);
+
+void T1_os_shutdown(void);
 
 #ifdef __cplusplus
 }

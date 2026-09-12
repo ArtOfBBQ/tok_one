@@ -154,12 +154,15 @@ void T1_meta_init(
     s32 (* T1_meta_strcmp_func)(const char *, const char *),
     u64 (* T1_meta_strlen_func)(const char *),
     u64 (* T1_meta_strtoull_func)(const char*, char**, s32),
-    const u32 ascii_store_cap,
-    const u16 meta_structs_cap,
-    const u16 meta_fields_cap,
-    const u16 meta_enums_cap,
-    const u16 meta_enum_vals_cap)
+    u32 ascii_store_cap,
+    u16 meta_structs_cap,
+    u16 meta_fields_cap,
+    u16 meta_enums_cap,
+    u16 meta_enum_vals_cap,
+    b8 * good)
 {
+    *good = 0;
+    
     t1ms = T1_meta_malloc_func(sizeof(T1MetaState));
     
     t1ms->fp_memcpy = T1_meta_memcpy;
@@ -188,6 +191,8 @@ void T1_meta_init(
         sizeof(MetaEnumValue) * t1ms->meta_enum_vals_cap);
     
     T1_meta_reset();
+    
+    *good = 1;
 }
 
 #if 0

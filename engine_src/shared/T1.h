@@ -56,6 +56,34 @@ void T1_log_append_u32(uint32_t u32val);
 #endif
 
 /*
+APPLICATION STARTUP
+*/
+void T1_os_create_main_window(
+    uint8_t * good);
+void T1_appinit_before_gpu_init(
+    void (* callback_newthread_entry_fptr)(int32_t),
+    void (* callback_update_fptr)(uint64_t),
+    void (* callback_onwindowresize_fptr)(void),
+    void (* callback_onappclose_fptr)(void),
+    void (* callback_evaluate_terminal_command)(
+        char * command, char * response, uint32_t),
+    uint8_t * success,
+    char * error_message,
+    uint32_t error_message_cap);
+void T1_appinit_after_gpu_init_step1(
+    uint8_t * success,
+    char * error_message,
+    uint32_t error_message_cap);
+void T1_appinit_after_gpu_init_step2(
+    int32_t throwaway_threadarg);
+void T1_os_link_gpu_to_main_window(
+    char * errmsg,
+    uint32_t errmsg_cap,
+    uint8_t * good);
+void T1_os_request_messagebox(
+    const char * message);
+
+/*
 PROFILER
 */
 void T1_profiler_start(const char * func_name);

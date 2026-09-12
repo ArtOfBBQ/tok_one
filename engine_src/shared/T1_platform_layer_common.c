@@ -9,12 +9,17 @@
 #include "T1_texquad.h"
 #include "T1_ui_widget.h"
 
-
 #define MAX_FILENAME_SIZE  512
 #define MAX_SEPARATOR_SIZE   3 // 2 characters and NULL terminator
 
-/*
-Get a file's size. Returns -1 if no such file
+#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
+EngineSaveFile * engine_save_file = NULL;
+#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif 
+
+/* Get a file's size. Returns -1 if no such file
 
 same as platform_get_filesize() except it assumes
 the resources directory
@@ -346,4 +351,57 @@ void T1_os_layer_start_window_resize(
     #else
     #error
     #endif
+}
+
+void T1_os_shutdown(void)
+{
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
+    
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
+    engine_save_file->music_volume = T1_audio_state->music_volume;
+    engine_save_file->sound_volume = T1_audio_state->sfx_volume;
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_AUDIO_ACTIVE undefined!"
+    #endif
+    
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
+    #endif
+    
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
+    T1_log_assert(engine_save_file != NULL);
+    engine_save_file->window_bottom =
+        T1_global->window_bottom;
+    engine_save_file->window_height =
+        T1_global->window_wh[1];
+    engine_save_file->window_left =
+        T1_global->window_left;
+    engine_save_file->window_width =
+        T1_global->window_wh[0];
+    engine_save_file->window_fullscreen =
+        T1_global->fullscreen;
+    
+    b8 good = false;
+    T1_os_del_writable("enginestate.dat");
+    
+    T1_os_write_file_to_writables(
+        /* const char filepath_inside_writables: */
+            "enginestate.dat",
+        /* const char * output: */
+            (char *)engine_save_file,
+        /* output_size: */
+            sizeof(EngineSaveFile),
+        /* u32 good: */
+            &good);
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+    u32 good = true;
+    #else
+    #error
+    #endif
+    
+    if (!good) {
+        return;
+    }
 }

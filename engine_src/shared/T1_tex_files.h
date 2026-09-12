@@ -17,13 +17,16 @@ void T1_tex_files_reg_new_by_splitting_file(
 
 void T1_tex_files_load_font_images(
     u8 * success,
-    c8 * error_message);
+    c8 * error_message,
+    u32 error_message_cap);
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const c8 * filename,
     u32 rows, u32 columns,
     b8 free_rgba,
-    u8 * success, char * error_message);
+    u8 * success,
+    char * error_message,
+    u32 error_message_cap);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(

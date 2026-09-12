@@ -41,41 +41,21 @@
 #include "T1_platform_layer.h"
 
 
-
-
-#define IMAGE_DECODING_THREADS_MAX 10
-typedef struct InitApplicationState {
+#define T1_IMAGE_DECODING_THREADS_MAX 10
+typedef struct {
     u32 image_decoding_threads;
     u32 all_finished;
-    u32 thread_finished[IMAGE_DECODING_THREADS_MAX];
-} InitApplicationState;
+    u32 thread_finished[T1_IMAGE_DECODING_THREADS_MAX];
+} T1InitApplicationState;
 
-static InitApplicationState * ias;
+static T1InitApplicationState * ias;
 
 #define DPNG_WORKING_MEMORY_SIZE 35000000
 
-#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-typedef struct EngineSaveFile {
-    f32 window_left;
-    f32 window_width;
-    f32 window_bottom;
-    f32 window_height;
-    f32 music_volume;
-    f32 sound_volume;
-    b8 window_fullscreen;
-} EngineSaveFile;
-
-static EngineSaveFile * engine_save_file = NULL;
-#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-// Pass
-#else
-#error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
-#endif
-
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-typedef struct SimdTestStruct {
+typedef struct {
     f32 imanf32[16];
-} SimdTestStruct;
+} T1SimdTestStruct;
 static void 
 test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
@@ -89,36 +69,36 @@ test_simd_functions_f32s(void) {
     T1_log_assert(sizeof(T1GPUTexQuadu32)   % (SIMD_INT32_LANES * 4) == 0);
     
     
-    T1_log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
-    SimdTestStruct * structs = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
+    T1_log_assert(sizeof(T1SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
+    T1SimdTestStruct * structs = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
     f32 * sets = T1_mem_malloc_managed(
         sizeof(f32) * 10);
-    SimdTestStruct * muls = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * divs = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * adds = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * maxs = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * check_values = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * equals = T1_mem_malloc_managed(
-        sizeof(SimdTestStruct) * 10);
+    T1SimdTestStruct * muls = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
+    T1SimdTestStruct * divs = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
+    T1SimdTestStruct * adds = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
+    T1SimdTestStruct * maxs = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
+    T1SimdTestStruct * check_values = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
+    T1SimdTestStruct * equals = T1_mem_malloc_managed(
+        sizeof(T1SimdTestStruct) * 10);
     
-    T1_std_memset(structs, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(check_values, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(structs, 0, sizeof(T1SimdTestStruct)*10);
+    T1_std_memset(check_values, 0, sizeof(T1SimdTestStruct)*10);
     T1_std_memset(sets, 0, sizeof(f32));
-    T1_std_memset(adds, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(maxs, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(muls, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset(divs, 0, sizeof(SimdTestStruct)*10);
-    T1_std_memset_f32(equals, 2.0f, sizeof(SimdTestStruct)*10);
+    T1_std_memset(adds, 0, sizeof(T1SimdTestStruct)*10);
+    T1_std_memset(maxs, 0, sizeof(T1SimdTestStruct)*10);
+    T1_std_memset(muls, 0, sizeof(T1SimdTestStruct)*10);
+    T1_std_memset(divs, 0, sizeof(T1SimdTestStruct)*10);
+    T1_std_memset_f32(equals, 2.0f, sizeof(T1SimdTestStruct)*10);
     
     for (u32 i = 0; i < 10; i++) {
         sets[i] = (f32)i;
-        for (u32 j = 0; j < sizeof(SimdTestStruct) / sizeof(f32); j++) {
+        for (u32 j = 0; j < sizeof(T1SimdTestStruct) / sizeof(f32); j++) {
             maxs[i].imanf32[j] = (f32)((j % 2) * (i * 2));
             muls[i].imanf32[j] = (f32)(i % 4);
             divs[i].imanf32[j] = (f32)((i % 2) + 1);
@@ -127,7 +107,7 @@ test_simd_functions_f32s(void) {
     }
     
     for (u32 j = 0; j < 10; j++) {
-        for (u32 i = 0; i < sizeof(SimdTestStruct) / sizeof(f32); i++) {
+        for (u32 i = 0; i < sizeof(T1SimdTestStruct) / sizeof(f32); i++) {
             check_values[j].imanf32[i]  = sets[j];
             check_values[j].imanf32[i] *= muls[j].imanf32[i];
             check_values[j].imanf32[i] += adds[j].imanf32[i];
@@ -151,7 +131,7 @@ test_simd_functions_f32s(void) {
         // SIMD_FLOAT all_ones   = simd_set1_f32(one);
         for (
             u32 i = 0;
-            i < sizeof(SimdTestStruct) / sizeof(f32);
+            i < sizeof(T1SimdTestStruct) / sizeof(f32);
             i += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT cur  = simd_load_f32s(structs_at + i);
@@ -205,17 +185,47 @@ static u32 pad_to_page_size(u32 base_allocation) {
 }
 
 void T1_appinit_before_gpu_init(
+    void (* callback_newthread_entry_fptr)(s32),
+    void (* callback_update_fptr)(u64),
+    void (* callback_onwindowresize_fptr)(void),
+    void (* callback_onappclose_fptr)(void),
+    void (* example_callback_evaluate_terminal_command)(
+        char * command, char * response, u32),
     u8 * success,
-    char * error_message)
+    char * error_message,
+    u32 error_message_cap)
 {
-    *success = true;
+    T1_gameloop_active = false;
+    T1_log_app_running = true;
+    
+    *success = false;
     error_message[0] = '\0';
     
     void * unmanaged_memory_store =
         T1_os_malloc_unaligned_block(
             T1_UNMANAGED_MEM_CAP + 7232);
     
-    T1_os_init(&unmanaged_memory_store, 32);
+    if (!unmanaged_memory_store) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Failed to preallocate ");
+        T1_std_strcat_u32_cap(
+            error_message,
+            error_message_cap,
+            (T1_UNMANAGED_MEM_CAP + 7232)/1000000);
+        T1_std_strcat_cap(
+            error_message,
+            error_message_cap,
+            "MB");
+        return;
+    }
+    
+    T1_os_init(
+        callback_newthread_entry_fptr,
+        callback_onappclose_fptr,
+        &unmanaged_memory_store,
+        32);
     
     T1_mem_init(
         unmanaged_memory_store,
@@ -223,7 +233,14 @@ void T1_appinit_before_gpu_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
     
-    T1_settings_init(T1_mem_malloc_unmanaged);
+    T1_settings_init(T1_mem_malloc_unmanaged, success);
+    if (!*success) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Engine startup failed at T1_settings_init()");
+        return;
+    } else { *success = 0; }
     
     T1_meta_init(
         T1_std_memcpy,
@@ -241,12 +258,26 @@ void T1_appinit_before_gpu_init(
         /* const u16 meta_enums_cap: */
             30,
         /* const u16 meta_enum_vals_cap: */
-            200);
+            200,
+        /* b8 * good: */
+            success);
+    if (!*success) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Engine startup failed at T1_meta_init()");
+        return;
+    } else { *success = 0; }
     
-    ias = T1_mem_malloc_unmanaged(sizeof(InitApplicationState));
-    T1_std_memset(ias, 0, sizeof(InitApplicationState));
-    
-    // settings_init(malloc_from_unmanaged);
+    ias = T1_mem_malloc_unmanaged(sizeof(T1InitApplicationState));
+    if (!ias) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Impossible ias alloc failure");
+        return;
+    }
+    T1_std_memset(ias, 0, sizeof(T1InitApplicationState));
     
     decode_png_init(
         /* void *(*malloc_funcptr)(u64): */
@@ -270,13 +301,18 @@ void T1_appinit_before_gpu_init(
     #error
     #endif
     
-    u8 good = 0;
     T1_token_init(
         T1_std_memset,
         T1_std_strlen,
         T1_mem_malloc_managed,
-        &good);
-    T1_log_assert(good);
+        success);
+    if (!*success) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "T1 failed to initialize the tokenizer");
+        return;
+    } else { *success = 0; }
     
     T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
     T1_mtlparser_init(
@@ -306,13 +342,17 @@ void T1_appinit_before_gpu_init(
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     engine_save_file = (EngineSaveFile *)T1_mem_malloc_unmanaged(
         sizeof(EngineSaveFile));
+    if (!engine_save_file) {
+        return;
+    }
     T1_std_memset(engine_save_file, 0, sizeof(EngineSaveFile));
     
-    char full_writable_pathfile[256];
+    char full_writable_pathfile[512];
+    T1_std_memset(full_writable_pathfile, 0, 512);
     T1_os_writable_filename_to_pathfile(
         "enginestate.dat",
         full_writable_pathfile,
-        256);
+        512);
     
     c8 * engine_save_contents = NULL;
     u32  engine_save_size = 0;
@@ -341,6 +381,7 @@ void T1_appinit_before_gpu_init(
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
         sizeof(T1Globals));
+    if (!T1_global) { return; }
     T1_std_memset(T1_global, 0, sizeof(T1Globals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -426,6 +467,7 @@ void T1_appinit_before_gpu_init(
     T1_objmodel_init();
     T1_zlights = (T1zLight *)T1_mem_malloc_unmanaged(
         sizeof(T1zLight) * T1_ZLIGHTS_CAP);
+    if (!T1_zlights) { return; }
     T1_std_memset(
         T1_zlights,
         0,
@@ -438,7 +480,16 @@ void T1_appinit_before_gpu_init(
     #error
     #endif
     
-    T1_gameloop_init();
+    T1_gameloop_init(
+        /* void *(*arg_malloc_fptr)(size_t): */
+            T1_mem_malloc_unmanaged,
+        /* void (*client_update_fptr)(u64): */
+            callback_update_fptr,
+        /* void (*client_callback_after_render_fptr)(void): */
+            NULL,
+        /* void (*client_callback_update_window_resize)(void): */
+            callback_onwindowresize_fptr);
+    
     #if T1_TERM_ACTIVE == T1_ACTIVE
     T1_term_init(T1_os_enter_fullscreen);
     #elif T1_TERM_ACTIVE == T1_INACTIVE
@@ -469,6 +520,9 @@ void T1_appinit_before_gpu_init(
     if (font_metrics_contents_cap > 0) {
         font_metrics_contents = (char *)T1_mem_malloc_unmanaged(
             font_metrics_contents_cap + 1);
+        if (!font_metrics_contents) {
+            return;
+        }
         T1_os_read_resource_file(
             /* const char * filename: */
                 "fontmetrics.dat",
@@ -482,8 +536,8 @@ void T1_appinit_before_gpu_init(
         if (!font_metrics_good) {
             T1_std_strcpy_cap(
                 error_message,
-                256, "fontmetrics.dat was corrupted\n");
-            *success = false;
+                error_message_cap,
+                "fontmetrics.dat was corrupted\n");
             return;
         }
         
@@ -496,17 +550,14 @@ void T1_appinit_before_gpu_init(
     } else {
         T1_std_strcpy_cap(
             error_message,
-            128,
+            error_message_cap,
             "Error - missing font.png at startup");
-        *success = 0;
         return;
     }
     
     T1_render_view_init();
     
     T1_render_init();
-    
-    T1_client_init();
     
     T1_rand_init(
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -520,7 +571,7 @@ void T1_appinit_before_gpu_init(
     
     T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
         sizeof(T1CPUToGPUData));
-    T1_log_assert(T1_cpu_to_gpu_data != NULL);
+    if (!T1_cpu_to_gpu_data) { return; }
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
     T1_log_assert(sd != NULL);
@@ -595,34 +646,38 @@ void T1_appinit_before_gpu_init(
             T1_mem_malloc_unmanaged_aligned(
                 sd->vertices_alloc_size,
                 T1_mem_page_size);
+        if (!f->verts) { return; }
         
         f->flat_bb_quads = (T1GPUFlatQuad *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->flat_quads_alloc_size,
                 T1_mem_page_size);
+        if (!f->flat_bb_quads) { return; }
         
         f->flat_tex_quads = (T1GPUTexQuad *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->flat_texquads_alloc_size,
                 T1_mem_page_size);
+        if (!f->flat_tex_quads) { return; }
         
         f->zsprite_list = (T1GPUzSpriteList *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->polygons_alloc_size,
                 T1_mem_page_size);
-        T1_log_assert(f->zsprite_list != NULL);
+        if (!f->zsprite_list) { return; }
         
         T1_log_assert(sd->lights_alloc_size > 0);
         f->lights = (T1GPULight *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->lights_alloc_size,
                 T1_mem_page_size);
-        T1_log_assert(f->lights != NULL);
+        if (!f->lights) { return; }
         
         f->render_views = (T1GPURenderView *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->render_views_alloc_size,
                 T1_mem_page_size);
+        if (!f->render_views) { return; }
         
         T1_std_memset_f32(
             f->render_views,
@@ -634,41 +689,43 @@ void T1_appinit_before_gpu_init(
             T1_mem_malloc_unmanaged_aligned(
                 sd->postprocessing_constants_alloc_size,
                 T1_mem_page_size);
+        if (!f->postproc_consts) { return; }
     }
     
     sd->locked_vertices =
         (T1GPULockedVertex *)T1_mem_malloc_unmanaged_aligned(
             sd->locked_vertices_alloc_size,
             T1_mem_page_size);
+    if (!sd->locked_vertices) { return; }
     
     sd->const_mats_f32 = (T1GPUMatf32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
+    if (!sd->const_mats_f32) { return; }
     
     sd->const_mats_s32 = (T1GPUMatu32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matss32_alloc_size,
             T1_mem_page_size);
+    if (!sd->const_mats_s32) { return; }
     
     u8 initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        T1_log_dump_and_crash(
-            "initial log dump unsuccesful, exiting app");
         T1_std_strcpy_cap(
             error_message,
-            128,
+            error_message_cap,
             "Error - couldn't write the log file to "
             "disk at startup");
-        *success = 0;
         return;
     }
+    
+    *success = true;
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void
-T1_appinit_asset_loading_thread(
+static void T1_appinit_asset_loading_thread(
     s32 asset_thread_id)
 {
     if (asset_thread_id > 0) {
@@ -699,7 +756,8 @@ T1_appinit_asset_loading_thread(
 
 void T1_appinit_after_gpu_init_step1(
     u8 * success,
-    char * error_message)
+    char * error_message,
+    u32 error_message_cap)
 {
     *success = 0;
     
@@ -711,7 +769,8 @@ void T1_appinit_after_gpu_init_step1(
     
     T1_tex_files_load_font_images(
         success,
-        error_message);
+        error_message,
+        error_message_cap);
     
     if (!*success) { return; } else { *success = 0; }
     
@@ -741,7 +800,8 @@ void T1_appinit_after_gpu_init_step1(
         /* const void * src: */
             T1_mesh_summary_all_vertices->gpu_data,
         /* u64 n: */
-            sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
+            sizeof(T1GPULockedVertex) *
+                T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
     
     T1_gameloop_active = true;
@@ -796,27 +856,10 @@ void T1_appinit_after_gpu_init_step2(
     #error "T1_SHADOWS_ACTIVE undefined"
     #endif
     
-    u8 success = false;
     char errmsg[256];
     errmsg[0] = '\0';
     
     if (T1_log_app_running) {
-        T1_client_early_startup(&success, errmsg);
-        
-        if (!success) {
-            if (errmsg[0] == '\0') {
-                T1_std_strcpy_cap(
-                    errmsg,
-                    256,
-                    "client_logic_early_startup() returned failure "
-                    "without an error message");
-            }
-            T1_log_dump_and_crash(errmsg);
-            return;
-        }
-        
-        T1_global->clientlogic_early_startup_finished = 1;
-        
         u32 core_count = T1_os_get_cpu_logical_core_count();
         T1_log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
@@ -824,7 +867,7 @@ void T1_appinit_after_gpu_init_step2(
         T1_std_memset(
             ias->thread_finished,
             0,
-            sizeof(u32) * IMAGE_DECODING_THREADS_MAX);
+            sizeof(u32) * T1_IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
         T1_log_assert(T1_global->startup_bytes_to_load == 0);
@@ -1011,14 +1054,8 @@ void T1_appinit_after_gpu_init_step2(
     T1_os_layer_start_window_resize(
         T1_os_get_current_time_us());
     
-    if (T1_log_app_running) {
-        T1_client_late_startup();
-    } else {
-        T1_gameloop_active = true;
-        return;
-    }
-    
     if (!T1_log_app_running) {
+        T1_gameloop_active = true;
         return;
     }
     
@@ -1029,57 +1066,4 @@ void T1_appinit_after_gpu_init_step2(
     #else
     #error "T1_AUDIO_ACTIVE undefined!"
     #endif
-}
-
-void T1_appinit_shutdown(void)
-{
-    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    
-    #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    engine_save_file->music_volume = T1_audio_state->music_volume;
-    engine_save_file->sound_volume = T1_audio_state->sfx_volume;
-    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_AUDIO_ACTIVE undefined!"
-    #endif
-    
-    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
-    #endif
-    
-    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    T1_log_assert(engine_save_file != NULL);
-    engine_save_file->window_bottom =
-        T1_global->window_bottom;
-    engine_save_file->window_height =
-        T1_global->window_wh[1];
-    engine_save_file->window_left =
-        T1_global->window_left;
-    engine_save_file->window_width =
-        T1_global->window_wh[0];
-    engine_save_file->window_fullscreen =
-        T1_global->fullscreen;
-    
-    b8 good = false;
-    T1_os_del_writable("enginestate.dat");
-    
-    T1_os_write_file_to_writables(
-        /* const char filepath_inside_writables: */
-            "enginestate.dat",
-        /* const char * output: */
-            (char *)engine_save_file,
-        /* output_size: */
-            sizeof(EngineSaveFile),
-        /* u32 good: */
-            &good);
-    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    u32 good = true;
-    #else
-    #error
-    #endif
-    
-    if (!good) {
-        return;
-    }
 }

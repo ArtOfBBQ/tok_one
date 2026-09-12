@@ -42,42 +42,53 @@
 #include "immintrin.h"
 #endif
 
-
 typedef struct {
     pthread_mutex_t mutex;
     b8 initialized;
 } OSMutexID;
 
-static OSMutexID * mutexes = NULL;
-static u32 next_mutex_id = 0;
+typedef struct {
+    OSMutexID mutexes[T1_MUTEXES_SIZE];
+    void (* newthread_main_fptr)(s32);
+    void (* appwillclose_fptr)(void);
+    u32 next_mutex_id;
+} T1OSState;
+
+static T1OSState * T1_os_s = NULL;
 
 void T1_os_init(
+    void (* newthread_main_fptr)(s32),
+    void (* appwillclose_fptr)(void),
     void ** unmanaged_memory_store,
     const u32 aligned_to)
 {
-    mutexes = *unmanaged_memory_store;
+    T1_os_s = *unmanaged_memory_store;
     
-    size_t size = sizeof(OSMutexID) * T1_MUTEXES_SIZE;
+    size_t size = sizeof(T1OSState);
     while (size % aligned_to != 0) {
         size += 1;
     }
     
-    T1_std_memset(mutexes, 0, sizeof(OSMutexID) * T1_MUTEXES_SIZE);
+    T1_std_memset(
+        T1_os_s,
+        0,
+        size);
     
     *unmanaged_memory_store = (void *)(
         ((char *)*unmanaged_memory_store) + size);
+    
+    T1_os_s->newthread_main_fptr = newthread_main_fptr;
 }
 
-u32
-T1_os_init_mutex_and_return_id(void)
+u32 T1_os_init_mutex_and_return_id(void)
 {
     T1_log_assert(
-        next_mutex_id + 1 < T1_MUTEXES_SIZE);
+        T1_os_s->next_mutex_id + 1 < T1_MUTEXES_SIZE);
     T1_log_assert(
-        !mutexes[next_mutex_id].initialized);
+        !T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized);
     
     s32 mutex_init_error_value = pthread_mutex_init(
-        &(mutexes[next_mutex_id].mutex),
+        &(T1_os_s->mutexes[T1_os_s->next_mutex_id].mutex),
         NULL);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -88,11 +99,11 @@ T1_os_init_mutex_and_return_id(void)
     #error
     #endif
     
-    u32 return_value = next_mutex_id;
+    u32 return_value = T1_os_s->next_mutex_id;
     
-    mutexes[next_mutex_id].initialized = true;
+    T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized = true;
     
-    next_mutex_id++;
+    T1_os_s->next_mutex_id++;
     return return_value;
 }
 
@@ -105,9 +116,9 @@ u8 T1_os_mutex_trylock(const u32 mutex_id)
     If successful, pthread_mutex_trylock() will return zero.
     Otherwise, an error number will be returned to indicate the error.
     */
-    T1_log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
     
-    s32 return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
+    s32 return_val = pthread_mutex_trylock(&T1_os_s->mutexes[mutex_id].mutex);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     if (return_val != 0) {
@@ -133,7 +144,7 @@ void T1_os_assert_mutex_locked(
     const u32 mutex_id) 
 {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
+    s32 return_val = pthread_mutex_trylock(&T1_os_s->mutexes[mutex_id].mutex);
     T1_log_assert(return_val == EBUSY);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)mutex_id;
@@ -149,9 +160,9 @@ was unlocked
 void T1_os_mutex_lock(u32 mutex_id)
 {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
-    T1_log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
     s32 return_value = 
-        pthread_mutex_lock(&(mutexes[mutex_id].mutex));
+        pthread_mutex_lock(&(T1_os_s->mutexes[mutex_id].mutex));
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(return_value == 0);
@@ -166,10 +177,10 @@ void T1_os_mutex_lock(u32 mutex_id)
 
 void T1_os_mutex_unlock(u32 mutex_id) {
     T1_log_assert(mutex_id < T1_MUTEXES_SIZE);
-    T1_log_assert(mutexes[mutex_id].initialized);
+    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 out = pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
+    s32 out = pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
     #else

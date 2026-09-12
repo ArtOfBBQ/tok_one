@@ -218,12 +218,12 @@ void T1_tex_files_reg_new_by_splitting_file(
 
 void T1_tex_files_load_font_images(
     u8 * success,
-    char * error_message)
+    char * error_message,
+    u32 error_message_cap)
 {
     *success = 0;
     
     if (T1_tex_arrays_size != 0) {
-        assert(0);
         T1_std_strcpy_cap(
             error_message,
             256,
@@ -239,17 +239,18 @@ void T1_tex_files_load_font_images(
         /* columns  : */ 10,
         false,
         success,
-        error_message);
+        error_message,
+        error_message_cap);
     T1_tex_arrays[0].request_init = false;
 }
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
-    u32 rows,
-    u32 columns,
+    u32 rows, u32 columns,
     b8 free_rgba,
     u8 * success,
-    char * error_message)
+    char * error_message,
+    u32 error_message_cap)
 {
     *success = 0;
     
@@ -257,7 +258,6 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     T1Img * img = &stack_img;
     malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
-    T1_log_assert(img->good);
     if (!img->good) {
         T1_std_strcpy_cap(
             error_message,

@@ -7,7 +7,7 @@
 
 void T1_profiler_init(
     const u64 clock_frequency,
-    void * (* profiler_malloc_function)(u64));
+    void * (* profiler_malloc_function)(size_t));
 
 void T1_profiler_new_frame(void);
 

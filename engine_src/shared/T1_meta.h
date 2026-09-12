@@ -24,7 +24,8 @@ void T1_meta_init(
     const u16 meta_structs_cap,
     const u16 meta_fields_cap,
     const u16 meta_enums_cap,
-    const u16 meta_enum_vals_cap);
+    const u16 meta_enum_vals_cap,
+    b8 * good);
 
 #define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
 void T1_meta_reg_enum(
