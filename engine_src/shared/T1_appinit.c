@@ -804,19 +804,6 @@ void T1_appinit_after_gpu_init_step1(
                 T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
     
-    T1_gameloop_active = true;
-    *success = true;
-}
-
-void T1_appinit_after_gpu_init_step2(
-    s32 throwaway_threadarg)
-{
-    (void)throwaway_threadarg;
-    
-    if (!T1_log_app_running) {
-        return;
-    }
-    
     b8 perlin_good = 0;
     T1_tex_files_prereg_dds_res(
         "perlin_noise.dds",
@@ -843,6 +830,19 @@ void T1_appinit_after_gpu_init_step2(
     {
         T1_gameloop_active = true;
         T1_log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
+        return;
+    }
+    
+    T1_gameloop_active = true;
+    *success = true;
+}
+
+void T1_appinit_after_gpu_init_step2(
+    s32 throwaway_threadarg)
+{
+    (void)throwaway_threadarg;
+    
+    if (!T1_log_app_running) {
         return;
     }
     

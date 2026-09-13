@@ -464,11 +464,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     T1_log_append("window will close, terminating app..\n");
     
     T1_os_shutdown();
-    
-    if (T1_os_s->appwillclose_fptr) {
-        T1_os_s->appwillclose_fptr();
-    }
-    
+        
     uint8_t write_succesful = false;
     T1_log_dump(&write_succesful);
     
@@ -696,7 +692,7 @@ void T1_os_link_gpu_to_main_window(
             " Metal error description: ");
         T1_std_strcat_cap(
             errmsg,
-            512,
+            errmsg_cap,
             errmsg2);
     }
     
