@@ -1,8 +1,9 @@
 #import "Appkit/Appkit.h"
 
-#import <GameController/GameController.h>
+#include <dlfcn.h>
 
 #include "T1_std.h"
+#include "T1_mem.h"
 #include "T1_log.h"
 #include "T1_io.h"
 #include "T1_global.h"
@@ -41,40 +42,214 @@ static void update_simple_key(
     }
 }
 
+typedef struct {
+    void * (*msg_send)(void *, void *);
+    u32    (* msg_send_u32)(void *, void *);
+    u8     (* msg_send_u8)(void *, void *);
+    
+    void * class_GCController;
+    void * sel_current;
+    void * sel_extendedgamepad;
+    void * sel_left_shoulder;
+    void * sel_right_shoulder;
+    void * sel_left_trigger;
+    void * sel_right_trigger;
+    void * sel_left_thumbstick_button;
+    void * sel_right_thumbstick_button;
+    void * sel_ispressed;
+    void * sel_dpad;
+    void * sel_left;
+    void * sel_right;
+    void * sel_up;
+    void * sel_down;
+    void * sel_button_a;
+    void * sel_button_b;
+    void * sel_button_x;
+    void * sel_button_y;
+    void * sel_button_home;
+    void * sel_button_menu;
+    void * sel_button_options;
+    u8 good;
+} LibObjCPointers;
+
+static LibObjCPointers * T1_mpl_objc = NULL;
+
+static void setup_obj_frameworks(void) {
+    // we're assuming no one calls this a 2nd time
+    T1_log_assert(!T1_mpl_objc);
+    
+    T1_mpl_objc = T1_mem_malloc_unmanaged(
+        sizeof(LibObjCPointers));
+    if (!T1_mpl_objc) { return; }
+    T1_std_memset(T1_mpl_objc, 0, sizeof(LibObjCPointers));
+    
+    void * libobjc = dlopen(
+        "/usr/lib/libobjc.A.dylib",
+        RTLD_LAZY);
+    void * framework_gamecontroller = dlopen(
+        "/System/Library/Frameworks/GameController.framework/GameController",
+        RTLD_LAZY);
+    
+    void * (*objc_getclass)(const char *) = dlsym(
+        libobjc,
+        "objc_getClass");
+    T1_mpl_objc->msg_send = dlsym(
+        libobjc,
+        "objc_msgSend");
+    T1_mpl_objc->msg_send_u32 = (u32 (*)(void *, void *))T1_mpl_objc->msg_send;
+    T1_mpl_objc->msg_send_u8 = (u8 (*)(void *, void *))T1_mpl_objc->msg_send;
+    
+    void * (*objc_sel_registername)(const char *) = dlsym(
+        libobjc,
+        "sel_registerName");
+    if (!objc_sel_registername) {
+        return;
+    }
+    
+    T1_mpl_objc->class_GCController = objc_getclass(
+        "GCController");
+    if (!T1_mpl_objc->class_GCController) { return; }
+    T1_mpl_objc->sel_current =
+        objc_sel_registername("current");
+    if (!T1_mpl_objc->sel_current) { return; }
+    T1_mpl_objc->sel_extendedgamepad =
+        objc_sel_registername("extendedGamepad");
+    if (!T1_mpl_objc->sel_extendedgamepad) { return; }
+    T1_mpl_objc->sel_dpad =
+        objc_sel_registername("dpad");
+    if (!T1_mpl_objc->sel_dpad) { return; }
+    T1_mpl_objc->sel_left_shoulder =
+        objc_sel_registername("leftShoulder");
+    if (!T1_mpl_objc->sel_left_shoulder) { return; }
+    T1_mpl_objc->sel_right_shoulder =
+        objc_sel_registername("rightShoulder");
+    if (!T1_mpl_objc->sel_right_shoulder) { return; }
+    T1_mpl_objc->sel_left_trigger =
+        objc_sel_registername("leftTrigger");
+    if (!T1_mpl_objc->sel_left_trigger) { return; }
+    T1_mpl_objc->sel_right_trigger =
+        objc_sel_registername("rightTrigger");
+    if (!T1_mpl_objc->sel_right_trigger) { return; }
+    T1_mpl_objc->sel_left_thumbstick_button =
+        objc_sel_registername("leftThumbstickButton");
+    if (!T1_mpl_objc->sel_left_thumbstick_button) { return; }
+    T1_mpl_objc->sel_right_thumbstick_button =
+        objc_sel_registername("rightThumbstickButton");
+    if (!T1_mpl_objc->sel_left_thumbstick_button) { return; }
+    if (!T1_mpl_objc->sel_dpad) { return; }
+    T1_mpl_objc->sel_left =
+        objc_sel_registername("left");
+    if (!T1_mpl_objc->sel_left) { return; }
+    T1_mpl_objc->sel_right =
+        objc_sel_registername("right");
+    if (!T1_mpl_objc->sel_right) { return; }
+    T1_mpl_objc->sel_up =
+        objc_sel_registername("up");
+    if (!T1_mpl_objc->sel_up) { return; }
+    T1_mpl_objc->sel_down =
+        objc_sel_registername("down");
+    if (!T1_mpl_objc->sel_down) { return; }
+    
+    T1_mpl_objc->sel_button_a =
+        objc_sel_registername("buttonA");
+    if (!T1_mpl_objc->sel_button_a) { return; }
+    T1_mpl_objc->sel_button_b =
+        objc_sel_registername("buttonB");
+    if (!T1_mpl_objc->sel_button_b) { return; }
+    T1_mpl_objc->sel_button_x =
+        objc_sel_registername("buttonX");
+    if (!T1_mpl_objc->sel_button_x) { return; }
+    T1_mpl_objc->sel_button_y =
+        objc_sel_registername("buttonY");
+    if (!T1_mpl_objc->sel_button_y) { return; }
+    T1_mpl_objc->sel_button_home =
+        objc_sel_registername("buttonHome");
+    if (!T1_mpl_objc->sel_button_home) { return; }
+    T1_mpl_objc->sel_button_menu =
+        objc_sel_registername("buttonMenu");
+    if (!T1_mpl_objc->sel_button_menu) { return; }
+    T1_mpl_objc->sel_button_options =
+        objc_sel_registername("buttonOptions");
+    if (!T1_mpl_objc->sel_button_options) { return; }
+    T1_mpl_objc->sel_ispressed =
+        objc_sel_registername("isPressed");
+    if (!T1_mpl_objc->sel_ispressed) { return; }
+    
+    dlclose(libobjc);
+    dlclose(framework_gamecontroller);
+    
+    T1_mpl_objc->good = true;
+}
+
+static void update_chain_key(
+    void * objc_parent,
+    void * objc_sel,
+    T1IOKey T1_io_key)
+{
+    if (!objc_parent) { return; }
+    
+    void * objc_sub = T1_mpl_objc->msg_send(
+        objc_parent,
+        objc_sel);
+    
+    if (!objc_sub) { return; }
+    
+    u32 ispressed_u32 = T1_mpl_objc->msg_send_u32(
+        objc_sub,
+        T1_mpl_objc->sel_ispressed);
+    
+    update_simple_key(ispressed_u32 > 0, T1_io_key);
+}
+
 void T1_os_poll_gamepad_events(void) {
-    //    NSArray *controllers = [GCController controllers];
-    //    
-    //    if (controllers.count == 0) {
-    //        return; // No gamepads connected
-    //    }
-    //    
-    //    if (controllers.count != 1) {
-    //        T1_log_warn(1); // potentially dangerous
-    //    }
+    
+    if (!T1_mpl_objc) {
+        setup_obj_frameworks();
+        return;
+    }
+    
+    if (!T1_mpl_objc->good) {
+        return;
+    }
     
     // Grab the primary controller (like your EasySMX X05PRO)
-    GCController * c = [GCController current];
-    GCExtendedGamepad * g = c.extendedGamepad;
+    // GCController * c = [GCController current];
+    void * c = T1_mpl_objc->msg_send(
+        T1_mpl_objc->class_GCController,
+        T1_mpl_objc->sel_current);
+    
+    void * g = T1_mpl_objc->msg_send(
+        c,
+        T1_mpl_objc->sel_extendedgamepad);
     
     if (g) {
-        update_simple_key(g.dpad.left.isPressed, T1_IO_GAMEPAD_DPAD_LEFT); 
-        update_simple_key(g.dpad.right.isPressed, T1_IO_GAMEPAD_DPAD_RIGHT);
-        update_simple_key(g.dpad.up.isPressed, T1_IO_GAMEPAD_DPAD_UP); 
-        update_simple_key(g.dpad.down.isPressed, T1_IO_GAMEPAD_DPAD_DOWN);
-        update_simple_key(g.leftShoulder.isPressed, T1_IO_GAMEPAD_LSHOULDER);
-        update_simple_key(g.rightShoulder.isPressed, T1_IO_GAMEPAD_RSHOULDER);
-        update_simple_key(g.leftTrigger.isPressed, T1_IO_GAMEPAD_LTRIGGER);
-        update_simple_key(g.rightTrigger.isPressed, T1_IO_GAMEPAD_RTRIGGER);
-        update_simple_key(g.leftThumbstickButton.isPressed, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
-        update_simple_key(g.rightThumbstickButton.isPressed, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
-        update_simple_key(g.buttonA.isPressed, T1_IO_GAMEPAD_A);
-        update_simple_key(g.buttonB.isPressed, T1_IO_GAMEPAD_B);
-        update_simple_key(g.buttonX.isPressed, T1_IO_GAMEPAD_X);
-        update_simple_key(g.buttonY.isPressed, T1_IO_GAMEPAD_Y);
-        update_simple_key(g.buttonHome.isPressed, T1_IO_GAMEPAD_HOME);
-        update_simple_key(g.buttonMenu.isPressed, T1_IO_GAMEPAD_MENU);
-        update_simple_key(g.buttonOptions.isPressed, T1_IO_GAMEPAD_OPTIONS);
+        void * dpad = T1_mpl_objc->msg_send(
+            g,
+            T1_mpl_objc->sel_dpad);
         
+        if (dpad) {
+            update_chain_key(dpad, T1_mpl_objc->sel_left, T1_IO_GAMEPAD_DPAD_LEFT);
+            update_chain_key(dpad, T1_mpl_objc->sel_right, T1_IO_GAMEPAD_DPAD_RIGHT);
+            update_chain_key(dpad, T1_mpl_objc->sel_up, T1_IO_GAMEPAD_DPAD_UP); 
+            update_chain_key(dpad, T1_mpl_objc->sel_down, T1_IO_GAMEPAD_DPAD_DOWN);
+        }
+        
+        update_chain_key(g, T1_mpl_objc->sel_left_shoulder, T1_IO_GAMEPAD_LSHOULDER);
+        update_chain_key(g, T1_mpl_objc->sel_right_shoulder, T1_IO_GAMEPAD_RSHOULDER);
+        update_chain_key(g, T1_mpl_objc->sel_left_trigger, T1_IO_GAMEPAD_LTRIGGER);
+        update_chain_key(g, T1_mpl_objc->sel_right_trigger, T1_IO_GAMEPAD_RTRIGGER);
+        update_chain_key(g, T1_mpl_objc->sel_left_thumbstick_button, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
+        update_chain_key(g, T1_mpl_objc->sel_right_thumbstick_button, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
+        
+        update_chain_key(g, T1_mpl_objc->sel_button_a, T1_IO_GAMEPAD_A);
+        update_chain_key(g, T1_mpl_objc->sel_button_b, T1_IO_GAMEPAD_B);
+        update_chain_key(g, T1_mpl_objc->sel_button_x, T1_IO_GAMEPAD_X);
+        update_chain_key(g, T1_mpl_objc->sel_button_y, T1_IO_GAMEPAD_Y);
+        update_chain_key(g, T1_mpl_objc->sel_button_home, T1_IO_GAMEPAD_HOME);
+        update_chain_key(g, T1_mpl_objc->sel_button_menu, T1_IO_GAMEPAD_MENU);
+        update_chain_key(g, T1_mpl_objc->sel_button_options, T1_IO_GAMEPAD_OPTIONS);
+        
+        /*
         T1_io_register_key_move_to_pos(
             T1_IO_GAMEPAD_LTHUMBSTICK,
                 g.leftThumbstick.xAxis.value,
@@ -83,6 +258,7 @@ void T1_os_poll_gamepad_events(void) {
             T1_IO_GAMEPAD_RTHUMBSTICK,
                 g.rightThumbstick.xAxis.value,
                 g.rightThumbstick.yAxis.value);
+        */
     }
 }
 #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE

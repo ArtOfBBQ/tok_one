@@ -7,49 +7,114 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */ = {isa = PBXBuildFile; fileRef = 6009FB632876A47100FC5A60 /* fontmetrics.dat */; };
-		601128452861239600F92967 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128442861239600F92967 /* Foundation.framework */; };
-		601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A0286253FA00F92967 /* MetalKit.framework */; };
-		601128A3286253FA00F92967 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A1286253FA00F92967 /* Metal.framework */; };
-		601128A82862588900F92967 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A72862588900F92967 /* AppKit.framework */; };
-		601128AD28625BAF00F92967 /* structuredart1.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128A928625BAE00F92967 /* structuredart1.png */; };
-		601128AE28625BAF00F92967 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
-		601128AF28625BAF00F92967 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
-		601128B028625BAF00F92967 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AC28625BAF00F92967 /* font.png */; };
-		6080CC46286FFD1E00444118 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
-		EC0531612C43D20F00C6771A /* unitybuild_macos.c in Sources */ = {isa = PBXBuildFile; fileRef = EC493BC42BEDA96D004D957F /* unitybuild_macos.c */; };
-		EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */; };
-		EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
-		EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */; };
-		EC14028E2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */ = {isa = PBXBuildFile; fileRef = EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */; };
-		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
-		EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4129E3DC8B00ED785C /* blob1.png */; };
-		EC18FF4629E3DD8900ED785C /* blob2.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4429E3DD8900ED785C /* blob2.png */; };
-		EC18FF4829E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
-		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
-		EC676A3D2DE8D41D001FD4DE /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
-		EC67AE162A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
-		EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
-		EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51F2DE3BC070033206F /* guitar_simplified.obj */; };
-		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
-		EC7FBC402DECE93000A679A7 /* 1001_albedo.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */; };
-		EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
-		EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828B2DF25F9E00E2D97A /* open_cube.obj */; };
-		EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */; };
-		EC90BD982E03266700773769 /* crack_1.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD962E03266700773769 /* crack_1.mtl */; };
-		EC90BD992E03266700773769 /* crack_1.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD972E03266700773769 /* crack_1.obj */; };
-		EC90BDC22E040D5200773769 /* perlin_noise.dds in Resources */ = {isa = PBXBuildFile; fileRef = EC90BDC12E040D5200773769 /* perlin_noise.dds */; };
-		EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC914B892B9199A1007FCBFC /* AudioToolbox.framework */; };
-		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
-		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
-		ECF3D4982FF755BC0006B0E7 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECF3D4972FF755BC0006B0E7 /* GameController.framework */; };
+		ECCD57083057CE6200493B56 /* T1_linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */; };
+		ECCD57093057CE6200493B56 /* decode_bmp.h in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAB2902917500C10865 /* decode_bmp.h */; };
+		ECCD570A3057CE6200493B56 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
+		ECCD570B3057CE6200493B56 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
+		ECCD570C3057CE6200493B56 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
+		ECCD570D3057CE6200493B56 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
+		ECCD570E3057CE6200493B56 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
+		ECCD570F3057CE6200493B56 /* T1.h in Sources */ = {isa = PBXBuildFile; fileRef = EC570B213007C3C2003B545D /* T1.h */; };
+		ECCD57103057CE6200493B56 /* T1.c in Sources */ = {isa = PBXBuildFile; fileRef = EC570B223007C3C2003B545D /* T1.c */; };
+		ECCD57113057CE6200493B56 /* T1_anim.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286A2862511500F92967 /* T1_anim.h */; };
+		ECCD57123057CE6200493B56 /* T1_anim.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* T1_anim.c */; };
+		ECCD57133057CE6200493B56 /* T1_appinit.h in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD302886EE36000E1E98 /* T1_appinit.h */; };
+		ECCD57143057CE6200493B56 /* T1_appinit.c in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD2F2886EE35000E1E98 /* T1_appinit.c */; };
+		ECCD57153057CE6200493B56 /* T1_apple_audio.h in Sources */ = {isa = PBXBuildFile; fileRef = EC914B822B8AD5AA007FCBFC /* T1_apple_audio.h */; };
+		ECCD57163057CE6200493B56 /* T1_apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* T1_apple_audio.m */; };
+		ECCD57173057CE6200493B56 /* T1_apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* T1_apple_platform_layer.m */; };
+		ECCD57183057CE6200493B56 /* T1_audio.h in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7D2B8AD447007FCBFC /* T1_audio.h */; };
+		ECCD57193057CE6200493B56 /* T1_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* T1_audio.c */; };
+		ECCD571A3057CE6200493B56 /* T1_client.h in Sources */ = {isa = PBXBuildFile; fileRef = EC5B9C792FEF673F00C35D26 /* T1_client.h */; };
+		ECCD571B3057CE6200493B56 /* T1_collision.h in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CD2C3FF1BE004B0847 /* T1_collision.h */; };
+		ECCD571C3057CE6200493B56 /* T1_collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* T1_collision.c */; };
+		ECCD571D3057CE6200493B56 /* T1_easing.h in Sources */ = {isa = PBXBuildFile; fileRef = EC4186E62E8F0739007FF019 /* T1_easing.h */; };
+		ECCD571E3057CE6200493B56 /* T1_easing.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4186E72E8F0739007FF019 /* T1_easing.c */; };
+		ECCD571F3057CE6200493B56 /* T1_frame_anim.h in Sources */ = {isa = PBXBuildFile; fileRef = EC29149F2EEE200B00D3873E /* T1_frame_anim.h */; };
+		ECCD57203057CE6200493B56 /* T1_frame_anim.c in Sources */ = {isa = PBXBuildFile; fileRef = EC2914A02EEE200B00D3873E /* T1_frame_anim.c */; };
+		ECCD57213057CE6200493B56 /* T1_gameloop.h in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BE2892504A00E8B3AD /* T1_gameloop.h */; };
+		ECCD57223057CE6200493B56 /* T1_gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BF2892504A00E8B3AD /* T1_gameloop.c */; };
+		ECCD57233057CE6200493B56 /* T1_global.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* T1_global.h */; };
+		ECCD57243057CE6200493B56 /* T1_global.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* T1_global.c */; };
+		ECCD57253057CE6200493B56 /* T1_gpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 60112898286253C100F92967 /* T1_gpu.h */; };
+		ECCD57263057CE6200493B56 /* T1_gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* T1_gpu.m */; };
+		ECCD57273057CE6200493B56 /* T1_id.h in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12192A04CE13004E7BD1 /* T1_id.h */; };
+		ECCD57283057CE6200493B56 /* T1_id.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* T1_id.c */; };
+		ECCD57293057CE6200493B56 /* T1_img.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* T1_img.h */; };
+		ECCD572A3057CE6200493B56 /* T1_img.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* T1_img.c */; };
+		ECCD572B3057CE6200493B56 /* T1_io.h in Sources */ = {isa = PBXBuildFile; fileRef = EC29149C2EEE1FFB00D3873E /* T1_io.h */; };
+		ECCD572C3057CE6200493B56 /* T1_io.c in Sources */ = {isa = PBXBuildFile; fileRef = EC29149D2EEE1FFB00D3873E /* T1_io.c */; };
+		ECCD572D3057CE6200493B56 /* T1_linalg3d.h in Sources */ = {isa = PBXBuildFile; fileRef = ECE530FF2EB229900035DC98 /* T1_linalg3d.h */; };
+		ECCD572E3057CE6200493B56 /* T1_linalg3d.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE531002EB229900035DC98 /* T1_linalg3d.c */; };
+		ECCD572F3057CE6200493B56 /* T1_log.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* T1_log.h */; };
+		ECCD57303057CE6200493B56 /* T1_log.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* T1_log.c */; };
+		ECCD57313057CE6200493B56 /* T1_material.h in Sources */ = {isa = PBXBuildFile; fileRef = EC676A382DE6D667001FD4DE /* T1_material.h */; };
+		ECCD57323057CE6200493B56 /* T1_material.c in Sources */ = {isa = PBXBuildFile; fileRef = EC676A392DE6D667001FD4DE /* T1_material.c */; };
+		ECCD57333057CE6200493B56 /* T1_mem.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* T1_mem.h */; };
+		ECCD57343057CE6200493B56 /* T1_mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* T1_mem.c */; };
+		ECCD57353057CE6200493B56 /* T1_mesh_summary.h in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971B2EEF6B86008D8481 /* T1_mesh_summary.h */; };
+		ECCD57363057CE6200493B56 /* T1_mesh_summary.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971C2EEF6B86008D8481 /* T1_mesh_summary.c */; };
+		ECCD57373057CE6200493B56 /* T1_meta.h in Sources */ = {isa = PBXBuildFile; fileRef = EC8043222E56D38000434066 /* T1_meta.h */; };
+		ECCD57383057CE6200493B56 /* T1_meta.c in Sources */ = {isa = PBXBuildFile; fileRef = EC8043202E56C3A800434066 /* T1_meta.c */; };
+		ECCD57393057CE6200493B56 /* T1_mtlparser.h in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4C2DDE0F2A002AA399 /* T1_mtlparser.h */; };
+		ECCD573A3057CE6200493B56 /* T1_mtlparser.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */; };
+		ECCD573B3057CE6200493B56 /* T1_objmodel.h in Sources */ = {isa = PBXBuildFile; fileRef = EC78509829E62CA800E6882A /* T1_objmodel.h */; };
+		ECCD573C3057CE6200493B56 /* T1_objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* T1_objmodel.c */; };
+		ECCD573D3057CE6200493B56 /* T1_objparser.h in Sources */ = {isa = PBXBuildFile; fileRef = EC083A382AFF727900234FE3 /* T1_objparser.h */; };
+		ECCD573E3057CE6200493B56 /* T1_objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* T1_objparser.c */; };
+		ECCD573F3057CE6200493B56 /* T1_particle.h in Sources */ = {isa = PBXBuildFile; fileRef = EC31932229DFAAFB00E320CD /* T1_particle.h */; };
+		ECCD57403057CE6200493B56 /* T1_particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* T1_particle.c */; };
+		ECCD57413057CE6200493B56 /* T1_platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128832862511700F92967 /* T1_platform_layer.h */; };
+		ECCD57423057CE6200493B56 /* T1_platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */; };
+		ECCD57433057CE6200493B56 /* T1_profiler.h in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB162D53ADA400623C60 /* T1_profiler.h */; };
+		ECCD57443057CE6200493B56 /* T1_profiler.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB152D53ADA400623C60 /* T1_profiler.c */; };
+		ECCD57453057CE6200493B56 /* T1_rand.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* T1_rand.h */; };
+		ECCD57463057CE6200493B56 /* T1_rand.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* T1_rand.c */; };
+		ECCD57473057CE6200493B56 /* T1_render.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* T1_render.h */; };
+		ECCD57483057CE6200493B56 /* T1_render.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* T1_render.c */; };
+		ECCD57493057CE6200493B56 /* T1_render_view.h in Sources */ = {isa = PBXBuildFile; fileRef = ECDAFF682EFBDCB000AE4CA1 /* T1_render_view.h */; };
+		ECCD574A3057CE6200493B56 /* T1_render_view.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */; };
+		ECCD574B3057CE6200493B56 /* T1_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC5B9C7D2FEF6F3A00C35D26 /* T1_settings.h */; };
+		ECCD574C3057CE6200493B56 /* T1_settings.c in Sources */ = {isa = PBXBuildFile; fileRef = EC5B9C7E2FEF6F3A00C35D26 /* T1_settings.c */; };
+		ECCD574D3057CE6200493B56 /* T1_simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* T1_simd.h */; };
+		ECCD574E3057CE6200493B56 /* T1_std.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* T1_std.h */; };
+		ECCD574F3057CE6200493B56 /* T1_std.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286F2862511600F92967 /* T1_std.c */; };
+		ECCD57503057CE6200493B56 /* T1_term.h in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25242980B6A900DB7BC8 /* T1_term.h */; };
+		ECCD57513057CE6200493B56 /* T1_term.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* T1_term.c */; };
+		ECCD57523057CE6200493B56 /* T1_tex.h in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971D2EEF6B86008D8481 /* T1_tex.h */; };
+		ECCD57533057CE6200493B56 /* T1_tex.c in Sources */ = {isa = PBXBuildFile; fileRef = EC9F971E2EEF6B86008D8481 /* T1_tex.c */; };
+		ECCD57543057CE6200493B56 /* T1_tex_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* T1_tex_array.h */; };
+		ECCD57553057CE6200493B56 /* T1_tex_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* T1_tex_array.c */; };
+		ECCD57563057CE6200493B56 /* T1_tex_files.h in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C222DE2157500721A48 /* T1_tex_files.h */; };
+		ECCD57573057CE6200493B56 /* T1_tex_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_tex_files.c */; };
+		ECCD57583057CE6200493B56 /* T1_texquad.h in Sources */ = {isa = PBXBuildFile; fileRef = EC3DF2782F197AE40049AA47 /* T1_texquad.h */; };
+		ECCD57593057CE6200493B56 /* T1_texquad.c in Sources */ = {isa = PBXBuildFile; fileRef = EC3DF2792F197AE40049AA47 /* T1_texquad.c */; };
+		ECCD575A3057CE6200493B56 /* T1_text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* T1_text.h */; };
+		ECCD575B3057CE6200493B56 /* T1_text.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128742862511600F92967 /* T1_text.c */; };
+		ECCD575C3057CE6200493B56 /* T1_token.h in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4E2DDE0F52002AA399 /* T1_token.h */; };
+		ECCD575D3057CE6200493B56 /* T1_token.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* T1_token.c */; };
+		ECCD575E3057CE6200493B56 /* T1_triangle.h in Sources */ = {isa = PBXBuildFile; fileRef = EC78509C29E639F900E6882A /* T1_triangle.h */; };
+		ECCD575F3057CE6200493B56 /* T1_triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* T1_triangle.c */; };
+		ECCD57603057CE6200493B56 /* T1_types_cpu_to_gpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* T1_types_cpu_to_gpu.h */; };
+		ECCD57613057CE6200493B56 /* T1_types_cpu_to_gpu.c in Sources */ = {isa = PBXBuildFile; fileRef = EC676A3B2DE85210001FD4DE /* T1_types_cpu_to_gpu.c */; };
+		ECCD57623057CE6200493B56 /* T1_types_gpucpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* T1_types_gpucpu.h */; };
+		ECCD57633057CE6200493B56 /* T1_types_public.h in Sources */ = {isa = PBXBuildFile; fileRef = EC5B9C7B2FEF685300C35D26 /* T1_types_public.h */; };
+		ECCD57643057CE6200493B56 /* T1_types_public_gpucpu.h in Sources */ = {isa = PBXBuildFile; fileRef = EC570B233007C3C2003B545D /* T1_types_public_gpucpu.h */; };
+		ECCD57653057CE6200493B56 /* T1_ui_widget.h in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12152A03BD8F004E7BD1 /* T1_ui_widget.h */; };
+		ECCD57663057CE6200493B56 /* T1_ui_widget.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* T1_ui_widget.c */; };
+		ECCD57673057CE6200493B56 /* T1_wav.h in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7C2B8AD447007FCBFC /* T1_wav.h */; };
+		ECCD57683057CE6200493B56 /* T1_wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* T1_wav.c */; };
+		ECCD57693057CE6200493B56 /* T1_zlight.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* T1_zlight.h */; };
+		ECCD576A3057CE6200493B56 /* T1_zlight.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* T1_zlight.c */; };
+		ECCD576B3057CE6200493B56 /* T1_zsprite.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* T1_zsprite.h */; };
+		ECCD576C3057CE6200493B56 /* T1_zsprite.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* T1_zsprite.c */; };
+		ECCD576D3057CE6200493B56 /* T1_macos_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6011289C286253DD00F92967 /* T1_macos_platform_layer.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6009B4F228679E7D00F1F279 /* T1_mem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_mem.h; path = ../../engine_src/shared/T1_mem.h; sourceTree = "<group>"; };
 		6009B4F328679E7D00F1F279 /* T1_mem.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_mem.c; path = ../../engine_src/shared/T1_mem.c; sourceTree = "<group>"; };
 		6009FB632876A47100FC5A60 /* fontmetrics.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = fontmetrics.dat; path = ../../resources/fontmetrics.dat; sourceTree = "<group>"; };
-		6011281928611F5100F92967 /* TOKONE_macos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_macos.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6011282928611F7900F92967 /* TOKONE_macos.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TOKONE_macos.entitlements; sourceTree = "<group>"; };
 		60112839286122FE00F92967 /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inflate.c; path = ../../engine_src/shared/debigulator/src/inflate.c; sourceTree = "<group>"; };
 		6011283C286122FE00F92967 /* decode_png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_png.h; path = ../../engine_src/shared/debigulator/src/decode_png.h; sourceTree = "<group>"; };
@@ -185,6 +250,7 @@
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		ECCD577030599F6600493B56 /* libT1.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libT1.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		ECD724412F367280000A6498 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/README.md; sourceTree = "<absolute>"; };
 		ECDAFF682EFBDCB000AE4CA1 /* T1_render_view.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_render_view.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_render_view.h; sourceTree = "<absolute>"; };
 		ECDAFF692EFBDCB000AE4CA1 /* T1_render_view.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_render_view.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_render_view.c; sourceTree = "<absolute>"; };
@@ -198,23 +264,16 @@
 		ECE531002EB229900035DC98 /* T1_linalg3d.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_linalg3d.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_linalg3d.c; sourceTree = "<absolute>"; };
 		ECE759CC2C3FF1BE004B0847 /* T1_collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_collision.c; path = ../../engine_src/shared/T1_collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* T1_collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_collision.h; path = ../../engine_src/shared/T1_collision.h; sourceTree = "<group>"; };
-		ECF3D4972FF755BC0006B0E7 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_platform_layer_common.c; path = ../../engine_src/shared/T1_platform_layer_common.c; sourceTree = "<group>"; };
 		ECF7CB152D53ADA400623C60 /* T1_profiler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_profiler.c; path = ../../engine_src/shared/T1_profiler.c; sourceTree = "<group>"; };
 		ECF7CB162D53ADA400623C60 /* T1_profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_profiler.h; path = ../../engine_src/shared/T1_profiler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		6011281628611F5100F92967 /* Frameworks */ = {
+		ECCD57023057CD1800493B56 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ECF3D4982FF755BC0006B0E7 /* GameController.framework in Frameworks */,
-				EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */,
-				601128A82862588900F92967 /* AppKit.framework in Frameworks */,
-				601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */,
-				601128A3286253FA00F92967 /* Metal.framework in Frameworks */,
-				601128452861239600F92967 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,7 +297,7 @@
 		6011281A28611F5100F92967 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6011281928611F5100F92967 /* TOKONE_macos.app */,
+				ECCD577030599F6600493B56 /* libT1.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -254,7 +313,6 @@
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				ECF3D4972FF755BC0006B0E7 /* GameController.framework */,
 				EC914B892B9199A1007FCBFC /* AudioToolbox.framework */,
 				EC6B1F4E293CA05500837369 /* MetalKit.framework */,
 				EC6B1F4C293CA04F00837369 /* Metal.framework */,
@@ -457,23 +515,35 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		ECCD57003057CD1800493B56 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
-		6011281828611F5100F92967 /* TOKONE_macos */ = {
+		ECCD57033057CD1800493B56 /* T1 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "TOKONE_macos" */;
+			buildConfigurationList = ECCD57073057CD1800493B56 /* Build configuration list for PBXNativeTarget "T1" */;
 			buildPhases = (
-				6011281528611F5100F92967 /* Sources */,
-				6011281628611F5100F92967 /* Frameworks */,
-				6011281728611F5100F92967 /* Resources */,
+				ECCD57003057CD1800493B56 /* Headers */,
+				ECCD57013057CD1800493B56 /* Sources */,
+				ECCD57023057CD1800493B56 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = TOKONE_macos;
-			productName = engine;
-			productReference = 6011281928611F5100F92967 /* TOKONE_macos.app */;
-			productType = "com.apple.product-type.application";
+			name = T1;
+			packageProductDependencies = (
+			);
+			productName = libT1;
+			productReference = ECCD577030599F6600493B56 /* libT1.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
@@ -484,8 +554,8 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
-					6011281828611F5100F92967 = {
-						CreatedOnToolsVersion = 13.2.1;
+					ECCD57033057CD1800493B56 = {
+						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
@@ -502,56 +572,118 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6011281828611F5100F92967 /* TOKONE_macos */,
+				ECCD57033057CD1800493B56 /* T1 */,
 			);
 		};
 /* End PBXProject section */
 
-/* Begin PBXResourcesBuildPhase section */
-		6011281728611F5100F92967 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
-				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
-				EC7FBC402DECE93000A679A7 /* 1001_albedo.png in Resources */,
-				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
-				EC90BDC22E040D5200773769 /* perlin_noise.dds in Resources */,
-				EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */,
-				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
-				EC90BD982E03266700773769 /* crack_1.mtl in Resources */,
-				EC90BD992E03266700773769 /* crack_1.obj in Resources */,
-				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
-				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
-				EC676A3D2DE8D41D001FD4DE /* guitar_simplified.mtl in Resources */,
-				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
-				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
-				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
-				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
-				EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */,
-				EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */,
-				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
-				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
-				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
-				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
-				601128B028625BAF00F92967 /* font.png in Resources */,
-				EC14028E2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */,
-				EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */,
-				601128AF28625BAF00F92967 /* teapot.obj in Resources */,
-				EC18FF4829E3DD8900ED785C /* blob3.png in Resources */,
-				EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-		6011281528611F5100F92967 /* Sources */ = {
+		ECCD57013057CD1800493B56 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EC0531612C43D20F00C6771A /* unitybuild_macos.c in Sources */,
-				EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */,
+				ECCD57083057CE6200493B56 /* T1_linux_apple_platform_layer.c in Sources */,
+				ECCD57093057CE6200493B56 /* decode_bmp.h in Sources */,
+				ECCD570A3057CE6200493B56 /* decode_bmp.c in Sources */,
+				ECCD570B3057CE6200493B56 /* decode_png.h in Sources */,
+				ECCD570C3057CE6200493B56 /* decode_png.c in Sources */,
+				ECCD570D3057CE6200493B56 /* inflate.h in Sources */,
+				ECCD570E3057CE6200493B56 /* inflate.c in Sources */,
+				ECCD570F3057CE6200493B56 /* T1.h in Sources */,
+				ECCD57103057CE6200493B56 /* T1.c in Sources */,
+				ECCD57113057CE6200493B56 /* T1_anim.h in Sources */,
+				ECCD57123057CE6200493B56 /* T1_anim.c in Sources */,
+				ECCD57133057CE6200493B56 /* T1_appinit.h in Sources */,
+				ECCD57143057CE6200493B56 /* T1_appinit.c in Sources */,
+				ECCD57153057CE6200493B56 /* T1_apple_audio.h in Sources */,
+				ECCD57163057CE6200493B56 /* T1_apple_audio.m in Sources */,
+				ECCD57173057CE6200493B56 /* T1_apple_platform_layer.m in Sources */,
+				ECCD57183057CE6200493B56 /* T1_audio.h in Sources */,
+				ECCD57193057CE6200493B56 /* T1_audio.c in Sources */,
+				ECCD571A3057CE6200493B56 /* T1_client.h in Sources */,
+				ECCD571B3057CE6200493B56 /* T1_collision.h in Sources */,
+				ECCD571C3057CE6200493B56 /* T1_collision.c in Sources */,
+				ECCD571D3057CE6200493B56 /* T1_easing.h in Sources */,
+				ECCD571E3057CE6200493B56 /* T1_easing.c in Sources */,
+				ECCD571F3057CE6200493B56 /* T1_frame_anim.h in Sources */,
+				ECCD57203057CE6200493B56 /* T1_frame_anim.c in Sources */,
+				ECCD57213057CE6200493B56 /* T1_gameloop.h in Sources */,
+				ECCD57223057CE6200493B56 /* T1_gameloop.c in Sources */,
+				ECCD57233057CE6200493B56 /* T1_global.h in Sources */,
+				ECCD57243057CE6200493B56 /* T1_global.c in Sources */,
+				ECCD57253057CE6200493B56 /* T1_gpu.h in Sources */,
+				ECCD57263057CE6200493B56 /* T1_gpu.m in Sources */,
+				ECCD57273057CE6200493B56 /* T1_id.h in Sources */,
+				ECCD57283057CE6200493B56 /* T1_id.c in Sources */,
+				ECCD57293057CE6200493B56 /* T1_img.h in Sources */,
+				ECCD572A3057CE6200493B56 /* T1_img.c in Sources */,
+				ECCD572B3057CE6200493B56 /* T1_io.h in Sources */,
+				ECCD572C3057CE6200493B56 /* T1_io.c in Sources */,
+				ECCD572D3057CE6200493B56 /* T1_linalg3d.h in Sources */,
+				ECCD572E3057CE6200493B56 /* T1_linalg3d.c in Sources */,
+				ECCD572F3057CE6200493B56 /* T1_log.h in Sources */,
+				ECCD57303057CE6200493B56 /* T1_log.c in Sources */,
+				ECCD57313057CE6200493B56 /* T1_material.h in Sources */,
+				ECCD57323057CE6200493B56 /* T1_material.c in Sources */,
+				ECCD57333057CE6200493B56 /* T1_mem.h in Sources */,
+				ECCD57343057CE6200493B56 /* T1_mem.c in Sources */,
+				ECCD57353057CE6200493B56 /* T1_mesh_summary.h in Sources */,
+				ECCD57363057CE6200493B56 /* T1_mesh_summary.c in Sources */,
+				ECCD57373057CE6200493B56 /* T1_meta.h in Sources */,
+				ECCD57383057CE6200493B56 /* T1_meta.c in Sources */,
+				ECCD57393057CE6200493B56 /* T1_mtlparser.h in Sources */,
+				ECCD573A3057CE6200493B56 /* T1_mtlparser.c in Sources */,
+				ECCD573B3057CE6200493B56 /* T1_objmodel.h in Sources */,
+				ECCD573C3057CE6200493B56 /* T1_objmodel.c in Sources */,
+				ECCD573D3057CE6200493B56 /* T1_objparser.h in Sources */,
+				ECCD573E3057CE6200493B56 /* T1_objparser.c in Sources */,
+				ECCD573F3057CE6200493B56 /* T1_particle.h in Sources */,
+				ECCD57403057CE6200493B56 /* T1_particle.c in Sources */,
+				ECCD57413057CE6200493B56 /* T1_platform_layer.h in Sources */,
+				ECCD57423057CE6200493B56 /* T1_platform_layer_common.c in Sources */,
+				ECCD57433057CE6200493B56 /* T1_profiler.h in Sources */,
+				ECCD57443057CE6200493B56 /* T1_profiler.c in Sources */,
+				ECCD57453057CE6200493B56 /* T1_rand.h in Sources */,
+				ECCD57463057CE6200493B56 /* T1_rand.c in Sources */,
+				ECCD57473057CE6200493B56 /* T1_render.h in Sources */,
+				ECCD57483057CE6200493B56 /* T1_render.c in Sources */,
+				ECCD57493057CE6200493B56 /* T1_render_view.h in Sources */,
+				ECCD574A3057CE6200493B56 /* T1_render_view.c in Sources */,
+				ECCD574B3057CE6200493B56 /* T1_settings.h in Sources */,
+				ECCD574C3057CE6200493B56 /* T1_settings.c in Sources */,
+				ECCD574D3057CE6200493B56 /* T1_simd.h in Sources */,
+				ECCD574E3057CE6200493B56 /* T1_std.h in Sources */,
+				ECCD574F3057CE6200493B56 /* T1_std.c in Sources */,
+				ECCD57503057CE6200493B56 /* T1_term.h in Sources */,
+				ECCD57513057CE6200493B56 /* T1_term.c in Sources */,
+				ECCD57523057CE6200493B56 /* T1_tex.h in Sources */,
+				ECCD57533057CE6200493B56 /* T1_tex.c in Sources */,
+				ECCD57543057CE6200493B56 /* T1_tex_array.h in Sources */,
+				ECCD57553057CE6200493B56 /* T1_tex_array.c in Sources */,
+				ECCD57563057CE6200493B56 /* T1_tex_files.h in Sources */,
+				ECCD57573057CE6200493B56 /* T1_tex_files.c in Sources */,
+				ECCD57583057CE6200493B56 /* T1_texquad.h in Sources */,
+				ECCD57593057CE6200493B56 /* T1_texquad.c in Sources */,
+				ECCD575A3057CE6200493B56 /* T1_text.h in Sources */,
+				ECCD575B3057CE6200493B56 /* T1_text.c in Sources */,
+				ECCD575C3057CE6200493B56 /* T1_token.h in Sources */,
+				ECCD575D3057CE6200493B56 /* T1_token.c in Sources */,
+				ECCD575E3057CE6200493B56 /* T1_triangle.h in Sources */,
+				ECCD575F3057CE6200493B56 /* T1_triangle.c in Sources */,
+				ECCD57603057CE6200493B56 /* T1_types_cpu_to_gpu.h in Sources */,
+				ECCD57613057CE6200493B56 /* T1_types_cpu_to_gpu.c in Sources */,
+				ECCD57623057CE6200493B56 /* T1_types_gpucpu.h in Sources */,
+				ECCD57633057CE6200493B56 /* T1_types_public.h in Sources */,
+				ECCD57643057CE6200493B56 /* T1_types_public_gpucpu.h in Sources */,
+				ECCD57653057CE6200493B56 /* T1_ui_widget.h in Sources */,
+				ECCD57663057CE6200493B56 /* T1_ui_widget.c in Sources */,
+				ECCD57673057CE6200493B56 /* T1_wav.h in Sources */,
+				ECCD57683057CE6200493B56 /* T1_wav.c in Sources */,
+				ECCD57693057CE6200493B56 /* T1_zlight.h in Sources */,
+				ECCD576A3057CE6200493B56 /* T1_zlight.c in Sources */,
+				ECCD576B3057CE6200493B56 /* T1_zsprite.h in Sources */,
+				ECCD576C3057CE6200493B56 /* T1_zsprite.c in Sources */,
+				ECCD576D3057CE6200493B56 /* T1_macos_platform_layer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -690,174 +822,76 @@
 			};
 			name = Release;
 		};
-		6011282B28611F7900F92967 /* Debug */ = {
+		ECCD57053057CD1800493B56 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
-				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
-				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = c11;
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_PEDANTIC = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = "";
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"\"-includeclient_macro_settings.h\"",
-					"-DT1_SHARED_APPLE_PLATFORM=1",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.TOK.engine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/build";
 			};
 			name = Debug;
 		};
-		6011282C28611F7900F92967 /* Release */ = {
+		ECCD57063057CD1800493B56 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
-				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
-				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
-				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
-				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_PEDANTIC = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = "";
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 1.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = (
-					"\"-includeclient_macro_settings.h\"",
-					"-DT1_SHARED_APPLE_PLATFORM=1",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.TOK.engine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SWIFT_EMIT_LOC_STRINGS = YES;
+				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/build";
 			};
 			name = Release;
 		};
@@ -873,11 +907,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "TOKONE_macos" */ = {
+		ECCD57073057CD1800493B56 /* Build configuration list for PBXNativeTarget "T1" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				6011282B28611F7900F92967 /* Debug */,
-				6011282C28611F7900F92967 /* Release */,
+				ECCD57053057CD1800493B56 /* Debug */,
+				ECCD57063057CD1800493B56 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

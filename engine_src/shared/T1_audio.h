@@ -3,7 +3,7 @@
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 
-#include "T1_public_types.h"
+#include "T1_types_public.h"
 #include "T1_stdint.h"
 
 typedef struct {

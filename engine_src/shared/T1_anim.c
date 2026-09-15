@@ -184,7 +184,7 @@ static T1zLightf32 * T1_anim_fetch_next_store_zl_gpu_f32s(
     {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= (1 << 5);
@@ -202,7 +202,7 @@ T1_anim_fetch_next_store_zs_gpu_f32s(u16 * store_i) {
     {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= (1 << 4);
@@ -220,7 +220,7 @@ T1_anim_fetch_next_store_zs_cpu_f32s(u16 * store_i) {
     {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= (1 << 3);
@@ -240,7 +240,7 @@ T1_anim_fetch_next_store_zs_gpu_u32s(u16 * store_i) {
     {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= (1 << 2);
@@ -260,7 +260,7 @@ T1_anim_fetch_next_store_tq_gpu_f32s(u16 * store_i) {
     {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= (1 << 1);
@@ -277,7 +277,7 @@ T1_anim_fetch_next_store_tq_gpu_u32s(u16 * store_i) {
     while ((as->store_taken[i] & 1) && i < T1_ANIMS_CAP) {
         i++;
     }
-    T1_assert(i < T1_ANIMS_CAP);
+    T1_log_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->store_taken[i] |= 1;
@@ -635,7 +635,7 @@ static void T1_anim_resolve_single(
         if (a->pub.zl_gpu_f32s)
         {
             // TODO: apply anim (non-endpoint) for zLight
-            T1_assert(0);
+            T1_log_assert(0);
         }
     }
 }
@@ -771,30 +771,30 @@ void T1_anim_commit(
         // don't use T1_ANIM_NO_EFFECT in non-endpoint anims
         if (parent->pub.zs_cpu_f32s) {
             for (u32 i = 0; i < (sizeof(T1CPUzSpritef32) / 4); i++) {
-                T1_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != T1_ANIM_NO_EFFECT);
-                T1_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != 65535.0f);
+                T1_log_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != T1_ANIM_NO_EFFECT);
+                T1_log_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != 65535.0f);
             }
         }
         if (parent->pub.zs_gpu_f32s) {
             for (u32 i = 0; i < (sizeof(T1GPUzSpritef32) / 4); i++) {
-                T1_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != T1_ANIM_NO_EFFECT);
-                T1_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != 65535.0f);
+                T1_log_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != T1_ANIM_NO_EFFECT);
+                T1_log_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != 65535.0f);
             }
         }
         if (parent->pub.zs_gpu_u32s) {
             for (u32 i = 0; i < (sizeof(T1GPUzSpriteu32) / 4); i++) {
                 f32 check;
                 T1_std_memcpy(&check, ((u32 *)parent->pub.zs_gpu_u32s) + i, 4);
-                T1_assert(check != T1_ANIM_NO_EFFECT);
-                T1_assert(check != 65535.0f);
+                T1_log_assert(check != T1_ANIM_NO_EFFECT);
+                T1_log_assert(check != 65535.0f);
             }
         }
         if (parent->pub.zl_gpu_f32s) {
             for (u32 i = 0; i < (sizeof(T1zLightf32) / 4); i++) {
                 f32 check;
                 T1_std_memcpy(&check, parent->pub.zl_gpu_f32s + i, 4);
-                T1_assert(check != T1_ANIM_NO_EFFECT);
-                T1_assert(check != 65535.0f);
+                T1_log_assert(check != T1_ANIM_NO_EFFECT);
+                T1_log_assert(check != 65535.0f);
             }
         }
     }

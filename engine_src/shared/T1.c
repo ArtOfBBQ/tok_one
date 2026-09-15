@@ -9,6 +9,10 @@
 #include "T1_io.h"
 #include "T1_platform_layer.h"
 
+uint8_t T1_running(void) {
+    return T1_log_app_running > 0;
+}
+
 void T1_assert(b8 condition) {
     T1_log_assert(condition);
 }
@@ -331,12 +335,14 @@ u8 * T1_png_malloc_managed_from_resource(
     return rgba;
 }
 
-void
-T1_png_get_width_height(
+// TODO: is this called in any of our projects?
+// - not called in deck assembler
+#if 0
+void T1_png_get_width_height(
     const u8 * compressed_input,
     u64 compressed_input_size,
-    u32 * const out_width,
-    u32 * const out_height,
+    u32 * out_width,
+    u32 * out_height,
     u8 * out_good)
 {
     decode_png_get_width_height(
@@ -362,3 +368,4 @@ void T1_png_decode(
         thread_id,
         out_good);
 }
+#endif

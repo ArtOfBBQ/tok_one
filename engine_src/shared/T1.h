@@ -58,6 +58,7 @@ void T1_log_append_u32(uint32_t u32val);
 /*
 APPLICATION STARTUP
 */
+uint8_t T1_running(void);
 void T1_os_create_main_window(
     uint8_t * good);
 void T1_appinit_before_gpu_init(
@@ -160,7 +161,7 @@ void T1_rand_shuf_array(void * array, uint32_t array_sz, uint32_t elem_sz);
 CAMERA MANIPULATION
 */
 void  T1_cam_set_us_to_dest(int32_t cam_i, uint64_t us);
-float   T1_cam_get_angle_xyz(int32_t cam_i, int32_t i);
+float T1_cam_get_angle_xyz(int32_t cam_i, int32_t i);
 void  T1_cam_set_dest_xyz(int32_t cam_i, int32_t i, float newval);
 void  T1_cam_add_dest_xyz(int32_t cam_i, int32_t i, float newval);
 void  T1_cam_set_dest_angle_xyz(int32_t cam_i, int32_t i, float newval);

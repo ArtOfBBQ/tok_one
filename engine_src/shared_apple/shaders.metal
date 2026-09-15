@@ -136,6 +136,7 @@ vertex_shader(
         lv->norm_xyz[1],
         lv->norm_xyz[2]);
     
+    #if 0
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     float3 face_normal = vector_float3(
         lv->face_normal_xyz[0],
@@ -144,6 +145,7 @@ vertex_shader(
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
+    #endif
     #endif
     
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE

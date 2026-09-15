@@ -261,11 +261,11 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     if (!img->good) {
         T1_std_strcpy_cap(
             error_message,
-            512,
+            error_message_cap,
             "Couldn't read file: ");
         T1_std_strcat_cap(
             error_message,
-            512,
+            error_message_cap,
             filename);
         return;
     }

@@ -2,7 +2,7 @@
 #define T1_TYPES_GPUCPU_H
 
 #include "T1_stdint.h"
-#include "client_macro_settings.h"
+#include "T1_macro_settings.h"
 
 #define T1_CAM_DEPTH_FRAGARG_I 30
 #define T1_SHADOW_MAPS_1ST_FRAGARG_I 31

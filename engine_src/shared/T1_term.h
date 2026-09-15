@@ -3,11 +3,16 @@
 #ifndef T1_TERM_H
 #define T1_TERM_H
 
+#include "T1_stdint.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void T1_term_init(void (* enter_fullscreen_fncptr)(void));
+void T1_term_init(
+    void (* callback_eval_command_fptr)(
+        char *, char *, u32),
+    void (* enter_fullscreen_fncptr)(void));
 
 void T1_term_update(void);
 

@@ -189,7 +189,7 @@ void T1_appinit_before_gpu_init(
     void (* callback_update_fptr)(u64),
     void (* callback_onwindowresize_fptr)(void),
     void (* callback_onappclose_fptr)(void),
-    void (* example_callback_evaluate_terminal_command)(
+    void (* callback_on_terminal_cmd)(
         char * command, char * response, u32),
     u8 * success,
     char * error_message,
@@ -491,7 +491,9 @@ void T1_appinit_before_gpu_init(
             callback_onwindowresize_fptr);
     
     #if T1_TERM_ACTIVE == T1_ACTIVE
-    T1_term_init(T1_os_enter_fullscreen);
+    T1_term_init(
+        callback_on_terminal_cmd,
+        T1_os_enter_fullscreen);
     #elif T1_TERM_ACTIVE == T1_INACTIVE
     // Pass
     #else

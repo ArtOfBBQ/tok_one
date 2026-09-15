@@ -45,14 +45,18 @@ static T1GameloopState * T1_gl_s = NULL;
 
 void T1_gameloop_init(
     void *(* arg_malloc_fptr)(size_t),
-    void (* client_update_fptr)(u64),
+    void (* client_callback_on_update_fptr)(u64),
     void (* client_callback_after_render_fptr)(void),
     void (* client_callback_update_window_resize)(void))
 {
+    // not implemented
+    T1_log_assert(client_callback_after_render_fptr == NULL);
+    
     T1_gl_s = arg_malloc_fptr(sizeof(T1GameloopState));
     T1_std_memset(T1_gl_s, 0, sizeof(T1GameloopState));
     T1_gl_s->loading_text_T1_id = T1_ID_NONE;
-    T1_gl_s->client_callback_update_fptr = client_update_fptr;
+    T1_gl_s->client_callback_update_fptr =
+        client_callback_on_update_fptr;
     T1_gl_s->client_callback_update_window_resize =
         client_callback_update_window_resize;
 }

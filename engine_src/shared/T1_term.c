@@ -23,7 +23,7 @@
 #define T1_TERM_HIST_CAP 500000
 #define T1_TERM_SINGLE_LINE_MAX 1024
 typedef struct {
-    void (* callback_evaluate_terminal_command)(
+    void (* callback_eval_command_fptr)(
         char *, char *, u32);
     void (* to_fullscreen_fncptr)(void);
     u32 history_size;
@@ -1045,19 +1045,26 @@ static void T1_term_commit_or_activate(void) {
                 T1_trms->history,
                 T1_TERM_HIST_CAP,
                 "\n");
-        } else {
-            T1_trms->callback_evaluate_terminal_command(
+        } else if (
+            T1_trms->callback_eval_command_fptr)
+        {
+            T1_trms->callback_eval_command_fptr(
                 T1_trms->cur_command,
                 client_response,
                 T1_TERM_SINGLE_LINE_MAX);
-            T1_std_strcat_cap(
-                T1_trms->history,
-                T1_TERM_HIST_CAP,
-                client_response);
+                T1_std_strcat_cap(
+                    T1_trms->history,
+                        T1_TERM_HIST_CAP,
+                        client_response);
             T1_std_strcat_cap(
                 T1_trms->history,
                 T1_TERM_HIST_CAP,
                 "\n");
+        } else {
+            T1_std_strcat_cap(
+                T1_trms->history,
+                T1_TERM_HIST_CAP,
+                "Unrecognized command\n");
         }
         
         T1_trms->cur_command[0] = '\0';
@@ -1116,12 +1123,16 @@ void T1_term_manually_deactivate(void) {
 }
 
 void T1_term_init(
+    void (* callback_eval_command_fptr)(
+        char *, char *, u32),
     void (* enter_fullscreen_fncptr)(void))
 {
     T1_trms = T1_mem_malloc_unmanaged(
         sizeof(T1TermState));
     T1_std_memset(T1_trms, 0, sizeof(T1TermState));
     
+    T1_trms->callback_eval_command_fptr =
+        callback_eval_command_fptr;
     T1_trms->to_fullscreen_fncptr = enter_fullscreen_fncptr;
     
     T1_trms->scene_id = T1_io_create_scene_and_return_id();
