@@ -384,6 +384,8 @@ void T1_appinit_before_gpu_init(
     if (!T1_global) { return; }
     T1_std_memset(T1_global, 0, sizeof(T1Globals));
     
+    T1_objc_init(T1_mem_malloc_unmanaged);
+    
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
         /* void *(*arg_malloc_function)(u64): */

@@ -1410,7 +1410,6 @@ static void strip_array_brackets_and_get_array_indices(
     u32 * array_indices_found)
 {
     u64 field_name_len = t1ms->fp_strlen(to_strip);
-    u8 is_array = 0;
     t1ms->fp_memset(
         array_indices,
         0,
@@ -1441,7 +1440,6 @@ static void strip_array_brackets_and_get_array_indices(
         }
         
         if (to_strip[i] == '[') {
-            is_array = 1;
             array_indices[0] = total;
             to_strip[i] = '\0';
             field_name_len -= 3;

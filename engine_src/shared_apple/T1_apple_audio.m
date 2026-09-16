@@ -1,6 +1,79 @@
 #import "T1_apple_audio.h"
 
+#include "T1_objc.h"
+
+#include <AudioToolbox/AudioToolbox.h>
+
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
+typedef struct {
+    void * (* msg_send)(void *, void *);
+    u32    (* msg_send_u32)(void *, void *);
+    
+    OSStatus (* audio_queue_new_output)(
+        const AudioStreamBasicDescription *,
+        AudioQueueOutputCallback,
+        void *,
+        CFRunLoopRef,
+        CFStringRef,
+        UInt32,
+        AudioQueueRef *);
+    
+    void * class_GCController;
+    void * sel_someproperty;
+    u8 good;
+} T1AppleAudioLibObjCPointers;
+
+static T1AppleAudioLibObjCPointers * T1_aa_s = NULL;
+
+static void T1_apple_audio_init_if_needed(void) {
+    T1_aa_s = T1_mem_malloc_unmanaged(
+        sizeof(T1AppleAudioLibObjCPointers));
+    if (!T1_aa_s) { return; }
+    T1_std_memset(T1_aa_s, 0, sizeof(T1AppleAudioLibObjCPointers));
+    
+    void * libobjc = dlopen(
+        "/usr/lib/libobjc.A.dylib",
+        RTLD_LAZY);
+    if (!libobjc) {
+        return;
+    }
+    void * framework_audiotb = dlopen(
+        "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox",
+        RTLD_LAZY);
+    if (!framework_audiotb) {
+        dlclose(libobjc);
+        return;
+    }
+    
+    void * (*objc_getclass)(const char *) = dlsym(
+        libobjc,
+        "objc_getClass");
+    if (!objc_getclass) {
+        dlclose(libobjc);
+        dlclose(framework_audiotb);
+        return;
+    }
+    
+    T1_aa_s->msg_send = dlsym(libobjc, "objc_msgSend");
+    if (!T1_aa_s->msg_send) {
+        dlclose(libobjc);
+        dlclose(framework_audiotb);
+        return;
+    }
+    T1_aa_s->msg_send_u32 = (u32 (*)(void *, void *))T1_aa_s->msg_send;
+    
+    void * (*objc_sel_reg)(const char *) = dlsym(
+        libobjc,
+        "sel_registerName");
+    if (!objc_sel_reg) { T1_aa_s->good = 0; }
+    
+    // T1_aa_s->sel_current = objc_sel_reg("current");
+    // if (!T1_aa_s->sel_current) { T1_mpl_objc->good = 0; }
+    
+    dlclose(libobjc);
+    dlclose(framework_audiotb);
+}
+
 static void T1_apple_audio_callback(
     void * in_user_data,
     AudioQueueRef queue,

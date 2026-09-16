@@ -27,11 +27,7 @@ else
     fi
 fi
 
-MAC_FRAMEWORKS="
-    -framework AppKit 
-    -framework MetalKit 
-    -framework Metal
-    -framework AudioToolbox"
+MAC_FRAMEWORKS=""
 
 echo "create build folder..>"
 sudo mkdir -p build/lib/macos

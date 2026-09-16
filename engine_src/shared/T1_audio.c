@@ -4,7 +4,7 @@
 #include "T1_std.h"
 #include "T1_log.h"
 
-#define T1_AUDIO_ASSERTS_ACTIVE 2
+#define T1_AUDIO_ASSERTS_ACTIVE 1
 #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h>
 #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
@@ -31,7 +31,7 @@ static s16 * all_samples = NULL;
 s32 all_samples_size = 0;
 
 void T1_audio_init(
-    void * (* arg_malloc_function)(u64 size))
+    void * (* arg_malloc_function)(size_t size))
 {
     T1_audio_state               = arg_malloc_function(sizeof(T1AudioSettingsFullyPublic));
     T1_std_memset(T1_audio_state, 0, sizeof(T1AudioSettingsFullyPublic));
@@ -90,7 +90,7 @@ void T1_audio_init(
 //__attribute__((noinline))
 void T1_audio_consume_int16_samples(
     s16 * recipient,
-    const u32 samples_to_copy)
+    u32 samples_to_copy)
 {
     for (u32 _ = 0; _ < samples_to_copy; _++) {
         u32 next_i = (T1_audio_s->play_cursor) %
@@ -114,12 +114,12 @@ void T1_audio_consume_int16_samples(
 #define DEFAULT_WRITING_OFFSET 12
 void T1_audio_add_at_offset(
     s16 * data,
-    const u32 data_size,
-    const u64 play_cursor_offset,
-    const f32 volume_mult)
+    u32 data_size,
+    u64 play_cursor_offset,
+    f32 volume_mult)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(data_size < (T1_audio_state->global_buffer_size_bytes / 2));
+    assert(data_size < (T1_audio_s->global_buffer_size_bytes / 2));
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -141,27 +141,27 @@ void T1_audio_add_at_offset(
 
 void T1_audio_add(
     s16 * data,
-    const u32 data_size,
-    const f32 volume_mult)
+    u32 data_size,
+    f32 volume_mult)
 {
     T1_audio_add_at_offset(
         /* s16 * data: */
             data,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             data_size,
-        /* const u64 play_cursor_offset: */
+        /* u64 play_cursor_offset: */
             DEFAULT_WRITING_OFFSET,
-        /* const f32 volume_mult: */
+        /* f32 volume_mult: */
             volume_mult);
 }
 
 void T1_audio_copy(
     s16 * data,
-    const u32 data_size,
-    const b8 is_music)
+    u32 data_size,
+    b8 is_music)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(data_size < T1_audio_state->global_buffer_size_bytes);
+    assert(data_size < T1_audio_s->global_buffer_size_bytes);
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -170,22 +170,22 @@ void T1_audio_copy(
     T1_audio_copy_at_offset(
         /* s16 * data: */
             data,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             data_size,
-        /* const u64 play_cursor_offset: */
+        /* u64 play_cursor_offset: */
             DEFAULT_WRITING_OFFSET,
-        /* const bool8_t is_music: */
+        /* bool8_t is_music: */
             is_music);
 }
 
 void T1_audio_copy_at_offset(
     s16 * samples,
-    const u32 samples_size,
-    const u64 play_cursor_offset,
-    const b8 is_music)
+    u32 samples_size,
+    u64 play_cursor_offset,
+    b8 is_music)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(samples_size < T1_audio_state->global_buffer_size_bytes);
+    assert(samples_size < T1_audio_s->global_buffer_size_bytes);
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -205,9 +205,9 @@ void T1_audio_copy_at_offset(
 }
 
 void T1_audio_add_permasound_to_global_buffer_at_offset(
-    const s32 permasound_id,
-    const u64 play_cursor_offset,
-    const f32 volume_mult)
+    s32 permasound_id,
+    u64 play_cursor_offset,
+    f32 volume_mult)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -220,20 +220,20 @@ void T1_audio_add_permasound_to_global_buffer_at_offset(
     T1_audio_add_at_offset(
         /* s16 * data: */
             all_samples + all_permasounds[permasound_id].allsamples_head_i,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             (u32)all_permasounds[permasound_id].allsamples_tail_i -
                 (u32)all_permasounds[permasound_id].allsamples_head_i,
-        /* const u32 play_cursor_offset: */
+        /* u32 play_cursor_offset: */
             play_cursor_offset,
         /* volume_mult: */
             volume_mult);
 }
 
 void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
-    const s32 permasound_id,
-    const u64 permasound_offset,
-    const u64 play_cursor_offset,
-    const f32 volume_mult)
+    s32 permasound_id,
+    u64 permasound_offset,
+    u64 play_cursor_offset,
+    f32 volume_mult)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -248,33 +248,33 @@ void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
         /* s16 * data: */
             all_samples + all_permasounds[permasound_id].
                 allsamples_head_i + permasound_offset,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             (u32)all_permasounds[permasound_id].allsamples_tail_i -
                 (u32)all_permasounds[permasound_id].allsamples_head_i -
                     (u32)permasound_offset,
-        /* const u32 play_cursor_offset: */
+        /* u32 play_cursor_offset: */
             play_cursor_offset,
-        /* const f32 volume_mult: */
+        /* f32 volume_mult: */
             volume_mult);
 }
 
 void T1_audio_add_permasound_to_global_buffer(
-    const s32 permasound_id,
-    const f32 volume_mult)
+    s32 permasound_id,
+    f32 volume_mult)
 {
     T1_audio_add_permasound_to_global_buffer_at_offset(
-        /* const s32 permasound_id: */
+        /* s32 permasound_id: */
             permasound_id,
-        /* const u64 play_cursor_offset: */
+        /* u64 play_cursor_offset: */
             DEFAULT_WRITING_OFFSET,
-        /* const f32 volume_mult: */
+        /* f32 volume_mult: */
             volume_mult);
 }
 
 void T1_audio_copy_permasound_to_global_buffer_at_offset(
-    const s32 permasound_id,
-    const u64 play_cursor_offset,
-    const b8 is_music)
+    s32 permasound_id,
+    u64 play_cursor_offset,
+    b8 is_music)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -287,21 +287,21 @@ void T1_audio_copy_permasound_to_global_buffer_at_offset(
     T1_audio_copy_at_offset(
         /* s16 * data: */
             all_samples + all_permasounds[permasound_id].allsamples_head_i,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             (u32)all_permasounds[permasound_id].allsamples_tail_i -
                 (u32)all_permasounds[permasound_id].allsamples_head_i,
-        /* const u32 play_cursor_offset: */
+        /* u32 play_cursor_offset: */
             play_cursor_offset,
-        /* const bool32_t is_music: */
+        /* bool32_t is_music: */
             is_music);
 }
 
 void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
-    const s32 permasound_id,
-    const u64 permasound_offset,
-    const u64 play_cursor_offset,
-    const u32 samples_to_copy_size,
-    const b8 is_music)
+    s32 permasound_id,
+    u64 permasound_offset,
+    u64 play_cursor_offset,
+    u32 samples_to_copy_size,
+    b8  is_music)
 {
     T1_log_assert(permasound_id >= 0);
     T1_log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -317,24 +317,24 @@ void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
             all_samples +
                 all_permasounds[permasound_id].allsamples_head_i +
                     permasound_offset,
-        /* const u32 data_size: */
+        /* u32 data_size: */
             samples_to_copy_size,
-        /* const u32 play_cursor_offset: */
+        /* u32 play_cursor_offset: */
             play_cursor_offset,
-        /* const bool32_t is_music: */
+        /* bool32_t is_music: */
             is_music);
 }
 
 void T1_audio_copy_permasound_to_global_buffer(
-    const s32 permasound_id,
-    const f32 volume_mult)
+    s32 permasound_id,
+    f32 volume_mult)
 {
     T1_audio_add_permasound_to_global_buffer_at_offset(
-        /* const s32 permasound_id: */
+        /* s32 permasound_id: */
             permasound_id,
-        /* const u64 play_cursor_offset: */
+        /* u64 play_cursor_offset: */
             DEFAULT_WRITING_OFFSET,
-        /* const f32 volume_mult: */
+        /* f32 volume_mult: */
             volume_mult);
 }
 
@@ -372,9 +372,9 @@ s32 T1_audio_get_permasound_id_or_register_new(
 }
 
 void T1_audio_register_samples_to_permasound(
-    const s32 permasound_id,
+    s32 permasound_id,
     s16 * samples,
-    const s32 samples_size)
+    s32 samples_size)
 {
     T1_log_assert(samples_size + all_samples_size <= T1_ALL_AUDIOSAMPLES_SIZE);
     T1_log_assert(all_permasounds[permasound_id].allsamples_head_i < 0);

@@ -21,7 +21,7 @@ extern T1AudioSettings * T1_audio_s;
 extern T1AudioSettingsFullyPublic * T1_audio_state;
 
 void T1_audio_init(
-    void * (* arg_malloc_function)(u64 size));
+    void * (* arg_malloc_function)(size_t size));
 
 void T1_audio_consume_int16_samples(
     s16 * recipient,
@@ -49,39 +49,34 @@ void T1_audio_copy_at_offset(
     const u64 play_cursor_offset,
     const b8 is_music);
 
-void
-T1_audio_add_permasound_to_global_buffer_at_offset(
+void T1_audio_add_permasound_to_global_buffer_at_offset(
     s32 permasound_id,
     u64 play_cursor_offset,
     f32 volume_mult);
 
-void
-T1_audio_add_offset_permasound_to_global_buffer_at_offset(
+void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
     const s32 permasound_id,
     const u64 permasound_offset,
     const u64 play_cursor_offset,
     const f32 volume_mult);
 
-void
-T1_audio_add_permasound_to_global_buffer(
+void T1_audio_add_permasound_to_global_buffer(
     s32 permasound_id,
     f32 volume_f32);
 
-void
-T1_audio_copy_permasound_to_global_buffer_at_offset(
-    const s32 permasound_id,
-    const u64 play_cursor_offset,
-    const b8 is_music);
+void T1_audio_copy_permasound_to_global_buffer_at_offset(
+    s32 permasound_id,
+    u64 play_cursor_offset,
+    b8 is_music);
 
 void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
     s32 permasound_id,
     u64 permasound_offset,
     u64 play_cursor_offset,
     u32 samples_to_copy_size,
-    b8 is_music);
+    b8  is_music);
 
-void
-T1_audio_copy_permasound_to_global_buffer(
+void T1_audio_copy_permasound_to_global_buffer(
     const s32 permasound_id,
     const f32 volume_mult);
 
@@ -89,12 +84,10 @@ u64 T1_audio_get_play_cursor(void);
 
 void T1_audio_clear_global_buffer(void);
 
-s32
-T1_audio_get_permasound_id_or_register_new(
+s32 T1_audio_get_permasound_id_or_register_new(
     const char * for_resource_name);
 
-void
-T1_audio_register_samples_to_permasound(
+void T1_audio_register_samples_to_permasound(
     s32 permasound_id,
     s16 * samples,
     s32 samples_size);
