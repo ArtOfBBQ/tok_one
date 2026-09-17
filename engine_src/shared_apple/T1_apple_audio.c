@@ -1,5 +1,7 @@
 #import "T1_apple_audio.h"
 
+#include "T1_std.h"
+#include "T1_mem.h"
 #include "T1_objc.h"
 
 #include <AudioToolbox/AudioToolbox.h>
@@ -17,6 +19,18 @@ typedef struct {
         CFStringRef,
         UInt32,
         AudioQueueRef *);
+    OSStatus (* audio_queue_alloc_buffer)(
+        AudioQueueRef,
+        UInt32,
+        AudioQueueBufferRef *);
+    OSStatus (* audio_queue_start)(
+        AudioQueueRef,
+        const AudioTimeStamp *);
+    OSStatus (* audio_queue_enqueue_buffer)(
+        AudioQueueRef,
+        AudioQueueBufferRef,
+        UInt32,
+        const AudioStreamPacketDescription *);
     
     void * class_GCController;
     void * sel_someproperty;
@@ -25,53 +39,26 @@ typedef struct {
 
 static T1AppleAudioLibObjCPointers * T1_aa_s = NULL;
 
-static void T1_apple_audio_init_if_needed(void) {
+void T1_apple_audio_init(void) {
     T1_aa_s = T1_mem_malloc_unmanaged(
         sizeof(T1AppleAudioLibObjCPointers));
     if (!T1_aa_s) { return; }
     T1_std_memset(T1_aa_s, 0, sizeof(T1AppleAudioLibObjCPointers));
     
-    void * libobjc = dlopen(
-        "/usr/lib/libobjc.A.dylib",
-        RTLD_LAZY);
-    if (!libobjc) {
-        return;
-    }
-    void * framework_audiotb = dlopen(
+    T1_objc_open_framework_and_link_perma_good_val(
         "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox",
-        RTLD_LAZY);
-    if (!framework_audiotb) {
-        dlclose(libobjc);
-        return;
-    }
+        &T1_aa_s->good);
     
-    void * (*objc_getclass)(const char *) = dlsym(
-        libobjc,
-        "objc_getClass");
-    if (!objc_getclass) {
-        dlclose(libobjc);
-        dlclose(framework_audiotb);
-        return;
-    }
+    T1_aa_s->audio_queue_new_output = T1_objc_get_func("AudioQueueNewOutput");
+    T1_aa_s->audio_queue_alloc_buffer = T1_objc_get_func("AudioQueueAllocateBuffer");
+    T1_aa_s->audio_queue_start = T1_objc_get_func("AudioQueueStart");
+    T1_aa_s->audio_queue_enqueue_buffer = T1_objc_get_func("AudioQueueEnqueueBuffer");
     
-    T1_aa_s->msg_send = dlsym(libobjc, "objc_msgSend");
-    if (!T1_aa_s->msg_send) {
-        dlclose(libobjc);
-        dlclose(framework_audiotb);
-        return;
-    }
-    T1_aa_s->msg_send_u32 = (u32 (*)(void *, void *))T1_aa_s->msg_send;
+    assert(T1_aa_s->audio_queue_new_output);
+    // T1_aa_s->class_GCController = T1_objc_get_class("GCController");
+    // T1_aa_s->sel_x = T1_objc_reg_sel("current");
     
-    void * (*objc_sel_reg)(const char *) = dlsym(
-        libobjc,
-        "sel_registerName");
-    if (!objc_sel_reg) { T1_aa_s->good = 0; }
-    
-    // T1_aa_s->sel_current = objc_sel_reg("current");
-    // if (!T1_aa_s->sel_current) { T1_mpl_objc->good = 0; }
-    
-    dlclose(libobjc);
-    dlclose(framework_audiotb);
+    T1_objc_close_current_framework();
 }
 
 static void T1_apple_audio_callback(
@@ -97,7 +84,7 @@ static void T1_apple_audio_callback(
         /* const u32 samples_to_copy: */
             samples_to_copy);
     
-    OSStatus err = AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+    OSStatus err = T1_aa_s->audio_queue_enqueue_buffer(queue, buffer, 0, NULL);
     if (err != noErr) {
         assert(0);
         return;
@@ -126,7 +113,7 @@ void T1_apple_audio_start_loop(void) {
     
     // most of the 0 and nullptr params here are for compressed sound
     // formats etc.
-    OSStatus err = AudioQueueNewOutput(
+    OSStatus err = T1_aa_s->audio_queue_new_output(
         /* const AudioStreamBasicDescription * _Nonnull inFormat: */
             &audio_stream_basic_description,
         /* AudioQueueOutputCallback  _Nonnull inCallbackProc: */
@@ -147,7 +134,7 @@ void T1_apple_audio_start_loop(void) {
         return;
     }
     
-    err = AudioQueueAllocateBuffer(
+    err = T1_aa_s->audio_queue_alloc_buffer(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,
         /* UInt32 inBufferByteSize: */
@@ -164,7 +151,7 @@ void T1_apple_audio_start_loop(void) {
     buf = audio_queue_buffer_refs[0];
     buf->mAudioDataByteSize = platform_buffer_size_bytes;
     
-    err = AudioQueueAllocateBuffer(
+    err = T1_aa_s->audio_queue_alloc_buffer(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,
         /* UInt32 inBufferByteSize: */
@@ -190,7 +177,7 @@ void T1_apple_audio_start_loop(void) {
         audio_queue_buffer_refs[1]);
     
     // enqueue for playing
-    AudioQueueEnqueueBuffer(
+    T1_aa_s->audio_queue_enqueue_buffer(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,
         /* AudioQueueBufferRef  _Nonnull inBuffer: */
@@ -199,7 +186,7 @@ void T1_apple_audio_start_loop(void) {
             0,
         /* const AudioStreamPacketDescription * _Nullable inPacketDescs: :*/
             NULL);
-    AudioQueueEnqueueBuffer(
+    T1_aa_s->audio_queue_enqueue_buffer(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,
         /* AudioQueueBufferRef  _Nonnull inBuffer: */
@@ -209,7 +196,7 @@ void T1_apple_audio_start_loop(void) {
         /* const AudioStreamPacketDescription * _Nullable inPacketDescs: :*/
             NULL);
     
-    AudioQueueStart(
+    T1_aa_s->audio_queue_start(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,
         /* const AudioTimeStamp * _Nullable inStartTime: */

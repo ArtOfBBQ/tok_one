@@ -101,6 +101,31 @@ void T1_objc_close_current_framework(void)
     }
 }
 
+void * T1_objc_get_func(
+    const char * func_name)
+{
+    if (
+        !T1_objc_s ||
+        !T1_objc_s->good ||
+        !T1_objc_s->active_framework ||
+        !T1_objc_s->get_class ||
+        !T1_objc_s->linked_good ||
+        !*T1_objc_s->linked_good)
+    {
+        return NULL;
+    }
+    
+    void * out = dlsym(
+        T1_objc_s->active_framework,
+        func_name);
+    
+    if (!out) {
+        *T1_objc_s->linked_good = 0;
+    }
+    
+    return out;
+}
+
 void * T1_objc_get_class(
     const char * class_name)
 {

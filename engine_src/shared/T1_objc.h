@@ -15,6 +15,9 @@ void T1_objc_open_framework_and_link_perma_good_val(
 
 void T1_objc_close_current_framework(void);
 
+void * T1_objc_get_func(
+    const char * func_name);
+
 void * T1_objc_get_class(
     const char * class_name);
 

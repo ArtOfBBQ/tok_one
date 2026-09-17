@@ -59,7 +59,7 @@ engine_src/shared/T1_triangle.c
 engine_src/shared/T1_material.c
 engine_src/shared/T1_zlight.c
 engine_src/shared/T1_types_cpu_to_gpu.c
-engine_src/shared_apple/T1_apple_audio.m
+engine_src/shared_apple/T1_apple_audio.c
 engine_src/shared/T1_platform_layer_common.c
 engine_src/macos/T1_macos_platform_layer.m
 engine_src/shared_apple/T1_apple_platform_layer.m

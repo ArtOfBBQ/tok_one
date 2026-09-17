@@ -391,6 +391,7 @@ void T1_appinit_before_gpu_init(
     T1_audio_init(
         /* void *(*arg_malloc_function)(u64): */
             T1_mem_malloc_unmanaged);
+    T1_platform_audio_init();
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else

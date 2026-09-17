@@ -53,8 +53,11 @@ T1_os_get_clock_frequency(void) {
 }
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-void
-T1_platform_audio_start_loop(void)
+void T1_platform_audio_init(void) {
+    T1_apple_audio_init();
+}
+
+void T1_platform_audio_start_loop(void)
 {
     T1_apple_audio_start_loop();
 }

@@ -131,11 +131,11 @@ static void update_chain_key(
     
     if (!objc_sub) { return; }
     
-    u32 ispressed_u32 = T1_objc_msg_expect_u32(
+    u32 isdown_u32 = T1_objc_msg_expect_u32(
         objc_sub,
         T1_mpl_objc->sel_ispressed);
     
-    update_simple_key(ispressed_u32 > 0, T1_io_key);
+    update_simple_key(isdown_u32 > 0, T1_io_key);
 }
 
 void T1_os_poll_gamepad_events(void) {
