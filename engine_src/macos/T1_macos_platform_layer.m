@@ -64,6 +64,11 @@ typedef struct {
     void * sel_button_home;
     void * sel_button_menu;
     void * sel_button_options;
+    void * sel_left_thumbstick;
+    void * sel_right_thumbstick;
+    void * sel_xaxis;
+    void * sel_yaxis;
+    void * sel_value;
     u8 good;
 } ObjCFrameworkGCC;
 
@@ -104,6 +109,11 @@ static void T1_os_setup_obj_frameworks(void) {
     T1_mpl_objc->sel_button_menu = T1_objc_reg_sel("buttonMenu");
     T1_mpl_objc->sel_button_options = T1_objc_reg_sel("buttonOptions");
     T1_mpl_objc->sel_ispressed = T1_objc_reg_sel("isPressed");
+    T1_mpl_objc->sel_left_thumbstick = T1_objc_reg_sel("leftThumbstick");
+    T1_mpl_objc->sel_right_thumbstick = T1_objc_reg_sel("rightThumbstick");
+    T1_mpl_objc->sel_xaxis = T1_objc_reg_sel("xAxis");
+    T1_mpl_objc->sel_yaxis = T1_objc_reg_sel("yAxis");
+    T1_mpl_objc->sel_value = T1_objc_reg_sel("value");
     
     T1_objc_close_current_framework();
 }
@@ -176,17 +186,36 @@ void T1_os_poll_gamepad_events(void) {
         update_chain_key(g, T1_mpl_objc->sel_button_menu, T1_IO_GAMEPAD_MENU);
         update_chain_key(g, T1_mpl_objc->sel_button_options, T1_IO_GAMEPAD_OPTIONS);
         
-        // TODO: reimplement thumbsticks
-        /*
+        // thumbsticks
+        void * xaxis = T1_objc_msgx2_expect_ptr(
+            g,
+            T1_mpl_objc->sel_left_thumbstick,
+            T1_mpl_objc->sel_xaxis);
+        f32 xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
+        void * yaxis = T1_objc_msgx2_expect_ptr(
+            g,
+            T1_mpl_objc->sel_left_thumbstick,
+            T1_mpl_objc->sel_yaxis);
+        f32 yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
         T1_io_register_key_move_to_pos(
             T1_IO_GAMEPAD_LTHUMBSTICK,
-                g.leftThumbstick.xAxis.value,
-                g.leftThumbstick.yAxis.value); 
+            xval,
+            yval);
+        
+        xaxis = T1_objc_msgx2_expect_ptr(
+            g,
+            T1_mpl_objc->sel_right_thumbstick,
+            T1_mpl_objc->sel_xaxis);
+        yaxis = T1_objc_msgx2_expect_ptr(
+            g,
+            T1_mpl_objc->sel_right_thumbstick,
+            T1_mpl_objc->sel_yaxis);
+        xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
+        yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
         T1_io_register_key_move_to_pos(
             T1_IO_GAMEPAD_RTHUMBSTICK,
-                g.rightThumbstick.xAxis.value,
-                g.rightThumbstick.yAxis.value);
-        */
+            xval,
+            yval);
     }
 }
 #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE

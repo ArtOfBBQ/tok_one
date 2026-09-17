@@ -25,7 +25,16 @@ void * T1_objc_msg_expect_ptr(
     void * recip,
     void * selector);
 
+void * T1_objc_msgx2_expect_ptr(
+    void * recip,
+    void * selector_1,
+    void * selector_2);
+
 u32 T1_objc_msg_expect_u32(
+    void * recip,
+    void * selector);
+
+f32 T1_objc_msg_expect_f32(
     void * recip,
     void * selector);
 
