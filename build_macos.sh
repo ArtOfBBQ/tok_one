@@ -1,5 +1,3 @@
-APP_NAME="loreseek"
-
 COMPILER_PATHS="
 -I engine_src/macos/
 -I engine_src/shared/debigulator/src/
@@ -39,6 +37,7 @@ SOURCE_FILES="
 engine_src/shared/debigulator/src/inflate.c
 engine_src/shared/debigulator/src/decode_png.c
 engine_src/shared/debigulator/src/decode_bmp.c
+engine_src/shared/T1_objc.c
 engine_src/shared/T1_settings.c
 engine_src/shared/T1_texquad.c
 engine_src/shared/T1_linalg3d.c
@@ -86,7 +85,7 @@ engine_src/shared/T1_gameloop.c
 engine_src/shared/T1_appinit.c
 engine_src/shared/T1.c"
 
-echo "Compiling & linking $APP_NAME..."
+echo "Compiling & linking T1..."
 if
 sudo time gcc $COMPILER_PATHS $COMPILER_ARGS $COMPILER_ARGS_EXTRA $MAC_FRAMEWORKS $SOURCE_FILES
 then

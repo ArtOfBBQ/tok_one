@@ -3,6 +3,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_log.h"
+#include "T1_objc.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_ui_widget.h"

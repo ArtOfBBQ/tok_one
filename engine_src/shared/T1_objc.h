@@ -4,6 +4,8 @@
 // Convenience functions to interface with
 // objective-c frameworks
 
+#include "T1_stdint.h"
+
 void T1_objc_init(
     void * (* malloc_perma)(size_t));
 

@@ -1,5 +1,8 @@
 #include "T1_objc.h"
 
+#include "T1_std.h"
+#include "T1_log.h"
+
 #include <dlfcn.h>
 
 typedef struct {
