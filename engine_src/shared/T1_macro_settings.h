@@ -26,7 +26,7 @@ that modify the behavior of the engine.
 #define T1_STD_ASSERTS_ACTIVE 1
 
 #define T1_GAMEPAD_ACTIVE 1
-#define T1_Z_PREPASS_ACTIVE 2
+#define T1_Z_PREPASS_ACTIVE 1
 #define T1_BLENDING_SHADER_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 1
 #define T1_OCCLUSION_ACTIVE 2

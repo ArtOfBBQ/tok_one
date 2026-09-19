@@ -802,31 +802,10 @@ void T1_os_link_gpu_to_main_window(
             errmsg);
     
     if (!result || !T1_log_app_running) {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_dump_and_crash("Can't draw anything to the screen...\n");
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        char errmsg2[512];
-        T1_std_strcpy_cap(
-            errmsg2,
-            512,
-            "Critical fail: couldn't configure Metal graphics."
-            " Looked for shader in: ");
-        T1_std_strcat_cap(
-            errmsg2,
-            512,
-            shader_lib_path_cstr);
-        T1_std_strcat_cap(
-            errmsg2,
-            512,
-            " Metal error description: ");
-        T1_std_strcat_cap(
-            errmsg,
-            errmsg_cap,
-            errmsg2);
+        if (errmsg[0] == '\0') {
+            T1_std_strcpy_cap(errmsg, errmsg_cap, "Failed Metal init (unhandled)"); 
+        }
+        return;
     }
     
     *good = 1;

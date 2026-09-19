@@ -1041,11 +1041,11 @@ void T1_appinit_after_gpu_init_step2(
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
         s32 i = 1;
-        i < (s32)T1_texture_arrays_size;
+        i < (s32)T1_tex_arrays_size;
         i++)
     {
-        if (!T1_texture_arrays[i].bc1_compressed) {
-            T1_platform_gpu_generate_mipmaps_for_texture_array(i);
+        if (!T1_tex_arrays[i].bc1_compressed) {
+            T1_os_gpu_generate_mipmaps_for_texture_array(i);
         }
     }
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE

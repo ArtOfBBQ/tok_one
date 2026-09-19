@@ -198,7 +198,7 @@ void T1_os_read_file_from_writables(
 
 void T1_os_gpu_get_device_name(
     c8 * recipient,
-    const u32 recipient_cap);
+    u32 recipient_cap);
 
 void T1_os_gpu_update_capacity_if_needed(
     s32 tex_array_i);
@@ -249,7 +249,7 @@ u32 T1_os_gpu_get_touch_id_at_screen_pos(
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_os_gpu_generate_mipmaps_for_texture_array(
-    const s32 texture_array_i);
+    s32 texture_array_i);
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 #else
 #error

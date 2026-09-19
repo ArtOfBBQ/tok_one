@@ -15,7 +15,7 @@ u8 T1_apple_gpu_init(
     void (* arg_funcptr_gameloop_update_after_render)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
-    float backing_scale_factor,
+    f32 backing_scale_factor,
     char * error_msg_string);
 
 // returns slice_i of new depth texture

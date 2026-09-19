@@ -7,11 +7,19 @@
 
 typedef struct {
     void * (* msg)(void *, void *);
+    void * (* msg_with_arg)(void *, void *, uintptr_t);
+    void * (* msg_with_2arg)(void *, void *, uintptr_t, uintptr_t);
+    void * (* msg_with_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    void * (* msg_with_2arg_sizet)(void *, void *, size_t, size_t);
+    void * (* msg_with_char_arg)(void *, void *, const char *);
+    u64    (* msg_u64)(void *, void *);
     u32    (* msg_u32)(void *, void *);
-    f32    (* msg_f32)(void *, void *);
     u8     (* msg_u8)(void *, void *);
+    f32    (* msg_f32)(void *, void *);
     void * (* get_class)(const char *);
     void * (* reg_name)(const char *);
+    void * class_nsstring;
+    void * sel_string_with_utf8_string;
     void * active_framework;
     u8 *   linked_good;
     u8 good;
@@ -38,9 +46,15 @@ void T1_objc_init(
         return;
     }
     
-    T1_objc_s->msg_u32 = (u32 (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_f32 = (f32 (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_u8 = (u8 (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_u64             = (u64    (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_u32             = (u32    (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_f32             = (f32    (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_u8              = (u8     (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_with_arg        = (void * (*)(void *, void *, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_2arg       = (void * (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_4arg       = (void * (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_2arg_sizet = (void * (*)(void *, void *, size_t, size_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_char_arg   = (void * (*)(void *, void *, const char*))T1_objc_s->msg;
     
     T1_objc_s->reg_name = dlsym(
         libobjc,
@@ -55,6 +69,9 @@ void T1_objc_init(
     if (!T1_objc_s->get_class) {
         return;
     }
+    
+    T1_objc_s->class_nsstring = T1_objc_s->get_class("NSString");
+    T1_objc_s->sel_string_with_utf8_string = T1_objc_s->reg_name("stringWithUTF8String:");
     
     // dlclose(libobjc);
     
@@ -184,6 +201,92 @@ void * T1_objc_msg_expect_ptr(
     return out;
 }
 
+void * T1_objc_msg_with_1arg_expect_ptr(
+    void * recip,
+    void * selector,
+    uintptr_t arg1)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return NULL;
+    }
+    
+    void * out = T1_objc_s->msg_with_arg(recip, selector, arg1);
+    
+    return out;
+}
+
+void * T1_objc_msg_with_2arg_expect_ptr(
+    void * recip,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return NULL;
+    }
+    
+    void * out = T1_objc_s->msg_with_2arg(recip, selector, arg1, arg2);
+    
+    return out;
+}
+
+void * T1_objc_msg_with_3arg_expect_ptr(
+    void * recip,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3)
+{
+    T1_log_assert(0);
+    return NULL;
+}
+
+void * T1_objc_msg_with_4arg_expect_ptr(
+    void * recip,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    uintptr_t arg4)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return NULL;
+    }
+    
+    void * out = T1_objc_s->msg_with_4arg(recip, selector, arg1, arg2, arg3, arg4);
+    
+    return out;
+}
+
+void * T1_objc_msg_with_2arg_sizet_expect_ptr(
+    void * recip,
+    void * selector,
+    size_t arg1,
+    size_t arg2)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return NULL;
+    }
+    
+    void * out = T1_objc_s->msg_with_2arg_sizet(recip, selector, arg1, arg2);
+    
+    return out;
+}
+
+void * T1_objc_msg_with_char_arg_expect_ptr(
+    void * recip,
+    void * selector,
+    const char * arg1)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return NULL;
+    }
+    
+    void * out = T1_objc_s->msg_with_char_arg(recip, selector, arg1);
+    
+    return out;
+}
+
 void * T1_objc_msgx2_expect_ptr(
     void * recip,
     void * selector_1,
@@ -196,6 +299,60 @@ void * T1_objc_msgx2_expect_ptr(
     return T1_objc_msg_expect_ptr(
         step1,
         selector_2);
+}
+
+T1ObjcSet T1_objc_set_make(
+    uintptr_t x,
+    uintptr_t y,
+    uintptr_t z)
+{
+    return (T1ObjcSet){x, y, z};
+}
+
+void T1_cmd_copy_texture_to_buffer(
+    void *    command_encoder,
+    void *    sel_copy_to_buf,
+    void *    src_texture,
+    uintptr_t src_slice,
+    uintptr_t src_level,
+    T1ObjcSet src_origin,
+    T1ObjcSet src_size,
+    void *    dst_buffer,
+    uintptr_t dst_offset,
+    uintptr_t dst_bytes_per_row,
+    uintptr_t dst_bytes_per_image)
+{
+    // TODO: fix intel ABI
+    #if defined(__x86_64__)
+    #error
+    #else
+    // for ARM64 ABI:
+    typedef void (*copy_fn)(
+        void *,
+        void *,
+        void *, 
+        uintptr_t,
+        uintptr_t, 
+        T1ObjcSet,
+        T1ObjcSet, 
+        void *,
+        uintptr_t,
+        uintptr_t,
+        uintptr_t);
+    
+    ((copy_fn)T1_objc_s->msg)(
+        command_encoder,
+        sel_copy_to_buf,
+        src_texture,
+        src_slice,
+        src_level,
+        src_origin,
+        src_size,
+        dst_buffer,
+        dst_offset,
+        dst_bytes_per_row,
+        dst_bytes_per_image);
+    #endif
 }
 
 u32 T1_objc_msg_expect_u32(
@@ -211,6 +368,19 @@ u32 T1_objc_msg_expect_u32(
     return out;
 }
 
+u64 T1_objc_msg_expect_u64(
+    void * recip,
+    void * selector)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return 0;
+    }
+    
+    u64 out = T1_objc_s->msg_u64(recip, selector);
+    
+    return out;
+}
+
 f32 T1_objc_msg_expect_f32(
     void * recip,
     void * selector)
@@ -220,6 +390,17 @@ f32 T1_objc_msg_expect_f32(
     }
     
     f32 out = T1_objc_s->msg_f32(recip, selector);
+    
+    return out;
+}
+
+void * T1_objc_nsstring_construct(
+    const char * from)
+{
+    void * out = T1_objc_msg_with_char_arg_expect_ptr(
+        T1_objc_s->class_nsstring,
+        T1_objc_s->sel_string_with_utf8_string,
+        from);
     
     return out;
 }
