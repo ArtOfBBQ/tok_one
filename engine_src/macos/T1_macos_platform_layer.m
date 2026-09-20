@@ -125,17 +125,17 @@ static void update_chain_key(
 {
     if (!objc_parent) { return; }
     
-    void * objc_sub = T1_objc_msg_expect_ptr(
+    void * objc_sub = (void *)T1_objc_msg(
         objc_parent,
         objc_sel);
     
     if (!objc_sub) { return; }
     
-    u32 isdown_u32 = T1_objc_msg_expect_u32(
+    uintptr_t isdown_u32 = T1_objc_msg(
         objc_sub,
         T1_mpl_objc->sel_ispressed);
     
-    update_simple_key(isdown_u32 > 0, T1_io_key);
+    update_simple_key(isdown_u32 & 1, T1_io_key);
 }
 
 void T1_os_poll_gamepad_events(void) {
@@ -151,16 +151,16 @@ void T1_os_poll_gamepad_events(void) {
     
     // Grab the primary controller (like your EasySMX X05PRO)
     // GCController * c = [GCController current];
-    void * c = T1_objc_msg_expect_ptr(
+    void * c = (void *)T1_objc_msg(
         T1_mpl_objc->class_GCController,
         T1_mpl_objc->sel_current);
     
-    void * g = T1_objc_msg_expect_ptr(
+    void * g = (void *)T1_objc_msg(
         c,
         T1_mpl_objc->sel_extendedgamepad);
     
     if (g) {
-        void * dpad = T1_objc_msg_expect_ptr(
+        void * dpad = (void *)T1_objc_msg(
             g,
             T1_mpl_objc->sel_dpad);
         

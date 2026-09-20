@@ -11,10 +11,13 @@
 #include "T1_platform_layer.h"
 
 typedef struct {
-    MTLPixelFormat pixel_format_renderpass1;
-    NSUInteger frame_i;
-    MTLViewport window_viewport;
-    MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
+    double originX, originY, width, height, znear, zfar;
+} T1MTLViewport;
+
+typedef struct {
+    uintptr_t pixel_format_renderpass1;
+    T1MTLViewport window_viewport;
+    T1MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
     
     void * device;
     void * lib;
@@ -100,9 +103,24 @@ typedef struct {
     
     // objective-c classes
     void * class_mtl_texture_desc; // MTLTextureDescriptor
+    void * class_mtl_render_pipeline_desc; // MTLRenderPipelineDescriptor
     // objective-c selectors
+    void * sel_set_depth_attachment_pixel_format; // setDepthAttachmentPixelFormat
+    void * sel_set_vertex_function; // setVertexFunction:
+    void * sel_set_fragment_function; // setFragmentFunction:
+    void * sel_set_label; // setLabel:
+    void * sel_color_attachments; // colorAttachments
+    void * sel_object_at_indexed_subscript; // objectAtIndexedSubscript:
+    void * sel_set_object_at_indexed_subscript; // setObject:atIndexedSubscript:
     void * sel_new;
     void * sel_command_buffer; // commandBuffer
+    void * sel_render_cmd_enc_with_desc; // renderCommandEncoderWithDescriptor:
+    void * sel_set_viewport; // setViewport:
+    void * sel_set_render_pls; // setRenderPipelineState
+    void * sel_set_depth_stencil_state; // setDepthStencilState:
+    void * sel_set_depth_clip_mode; // setDepthClipMode:
+    void * sel_set_cull_mode; // setCullMode:
+    void * sel_draw_primitives_vertex_start_vertex_count; // drawPrimitives:vertexStart:vertexCount:
     void * sel_new_function_with_name; // newFunctionWithName
     void * sel_width;
     void * sel_height;
@@ -118,6 +136,10 @@ typedef struct {
     void * sel_set_texture_type; // setTextureType:
     void * sel_set_array_length; // setArrayLength;
     void * sel_set_pixel_format; // setPixelFormat:
+    void * sel_set_blending_enabled; // setBlendingEnabled:
+    void * sel_set_source_rgb_blend_factor; // setSourceRGBBlendFactor:
+    void * sel_set_dest_rgb_blend_factor; // setDestinationRGBBlendFactor:
+    void * sel_set_rgb_blend_operation; // setRgbBlendOperation:
     void * sel_set_storage_mode; // setStorageMode:
     void * sel_set_usage; // setUsage:
     void * sel_set_width; // setWidth:
@@ -136,6 +158,7 @@ typedef struct {
     T1PostProcessingVertex quad_vertices[6];
     f32 retina_scaling_factor;
     u8  viewports_set[T1_RENDER_VIEW_CAP];
+    u8  frame_i;
     b8  metal_active;
     b8  zbuf_cleared;
     b8  rtt_cleared;
@@ -170,8 +193,30 @@ u8 T1_apple_gpu_init(
         "/System/Library/Frameworks/MetalKit.framework/MetalKit",
         &ags->objc_metal_framework_good);
     ags->class_mtl_texture_desc = T1_objc_get_class("MTLTextureDescriptor");
+    ags->class_mtl_render_pipeline_desc = T1_objc_get_class("MTLRenderPipelineDescriptor");
+    ags->sel_set_depth_attachment_pixel_format = T1_objc_reg_sel(
+        "setDepthAttachmentPixelFormat:");
+    ags->sel_set_vertex_function = T1_objc_reg_sel(
+        "setVertexFunction:");
+    ags->sel_set_fragment_function = T1_objc_reg_sel(
+        "setFragmentFunction:");
+    ags->sel_set_label = T1_objc_reg_sel("setLabel:");
+    ags->sel_color_attachments = T1_objc_reg_sel(
+        "colorAttachments");
+    ags->sel_object_at_indexed_subscript = T1_objc_reg_sel(
+        "objectAtIndexedSubscript:");
+    ags->sel_set_object_at_indexed_subscript = T1_objc_reg_sel(
+        "setObject:atIndexedSubscript:");
     ags->sel_new = T1_objc_reg_sel("new");
     ags->sel_command_buffer = T1_objc_reg_sel("commandBuffer");
+    ags->sel_render_cmd_enc_with_desc = T1_objc_reg_sel("renderCommandEncoderWithDescriptor:");
+    ags->sel_set_viewport = T1_objc_reg_sel("setViewport:");
+    ags->sel_set_render_pls = T1_objc_reg_sel("setRenderPipelineState:");
+    ags->sel_set_depth_stencil_state = T1_objc_reg_sel("setDepthStencilState:");
+    ags->sel_set_depth_clip_mode = T1_objc_reg_sel("setDepthClipMode:");
+    ags->sel_set_cull_mode = T1_objc_reg_sel("setCullMode:");
+    ags->sel_draw_primitives_vertex_start_vertex_count =
+        T1_objc_reg_sel("drawPrimitives:vertexStart:vertexCount:");
     ags->sel_new_function_with_name = T1_objc_reg_sel("newFunctionWithName:"); 
     ags->sel_width  = T1_objc_reg_sel("width");
     ags->sel_height = T1_objc_reg_sel("height");
@@ -201,6 +246,12 @@ u8 T1_apple_gpu_init(
         T1_objc_reg_sel("setArrayLength:");
     ags->sel_set_pixel_format =
         T1_objc_reg_sel("setPixelFormat:");
+    ags->sel_set_blending_enabled =
+        T1_objc_reg_sel("setBlendingEnabled:");
+    ags->sel_set_source_rgb_blend_factor =
+        T1_objc_reg_sel("setSourceRGBBlendFactor:");
+    ags->sel_set_dest_rgb_blend_factor =
+        T1_objc_reg_sel("setDestinationRGBBlendFactor:");
     ags->sel_set_storage_mode =
         T1_objc_reg_sel("setStorageMode:");
     ags->sel_set_usage =
@@ -240,7 +291,7 @@ u8 T1_apple_gpu_init(
     
     T1_objc_close_current_framework();
     
-    ags->pixel_format_renderpass1 = MTLPixelFormatRGBA8Unorm;
+    ags->pixel_format_renderpass1 = MTLPixelFormatRGBA8Unorm; // 70
     
     ags->frame_i = 0;
     
@@ -329,7 +380,7 @@ u8 T1_apple_gpu_init(
     
     void * nsstring_vert_shader = T1_objc_nsstring_construct(
         "vertex_shader");
-    void * vertex_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * vertex_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_vert_shader);
@@ -343,7 +394,7 @@ u8 T1_apple_gpu_init(
     
     void * nsstring_fragment_shader = T1_objc_nsstring_construct(
         "frag_shader");
-    void * fragment_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * fragment_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_fragment_shader);
@@ -358,7 +409,7 @@ u8 T1_apple_gpu_init(
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     void * nsstring_alphablending_fragment_shader = T1_objc_nsstring_construct(
         "alphablending_frag_shader");
-    void * alphablending_fragment_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * alphablending_fragment_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_alphablending_fragment_shader);
@@ -377,7 +428,7 @@ u8 T1_apple_gpu_init(
     #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
     void * nsstring_vertex_shader = T1_objc_nsstring_construct(
         "vertex_shader");
-    void * z_prepass_vertex_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * z_prepass_vertex_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_vertex_shader);
@@ -392,7 +443,7 @@ u8 T1_apple_gpu_init(
     void * nsstring_z_prepass_frag_shader = T1_objc_nsstring_construct(
         "z_prepass_frag_shader");
     void * z_prepass_fragment_shader =
-        T1_objc_msg_with_1arg_expect_ptr(
+        (void *)T1_objc_msg_with_1arg(
             ags->lib,
             ags->sel_new_function_with_name,
             (uintptr_t)nsstring_z_prepass_frag_shader);
@@ -407,25 +458,36 @@ u8 T1_apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * z_prepass_pls_desc =
-        [MTLRenderPipelineDescriptor new];
-    [z_prepass_pls_desc
-        setVertexFunction:
-            (__bridge id<MTLFunction> _Nullable)(z_prepass_vertex_shader)];
-    [z_prepass_pls_desc
-        setFragmentFunction:
-            (__bridge id<MTLFunction> _Nullable)(z_prepass_fragment_shader)];
-    z_prepass_pls_desc.depthAttachmentPixelFormat =
-        MTLPixelFormatDepth32Float;
-    z_prepass_pls_desc.label = @"z prepass pipeline state";
-    z_prepass_pls_desc
-        .colorAttachments[0]
-        .pixelFormat = ags->pixel_format_renderpass1;
-    
-    ags->z_prepass_pls = T1_objc_msg_with_2arg_expect_ptr(
+    void * z_prepass_pls_desc = (void *)T1_objc_msg(
+        ags->class_mtl_render_pipeline_desc,
+        ags->sel_new);
+    T1_objc_msg_with_1arg(
+        z_prepass_pls_desc,
+        ags->sel_set_vertex_function,
+        (uintptr_t)z_prepass_vertex_shader);
+    T1_objc_msg_with_1arg(
+        z_prepass_pls_desc,
+        ags->sel_set_fragment_function,
+        (uintptr_t)z_prepass_fragment_shader);
+    T1_objc_msg_with_1arg(
+        z_prepass_pls_desc,
+        ags->sel_set_depth_attachment_pixel_format,
+        MTLPixelFormatDepth32Float);
+    void * colorattachments = (void *)T1_objc_msg(
+        z_prepass_pls_desc,
+        ags->sel_color_attachments);
+    void * colorattachment_0 = (void *)T1_objc_msg_with_1arg(
+        colorattachments,
+        ags->sel_object_at_indexed_subscript,
+        0);
+    T1_objc_msg_with_1arg(
+        colorattachment_0,
+        ags->sel_set_pixel_format,
+        ags->pixel_format_renderpass1);
+    ags->z_prepass_pls = (void *)T1_objc_msg_with_2arg(
         ags->device,
         ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)(__bridge void *)(z_prepass_pls_desc),
+        (uintptr_t)z_prepass_pls_desc,
         (uintptr_t)NULL);
     #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
     #else
@@ -435,7 +497,7 @@ u8 T1_apple_gpu_init(
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     void * nsstring_outlines_vertex_shader =
         T1_objc_nsstring_construct("outlines_vertex_shader");
-    void * outlines_vertex_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * outlines_vertex_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_outlines_vertex_shader);
@@ -450,7 +512,7 @@ u8 T1_apple_gpu_init(
     void * nsstring_outlines_fragment_shader =
         T1_objc_nsstring_construct(
             "outlines_frag_shader");
-    void * outlines_fragment_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * outlines_fragment_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_outlines_fragment_shader);
@@ -462,28 +524,39 @@ u8 T1_apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * outlines_pls_desc =
-        [MTLRenderPipelineDescriptor new];
-    [outlines_pls_desc
-        setVertexFunction:
-            (__bridge id<MTLFunction> _Nullable)(outlines_vertex_shader)];
-    [outlines_pls_desc
-        setFragmentFunction:
-            (__bridge id<MTLFunction> _Nullable)(outlines_fragment_shader)];
-    outlines_pls_desc.label =
-        @"outlines pipeline state";
-    outlines_pls_desc
-        .colorAttachments[0]
-        .pixelFormat = ags->pixel_format_renderpass1;
-    outlines_pls_desc.
-        depthAttachmentPixelFormat =
-            MTLPixelFormatDepth32Float;
-    ags->outlines_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(outlines_pls_desc),
-            (uintptr_t)&Error);
+    void * outlines_pls_desc = (void *)T1_objc_msg(
+        ags->class_mtl_render_pipeline_desc,
+        ags->sel_new);
+    T1_objc_msg_with_1arg(
+        outlines_pls_desc,
+        ags->sel_set_vertex_function,
+        (uintptr_t)outlines_vertex_shader);
+    T1_objc_msg_with_1arg(
+        outlines_pls_desc,
+        ags->sel_set_fragment_function,
+        (uintptr_t)outlines_fragment_shader);
+    {
+        void * color_attachments = (void *)T1_objc_msg(
+            outlines_pls_desc,
+            ags->sel_color_attachments);
+        void * color_attachment_0 = (void *)T1_objc_msg_with_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            0);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
+    }
+    T1_objc_msg_with_1arg(
+        outlines_pls_desc,
+        ags->sel_set_depth_attachment_pixel_format,
+        MTLPixelFormatDepth32Float);
+    ags->outlines_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)outlines_pls_desc,
+        (uintptr_t)&Error);
     
     if (Error != nil) {
         T1_log_dump_and_crash((char *)[
@@ -500,7 +573,7 @@ u8 T1_apple_gpu_init(
     void * nsstring_flat_billboard_quad_vert_shader =
         T1_objc_nsstring_construct(
             "flat_billboard_quad_vertex_shader");
-    void * flat_billboard_quad_vert_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * flat_billboard_quad_vert_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_flat_billboard_quad_vert_shader);
@@ -517,7 +590,7 @@ u8 T1_apple_gpu_init(
     void * nsstring_flat_billboard_quad_frag_shader =
         T1_objc_nsstring_construct(
             "flat_billboard_quad_frag_shader");
-    void * flat_billboard_quad_frag_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * flat_billboard_quad_frag_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_flat_billboard_quad_frag_shader);
@@ -530,6 +603,8 @@ u8 T1_apple_gpu_init(
         return false;
     }
     
+    // TODO: remove this #if 0 path
+    #if 0
     MTLRenderPipelineDescriptor *
         flat_billboard_quad_pls_desc =
             [MTLRenderPipelineDescriptor new];
@@ -547,44 +622,116 @@ u8 T1_apple_gpu_init(
     [flat_billboard_quad_pls_desc
         .colorAttachments[0]
         setBlendingEnabled: YES];
-    flat_billboard_quad_pls_desc
-        .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorOne;
-    flat_billboard_quad_pls_desc
-        .colorAttachments[0].destinationRGBBlendFactor =
-            MTLBlendFactorOne;
-    flat_billboard_quad_pls_desc
-        .colorAttachments[0].rgbBlendOperation =
-            MTLBlendOperationAdd;
+    [flat_billboard_quad_pls_desc
+        .colorAttachments[0]
+            setSourceRGBBlendFactor:
+                MTLBlendFactorOne];
+    [flat_billboard_quad_pls_desc
+        .colorAttachments[0]
+            setDestinationRGBBlendFactor:
+                MTLBlendFactorOne];
+    [flat_billboard_quad_pls_desc
+        .colorAttachments[0]
+            setRgbBlendOperation:
+                MTLBlendOperationAdd];
     flat_billboard_quad_pls_desc.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
     flat_billboard_quad_pls_desc.
         depthAttachmentPixelFormat =
             MTLPixelFormatDepth32Float;
-    ags->bb_touch_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
+    ags->bb_touch_pls = (void *)T1_objc_msg_with_2arg(
             ags->device,
             ags->sel_new_render_pls_with_descriptor_error,
             (uintptr_t)(__bridge void *)(flat_billboard_quad_pls_desc),
             (uintptr_t)&Error);
+    #else
+    void * flat_billboard_quad_pls_desc =
+        (void *)T1_objc_msg(
+            ags->class_mtl_render_pipeline_desc,
+            ags->sel_new);
+    T1_objc_msg_with_1arg(
+        flat_billboard_quad_pls_desc,
+        ags->sel_set_vertex_function,
+        (uintptr_t)flat_billboard_quad_vert_shader);
+    T1_objc_msg_with_1arg(
+        flat_billboard_quad_pls_desc,
+        ags->sel_set_fragment_function,
+        (uintptr_t)flat_billboard_quad_frag_shader);
+    {
+        void * color_attachments = (void *)T1_objc_msg(
+            flat_billboard_quad_pls_desc,
+            ags->sel_color_attachments);
+        void * color_attachment_0 = (void *)T1_objc_msg_with_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            0);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_blending_enabled,
+            1);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_source_rgb_blend_factor,
+            MTLBlendFactorOne);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_dest_rgb_blend_factor,
+            MTLBlendFactorOne);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_rgb_blend_operation,
+            MTLBlendOperationAdd);
+        void * color_attachment_1 = (void *)T1_objc_msg_with_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            1);
+        T1_objc_msg_with_1arg(
+            color_attachment_1,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
+    }
+    T1_objc_msg_with_1arg(
+        flat_billboard_quad_pls_desc,
+        ags->sel_set_depth_attachment_pixel_format,
+        MTLPixelFormatDepth32Float);
+    ags->bb_touch_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)flat_billboard_quad_pls_desc,
+        (uintptr_t)&Error);
+    #endif
     
     T1_log_assert(Error == nil);
-    flat_billboard_quad_pls_desc.
-        colorAttachments[1] = nil;
+    {
+        void * color_attachments = (void *)T1_objc_msg(
+            flat_billboard_quad_pls_desc,
+            ags->sel_color_attachments);
+        T1_objc_msg_with_2arg(
+            color_attachments,
+            ags->sel_set_object_at_indexed_subscript,
+            0,
+            1);
+    }
+    
     ags->bb_notouch_pls =
         (__bridge_retained void *)([with_metal_device
             newRenderPipelineStateWithDescriptor:
-                flat_billboard_quad_pls_desc
+                (__bridge MTLRenderPipelineDescriptor * _Nonnull)(flat_billboard_quad_pls_desc)
             error:
                 &Error]);
     
     void * nsstring_flat_texquad_vert_shader =
         T1_objc_nsstring_construct(
             "flat_texquad_vertex_shader");
-    void * flat_texquad_vert_shader = T1_objc_msg_with_1arg_expect_ptr(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_flat_texquad_vert_shader);
+    void * flat_texquad_vert_shader =
+        (void *)T1_objc_msg_with_1arg(
+            ags->lib,
+            ags->sel_new_function_with_name,
+            (uintptr_t)nsstring_flat_texquad_vert_shader);
     if (flat_texquad_vert_shader == NULL)
     {
         T1_std_strcpy_cap(
@@ -598,7 +745,7 @@ u8 T1_apple_gpu_init(
     void * nsstring_flat_texquad_frag_shader =
         T1_objc_nsstring_construct(
             "flat_texquad_frag_shader");
-    void * flat_texquad_frag_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * flat_texquad_frag_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_flat_texquad_frag_shader);
@@ -611,44 +758,64 @@ u8 T1_apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor *
-        flat_texquad_pls_desc =
-            [MTLRenderPipelineDescriptor new];
-    [flat_texquad_pls_desc
-        setVertexFunction:
-            (__bridge id<MTLFunction> _Nullable)(flat_texquad_vert_shader)];
-    [flat_texquad_pls_desc
-        setFragmentFunction:
-            (__bridge id<MTLFunction> _Nullable)(flat_texquad_frag_shader)];
-    flat_texquad_pls_desc.label =
-        @"flat texquad pipeline state";
-    flat_texquad_pls_desc
-        .colorAttachments[0]
-        .pixelFormat = ags->pixel_format_renderpass1;
-    [flat_texquad_pls_desc
-        .colorAttachments[0]
-        setBlendingEnabled: YES];
-    flat_texquad_pls_desc
-        .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorSourceAlpha;
-    flat_texquad_pls_desc
-        .colorAttachments[0].destinationRGBBlendFactor =
-            MTLBlendFactorOneMinusSourceAlpha;
-    flat_texquad_pls_desc
-        .colorAttachments[0].rgbBlendOperation =
-            MTLBlendOperationAdd;
-    flat_texquad_pls_desc.colorAttachments[1].
-        pixelFormat = ags->pixel_format_renderpass1;
-    flat_texquad_pls_desc.
-        depthAttachmentPixelFormat =
-            MTLPixelFormatDepth32Float;
-    
-    ags->flat_texquad_touch_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(flat_texquad_pls_desc),
-            (uintptr_t)&Error);
+    void * flat_texquad_pls_desc =
+        (void *)T1_objc_msg(
+            ags->class_mtl_render_pipeline_desc,
+            ags->sel_new);
+    T1_objc_msg_with_1arg(
+        flat_texquad_pls_desc,
+        ags->sel_set_vertex_function,
+        (uintptr_t)flat_texquad_vert_shader);
+    T1_objc_msg_with_1arg(
+        flat_texquad_pls_desc,
+        ags->sel_set_fragment_function,
+        (uintptr_t)flat_texquad_frag_shader);
+    {
+        void * color_attachments = (void *)T1_objc_msg(
+            flat_texquad_pls_desc,
+            ags->sel_color_attachments);
+        void * color_attachment_0 = (void *)T1_objc_msg_with_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            0);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_blending_enabled,
+            1);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_source_rgb_blend_factor,
+            MTLBlendFactorOne);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_dest_rgb_blend_factor,
+            MTLBlendFactorOne);
+        T1_objc_msg_with_1arg(
+            color_attachment_0,
+            ags->sel_set_rgb_blend_operation,
+            MTLBlendOperationAdd);
+        void * color_attachment_1 = (void *)T1_objc_msg_with_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            1);
+        T1_objc_msg_with_1arg(
+            color_attachment_1,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
+    }
+    T1_objc_msg_with_1arg(
+        flat_texquad_pls_desc,
+        ags->sel_set_depth_attachment_pixel_format,
+        MTLPixelFormatDepth32Float);
+    ags->flat_texquad_touch_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)flat_texquad_pls_desc,
+        (uintptr_t)&Error);
     
     T1_log_assert(Error == nil);
     
@@ -701,23 +868,21 @@ u8 T1_apple_gpu_init(
     }
     
     diamond_pls_desc.colorAttachments[1] = nil;
-    ags->diamond_notouch_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(diamond_pls_desc),
-            (uintptr_t)&Error);
+    ags->diamond_notouch_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)(__bridge void *)(diamond_pls_desc),
+        (uintptr_t)&Error);
     T1_log_assert(Error == NULL);
     
     diamond_pls_desc.colorAttachments[0] = nil;
     diamond_pls_desc.fragmentFunction = nil;
     
-    ags->depth_only_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(diamond_pls_desc),
-            (uintptr_t)&Error);
+    ags->depth_only_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)(__bridge void *)(diamond_pls_desc),
+        (uintptr_t)&Error);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     MTLRenderPipelineDescriptor * alpha_pls_desc =
@@ -749,12 +914,11 @@ u8 T1_apple_gpu_init(
         MTLPixelFormatDepth32Float;
     alpha_pls_desc.label =
         @"Alphablending pipeline";
-    ags->blend_touch_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(alpha_pls_desc),
-            (uintptr_t)&Error);
+    ags->blend_touch_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)(__bridge void *)(alpha_pls_desc),
+        (uintptr_t)&Error);
     
     if (Error != NULL)
     {
@@ -798,11 +962,10 @@ u8 T1_apple_gpu_init(
     [depth_desc
         setDepthCompareFunction:
             MTLCompareFunctionLessEqual];
-    ags->opaque_depth_stencil_state =
-        T1_objc_msg_with_1arg_expect_ptr(
-            ags->device,
-            ags->sel_new_depth_stencil_state_with_desc,
-            (uintptr_t)(__bridge void *)(depth_desc));
+    ags->opaque_depth_stencil_state = (void *)T1_objc_msg_with_1arg(
+        ags->device,
+        ags->sel_new_depth_stencil_state_with_desc,
+        (uintptr_t)(__bridge void *)(depth_desc));
     
     if (Error != NULL)
     {
@@ -978,12 +1141,11 @@ u8 T1_apple_gpu_init(
             deallocator:
                 nil]);
     
-    ags->locked_vertex_buffer =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            T1_cpu_to_gpu_data->locked_vertices_alloc_size,
-            MTLResourceStorageModePrivate);
+    ags->locked_vertex_buffer = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        T1_cpu_to_gpu_data->locked_vertices_alloc_size,
+        MTLResourceStorageModePrivate);
     
     ags->locked_matf32_populator_buffer =
         (__bridge_retained void *)[with_metal_device
@@ -999,12 +1161,11 @@ u8 T1_apple_gpu_init(
                 deallocator:
                     nil];
     
-    ags->locked_matf32_buffer =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            T1_cpu_to_gpu_data->const_matsf32_alloc_size,
-            MTLResourceStorageModePrivate);
+    ags->locked_matf32_buffer = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        T1_cpu_to_gpu_data->const_matsf32_alloc_size,
+        MTLResourceStorageModePrivate);
     
     ags->locked_mats32_populator_buffer =
         (__bridge_retained void *)[with_metal_device
@@ -1020,12 +1181,11 @@ u8 T1_apple_gpu_init(
                 deallocator:
                     nil];
     
-    ags->locked_mats32_buffer =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            T1_cpu_to_gpu_data->const_matss32_alloc_size,
-            MTLResourceStorageModePrivate);
+    ags->locked_mats32_buffer = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        T1_cpu_to_gpu_data->const_matss32_alloc_size,
+        MTLResourceStorageModePrivate);
     
     #define FLVERT 1.0f
     #define TEX_MAX 1.0f
@@ -1063,27 +1223,26 @@ u8 T1_apple_gpu_init(
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     void * nsstring_downsample_texture = T1_objc_nsstring_construct(
         "downsample_texture");
-    void * downsample_func = T1_objc_msg_with_1arg_expect_ptr(
+    void * downsample_func = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_downsample_texture);
     
-    ags->downsample_compute_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_compute_pls_with_func,
-            (uintptr_t)downsample_func,
-            (uintptr_t)NULL);
+    ags->downsample_compute_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_compute_pls_with_func,
+        (uintptr_t)downsample_func,
+        (uintptr_t)NULL);
     
     void * nsstring_boxblur_texture = T1_objc_nsstring_construct(
         "boxblur_texture");
-    void * boxblur_texture = T1_objc_msg_with_1arg_expect_ptr(
+    void * boxblur_texture = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_boxblur_texture);
     void * error = NULL;
     ags->boxblur_compute_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
+        (void *)T1_objc_msg_with_2arg(
             ags->device,
             ags->sel_new_compute_pls_with_func,
             (uintptr_t)boxblur_texture,
@@ -1095,7 +1254,7 @@ u8 T1_apple_gpu_init(
     
     void * nsstring_singlequad_vertex_shader = T1_objc_nsstring_construct(
         "single_quad_vertex_shader");
-    void * singlequad_vertex_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * singlequad_vertex_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_singlequad_vertex_shader);
@@ -1114,7 +1273,7 @@ u8 T1_apple_gpu_init(
     
     void * nsstring_singlequad_fragment_shader = T1_objc_nsstring_construct(
         "single_quad_frag_shader");
-    void * singlequad_fragment_shader = T1_objc_msg_with_1arg_expect_ptr(
+    void * singlequad_fragment_shader = (void *)T1_objc_msg_with_1arg(
         ags->lib,
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_singlequad_fragment_shader);
@@ -1155,12 +1314,11 @@ u8 T1_apple_gpu_init(
         MTLPixelFormatDepth32Float;
     singlequad_pipeline_descriptor.vertexBuffers[0].
         mutability = MTLMutabilityImmutable;
-    ags->singlequad_pls =
-        T1_objc_msg_with_2arg_expect_ptr(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)(__bridge void *)(singlequad_pipeline_descriptor),
-            (uintptr_t)NULL);
+    ags->singlequad_pls = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)(__bridge void *)(singlequad_pipeline_descriptor),
+        (uintptr_t)NULL);
     
     ags->command_queue = (__bridge_retained void *)([with_metal_device newCommandQueue]);
     
@@ -1242,21 +1400,21 @@ void T1_os_gpu_update_capacity_if_needed(
     } else if (
         ags->metal_textures[tex_array_i] == NULL ||
         (T1_tex_arrays[tex_array_i].bc1_compressed &&
-            T1_objc_msg_expect_u64(
+            T1_objc_msg(
                 ags->metal_textures[tex_array_i],
                 ags->sel_pixel_format) !=
                     MTLPixelFormatBC1_RGBA) ||
         ((!T1_tex_arrays[tex_array_i].bc1_compressed) &&
-            T1_objc_msg_expect_u64(
+            T1_objc_msg(
                 ags->metal_textures[tex_array_i],
                 ags->sel_pixel_format) !=
                     MTLPixelFormatRGBA8Unorm) ||
             T1_tex_arrays[tex_array_i].single_img_width !=
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_width) ||
             T1_tex_arrays[tex_array_i].single_img_height !=
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_height))
     {
@@ -1264,28 +1422,28 @@ void T1_os_gpu_update_capacity_if_needed(
         copy_prev = false;
     } else if (
         T1_tex_arrays[tex_array_i].images_size >
-            T1_objc_msg_expect_u64(
+            T1_objc_msg(
                 ags->metal_textures[tex_array_i],
                 ags->sel_array_length))
     {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_log_assert(
             T1_tex_arrays[tex_array_i].single_img_width ==
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_width));
         T1_log_assert(
             T1_tex_arrays[tex_array_i].single_img_height ==
-                T1_objc_msg_expect_u64(ags->metal_textures[tex_array_i], ags->sel_height));
+                T1_objc_msg(ags->metal_textures[tex_array_i], ags->sel_height));
         T1_log_assert(
             T1_tex_arrays[tex_array_i].is_render_target == (
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_usage) &
                 MTLTextureUsageRenderTarget) > 0);
         if (T1_tex_arrays[tex_array_i].bc1_compressed) {
             T1_log_assert(
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_pixel_format) ==
                         MTLPixelFormatBC1_RGBA);
@@ -1302,7 +1460,7 @@ void T1_os_gpu_update_capacity_if_needed(
         T1_log_assert(
             T1_tex_arrays[tex_array_i].is_render_target ==
                 ((
-                T1_objc_msg_expect_u64(
+                T1_objc_msg(
                     ags->metal_textures[tex_array_i],
                     ags->sel_usage) &
                 MTLTextureUsageRenderTarget) > 0));
@@ -1311,50 +1469,50 @@ void T1_os_gpu_update_capacity_if_needed(
     
     #if 1
     void * texture_descriptor =
-        T1_objc_msg_expect_ptr(ags->class_mtl_texture_desc, ags->sel_new);
-    T1_objc_msg_with_1arg_expect_ptr(
+        (void *)T1_objc_msg(ags->class_mtl_texture_desc, ags->sel_new);
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_texture_type,
         MTLTextureType2DArray);
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_array_length,
         T1_tex_arrays[tex_array_i].images_size);
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_pixel_format,
         T1_tex_arrays[tex_array_i].bc1_compressed ?
             MTLPixelFormatBC1_RGBA :
             MTLPixelFormatRGBA8Unorm);
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_storage_mode,
         MTLStorageModePrivate);
     
     if (T1_tex_arrays[tex_array_i].is_render_target)
     {
-        T1_objc_msg_with_1arg_expect_ptr(
+        T1_objc_msg_with_1arg(
             texture_descriptor,
             ags->sel_set_usage,
             MTLTextureUsageShaderRead |
                 MTLTextureUsageRenderTarget);
     } else {
-        T1_objc_msg_with_1arg_expect_ptr(
+        T1_objc_msg_with_1arg(
             texture_descriptor,
             ags->sel_set_usage,
             MTLTextureUsageShaderRead);
     }
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_width,
         T1_tex_arrays[tex_array_i].single_img_width);
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_height,
         T1_tex_arrays[tex_array_i].single_img_height);
     
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_mipmap_level_count,
         T1_tex_arrays[tex_array_i].bc1_compressed || tex_array_i == 0 ?
@@ -1364,7 +1522,7 @@ void T1_os_gpu_update_capacity_if_needed(
                 T1_tex_arrays[tex_array_i].single_img_width,
                 T1_tex_arrays[tex_array_i].single_img_height))) + 1);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
-    T1_objc_msg_with_1arg_expect_ptr(
+    T1_objc_msg_with_1arg(
         texture_descriptor,
         ags->sel_set_mipmap_level_count,
         1);
@@ -1416,7 +1574,7 @@ void T1_os_gpu_update_capacity_if_needed(
     #endif
     
     T1_log_assert(ags->metal_textures[tex_array_i] == NULL);
-    ags->metal_textures[tex_array_i] = T1_objc_msg_with_1arg_expect_ptr(
+    ags->metal_textures[tex_array_i] = (void *)T1_objc_msg_with_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)texture_descriptor);
@@ -1426,24 +1584,22 @@ void T1_os_gpu_update_capacity_if_needed(
         T1_tex_arrays[tex_array_i].images_size;
     
     if (copy_prev) {
-        void * combuf =
-            T1_objc_msg_expect_ptr(
-                ags->command_queue,
-                ags->sel_command_buffer);
-        void * blitenc =
-            T1_objc_msg_expect_ptr(
-                combuf,
-                ags->sel_blit_command_encoder);
+        void * combuf = (void *)T1_objc_msg(
+            ags->command_queue,
+            ags->sel_command_buffer);
+        void * blitenc = (void *)T1_objc_msg(
+            combuf,
+            ags->sel_blit_command_encoder);
         
-        T1_objc_msg_with_2arg_expect_ptr(
+        T1_objc_msg_with_2arg(
             blitenc,
             ags->sel_copy_from_texture_to_texture,
             (uintptr_t)prev_copy,
             (uintptr_t)ags->metal_textures[tex_array_i]);
-        T1_objc_msg_expect_ptr(blitenc, ags->sel_end_encoding);
+        T1_objc_msg(blitenc, ags->sel_end_encoding);
         
-        T1_objc_msg_expect_ptr(combuf, ags->sel_commit);
-        T1_objc_msg_expect_ptr(combuf, ags->sel_wait_until_completed);
+        T1_objc_msg(combuf, ags->sel_commit);
+        T1_objc_msg(combuf, ags->sel_wait_until_completed);
     }
 }
 
@@ -1493,9 +1649,9 @@ u32 T1_os_gpu_get_touch_id_at_screen_pos(
         screen_y_adj = rtt_height;
     }
     
-    u8 * data = (u8 *)T1_objc_msg_expect_ptr(
+    u8 * data = (u8 *)T1_objc_msg(
         ags->touch_id_buffer, ags->sel_contents);
-    u64 size = T1_objc_msg_expect_u64(
+    u64 size = T1_objc_msg(
         ags->touch_id_buffer,
         ags->sel_allocated_size);
     
@@ -1539,13 +1695,13 @@ void T1_os_gpu_delete_depth_tex(
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_os_gpu_fetch_rgba_at(
-    const s32 texture_array_i,
-    const s32 texture_i,
+    s32 texture_array_i,
+    s32 texture_i,
     u8 * rgba_recipient,
     u32 * recipient_size,
     u32 * recipient_width,
     u32 * recipient_height,
-    const u32 recipient_cap,
+    u32 recipient_cap,
     u32 * good)
 {
     // Validate inputs
@@ -1562,7 +1718,7 @@ void T1_os_gpu_fetch_rgba_at(
     void * texture = ags->metal_textures[texture_array_i];
     if (
         texture == NULL ||
-        T1_objc_msg_expect_u64(
+        T1_objc_msg(
             texture,
             ags->sel_texture_type) !=
                 MTLTextureType2DArray)
@@ -1570,46 +1726,45 @@ void T1_os_gpu_fetch_rgba_at(
         return;
     }
     
-    if (T1_objc_msg_expect_u64(texture, ags->sel_pixel_format) != MTLPixelFormatRGBA8Unorm)
+    if (T1_objc_msg(texture, ags->sel_pixel_format) != MTLPixelFormatRGBA8Unorm)
     {
         // Ensure the texture format is RGBA8Unorm
         // for direct copying to u8 RGBA
         return;
     }
     
-    *recipient_width = (u32)T1_objc_msg_expect_u64(texture, ags->sel_width);
-    *recipient_height = (u32)T1_objc_msg_expect_u64(texture, ags->sel_height);
+    *recipient_width = (u32)T1_objc_msg(texture, ags->sel_width);
+    *recipient_height = (u32)T1_objc_msg(texture, ags->sel_height);
     if (*recipient_width < 1 || *recipient_height < 1) {
         return;
     }
     
     // Calculate required buffer size
-    NSUInteger bytes_per_row = T1_objc_msg_expect_u64(
+    NSUInteger bytes_per_row = T1_objc_msg(
         texture,
         ags->sel_width) * 4; // 4 bytes per pixel (RGBA)
     NSUInteger bytes_per_image =
         bytes_per_row *
-        T1_objc_msg_expect_u64(texture, ags->sel_height);
+        T1_objc_msg(texture, ags->sel_height);
     if (recipient_cap < bytes_per_image) {
         *recipient_size = 0;
         return;
     }
     
     // Create a temporary buffer for the copy
-    // T1_objc_msg_with_2arg_expect_ptr(ags->device, ags->objc_sel_new_buf_with_len_options, bytes_per_image, MTLResourceStorageModeShared);
-    void * temp_buffer =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            bytes_per_image,
-            MTLResourceStorageModeShared);
+    // T1_objc_msg_with_2arg(ags->device, ags->objc_sel_new_buf_with_len_options, bytes_per_image, MTLResourceStorageModeShared);
+    void * temp_buffer = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        bytes_per_image,
+        MTLResourceStorageModeShared);
     if (temp_buffer == NULL) {
         return;
     }
     T1_log_assert(temp_buffer != nil);
     
     if (
-        texture_i >= (s32)T1_objc_msg_expect_u64(
+        texture_i >= (s32)T1_objc_msg(
             texture,
             ags->sel_array_length))
     {
@@ -1617,14 +1772,12 @@ void T1_os_gpu_fetch_rgba_at(
     }
     
     // Create command buffer and blit encoder
-    void * command_buffer =
-        T1_objc_msg_expect_ptr(
-            ags->command_queue,
-            ags->sel_command_buffer);
-    void * blit_encoder =
-        T1_objc_msg_expect_ptr(
-            command_buffer,
-            ags->sel_blit_command_encoder);
+    void * command_buffer = (void *)T1_objc_msg(
+        ags->command_queue,
+        ags->sel_command_buffer);
+    void * blit_encoder = (void *)T1_objc_msg(
+        command_buffer,
+        ags->sel_blit_command_encoder);
     
     T1_cmd_copy_texture_to_buffer(
         blit_encoder,
@@ -1634,8 +1787,8 @@ void T1_os_gpu_fetch_rgba_at(
         0,
         T1_objc_set_make(0, 0, 0),
         T1_objc_set_make(
-            T1_objc_msg_expect_u64(texture, ags->sel_width),
-            T1_objc_msg_expect_u64(texture, ags->sel_height),
+            T1_objc_msg(texture, ags->sel_width),
+            T1_objc_msg(texture, ags->sel_height),
             1),
         temp_buffer,
         0,
@@ -1650,15 +1803,15 @@ void T1_os_gpu_fetch_rgba_at(
         0,
         T1_objc_set_make(0, 0, 0),
         T1_objc_set_make(
-            T1_objc_msg_expect_u64(texture, ags->sel_width),
-            T1_objc_msg_expect_u64(texture, ags->sel_height),
+            T1_objc_msg(texture, ags->sel_width),
+            T1_objc_msg(texture, ags->sel_height),
             1),
         temp_buffer,
         0,
         bytes_per_row,
         bytes_per_image);
     
-    T1_objc_msg_expect_ptr(
+    T1_objc_msg(
         blit_encoder,
         ags->sel_end_encoding);
     
@@ -1681,8 +1834,8 @@ void T1_os_gpu_fetch_rgba_at(
     }];
     
     // Commit the command buffer
-    T1_objc_msg_expect_ptr(command_buffer, ags->sel_commit);
-    T1_objc_msg_expect_ptr(command_buffer, ags->sel_wait_until_completed);
+    T1_objc_msg(command_buffer, ags->sel_commit);
+    T1_objc_msg(command_buffer, ags->sel_wait_until_completed);
     
     *recipient_size = (u32)bytes_per_image;
     
@@ -1704,13 +1857,13 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
     T1_log_assert(!T1_tex_arrays[texture_array_i].bc1_compressed);
     
     void * combuf =
-        T1_objc_msg_expect_ptr(
+        T1_objc_msg(
             ags->command_queue,
             ags->sel_command_buffer);
     
     // Create a blit command encoder
     void * blit_mipmap_encoder =
-        T1_objc_msg_expect_ptr(
+        T1_objc_msg(
             combuf,
             ags->sel_blit_command_encoder);
     
@@ -1720,12 +1873,12 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
             (__bridge id<MTLTexture> _Nonnull)(ags->metal_textures[texture_array_i])
         ];
     
-    T1_objc_msg_expect_ptr(
+    T1_objc_msg(
         blit_mipmap_encoder,
         ags->sel_end_encoding);
     
-    T1_objc_msg_expect_ptr(combuf, ags->sel_commit);
-    T1_objc_msg_expect_ptr(combuf, ags->sel_wait_until_completed);
+    T1_objc_msg(combuf, ags->sel_commit);
+    T1_objc_msg(combuf, ags->sel_wait_until_completed);
 }
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 // Pass
@@ -1790,25 +1943,24 @@ void T1_os_gpu_push_tex_slice(
                 image.rgba_values_size);
     }
     
-    void * temp_source_buf =
-        T1_objc_msg_with_4arg_expect_ptr(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)temp_src_buf_ptr,
-            temp_buf_cap,
-            MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
+    void * temp_source_buf = (void *)T1_objc_msg_with_4arg(
+        ags->device,
+        ags->sel_new_buffer_with_bytes_no_copy,
+        (uintptr_t)temp_src_buf_ptr,
+        temp_buf_cap,
+        MTLResourceStorageModeShared,
+        (uintptr_t)NULL);
     
     if (temp_source_buf == NULL) {
         T1_log_assert(0);
         return;
     }
     
-    void * combuf = T1_objc_msg_expect_ptr(
+    void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
     
-    void * blit_copy_encoder = T1_objc_msg_expect_ptr(
+    void * blit_copy_encoder = (void *)T1_objc_msg(
         combuf,
         ags->sel_blit_command_encoder);
     
@@ -1836,10 +1988,10 @@ void T1_os_gpu_push_tex_slice(
         destinationOrigin:
             MTLOriginMake(0, 0, 0)];
     
-    T1_objc_msg_expect_ptr(blit_copy_encoder, ags->sel_end_encoding);
+    T1_objc_msg(blit_copy_encoder, ags->sel_end_encoding);
     
-    T1_objc_msg_expect_ptr(combuf, ags->sel_commit);
-    T1_objc_msg_expect_ptr(combuf, ags->sel_wait_until_completed);
+    T1_objc_msg(combuf, ags->sel_commit);
+    T1_objc_msg(combuf, ags->sel_wait_until_completed);
     
     vm_deallocate(mach_task_self(), vm_ptr, vm_size);
     
@@ -1860,7 +2012,7 @@ void T1_os_gpu_copy_locked_vertices(void)
     
     id <MTLCommandBuffer> combuf =
         (__bridge id<MTLCommandBuffer>)(
-            T1_objc_msg_expect_ptr(
+            (void *)T1_objc_msg(
                 ags->command_queue,
                 ags->sel_command_buffer));
     
@@ -1891,8 +2043,8 @@ void T1_os_gpu_copy_locked_materials(void)
 {
     T1_cpu_to_gpu_data->const_mats_size = all_mesh_materials->size;
     
-    id <MTLCommandBuffer> combuf = (__bridge id<MTLCommandBuffer>)(
-        T1_objc_msg_expect_ptr(
+    id <MTLCommandBuffer> combuf = (__bridge id<MTLCommandBuffer>)(void *)(
+        T1_objc_msg(
             ags->command_queue,
             ags->sel_command_buffer));
     
@@ -1942,7 +2094,7 @@ get_tex_slice(
     
     NSRange level_range = NSMakeRange(
         0,
-        T1_objc_msg_expect_u64(
+        T1_objc_msg(
             parent,
             ags->sel_mipmap_level_count));
     NSRange slice_range = NSMakeRange(
@@ -1951,7 +2103,7 @@ get_tex_slice(
     
     id<MTLTexture> retval = [(__bridge id<MTLTexture>)parent
         newTextureViewWithPixelFormat:
-            T1_objc_msg_expect_u64(parent, ags->sel_pixel_format)
+            T1_objc_msg(parent, ags->sel_pixel_format)
         textureType:
             MTLTextureType2D
         levels:
@@ -2023,7 +2175,9 @@ static void set_defaults_for_encoder(
     [encoder setFrontFacingWinding:
         MTLWindingCounterClockwise];
     
-    [encoder setViewport: ags->render_viewports[cam_i]];
+    MTLViewport temp;
+    T1_std_memcpy(&temp, ags->render_viewports + cam_i, sizeof(MTLViewport));
+    [encoder setViewport: temp];
     
     [encoder
         setVertexBuffer:
@@ -2248,7 +2402,7 @@ static void set_defaults_for_encoder(
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderRead;
     
-    ags->depth_textures[at_i] = T1_objc_msg_with_1arg_expect_ptr(
+    ags->depth_textures[at_i] = (void *)T1_objc_msg_with_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)(__bridge void *)(zbuffer_desc));
@@ -2268,7 +2422,7 @@ static void set_defaults_for_encoder(
     touch_id_tex_desc.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderRead;
-    ags->touch_id_texture = T1_objc_msg_with_1arg_expect_ptr(
+    ags->touch_id_texture = (void *)T1_objc_msg_with_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)(__bridge void *)(touch_id_tex_desc));
@@ -2279,24 +2433,22 @@ static void set_defaults_for_encoder(
             4;
     
     T1_log_assert(ags->device != NULL);
-    ags->touch_id_buffer =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            touch_buffer_size_bytes,
-            MTLResourceStorageModeShared);
+    ags->touch_id_buffer = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        touch_buffer_size_bytes,
+        MTLResourceStorageModeShared);
     T1_log_assert(ags->touch_id_buffer != NULL);
     
-    ags->touch_id_buffer_all_zeros =
-        T1_objc_msg_with_2arg_sizet_expect_ptr(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            touch_buffer_size_bytes,
-            MTLResourceStorageModeShared);
+    ags->touch_id_buffer_all_zeros = (void *)T1_objc_msg_with_2arg(
+        ags->device,
+        ags->sel_new_buf_with_len_options,
+        touch_buffer_size_bytes,
+        MTLResourceStorageModeShared);
     
     s32 minus_one = -1;
     T1_std_memset_s32(
-        T1_objc_msg_expect_ptr(
+        (void *)T1_objc_msg(
             ags->touch_id_buffer_all_zeros,
             ags->sel_contents),
         minus_one,
@@ -2336,7 +2488,7 @@ static void set_defaults_for_encoder(
             downsampled_rtt_desc.usage |=
                 MTLTextureUsageRenderTarget;
         }
-        ags->downsampled_rtts[i] = T1_objc_msg_with_1arg_expect_ptr(
+        ags->downsampled_rtts[i] = (void *)T1_objc_msg_with_1arg(
             ags->device,
             ags->sel_new_tex_with_desc,
             (uintptr_t)(__bridge void *)(downsampled_rtt_desc));
@@ -2388,45 +2540,53 @@ static void set_defaults_for_encoder(
             
             outlines_desc.colorAttachments[1].texture = nil;
             
-            id<MTLRenderCommandEncoder>
-                pass_1_outline_enc =
-                    [combuf
-                        renderCommandEncoderWithDescriptor:
-                            outlines_desc];
+            void * pass_1_outline_enc =
+                (void *)T1_objc_msg_with_1arg(
+                    (__bridge void *)combuf,
+                    ags->sel_render_cmd_enc_with_desc,
+                    (uintptr_t)(__bridge void *)outlines_desc);
             
             set_defaults_for_encoder(
-                pass_1_outline_enc,
+                (__bridge id<MTLRenderCommandEncoder>)pass_1_outline_enc,
                 (u32)cam_i);
             
-            [pass_1_outline_enc
-                setViewport:
-                    ags->render_viewports[cam_i]];
+            T1_objc_msg_with_1bigstructarg(
+                pass_1_outline_enc,
+                ags->sel_set_viewport,
+                &ags->render_viewports[cam_i]);
             
             // outlines pipeline
-            [pass_1_outline_enc
-                setRenderPipelineState:
-                    (__bridge id<MTLRenderPipelineState> _Nonnull)(ags->outlines_pls)];
-            [pass_1_outline_enc
-                setDepthStencilState:
-                    (__bridge id<MTLDepthStencilState> _Nullable)(ags->opaque_depth_stencil_state)];
-            [pass_1_outline_enc
-                setDepthClipMode: MTLDepthClipModeClip];
-            [pass_1_outline_enc setCullMode: MTLCullModeFront];
+            T1_objc_msg_with_1arg(
+                pass_1_outline_enc,
+                ags->sel_set_render_pls,
+                (uintptr_t)ags->outlines_pls);
+            T1_objc_msg_with_1arg(
+                pass_1_outline_enc,
+                ags->sel_set_depth_stencil_state,
+                (uintptr_t)ags->opaque_depth_stencil_state);
+            T1_objc_msg_with_1arg(
+                pass_1_outline_enc,
+                ags->sel_set_depth_clip_mode,
+                MTLDepthClipModeClip);
+            T1_objc_msg_with_1arg(
+                pass_1_outline_enc,
+                ags->sel_set_cull_mode,
+                MTLCullModeFront);
             
             if (
                 T1_global->draw_triangles &&
                 pass->verts_size > 0)
             {
-                [pass_1_outline_enc
-                    drawPrimitives:
-                        MTLPrimitiveTypeTriangle
-                    vertexStart:
-                        (NSUInteger)pass->vert_i
-                    vertexCount:
-                        (NSUInteger)pass->
-                            verts_size];
+                T1_objc_msg_with_3arg(
+                    pass_1_outline_enc,
+                    ags->sel_draw_primitives_vertex_start_vertex_count,
+                    MTLPrimitiveTypeTriangle,
+                    (uintptr_t)pass->vert_i,
+                    (uintptr_t)pass->verts_size);
             }
-            [pass_1_outline_enc endEncoding];
+            T1_objc_msg(
+                pass_1_outline_enc,
+                ags->sel_end_encoding);
             #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
             #else
             #error
@@ -2650,15 +2810,15 @@ static void set_defaults_for_encoder(
                 ds_i < T1_DOWNSAMPLES_SIZE;
                 ds_i++)
             {
-                MTLViewport smaller_viewport =
+                T1MTLViewport smaller_viewport =
                     ags->render_viewports[0];
                 
                 smaller_viewport.width =
-                    T1_objc_msg_expect_u64(
+                    T1_objc_msg(
                         ags->downsampled_rtts[ds_i],
                         ags->sel_width);
                 smaller_viewport.height =
-                    T1_objc_msg_expect_u64(
+                    T1_objc_msg(
                         ags->downsampled_rtts[ds_i],
                         ags->sel_height);
                 
@@ -2837,7 +2997,7 @@ static void set_defaults_for_encoder(
     }
     
     id<MTLCommandBuffer> combuf = (__bridge id<MTLCommandBuffer>)(
-        T1_objc_msg_expect_ptr(
+        (void *)T1_objc_msg(
             ags->command_queue,
             ags->sel_command_buffer));
     
@@ -2851,10 +3011,10 @@ static void set_defaults_for_encoder(
     
     // Blit to clear the touch id buffer
     T1_log_assert(ags->touch_id_texture != NULL);
-    u64 touch_id_w = T1_objc_msg_expect_u64(
+    u64 touch_id_w = T1_objc_msg(
         ags->touch_id_texture,
         ags->sel_width);
-    u64 touch_id_h = T1_objc_msg_expect_u64(
+    u64 touch_id_h = T1_objc_msg(
         ags->touch_id_texture,
         ags->sel_height);
     u64 size_bytes = touch_id_w * touch_id_h * 8;
@@ -3032,11 +3192,13 @@ static void set_defaults_for_encoder(
         depthAttachment.loadAction =
             MTLLoadActionClear;
     
+    MTLViewport vp_copy;
+    T1_std_memcpy(&vp_copy, &ags->window_viewport, sizeof(MTLViewport));
     id<MTLRenderCommandEncoder> pass_5_comp =
         [combuf
             renderCommandEncoderWithDescriptor:
                 pass_5_comp_desc];
-    [pass_5_comp setViewport: ags->window_viewport];
+    [pass_5_comp setViewport: vp_copy];
     [pass_5_comp setCullMode: MTLCullModeNone];
     [pass_5_comp
         setRenderPipelineState:
@@ -3194,11 +3356,10 @@ s16 T1_apple_gpu_make_depth_tex(
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderRead;
     
-    ags->depth_textures[slice_i] =
-        T1_objc_msg_with_1arg_expect_ptr(
-            ags->device,
-            ags->sel_new_tex_with_desc,
-            (uintptr_t)(__bridge void *)(desc));
+    ags->depth_textures[slice_i] = (void *)T1_objc_msg_with_1arg(
+        ags->device,
+        ags->sel_new_tex_with_desc,
+        (uintptr_t)(__bridge void *)(desc));
     
     T1_log_assert(ags->depth_textures[slice_i] != nil);
     

@@ -268,7 +268,7 @@ void T1_os_gpu_fetch_rgba_at(
     u32 * recipient_size,
     u32 * recipient_width,
     u32 * recipient_height,
-    const u32 recipient_cap,
+    u32 recipient_cap,
     u32 * good);
 
 void T1_os_gpu_delete_texture_array(
