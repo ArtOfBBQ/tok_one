@@ -11,6 +11,11 @@ typedef struct {
     uintptr_t (* msg_with_2arg)(void *, void *, uintptr_t, uintptr_t);
     uintptr_t (* msg_with_3arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_with_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_with_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_with_f64)(void *, void *, f64);
+    uintptr_t (* msg_with_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
+    uintptr_t (* msg_3arg_2set_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_4arg_1set_3arg_1set)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet);
     f32    (* msg_f32)(void *, void *);
     void * (* get_class)(const char *);
     void * (* reg_name)(const char *);
@@ -42,11 +47,16 @@ void T1_objc_init(
         return;
     }
     
-    T1_objc_s->msg_f32             = (f32       (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_with_arg        = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_2arg       = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_3arg       = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_4arg       = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_f32                 = (f32       (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_with_arg            = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_2arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_3arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_4arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_5arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_with_f64            = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
+    T1_objc_s->msg_with_2arg_2pair     = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
+    T1_objc_s->msg_3arg_2set_4arg      = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_4arg_1set_3arg_1set = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet))T1_objc_s->msg;
     
     T1_objc_s->reg_name = dlsym(
         libobjc,
@@ -283,6 +293,34 @@ uintptr_t T1_objc_msg_with_4arg(
     return T1_objc_s->msg_with_4arg(recip, selector, arg1, arg2, arg3, arg4);
 }
 
+uintptr_t T1_objc_msg_with_5arg(
+    void * recip,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    uintptr_t arg4,
+    uintptr_t arg5)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return 0;
+    }
+    
+    return T1_objc_s->msg_with_5arg(recip, selector, arg1, arg2, arg3, arg4, arg5);
+}
+
+uintptr_t T1_objc_msg_with_f64(
+    void * recip,
+    void * selector,
+    f64 arg1)
+{
+    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        return 0;
+    }
+    
+    return T1_objc_s->msg_with_f64(recip, selector, arg1);
+}
+
 void * T1_objc_msgx2_expect_ptr(
     void * recip,
     void * selector_1,
@@ -297,6 +335,13 @@ void * T1_objc_msgx2_expect_ptr(
         selector_2);
 }
 
+T1ObjcPair T1_objc_pair_make(
+    uintptr_t a,
+    uintptr_t b)
+{
+    return (T1ObjcPair){a, b};
+}
+
 T1ObjcSet T1_objc_set_make(
     uintptr_t x,
     uintptr_t y,
@@ -309,6 +354,59 @@ T1Objc6Doubles T1_objc_6doubles_make(
     f64 a, f64 b, f64 c, f64 d, f64 e, f64 f)
 {
     return (T1Objc6Doubles){a, b, c, d, e, f};
+}
+
+uintptr_t T1_objc_msg_2arg_2pair(
+    void *target, 
+    void *sel, 
+    uintptr_t arg1, 
+    uintptr_t arg2, 
+    T1ObjcPair pair1, 
+    T1ObjcPair pair2)
+{
+    // T1_msgSend_2arg_2pair_fn send = (T1_msgSend_2arg_2pair_fn)T1_objc_s->msg;
+    return T1_objc_s->msg_with_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
+}
+
+uintptr_t T1_objc_msg_3arg_2set_4arg(
+    void * target,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    T1ObjcSet set1,
+    T1ObjcSet set2,
+    uintptr_t arg4,
+    uintptr_t arg5,
+    uintptr_t arg6,
+    uintptr_t arg7)
+{
+    return T1_objc_s->msg_3arg_2set_4arg(
+        target, selector,
+        arg1, arg2, arg3,
+        set1, set2,
+        arg4, arg5, arg6, arg7);
+}
+
+uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
+    void * target,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    uintptr_t arg4,
+    T1ObjcSet set1,
+    uintptr_t arg5,
+    uintptr_t arg6,
+    uintptr_t arg7,
+    T1ObjcSet set2)
+{
+    return T1_objc_s->msg_4arg_1set_3arg_1set(
+        target, selector,
+        arg1, arg2, arg3, arg4,
+        set1,
+        arg5, arg6, arg7,
+        set2);
 }
 
 void T1_cmd_copy_texture_to_buffer(

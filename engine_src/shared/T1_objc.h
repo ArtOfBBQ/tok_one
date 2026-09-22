@@ -124,6 +124,20 @@ uintptr_t T1_objc_msg_with_4arg(
     uintptr_t arg3,
     uintptr_t arg4);
 
+uintptr_t T1_objc_msg_with_5arg(
+    void * recip,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    uintptr_t arg4,
+    uintptr_t arg5);
+
+uintptr_t T1_objc_msg_with_f64(
+    void * recip,
+    void * selector,
+    f64 arg1);
+
 uintptr_t T1_objc_msg_with_1bigstructarg(
     void * recip,
     void * selector,
@@ -146,17 +160,21 @@ void * T1_objc_nsstring_construct(
 Metal-specific
 */
 typedef struct {
-    uintptr_t x, y, z;
-} T1ObjcMTLOrigin;
+    uintptr_t a, b;
+} T1ObjcPair;
 
 typedef struct {
-    uintptr_t x, y, z;
+    uintptr_t a, b, c;
 } T1ObjcSet;
 
+T1ObjcPair T1_objc_pair_make(
+    uintptr_t a,
+    uintptr_t b);
+
 T1ObjcSet T1_objc_set_make(
-    uintptr_t x,
-    uintptr_t y,
-    uintptr_t z);
+    uintptr_t a,
+    uintptr_t b,
+    uintptr_t c);
 
 typedef struct {
     double a, b, c, d, e, f;
@@ -164,6 +182,40 @@ typedef struct {
 
 T1Objc6Doubles T1_objc_6doubles_make(
     f64 a, f64 b, f64 c, f64 d, f64 e, f64 f);
+
+uintptr_t T1_objc_msg_2arg_2pair(
+    void * target, 
+    void * selector, 
+    uintptr_t arg1, 
+    uintptr_t arg2, 
+    T1ObjcPair pair1, 
+    T1ObjcPair pair2);
+
+uintptr_t T1_objc_msg_3arg_2set_4arg(
+    void * target,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    T1ObjcSet set1,
+    T1ObjcSet set2,
+    uintptr_t arg4,
+    uintptr_t arg5,
+    uintptr_t arg6,
+    uintptr_t arg7);
+
+uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
+    void * target,
+    void * selector,
+    uintptr_t arg1,
+    uintptr_t arg2,
+    uintptr_t arg3,
+    uintptr_t arg4,
+    T1ObjcSet set1,
+    uintptr_t arg5,
+    uintptr_t arg6,
+    uintptr_t arg7,
+    T1ObjcSet set2);
 
 void T1_cmd_copy_texture_to_buffer(
     void *    command_encoder,
