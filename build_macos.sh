@@ -69,7 +69,7 @@ engine_src/shared/T1_profiler.c
 engine_src/shared/T1_objmodel.c
 engine_src/shared/T1_io.c
 engine_src/shared/T1_rand.c
-engine_src/shared_apple/T1_gpu.m
+engine_src/shared_apple/T1_gpu.c
 engine_src/shared/T1_tex.c
 engine_src/shared/T1_tex_array.c
 engine_src/shared/T1_tex_files.c
