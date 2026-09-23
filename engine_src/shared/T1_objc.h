@@ -98,25 +98,25 @@ uintptr_t T1_objc_msg(
     void * recip,
     void * selector);
 
-uintptr_t T1_objc_msg_with_1arg(
+uintptr_t T1_objc_msg_1arg(
     void * recip,
     void * selector,
     uintptr_t arg1);
 
-uintptr_t T1_objc_msg_with_2arg(
+uintptr_t T1_objc_msg_2arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
     uintptr_t arg2);
 
-uintptr_t T1_objc_msg_with_3arg(
+uintptr_t T1_objc_msg_3arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
     uintptr_t arg2,
     uintptr_t arg3);
 
-uintptr_t T1_objc_msg_with_4arg(
+uintptr_t T1_objc_msg_4arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -124,7 +124,7 @@ uintptr_t T1_objc_msg_with_4arg(
     uintptr_t arg3,
     uintptr_t arg4);
 
-uintptr_t T1_objc_msg_with_5arg(
+uintptr_t T1_objc_msg_5arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -133,12 +133,12 @@ uintptr_t T1_objc_msg_with_5arg(
     uintptr_t arg4,
     uintptr_t arg5);
 
-uintptr_t T1_objc_msg_with_f64(
+uintptr_t T1_objc_msg_f64(
     void * recip,
     void * selector,
     f64 arg1);
 
-uintptr_t T1_objc_msg_with_1bigstructarg(
+uintptr_t T1_objc_msg_1bigstructarg(
     void * recip,
     void * selector,
     void * struct_16bytesplus_arg);
@@ -157,7 +157,7 @@ void * T1_objc_nsstring_construct(
 
 
 /*
-Metal-specific
+Passing structs
 */
 typedef struct {
     uintptr_t a, b;
@@ -167,21 +167,35 @@ typedef struct {
     uintptr_t a, b, c;
 } T1ObjcSet;
 
+typedef struct {
+    double a, b, c, d;
+} T1ObjcQuadf64;
+
 T1ObjcPair T1_objc_pair_make(
-    uintptr_t a,
-    uintptr_t b);
+    uintptr_t a, uintptr_t b);
 
 T1ObjcSet T1_objc_set_make(
-    uintptr_t a,
-    uintptr_t b,
-    uintptr_t c);
+    uintptr_t a, uintptr_t b, uintptr_t c);
+
+T1ObjcQuadf64 T1_objc_quadf64_make(
+    double a, double b, double c, double d);
 
 typedef struct {
     double a, b, c, d, e, f;
-} T1Objc6Doubles;
+} T1ObjcSextf64;
 
-T1Objc6Doubles T1_objc_6doubles_make(
+T1ObjcSextf64 T1_objc_sextf64_make(
     f64 a, f64 b, f64 c, f64 d, f64 e, f64 f);
+
+uintptr_t T1_objc_msg_1quadf64(
+    void * target,
+    void * selector,
+    T1ObjcQuadf64);
+
+uintptr_t T1_objc_msg_1sextf64(
+    void * target,
+    void * selector,
+    T1ObjcSextf64);
 
 uintptr_t T1_objc_msg_2arg_2pair(
     void * target, 
@@ -190,6 +204,12 @@ uintptr_t T1_objc_msg_2arg_2pair(
     uintptr_t arg2, 
     T1ObjcPair pair1, 
     T1ObjcPair pair2);
+
+uintptr_t T1_objc_msg_2set(
+    void * target,
+    void * selector,
+    T1ObjcSet a,
+    T1ObjcSet b);
 
 uintptr_t T1_objc_msg_3arg_2set_4arg(
     void * target,

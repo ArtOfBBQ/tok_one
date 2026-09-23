@@ -7,13 +7,16 @@
 
 typedef struct {
     uintptr_t (* msg)(void *, void *);
-    uintptr_t (* msg_with_arg)(void *, void *, uintptr_t);
-    uintptr_t (* msg_with_2arg)(void *, void *, uintptr_t, uintptr_t);
-    uintptr_t (* msg_with_3arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t);
-    uintptr_t (* msg_with_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
-    uintptr_t (* msg_with_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
-    uintptr_t (* msg_with_f64)(void *, void *, f64);
-    uintptr_t (* msg_with_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
+    uintptr_t (* msg_arg)(void *, void *, uintptr_t);
+    uintptr_t (* msg_2arg)(void *, void *, uintptr_t, uintptr_t);
+    uintptr_t (* msg_3arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
+    uintptr_t (* msg_f64)(void *, void *, f64);
+    uintptr_t (* msg_1quadf64)(void *, void *, T1ObjcQuadf64);
+    uintptr_t (* msg_1sextf64)(void *, void *, T1ObjcSextf64);
+    uintptr_t (* msg_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
+    uintptr_t (* msg_2set)(void *, void *, T1ObjcSet, T1ObjcSet);
     uintptr_t (* msg_3arg_2set_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_4arg_1set_3arg_1set)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet);
     f32    (* msg_f32)(void *, void *);
@@ -48,13 +51,16 @@ void T1_objc_init(
     }
     
     T1_objc_s->msg_f32                 = (f32       (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_with_arg            = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_2arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_3arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_4arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_5arg           = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_with_f64            = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
-    T1_objc_s->msg_with_2arg_2pair     = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
+    T1_objc_s->msg_arg                 = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_2arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_3arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_4arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_5arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_f64                 = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
+    T1_objc_s->msg_1quadf64            = (uintptr_t (*)(void *, void *, T1ObjcQuadf64))T1_objc_s->msg;
+    T1_objc_s->msg_1sextf64            = (uintptr_t (*)(void *, void *, T1ObjcSextf64))T1_objc_s->msg;
+    T1_objc_s->msg_2arg_2pair          = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
+    T1_objc_s->msg_2set                = (uintptr_t (*)(void *, void *, T1ObjcSet, T1ObjcSet))T1_objc_s->msg;
     T1_objc_s->msg_3arg_2set_4arg      = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_4arg_1set_3arg_1set = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet))T1_objc_s->msg;
     
@@ -218,7 +224,7 @@ uintptr_t T1_objc_msg(
     return out;
 }
 
-uintptr_t T1_objc_msg_with_1arg(
+uintptr_t T1_objc_msg_1arg(
     void * recip,
     void * selector,
     uintptr_t arg1)
@@ -227,10 +233,10 @@ uintptr_t T1_objc_msg_with_1arg(
         return 0;
     }
     
-    return T1_objc_s->msg_with_arg(recip, selector, arg1);
+    return T1_objc_s->msg_arg(recip, selector, arg1);
 }
 
-uintptr_t T1_objc_msg_with_1bigstructarg(
+uintptr_t T1_objc_msg_1bigstructarg(
     void * recip,
     void * selector,
     void * struct_16bytesplus_arg)
@@ -240,7 +246,7 @@ uintptr_t T1_objc_msg_with_1bigstructarg(
     T1_log_assert(0);
     return NULL;
     #elif defined(__arm64__) || defined(__aarch64__)
-    return T1_objc_msg_with_1arg(
+    return T1_objc_msg_1arg(
         recip,
         selector,
         (uintptr_t)struct_16bytesplus_arg);
@@ -251,7 +257,7 @@ uintptr_t T1_objc_msg_with_1bigstructarg(
     #endif
 }
 
-uintptr_t T1_objc_msg_with_2arg(
+uintptr_t T1_objc_msg_2arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -261,10 +267,10 @@ uintptr_t T1_objc_msg_with_2arg(
         return 0;
     }
     
-    return T1_objc_s->msg_with_2arg(recip, selector, arg1, arg2);
+    return T1_objc_s->msg_2arg(recip, selector, arg1, arg2);
 }
 
-uintptr_t T1_objc_msg_with_3arg(
+uintptr_t T1_objc_msg_3arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -275,10 +281,10 @@ uintptr_t T1_objc_msg_with_3arg(
         return 0;
     }
     
-    return T1_objc_s->msg_with_3arg(recip, selector, arg1, arg2, arg3);
+    return T1_objc_s->msg_3arg(recip, selector, arg1, arg2, arg3);
 }
 
-uintptr_t T1_objc_msg_with_4arg(
+uintptr_t T1_objc_msg_4arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -290,10 +296,10 @@ uintptr_t T1_objc_msg_with_4arg(
         return 0;
     }
     
-    return T1_objc_s->msg_with_4arg(recip, selector, arg1, arg2, arg3, arg4);
+    return T1_objc_s->msg_4arg(recip, selector, arg1, arg2, arg3, arg4);
 }
 
-uintptr_t T1_objc_msg_with_5arg(
+uintptr_t T1_objc_msg_5arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
@@ -306,10 +312,10 @@ uintptr_t T1_objc_msg_with_5arg(
         return 0;
     }
     
-    return T1_objc_s->msg_with_5arg(recip, selector, arg1, arg2, arg3, arg4, arg5);
+    return T1_objc_s->msg_5arg(recip, selector, arg1, arg2, arg3, arg4, arg5);
 }
 
-uintptr_t T1_objc_msg_with_f64(
+uintptr_t T1_objc_msg_f64(
     void * recip,
     void * selector,
     f64 arg1)
@@ -318,7 +324,7 @@ uintptr_t T1_objc_msg_with_f64(
         return 0;
     }
     
-    return T1_objc_s->msg_with_f64(recip, selector, arg1);
+    return T1_objc_s->msg_f64(recip, selector, arg1);
 }
 
 void * T1_objc_msgx2_expect_ptr(
@@ -350,10 +356,32 @@ T1ObjcSet T1_objc_set_make(
     return (T1ObjcSet){x, y, z};
 }
 
-T1Objc6Doubles T1_objc_6doubles_make(
+T1ObjcQuadf64 T1_objc_quadf64_make(
+    double a, double b, double c, double d)
+{
+    return (T1ObjcQuadf64){a, b, c, d};
+}
+
+T1ObjcSextf64 T1_objc_sextf64_make(
     f64 a, f64 b, f64 c, f64 d, f64 e, f64 f)
 {
-    return (T1Objc6Doubles){a, b, c, d, e, f};
+    return (T1ObjcSextf64){a, b, c, d, e, f};
+}
+
+uintptr_t T1_objc_msg_1quadf64(
+    void * target,
+    void * sel,
+    T1ObjcQuadf64 quad1)
+{
+    return T1_objc_s->msg_1quadf64(target, sel, quad1);    
+}
+
+uintptr_t T1_objc_msg_1sextf64(
+    void * target,
+    void * sel,
+    T1ObjcSextf64 sext1)
+{
+    return T1_objc_s->msg_1sextf64(target, sel, sext1);
 }
 
 uintptr_t T1_objc_msg_2arg_2pair(
@@ -364,8 +392,18 @@ uintptr_t T1_objc_msg_2arg_2pair(
     T1ObjcPair pair1, 
     T1ObjcPair pair2)
 {
-    // T1_msgSend_2arg_2pair_fn send = (T1_msgSend_2arg_2pair_fn)T1_objc_s->msg;
-    return T1_objc_s->msg_with_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
+    return T1_objc_s->msg_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
+}
+
+uintptr_t T1_objc_msg_2set(
+    void * target,
+    void * selector,
+    T1ObjcSet set1,
+    T1ObjcSet set2)
+{
+    return T1_objc_s->msg_2set(
+        target, selector,
+        set1, set2);
 }
 
 uintptr_t T1_objc_msg_3arg_2set_4arg(
@@ -471,7 +509,7 @@ f32 T1_objc_msg_expect_f32(
 void * T1_objc_nsstring_construct(
     const char * from)
 {
-    void * out = (void *)T1_objc_msg_with_1arg(
+    void * out = (void *)T1_objc_msg_1arg(
         T1_objc_s->class_nsstring,
         T1_objc_s->sel_string_with_utf8_string,
         (uintptr_t)from);

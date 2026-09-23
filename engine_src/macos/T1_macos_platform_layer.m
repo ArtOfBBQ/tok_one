@@ -1,4 +1,5 @@
-#import "Appkit/Appkit.h"
+#import <Appkit/Appkit.h>
+#import <MetalKit/MetalKit.h>
 
 #include "T1_std.h"
 #include "T1_mem.h"
@@ -661,7 +662,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         /* u64 at_timestamp_us: */
             T1_os_get_current_time_us());
     
-    [apple_gpu_delegate updateFinalWindowSize];
+    T1_gpu_update_final_window_size();
 }
 @end
 
@@ -732,6 +733,34 @@ void T1_os_destroy_main_window_if_possible(void) {
 
 static MTKView * mtk_view = NULL;
 
+@interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
+@end
+
+@implementation MetalKitViewDelegate
+- (void) updateFinalWindowSize
+{
+    T1_gpu_update_final_window_size();
+}
+
+- (void) updateRenderViewSize: (s32)at_i
+{
+    T1_gpu_update_render_view_size(at_i);
+}
+
+- (void)drawInMTKView:(MTKView *)view
+{
+    void * typeless_view = (__bridge void *)view;
+    T1_gpu_draw_in_mtk_view(typeless_view);
+}
+
+- (void)mtkView:(MTKView *)view
+    drawableSizeWillChange:(CGSize)size
+{
+}
+@end
+
+static MetalKitViewDelegate * apple_gpu_delegate = NULL;
+
 void T1_os_link_gpu_to_main_window(
     c8 * errmsg,
     u32 errmsg_cap,
@@ -782,19 +811,14 @@ void T1_os_link_gpu_to_main_window(
         1000,
         "/Shaders.metallib");
     
-    NSString * shader_lib_path =
-        [NSString
-            stringWithCString:shader_lib_path_cstr
-            encoding:NSASCIIStringEncoding];
-    
     b8 result = T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
-            metal_device_for_window,
+            (__bridge void *)(metal_device_for_window),
         /* NSString *shader_lib_filepath: */
-            shader_lib_path,
+            shader_lib_path_cstr,
         /* bool32_t has_retina_screen: */
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],
