@@ -12,7 +12,10 @@ that modify the behavior of the engine.
 #define T1_ACTIVE 1
 #define T1_INACTIVE 2
 
+#define INFLATE_SILENCE
+#define DECODE_PNG_SILENCE
 #define DECODED_IMAGE_SILENCE
+
 #define T1_6502_PRINTF_ON 2
 
 #define LS_GUI_ACTIVE 1
