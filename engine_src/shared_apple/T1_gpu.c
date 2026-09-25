@@ -433,6 +433,8 @@ u8 T1_apple_gpu_init(
         T1_objc_reg_sel("setSourceRGBBlendFactor:");
     ags->sel_set_dest_rgb_blend_factor =
         T1_objc_reg_sel("setDestinationRGBBlendFactor:");
+    ags->sel_set_rgb_blend_operation =
+        T1_objc_reg_sel("setRgbBlendOperation:");
     ags->sel_set_storage_mode =
         T1_objc_reg_sel("setStorageMode:");
     ags->sel_set_usage =
@@ -2657,6 +2659,7 @@ static void T1_gpu_draw_single_pass(
 }
 
 void T1_gpu_update_final_window_size(void) {
+    if (!ags) { return; }
     ags->window_viewport.originX = 0;
     ags->window_viewport.originY = 0;
     ags->window_viewport.width =
@@ -2865,6 +2868,10 @@ void T1_gpu_update_render_view_size(s32 at_i) {
 
 void T1_gpu_draw_in_mtk_view(void * view)
 {
+    if (!ags || !ags->metal_active) {
+        return;
+    }
+    
     if (
         funcptr_gameloop_before_render == NULL ||
         T1_render_views->size < 1 ||
@@ -3089,7 +3096,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
     
     T1_objc_msg_1arg(
         pass_5_comp,
-        ags->sel_set_cull_mode, T1MTLCullModeNone);
+        ags->sel_set_cull_mode,
+        T1MTLCullModeNone);
     T1_objc_msg_1arg(
         pass_5_comp,
         ags->sel_set_render_pls, (uintptr_t)ags->singlequad_pls);

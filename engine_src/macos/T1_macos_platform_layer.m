@@ -14,16 +14,76 @@
 #include "T1_gpu.h"
 #include "T1_gameloop.h"
 
-void T1_os_request_messagebox(const char * message) {
-    NSAlert * alert = [[NSAlert alloc] init];
-    NSString * NSmsg = [NSString
-        stringWithCString:message
-        encoding:NSASCIIStringEncoding];
-    [alert setMessageText: NSmsg];
-    [[alert window] setLevel:NSModalPanelWindowLevel];
-    [[alert window] makeKeyAndOrderFront:nil];
+typedef struct {
+    void * class_ns_alert; // NSAlert
+    void * sel_new; // new
+    void * sel_window; // window
+    void * sel_set_message_text; // setMessageText:
+    void * sel_set_level; // setLevel:
+    void * sel_make_key_and_order_front; // makeKeyAndOrderFront:
+    void * sel_run_modal; // runModal
+    void * sel_length; // length;
+    void * sel_get_bytes_length; // getBytes:length:
+    b8 framework_good;
+} T1OSMacosState;
+
+static T1OSMacosState * T1_os_macos_s = NULL;
+
+void T1_os_macos_init(void) {
+    T1_os_macos_s = T1_mem_malloc_unmanaged(sizeof(T1OSMacosState));
+    T1_std_memset(T1_os_macos_s, 0, sizeof(T1OSMacosState));
     
-    [alert runModal];
+    T1_objc_open_framework_and_link_perma_good_val(
+        "/System/Library/Frameworks/Foundation.framework/Foundation",
+        &T1_os_macos_s->framework_good);
+    
+    // classes
+    T1_os_macos_s->class_ns_alert = T1_objc_get_class(
+        "NSAlert");
+    
+    // selectors
+    T1_os_macos_s->sel_new = T1_objc_reg_sel(
+        "new");
+    T1_os_macos_s->sel_window = T1_objc_reg_sel(
+        "window");
+    T1_os_macos_s->sel_set_message_text = T1_objc_reg_sel(
+        "setMessageText:");
+    T1_os_macos_s->sel_set_level = T1_objc_reg_sel(
+        "setLevel:");
+    T1_os_macos_s->sel_make_key_and_order_front = T1_objc_reg_sel(
+        "makeKeyAndOrderFront:");
+    T1_os_macos_s->sel_run_modal = T1_objc_reg_sel(
+        "runModal");
+    T1_os_macos_s->sel_length = T1_objc_reg_sel(
+        "length");
+    T1_os_macos_s->sel_get_bytes_length = T1_objc_reg_sel(
+        "getBytes:length:");
+    
+    T1_objc_close_current_framework();
+}
+
+void T1_os_request_messagebox(const char * message) {
+    void * alert = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_alert,
+        T1_os_macos_s->sel_new);
+    void * ns_msg = T1_objc_nsstring_construct(message);
+    T1_objc_msg_1arg(
+        alert,
+        T1_os_macos_s->sel_set_message_text,
+        (uintptr_t)ns_msg);
+    void * window = (void *)T1_objc_msg(
+        alert, T1_os_macos_s->sel_window);
+    
+    T1_objc_msg_1arg(
+        window,
+        T1_os_macos_s->sel_set_level,
+        NSModalPanelWindowLevel);
+    T1_objc_msg_1arg(
+        window,
+        T1_os_macos_s->sel_make_key_and_order_front,
+        0);
+    
+    T1_objc_msg(alert, T1_os_macos_s->sel_run_modal);
 }
 
 #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
@@ -156,68 +216,70 @@ void T1_os_poll_gamepad_events(void) {
         T1_mpl_objc->class_GCController,
         T1_mpl_objc->sel_current);
     
+    if (!c) { return; }
+    
     void * g = (void *)T1_objc_msg(
         c,
         T1_mpl_objc->sel_extendedgamepad);
     
-    if (g) {
-        void * dpad = (void *)T1_objc_msg(
-            g,
-            T1_mpl_objc->sel_dpad);
-        
-        if (dpad) {
-            update_chain_key(dpad, T1_mpl_objc->sel_left, T1_IO_GAMEPAD_DPAD_LEFT);
-            update_chain_key(dpad, T1_mpl_objc->sel_right, T1_IO_GAMEPAD_DPAD_RIGHT);
-            update_chain_key(dpad, T1_mpl_objc->sel_up, T1_IO_GAMEPAD_DPAD_UP); 
-            update_chain_key(dpad, T1_mpl_objc->sel_down, T1_IO_GAMEPAD_DPAD_DOWN);
-        }
-        
-        update_chain_key(g, T1_mpl_objc->sel_left_shoulder, T1_IO_GAMEPAD_LSHOULDER);
-        update_chain_key(g, T1_mpl_objc->sel_right_shoulder, T1_IO_GAMEPAD_RSHOULDER);
-        update_chain_key(g, T1_mpl_objc->sel_left_trigger, T1_IO_GAMEPAD_LTRIGGER);
-        update_chain_key(g, T1_mpl_objc->sel_right_trigger, T1_IO_GAMEPAD_RTRIGGER);
-        update_chain_key(g, T1_mpl_objc->sel_left_thumbstick_button, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
-        update_chain_key(g, T1_mpl_objc->sel_right_thumbstick_button, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
-        
-        update_chain_key(g, T1_mpl_objc->sel_button_a, T1_IO_GAMEPAD_A);
-        update_chain_key(g, T1_mpl_objc->sel_button_b, T1_IO_GAMEPAD_B);
-        update_chain_key(g, T1_mpl_objc->sel_button_x, T1_IO_GAMEPAD_X);
-        update_chain_key(g, T1_mpl_objc->sel_button_y, T1_IO_GAMEPAD_Y);
-        update_chain_key(g, T1_mpl_objc->sel_button_home, T1_IO_GAMEPAD_HOME);
-        update_chain_key(g, T1_mpl_objc->sel_button_menu, T1_IO_GAMEPAD_MENU);
-        update_chain_key(g, T1_mpl_objc->sel_button_options, T1_IO_GAMEPAD_OPTIONS);
-        
-        // thumbsticks
-        void * xaxis = T1_objc_msgx2_expect_ptr(
-            g,
-            T1_mpl_objc->sel_left_thumbstick,
-            T1_mpl_objc->sel_xaxis);
-        f32 xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
-        void * yaxis = T1_objc_msgx2_expect_ptr(
-            g,
-            T1_mpl_objc->sel_left_thumbstick,
-            T1_mpl_objc->sel_yaxis);
-        f32 yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
-        T1_io_register_key_move_to_pos(
-            T1_IO_GAMEPAD_LTHUMBSTICK,
-            xval,
-            yval);
-        
-        xaxis = T1_objc_msgx2_expect_ptr(
-            g,
-            T1_mpl_objc->sel_right_thumbstick,
-            T1_mpl_objc->sel_xaxis);
-        yaxis = T1_objc_msgx2_expect_ptr(
-            g,
-            T1_mpl_objc->sel_right_thumbstick,
-            T1_mpl_objc->sel_yaxis);
-        xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
-        yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
-        T1_io_register_key_move_to_pos(
-            T1_IO_GAMEPAD_RTHUMBSTICK,
-            xval,
-            yval);
+    if (!g) { return; }
+    
+    void * dpad = (void *)T1_objc_msg(
+        g,
+        T1_mpl_objc->sel_dpad);
+    
+    if (dpad) {
+        update_chain_key(dpad, T1_mpl_objc->sel_left, T1_IO_GAMEPAD_DPAD_LEFT);
+        update_chain_key(dpad, T1_mpl_objc->sel_right, T1_IO_GAMEPAD_DPAD_RIGHT);
+        update_chain_key(dpad, T1_mpl_objc->sel_up, T1_IO_GAMEPAD_DPAD_UP); 
+        update_chain_key(dpad, T1_mpl_objc->sel_down, T1_IO_GAMEPAD_DPAD_DOWN);
     }
+    
+    update_chain_key(g, T1_mpl_objc->sel_left_shoulder, T1_IO_GAMEPAD_LSHOULDER);
+    update_chain_key(g, T1_mpl_objc->sel_right_shoulder, T1_IO_GAMEPAD_RSHOULDER);
+    update_chain_key(g, T1_mpl_objc->sel_left_trigger, T1_IO_GAMEPAD_LTRIGGER);
+    update_chain_key(g, T1_mpl_objc->sel_right_trigger, T1_IO_GAMEPAD_RTRIGGER);
+    update_chain_key(g, T1_mpl_objc->sel_left_thumbstick_button, T1_IO_GAMEPAD_LTHUMBSTICKBTN);
+    update_chain_key(g, T1_mpl_objc->sel_right_thumbstick_button, T1_IO_GAMEPAD_RTHUMBSTICKBTN);
+    
+    update_chain_key(g, T1_mpl_objc->sel_button_a, T1_IO_GAMEPAD_A);
+    update_chain_key(g, T1_mpl_objc->sel_button_b, T1_IO_GAMEPAD_B);
+    update_chain_key(g, T1_mpl_objc->sel_button_x, T1_IO_GAMEPAD_X);
+    update_chain_key(g, T1_mpl_objc->sel_button_y, T1_IO_GAMEPAD_Y);
+    update_chain_key(g, T1_mpl_objc->sel_button_home, T1_IO_GAMEPAD_HOME);
+    update_chain_key(g, T1_mpl_objc->sel_button_menu, T1_IO_GAMEPAD_MENU);
+    update_chain_key(g, T1_mpl_objc->sel_button_options, T1_IO_GAMEPAD_OPTIONS);
+    
+    // thumbsticks
+    void * xaxis = T1_objc_msgx2_expect_ptr(
+        g,
+        T1_mpl_objc->sel_left_thumbstick,
+        T1_mpl_objc->sel_xaxis);
+    f32 xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
+    void * yaxis = T1_objc_msgx2_expect_ptr(
+        g,
+        T1_mpl_objc->sel_left_thumbstick,
+        T1_mpl_objc->sel_yaxis);
+    f32 yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
+    T1_io_register_key_move_to_pos(
+        T1_IO_GAMEPAD_LTHUMBSTICK,
+        xval,
+        yval);
+    
+    xaxis = T1_objc_msgx2_expect_ptr(
+        g,
+        T1_mpl_objc->sel_right_thumbstick,
+        T1_mpl_objc->sel_xaxis);
+    yaxis = T1_objc_msgx2_expect_ptr(
+        g,
+        T1_mpl_objc->sel_right_thumbstick,
+        T1_mpl_objc->sel_yaxis);
+    xval = T1_objc_msg_expect_f32(xaxis, T1_mpl_objc->sel_value);
+    yval = T1_objc_msg_expect_f32(yaxis, T1_mpl_objc->sel_value);
+    T1_io_register_key_move_to_pos(
+        T1_IO_GAMEPAD_RTHUMBSTICK,
+        xval,
+        yval);
 }
 #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
 #else
@@ -654,6 +716,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)windowDidResize:
     (NSNotification *)notification
 {
+    #if 0
     T1_global_update_window_size(
         /* float width: */
             [window getWidth],
@@ -663,6 +726,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
             T1_os_get_current_time_us());
     
     T1_gpu_update_final_window_size();
+    #endif
 }
 @end
 
@@ -676,6 +740,7 @@ void T1_os_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }
 
+__attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
     b8 * good)
 {
@@ -719,8 +784,6 @@ void T1_os_create_main_window(
     } @catch (NSException * exception) {
         return;
     }
-    
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     
     *good = 1;
 }

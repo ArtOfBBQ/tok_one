@@ -5,7 +5,7 @@
 This header should only contain macro definitions
 that modify the behavior of the engine.
 */
-#define T1_APP_NAME "Lore Seeker"
+#define T1_APP_NAME "Deck Assembler"
 
 #define T1_RENDER_VIEW_CAP 5
 
@@ -42,7 +42,7 @@ that modify the behavior of the engine.
 #define T1_BLOOM_ACTIVE 1
 #define T1_PARTICLES_ACTIVE 2
 #define T1_OUTLINES_ACTIVE 1
-#define T1_AUDIO_ACTIVE 1
+#define T1_AUDIO_ACTIVE 2
 #define T1_ENGINE_SAVEFILE_ACTIVE 1
 #define T1_PROFILER_ACTIVE 2
 #define T1_TONE_MAPPING_ACTIVE 1

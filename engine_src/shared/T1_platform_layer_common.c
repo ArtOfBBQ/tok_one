@@ -179,13 +179,20 @@ the resources directory
 */
 u64 T1_os_get_resource_size(const char * filename)
 {
-    char pathfile[512];
+    const u32 pathfile_cap = 512;
+    char * pathfile = T1_mem_malloc_managed(pathfile_cap);
+    T1_std_memset(pathfile, 0, pathfile_cap);
+    
     T1_os_res_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
-        /* assert_capacity: */ 512);
+        /* assert_capacity: */ pathfile_cap);
     
-    return T1_os_get_filesize(pathfile);
+    u64 len = T1_os_get_filesize(pathfile);
+    
+    T1_mem_free_managed(pathfile);
+    
+    return len;
 }
 
 u64 T1_os_get_writable_size(const char * filename) {
@@ -335,7 +342,9 @@ void T1_os_read_resource_file(
     const u64 recip_cap,
     u8 * good)
 {
-    char pathfile[500];
+    char * pathfile = T1_mem_malloc_managed(500);
+    T1_std_memset(pathfile, 0, 500);
+    
     T1_os_res_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
@@ -350,8 +359,10 @@ void T1_os_read_resource_file(
             &bytes_read,
         /* const u64 recip_cap :*/
             recip_cap,
-        /* bool8_t * good: */
+        /* b8 * good: */
             good);
+    
+    T1_mem_free_managed(pathfile);
     
     if (bytes_read != recip_cap) {
         T1_log_assert(0);
@@ -366,39 +377,40 @@ void T1_os_read_resource_file(
 void T1_os_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const u32 assert_capacity)
+    u32 recip_cap)
 {
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    // pass
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)assert_capacity;
-    #else
-    #error
-    #endif
-    
     assert(filename != NULL);
     assert(recipient != NULL);
     
-    char resource_path[256];
-    T1_os_get_res_dir(resource_path, 256);
+    const u32 resource_path_size = 512;
+    char * resource_path = T1_mem_malloc_managed(
+        resource_path_size);
+    T1_std_memset(resource_path, 0, resource_path_size);
+    
+    T1_os_get_res_dir(
+        resource_path,
+        resource_path_size);
     T1_std_strcpy_cap(
         recipient,
-        assert_capacity,
+        recip_cap,
         resource_path);
     // u32 separator_size = platform_get_directory_separator_size();
     char separator[MAX_SEPARATOR_SIZE];
+    T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(
         /* recipient: */ separator);
     T1_std_strcat_cap(
         recipient,
-        assert_capacity,
+        recip_cap,
         separator);
     T1_std_strcat_cap(
         recipient,
-        assert_capacity,
+        recip_cap,
         filename);
     
-    assert(recipient[0] != '\0');
+    T1_log_assert(recipient[0] != '\0');
+    
+    T1_mem_free_managed(resource_path);
 }
 
 void T1_os_writable_filename_to_pathfile(

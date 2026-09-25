@@ -62,7 +62,7 @@ engine_src/shared/T1_types_cpu_to_gpu.c
 engine_src/shared_apple/T1_apple_audio.c
 engine_src/shared/T1_platform_layer_common.c
 engine_src/macos/T1_macos_platform_layer.m
-engine_src/shared_apple/T1_apple_platform_layer.m
+engine_src/shared_apple/T1_apple_platform_layer.c
 engine_src/shared_linux_apple/T1_linux_apple_platform_layer.c
 engine_src/shared/T1_mem.c
 engine_src/shared/T1_profiler.c

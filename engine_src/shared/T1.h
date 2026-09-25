@@ -59,8 +59,11 @@ void T1_log_append_u32(uint32_t u32val);
 APPLICATION STARTUP
 */
 uint8_t T1_running(void);
+
+__attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
     uint8_t * good);
+
 void T1_appinit_before_gpu_init(
     void (* callback_newthread_entry_fptr)(int32_t),
     void (* callback_update_fptr)(uint64_t),
@@ -586,15 +589,20 @@ your user's progress or preferences, etc.
 */
 uint64_t T1_os_get_current_time_us(void);
 void T1_os_toggle_fullscreen(void);
-void T1_os_start_thread(void (*func_to_run)(int32_t), int32_t argument);
+void T1_os_start_thread(void *(*function_to_run)(void *), void * arg_on_heap);
 uint32_t T1_os_init_mutex_and_return_id(void);
 uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
 void T1_os_assert_mutex_locked(uint32_t mutex_id);
 void T1_os_mutex_lock(uint32_t mutex_id);
 void T1_os_mutex_unlock(uint32_t mutex_id);
 void T1_os_get_res_dir(char * recip, uint32_t recip_cap);
+
+__attribute__((no_sanitize("address")))
 void T1_os_get_filenames_in(
-    const char * directory, char filenames[2000][500]);
+    const char * directory,
+    char * filenames,
+    uint32_t filenames_cap);
+
 uint8_t T1_os_res_exists(const char * resource_name);
 uint8_t T1_os_file_exists(const char * filepath);
 void T1_os_del_file(const char * filepath);

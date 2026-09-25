@@ -72,6 +72,46 @@ static void sample_messaging_use_repeatedly(void) {
 
 #include "T1_stdint.h"
 
+#if 1
+// Reads the current ARM64 Frame Pointer register (x29)
+static inline uintptr_t T1_get_fp(void) {
+    uintptr_t fp;
+    __asm__ volatile("mov %0, x29" : "=r"(fp));
+    return fp;
+}
+
+// Reads the current ARM64 Stack Pointer register (sp)
+static inline uintptr_t T1_get_sp(void) {
+    uintptr_t sp;
+    __asm__ volatile("mov %0, sp" : "=r"(sp));
+    return sp;
+}
+
+// Asserts that the stack pointer is aligned to 16 bytes (ARM64 ABI requirement)
+#define ASSERT_STACK_ALIGNED() do { \
+    uintptr_t sp = T1_get_sp(); \
+    if ((sp & 0xF) != 0) { \
+        fprintf(stderr, "FATAL: Stack pointer misaligned (sp = 0x%lx) at %s:%d\n", \
+                sp, __FILE__, __LINE__); \
+        __builtin_trap(); \
+    } \
+} while(0)
+
+// Wraps a message call to ensure FP doesn't get corrupted
+#define T1_VERIFY_MSG_CALL(expr) do { \
+    uintptr_t fp_before = T1_get_fp(); \
+    ASSERT_STACK_ALIGNED(); \
+    expr; \
+    ASSERT_STACK_ALIGNED(); \
+    uintptr_t fp_after = T1_get_fp(); \
+    if (fp_before != fp_after) { \
+        fprintf(stderr, "FATAL: Frame pointer corrupted across msgSend at %s:%d! (0x%lx -> 0x%lx)\n", \
+                __FILE__, __LINE__, fp_before, fp_after); \
+        __builtin_trap(); \
+    } \
+} while(0)
+#endif
+
 void T1_objc_init(
     void * (* malloc_perma)(size_t));
 
@@ -155,6 +195,8 @@ f32 T1_objc_msg_expect_f32(
 void * T1_objc_nsstring_construct(
     const char * from);
 
+char * T1_objc_nsstring_to_cstring(
+    void * nsstring);
 
 /*
 Passing structs

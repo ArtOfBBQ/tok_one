@@ -50,6 +50,14 @@ extern EngineSaveFile * engine_save_file;
 #error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
 #endif
 
+#ifdef __APPLE__
+void T1_apple_os_init(void);
+#endif
+
+#ifdef TARGET_OS_OSX
+void T1_os_macos_init(void);
+#endif
+
 void T1_os_init(
     void (* newthread_main_fptr)(s32),
     void (* appwillclose_fptr)(void),
@@ -133,9 +141,11 @@ void T1_os_copy_file(
 void T1_os_mkdir_if_not_exist(
     const c8 * dirname);
 
+__attribute__((no_sanitize("address")))
 void T1_os_get_filenames_in(
     const c8 * directory,
-    c8 filenames[2000][500]);
+    char * filenames,
+    const u32 filenames_cap);
 
 /*
 Get a file's size. Returns 0 if no such file
@@ -219,8 +229,8 @@ implement client_logic_threadmain() to do what you want it to do when it gets
 that id
 */
 void T1_os_start_thread(
-    void (*function_to_run)(s32),
-    s32 argument);
+    void *(*function_to_run)(void *),
+    void * argument);
 
 u64 T1_os_get_current_time_us(void);
 

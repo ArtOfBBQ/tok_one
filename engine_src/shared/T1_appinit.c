@@ -234,6 +234,8 @@ void T1_appinit_before_gpu_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
     
+    T1_objc_init(T1_mem_malloc_unmanaged);
+    
     T1_settings_init(T1_mem_malloc_unmanaged, success);
     if (!*success) {
         T1_std_strcpy_cap(
@@ -340,6 +342,30 @@ void T1_appinit_before_gpu_init(
     #error "T1_PROFILER_ACTIVE not set"
     #endif
     
+    T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
+        sizeof(T1Globals));
+    if (!T1_global) { return; }
+    T1_std_memset(T1_global, 0, sizeof(T1Globals));
+    
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
+    T1_audio_init(
+        /* void *(*arg_malloc_function)(u64): */
+            T1_mem_malloc_unmanaged);
+    T1_platform_audio_init();
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_AUDIO_ACTIVE undefined!"
+    #endif
+    
+    #ifdef __APPLE__
+    T1_apple_os_init();
+    #endif
+    
+    #ifdef TARGET_OS_OSX
+    T1_os_macos_init();
+    #endif
+    
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     engine_save_file = (EngineSaveFile *)T1_mem_malloc_unmanaged(
         sizeof(EngineSaveFile));
@@ -364,6 +390,7 @@ void T1_appinit_before_gpu_init(
             full_writable_pathfile);
         engine_save_contents = (char *)T1_mem_malloc_managed(
             engine_save_cap_noterm + 1);
+        T1_std_memset(engine_save_contents, 0, engine_save_cap_noterm + 1); 
         T1_os_read_file(
             full_writable_pathfile,
             engine_save_contents,
@@ -378,24 +405,6 @@ void T1_appinit_before_gpu_init(
     // Pass
     #else
     #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
-    #endif
-    
-    T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
-        sizeof(T1Globals));
-    if (!T1_global) { return; }
-    T1_std_memset(T1_global, 0, sizeof(T1Globals));
-    
-    T1_objc_init(T1_mem_malloc_unmanaged);
-    
-    #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_init(
-        /* void *(*arg_malloc_function)(u64): */
-            T1_mem_malloc_unmanaged);
-    T1_platform_audio_init();
-    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_AUDIO_ACTIVE undefined!"
     #endif
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
@@ -524,8 +533,14 @@ void T1_appinit_before_gpu_init(
     u8 font_metrics_good = 0;
     
     if (font_metrics_contents_cap > 0) {
-        font_metrics_contents = (char *)T1_mem_malloc_unmanaged(
+        font_metrics_contents =
+            (char *)T1_mem_malloc_unmanaged(
+                font_metrics_contents_cap + 1);
+        T1_std_memset(
+            font_metrics_contents,
+            0,
             font_metrics_contents_cap + 1);
+        
         if (!font_metrics_contents) {
             return;
         }
@@ -578,14 +593,10 @@ void T1_appinit_before_gpu_init(
     T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
         sizeof(T1CPUToGPUData));
     if (!T1_cpu_to_gpu_data) { return; }
+    T1_std_memset(T1_cpu_to_gpu_data, 0, sizeof(T1CPUToGPUData));
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
     T1_log_assert(sd != NULL);
-    
-    T1_std_memset(
-        sd,
-        0,
-        sizeof(T1CPUToGPUData));
     
     // init the buffers that contain our vertices to send to the GPU
     sd->vertices_alloc_size = pad_to_page_size(
@@ -696,6 +707,7 @@ void T1_appinit_before_gpu_init(
                 sd->postprocessing_constants_alloc_size,
                 T1_mem_page_size);
         if (!f->postproc_consts) { return; }
+        T1_std_memset(f->postproc_consts, 0, sd->postprocessing_constants_alloc_size);
     }
     
     sd->locked_vertices =
@@ -703,20 +715,32 @@ void T1_appinit_before_gpu_init(
             sd->locked_vertices_alloc_size,
             T1_mem_page_size);
     if (!sd->locked_vertices) { return; }
+    T1_std_memset(
+        sd->locked_vertices,
+        0,
+        sd->locked_vertices_alloc_size);
     
     sd->const_mats_f32 = (T1GPUMatf32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
     if (!sd->const_mats_f32) { return; }
+    T1_std_memset(
+        sd->const_mats_f32,
+        0,
+        sd->const_matsf32_alloc_size);
     
     sd->const_mats_s32 = (T1GPUMatu32 *)
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matss32_alloc_size,
             T1_mem_page_size);
     if (!sd->const_mats_s32) { return; }
+    T1_std_memset(
+        sd->const_mats_s32,
+        0,
+        sd->const_matss32_alloc_size);
     
-    u8 initial_log_dump_succesful = false;
+    b8 initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
         T1_std_strcpy_cap(
@@ -731,9 +755,10 @@ void T1_appinit_before_gpu_init(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void T1_appinit_asset_loading_thread(
-    s32 asset_thread_id)
+static void * T1_appinit_asset_loading_thread(
+    void * asset_thread_id_u32_me)
 {
+    u32 asset_thread_id = (u32)(uintptr_t)asset_thread_id_u32_me;
     if (asset_thread_id > 0) {
         decode_png_init(
             T1_mem_malloc_managed,
@@ -753,6 +778,8 @@ static void T1_appinit_asset_loading_thread(
     }
     
     ias->thread_finished[asset_thread_id] = 1;
+    
+    return NULL;
 }
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 // Pass
@@ -895,7 +922,7 @@ void T1_appinit_after_gpu_init_step2(
                 /* void (*function_to_run)(s32): */
                     T1_appinit_asset_loading_thread,
                 /* s32 argument: */
-                    i);
+                    (void *)(uintptr_t)i);
         }
         #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
         // Pass
@@ -988,7 +1015,8 @@ void T1_appinit_after_gpu_init_step2(
     }
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    T1_appinit_asset_loading_thread(0);
+    uintptr_t zero = 0;
+    T1_appinit_asset_loading_thread((void *)zero);
     
     if (!T1_log_app_running) {
         return;

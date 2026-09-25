@@ -483,8 +483,7 @@ T1_std_copy_strings(
 }
 
 __attribute__((no_sanitize("address")))
-u64
-T1_std_strlen(const char * null_terminated_string)
+u64 T1_std_strlen(const char * null_terminated_string)
 {
     u32 return_value = 0;
     
@@ -513,8 +512,7 @@ T1_std_strlen(const char * null_terminated_string)
     return return_value;
 }
 
-void
-T1_std_strtolower(char * in)
+void T1_std_strtolower(char * in)
 {
     s8 offset = ('A' - 'a');
     while (in[0] != '\0') {
@@ -525,8 +523,7 @@ T1_std_strtolower(char * in)
     }
 }
 
-u8
-T1_std_string_starts_with(
+u8 T1_std_string_starts_with(
     const char * str_to_check,
     const char * start)
 {
@@ -546,8 +543,7 @@ T1_std_string_starts_with(
     return true;
 }
 
-u8
-T1_std_string_ends_with(
+u8 T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending)
 {
@@ -577,8 +573,7 @@ T1_std_string_ends_with(
     return true;
 }
 
-void
-T1_std_strsub(
+void T1_std_strsub(
     char * in,
     const char * to_match,
     const char * replacement)
@@ -626,8 +621,7 @@ T1_std_strsub(
     }
 }
 
-b8
-T1_std_are_equal_strings(
+b8 T1_std_are_equal_strings(
     const char * str1,
     const char * str2)
 {
@@ -657,8 +651,7 @@ T1_std_are_equal_strings(
     return true;
 }
 
-u8
-T1_std_are_equal_until_nullterminator(
+u8 T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2)
 {
@@ -680,8 +673,7 @@ T1_std_are_equal_until_nullterminator(
     return true;
 }
 
-u8
-T1_std_are_equal_strings_of_length(
+u8 T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const u64 len)
@@ -755,8 +747,7 @@ void T1_std_s32_to_string(
     }
 }
 
-void
-T1_std_u32_to_string(
+void T1_std_u32_to_string(
     const u32 input,
     char * recipient)
 {
@@ -797,8 +788,7 @@ T1_std_u32_to_string(
     }
 }
 
-s32
-T1_std_string_to_s32_validate(
+s32 T1_std_string_to_s32_validate(
     const char * input,
     u8 * good)
 {
@@ -833,8 +823,7 @@ T1_std_string_to_s32_validate(
     return (s32)unsigned_return;
 }
 
-s32
-T1_std_string_to_s32(const char * input)
+s32 T1_std_string_to_s32(const char * input)
 {
     u8 result_good = false;
     s32 result = T1_std_string_to_s32_validate(
@@ -849,8 +838,7 @@ T1_std_string_to_s32(const char * input)
     return result;
 }
 
-u32
-T1_std_string_to_u32_validate(
+u32 T1_std_string_to_u32_validate(
     const char * input,
     u8 * good)
 {
@@ -894,8 +882,7 @@ T1_std_string_to_u32_validate(
     return return_value;
 }
 
-u32
-T1_std_string_to_u32(
+u32 T1_std_string_to_u32(
     const char * input)
 {
     u8 result_good = false;
@@ -911,8 +898,7 @@ T1_std_string_to_u32(
     return result;
 }
 
-f32
-T1_std_string_to_f32_validate(
+f32 T1_std_string_to_f32_validate(
     const char * input,
     u8 * good)
 {
@@ -1047,8 +1033,7 @@ T1_std_string_to_f32_validate(
     return return_value;
 }
 
-f32
-T1_std_string_to_f32(
+f32 T1_std_string_to_f32(
     const char * input)
 {
     u8 result_good = false;

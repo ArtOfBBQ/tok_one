@@ -5,6 +5,8 @@
 
 #include <dlfcn.h>
 
+#define T1NSASCIIStringEncoding 1
+
 typedef struct {
     uintptr_t (* msg)(void *, void *);
     uintptr_t (* msg_arg)(void *, void *, uintptr_t);
@@ -24,6 +26,7 @@ typedef struct {
     void * (* reg_name)(const char *);
     void * class_nsstring;
     void * sel_string_with_utf8_string;
+    void * sel_c_string_using_encoding; // cStringUsingEncoding:
     void * active_framework;
     u8 *   linked_good;
     u8 good;
@@ -80,6 +83,7 @@ void T1_objc_init(
     
     T1_objc_s->class_nsstring = T1_objc_s->get_class("NSString");
     T1_objc_s->sel_string_with_utf8_string = T1_objc_s->reg_name("stringWithUTF8String:");
+    T1_objc_s->sel_c_string_using_encoding = T1_objc_s->reg_name("cStringUsingEncoding:");
     
     // dlclose(libobjc);
     
@@ -215,6 +219,9 @@ uintptr_t T1_objc_msg(
     void * recip,
     void * selector)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -229,6 +236,9 @@ uintptr_t T1_objc_msg_1arg(
     void * selector,
     uintptr_t arg1)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -263,6 +273,9 @@ uintptr_t T1_objc_msg_2arg(
     uintptr_t arg1,
     uintptr_t arg2)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -277,6 +290,9 @@ uintptr_t T1_objc_msg_3arg(
     uintptr_t arg2,
     uintptr_t arg3)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -292,6 +308,9 @@ uintptr_t T1_objc_msg_4arg(
     uintptr_t arg3,
     uintptr_t arg4)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -308,6 +327,9 @@ uintptr_t T1_objc_msg_5arg(
     uintptr_t arg4,
     uintptr_t arg5)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -320,6 +342,9 @@ uintptr_t T1_objc_msg_f64(
     void * selector,
     f64 arg1)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector != NULL);
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
@@ -332,6 +357,10 @@ void * T1_objc_msgx2_expect_ptr(
     void * selector_1,
     void * selector_2)
 {
+    T1_log_assert(recip != NULL);
+    T1_log_assert(selector_1 != NULL);
+    T1_log_assert(selector_2 != NULL);
+    
     void * step1 = (void *)T1_objc_msg(
         recip,
         selector_1);
@@ -372,7 +401,10 @@ uintptr_t T1_objc_msg_1quadf64(
     void * target,
     void * sel,
     T1ObjcQuadf64 quad1)
-{
+{   
+    T1_log_assert(target != NULL);
+    T1_log_assert(sel != NULL);
+    
     return T1_objc_s->msg_1quadf64(target, sel, quad1);    
 }
 
@@ -381,6 +413,9 @@ uintptr_t T1_objc_msg_1sextf64(
     void * sel,
     T1ObjcSextf64 sext1)
 {
+    T1_log_assert(target != NULL);
+    T1_log_assert(sel != NULL);
+    
     return T1_objc_s->msg_1sextf64(target, sel, sext1);
 }
 
@@ -392,6 +427,9 @@ uintptr_t T1_objc_msg_2arg_2pair(
     T1ObjcPair pair1, 
     T1ObjcPair pair2)
 {
+    T1_log_assert(target != NULL);
+    T1_log_assert(sel != NULL);
+    
     return T1_objc_s->msg_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
 }
 
@@ -401,6 +439,9 @@ uintptr_t T1_objc_msg_2set(
     T1ObjcSet set1,
     T1ObjcSet set2)
 {
+    T1_log_assert(target != NULL);
+    T1_log_assert(selector != NULL);
+    
     return T1_objc_s->msg_2set(
         target, selector,
         set1, set2);
@@ -419,6 +460,9 @@ uintptr_t T1_objc_msg_3arg_2set_4arg(
     uintptr_t arg6,
     uintptr_t arg7)
 {
+    T1_log_assert(target != NULL);
+    T1_log_assert(selector != NULL);
+    
     return T1_objc_s->msg_3arg_2set_4arg(
         target, selector,
         arg1, arg2, arg3,
@@ -439,6 +483,9 @@ uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
     uintptr_t arg7,
     T1ObjcSet set2)
 {
+    T1_log_assert(target != NULL);
+    T1_log_assert(selector != NULL);
+    
     return T1_objc_s->msg_4arg_1set_3arg_1set(
         target, selector,
         arg1, arg2, arg3, arg4,
@@ -460,6 +507,9 @@ void T1_cmd_copy_texture_to_buffer(
     uintptr_t dst_bytes_per_row,
     uintptr_t dst_bytes_per_image)
 {
+    T1_log_assert(command_encoder != NULL);
+    T1_log_assert(sel_copy_to_buf != NULL);
+    
     // TODO: fix intel ABI
     #if defined(__x86_64__)
     #error
@@ -515,4 +565,13 @@ void * T1_objc_nsstring_construct(
         (uintptr_t)from);
     
     return out;
+}
+
+char * T1_objc_nsstring_to_cstring(
+    void * nsstring)
+{
+    return (char *)T1_objc_msg_1arg(
+        nsstring,
+        T1_objc_s->sel_c_string_using_encoding,
+        /* cStringUsingEncoding: */ T1NSASCIIStringEncoding);
 }
