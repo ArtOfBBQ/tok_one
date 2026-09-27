@@ -83,8 +83,6 @@ void T1_objc_open_framework_and_link_perma_good_val(
     const char * framework_name,
     u8 * perma_good_checker);
 
-void T1_objc_close_current_framework(void);
-
 void * T1_objc_autorelease_pool_push(void);
 
 void T1_objc_autorelease_pool_pop(void * pool);
@@ -245,6 +243,12 @@ uintptr_t T1_objc_msg_1quadf64(
     void * target,
     void * selector,
     T1ObjcQuadf64);
+
+uintptr_t T1_objc_msg_1quadf64_1arg(
+    void * target,
+    void * selector,
+    T1ObjcQuadf64 quad_1,
+    uintptr_t arg_1);
 
 uintptr_t T1_objc_msg_1quadf64_3arg(
     void * target,

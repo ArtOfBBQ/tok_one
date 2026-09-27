@@ -60,7 +60,7 @@ engine_src/shared/T1_zlight.c
 engine_src/shared/T1_types_cpu_to_gpu.c
 engine_src/shared_apple/T1_os_apple_audio.c
 engine_src/shared/T1_os_common.c
-engine_src/macos/T1_os_macos.m
+engine_src/macos/T1_os_macos.c
 engine_src/shared_apple/T1_os_apple.c
 engine_src/shared/T1_mem.c
 engine_src/shared/T1_profiler.c

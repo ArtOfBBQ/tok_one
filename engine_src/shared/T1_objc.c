@@ -16,6 +16,7 @@ typedef struct {
     uintptr_t (* msg_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_1f64)(void *, void *, f64);
     uintptr_t (* msg_1quadf64)(void *, void *, T1ObjcQuadf64);
+    uintptr_t (* msg_1quadf64_1arg)(void *, void *, T1ObjcQuadf64, uintptr_t);
     uintptr_t (* msg_1quadf64_3arg)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_1sextf64)(void *, void *, T1ObjcSextf64);
     uintptr_t (* msg_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
@@ -37,7 +38,6 @@ typedef struct {
     void * class_nsstring;
     void * sel_string_with_utf8_string;
     void * sel_c_string_using_encoding; // cStringUsingEncoding:
-    void * active_framework;
     u8 *   linked_good;
     u8 good;
 } T1ObjCState;
@@ -74,6 +74,7 @@ void T1_objc_init(
     T1_objc_s->msg_5arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_1f64                = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
     T1_objc_s->msg_1quadf64            = (uintptr_t (*)(void *, void *, T1ObjcQuadf64))T1_objc_s->msg;
+    T1_objc_s->msg_1quadf64_1arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_1quadf64_3arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_1sextf64            = (uintptr_t (*)(void *, void *, T1ObjcSextf64))T1_objc_s->msg;
     T1_objc_s->msg_2arg_2pair          = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
@@ -143,26 +144,9 @@ void T1_objc_open_framework_and_link_perma_good_val(
     }
     T1_objc_s->linked_good = perma_good_checker;
     
-    if (T1_objc_s->active_framework) {
-        dlclose(T1_objc_s->active_framework);
-    }
-    
-    T1_objc_s->active_framework = dlopen(
+    *T1_objc_s->linked_good = dlopen(
         framework_name,
-        RTLD_LAZY);
-    if (!T1_objc_s->active_framework) {
-        return;
-    }
-    
-    *T1_objc_s->linked_good = 1;
-}
-
-void T1_objc_close_current_framework(void)
-{
-    if (T1_objc_s->active_framework) {
-        dlclose(T1_objc_s->active_framework);
-        T1_objc_s->active_framework = NULL;
-    }
+        RTLD_LAZY) != 0;
 }
 
 void * T1_objc_autorelease_pool_push(void) {
@@ -186,7 +170,6 @@ void * T1_objc_get_func(
     if (
         !T1_objc_s ||
         !T1_objc_s->good ||
-        !T1_objc_s->active_framework ||
         !T1_objc_s->get_class ||
         !T1_objc_s->linked_good ||
         !*T1_objc_s->linked_good)
@@ -195,7 +178,7 @@ void * T1_objc_get_func(
     }
     
     void * out = dlsym(
-        T1_objc_s->active_framework,
+        RTLD_DEFAULT,
         func_name);
     
     if (!out) {
@@ -211,7 +194,6 @@ void * T1_objc_get_class(
     if (
         !T1_objc_s ||
         !T1_objc_s->good ||
-        !T1_objc_s->active_framework ||
         !T1_objc_s->get_class ||
         !T1_objc_s->linked_good ||
         !*T1_objc_s->linked_good)
@@ -268,7 +250,6 @@ void * T1_objc_reg_sel(
     if (
         !T1_objc_s ||
         !T1_objc_s->good ||
-        !T1_objc_s->active_framework ||
         !T1_objc_s->linked_good ||
         !*T1_objc_s->linked_good)
     {
@@ -476,6 +457,20 @@ uintptr_t T1_objc_msg_1quadf64(
     
     return T1_objc_s->msg_1quadf64(target, sel, quad1);    
 }
+
+uintptr_t T1_objc_msg_1quadf64_1arg(
+    void * target,
+    void * sel,
+    T1ObjcQuadf64 quad_1,
+    uintptr_t arg_1)
+{
+    T1_log_assert(target != NULL);
+    T1_log_assert(sel != NULL);
+    
+    return T1_objc_s->msg_1quadf64_1arg(
+        target, sel, quad_1, arg_1);
+}
+
 
 uintptr_t T1_objc_msg_1quadf64_3arg(
     void * target,

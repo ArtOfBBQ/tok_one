@@ -24,6 +24,7 @@
 #define T1NSWindowStyleMaskTitled (1 << 0)
 #define T1NSWindowStyleMaskClosable (1 << 1)
 #define T1NSWindowStyleMaskResizable (1 << 3)
+#define T1MTLPixelFormatDepth32Float 252
 
 typedef struct {
     void * class_T1_ns_window; // T1NSWindow
@@ -34,6 +35,7 @@ typedef struct {
     void * class_ns_alert; // NSAlert
     void * class_ns_file_manager; // NSFileManager
     void * class_ns_workspace; // NSWorkspace
+    void * class_mtk_view; // MTKView
     void * sel_new; // new
     void * sel_window; // window
     void * sel_set_message_text; // setMessageText:
@@ -53,6 +55,7 @@ typedef struct {
     void * sel_file_url_with_path; // fileURLWithPath:
     void * sel_shared_workspace; // sharedWorkspace
     void * func_ns_search_path_dirs_in_domains; // NSSearchPathForDirectoriesInDomains
+    void * func_mtl_create_system_default_device; // MTLCreateSystemDefaultDevice()
     void * sel_delta_y; // deltaY
     void * sel_open_url; // openURL:
     void * sel_content_view; // contentView
@@ -70,6 +73,14 @@ typedef struct {
     void * sel_set_content_view; // setContentView:
     void * sel_alloc;
     void * sel_init_with_content_rect_style_mask; // initWithContentRect:styleMask:backing:defer:
+    void * sel_init_with_frame_device; // initWithFrame:device:
+    void * sel_set_auto_resize_drawable; // setAutoResizeDrawable:
+    void * sel_set_preferred_frames_per_second; // setPreferredFramesPerSecond:
+    void * sel_set_enable_set_needs_display; // setEnableSetNeedsDisplay:
+    void * sel_set_depth_stencil_pixel_format; // setDepthStencilPixelFormat:
+    void * sel_set_clear_depth; // setClearDepth:
+    void * sel_set_paused;
+    void * sel_set_needs_display; 
     b8 framework_good;
 } T1OSMacosState;
 
@@ -515,6 +526,7 @@ static u8 T1_os_macos_ns_window_always_true(
 }
 
 static void * window = NULL; // id<T1NSWindow>
+static void * mtk_view = NULL; // id<MTKView>
 static void * apple_gpu_delegate = NULL; // id<T1MTKViewDelegate>
 
 static void T1_os_macos_ns_window_delegate_window_will_close(
@@ -562,6 +574,7 @@ static void T1_os_macos_ns_window_delegate_window_will_exit_full_screen(
     T1_global->fullscreen = false;
 }
 
+#if 0
 static void T1_os_macos_ns_window_delegate_window_did_move(
     void * self_ptr,
     void * selector,
@@ -577,6 +590,7 @@ static void T1_os_macos_ns_window_delegate_window_did_move(
         (f32)frame.a,
         (f32)frame.b);
 }
+#endif
 
 static T1ObjcPairf64
 T1_os_macos_ns_window_delegate_window_will_resize_to_size(
@@ -598,6 +612,8 @@ static void T1_os_macos_ns_window_delegate_window_did_resize(
     void * selector,
     void * notification)
 {
+    (void)self_ptr; (void)selector; (void)notification;
+    
     T1_global_update_window_size(
         /* float width: */
             T1_os_macos_ns_window_get_width(
@@ -618,6 +634,19 @@ void T1_os_macos_init(void) {
     T1_objc_open_framework_and_link_perma_good_val(
         "/System/Library/Frameworks/Foundation.framework/Foundation",
         &T1_os_macos_s->framework_good);
+    T1_objc_open_framework_and_link_perma_good_val(
+        "/System/Library/Frameworks/AppKit.framework/AppKit",
+        &T1_os_macos_s->framework_good);
+    
+    T1_os_macos_s->sel_alloc = T1_objc_reg_sel("alloc");
+    T1_log_assert(T1_os_macos_s->sel_alloc != NULL);
+    
+    T1_os_macos_s->sel_init_with_content_rect_style_mask =
+        T1_objc_reg_sel("initWithContentRect:styleMask:backing:defer:");
+    T1_log_assert(T1_os_macos_s->sel_init_with_content_rect_style_mask != NULL);
+    T1_os_macos_s->sel_set_animation_behavior = T1_objc_reg_sel(
+        "setAnimationBehavior:");
+    T1_log_assert(T1_os_macos_s->sel_set_animation_behavior != NULL);
     
     // classes
     T1_os_macos_s->class_T1_ns_window =
@@ -774,9 +803,12 @@ void T1_os_macos_init(void) {
     T1_log_assert(T1_os_macos_s->class_ns_app != NULL);
     T1_os_macos_s->class_ns_alert = T1_objc_get_class(
         "NSAlert");
+    T1_log_assert(T1_os_macos_s->class_ns_alert != NULL);
     T1_os_macos_s->class_ns_workspace = T1_objc_get_class(
         "NSWorkspace");
-    T1_log_assert(T1_os_macos_s->class_ns_alert != NULL);
+    T1_os_macos_s->class_mtk_view = T1_objc_get_class(
+        "MTKView");
+    T1_log_assert(T1_os_macos_s->class_mtk_view != NULL);
     
     // selectors
     T1_os_macos_s->sel_new = T1_objc_reg_sel(
@@ -835,6 +867,11 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->func_ns_search_path_dirs_in_domains =
         T1_objc_get_func(
             "NSSearchPathForDirectoriesInDomains");
+    
+    T1_os_macos_s->func_mtl_create_system_default_device =
+        T1_objc_get_func(
+            "MTLCreateSystemDefaultDevice");
+    
     T1_os_macos_s->sel_delta_y = T1_objc_reg_sel(
         "deltaY");
     T1_os_macos_s->sel_open_url = T1_objc_reg_sel(
@@ -849,8 +886,7 @@ void T1_os_macos_init(void) {
         "styleMask");
     T1_os_macos_s->sel_toggle_full_screen = T1_objc_reg_sel(
         "toggleFullScreen:");
-    T1_os_macos_s->sel_set_animation_behavior = T1_objc_reg_sel(
-        "setAnimationBehavior:");
+    
     T1_os_macos_s->sel_set_delegate = T1_objc_reg_sel(
         "setDelegate:");
     T1_os_macos_s->sel_set_title = T1_objc_reg_sel(
@@ -864,10 +900,25 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->sel_close = T1_objc_reg_sel("close");
     T1_os_macos_s->sel_set_content_view =
         T1_objc_reg_sel("setContentView:");
-    T1_os_macos_s->sel_alloc = T1_objc_reg_sel("alloc");
-    T1_os_macos_s->sel_init_with_content_rect_style_mask =
-        T1_objc_reg_sel("initWithContentRect:styleMask:backing:defer:");
-
+    
+    
+    T1_os_macos_s->sel_init_with_frame_device = T1_objc_reg_sel(
+        "initWithFrame:device:");
+    T1_os_macos_s->sel_set_auto_resize_drawable = T1_objc_reg_sel(
+        "setAutoResizeDrawable:");
+    T1_os_macos_s->sel_set_preferred_frames_per_second = T1_objc_reg_sel(
+        "setPreferredFramesPerSecond:");
+    T1_os_macos_s->sel_set_enable_set_needs_display = T1_objc_reg_sel(
+        "setEnableSetNeedsDisplay:");
+    T1_os_macos_s->sel_set_depth_stencil_pixel_format = T1_objc_reg_sel(
+        "setDepthStencilPixelFormat:");
+    T1_os_macos_s->sel_set_clear_depth = T1_objc_reg_sel(
+        "setClearDepth:");
+    T1_os_macos_s->sel_set_paused = T1_objc_reg_sel(
+        "setPaused:");
+    T1_os_macos_s->sel_set_needs_display = T1_objc_reg_sel(
+        "setNeedsDisplay:");
+    
     T1_log_assert(T1_os_macos_s->
         func_ns_search_path_dirs_in_domains != NULL);
 }
@@ -988,8 +1039,6 @@ static void T1_os_setup_obj_frameworks(void) {
     T1_mpl_objc->sel_xaxis = T1_objc_reg_sel("xAxis");
     T1_mpl_objc->sel_yaxis = T1_objc_reg_sel("yAxis");
     T1_mpl_objc->sel_value = T1_objc_reg_sel("value");
-    
-    T1_objc_close_current_framework();
 }
 
 static void update_chain_key(
@@ -1322,8 +1371,6 @@ void T1_os_destroy_main_window_if_possible(void) {
     }
 }
 
-static MTKView * mtk_view = NULL;
-
 void T1_os_link_gpu_to_main_window(
     c8 * errmsg,
     u32 errmsg_cap,
@@ -1331,52 +1378,69 @@ void T1_os_link_gpu_to_main_window(
 {
     *good = 0;
     
-    id<MTLDevice> metal_device_for_window = MTLCreateSystemDefaultDevice();
+    typedef void *(* mtl_fn)(void);
+    mtl_fn fn = (mtl_fn)T1_os_macos_s->
+        func_mtl_create_system_default_device;
     
-    NSRect window_rect = NSMakeRect(
+    if (fn == NULL) { return; }
+    void * metal_device_for_window = fn();
+    
+    T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
         /* x: */ T1_global->window_left,
         /* y: */ T1_global->window_bottom,
         /* width: */ T1_global->window_wh[0],
         /* height: */ T1_global->window_wh[1]);
     
-    mtk_view = [[MTKView alloc]
-        initWithFrame: window_rect
-        device: metal_device_for_window];
+    mtk_view = (void *)T1_objc_msg(
+        T1_os_macos_s->class_mtk_view,
+        T1_os_macos_s->sel_alloc);
     
-    mtk_view.autoResizeDrawable = true;
+    mtk_view = (void *)T1_objc_msg_1quadf64_1arg(
+        mtk_view,
+        T1_os_macos_s->sel_init_with_frame_device,
+        window_rect,
+        (uintptr_t)metal_device_for_window);
     
-    mtk_view.preferredFramesPerSecond = 120;
-    mtk_view.enableSetNeedsDisplay = false;
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_auto_resize_drawable, true);
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_preferred_frames_per_second, 60);
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_enable_set_needs_display, false);
     
-    // Indicate that each pixel in the depth buffer is a 32-bit floating point
-    // value.
-    mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_depth_stencil_pixel_format,
+        T1MTLPixelFormatDepth32Float);
     
-    // Indicate that Metal should clear all values in the depth buffer to x
-    // when you create a render command encoder with the MetalKit view's
-    // `currentRenderPassDescriptor` property.
-    mtk_view.clearDepth = T1_GLOBAL_CLEARDEPTH;
-    [mtk_view setPaused: false];
-    [mtk_view setNeedsDisplay: false];
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_clear_depth,
+        T1_GLOBAL_CLEARDEPTH);
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_paused, false);
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_needs_display, false);
     
     T1_objc_msg_1arg(
         window,
         T1_os_macos_s->sel_set_content_view,
-        (uintptr_t)(__bridge void *)mtk_view);
+        (uintptr_t)mtk_view);
     
     apple_gpu_delegate = (void *)T1_objc_msg(
         T1_os_macos_s->class_T1_mtk_view_delegate,
         T1_os_macos_s->sel_new);
-    [mtk_view setDelegate: (__bridge id<MTKViewDelegate> _Nullable)(apple_gpu_delegate)];
     
-    char shader_lib_path_cstr[2000];
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_delegate,
+        (uintptr_t)apple_gpu_delegate);
+    
+    char shader_lib_path_cstr[512];
     T1_os_get_res_dir(
         shader_lib_path_cstr,
-        2000);
+        512);
     
     T1_std_strcat_cap(
         shader_lib_path_cstr,
-        1000,
+        512,
         "/Shaders.metallib");
     
     b8 result = T1_apple_gpu_init(
@@ -1384,7 +1448,7 @@ void T1_os_link_gpu_to_main_window(
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
-            (__bridge void *)(metal_device_for_window),
+            metal_device_for_window,
         /* NSString *shader_lib_filepath: */
             shader_lib_path_cstr,
         /* bool32_t has_retina_screen: */
