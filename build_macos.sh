@@ -11,7 +11,7 @@ COMPILER_ARGS="
 -ferror-limit=2 
 -march=native 
 -Wall 
--x objective-c -std=c11 
+-x c -std=c11 
 -O0 
 -include T1_macro_settings.h
 -c"

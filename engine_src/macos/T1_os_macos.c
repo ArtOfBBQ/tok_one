@@ -1,5 +1,3 @@
-#import <MetalKit/MetalKit.h>
-
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_log.h"
@@ -12,6 +10,8 @@
 #include "T1_os.h"
 #include "T1_gpu.h"
 #include "T1_gameloop.h"
+
+#include <sys/mman.h>
 
 #define T1NSUserDomainMask 1
 #define T1NSUTF8StringEncoding 4
