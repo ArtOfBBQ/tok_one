@@ -1,4 +1,4 @@
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 #include <pthread.h>
 #include <dirent.h>
@@ -9,17 +9,20 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_log.h"
-#include "T1_apple_audio.h"
+#include "T1_os_apple_audio.h"
 #include "T1_objc.h"
 
 #define T1NSDataReadingUncached 2
 
 typedef struct {
+    void * class_ns_application;
     void * class_ns_filemanager; // NSFileManager
     void * class_ns_data; // NSData
     void * class_ns_url; // NSURL
     void * class_ns_bundle; // NSBundle
     void * class_ns_process_info; // NSProcessInfo
+    void * sel_shared_application; // sharedApplication
+    void * sel_run;
     void * sel_default_manager; // defaultManager
     void * sel_attributes_of_item_at_path_error; // attributesOfItemAtPath:error:
     void * sel_file_size; // fileSize
@@ -57,6 +60,8 @@ void T1_apple_os_init(void) {
         &T1_os_apple_s->framework_good);
     
     // classes
+    T1_os_apple_s->class_ns_application = T1_objc_get_class(
+        "NSApplication");
     T1_os_apple_s->class_ns_filemanager = T1_objc_get_class(
         "NSFileManager");
     T1_os_apple_s->class_ns_data = T1_objc_get_class(
@@ -69,6 +74,10 @@ void T1_apple_os_init(void) {
         T1_objc_get_class("NSProcessInfo");
     
     // selectors
+    T1_os_apple_s->sel_shared_application = T1_objc_reg_sel(
+        "sharedApplication");
+    T1_os_apple_s->sel_run = T1_objc_reg_sel(
+        "run");
     T1_os_apple_s->sel_default_manager = T1_objc_reg_sel(
         "defaultManager");
     T1_os_apple_s->sel_attributes_of_item_at_path_error = T1_objc_reg_sel(
@@ -112,7 +121,6 @@ void T1_apple_os_init(void) {
         "removeItemAtPath:error:");
     T1_os_apple_s->sel_copy_item_at_path_to_path_error = T1_objc_reg_sel(
         "copyItemAtPath:toPath:error:");
-    T1_objc_close_current_framework();
 }
 
 f32 T1_os_get_screen_backing_scale_factor(void) {
@@ -599,4 +607,14 @@ u32 T1_os_get_cpu_logical_core_count(void)
         process_info,
         T1_os_apple_s->sel_active_processor_count);
     return (core_count > 0) ? (unsigned int)core_count : 1;
+}
+
+void T1_os_run_app(void) {
+    void * ns_app = (void *)T1_objc_msg(
+        T1_os_apple_s->class_ns_application,
+        T1_os_apple_s->sel_shared_application);
+    
+    if (ns_app) {
+        T1_objc_msg(ns_app, T1_os_apple_s->sel_run);
+    }
 }

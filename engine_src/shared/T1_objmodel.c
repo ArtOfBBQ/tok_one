@@ -15,7 +15,7 @@
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_render_view.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 static void construct_mesh_summary(
     T1MeshSummary * to_construct,

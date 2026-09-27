@@ -3,7 +3,6 @@ COMPILER_PATHS="
 -I engine_src/shared/debigulator/src/
 -I engine_src/shared/
 -I engine_src/shared_apple/
--I engine_src/shared_linux_apple/
 -I engine_src/shared_windows_macos/
 -I sampleproject_src/
 "
@@ -59,11 +58,10 @@ engine_src/shared/T1_triangle.c
 engine_src/shared/T1_material.c
 engine_src/shared/T1_zlight.c
 engine_src/shared/T1_types_cpu_to_gpu.c
-engine_src/shared_apple/T1_apple_audio.c
-engine_src/shared/T1_platform_layer_common.c
-engine_src/macos/T1_macos_platform_layer.m
-engine_src/shared_apple/T1_apple_platform_layer.c
-engine_src/shared_linux_apple/T1_linux_apple_platform_layer.c
+engine_src/shared_apple/T1_os_apple_audio.c
+engine_src/shared/T1_os_common.c
+engine_src/macos/T1_os_macos.m
+engine_src/shared_apple/T1_os_apple.c
 engine_src/shared/T1_mem.c
 engine_src/shared/T1_profiler.c
 engine_src/shared/T1_objmodel.c

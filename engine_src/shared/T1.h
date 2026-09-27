@@ -63,6 +63,7 @@ uint8_t T1_running(void);
 __attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
     uint8_t * good);
+void T1_os_run_app(void);
 
 void T1_appinit_before_gpu_init(
     void (* callback_newthread_entry_fptr)(int32_t),

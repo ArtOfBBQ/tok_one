@@ -16,7 +16,7 @@
 #include "T1_tex_array.h"
 #include "T1_zlight.h"
 #include "T1_render_view.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 

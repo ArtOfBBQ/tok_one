@@ -1,30 +1,11 @@
 /*
-These functions are not defined in the 'shared' folder they must be provided
-by the platform layer in a platform_layer.c file
-
-For example, 'platform_read_file' is currently defined in
-/shared_windows_macos/platform_layer.c for windows and mac os X, but it's
-defined elsewhere for iOS
-
-Therefore, the implementations of the function signatures in this header are
-actually scattered across multiple source files, since the combination of
-source files will be different on every platform
-
-The implementation folders are organized like this:
-1. src/shared_apple -> code that work on iOS and MacOS but not elsewhere
-2. src/macos -> code that works on MacOs esclusively
-3. src/linux -> code that works on Linux exclusively
-4. src/ios -> code that works on iOS
-5. src/shared_windows_macos -> code that works on windows and macos, but not elsewhere
-etc.
-
-Finally, there is 'common_platform_layer.c' which contains functions that
-are called only by other platform layer functions, but have identical code
-on each platform
+These functions are not defined in the 'shared' folder but
+they must be implemented by .c files specific to
+your platform
 */
 
-#ifndef T1_PLATFORM_LAYER_H
-#define T1_PLATFORM_LAYER_H
+#ifndef T1_OS_H
+#define T1_OS_H
 
 #include "T1_stdint.h"
 
@@ -41,9 +22,9 @@ typedef struct {
     f32 music_volume;
     f32 sound_volume;
     b8 window_fullscreen;
-} EngineSaveFile;
+} T1EngineSaveFile;
 
-extern EngineSaveFile * engine_save_file;
+extern T1EngineSaveFile * engine_save_file;
 #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
 // Pass
 #else
@@ -150,8 +131,9 @@ void T1_os_get_filenames_in(
 /*
 Get a file's size. Returns 0 if no such file
 
-A 'resource' is a file that's available in the typical folder for our platform
-, so you can pass "warrior.png" or whatever, the filename only without a path
+A 'resource' is a file that's available in the typical folder
+for our platform, so you can pass "warrior.png" or whatever,
+the filename only without a path
 
 A 'filepath' is a full explicit path to and including the filename
 */
@@ -165,8 +147,8 @@ u64 T1_os_get_filesize(
     const c8 * filepath);
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-void T1_platform_audio_init(void);
-void T1_platform_audio_start_loop(void);
+void T1_os_audio_init(void);
+void T1_os_audio_start_loop(void);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else
 #error
@@ -295,7 +277,7 @@ s16 T1_os_gpu_make_depth_tex(
     u32 width,
     u32 height);
 
-void T1_platform_update_mouse_location(void);
+// void T1_os_update_mouse_location(void);
 
 // This is used to communicate failure after failure to init GPU
 // acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
@@ -327,8 +309,10 @@ void T1_os_link_gpu_to_main_window(
 
 void T1_os_shutdown(void);
 
+void T1_os_run_app(void);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // T1_PLATFORM_LAYER_H
+#endif // T1_OS_H

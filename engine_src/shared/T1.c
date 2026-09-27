@@ -7,7 +7,7 @@
 #include "T1_texquad.h"
 #include "T1_zlight.h"
 #include "T1_io.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 uint8_t T1_running(void) {
     return T1_log_app_running > 0;

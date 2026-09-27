@@ -1,4 +1,4 @@
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 #include "decode_png.h"
 #include "decode_bmp.h"
@@ -166,7 +166,7 @@ void T1_os_mutex_unlock(u32 mutex_id) {
 #define MAX_SEPARATOR_SIZE   3 // 2 characters and NULL terminator
 
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-EngineSaveFile * engine_save_file = NULL;
+T1EngineSaveFile * engine_save_file = NULL;
 #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
 #else
 #error
@@ -416,7 +416,7 @@ void T1_os_res_filename_to_pathfile(
 void T1_os_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    const u32 assert_capacity)
+    u32 assert_capacity)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     // pass
@@ -438,9 +438,12 @@ void T1_os_writable_filename_to_pathfile(
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];
+    T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(/* recipient: */ separator);
     
     char separator_and_filename[MAX_FILENAME_SIZE];
+    T1_std_memset(separator_and_filename, 0, MAX_FILENAME_SIZE);
+    
     T1_std_strcpy_cap(
         separator_and_filename,
         filename_length + separator_size + 1,
@@ -451,6 +454,8 @@ void T1_os_writable_filename_to_pathfile(
         filename);
     
     char writables_path[256];
+    T1_std_memset(writables_path, 0, 256);
+    
     T1_os_get_writables_dir(writables_path, 256);
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
@@ -561,7 +566,7 @@ void T1_os_shutdown(void)
         /* const char * output: */
             (char *)engine_save_file,
         /* output_size: */
-            sizeof(EngineSaveFile),
+            sizeof(T1EngineSaveFile),
         /* u32 good: */
             &good);
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE

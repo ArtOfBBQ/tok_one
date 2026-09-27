@@ -39,7 +39,7 @@
 #include "T1_render_view.h"
 
 #include "T1_client.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 
 #define T1_IMAGE_DECODING_THREADS_MAX 10
@@ -367,12 +367,12 @@ void T1_appinit_before_gpu_init(
     #endif
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    engine_save_file = (EngineSaveFile *)T1_mem_malloc_unmanaged(
-        sizeof(EngineSaveFile));
+    engine_save_file = (T1EngineSaveFile *)T1_mem_malloc_unmanaged(
+        sizeof(T1EngineSaveFile));
     if (!engine_save_file) {
         return;
     }
-    T1_std_memset(engine_save_file, 0, sizeof(EngineSaveFile));
+    T1_std_memset(engine_save_file, 0, sizeof(T1EngineSaveFile));
     
     char full_writable_pathfile[512];
     T1_std_memset(full_writable_pathfile, 0, 512);
@@ -398,7 +398,7 @@ void T1_appinit_before_gpu_init(
             engine_save_cap_noterm,
             &engine_save_good);
         if (engine_save_good) {
-            *engine_save_file = *(EngineSaveFile *)engine_save_contents;
+            *engine_save_file = *(T1EngineSaveFile *)engine_save_contents;
         }
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE

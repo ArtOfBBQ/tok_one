@@ -6,7 +6,7 @@
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_simd.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 #include "T1_types_gpucpu.h"
 #include "T1_texquad.h"
 #include "T1_zsprite.h"

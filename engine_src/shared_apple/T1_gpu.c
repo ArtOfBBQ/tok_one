@@ -11,7 +11,7 @@
 #include "T1_mesh_summary.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 #define T1MTLPrimitiveTypePoint 0
 #define T1MTLPrimitiveTypeLine 1
@@ -433,66 +433,68 @@ u8 T1_apple_gpu_init(
         T1_objc_reg_sel("setSourceRGBBlendFactor:");
     ags->sel_set_dest_rgb_blend_factor =
         T1_objc_reg_sel("setDestinationRGBBlendFactor:");
-    ags->sel_set_rgb_blend_operation =
-        T1_objc_reg_sel("setRgbBlendOperation:");
-    ags->sel_set_storage_mode =
-        T1_objc_reg_sel("setStorageMode:");
-    ags->sel_set_usage =
-        T1_objc_reg_sel("setUsage:");
-    ags->sel_set_width =
-        T1_objc_reg_sel("setWidth:"); // setWidth:
-    ags->sel_set_height =
-        T1_objc_reg_sel("setHeight:"); // setWidth:
-    ags->sel_set_mipmap_level_count =
-        T1_objc_reg_sel("setMipmapLevelCount:");
-    ags->sel_usage =
-        T1_objc_reg_sel("usage");
+    ags->sel_set_rgb_blend_operation = T1_objc_reg_sel(
+        "setRgbBlendOperation:");
+    ags->sel_set_storage_mode = T1_objc_reg_sel(
+        "setStorageMode:");
+    ags->sel_set_usage = T1_objc_reg_sel("setUsage:");
+    ags->sel_set_width = T1_objc_reg_sel(
+        "setWidth:"); // setWidth:
+    ags->sel_set_height = T1_objc_reg_sel(
+        "setHeight:"); // setWidth:
+    ags->sel_set_mipmap_level_count = T1_objc_reg_sel(
+        "setMipmapLevelCount:");
+    ags->sel_usage = T1_objc_reg_sel("usage");
     T1_log_assert(ags->sel_usage != NULL);
-    ags->sel_mipmap_level_count =
-        T1_objc_reg_sel("mipmapLevelCount");
-    ags->sel_new_depth_stencil_state_with_desc =
-        T1_objc_reg_sel(
-            "newDepthStencilStateWithDescriptor:");
+    ags->sel_mipmap_level_count = T1_objc_reg_sel(
+        "mipmapLevelCount");
+    ags->sel_new_depth_stencil_state_with_desc = T1_objc_reg_sel(
+        "newDepthStencilStateWithDescriptor:");
     T1_log_assert(ags->sel_new_depth_stencil_state_with_desc != NULL);
-    ags->sel_blit_command_encoder =
-        T1_objc_reg_sel("blitCommandEncoder");
-    ags->sel_copy_from_buffer_source_offset_to_buffer =
-        T1_objc_reg_sel("copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:");
-    ags->sel_copy_from_buffer_source_offset_source_bytes_per_row =
-        T1_objc_reg_sel("copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:");
-    ags->sel_generate_mipmaps_for_texture =
-        T1_objc_reg_sel("generateMipmapsForTexture:");
+    ags->sel_blit_command_encoder = T1_objc_reg_sel(
+        "blitCommandEncoder");
+    ags->sel_copy_from_buffer_source_offset_to_buffer = T1_objc_reg_sel(
+        "copyFromBuffer:sourceOffset:toBuffer:destinationOffset:size:");
+    ags->sel_copy_from_buffer_source_offset_source_bytes_per_row = T1_objc_reg_sel(
+        "copyFromBuffer:sourceOffset:sourceBytesPerRow:sourceBytesPerImage:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:");
+    ags->sel_generate_mipmaps_for_texture = T1_objc_reg_sel(
+        "generateMipmapsForTexture:");
     ags->sel_present_drawable = T1_objc_reg_sel(
         "presentDrawable:");
-    ags->sel_commit =
-        T1_objc_reg_sel("commit");
-    ags->sel_wait_until_completed =
-        T1_objc_reg_sel("waitUntilCompleted");
-    ags->sel_end_encoding =
-        T1_objc_reg_sel("endEncoding");
+    ags->sel_commit = T1_objc_reg_sel(
+        "commit");
+    ags->sel_wait_until_completed = T1_objc_reg_sel(
+        "waitUntilCompleted");
+    ags->sel_end_encoding = T1_objc_reg_sel(
+        "endEncoding");
     ags->sel_current_drawable = T1_objc_reg_sel(
         "currentDrawable");
-    ags->sel_copy_from_texture_to_texture =
-        T1_objc_reg_sel("copyFromTexture:toTexture:");
-    ags->sel_copy_from_texture_to_buffer =
-        T1_objc_reg_sel(
-            "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:");
-    ags->sel_new_buffer_with_bytes_no_copy =
-        T1_objc_reg_sel(
-            "newBufferWithBytesNoCopy:length:options:deallocator:");
-    ags->sel_new_command_queue =
-        T1_objc_reg_sel("newCommandQueue");
-    ags->sel_vertex_buffers =
-        T1_objc_reg_sel("vertexBuffers");
-    ags->sel_new_default_library =
-        T1_objc_reg_sel("newDefaultLibrary");
-    ags->sel_depth_attachment = T1_objc_reg_sel("depthAttachment"); 
-    ags->sel_set_load_action = T1_objc_reg_sel("setLoadAction:");
-    ags->sel_set_clear_depth = T1_objc_reg_sel("setClearDepth:");
-    ags->sel_set_store_action = T1_objc_reg_sel("setStoreAction:");
-    ags->sel_set_texture = T1_objc_reg_sel("setTexture:");
-    ags->sel_set_depth_write_enabled = T1_objc_reg_sel("setDepthWriteEnabled:");
-    ags->sel_set_depth_compare_function = T1_objc_reg_sel("setDepthCompareFunction:");
+    ags->sel_copy_from_texture_to_texture = T1_objc_reg_sel(
+        "copyFromTexture:toTexture:");
+    ags->sel_copy_from_texture_to_buffer = T1_objc_reg_sel(
+        "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:");
+    ags->sel_new_buffer_with_bytes_no_copy = T1_objc_reg_sel(
+        "newBufferWithBytesNoCopy:length:options:deallocator:");
+    ags->sel_new_command_queue = T1_objc_reg_sel(
+        "newCommandQueue");
+    ags->sel_vertex_buffers = T1_objc_reg_sel(
+        "vertexBuffers");
+    ags->sel_new_default_library = T1_objc_reg_sel(
+        "newDefaultLibrary");
+    ags->sel_depth_attachment = T1_objc_reg_sel(
+        "depthAttachment"); 
+    ags->sel_set_load_action = T1_objc_reg_sel(
+        "setLoadAction:");
+    ags->sel_set_clear_depth = T1_objc_reg_sel(
+        "setClearDepth:");
+    ags->sel_set_store_action = T1_objc_reg_sel(
+        "setStoreAction:");
+    ags->sel_set_texture = T1_objc_reg_sel(
+        "setTexture:");
+    ags->sel_set_depth_write_enabled = T1_objc_reg_sel(
+        "setDepthWriteEnabled:");
+    ags->sel_set_depth_compare_function = T1_objc_reg_sel(
+        "setDepthCompareFunction:");
     ags->sel_current_render_pass_desc = T1_objc_reg_sel(
         "currentRenderPassDescriptor");
     ags->sel_file_URL_with_path_is_directory = T1_objc_reg_sel(
@@ -503,8 +505,6 @@ u8 T1_apple_gpu_init(
         arg_funcptr_shared_gameloop_update;
     funcptr_gameloop_after_render =
         arg_funcptr_shared_gameloop_update_after_render_pass;
-    
-    T1_objc_close_current_framework();
     
     ags->pixel_format_renderpass1 = T1MTLPixelFormatRGBA8Unorm; // 70
     
@@ -1631,14 +1631,14 @@ void T1_os_gpu_fetch_rgba_at(
         command_buffer,
         ags->sel_blit_command_encoder);
     
-    T1_cmd_copy_texture_to_buffer(
+    T1_objc_mtl_copy_texture_to_buffer(
         blit_encoder,
         ags->sel_copy_from_texture_to_buffer,
         texture,
         (uintptr_t)texture_i,
         0,
-        T1_objc_set_make(0, 0, 0),
-        T1_objc_set_make(
+        T1_objc_set_construct(0, 0, 0),
+        T1_objc_set_construct(
             T1_objc_msg(texture, ags->sel_width),
             T1_objc_msg(texture, ags->sel_height),
             1),
@@ -1647,14 +1647,14 @@ void T1_os_gpu_fetch_rgba_at(
         bytes_per_row,
         bytes_per_image);
     
-    T1_cmd_copy_texture_to_buffer(
+    T1_objc_mtl_copy_texture_to_buffer(
         blit_encoder,
         ags->sel_copy_from_texture_to_buffer,
         texture,
         (uintptr_t)texture_i,
         0,
-        T1_objc_set_make(0, 0, 0),
-        T1_objc_set_make(
+        T1_objc_set_construct(0, 0, 0),
+        T1_objc_set_construct(
             T1_objc_msg(texture, ags->sel_width),
             T1_objc_msg(texture, ags->sel_height),
             1),
@@ -1795,8 +1795,8 @@ void T1_os_gpu_push_tex_slice(
         combuf,
         ags->sel_blit_command_encoder);
     
-    T1ObjcSet size = T1_objc_set_make(img_width, img_height, 1);
-    T1ObjcSet origin = T1_objc_set_make(0, 0, 0);
+    T1ObjcSet size = T1_objc_set_construct(img_width, img_height, 1);
+    T1ObjcSet origin = T1_objc_set_construct(0, 0, 0);
     
     T1_objc_msg_4arg_1set_3arg_1set(
         blit_copy_encoder,
@@ -1909,12 +1909,12 @@ static void * get_tex_slice(
     
     void * parent = ags->metal_textures[at_array_i];
     
-    T1ObjcPair ns_range_level = T1_objc_pair_make(
+    T1ObjcPair ns_range_level = T1_objc_pair_construct(
         0,
         T1_objc_msg(
             parent,
             ags->sel_mipmap_level_count));
-    T1ObjcPair ns_range_slice = T1_objc_pair_make(
+    T1ObjcPair ns_range_slice = T1_objc_pair_construct(
         (uintptr_t)at_slice_i,
         1);
     
@@ -1936,7 +1936,7 @@ static void set_defaults_for_render_descriptor(
     void * depth_attachm = (void *)T1_objc_msg(desc, ags->sel_depth_attachment);
     if (!ags->zbuf_cleared) {
         T1_objc_msg_1arg(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionClear);
-        T1_objc_msg_f64(depth_attachm, ags->sel_set_clear_depth, 1.0);
+        T1_objc_msg_1f64(depth_attachm, ags->sel_set_clear_depth, 1.0);
         
         ags->zbuf_cleared = true;
     } else {
@@ -1960,7 +1960,7 @@ static void set_defaults_for_render_descriptor(
         T1_objc_msg_1quadf64(
             color_attachment_0,
             ags->sel_set_clear_color,
-            T1_objc_quadf64_make(0.0f, 0.0f, 0.1f, 1.0f));
+            T1_objc_quadf64_construct(0.0f, 0.0f, 0.1f, 1.0f));
         
         ags->rtt_cleared = true;
     } else {
@@ -2455,7 +2455,7 @@ static void T1_gpu_draw_single_pass(
                     ags->sel_set_texture, (uintptr_t)bloom_rtt);
                 T1_objc_msg_1quadf64(color_att_0,
                     ags->sel_set_clear_color,
-                        T1_objc_quadf64_make(0.0, 0.0, 0.0, 0.0));
+                        T1_objc_quadf64_construct(0.0, 0.0, 0.0, 0.0));
                 T1_objc_msg_1arg(
                     color_att_0,
                     ags->sel_set_load_action, T1MTLLoadActionClear);
@@ -2502,12 +2502,12 @@ static void T1_gpu_draw_single_pass(
                         ags->downsampled_rtts[ds_i],
                         ags->sel_height);
                 
-                T1ObjcSet grid = T1_objc_set_make(
+                T1ObjcSet grid = T1_objc_set_construct(
                     (uintptr_t)smaller_viewport.width,
                     (uintptr_t)smaller_viewport.height,
                     1);
                 
-                T1ObjcSet threadgroup = T1_objc_set_make(16, 16, 1);
+                T1ObjcSet threadgroup = T1_objc_set_construct(16, 16, 1);
                 
                 if (ds_i < T1_DOWNSAMPLES_CUTOFF) {
                     void * compute_enc = (void *)T1_objc_msg(
@@ -2927,8 +2927,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
         ags->sel_height);
     u64 size_bytes = touch_id_w * touch_id_h * 8;
     
-    T1ObjcSet touch_buf_size = T1_objc_set_make(touch_id_w, touch_id_h, 1);
-    T1ObjcSet touch_buf_origin = T1_objc_set_make(0, 0, 0);
+    T1ObjcSet touch_buf_size = T1_objc_set_construct(touch_id_w, touch_id_h, 1);
+    T1ObjcSet touch_buf_origin = T1_objc_set_construct(0, 0, 0);
     
     {
     void * clear_touch_tex_blit_enc = (void *)T1_objc_msg(
@@ -3126,8 +3126,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
     
     void * arr_tex =
         ags->metal_textures[T1_tex_to_array_i(T1_render_views->cpu[0].write_tex)];
-    T1ObjcPair levels_range = T1_objc_pair_make(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
-    T1ObjcPair slices_range = T1_objc_pair_make(
+    T1ObjcPair levels_range = T1_objc_pair_construct(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
+    T1ObjcPair slices_range = T1_objc_pair_construct(
         (uintptr_t)T1_tex_to_slice_i(
             T1_render_views->cpu[0].write_tex),
         1);

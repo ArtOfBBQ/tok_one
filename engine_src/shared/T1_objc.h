@@ -3,36 +3,40 @@
 
 /*
 These are convenience functions to interface with
-objective-c and apple frameworks without having to compile
-as objective-c or linking any frameworks at compile time.
+objective-c and apple frameworks without having to
+compile as objective-c or linking any frameworks at
+compile time.
 
-Your classes, class instances, and selectors will all be
-represented by void *, so you lose all type safety.
+Your classes, class instances, and selectors will all
+be represented by void *, so you lose all type safety.
 
 When you pass any type of int or pointer as a message,
-it's passed as a typeless uintptr_t, so using this again
-strips you of all type safety.
+it's passed as a typeless uintptr_t, so using this
+again strips you of all type safety.
 
 Most of the time, you don't need to do anything - all
-Apple enums I've encountered are 64-bit, so you can just
-assign to them from a uintptr_t return value directly. Any
-pointer can also be assigned directly. (Or you can use an
-implicit cast to silence compiler warnings.)
+Apple enums I've encountered are 64-bit, so you can
+just assign to them from a uintptr_t return value
+directly. Any pointer can also be assigned directly.
+(Or you can use an implicit cast to silence compiler
+warnings.)
 
-If your return value is something smaller like an int32_t,
-it comes in the form of a uintptr_t with some useless bytes,
-so make sure you're extracting the exact bytes you want.
+If your return value is something smaller like an
+int32_t, it comes in the form of a uintptr_t with some
+useless bytes, so make sure you're extracting the
+exact bytes you want.
 
-When you pass or receive floats or doubles, they use the
-floating point registers, so you have to use dedicated
-functions for that. You can't use the functions that return
-uintpr_t or that take uintptr_t as an argument, it won't
-work. 
+When you pass or receive floats or doubles, they use
+the floating point registers, so you have to use
+dedicated functions for that. You can't use the
+functions that return uintpr_t or that take uintptr_t
+as an argument, it won't work. 
 
-During initialization, you don't need to early exit when
-something goes wrong or constantly check the
-"perma_good_checker" value is 1, you can set up your entire
-framework and check if everything worked once at the end. 
+During initialization, you don't need to early exit
+when something goes wrong or constantly check the
+"perma_good_checker" value is 1, you can set up your
+entire framework and check if everything worked once
+at the end. 
 
 *******************
 Example usage:
@@ -72,46 +76,6 @@ static void sample_messaging_use_repeatedly(void) {
 
 #include "T1_stdint.h"
 
-#if 1
-// Reads the current ARM64 Frame Pointer register (x29)
-static inline uintptr_t T1_get_fp(void) {
-    uintptr_t fp;
-    __asm__ volatile("mov %0, x29" : "=r"(fp));
-    return fp;
-}
-
-// Reads the current ARM64 Stack Pointer register (sp)
-static inline uintptr_t T1_get_sp(void) {
-    uintptr_t sp;
-    __asm__ volatile("mov %0, sp" : "=r"(sp));
-    return sp;
-}
-
-// Asserts that the stack pointer is aligned to 16 bytes (ARM64 ABI requirement)
-#define ASSERT_STACK_ALIGNED() do { \
-    uintptr_t sp = T1_get_sp(); \
-    if ((sp & 0xF) != 0) { \
-        fprintf(stderr, "FATAL: Stack pointer misaligned (sp = 0x%lx) at %s:%d\n", \
-                sp, __FILE__, __LINE__); \
-        __builtin_trap(); \
-    } \
-} while(0)
-
-// Wraps a message call to ensure FP doesn't get corrupted
-#define T1_VERIFY_MSG_CALL(expr) do { \
-    uintptr_t fp_before = T1_get_fp(); \
-    ASSERT_STACK_ALIGNED(); \
-    expr; \
-    ASSERT_STACK_ALIGNED(); \
-    uintptr_t fp_after = T1_get_fp(); \
-    if (fp_before != fp_after) { \
-        fprintf(stderr, "FATAL: Frame pointer corrupted across msgSend at %s:%d! (0x%lx -> 0x%lx)\n", \
-                __FILE__, __LINE__, fp_before, fp_after); \
-        __builtin_trap(); \
-    } \
-} while(0)
-#endif
-
 void T1_objc_init(
     void * (* malloc_perma)(size_t));
 
@@ -130,6 +94,47 @@ void * T1_objc_get_func(
 
 void * T1_objc_get_class(
     const char * class_name);
+
+void * T1_objc_inherit_from_class(
+    const char * base_class_name,
+    const char * new_class_name);
+
+/*
+Objective-C Type Encoding Reference
+(64-bit macOS / LP64):
+
+Return & Argument Types:
+v  = void
+B  = C99 bool / BOOL
+c  = int8_t
+C  = uint8_t
+s  = int16_t
+S  = uint16_t
+i  = int32_t
+I  = uint32_t
+q  = int64_t
+Q  = uint64_t
+f  = float (32-bit IEEE float)
+d  = double / CGFloat (64-bit IEEE float)
+@  = Object pointer (id, NSWindow *, NSEvent *, etc.)
+:  = Selector (SEL)
+^v = Raw pointer (void *)
+
+Note: Every method implicitly receives self (@) and _cmd (:) as its first two parameters.
+
+Example Type Encodings:
+"v@:@" <- void return, self (@), _cmd (:), 1 object arg (@) [e.g., keyDown:]
+"B@:"  <- BOOL return, self (@), _cmd (:)             [e.g., canBecomeKeyWindow]
+"d@:"  <- double/CGFloat return, self (@), _cmd (:)   [e.g., button value]
+"Q@:"  <- NSUInteger return, self (@), _cmd (:)       [e.g., array count]
+*/
+void T1_objc_add_method(
+    void * to_class,
+    const char * method_name,
+    void * func_ptr,
+    const char * types_magicstr);
+
+void T1_objc_commit_child_class(void * class_ptr);
 
 void * T1_objc_reg_sel(
     const char * selector_name);
@@ -173,7 +178,7 @@ uintptr_t T1_objc_msg_5arg(
     uintptr_t arg4,
     uintptr_t arg5);
 
-uintptr_t T1_objc_msg_f64(
+uintptr_t T1_objc_msg_1f64(
     void * recip,
     void * selector,
     f64 arg1);
@@ -183,12 +188,12 @@ uintptr_t T1_objc_msg_1bigstructarg(
     void * selector,
     void * struct_16bytesplus_arg);
 
-void * T1_objc_msgx2_expect_ptr(
+void * T1_objc_msgx2_get_ptr(
     void * recip,
     void * selector_1,
     void * selector_2);
 
-f32 T1_objc_msg_expect_f32(
+f64 T1_objc_msg_get_f64(
     void * recip,
     void * selector);
 
@@ -206,33 +211,48 @@ typedef struct {
 } T1ObjcPair;
 
 typedef struct {
+    f64 a, b;
+} T1ObjcPairf64;
+
+typedef struct {
     uintptr_t a, b, c;
 } T1ObjcSet;
 
 typedef struct {
-    double a, b, c, d;
+    f64 a, b, c, d;
 } T1ObjcQuadf64;
 
-T1ObjcPair T1_objc_pair_make(
-    uintptr_t a, uintptr_t b);
+T1ObjcPair T1_objc_pair_construct(
+    uintptr_t a,
+    uintptr_t b);
 
-T1ObjcSet T1_objc_set_make(
-    uintptr_t a, uintptr_t b, uintptr_t c);
+T1ObjcSet T1_objc_set_construct(
+    uintptr_t a,
+    uintptr_t b,
+    uintptr_t c);
 
-T1ObjcQuadf64 T1_objc_quadf64_make(
-    double a, double b, double c, double d);
+T1ObjcQuadf64 T1_objc_quadf64_construct(
+    f64 a, f64 b, f64 c, f64 d);
 
 typedef struct {
-    double a, b, c, d, e, f;
+    f64 a, b, c, d, e, f;
 } T1ObjcSextf64;
 
-T1ObjcSextf64 T1_objc_sextf64_make(
+T1ObjcSextf64 T1_objc_sextf64_construct(
     f64 a, f64 b, f64 c, f64 d, f64 e, f64 f);
 
 uintptr_t T1_objc_msg_1quadf64(
     void * target,
     void * selector,
     T1ObjcQuadf64);
+
+uintptr_t T1_objc_msg_1quadf64_3arg(
+    void * target,
+    void * selector,
+    T1ObjcQuadf64 quad_1,
+    uintptr_t arg_1,
+    uintptr_t arg_2,
+    uintptr_t arg_3);
 
 uintptr_t T1_objc_msg_1sextf64(
     void * target,
@@ -279,7 +299,15 @@ uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
     uintptr_t arg7,
     T1ObjcSet set2);
 
-void T1_cmd_copy_texture_to_buffer(
+T1ObjcPairf64 T1_objc_msg_get_pairf64(
+    void * target,
+    void * selector);
+
+T1ObjcQuadf64 T1_objc_msg_get_quadf64(
+    void * target,
+    void * selector);
+
+void T1_objc_mtl_copy_texture_to_buffer(
     void *    command_encoder,
     void *    sel_copy_to_buf,
     void *    src_texture,

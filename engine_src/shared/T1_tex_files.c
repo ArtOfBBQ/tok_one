@@ -7,7 +7,7 @@
 #include "T1_log.h"
 #include "T1_img.h"
 #include "T1_tex_array.h"
-#include "T1_platform_layer.h"
+#include "T1_os.h"
 
 static void malloc_img_from_resource_name(
     T1Img * recipient,
