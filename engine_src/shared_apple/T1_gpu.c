@@ -339,9 +339,6 @@ u8 T1_apple_gpu_init(
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
     
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/MetalKit.framework/MetalKit",
-        &ags->objc_metal_framework_good);
     ags->class_mtl_texture_desc = T1_objc_get_class("MTLTextureDescriptor");
     ags->class_mtl_render_pipeline_desc = T1_objc_get_class("MTLRenderPipelineDescriptor");
     ags->class_mtl_depth_stencil_desc = T1_objc_get_class("MTLDepthStencilDescriptor");
@@ -1364,7 +1361,10 @@ void T1_os_gpu_update_capacity_if_needed(
     }
     
     void * texture_descriptor =
-        (void *)T1_objc_msg(ags->class_mtl_texture_desc, ags->sel_new);
+        (void *)T1_objc_msg(
+            ags->class_mtl_texture_desc,
+            ags->sel_new);
+    if (!texture_descriptor) { return; }
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_texture_type,
@@ -2668,8 +2668,12 @@ void T1_gpu_update_final_window_size(void) {
     ags->window_viewport.height  =
         T1_global->window_wh[1] *
             ags->retina_scaling_factor;
-    T1_log_assert(ags->window_viewport.width > 0.0f);
-    T1_log_assert(ags->window_viewport.height > 0.0f);
+    if (ags->window_viewport.width < 10.0f) {
+        ags->window_viewport.width = 10.0f;
+    }
+    if (ags->window_viewport.height < 10.0f) {
+        ags->window_viewport.height = 10.0f;
+    }
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -2728,6 +2732,7 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     void * zbuffer_desc = (void *)T1_objc_msg(
         ags->class_mtl_texture_desc,
         ags->sel_new);
+    if (!zbuffer_desc) { return; }
     T1_objc_msg_1arg(zbuffer_desc,
         ags->sel_set_texture_type, T1MTLTextureType2D);
     T1_objc_msg_1arg(zbuffer_desc,
@@ -3259,6 +3264,7 @@ s16 T1_apple_gpu_make_depth_tex(
     
     void * desc = (void *)T1_objc_msg(
         ags->class_mtl_texture_desc, ags->sel_new);
+    if (!desc) { return -1; }
     T1_objc_msg_1arg(desc, ags->sel_set_width, width);
     T1_objc_msg_1arg(desc, ags->sel_set_height, height);
     T1_objc_msg_1arg(desc, ags->sel_set_texture_type, T1MTLTextureType2D);

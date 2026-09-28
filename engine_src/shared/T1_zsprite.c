@@ -72,7 +72,7 @@ assert_sanity_check_zsprite_vals_by_id(s32 zp_i) {
         &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s);
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#define assert_sanity_check_zsprite_vals(x, y)
+#define assert_sanity_check_zsprite_vals(x, y, z)
 #define assert_sanity_check_zsprite_vals_by_id(id)
 #else
 #error

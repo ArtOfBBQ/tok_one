@@ -33,9 +33,9 @@ void T1_assert(uint8_t condition);
 void T1_log_warn_if_false(uint8_t condition, const char * msg);
 void T1_log_dump_and_crash(const char * crash_message);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#else
 #define T1_assert(x)
 #define T1_log_dump_and_crash(x)
+#else
 #error
 #endif
 
@@ -85,8 +85,6 @@ void T1_os_link_gpu_to_main_window(
     char * errmsg,
     uint32_t errmsg_cap,
     uint8_t * good);
-void T1_os_request_messagebox(
-    const char * message);
 
 /*
 PROFILER

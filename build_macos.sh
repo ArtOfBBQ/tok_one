@@ -1,3 +1,27 @@
+################################
+if test -f "build/lib/macos/shaders.metallib"; then
+    echo "shaders.metallib already in build folder, skip metal compilation...."
+else
+    echo "shaders.metallib not in build folder, compiling new metal library..."
+    echo "if this fails install xcode or use the command"
+    echo "xcode-select -p' to doublecheck your xcode path."
+    echo "to fix a broken path, you can use command"
+    echo "xcode-select --switch /Applications/Xcode.app/Contents/Developer"
+    echo "or wherever your Xcode.app is (the beta versions have another name)"
+    # 1. Compile Metal source to AIR (Assembly Intermediate Representation) with include path and debug symbols
+    xcrun -sdk macosx metal -gline-tables-only -MO -g -c -I engine_src/shared "engine_src/shared_apple/Shaders.metal" -o resources/Shaders.air
+
+    # 2. Package AIR into the final Metallib binary
+    xcrun -sdk macosx metallib resources/Shaders.air -o build/lib/macos/Shaders.metallib
+##
+#
+#    sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c -I tok_one/engine_src/shared "engine_src/shared_apple/Shaders.metal" -o resources/Shaders.air
+#    sudo xcrun -sdk macosx metal -c "engine_src/shared_apple/shaders.metal" -o Shaders.air
+#    sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/lib/macos/Shaders.metallib
+#    exit 0
+fi
+################################
+
 COMPILER_PATHS="
 -I engine_src/macos/
 -I engine_src/shared/debigulator/src/

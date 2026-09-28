@@ -119,7 +119,7 @@ void T1_os_copy_file(
     const c8 * filepath_source,
     const c8 * filepath_destination);
 
-void T1_os_mkdir_if_not_exist(
+b8 T1_os_mkdir_if_not_exist(
     const c8 * dirname);
 
 __attribute__((no_sanitize("address")))
@@ -276,12 +276,6 @@ void T1_os_gpu_delete_depth_tex(
 s16 T1_os_gpu_make_depth_tex(
     u32 width,
     u32 height);
-
-// void T1_os_update_mouse_location(void);
-
-// This is used to communicate failure after failure to init GPU
-// acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
-void T1_os_request_messagebox(const c8 * message);
 
 /*
 creates a mutex and return the ID of said mutex for you to store

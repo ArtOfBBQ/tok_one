@@ -76,12 +76,13 @@ static void sample_messaging_use_repeatedly(void) {
 
 #include "T1_stdint.h"
 
-void T1_objc_init(
-    void * (* malloc_perma)(size_t));
+b8 T1_objc_init(
+    void * (* malloc_perma)(size_t),
+    char * error_message,
+    u32 error_message_cap);
 
-void T1_objc_open_framework_and_link_perma_good_val(
-    const char * framework_name,
-    u8 * perma_good_checker);
+b8 T1_objc_open_framework(
+    const char * framework_name);
 
 void * T1_objc_autorelease_pool_push(void);
 

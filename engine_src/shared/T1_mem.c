@@ -197,8 +197,15 @@ void T1_mem_malloc_managed_page_aligned(
     T1_log_assert(*aligned_subptr != NULL);
     
     #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     u32 alignment_miss =
         (uintptr_t)(*aligned_subptr) % aligned_to;
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_log_assert(alignment_miss == 0);
     #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
     #else

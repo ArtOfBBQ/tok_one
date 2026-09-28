@@ -13,9 +13,14 @@ uint8_t T1_running(void) {
     return T1_log_app_running > 0;
 }
 
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void T1_assert(b8 condition) {
     T1_log_assert(condition);
 }
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 void T1_cam_set_us_to_dest(s32 cam_i, u64 us) {
     T1_log_assert(cam_i == 0); // TODO: remove this debug check
@@ -122,7 +127,6 @@ void T1_make_shadowmap_and_attach_to_light(
         /* u32 height: */
             T1_render_views->cpu[new_rv_i].height);
     
-    T1_log_assert(slice_i >= 0);
     if (slice_i < 0) {
         T1_render_view_delete(new_rv_i);
         return;
@@ -166,6 +170,7 @@ void T1_cam_create_main_view(
     s32 rv_i = T1_tex_array_create_new_render_view(
         new_cam_width,
         new_cam_height);
+    if (rv_i != 0) { return; }
     
     T1CPURenderView * rv = T1_render_views->cpu + rv_i;
     

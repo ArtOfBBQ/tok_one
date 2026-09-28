@@ -16,13 +16,13 @@
 
 typedef struct {
     void * class_ns_application;
+    void * sel_shared_application; // sharedApplication
+    void * sel_run;
     void * class_ns_filemanager; // NSFileManager
     void * class_ns_data; // NSData
     void * class_ns_url; // NSURL
     void * class_ns_bundle; // NSBundle
     void * class_ns_process_info; // NSProcessInfo
-    void * sel_shared_application; // sharedApplication
-    void * sel_run;
     void * sel_default_manager; // defaultManager
     void * sel_attributes_of_item_at_path_error; // attributesOfItemAtPath:error:
     void * sel_file_size; // fileSize
@@ -55,10 +55,6 @@ void T1_apple_os_init(void) {
         sizeof(T1OSAppleState));
     T1_std_memset(T1_os_apple_s, 0, sizeof(T1OSAppleState));
     
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/Foundation.framework/Foundation",
-        &T1_os_apple_s->framework_good);
-    
     // classes
     T1_os_apple_s->class_ns_application = T1_objc_get_class(
         "NSApplication");
@@ -76,8 +72,7 @@ void T1_apple_os_init(void) {
     // selectors
     T1_os_apple_s->sel_shared_application = T1_objc_reg_sel(
         "sharedApplication");
-    T1_os_apple_s->sel_run = T1_objc_reg_sel(
-        "run");
+    T1_os_apple_s->sel_run = T1_objc_reg_sel("run");
     T1_os_apple_s->sel_default_manager = T1_objc_reg_sel(
         "defaultManager");
     T1_os_apple_s->sel_attributes_of_item_at_path_error = T1_objc_reg_sel(
@@ -299,15 +294,16 @@ u8 T1_os_file_exists(
     return false;
 }
 
-void T1_os_mkdir_if_not_exist(
+b8 T1_os_mkdir_if_not_exist(
     const char * dirname)
 {
-    T1_log_append("make directory if it doesn't exist: ");
-    T1_log_append(dirname);
-    T1_log_append("\n");
+    if (dirname == NULL || dirname[0] == '\0') {
+        return 0;
+    }
     
     void * ns_dirname = T1_objc_nsstring_construct(
         dirname);
+    if (!ns_dirname) { return 0; }
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     void * directory_url = (void *)T1_objc_msg_2arg(
@@ -315,7 +311,9 @@ void T1_os_mkdir_if_not_exist(
         T1_os_apple_s->sel_file_url_with_path_is_directory,
         (uintptr_t)ns_dirname,
         true);
-    T1_log_assert(directory_url != NULL);
+    if (directory_url == NULL) {
+        return 0;
+    }
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -324,6 +322,7 @@ void T1_os_mkdir_if_not_exist(
     void * manager = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
+    if (!manager) { return 0; }
     
     if (
         !T1_objc_msg_1arg(
@@ -342,12 +341,11 @@ void T1_os_mkdir_if_not_exist(
             (uintptr_t)&error);
         
         if (!success) {
-            T1_log_dump_and_crash("ERROR - tried to create a directory and failed\n");
-            return;
+            return 0;
         }
     }
     
-    return;
+    return 1;
 }
 
 void T1_os_del_file(

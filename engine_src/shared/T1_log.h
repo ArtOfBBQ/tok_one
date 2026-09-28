@@ -47,6 +47,8 @@ instead of crashing the app
 void T1_log_assert(u8 condition);
 void T1_log_warn_if_false(u8 condition, const char * msg);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#define T1_log_assert(x)
+#define T1_log_warn_if_false(x, y)
 #else
 #error
 #endif

@@ -234,7 +234,25 @@ void T1_appinit_before_gpu_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
     
-    T1_objc_init(T1_mem_malloc_unmanaged);
+    if (!T1_objc_init(
+        T1_mem_malloc_unmanaged,
+        error_message,
+        error_message_cap))
+    {
+        return;
+    }
+    
+    if (!T1_objc_open_framework(
+        "/System/Library/Frameworks/MetalKit.framework/MetalKit"))
+    {
+        return;
+    }
+    
+    if (!T1_objc_open_framework(
+        "/System/Library/Frameworks/GameController.framework/GameController"))
+    {
+        return;
+    }
     
     T1_settings_init(T1_mem_malloc_unmanaged, success);
     if (!*success) {
@@ -272,7 +290,8 @@ void T1_appinit_before_gpu_init(
         return;
     } else { *success = 0; }
     
-    ias = T1_mem_malloc_unmanaged(sizeof(T1InitApplicationState));
+    ias = T1_mem_malloc_unmanaged(
+        sizeof(T1InitApplicationState));
     if (!ias) {
         T1_std_strcpy_cap(
             error_message,
@@ -380,6 +399,14 @@ void T1_appinit_before_gpu_init(
         "enginestate.dat",
         full_writable_pathfile,
         512);
+    
+    if (full_writable_pathfile[0] == '\0') {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Failed to find enginestate.dat");
+        return;
+    }
     
     c8 * engine_save_contents = NULL;
     u32  engine_save_size = 0;

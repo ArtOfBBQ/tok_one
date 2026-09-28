@@ -443,7 +443,7 @@ float4 get_lit(
         if (texarray_i > 30) {
             return float4(1.0f, 1.0f, 1.0f, 1.0f);
         }
-        #elif T1_LOG_ASSERST_ACTIVE == T1_INACTIVE
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

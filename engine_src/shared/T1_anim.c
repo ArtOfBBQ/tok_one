@@ -81,6 +81,7 @@ static void T1_anim_sanity_check(T1AnimPrivate * a) {
     
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#define T1_anim_sanity_check(x)
 #else
 #error
 #endif

@@ -3,9 +3,11 @@
 #include "T1_std.h"
 #include "T1_log.h"
 
+#include <stdlib.h>
 #include <dlfcn.h>
 
 #define T1NSASCIIStringEncoding 1
+#define T1NSModalPanelWindowLevel 8
 
 typedef struct {
     uintptr_t (* msg)(void *, void *);
@@ -36,115 +38,191 @@ typedef struct {
         size_t extra_bytes);
     void * (* reg_name)(const char *);
     void * class_nsstring;
+    void * sel_run;
+    void * sel_run_modal; // runModal
+    void * sel_set_message_text; // setMessageText:
     void * sel_string_with_utf8_string;
+    // void * sel_make_key_and_order_front;
     void * sel_c_string_using_encoding; // cStringUsingEncoding:
-    u8 *   linked_good;
     u8 good;
 } T1ObjCState;
 
 static T1ObjCState * T1_objc_s = NULL;
 
-void T1_objc_init(
-    void * (* malloc_perma)(size_t))
+b8 T1_objc_init(
+    void * (* malloc_perma)(size_t),
+    char * error_message,
+    u32 error_message_cap)
 {
     T1_objc_s = malloc_perma(sizeof(T1ObjCState));
+    if (!T1_objc_s) {
+        T1_std_strcpy_cap(
+            error_message,
+            error_message_cap,
+            "Failed T1_objc_init() - no memory");
+    }
     T1_std_memset(T1_objc_s, 0, sizeof(T1ObjCState));
     
     void * libobjc = dlopen(
         "/usr/lib/libobjc.A.dylib",
         RTLD_LAZY);
-    if (!libobjc) { return; }
+    if (!libobjc) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load libobjc.A.dylib");
+        return 0;
+    }
+    
+    void * libfoundation = dlopen(
+        "/System/Library/Frameworks/Foundation.framework/Foundation",
+        RTLD_LAZY);
+    if (!libfoundation) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load Foundation.framework");
+        return 0;
+    }
     
     T1_objc_s->msg = dlsym(
         libobjc,
         "objc_msgSend");
     if (!T1_objc_s->msg) {
-        dlclose(libobjc);
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "objc_msgSend");
+        return 0;
     }
     
-    T1_objc_s->msg_get_f32              = (f32       (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_get_f64              = (f64       (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_get_pairf64         = (T1ObjcPairf64(*)(void *, void*))T1_objc_s->msg;
-    T1_objc_s->msg_get_quadf64         = (T1ObjcQuadf64(*)(void *, void*))T1_objc_s->msg;
-    T1_objc_s->msg_arg                 = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_2arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_3arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_4arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_5arg                = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_1f64                = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
-    T1_objc_s->msg_1quadf64            = (uintptr_t (*)(void *, void *, T1ObjcQuadf64))T1_objc_s->msg;
-    T1_objc_s->msg_1quadf64_1arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_1quadf64_3arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_1sextf64            = (uintptr_t (*)(void *, void *, T1ObjcSextf64))T1_objc_s->msg;
-    T1_objc_s->msg_2arg_2pair          = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
-    T1_objc_s->msg_2set                = (uintptr_t (*)(void *, void *, T1ObjcSet, T1ObjcSet))T1_objc_s->msg;
-    T1_objc_s->msg_3arg_2set_4arg      = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_4arg_1set_3arg_1set = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet))T1_objc_s->msg;
+    T1_objc_s->msg_get_f32      = (f32       (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_get_f64      = (f64       (*)(void *, void *))T1_objc_s->msg;
+    T1_objc_s->msg_get_pairf64  = (T1ObjcPairf64(*)(void *, void*))T1_objc_s->msg;
+    T1_objc_s->msg_get_quadf64  = (T1ObjcQuadf64(*)(void *, void*))T1_objc_s->msg;
+    T1_objc_s->msg_arg          = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_2arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_3arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_4arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_5arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_1f64         = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
+    T1_objc_s->msg_1quadf64     = (uintptr_t (*)(void *, void *, T1ObjcQuadf64))T1_objc_s->msg;
+    T1_objc_s->
+        msg_1quadf64_1arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->
+        msg_1quadf64_3arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->msg_1sextf64     = (uintptr_t (*)(void *, void *, T1ObjcSextf64))T1_objc_s->msg;
+    T1_objc_s->msg_2arg_2pair   = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
+    T1_objc_s->msg_2set         = (uintptr_t (*)(void *, void *, T1ObjcSet, T1ObjcSet))T1_objc_s->msg;
+    T1_objc_s->
+        msg_3arg_2set_4arg      = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
+    T1_objc_s->
+        msg_4arg_1set_3arg_1set = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet))T1_objc_s->msg;
     
     T1_objc_s->reg_name = dlsym(
         libobjc,
         "sel_registerName");
     if (!T1_objc_s->reg_name) {
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "sel_registerName");
+        return 0;
     }
     
     T1_objc_s->get_class = dlsym(
         libobjc,
         "objc_getClass");
     if (!T1_objc_s->get_class) {
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "objc_getClass");
+        return 0;
     }
     
     T1_objc_s->register_class_pair = dlsym(
         libobjc,
         "objc_registerClassPair");
     if (!T1_objc_s->register_class_pair) {
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "objc_registerClassPair");
+        return 0;
     }
     
     T1_objc_s->class_add_method = dlsym(
         libobjc,
         "class_addMethod");
     if (!T1_objc_s->class_add_method) {
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "class_addMethod");
+        return 0;
     }
     
     T1_objc_s->allocate_class_pair = dlsym(
         libobjc,
         "objc_allocateClassPair");
     if (!T1_objc_s->allocate_class_pair) {
-        return;
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "objc_allocateClassPair");
+        return 0;
     }
     
-    T1_objc_s->class_nsstring = T1_objc_s->get_class("NSString");
+    T1_objc_s->good = 1;
+    
+    T1_objc_s->class_nsstring = T1_objc_s->get_class(
+        "NSString");
+    if (!T1_objc_s->good) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "NSString");
+        return 0;
+    }
+    
     T1_objc_s->sel_string_with_utf8_string = T1_objc_s->reg_name("stringWithUTF8String:");
     T1_objc_s->sel_c_string_using_encoding = T1_objc_s->reg_name("cStringUsingEncoding:");
+    if (!T1_objc_s->good) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "NSString");
+        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
+        return 0;
+    }
     
-    // dlclose(libobjc);
+    T1_objc_s->sel_run = T1_objc_reg_sel("run");
+    T1_objc_s->sel_set_message_text = T1_objc_reg_sel(
+        "setMessageText:");
+    T1_objc_s->sel_run_modal = T1_objc_reg_sel(
+        "runModal");
+    if (!T1_objc_s->good) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "NSAlert");
+        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
+        return 0;
+    }
     
-    T1_objc_s->good = 1;
+    #if 0
+    T1_objc_s->class_ns_application = T1_objc_get_class(
+        "NSApplication");
+    if (!T1_objc_s->good) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "NSApplication");
+        return 0;
+    }
+    
+    T1_objc_s->sel_shared_application = T1_objc_reg_sel(
+        "sharedApplication");
+    if (!T1_objc_s->good) {
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
+        T1_std_strcat_cap(error_message, error_message_cap, "NSApplication");
+        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
+        return 0;
+    }
+    #endif
+    
+    return T1_objc_s->good;
 }
 
-void T1_objc_open_framework_and_link_perma_good_val(
-    const char * framework_name,
-    u8 * perma_good_checker)
+b8 T1_objc_open_framework(
+    const char * framework_name)
 {
     T1_log_assert(T1_objc_s != NULL);
     T1_log_assert(framework_name != NULL);
-    T1_log_assert(perma_good_checker != NULL);
-    
-    if (perma_good_checker == NULL) {
-        return;
-    }
-    *perma_good_checker = 0;
     
     if (T1_objc_s == NULL) {
-        return;
+        return 0;
     }
-    T1_objc_s->linked_good = perma_good_checker;
+    if (!T1_objc_s->good) {
+        return 0;
+    }
     
-    *T1_objc_s->linked_good = dlopen(
+    return dlopen(
         framework_name,
         RTLD_LAZY) != 0;
 }
@@ -170,9 +248,7 @@ void * T1_objc_get_func(
     if (
         !T1_objc_s ||
         !T1_objc_s->good ||
-        !T1_objc_s->get_class ||
-        !T1_objc_s->linked_good ||
-        !*T1_objc_s->linked_good)
+        !T1_objc_s->get_class)
     {
         return NULL;
     }
@@ -182,7 +258,7 @@ void * T1_objc_get_func(
         func_name);
     
     if (!out) {
-        *T1_objc_s->linked_good = 0;
+        T1_objc_s->good = 0;
     }
     
     return out;
@@ -194,9 +270,7 @@ void * T1_objc_get_class(
     if (
         !T1_objc_s ||
         !T1_objc_s->good ||
-        !T1_objc_s->get_class ||
-        !T1_objc_s->linked_good ||
-        !*T1_objc_s->linked_good)
+        !T1_objc_s->get_class)
     {
         return NULL;
     }
@@ -204,7 +278,7 @@ void * T1_objc_get_class(
     void * out = T1_objc_s->get_class(class_name);
     
     if (!out) {
-        *T1_objc_s->linked_good = 0;
+        T1_objc_s->good = 0;
     }
     
     return out;
@@ -249,9 +323,7 @@ void * T1_objc_reg_sel(
 {
     if (
         !T1_objc_s ||
-        !T1_objc_s->good ||
-        !T1_objc_s->linked_good ||
-        !*T1_objc_s->linked_good)
+        !T1_objc_s->good)
     {
         return NULL;
     }
@@ -259,7 +331,7 @@ void * T1_objc_reg_sel(
     void * out = T1_objc_s->reg_name(selector_name);
     
     if (!out) {
-        *T1_objc_s->linked_good = 0;
+        T1_objc_s->good = 0;
     }
     
     return out;

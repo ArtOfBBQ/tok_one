@@ -102,7 +102,6 @@ u8 T1_os_mutex_trylock(const u32 mutex_id)
         
         // EBUSY = Mutex is already locked
         T1_log_assert(return_val == EBUSY);
-        
     }
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
@@ -154,7 +153,7 @@ void T1_os_mutex_unlock(u32 mutex_id) {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     s32 out = pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
+    pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
     #else
     #error
     #endif
@@ -419,7 +418,6 @@ void T1_os_writable_filename_to_pathfile(
     u32 assert_capacity)
 {
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    // pass
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     (void)assert_capacity;
     #else
@@ -458,6 +456,10 @@ void T1_os_writable_filename_to_pathfile(
     
     T1_os_get_writables_dir(writables_path, 256);
     
+    if (writables_path[0] == '\0') {
+        return;
+    }
+    
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     u32 writables_path_length =
         (u32)T1_std_strlen(writables_path);
@@ -465,7 +467,8 @@ void T1_os_writable_filename_to_pathfile(
         (filename_length
             + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
-    T1_log_assert(assert_capacity >= full_filename_size);
+    
+    assert(assert_capacity >= full_filename_size);
     if (!T1_log_app_running) {
         recipient[0] = '\0';
         return;

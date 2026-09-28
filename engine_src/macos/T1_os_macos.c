@@ -15,7 +15,6 @@
 
 #define T1NSUserDomainMask 1
 #define T1NSUTF8StringEncoding 4
-#define T1NSModalPanelWindowLevel 8
 #define T1NSApplicationSupportDirectory 14
 #define T1NSEventModifierFlagShift (1 << 17)
 #define T1NSWindowStyleMaskFullScreen (1 << 14)
@@ -32,16 +31,12 @@ typedef struct {
     void * class_T1_mtk_view_delegate; // T1MTKViewDelegate
     void * class_ns_app; // NSApp
     void * class_ns_url; // NSURL;
-    void * class_ns_alert; // NSAlert
     void * class_ns_file_manager; // NSFileManager
     void * class_ns_workspace; // NSWorkspace
     void * class_mtk_view; // MTKView
     void * sel_new; // new
     void * sel_window; // window
-    void * sel_set_message_text; // setMessageText:
-    void * sel_set_level; // setLevel:
     void * sel_make_key_and_order_front; // makeKeyAndOrderFront:
-    void * sel_run_modal; // runModal
     void * sel_length; // length;
     void * sel_get_bytes_length; // getBytes:length:
     void * sel_object_at_index; // objectAtIndex:
@@ -631,19 +626,13 @@ void T1_os_macos_init(void) {
     T1_os_macos_s = T1_mem_malloc_unmanaged(sizeof(T1OSMacosState));
     T1_std_memset(T1_os_macos_s, 0, sizeof(T1OSMacosState));
     
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/Foundation.framework/Foundation",
-        &T1_os_macos_s->framework_good);
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/AppKit.framework/AppKit",
-        &T1_os_macos_s->framework_good);
-    
     T1_os_macos_s->sel_alloc = T1_objc_reg_sel("alloc");
     T1_log_assert(T1_os_macos_s->sel_alloc != NULL);
     
     T1_os_macos_s->sel_init_with_content_rect_style_mask =
         T1_objc_reg_sel("initWithContentRect:styleMask:backing:defer:");
-    T1_log_assert(T1_os_macos_s->sel_init_with_content_rect_style_mask != NULL);
+    T1_log_assert(T1_os_macos_s->
+        sel_init_with_content_rect_style_mask != NULL);
     T1_os_macos_s->sel_set_animation_behavior = T1_objc_reg_sel(
         "setAnimationBehavior:");
     T1_log_assert(T1_os_macos_s->sel_set_animation_behavior != NULL);
@@ -801,9 +790,6 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->class_ns_url = T1_objc_get_class(
         "NSURL"); // NSURL;
     T1_log_assert(T1_os_macos_s->class_ns_app != NULL);
-    T1_os_macos_s->class_ns_alert = T1_objc_get_class(
-        "NSAlert");
-    T1_log_assert(T1_os_macos_s->class_ns_alert != NULL);
     T1_os_macos_s->class_ns_workspace = T1_objc_get_class(
         "NSWorkspace");
     T1_os_macos_s->class_mtk_view = T1_objc_get_class(
@@ -817,20 +803,10 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->sel_window = T1_objc_reg_sel(
         "window");
     T1_log_assert(T1_os_macos_s->sel_window != NULL);
-    T1_os_macos_s->sel_set_message_text = T1_objc_reg_sel(
-        "setMessageText:");
-    T1_log_assert(T1_os_macos_s->
-        sel_set_message_text != NULL);
-    T1_os_macos_s->sel_set_level = T1_objc_reg_sel(
-        "setLevel:");
-    T1_log_assert(T1_os_macos_s->sel_set_level != NULL);
     T1_os_macos_s->sel_make_key_and_order_front = T1_objc_reg_sel(
         "makeKeyAndOrderFront:");
     T1_log_assert(T1_os_macos_s->
         sel_make_key_and_order_front != NULL);
-    T1_os_macos_s->sel_run_modal = T1_objc_reg_sel(
-        "runModal");
-    T1_log_assert(T1_os_macos_s->sel_run_modal != NULL);
     T1_os_macos_s->sel_length = T1_objc_reg_sel(
         "length");
     T1_log_assert(T1_os_macos_s->sel_length != NULL);
@@ -923,33 +899,6 @@ void T1_os_macos_init(void) {
         func_ns_search_path_dirs_in_domains != NULL);
 }
 
-void T1_os_request_messagebox(
-    const char * message)
-{
-    void * alert = (void *)T1_objc_msg(
-        T1_os_macos_s->class_ns_alert,
-        T1_os_macos_s->sel_new);
-    void * ns_msg = T1_objc_nsstring_construct(message);
-    T1_objc_msg_1arg(
-        alert,
-        T1_os_macos_s->sel_set_message_text,
-        (uintptr_t)ns_msg);
-    //    void * window = (void *)T1_objc_msg(
-    //        alert, T1_os_macos_s->sel_window);
-    
-    T1_objc_msg_1arg(
-        window,
-        T1_os_macos_s->sel_set_level,
-        T1NSModalPanelWindowLevel);
-    
-    T1_objc_msg_1arg(
-        window,
-        T1_os_macos_s->sel_make_key_and_order_front,
-        0);
-    
-    T1_objc_msg(alert, T1_os_macos_s->sel_run_modal);
-}
-
 #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
 static void update_simple_key(
     u8 ispressed,
@@ -1007,10 +956,6 @@ static void T1_os_setup_obj_frameworks(void) {
         sizeof(ObjCFrameworkGCC));
     if (!T1_mpl_objc) { return; }
     T1_std_memset(T1_mpl_objc, 0, sizeof(ObjCFrameworkGCC));
-    
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/GameController.framework/GameController",
-        &T1_mpl_objc->good);
     
     T1_mpl_objc->class_GCController = T1_objc_get_class("GCController");
     T1_mpl_objc->sel_current = T1_objc_reg_sel("current");
@@ -1171,14 +1116,21 @@ void T1_os_get_writables_dir(
         paths,
         T1_os_macos_s->sel_object_at_index,
         0);
+    if (!lib_dir) { return; }
     
     char * lib_dir_cstr = T1_objc_nsstring_to_cstring(lib_dir);
+    
+    if (lib_dir_cstr == NULL || lib_dir_cstr[0] == '\0') {
+        return;
+    }
     
     T1_std_strcpy_cap(recipient, recipient_size, lib_dir_cstr);
     T1_std_strcat_cap(recipient, recipient_size, "/");
     T1_std_strcat_cap(recipient, recipient_size, T1_APP_NAME);
     
-    T1_os_mkdir_if_not_exist(recipient);
+    if (!T1_os_mkdir_if_not_exist(recipient)) {
+        recipient[0] = '\0';
+    }
 }
 
 void * T1_os_malloc_unaligned_block(
@@ -1209,6 +1161,7 @@ void T1_os_close_app(void) {
     void * ns_app = (void *)T1_objc_msg(
         T1_os_macos_s->class_ns_app,
         T1_os_macos_s->sel_shared_application);
+    if (!ns_app) { return; }
     
     T1_objc_msg_1arg(
         ns_app,

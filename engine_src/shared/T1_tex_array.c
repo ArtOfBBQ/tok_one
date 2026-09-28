@@ -289,6 +289,10 @@ s32 T1_tex_array_create_new_render_view(
 {
     T1_log_assert(T1_render_views != NULL);
     
+    if (width < 10 || height < 10) {
+        return -1;
+    }
+    
     s32 rv_i = T1_render_view_fetch_next(
         width,
         height);
