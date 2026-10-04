@@ -227,6 +227,8 @@ typedef struct {
     void * sel_current_render_pass_desc; // currentRenderPassDescriptor
     void * sel_file_URL_with_path_is_directory; // fileURLWithPath:isDirectory:
     void * sel_dispatch_threads_threadsperthreadgroup; // dispatchThreads:threadsPerThreadsGroup:
+    void * sel_new_lib_with_source_options_error; // newLibraryWithSource:options:error:
+    void * sel_description; // description 
     T1PostProcessingVertex quad_vertices[6];
     f32 retina_scaling_factor;
     u8  viewports_set[T1_RENDER_VIEW_CAP];
@@ -326,7 +328,6 @@ u8 T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
-    char * shader_lib_filepath,
     f32 backing_scale_factor,
     c8 * error_msg_string)
 {
@@ -498,6 +499,10 @@ u8 T1_apple_gpu_init(
         "fileURLWithPath:isDirectory:");
     ags->sel_dispatch_threads_threadsperthreadgroup = T1_objc_reg_sel(
         "dispatchThreads:threadsPerThreadgroup:");
+    ags->sel_new_lib_with_source_options_error = T1_objc_reg_sel(
+        "newLibraryWithSource:options:error:");
+    ags->sel_description = T1_objc_reg_sel(
+        "description");
     funcptr_gameloop_before_render =
         arg_funcptr_shared_gameloop_update;
     funcptr_gameloop_after_render =
@@ -514,50 +519,34 @@ u8 T1_apple_gpu_init(
     
     ags->device = with_metal_device;
     
-    ags->lib = (void *)T1_objc_msg(
-        ags->device,
-        ags->sel_new_default_library);
+    if (ags->lib == NULL) {
+        // Try to compile a shader lib from src
+        void * nsstr_source = T1_objc_nsstring_construct(
+            T1_embedded_data_shaders_metal);
+        
+        void * error = NULL;
+        ags->lib = (void *)T1_objc_msg_3arg(
+            ags->device,
+            ags->sel_new_lib_with_source_options_error,
+            (uintptr_t)nsstr_source,
+            /* options: */ (uintptr_t)NULL,
+            /* error: */ (uintptr_t)&error);
+        
+        if (error) {
+            void * nsstr_error_desc = (void *)T1_objc_msg(error, ags->sel_description);
+            char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc); 
+            T1_std_strcat_cap(error, 512, error_desc);
+            return false;
+        }
+    }
     
-    if (ags->lib == NULL)
-    {        
-        #if 1
-        void * nsstring_shader_lib_fpath =
-            T1_objc_nsstring_construct(shader_lib_filepath);
-        
-        void * shader_lib_url = (void *)T1_objc_msg_2arg(
-            ags->class_nsurl,
-            ags->sel_file_URL_with_path_is_directory,
-            (uintptr_t)nsstring_shader_lib_fpath,
-            false);
-        #else
-        NSURL * shader_lib_url = [NSURL
-            fileURLWithPath: shader_lib_filepath
-            isDirectory: false];
-        #endif
-        
-        if (shader_lib_url == NULL) {
-            T1_std_strcpy_cap(
-                error_msg_string,
-                512,
-                "Failed to find the shader library");
-            return false;
-        }
-        
-        // newLibraryWithURL:error:
-        ags->lib = (void *)T1_objc_msg_2arg(
-            with_metal_device,
-            ags->sel_new_library_with_URL_error,
-            (uintptr_t)shader_lib_url,
-            0);
-        
-        if (ags->lib == NULL) {
-            T1_std_strcpy_cap(
-                error_msg_string,
-                512,
-                "Failed to find shader library file");
-            
-            return false;
-        }
+    if (ags->lib == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Failed to load shaders, and further "
+            "failed to compile them from source");
+        return false;
     }
     
     void * nsstring_vert_shader = T1_objc_nsstring_construct(
@@ -2683,26 +2672,6 @@ void T1_gpu_update_final_window_size(void) {
     */
     ags->window_viewport.znear = 0.001f;
     ags->window_viewport.zfar = 1.0f;
-    
-    #if 0
-    MTLTextureDescriptor * camera_depth_texture_descriptor =
-        [MTLTextureDescriptor new];
-    camera_depth_texture_descriptor.textureType = T1MTLTextureType2D;
-    camera_depth_texture_descriptor.pixelFormat = T1MTLPixelFormatDepth32Float;
-    camera_depth_texture_descriptor.width =
-        (u64)ags->window_viewport.width;
-    camera_depth_texture_descriptor.height =
-        (u64)ags->window_viewport.height;
-    camera_depth_texture_descriptor.storageMode =
-        T1MTLStorageModePrivate;
-    camera_depth_texture_descriptor.usage =
-        T1MTLTextureUsageRenderTarget |
-        T1MTLTextureUsageShaderRead;
-    
-    ags->cam_depth_texture =
-        [ags->device newTextureWithDescriptor:
-            camera_depth_texture_descriptor];
-    #endif
 }
 
 void T1_gpu_update_render_view_size(s32 at_i) {

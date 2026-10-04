@@ -28,7 +28,7 @@ because I don't know much about how that works or how reliable it is
 
 // int16 lanes
 #if defined(__ARM_NEON)
-#include "arm_neon.h"
+#include <arm_neon.h>
 #define SIMD_INT16_LANES                    8
 #define SIMD_INT16                          int16x8_t
 #define simd_load_int16s(int16sptr)         vld1q_s16(int16sptr)
@@ -52,7 +52,7 @@ because I don't know much about how that works or how reliable it is
 // TODO: implement AVX2 when we're on a CPU that supports it
 #elif defined(__AVX__) && defined(__AVX2__)
 
-#include "immintrin.h"
+#include <immintrin.h>
 #define SIMD_INT16_LANES                    16
 #define SIMD_INT16                          __m256i
 #define simd_load_int16s(int16sptr)         _mm256_loadu_si256(int16sptr) // AVX
@@ -72,7 +72,7 @@ because I don't know much about how that works or how reliable it is
 */
 #elif defined(__SSE2__) && defined(__SSE4_1__)
 
-#include "immintrin.h"
+#include <immintrin.h>
 #define SIMD_INT16_LANES                    8
 #define SIMD_INT16                          __m128i
 #define simd_load_int16s(int16sptr)         _mm_loadu_si128((const __m128i *)(int16sptr)) // SSE2
@@ -113,7 +113,7 @@ because I don't know much about how that works or how reliable it is
 // Float lanes
 #if defined(__ARM_NEON)
 
-#include "arm_neon.h"
+#include <arm_neon.h>
 
 #define SIMD_U32_LANES 4
 #define SIMD_U32 uint32x4_t
@@ -161,7 +161,7 @@ because I don't know much about how that works or how reliable it is
 
 #elif defined(__AVX__)
 
-#include "immintrin.h"
+#include <immintrin.h>
 #define SIMD_FLOAT_LANES 8
 #define SIMD_FLOAT __m256
 #define simd_load_f32s(f32sptr) _mm256_loadu_ps((f32sptr))
@@ -233,7 +233,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmplt_vec4f(a, b)             _mm_cmp_ps(a, b, _CMP_LT_OQ)
 #define simd_extract_vec4f(a, lane)        _mm_cvtss_f32(_mm_shuffle_ps(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
 #elif defined(__ARM_NEON)
-#include "arm_neon.h"
+#include <arm_neon.h>
 #define SIMD_VEC4F                         float32x4_t
 #define simd_load_vec4f(f32sptr)           vld1q_f32(f32sptr)
 #define simd_set1_vec4f(f32)               vld1q_dup_f32(&f32)
@@ -275,7 +275,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmplt_vec4i(a, b)           _mm_cmp_epi32(a, b, _CMP_LT_OQ)
 #define simd_extract_vec4i(a, lane)      _mm_cvtss_f32(_mm_shuffle_epi32(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
 #elif defined(__ARM_NEON)
-#include "arm_neon.h"
+#include <arm_neon.h>
 #define SIMD_VEC4I                       int32x4_t
 #define simd_load_vec4i(f32sptr)         vld1q_s32(f32sptr)
 #define simd_set1_vec4i(f32)             vld1q_dup_s32(&f32)

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		ECCD57083057CE6200493B56 /* T1_linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */; };
 		ECCD57093057CE6200493B56 /* decode_bmp.h in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAB2902917500C10865 /* decode_bmp.h */; };
 		ECCD570A3057CE6200493B56 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		ECCD570B3057CE6200493B56 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
@@ -108,7 +107,6 @@
 		ECCD576A3057CE6200493B56 /* T1_zlight.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* T1_zlight.c */; };
 		ECCD576B3057CE6200493B56 /* T1_zsprite.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* T1_zsprite.h */; };
 		ECCD576C3057CE6200493B56 /* T1_zsprite.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* T1_zsprite.c */; };
-		ECCD576D3057CE6200493B56 /* T1_macos_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6011289C286253DD00F92967 /* T1_macos_platform_layer.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -146,7 +144,6 @@
 		60112895286253C100F92967 /* shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = shaders.metal; path = ../../engine_src/shared_apple/shaders.metal; sourceTree = "<group>"; };
 		60112896286253C100F92967 /* T1_apple_platform_layer.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = T1_apple_platform_layer.m; path = ../../engine_src/shared_apple/T1_apple_platform_layer.m; sourceTree = "<group>"; };
 		60112898286253C100F92967 /* T1_gpu.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = T1_gpu.h; path = ../../engine_src/shared_apple/T1_gpu.h; sourceTree = "<group>"; };
-		6011289C286253DD00F92967 /* T1_macos_platform_layer.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = T1_macos_platform_layer.m; path = ../../engine_src/macos/T1_macos_platform_layer.m; sourceTree = "<group>"; };
 		601128A0286253FA00F92967 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		601128A1286253FA00F92967 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		601128A72862588900F92967 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -188,11 +185,9 @@
 		EC570B223007C3C2003B545D /* T1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1.c; sourceTree = "<absolute>"; };
 		EC570B233007C3C2003B545D /* T1_types_public_gpucpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_types_public_gpucpu.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_types_public_gpucpu.h; sourceTree = "<absolute>"; };
 		EC5B9C792FEF673F00C35D26 /* T1_client.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_client.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_client.h; sourceTree = "<absolute>"; };
-		EC5B9C7A2FEF67B300C35D26 /* client_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = client_macro_settings.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/client_macro_settings.h; sourceTree = "<absolute>"; };
 		EC5B9C7B2FEF685300C35D26 /* T1_types_public.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_types_public.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_types_public.h; sourceTree = "<absolute>"; };
 		EC5B9C7D2FEF6F3A00C35D26 /* T1_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_settings.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_settings.h; sourceTree = "<absolute>"; };
 		EC5B9C7E2FEF6F3A00C35D26 /* T1_settings.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_settings.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_settings.c; sourceTree = "<absolute>"; };
-		EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/T1_linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -285,7 +280,6 @@
 			children = (
 				ECD724412F367280000A6498 /* README.md */,
 				EC493BC42BEDA96D004D957F /* unitybuild_macos.c */,
-				EC5B9C7A2FEF67B300C35D26 /* client_macro_settings.h */,
 				601128B128625BC100F92967 /* resources */,
 				601128A42862540400F92967 /* src */,
 				6011281B28611F5100F92967 /* TOKONE_macos */,
@@ -380,7 +374,6 @@
 		60A998DD287BD459003F7159 /* macos_only */ = {
 			isa = PBXGroup;
 			children = (
-				6011289C286253DD00F92967 /* T1_macos_platform_layer.m */,
 			);
 			name = macos_only;
 			sourceTree = "<group>";
@@ -495,7 +488,6 @@
 		EC61E2D32AFB029F004D316D /* shared_apple_linux */ = {
 			isa = PBXGroup;
 			children = (
-				EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */,
 			);
 			name = shared_apple_linux;
 			sourceTree = "<group>";
@@ -582,7 +574,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ECCD57083057CE6200493B56 /* T1_linux_apple_platform_layer.c in Sources */,
 				ECCD57093057CE6200493B56 /* decode_bmp.h in Sources */,
 				ECCD570A3057CE6200493B56 /* decode_bmp.c in Sources */,
 				ECCD570B3057CE6200493B56 /* decode_png.h in Sources */,
@@ -683,7 +674,6 @@
 				ECCD576A3057CE6200493B56 /* T1_zlight.c in Sources */,
 				ECCD576B3057CE6200493B56 /* T1_zsprite.h in Sources */,
 				ECCD576C3057CE6200493B56 /* T1_zsprite.c in Sources */,
-				ECCD576D3057CE6200493B56 /* T1_macos_platform_layer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

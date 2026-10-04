@@ -10,7 +10,7 @@
 #endif
 
 
-u8 T1_log_app_running = false;
+u8 T1_log_app_running = 0;
 c8 * T1_log_crash_msg = NULL;
 
 #define T1_LOG_CRASH_STRING_SIZE 256
@@ -26,10 +26,6 @@ typedef struct {
 } T1LogState;
 
 static T1LogState * T1_log_s = NULL;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void T1_log_init(
     void * (* arg_log_malloc_func)(size_t size),
@@ -125,13 +121,13 @@ void T1_log_append(const c8 * to_append) {}
 #endif
 
 void T1_log_dump(u8 * good) {
-    *good = true;
+    *good = 1;
 }
 
 void T1_log_dump_and_crash(
     const c8 * crash_message)
 {
-    u8 log_dump_succesful = false;
+    u8 log_dump_succesful = 0;
     T1_log_dump(&log_dump_succesful);
     
     if (T1_log_app_running) {
@@ -154,7 +150,7 @@ void T1_log_dump_and_crash(
     #error
     #endif
     
-    T1_log_app_running = false;
+    T1_log_app_running = 0;
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE

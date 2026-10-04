@@ -22,8 +22,8 @@ static void T1_zlight_construct(T1zLight * to_construct)
     to_construct->f32s.RGBA[3]       = 1.0f;
     to_construct->f32s.diffuse       = 1.00f;
     to_construct->f32s.specular      = 0.50f; // mimics blender's behavior
-    to_construct->deleted            = false;
-    to_construct->committed          = false;
+    to_construct->deleted            = 0;
+    to_construct->committed          = 0;
     
     to_construct->shadow_map_depth_texture_i = -1;
 }
@@ -41,7 +41,7 @@ T1zLight * T1_zlight_next(void)
     
     T1_log_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
     return_value = &T1_zlights[T1_zlights_size];
-    return_value->committed = false;
+    return_value->committed = 0;
     T1_zlights_size += 1;
     
     T1_zlight_construct(return_value);
@@ -52,7 +52,7 @@ T1zLight * T1_zlight_next(void)
 void T1_zlight_commit(T1zLight * to_request)
 {
     T1_log_assert(!to_request->deleted);
-    to_request->committed = true;
+    to_request->committed = 1;
 }
 
 void T1_zlight_clean_all_deleted(void)
@@ -110,7 +110,7 @@ void T1_zlight_delete(u32 with_T1_id)
             T1_zlights[i].T1_id ==
                 with_T1_id)
         {
-            T1_zlights[i].deleted = true;
+            T1_zlights[i].deleted = 1;
             T1_zlights[i].T1_id = T1_ID_NONE;
         }
     }
@@ -118,7 +118,7 @@ void T1_zlight_delete(u32 with_T1_id)
 
 void T1_zlight_delete_all(void) {
     for (u32 i = 0; i < T1_zlights_size; i++) {
-        T1_zlights[i].deleted   = true;
+        T1_zlights[i].deleted   = 1;
         T1_zlights[i].T1_id = T1_ID_NONE;
     }
 }

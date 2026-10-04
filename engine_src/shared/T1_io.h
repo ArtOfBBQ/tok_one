@@ -6,10 +6,6 @@
 #include "T1_stdint.h"
 #include "T1_types_public.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct {
     u64 timestamp;
     s32 touch_id_pierce;
@@ -43,9 +39,5 @@ f32  T1_io_get_pos_x_this_frame(T1IOKey key);
 f32  T1_io_get_pos_y_this_frame(T1IOKey key); 
 u32  T1_io_get_mouse_touch_id_this_frame(void);
 b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 scene_id);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_IO_H

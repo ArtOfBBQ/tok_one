@@ -4,10 +4,6 @@
 #include "T1_simd.h"
 #include "T1_std.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void T1_triangle_cross_vertices(
     f32 * a,
     f32 * b,
@@ -63,9 +59,5 @@ void T1_triangle_z_rotate_f3_known_cossin(
 void T1_triangle_z_rotate_f3(
     f32 * xyz,
     f32 z_angle);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_TRIANGLE_H

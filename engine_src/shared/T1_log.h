@@ -3,10 +3,6 @@
 
 #include "T1_stdint.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern u8 T1_log_app_running;
 extern char * T1_log_crash_msg;
 
@@ -51,10 +47,6 @@ void T1_log_warn_if_false(u8 condition, const char * msg);
 #define T1_log_warn_if_false(x, y)
 #else
 #error
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif // T1_LOGGER_H

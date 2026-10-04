@@ -1,6 +1,8 @@
 #ifndef T1_MEM_H
 #define T1_MEM_H
 
+#include <stddef.h>
+
 #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h>
 #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
@@ -9,13 +11,7 @@
 #endif
 
 #include "T1_stdint.h"
-
 #include "T1_types_public.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern u32 T1_mem_page_size;
 
@@ -47,8 +43,5 @@ void * T1_mem_malloc_managed(size_t size);
 
 void T1_mem_free_managed(void * to_free);
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif // T1_MEM_H
+

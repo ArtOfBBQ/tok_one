@@ -1,10 +1,8 @@
-#import "T1_os_apple_audio.h"
+#include "T1_os_apple_audio.h"
 
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_objc.h"
-
-#include <AudioToolbox/AudioToolbox.h>
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 typedef struct {

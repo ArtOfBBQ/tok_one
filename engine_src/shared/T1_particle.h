@@ -6,10 +6,6 @@
 
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_PARTICLE_TEXTURES 10
 #define PARTICLE_RGBA_PROGRESSION_MAX 10
 
@@ -96,10 +92,6 @@ T1_particle_deserialize(
     T1ParticleEffect * recipient,
     u8 * buffer,
     u32 * buffer_size);
-
-#ifdef __cplusplus
-}
-#endif
 
 #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
 #else

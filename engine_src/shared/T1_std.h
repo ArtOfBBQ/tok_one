@@ -3,17 +3,8 @@
 
 #include "T1_stdint.h"
 
-#ifndef __cplusplus
-#define true 1
-#define false 0
-#endif
-
 #ifndef NULL
 #define NULL 0
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 #define T1_F32_MAX 3.402823466e+38f
@@ -156,9 +147,5 @@ void T1_std_f32_to_string(
     f32 input,
     c8 * recipient,
     u32 recipient_size);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_STD_H

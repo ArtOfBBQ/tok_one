@@ -3,7 +3,7 @@
 
 #include "T1_types_cpu_to_gpu.h"
 
-#import <mach/mach_time.h>
+#include <mach/mach_time.h>
 
 extern u64 last_resize_request_at;
 
@@ -12,7 +12,6 @@ u8 T1_apple_gpu_init(
         (T1GPUFrame *),
     void (* arg_funcptr_gameloop_update_after_render)(void),
     void * with_metal_device,
-    char * shader_lib_filepath,
     f32 backing_scale_factor,
     char * error_msg_string);
 

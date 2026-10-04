@@ -4,12 +4,18 @@ This project is my unfinished renderer and platform abstraction layer. Only Mac 
 
 <img width="991" alt="Screen Shot 2023-01-02 at 16 52 28" src="https://user-images.githubusercontent.com/40927974/210205771-546859c6-8602-4ab9-9cfd-fa41ccb1a3cf.png">
 
+## How to "build" (concatenate)?
+
+```
+gcc concat.c -o concat
+./concat
+```
+
+Your files (T1.h & T1.c) are now in the build folder, copy them into your project and you're done.
 
 ## Terminology in this codebase
 
-I generally try to use full-width english words
-and descriptions for clarity, but here is a list
-of words so common I do abbreviate them:
+I generally try to use full-width english words and descriptions for clarity, but here is a list of words so common I do abbreviate them:
 
 - T1 = tok one (the name of this project)
 - cur = current

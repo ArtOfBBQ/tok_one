@@ -3,11 +3,6 @@
 
 #include "T1_stdint.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #define T1_ID_FPS_COUNTER 0
 #define T1_ID_DEBUG_TEXT 1
 
@@ -28,9 +23,5 @@ u32  T1_id_next_nonui_id(void);
 u32  T1_id_next_ui_element_touch_id(void);
 void T1_id_clear_ui_element_touch_ids(void);
 u32  T1_id_next_nonui_touch_id(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_ID_H

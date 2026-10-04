@@ -9,10 +9,6 @@
 #include "T1_global.h"
 #include "T1_triangle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
@@ -57,9 +53,5 @@ void T1_zlight_update_all_attached_render_views(void);
 void T1_zlight_apply_endpoint_anim(
     u32 T1_id, f32 t_applied, f32 t_now,
     const f32 * goal_vals_f32);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_ZLIGHT_H

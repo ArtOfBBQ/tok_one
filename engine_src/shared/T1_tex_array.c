@@ -1,7 +1,7 @@
 #include "T1_tex_array.h"
 
-#include "debigulator/src/decode_png.h"
-#include "debigulator/src/decode_bmp.h"
+#include "decode_png.h"
+#include "decode_bmp.h"
 
 #include "T1_log.h"
 #include "T1_mem.h"

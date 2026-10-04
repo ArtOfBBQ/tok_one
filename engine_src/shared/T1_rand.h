@@ -4,10 +4,6 @@
 #include "T1_stdint.h"
 #include "T1_simd.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FLOAT_SEQUENCE_SIZE  4760
 #define T1_RAND_SEQUENCE_SIZE  999
 
@@ -23,9 +19,5 @@ void T1_rand_shuf_array(
     void * array,
     const u32 array_size,
     const u32 element_size);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_RANDOM_H

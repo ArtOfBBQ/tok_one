@@ -7,9 +7,9 @@
 #error
 #endif
 
-#include "T1_simd.h"
-
 #include <string.h>
+
+#include "T1_simd.h"
 
 void * T1_std_memset(
     void * in,
@@ -528,19 +528,19 @@ u8 T1_std_string_starts_with(
     const char * start)
 {
     if (str_to_check == NULL || start == NULL) {
-        return false;
+        return 0;
     }
     
     s32 i = 0;
     
     while (start[i] != '\0') {
         if (str_to_check[i] != start[i]) {
-            return false;
+            return 0;
         }
         i++;
     }
     
-    return true;
+    return 1;
 }
 
 u8 T1_std_string_ends_with(
@@ -548,14 +548,14 @@ u8 T1_std_string_ends_with(
     const char * ending)
 {
     if (str_to_check == NULL || ending == NULL) {
-        return false;
+        return 0;
     }
     
     u32 str_to_check_len = (u32)T1_std_strlen(str_to_check);
     u32 ending_len = (u32)T1_std_strlen(ending);
     
     if (ending_len > str_to_check_len || ending_len < 1) {
-        return false;
+        return 0;
     }
     
     u32 i = str_to_check_len;
@@ -566,11 +566,11 @@ u8 T1_std_string_ends_with(
         i--;
         
         if (str_to_check[i] != ending[j]) {
-            return false;
+            return 0;
         }
     }
     
-    return true;
+    return 1;
 }
 
 void T1_std_strsub(
@@ -626,29 +626,29 @@ b8 T1_std_are_equal_strings(
     const char * str2)
 {
     if (str1 == NULL || str2 == NULL) {
-        return false;
+        return 0;
     }
     
     if (
         str1[0] == '\0'
         && str2[0] != '\0')
     {
-        return false;
+        return 0;
     }
     
     u32 i = 0;
     while (str1[i] != '\0') {
         if (str1[i] != str2[i]) {
-            return false;
+            return 0;
         }
         i++;
     }
     
     if (str1[i] != '\0' || str2[i] != '\0') {
-        return false;
+        return 0;
     }
-
-    return true;
+    
+    return 1;
 }
 
 u8 T1_std_are_equal_until_nullterminator(
@@ -656,7 +656,7 @@ u8 T1_std_are_equal_until_nullterminator(
     const char * str2)
 {
     if (str1 == NULL || str2 == NULL) {
-        return false;
+        return 0;
     }
     
     u32 i = 0;
@@ -665,12 +665,12 @@ u8 T1_std_are_equal_until_nullterminator(
         str2[i] != '\0')
     {
         if (str1[i] != str2[i]) {
-            return false;
+            return 0;
         }
         i++;
     }
     
-    return true;
+    return 1;
 }
 
 u8 T1_std_are_equal_strings_of_length(
@@ -680,11 +680,11 @@ u8 T1_std_are_equal_strings_of_length(
 {
     for (u64 i = 0; i < len; i++) {
         if (str1[i] != str2[i]) {
-            return false;
+            return 0;
         }
     }
     
-    return true;
+    return 1;
 }
 
 void T1_std_f32_to_string(
@@ -793,7 +793,7 @@ s32 T1_std_string_to_s32_validate(
     u8 * good)
 {
     if (input[0] == '\0') {
-        *good = false;
+        *good = 0;
         return 0;
     }
     
@@ -805,11 +805,11 @@ s32 T1_std_string_to_s32_validate(
                 input + 1);
         
         if (temp > 2147483646) {
-            *good = false;
+            *good = 0;
             return 0;
         }
         
-        *good = true;
+        *good = 1;
         
         return (s32)temp * -1;
     }
@@ -825,7 +825,7 @@ s32 T1_std_string_to_s32_validate(
 
 s32 T1_std_string_to_s32(const char * input)
 {
-    u8 result_good = false;
+    u8 result_good = 0;
     s32 result = T1_std_string_to_s32_validate(
         input,
         &result_good);
@@ -843,10 +843,10 @@ u32 T1_std_string_to_u32_validate(
     u8 * good)
 {
     if (input[0] < '0' || input[0] > '9') {
-        *good = false;
+        *good = 0;
         return 0;
     } else {
-        *good = true;
+        *good = 1;
     }
     
     u32 return_value = 0;
@@ -872,7 +872,7 @@ u32 T1_std_string_to_u32_validate(
         decimal *= 10;
         
         if (decimal > 1000000000) {
-            *good = false;
+            *good = 0;
             return return_value;
         }
         
@@ -885,7 +885,7 @@ u32 T1_std_string_to_u32_validate(
 u32 T1_std_string_to_u32(
     const char * input)
 {
-    u8 result_good = false;
+    u8 result_good = 0;
     u32 result = T1_std_string_to_u32_validate(
         input,
         &result_good);
@@ -903,21 +903,21 @@ f32 T1_std_string_to_f32_validate(
     u8 * good)
 {
     if (input[0] == '\0') {
-        *good = false;
+        *good = 0;
         return 0;
     }
     
     f32 return_value = 0;
     
     u32 i = 0;
-    u8 found_num = false;
-    u8 used_dot = false;
+    u8 found_num = 0;
+    u8 used_dot = 0;
     char part1[20];
     u32 part1_size = 0;
     char part2[20];
     u32 part2_size = 0;
     
-    u8 found_exponent = false;
+    u8 found_exponent = 0;
     s32 exponent_modifier = 1; 
     s32 exponent = 0;
     
@@ -936,12 +936,12 @@ f32 T1_std_string_to_f32_validate(
     {
         if (!used_dot && found_num && input[i] == '.') {
             i++;
-            used_dot = true;
+            used_dot = 1;
             continue;
         }
         
         if (input[i] >= '0' && input[i] <= '9') {
-            found_num = true;
+            found_num = 1;
             if (found_exponent) {
                 if (exponent == 0) {
                     exponent = input[i] - '0';
@@ -958,21 +958,21 @@ f32 T1_std_string_to_f32_validate(
             input[i] == 'e' || input[i] == 'E')
         {
             if (found_exponent) {
-                *good = false;
+                *good = 0;
                 return return_value;
             }
-            found_exponent = true;
+            found_exponent = 1;
             if (input[i+1] == '-') {
                 exponent_modifier = -1;
                 i++;
             } else if (input[i+1] == '+') {
                 i++;
             } else {
-                *good = false;
+                *good = 0;
                 return return_value;
             }
         } else {
-            *good = false;
+            *good = 0;
             return return_value;
         }
         
@@ -981,12 +981,12 @@ f32 T1_std_string_to_f32_validate(
     
     part1[part1_size] = '\0';
     
-    u8 part1_valid = false;
+    u8 part1_valid = 0;
     s32 part1_s32 = T1_std_string_to_s32_validate(
         /* const char input: */ part1,
         &part1_valid);
     if (!part1_valid) {
-        *good = false;
+        *good = 0;
         return return_value;
     }
     
@@ -997,12 +997,12 @@ f32 T1_std_string_to_f32_validate(
         if (part2_size > 6) { part2_size = 6; }
         
         part2[part2_size] = '\0';
-        u8 part2_valid = false;
+        u8 part2_valid = 0;
         s32 part2_s32 = T1_std_string_to_s32_validate(
             /* const char input: */ part2,
             &part2_valid);
         if (!part2_valid) {
-            *good = false;
+            *good = 0;
             return return_value;
         }
         
@@ -1029,14 +1029,14 @@ f32 T1_std_string_to_f32_validate(
     }
     return_value *= scinot_modifier;
     
-    *good = true;
+    *good = 1;
     return return_value;
 }
 
 f32 T1_std_string_to_f32(
     const char * input)
 {
-    u8 result_good = false;
+    u8 result_good = 0;
     f32 result = T1_std_string_to_f32_validate(
         input,
         &result_good);

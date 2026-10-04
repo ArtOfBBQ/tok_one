@@ -4,10 +4,6 @@
 #include "T1_types_public.h"
 #include "T1_texquad.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_init(
@@ -71,9 +67,5 @@ void T1_text_request_fps(u64 elapsed_us);
 
 void T1_text_request_top_touch_id(
     u32 top_touchable_id);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_TEXT_H

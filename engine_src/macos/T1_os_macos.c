@@ -1386,24 +1386,12 @@ void T1_os_link_gpu_to_main_window(
         T1_os_macos_s->sel_set_delegate,
         (uintptr_t)apple_gpu_delegate);
     
-    char shader_lib_path_cstr[512];
-    T1_os_get_res_dir(
-        shader_lib_path_cstr,
-        512);
-    
-    T1_std_strcat_cap(
-        shader_lib_path_cstr,
-        512,
-        "/Shaders.metallib");
-    
     b8 result = T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
             metal_device_for_window,
-        /* NSString *shader_lib_filepath: */
-            shader_lib_path_cstr,
         /* bool32_t has_retina_screen: */
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],

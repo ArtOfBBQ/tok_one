@@ -5,10 +5,6 @@
 
 #include "T1_types_cpu_to_gpu.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern u8 T1_gameloop_active;
 extern u8 T1_gameloop_loading_texs;
 
@@ -24,9 +20,5 @@ T1_gameloop_update_before_render_pass(
 
 void
 T1_gameloop_update_after_render_pass(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_GAMELOOP_H

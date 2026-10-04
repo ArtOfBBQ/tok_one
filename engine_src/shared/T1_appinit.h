@@ -5,10 +5,6 @@
 
 #include "T1_stdint.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern u32 block_drawinmtkview;
 
 void T1_appinit_before_gpu_init(
@@ -27,9 +23,5 @@ void T1_appinit_after_gpu_init_step1(
     u32 error_message_cap);
 void T1_appinit_after_gpu_init_step2(
     s32 throwaway_threadarg);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // INIT_APPLICATION_H

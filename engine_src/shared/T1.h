@@ -2,8 +2,8 @@
 #define T1_H
 
 #include <stddef.h>
-#include <stdint.h>
 
+#include "T1_macro_settings.h"
 #include "T1_types_public.h"
 
 /*

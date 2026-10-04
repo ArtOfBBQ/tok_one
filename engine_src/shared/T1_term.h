@@ -5,10 +5,6 @@
 
 #include "T1_stdint.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void T1_term_init(
     void (* callback_eval_command_fptr)(
         char *, char *, u32),
@@ -17,10 +13,6 @@ void T1_term_init(
 void T1_term_update(void);
 
 void T1_term_manually_deactivate(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_TERM_H
 

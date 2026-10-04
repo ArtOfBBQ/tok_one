@@ -13,12 +13,12 @@ void T1_global_init(void) {
         return;
     }
     
-    T1_global->draw_imputed_normals   = false;
-    T1_global->draw_fps               = false;
-    T1_global->draw_triangles         =  true;
-    T1_global->show_profiler          = false;
-    T1_global->pause_profiler         = false;
-    T1_global->block_mouse            = false;
+    T1_global->draw_imputed_normals   = 0;
+    T1_global->draw_fps               = 0;
+    T1_global->draw_triangles         = 1;
+    T1_global->show_profiler          = 0;
+    T1_global->pause_profiler         = 0;
+    T1_global->block_mouse            = 0;
         
     T1_global->timedelta_mult = 1.00f;
     

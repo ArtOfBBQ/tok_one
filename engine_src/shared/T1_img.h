@@ -13,10 +13,6 @@ typedef struct {
     u8  good;
 } T1Img;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 u64
 T1_img_get_sum_rgba(const T1Img * input);
 
@@ -31,9 +27,5 @@ T1_img_overwrite_subregion(
     const u32 row_count,
     const u32 at_column,
     const u32 at_row);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_IMG_H

@@ -9,10 +9,6 @@ your platform
 
 #include "T1_stdint.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct {
     f32 window_left;
@@ -304,9 +300,5 @@ void T1_os_link_gpu_to_main_window(
 void T1_os_shutdown(void);
 
 void T1_os_run_app(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // T1_OS_H
