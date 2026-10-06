@@ -1,6 +1,7 @@
 #ifndef T1_H
 #define T1_H
 
+#include <stdint.h>
 #include <stddef.h>
 
 #include "T1_macro_settings.h"

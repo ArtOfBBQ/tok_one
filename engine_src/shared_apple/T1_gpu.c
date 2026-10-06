@@ -329,10 +329,14 @@ u8 T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
-    c8 * error_msg_string)
+    c8 * error_msg_string,
+    uint32_t error_msg_cap)
 {
     if (T1_cpu_to_gpu_data == NULL) {
-        T1_std_strcpy_cap(error_msg_string, 128, "GPU frame buffer was not initialized");
+        T1_std_strcpy_cap(
+            error_msg_string,
+            error_msg_cap,
+            "GPU frame buffer was not initialized");
         return false;
     }
     
@@ -514,7 +518,7 @@ u8 T1_apple_gpu_init(
     
     T1_std_strcpy_cap(
         error_msg_string,
-        512,
+        error_msg_cap,
         "");
     
     ags->device = with_metal_device;
@@ -534,8 +538,11 @@ u8 T1_apple_gpu_init(
         
         if (error) {
             void * nsstr_error_desc = (void *)T1_objc_msg(error, ags->sel_description);
-            char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc); 
-            T1_std_strcat_cap(error, 512, error_desc);
+            char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc);
+            if (strlen(error_desc) > (error_msg_cap / 2)) {
+                error_desc[(error_msg_cap / 2)] = '\0';
+            }
+            T1_std_strcat_cap(error_msg_string, error_msg_cap, error_desc);
             return false;
         }
     }
@@ -543,7 +550,7 @@ u8 T1_apple_gpu_init(
     if (ags->lib == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Failed to load shaders, and further "
             "failed to compile them from source");
         return false;
@@ -558,7 +565,7 @@ u8 T1_apple_gpu_init(
     if (vertex_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: vertex_shader()");
         return false;
     }
@@ -572,7 +579,7 @@ u8 T1_apple_gpu_init(
     if (fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: frag_shader()");
         return false;
     }
@@ -587,7 +594,7 @@ u8 T1_apple_gpu_init(
     if (alphablending_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: alphablending_frag_shader()");
         return false;
     }
@@ -606,7 +613,7 @@ u8 T1_apple_gpu_init(
     if (z_prepass_vertex_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: vertex_shader()");
         return false;
     }
@@ -624,7 +631,7 @@ u8 T1_apple_gpu_init(
         
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: z_prepass_fragment_shader()");
         return false;
     }
@@ -654,7 +661,7 @@ u8 T1_apple_gpu_init(
     if (outlines_vertex_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: outlines_vertex_shader()");
         return false;
     }
@@ -670,7 +677,7 @@ u8 T1_apple_gpu_init(
     if (outlines_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: outlines_frag_shader()");
         return false;
     }
@@ -728,7 +735,7 @@ u8 T1_apple_gpu_init(
     {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: "
             "flat_billboard_quad_vertex_shader()");
         return false;
@@ -744,7 +751,7 @@ u8 T1_apple_gpu_init(
     if (flat_billboard_quad_frag_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: "
             "flat_billboard_quad_fragment_shader()");
         return false;
@@ -786,7 +793,7 @@ u8 T1_apple_gpu_init(
     {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: "
             "flat_texquad_vertex_shader()");
         return false;
@@ -802,7 +809,7 @@ u8 T1_apple_gpu_init(
     if (flat_texquad_frag_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: "
             "flat_texquad_frag_shader()");
         return false;
@@ -838,7 +845,7 @@ u8 T1_apple_gpu_init(
     {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Failed to init diamond pipeline");
         return false;
     }
@@ -877,7 +884,7 @@ u8 T1_apple_gpu_init(
     {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Failed to load the alphablending shader");
         return false;
     }
@@ -913,7 +920,7 @@ u8 T1_apple_gpu_init(
     {
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Failed to load the depth stencil state");
         return false;
     }
@@ -1124,7 +1131,7 @@ u8 T1_apple_gpu_init(
         
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: "
             "postprocess_vertex_shader()");
         return false;
@@ -1141,7 +1148,7 @@ u8 T1_apple_gpu_init(
         T1_log_append("Missing function: downsampling_frag_shader()!");
         T1_std_strcpy_cap(
             error_msg_string,
-            512,
+            error_msg_cap,
             "Missing function: downsampling_fragment_shader()");
         return false;
     }

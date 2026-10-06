@@ -13,7 +13,8 @@ u8 T1_apple_gpu_init(
     void (* arg_funcptr_gameloop_update_after_render)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
-    char * error_msg_string);
+    char * error_msg_string,
+    uint32_t error_msg_cap);
 
 void T1_gpu_update_render_view_size(s32 at_i);
 void T1_gpu_update_final_window_size(void);

@@ -2,16 +2,23 @@
 #define T1_STDINT_H
 
 #ifdef __METAL_VERSION__
-// For Metal Shading Language
 typedef long   s64;
+// typedef long   int64_t;
 typedef int    s32;
+// typedef int    int32_t;
 typedef short  s16;
-typedef char    s8;
+// typedef short  int16_t;
+typedef char   s8;
+// typedef signed char int8_t;
 
 typedef ulong  u64;
+// typedef ulong  uint64_t;
 typedef uint   u32;
+// typedef uint   uint32_t;
 typedef ushort u16;
-typedef uchar   u8;
+// typedef ushort uint16_t;
+typedef uchar  u8;
+// typedef uchar  uint8_t;
 
 typedef float  f32;
 typedef half   f16;

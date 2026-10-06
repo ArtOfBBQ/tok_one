@@ -1,6 +1,11 @@
 #ifndef T1_TYPES_PUBLIC_GPUCPU_H
 #define T1_TYPES_PUBLIC_GPUCPU_H
 
+#ifdef __METAL_VERSION__
+#else
+#include <stdint.h>
+#endif
+
 #define T1_TEX_NONE 32109
 
 typedef union {

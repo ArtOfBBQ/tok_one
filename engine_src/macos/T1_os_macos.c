@@ -1396,7 +1396,8 @@ void T1_os_link_gpu_to_main_window(
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],
         /* char * error_msg_string: */
-            errmsg);
+            errmsg,
+            errmsg_cap);
     
     if (!result || !T1_log_app_running) {
         if (errmsg[0] == '\0') {
