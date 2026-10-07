@@ -9,11 +9,84 @@
 #include "T1_tex_array.h"
 #include "T1_os.h"
 
+static void malloc_img_from_embedded_png(
+    T1Img * recip,
+    const unsigned char * embedded_data,
+    u64 embedded_data_size)
+{
+    if (embedded_data_size < 1) {
+        return;
+    }
+    
+    char * contents = T1_mem_malloc_managed(embedded_data_size);
+    T1_std_memcpy(contents, embedded_data, embedded_data_size);
+    
+    u8 is_png =
+        contents[1] == 'P' &&
+        contents[2] == 'N' &&
+        contents[3] == 'G';
+    T1_assert(is_png);
+    
+    decode_png_get_width_height(
+        /* const u8 * compressed_input: */
+            (u8 *)embedded_data,
+        /* const u64 compressed_input_size: */
+            embedded_data_size - 1,
+        /* u32 * out_width: */ &recip->width,
+        /* u32 * out_height: */ &recip->height,
+        /* u32 * out_good: */ &recip->good);
+        
+    if (!recip->good) {
+        T1_log_assert(0);
+        T1_mem_free_managed((u8 *)contents);
+        return;
+    }
+    
+    recip->good = 0;
+    recip->pixel_count = recip->width * recip->height;
+    recip->rgba_values_size = recip->pixel_count * 4;
+    T1_mem_malloc_managed_page_aligned(
+        /* void *base_pointer_for_freeing: */
+            (void *)&recip->rgba_values_freeable,
+        /* void *aligned_subptr: */
+            (void *)&recip->rgba_values_page_aligned,
+        /* const u64 subptr_size: */
+            recip->rgba_values_size);
+    
+    T1_std_memset(
+        recip->rgba_values_page_aligned,
+        0,
+        recip->rgba_values_size);
+    
+    decode_png(
+        /* const u8 * compressed_input: */
+            (u8 *)contents,
+        /* const u64 compressed_input_size: */
+            embedded_data_size - 1,
+        /* out_rgba_values: */
+            recip->rgba_values_page_aligned,
+        /* rgba_values_size: */
+            recip->rgba_values_size,
+        /* const u32 thread_id: */
+            0,
+        /* u8 * out_good: */
+            &recip->good);
+    T1_mem_free_managed((u8 *)contents);
+}
+
 static void malloc_img_from_resource_name(
     T1Img * recipient,
     const char * filename,
     const u32 thread_id)
 {
+    if (T1_std_are_equal_strings(filename, "font.png")) {
+        malloc_img_from_embedded_png(
+            recipient,
+            T1_embedded_data_font_png,
+            T1_embedded_data_font_png_size);
+        return;
+    }
+    
     u64 size_without_terminator =
         T1_os_get_resource_size(filename);
     char * contents = NULL;
@@ -195,6 +268,7 @@ void T1_tex_files_reg_new_by_splitting_file(
 {
     T1Img stack_img;
     T1Img * img = &stack_img;
+    
     malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
     T1_log_assert(img->good);
@@ -227,8 +301,7 @@ void T1_tex_files_load_font_images(
         T1_std_strcpy_cap(
             error_message,
             256,
-            "Font error - other textures already "
-            "existed");
+            "Font error - other textures already existed");
         return;
     }
     

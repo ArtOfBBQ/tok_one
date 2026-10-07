@@ -553,55 +553,12 @@ void T1_appinit_before_gpu_init(
     
     T1_tex_array_init();
     
-    // initialize font with fontmetrics.dat
-    u64 font_metrics_contents_cap = T1_os_get_resource_size(
-        /* filename: */ "fontmetrics.dat");
-    char * font_metrics_contents = NULL; 
-    u8 font_metrics_good = 0;
+    T1_assert(T1_embedded_data_fontmetrics_dat_size > 0);
     
-    if (font_metrics_contents_cap > 0) {
-        font_metrics_contents =
-            (char *)T1_mem_malloc_unmanaged(
-                font_metrics_contents_cap + 1);
-        T1_std_memset(
-            font_metrics_contents,
-            0,
-            font_metrics_contents_cap + 1);
-        
-        if (!font_metrics_contents) {
-            return;
-        }
-        T1_os_read_resource_file(
-            /* const char * filename: */
-                "fontmetrics.dat",
-            /* char * recip: */
-                font_metrics_contents,
-            /* const u64 recip_cap: */
-                font_metrics_contents_cap,
-            /* u8 * good: */
-                &font_metrics_good);
-        
-        if (!font_metrics_good) {
-            T1_std_strcpy_cap(
-                error_message,
-                error_message_cap,
-                "fontmetrics.dat was corrupted\n");
-            return;
-        }
-        
-        T1_text_init(
-                T1_mem_malloc_unmanaged,
-            /* raw_fontmetrics_file_contents: */
-                font_metrics_contents,
-            /* raw_fontmetrics_file_size: */
-                font_metrics_contents_cap);
-    } else {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Error - missing font.png at startup");
-        return;
-    }
+    T1_text_init(
+        T1_mem_malloc_unmanaged,
+        (const char *)T1_embedded_data_fontmetrics_dat,
+        T1_embedded_data_fontmetrics_dat_size);
     
     T1_render_view_init();
     

@@ -600,7 +600,14 @@ static void append_embedded_file_to_out(
     if (to_embed_files[to_embed_i].inlineify) {
         strcat(asm_state->output, ";\n\n\n");
     } else {
-        strcat(asm_state->output, "\n};\n\n\n");
+        strcat(asm_state->output, "\n};\n");
+        strcat(asm_state->output, "const unsigned int ");
+        strcat(asm_state->output, adjusted_name);
+        strcat(asm_state->output, "_size = ");
+        sprintf(
+            asm_state->output + strlen(asm_state->output),
+            "%u;\n\n\n",
+            to_embed_size);
     }
     
     asm_state->arena_i = pop_arena_i;

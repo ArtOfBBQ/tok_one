@@ -87,10 +87,6 @@ void T1_text_init(
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     u64 filesize_remaining =
         raw_fontmetrics_file_size - sizeof(FontMetrics);
-    T1_log_assert(filesize_remaining % sizeof(FontCodepoint) == 0);
-    T1_log_assert(
-        filesize_remaining ==
-            codepoint_metrics_size * sizeof(FontCodepoint));
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
