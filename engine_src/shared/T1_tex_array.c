@@ -339,7 +339,7 @@ s32 T1_tex_array_create_new_render_view(
         /* u32 use_bc1_compression: */
             false);
     
-    #if T1_LOG_PRINTF == T1_ACTIVE
+    #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
     s32 tex_array_i = T1_tex_to_array_i(tex);
     s32 tex_slice_i = T1_tex_to_slice_i(tex);
     T1_log_append("Attaching texture array's ");
@@ -349,7 +349,7 @@ s32 T1_tex_array_create_new_render_view(
     T1_log_append(" to render view ");
     T1_log_append_s32(rv_i);
     T1_log_append("\n");
-    #elif T1_LOG_PRINTF == T1_INACTIVE
+    #elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

@@ -36,12 +36,14 @@ typedef struct {
 } Embeddable;
 
 static const Embeddable to_embed_files[] = {
-    {"shaders.metal",   0, 1},
-    {"fontmetrics.dat", 1, 0},
-    {"font.png",        1, 0},
+    {"shaders.metal",    0, 1},
+    {"fontmetrics.dat",  1, 0},
+    {"font.png",         1, 0},
+    {"perlin_noise.png", 1, 0},
 };
 
 static const char * c_files[] = {
+"T1.c",
 "inflate.c",
 "decode_png.c",
 "decode_bmp.c",
@@ -91,14 +93,13 @@ static const char * c_files[] = {
 "T1_render.c",
 "T1_gameloop.c",
 "T1_appinit.c",
-"T1.c",
 };
 
 #define PERMA_CAP    50000
 #define ARENA_CAP 40000000
 #define OBSERVED_INCLUDES_CAP 1000
 #define FILESTACK_CAP 200
-#define OUTPUT_CAP 5000000
+#define OUTPUT_CAP 10000000
 typedef struct {
     char     output[OUTPUT_CAP];
     char     perma[PERMA_CAP];
@@ -674,7 +675,10 @@ int main(void) {
             if (to_embed_files[i].inlineify) {
                 // pass
             } else {
-                strcat(asm_state->output, "[]");
+                strcat(asm_state->output, "[];\n");
+                strcat(asm_state->output, "extern const unsigned int ");
+                strcat(asm_state->output, adjusted_name);
+                strcat(asm_state->output, "_size");
             }
             strcat(asm_state->output, ";\n\n");
         }

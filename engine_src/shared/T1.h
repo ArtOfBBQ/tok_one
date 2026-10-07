@@ -40,13 +40,13 @@ void T1_log_dump_and_crash(const char * crash_message);
 #error
 #endif
 
-#if T1_LOG_PRINTF == T1_ACTIVE
+#if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
 void T1_log_append(const char *);
 void T1_log_append_c8(char c8val);
 void T1_log_append_f32(float f32val);
 void T1_log_append_s32(int32_t s32val);
 void T1_log_append_u32(uint32_t u32val);
-#elif T1_LOG_PRINTF == T1_INACTIVE
+#elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
 #define T1_log_append(string)
 #define T1_log_append_c8(num)
 #define T1_log_append_f32(num)
@@ -397,23 +397,9 @@ T1Anim * T1_anim_request_next(
     uint8_t tq_gpu_u32s,
     uint8_t zl_gpu_f32s);
 void T1_anim_commit(
-    T1Anim * c
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    );
+    T1Anim * c);
 void T1_anim_commit_and_instarun(
-    T1Anim * to_commit
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    );
+    T1Anim * to_commit);
 void T1_anim_fade_destroy_all(
     uint64_t pause_first,
     uint64_t duration_us);

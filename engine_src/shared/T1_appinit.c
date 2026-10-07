@@ -822,19 +822,20 @@ void T1_appinit_after_gpu_init_step1(
     T1_os_gpu_copy_locked_vertices();
     
     b8 perlin_good = 0;
-    T1_tex_files_prereg_dds_res(
-        "perlin_noise.dds",
+    const char * perlin_noise_fn = "perlin_noise.png";
+    T1_tex_files_prereg_and_decode_png_res(
+        perlin_noise_fn,
         &perlin_good);
     
     if (!perlin_good) {
-        T1_log_dump_and_crash(
-            "Missing engine file: "
-            "perlin_noise.dds");
+        T1_log_dump_and_crash(perlin_noise_fn);
+        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load perlin_noise data\n");
         T1_global->postproc_consts.perlin_texturearray_i = 1;
         T1_global->postproc_consts.perlin_texture_i = 0;
+        return;
     } else {
         T1Tex perlin_tex = T1_tex_array_get_filename_loc(
-            "perlin_noise.dds");
+            perlin_noise_fn);
         T1_global->postproc_consts.perlin_texturearray_i = 
             T1_tex_to_array_i(perlin_tex);
         T1_global->postproc_consts.perlin_texture_i =

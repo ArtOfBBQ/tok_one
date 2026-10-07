@@ -1,14 +1,5 @@
 #include "T1_collision.h"
-
-#define T1_COLLISION_SILENCE
-#ifndef T1_COLLISION_SILENCE
-#include <stdio.h>
-#endif
-
-#define T1_COLLISION_IGNORE_ASSERTS
-#ifndef T1_COLLISION_IGNORE_ASSERTS
-#include <assert.h>
-#endif
+#include "T1_conditional_includes.h"
 
 #ifndef T1_COL_FLT_MAX
 #define T1_COL_FLT_MAX 3.402823466e+38F
@@ -16,11 +7,12 @@
 
 #include <math.h>
 
-// evaporate printf statements if T1_COLLISION_SILENCE is set
-#ifndef T1_COLLISION_SILENCE
+#if T1_COLLISION_PRINTF_ACTIVE == T1_ACTIVE
 #define col_printf(...) printf(__VA_ARGS__)
-#else
+#elif T1_COLLISION_PRINTF_ACTIVE == T1_INACTIVE
 #define col_printf(...)
+#else
+#error
 #endif
 
 static f32 dot(const f32 A[3], const f32 B[3])

@@ -293,14 +293,7 @@ typedef struct {
     uint32_t runs;
     uint32_t target_T1_id;
     uint32_t target_touch_id;
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    char original_func_name[128];
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
+        
     T1EasingType easing_type; // u8
     uint8_t del_obj_on_finish;
     uint8_t del_conflict_anims;

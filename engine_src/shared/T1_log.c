@@ -1,14 +1,6 @@
 #include "T1_log.h"
 #include "T1_std.h"
-
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-#include <stdio.h>
-#include <assert.h>
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
-
+#include "T1_conditional_includes.h"
 
 u8 T1_log_app_running = 0;
 c8 * T1_log_crash_msg = NULL;
@@ -53,7 +45,7 @@ void T1_log_init(
     }
 }
 
-#if T1_LOG_PRINTF == T1_ACTIVE
+#if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
 void T1_log_append_u32(u32 to_append)
 {
     c8 converted[1000];
@@ -110,7 +102,7 @@ void T1_log_append(
     
     // logger_mutex_lock_func(logger_mutex_id);
 }
-#elif T1_LOG_PRINTF == T1_INACTIVE
+#elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
 void T1_log_append_u32(u32 to_append) {}
 void T1_log_append_c8(c8 to_append) {}
 void T1_log_append_s32(s32 to_append) {}
@@ -143,9 +135,9 @@ void T1_log_dump_and_crash(
         T1_log_crash_msg[i] = '\0';
     }
     
-    #if T1_LOG_PRINTF == T1_ACTIVE
+    #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
     printf("DUMP & CRASHED: %s\n", crash_message);
-    #elif T1_LOG_PRINTF == T1_INACTIVE
+    #elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

@@ -1,13 +1,6 @@
 #include "T1_img.h"
 
-#define T1_IMG_SILENCE
-#ifndef T1_IMG_SILENCE
-#include "stdio.h"
-#endif
-
-#ifndef T1_IMG_IGNORE_ASSERTS
-#include "assert.h"
-#endif
+#include "T1_conditional_includes.h"
 
 u64
 T1_img_get_sum_rgba(
@@ -45,23 +38,29 @@ T1_img_overwrite_subregion(
     assert(at_row > 0);
     
     if (at_column > column_count) {
-        #ifndef T1_IMG_SILENCE
+        #if T1_IMG_PRINTF_ACTIVE == 1
         printf(
             "can't write at [%u,%u], if only %u total columns\n",
             at_column,
             at_row,
             column_count);
+        #elif T1_IMG_PRINTF_ACTIVE == 2
+        #else
+        #error
         #endif
         return;
     }
     
     if (at_row > row_count) {
-        #ifndef T1_IMG_SILENCE
+        #if T1_IMG_PRINTF_ACTIVE == 1
         printf(
             "can't write at [%u,%u], if only %u total rows\n",
             at_column,
             at_row,
             row_count);
+        #elif T1_IMG_PRINTF_ACTIVE == 2
+        #else
+        #error
         #endif
         return;
     }
@@ -76,7 +75,7 @@ T1_img_overwrite_subregion(
         ||
         (new_image->height != expected_height))
     {
-        #ifndef T1_IMG_SILENCE
+        #if T1_IMG_PRINTF_ACTIVE == 1
         printf(
             "Error - can't overwrite chunk [%u,%u] of dimensions [%u,%u] for image (%u x %u) with new subimage sized [%u,%u], expected size [%u,%u]\n",
             at_column,
@@ -89,6 +88,9 @@ T1_img_overwrite_subregion(
             new_image->height,
             expected_width,
             expected_height);
+        #elif T1_IMG_PRINTF_ACTIVE == 2
+        #else
+        #error
         #endif
         
         return;

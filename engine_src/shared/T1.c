@@ -1,5 +1,7 @@
 #include "T1.h"
 
+#include "T1_conditional_includes.h"
+
 #include "decode_png.h"
 #include "T1_log.h"
 #include "T1_tex_array.h"
@@ -230,7 +232,7 @@ void T1_make_reflection_cam(
     T1_log_assert(T1_tex_to_slice_i(refl_cpu->write_tex) <
         (s32)T1_tex_arrays[T1_tex_to_array_i(refl_cpu->write_tex)].images_size);
     
-    refl_cpu->reflect_around_plane_z = true;
+    refl_cpu->reflect_around_plane_z = 1;
     refl_cpu->refl_cam_around_plane_z = reflection_z;
     
     refl_cpu->passes_size = 2;
@@ -256,7 +258,7 @@ u8 * T1_png_malloc_managed_from_resource(
     u32 * out_height,
     u8 * out_good)
 {
-    *out_good = false;
+    *out_good = 0;
     *out_width = 0;
     *out_height = 0;
     
@@ -297,7 +299,7 @@ u8 * T1_png_malloc_managed_from_resource(
     if (!*out_good) {
         T1_mem_free_managed(png);
         return NULL;
-    } else { *out_good = false; }
+    } else { *out_good = 0; }
     
     decode_png_get_width_height(
         (uint8_t *)png,
@@ -310,7 +312,7 @@ u8 * T1_png_malloc_managed_from_resource(
         T1_mem_free_managed(png);
         return NULL;
     } else {
-        *out_good = false;
+        *out_good = 0;
     }
     
     u32 rgba_cap = (*out_width * *out_height * 4);

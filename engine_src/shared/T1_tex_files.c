@@ -87,6 +87,14 @@ static void malloc_img_from_resource_name(
         return;
     }
     
+    if (T1_std_are_equal_strings(filename, "perlin_noise.png")) {
+        malloc_img_from_embedded_png(
+            recipient,
+            T1_embedded_data_perlin_noise_png,
+            T1_embedded_data_perlin_noise_png_size);
+        return;
+    }
+    
     u64 size_without_terminator =
         T1_os_get_resource_size(filename);
     char * contents = NULL;
@@ -317,6 +325,27 @@ void T1_tex_files_load_font_images(
     T1_tex_arrays[0].request_init = false;
 }
 
+void T1_tex_files_prereg_and_decode_png_res(
+    const char * resource_name,
+    u8 * success)
+{
+    *success = 0;
+    
+    T1Img img;    
+    malloc_img_from_resource_name(&img, resource_name, 0);
+    
+    T1_tex_array_reg_img(
+        resource_name,
+        img.width,
+        img.height,
+        false,
+        false);
+    
+    T1_tex_array_push_all();
+    
+    *success = 1;
+}
+
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
     u32 rows, u32 columns,
@@ -491,7 +520,10 @@ void T1_tex_files_prereg_png_res(
     char * contents = T1_mem_malloc_managed(contents_cap+1);
     
     T1_os_read_resource_file(filename, contents, contents_cap, good);
-    if (!*good) { return; } else { *good = 0; }
+    if (!*good) {
+        T1_mem_free_managed(contents);
+        return;
+    } else { *good = 0; }
     
     u32 width = 0;
     u32 height = 0;

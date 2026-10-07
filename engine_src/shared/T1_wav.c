@@ -67,7 +67,7 @@ T1_wav_check_strings_equal(
     }
     
     if (!*good) {
-        #if T1_WAV_PRINTF == T1_ACTIVE
+        #if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
         if (at_i > 50) {
             at_i = 50;
         }
@@ -81,7 +81,7 @@ T1_wav_check_strings_equal(
             "Mismatch: expected %s, got %s\n",
             expected_nullterm,
             actual_nullterm);
-        #elif T1_WAV_PRINTF == T1_INACTIVE
+        #elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -198,12 +198,12 @@ T1_wav_parse(
     if (!*good) { return; }
     
     if (file_header.file_size + 8 != data_size) {
-        #if T1_WAV_PRINTF == T1_ACTIVE
+        #if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
         printf(
             ".wav header claims filesize %u+8 bytes, got %u byte datastream\n",
             file_header.file_size,
             data_size);
-        #elif T1_WAV_PRINTF == T1_INACTIVE
+        #elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -463,13 +463,13 @@ T1_wav_parse(
                 "data"))
         {
             if (chunk_header.data_size > (recipient_cap * 2)) {
-                #if T1_WAV_PRINTF == T1_ACTIVE
+                #if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
                 printf(
                     "Recipient size of %u can't contain %u bytes of sound "
                     "data\n",
                     recipient_cap,
                     chunk_header.data_size);
-                #elif T1_WAV_PRINTF == T1_INACTIVE
+                #elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -478,12 +478,12 @@ T1_wav_parse(
             }
             
             if (chunk_header.data_size > file_header.file_size) {
-                #if T1_WAV_PRINTF == T1_ACTIVE
+                #if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
                 printf(
                     "Chunk size %u larger than file size %u?\n",
                     chunk_header.data_size,
                     file_header.file_size);
-                #elif T1_WAV_PRINTF == T1_INACTIVE
+                #elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -505,11 +505,11 @@ T1_wav_parse(
             }
         } else {
             *good = 0;
-            #if T1_WAV_PRINTF == T1_ACTIVE
+            #if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
             printf(
                 "Unrecognized chunk type: %s\n",
                 chunk_header.ascii_id);
-            #elif T1_WAV_PRINTF == T1_INACTIVE
+            #elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif

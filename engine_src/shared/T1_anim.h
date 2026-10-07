@@ -25,27 +25,11 @@ T1Anim * T1_anim_request_next(
     b8 tq_gpu_s32s,
     b8 zl_gpu_f32s);
 
-void T1_anim_commit_and_instarun(
-    T1Anim * to_commit
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    );
+void T1_anim_commit_and_instarun(T1Anim * to_commit);
 
 void T1_anim_assert_anim_valid_before_commit(T1Anim * to_check);
 
-void T1_anim_commit(
-    T1Anim * to_commit
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    );
+void T1_anim_commit(T1Anim * to_commit);
 
 void T1_anim_shatter_and_destroy(
     u32 T1_id,

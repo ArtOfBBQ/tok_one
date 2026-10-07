@@ -641,27 +641,9 @@ static void T1_anim_resolve_single(
     }
 }
 
-void T1_anim_commit_and_instarun(
-    T1Anim * to_commit
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    )
+void T1_anim_commit_and_instarun(T1Anim * to_commit)
 {
     as->mutex_lock(as->mutex_id);
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_std_strcat_cap(
-        to_commit->original_func_name,
-        64,
-        original_func_name);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     
     T1_anim_assert_anim_valid_before_commit(to_commit);
     
@@ -689,7 +671,6 @@ void T1_anim_assert_anim_valid_before_commit(
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1AnimPrivate * parent = T1_anim_get_container(to_check);
     
-    T1_log_assert(to_check->original_func_name[0] != '\0');
     T1_log_assert(&parent->pub == to_check);
     
     if (!parent->endpoints_not_deltas) {
@@ -714,27 +695,9 @@ void T1_anim_assert_anim_valid_before_commit(
     T1_anim_sanity_check(parent);
 }
 
-void T1_anim_commit(
-    T1Anim * c
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    ,const char * original_func_name
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    )
+void T1_anim_commit(T1Anim * c)
 {
     as->mutex_lock(as->mutex_id);
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_std_strcat_cap(
-        c->original_func_name,
-        128,
-        original_func_name);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     
     T1_anim_assert_anim_valid_before_commit(c);
     
@@ -862,15 +825,7 @@ void T1_anim_shatter_and_destroy(
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
-    T1_anim_commit_and_instarun(
-        set_scatter_mesh
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_shatter_and_destroy"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit_and_instarun(set_scatter_mesh);
     
     T1Anim * scatter = T1_anim_request_next(
         true,
@@ -886,15 +841,7 @@ void T1_anim_shatter_and_destroy(
     scatter->easing_type = T1_EASINGTYPE_NONE;
     scatter->runs = 1;
     scatter->del_obj_on_finish = true;
-    T1_anim_commit(
-        scatter
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_shatter_and_destroy"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit(scatter);
 }
 
 void T1_anim_evaporate_and_destroy(
@@ -920,15 +867,7 @@ void T1_anim_evaporate_and_destroy(
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
-    T1_anim_commit_and_instarun(
-        set_scatter_mesh
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_evaporate_and_destroy"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit_and_instarun(set_scatter_mesh);
     
     T1Anim * evap = T1_anim_request_next(
         /* b8 endpoints_not_deltas: */ true,
@@ -944,15 +883,7 @@ void T1_anim_evaporate_and_destroy(
     evap->easing_type = T1_EASINGTYPE_NONE;
     evap->runs = 1;
     evap->del_obj_on_finish = true;
-    T1_anim_commit(
-        evap
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_evaporate_and_destroy"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit(evap);
 }
 
 void T1_anim_fade_and_destroy(
@@ -989,15 +920,7 @@ void T1_anim_fade_and_destroy(
     fade_destroy->zl_gpu_f32s->specular = 0.0f;
     fade_destroy->pause_us = pause_first;
     fade_destroy->del_obj_on_finish = true;
-    T1_anim_commit(
-        fade_destroy
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_fade_and_destroy"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit(fade_destroy);
 }
 
 void T1_anim_fade_destroy_all(
@@ -1033,25 +956,9 @@ void T1_anim_fade_to(
     modify_alpha->zs_gpu_f32s->alpha = target_alpha;
     modify_alpha->del_obj_on_finish = true;
     if (duration_us < 50) {
-        T1_anim_commit_and_instarun(
-            modify_alpha
-            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-            , "T1_anim_fade_to"
-            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-            #else
-            #error
-            #endif
-            );
+        T1_anim_commit_and_instarun(modify_alpha);
     } else {
-        T1_anim_commit(
-            modify_alpha
-            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-            , "T1_anim_fade_to"
-            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-            #else
-            #error
-            #endif
-            );
+        T1_anim_commit(modify_alpha);
     }
 }
 
@@ -1090,15 +997,7 @@ void T1_anim_dud_dance(
     move_request->zs_cpu_f32s->xyz[1] = magnitude * 0.035f;
     move_request->zs_cpu_f32s->xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
-    T1_anim_commit(
-        move_request
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_dud_dance"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit(move_request);
 }
 
 void T1_anim_bump(
@@ -1126,15 +1025,7 @@ void T1_anim_bump(
     bump_req->zs_cpu_f32s->mul_xyz[1] = 0.05f;
     bump_req->zs_cpu_f32s->mul_xyz[2] = 0.05f;
     bump_req->duration_us = 200000;
-    T1_anim_commit(
-        bump_req
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        , "T1_anim_bump"
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        );
+    T1_anim_commit(bump_req);
 }
 
 void T1_anim_delete_all(void) {

@@ -20,6 +20,10 @@ void T1_tex_files_load_font_images(
     c8 * error_message,
     u32 error_message_cap);
 
+void T1_tex_files_prereg_and_decode_png_res(
+    const char * resource_name,
+    u8 * success);
+
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const c8 * filename,
     u32 rows, u32 columns,

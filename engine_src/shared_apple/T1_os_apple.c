@@ -201,7 +201,7 @@ u64 T1_os_get_filesize(
     );
 
     if (attrib_dict == NULL || error_value != NULL) {
-        T1_log_append("ERROR - failed to get size of file - ");
+        T1_log_append("WARNING - failed to get size of file - ");
         T1_log_append(filepath);
         T1_log_append("\n");
         return 0;
