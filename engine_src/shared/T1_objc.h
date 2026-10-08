@@ -76,10 +76,9 @@ static void sample_messaging_use_repeatedly(void) {
 
 #include "T1_stdint.h"
 
-b8 T1_objc_init(
+void T1_objc_init(
     void * (* malloc_perma)(size_t),
-    char * error_message,
-    u32 error_message_cap);
+    char ** const sticky_error);
 
 b8 T1_objc_open_framework(
     const char * framework_name);

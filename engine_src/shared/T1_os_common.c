@@ -208,9 +208,9 @@ void T1_os_read_file_from_writables(
     const char * filepath_in_writables,
     char * recip,
     const u32 recip_size,
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     char filepath[512];
     T1_os_writable_filename_to_pathfile(
@@ -230,16 +230,20 @@ void T1_os_read_file_from_writables(
             &bytes_read,
         /* u64 * size_without_term: */
             recip_size,
-        /* u8 * good: */
-            good);
+        /* char ** const sticky_error: */
+            sticky_error);
     
     if (bytes_read != recip_size) {
-        T1_log_assert(0);
-        *good = 0;
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
+        T1_std_strcpy_cap(*sticky_error, 512, "Error reading writable folder resource: "); 
+        T1_std_strcat_cap(*sticky_error, 512, filepath_in_writables);
+        T1_std_strcat_cap(*sticky_error, 512, ", expected ");
+        T1_std_strcat_u32_cap(*sticky_error, 512, recip_size);
+        T1_std_strcat_cap(*sticky_error, 512, " bytes, got: ");
+        T1_std_strcat_u32_cap(*sticky_error, 512, bytes_read);
         return;
     }
-    
-    *good = 1;
 }
 
 void T1_os_write_file_to_writables(
@@ -339,8 +343,10 @@ void T1_os_read_resource_file(
     const char * filename,
     char * recip,
     const u64 recip_cap,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     char * pathfile = T1_mem_malloc_managed(500);
     T1_std_memset(pathfile, 0, 500);
     
@@ -358,18 +364,23 @@ void T1_os_read_resource_file(
             &bytes_read,
         /* const u64 recip_cap :*/
             recip_cap,
-        /* b8 * good: */
-            good);
+        /* char ** const sticky_error: */
+            sticky_error);
+    
+    if (*sticky_error != 0) { return; }
     
     T1_mem_free_managed(pathfile);
     
-    if (bytes_read != recip_cap) {
-        T1_log_assert(0);
-        *good = 0;
+    if (1 || bytes_read != recip_cap) {
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_strcpy_cap(*sticky_error, 512, "Error reading resource: '");
+        T1_std_strcat_cap(*sticky_error, 512, filename);
+        T1_std_strcat_cap(*sticky_error, 512, " expected ");
+        T1_std_strcat_u32_cap(*sticky_error, 512, (u32)recip_cap);
+        T1_std_strcat_cap(*sticky_error, 512, " bytes, got: ");
+        T1_std_strcat_u32_cap(*sticky_error, 512, bytes_read);
         return;
     }
-    
-    *good = 1;
 }
 
 

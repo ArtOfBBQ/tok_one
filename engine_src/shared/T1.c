@@ -256,9 +256,9 @@ u8 * T1_png_malloc_managed_from_resource(
     const c8 * resource_name,
     u32 * out_width,
     u32 * out_height,
-    u8 * out_good)
+    char ** const sticky_error)
 {
-    *out_good = 0;
+    if (*sticky_error != 0) { return NULL; }
     *out_width = 0;
     *out_height = 0;
     
@@ -269,6 +269,10 @@ u8 * T1_png_malloc_managed_from_resource(
     }
     
     char * png = T1_mem_malloc_managed(png_cap+1);
+    if (!png) {
+        *sticky_error = "Malloc fail";
+        return NULL;
+    }
     
     T1_std_memset(png, 0, png_cap);
     u32 png_size = 0;
@@ -293,26 +297,24 @@ u8 * T1_png_malloc_managed_from_resource(
             &png_size,
         /* u64 recip_cap: */
             png_cap,
-        /* u8 * good: */
-            out_good);
+        /* char ** const sticky_error: */
+            sticky_error);
     
-    if (!*out_good) {
+    if (*sticky_error != 0) {
         T1_mem_free_managed(png);
         return NULL;
-    } else { *out_good = 0; }
+    }
     
     decode_png_get_width_height(
         (uint8_t *)png,
         png_size,
         out_width,
         out_height,
-        out_good);
+        sticky_error);
     
-    if (!*out_good) {
+    if (*sticky_error != 0) {
         T1_mem_free_managed(png);
         return NULL;
-    } else {
-        *out_good = 0;
     }
     
     u32 rgba_cap = (*out_width * *out_height * 4);
@@ -331,12 +333,7 @@ u8 * T1_png_malloc_managed_from_resource(
         /* u32 thread_id: */
             0,
         /* u8 * good: */
-            out_good);
-    
-    if (!*out_good) {
-        T1_mem_free_managed(png);
-        return NULL;
-    }
+            sticky_error);
     
     T1_mem_free_managed(png);
     return rgba;

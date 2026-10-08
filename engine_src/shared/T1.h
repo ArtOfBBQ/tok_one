@@ -63,7 +63,7 @@ uint8_t T1_running(void);
 
 __attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
-    uint8_t * good);
+    char ** const sticky_error);
 void T1_os_run_app(void);
 
 void T1_appinit_before_gpu_init(
@@ -73,19 +73,13 @@ void T1_appinit_before_gpu_init(
     void (* callback_onappclose_fptr)(void),
     void (* callback_evaluate_terminal_command)(
         char * command, char * response, uint32_t),
-    uint8_t * success,
-    char * error_message,
-    uint32_t error_message_cap);
+    char ** const sticky_error);
 void T1_appinit_after_gpu_init_step1(
-    uint8_t * success,
-    char * error_message,
-    uint32_t error_message_cap);
+    char ** const sticky_error);
 void T1_appinit_after_gpu_init_step2(
     int32_t throwaway_threadarg);
 void T1_os_link_gpu_to_main_window(
-    char * errmsg,
-    uint32_t errmsg_cap,
-    uint8_t * good);
+    char ** const sticky_error);
 
 /*
 PROFILER
@@ -210,19 +204,20 @@ uint8_t * T1_png_malloc_managed_from_resource(
     const char * resource_name,
     uint32_t * out_width,
     uint32_t * out_height,
-    uint8_t * out_good);
+    char ** const sticky_error);
 
 /*
 MANAGE TEXTURES
 */
 int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
 int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const char * filename, uint8_t * good);
-void T1_tex_files_prereg_dds_res(const char * filename, uint8_t * good);
+void T1_tex_files_prereg_png_res(const char * filename, char ** const sticky_error);
+void T1_tex_files_prereg_dds_res(const char * filename, char ** const sticky_error);
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
     uint32_t rows, uint32_t cols,
-    uint8_t free_rgba);
+    uint8_t free_rgba,
+    char ** const sticky_error);
 
 uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
 uint16_t T1_tex_array_reg_img(
@@ -249,8 +244,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     uint8_t flip_uv_u,
     uint8_t flip_uv_v,
-    uint8_t * success,
-    char * error_message);
+    char ** const sticky_error);
 int32_t T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
 float T1_objmodel_get_x_multiplier_for_width(
@@ -457,7 +451,7 @@ uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_
 /*
 TOKENIZER
 */
-void T1_token_reset(uint8_t * good);
+void T1_token_reset(char ** const sticky_error);
 #define T1_TOKEN_FLAG_IGNORE_CASE 1
 #define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
 #define T1_TOKEN_FLAG_LEAD_DOT_OK 4
@@ -473,9 +467,9 @@ void T1_token_set_reg_middle_cap(uint32_t middle_cap);
 void T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
     uint32_t pattern_index);
-void T1_token_set_string_literal(uint32_t enum_val, uint8_t * good);
-void T1_token_register(uint32_t enum_value, uint8_t * good);
-void T1_token_run(const char * input, uint8_t * good);
+void T1_token_set_string_literal(uint32_t enum_val, char ** const sticky_error);
+void T1_token_register(uint32_t enum_value, char ** const sticky_error);
+void T1_token_run(const char * input, char ** const sticky_error);
 uint32_t T1_token_get_token_count(void);
 uint32_t T1_token_get_enum_value(uint16_t token_i);
 void T1_token_overwrite_enum_val(uint16_t token_i, uint32_t new_enum_val);
@@ -500,18 +494,18 @@ double T1_token_as_number_floating(int32_t at_i);
 /*
 META TYPES (registration)
 */
-#define T1_meta_struct(struct_name, good) T1_meta_reg_struct(#struct_name, sizeof(struct_name), good)
+#define T1_meta_struct(struct_name, sticky_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), sticky_error)
 void T1_meta_reg_struct(
     const char * struct_name,
     const uint32_t size_bytes,
-    uint8_t * good);
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, good)
-#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, good)
-#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, good)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, good)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, good)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, good)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, good)
+    char ** const sticky_error);
+#define T1_meta_field(parent_type_name, field_T1_type, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, sticky_error)
+#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, sticky_error)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, sticky_error)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, sticky_error)
+#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, sticky_error)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, sticky_error)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, sticky_error)
 void T1_meta_reg_field(
     const char * field_name,
     uint32_t field_offset,
@@ -521,25 +515,24 @@ void T1_meta_reg_field(
     uint16_t field_array_size_2,
     uint16_t field_array_size_3,
     uint8_t is_enum,
-    uint8_t * good);
-#define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
+    char ** const sticky_error);
+#define T1_meta_enum(enum_type_name, T1_data_type, sticky_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), sticky_error)
 void T1_meta_reg_enum(
     const char * enum_type_name,
     const T1MetaType T1_type,
     const uint32_t type_size_check,
-    uint8_t * good);
-#define T1_meta_enum_value(enum_type_name, enum_value, good) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, good)
+    char ** const sticky_error);
+#define T1_meta_enum_value(enum_type_name, enum_value, sticky_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, sticky_error)
 void T1_meta_reg_enum_value(
     const char * enum_type_name,
     const char * value_name,
     int64_t value,
-    uint8_t * good);
-void
-T1_meta_reg_u4_subname_for_last_field(
+    char ** const sticky_error);
+void T1_meta_reg_u4_subname_for_last_field(
     const char * subname,
     const char * enum_name_if_any,
     uint8_t is_right_nibble,
-    uint8_t * good);
+    char ** const sticky_error);
 
 /*
 META TYPES (querying)
@@ -548,19 +541,20 @@ void T1_meta_get_offset_and_type(
     const char * struct_name,
     const char * field_name,
     int32_t * out_offset,
-    T1MetaType * out_data_type);
+    T1MetaType * out_data_type,
+    char ** const sticky_error);
 void T1_meta_write_to_known_field_uint(
     const char * target_parent_type,
     const char * target_field_name,
     uint64_t value_to_write_uint,
     void * target_parent_ptr,
-    uint8_t * good);
+    char ** const sticky_error);
 void T1_meta_write_to_known_field_str(
     const char * target_parent_type,
     const char * target_field_name,
     const char * value_to_write_str,
     void * target_parent_ptr,
-    uint8_t * good);
+    char ** const sticky_error);
 
 /*
 OPERATING SYSTEM
@@ -597,9 +591,9 @@ void T1_os_copy_file(
 uint64_t T1_os_get_filesize(const char * filepath);
 uint64_t T1_os_get_resource_size(const char * res_name);
 void T1_os_read_file(const char * filepath,
-    char * recip, uint32_t * recip_size, uint64_t recip_cap, uint8_t * good);
+    char * recip, uint32_t * recip_size, uint64_t recip_cap, char ** const sticky_error);
 void T1_os_read_resource_file(
-    const char * filen, char * recip, uint64_t recip_cap, uint8_t * good);
+    const char * filen, char * recip, uint64_t recip_cap, char ** const sticky_error);
 void T1_os_get_dir_separator(char * recip);
 uint32_t T1_os_get_dir_separator_size(void);
 void T1_os_writable_filename_to_pathfile(

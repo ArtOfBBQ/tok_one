@@ -192,33 +192,19 @@ void T1_appinit_before_gpu_init(
     void (* callback_onappclose_fptr)(void),
     void (* callback_on_terminal_cmd)(
         char * command, char * response, u32),
-    u8 * success,
-    char * error_message,
-    u32 error_message_cap)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     T1_gameloop_active = false;
     T1_log_app_running = true;
-    
-    *success = false;
-    error_message[0] = '\0';
     
     void * unmanaged_memory_store =
         T1_os_malloc_unaligned_block(
             T1_UNMANAGED_MEM_CAP + 7232);
     
     if (!unmanaged_memory_store) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Failed to preallocate ");
-        T1_std_strcat_u32_cap(
-            error_message,
-            error_message_cap,
-            (T1_UNMANAGED_MEM_CAP + 7232)/1000000);
-        T1_std_strcat_cap(
-            error_message,
-            error_message_cap,
-            "MB");
+        *sticky_error = "Failed to preallocate memory on startup";
         return;
     }
     
@@ -234,13 +220,9 @@ void T1_appinit_before_gpu_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
     
-    if (!T1_objc_init(
+    T1_objc_init(
         T1_mem_malloc_unmanaged,
-        error_message,
-        error_message_cap))
-    {
-        return;
-    }
+        sticky_error);
     
     if (!T1_objc_open_framework(
         "/System/Library/Frameworks/MetalKit.framework/MetalKit"))
@@ -254,14 +236,7 @@ void T1_appinit_before_gpu_init(
         return;
     }
     
-    T1_settings_init(T1_mem_malloc_unmanaged, success);
-    if (!*success) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Engine startup failed at T1_settings_init()");
-        return;
-    } else { *success = 0; }
+    T1_settings_init(T1_mem_malloc_unmanaged, sticky_error);
     
     T1_meta_init(
         T1_std_memcpy,
@@ -281,22 +256,12 @@ void T1_appinit_before_gpu_init(
         /* const u16 meta_enum_vals_cap: */
             200,
         /* b8 * good: */
-            success);
-    if (!*success) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Engine startup failed at T1_meta_init()");
-        return;
-    } else { *success = 0; }
+            sticky_error);
     
     ias = T1_mem_malloc_unmanaged(
         sizeof(T1InitApplicationState));
     if (!ias) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Impossible ias alloc failure");
+        *sticky_error = "Malloc fail";
         return;
     }
     T1_std_memset(ias, 0, sizeof(T1InitApplicationState));
@@ -327,14 +292,7 @@ void T1_appinit_before_gpu_init(
         T1_std_memset,
         T1_std_strlen,
         T1_mem_malloc_managed,
-        success);
-    if (!*success) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "T1 failed to initialize the tokenizer");
-        return;
-    } else { *success = 0; }
+        sticky_error);
     
     T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
     T1_mtlparser_init(
@@ -401,17 +359,13 @@ void T1_appinit_before_gpu_init(
         512);
     
     if (full_writable_pathfile[0] == '\0') {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Failed to find enginestate.dat");
+        *sticky_error = "Failed to find enginestate.dat";
         return;
     }
     
     c8 * engine_save_contents = NULL;
     u32  engine_save_size = 0;
     u64  engine_save_cap_noterm = 0;
-    b8   engine_save_good = 0;
     if (T1_os_file_exists(full_writable_pathfile)) {
         engine_save_cap_noterm = T1_os_get_filesize(
             full_writable_pathfile);
@@ -423,10 +377,9 @@ void T1_appinit_before_gpu_init(
             engine_save_contents,
             &engine_save_size,
             engine_save_cap_noterm,
-            &engine_save_good);
-        if (engine_save_good) {
-            *engine_save_file = *(T1EngineSaveFile *)engine_save_contents;
-        }
+            sticky_error);
+        if (*sticky_error != 0) { return; }
+        *engine_save_file = *(T1EngineSaveFile *)engine_save_contents;
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     // Pass
@@ -436,7 +389,6 @@ void T1_appinit_before_gpu_init(
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     if (
-        engine_save_good &&
         engine_save_file->window_height > 20 &&
         engine_save_file->window_height < T1_INITIAL_WINDOW_HEIGHT * 3 &&
         engine_save_file->window_width > 20 &&
@@ -727,21 +679,19 @@ void T1_appinit_before_gpu_init(
     b8 initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
+        *sticky_error =
             "Error - couldn't write the log file to "
-            "disk at startup");
+            "disk at startup";
         return;
     }
-    
-    *success = true;
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 static void * T1_appinit_asset_loading_thread(
     void * asset_thread_id_u32_me)
 {
+    char * sticky_error = 0;
+    
     u32 asset_thread_id = (u32)(uintptr_t)asset_thread_id_u32_me;
     if (asset_thread_id > 0) {
         decode_png_init(
@@ -755,7 +705,10 @@ static void * T1_appinit_asset_loading_thread(
     
     T1_tex_files_decode_all_prereg(
         (u32)asset_thread_id,
-        ias->image_decoding_threads);
+        ias->image_decoding_threads,
+        &sticky_error);
+    
+    T1_assert(sticky_error == 0);
     
     if (asset_thread_id > 0) {
         decode_png_deinit((u32)asset_thread_id);
@@ -772,24 +725,16 @@ static void * T1_appinit_asset_loading_thread(
 #endif
 
 void T1_appinit_after_gpu_init_step1(
-    u8 * success,
-    char * error_message,
-    u32 error_message_cap)
+    char ** const sticky_error)
 {
-    *success = 0;
+    if (*sticky_error != 0) { return; }
     
     if (!T1_log_app_running) {
+        *sticky_error = "T1_appinit_after_gpu_init_step1 before T1_log_app_running";
         return;
     }
     
-    error_message[0] = '\0';
-    
-    T1_tex_files_load_font_images(
-        success,
-        error_message,
-        error_message_cap);
-    
-    if (!*success) { return; } else { *success = 0; }
+    T1_tex_files_load_font_images(sticky_error);
     
     u32 rv_width = T1_settings_get_render_width();
     u32 rv_height = T1_settings_get_render_height();
@@ -825,11 +770,10 @@ void T1_appinit_after_gpu_init_step1(
     const char * perlin_noise_fn = "perlin_noise.png";
     T1_tex_files_prereg_and_decode_png_res(
         perlin_noise_fn,
-        &perlin_good);
+        sticky_error);
     
     if (!perlin_good) {
-        T1_log_dump_and_crash(perlin_noise_fn);
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load perlin_noise data\n");
+        *sticky_error = "Failed to load perlin_noise data";
         T1_global->postproc_consts.perlin_texturearray_i = 1;
         T1_global->postproc_consts.perlin_texture_i = 0;
         return;
@@ -852,7 +796,6 @@ void T1_appinit_after_gpu_init_step1(
     }
     
     T1_gameloop_active = true;
-    *success = true;
 }
 
 void T1_appinit_after_gpu_init_step2(

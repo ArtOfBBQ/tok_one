@@ -12,20 +12,34 @@
 static void malloc_img_from_embedded_png(
     T1Img * recip,
     const unsigned char * embedded_data,
-    u64 embedded_data_size)
+    u64 embedded_data_size,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     if (embedded_data_size < 1) {
+        recip->good = 0;
+        *sticky_error = "Embedded data size was 0";
         return;
     }
     
     char * contents = T1_mem_malloc_managed(embedded_data_size);
+    if (!contents) {
+        recip->good = 0;
+        *sticky_error = "Malloc fail";
+        return;
+    }
     T1_std_memcpy(contents, embedded_data, embedded_data_size);
     
     u8 is_png =
         contents[1] == 'P' &&
         contents[2] == 'N' &&
         contents[3] == 'G';
-    T1_assert(is_png);
+    if (!is_png) {
+        recip->good = 0;
+        *sticky_error = "Error - malloc_img_from_embedded_png(), but embedded data is not a PNG";
+        return;
+    }
     
     decode_png_get_width_height(
         /* const u8 * compressed_input: */
@@ -34,11 +48,14 @@ static void malloc_img_from_embedded_png(
             embedded_data_size - 1,
         /* u32 * out_width: */ &recip->width,
         /* u32 * out_height: */ &recip->height,
-        /* u32 * out_good: */ &recip->good);
-        
-    if (!recip->good) {
-        T1_log_assert(0);
+        /* u32 * out_good: */ sticky_error);
+    
+    if (*sticky_error != 0 || !recip->good) {
         T1_mem_free_managed((u8 *)contents);
+        if (*sticky_error == 0) {
+            *sticky_error = "Failed to get BMP width/height";
+        }
+        recip->good = 0;
         return;
     }
     
@@ -69,21 +86,27 @@ static void malloc_img_from_embedded_png(
             recip->rgba_values_size,
         /* const u32 thread_id: */
             0,
-        /* u8 * out_good: */
-            &recip->good);
+        /* sticky_error: */
+            sticky_error);
+    
+    recip->good = 1;
     T1_mem_free_managed((u8 *)contents);
 }
 
 static void malloc_img_from_resource_name(
     T1Img * recipient,
     const char * filename,
-    const u32 thread_id)
+    const u32 thread_id,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     if (T1_std_are_equal_strings(filename, "font.png")) {
         malloc_img_from_embedded_png(
             recipient,
             T1_embedded_data_font_png,
-            T1_embedded_data_font_png_size);
+            T1_embedded_data_font_png_size,
+            sticky_error);
         return;
     }
     
@@ -91,21 +114,29 @@ static void malloc_img_from_resource_name(
         malloc_img_from_embedded_png(
             recipient,
             T1_embedded_data_perlin_noise_png,
-            T1_embedded_data_perlin_noise_png_size);
+            T1_embedded_data_perlin_noise_png_size,
+            sticky_error);
         return;
     }
     
     u64 size_without_terminator =
         T1_os_get_resource_size(filename);
     char * contents = NULL;
-    b8 good = 0;
     
     if (size_without_terminator < 1) {
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
+        T1_std_strcpy_cap(*sticky_error, 512, "Img doesn't exist (filesize 0): ");
+        T1_std_strcat_cap(*sticky_error, 512, filename);
         return;
     }
     
     contents = (char *)T1_mem_malloc_managed(sizeof(char) *
         size_without_terminator + 1);
+    if (!contents) {
+        *sticky_error = "Failed to malloc_managed for img file";
+        return;
+    }
     
     T1_std_memset(
         contents,
@@ -116,9 +147,9 @@ static void malloc_img_from_resource_name(
         filename,
         contents,
         size_without_terminator,
-        &good);
+        sticky_error);
     
-    if (!good) {
+    if (*sticky_error != 0) {
         T1_mem_free_managed((u8 *)contents);
         return;
     }
@@ -137,11 +168,12 @@ static void malloc_img_from_resource_name(
                 &recipient->width,
             /* u32 * out_height: */
                 &recipient->height,
-            /* u32 * out_good: */
-                &recipient->good);
+            /* sticky_error: */
+                sticky_error);
         
-        if (!recipient->good) {
-            T1_log_assert(0);
+        if (*sticky_error != 0 || !recipient->good) {
+            T1_assert(*sticky_error != 0);
+            T1_assert(!recipient->good);
             T1_mem_free_managed((u8 *)contents);
             return;
         }
@@ -174,8 +206,8 @@ static void malloc_img_from_resource_name(
                 recipient->rgba_values_size,
             /* const u32 thread_id: */
                 thread_id,
-            /* u8 * out_good: */
-                &recipient->good);
+            /* sticky_error: */
+                sticky_error);
     } else if (
         contents[0] == 'B' &&
         contents[1] == 'M')
@@ -193,7 +225,7 @@ static void malloc_img_from_resource_name(
                 &recipient->good);
         
         if (!recipient->good) {
-            T1_log_assert(0);
+            *sticky_error = "get_BMP_width_height error";
             T1_mem_free_managed((u8 *)contents);
             return;
         }
@@ -254,16 +286,13 @@ static void malloc_img_from_resource_name(
         
         recipient->good = true;
     } else {
-        T1_log_append("unrecognized file format in: ");
-        T1_log_append(filename);
-        T1_log_append_c8('\n');
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
+        T1_std_strcpy_cap(*sticky_error, 512, "unrecognized file format in: ");
+        T1_std_strcat_cap(*sticky_error, 512, filename);
         recipient->good = false;
     }
     T1_mem_free_managed(contents);
-    
-    if (!recipient->good) {
-        return;
-    }
     
     return;
 }
@@ -272,15 +301,17 @@ void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
     u32 rows,
     u32 columns,
-    b8 free_rgba)
+    b8 free_rgba,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     T1Img stack_img;
     T1Img * img = &stack_img;
     
-    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
+    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0, sticky_error);
     
-    T1_log_assert(img->good);
-    if (!img->good) { return; }
+    if (*sticky_error != 0 || !img->good) { return; }
     
     char filename_prefix[256];
     T1_std_strcpy_cap(filename_prefix, 256, filename);
@@ -299,17 +330,12 @@ void T1_tex_files_reg_new_by_splitting_file(
 }
 
 void T1_tex_files_load_font_images(
-    u8 * success,
-    char * error_message,
-    u32 error_message_cap)
+    char ** const sticky_error)
 {
-    *success = 0;
+    if (*sticky_error != 0) { return; }
     
     if (T1_tex_arrays_size != 0) {
-        T1_std_strcpy_cap(
-            error_message,
-            256,
-            "Font error - other textures already existed");
+        *sticky_error = "Font error - other textures already existed";
         return;
     }
     
@@ -319,20 +345,21 @@ void T1_tex_files_load_font_images(
         /* rows     : */ 10,
         /* columns  : */ 10,
         false,
-        success,
-        error_message,
-        error_message_cap);
+        sticky_error);
+    if (*sticky_error != 0) { return; }
     T1_tex_arrays[0].request_init = false;
 }
 
 void T1_tex_files_prereg_and_decode_png_res(
     const char * resource_name,
-    u8 * success)
+    char ** const sticky_error)
 {
-    *success = 0;
+    if (*sticky_error != 0) { return; }
     
-    T1Img img;    
-    malloc_img_from_resource_name(&img, resource_name, 0);
+    T1Img img;
+    malloc_img_from_resource_name(&img, resource_name, 0, sticky_error);
+    
+    if (*sticky_error != 0) { return; }
     
     T1_tex_array_reg_img(
         resource_name,
@@ -342,33 +369,23 @@ void T1_tex_files_prereg_and_decode_png_res(
         false);
     
     T1_tex_array_push_all();
-    
-    *success = 1;
 }
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
     u32 rows, u32 columns,
     b8 free_rgba,
-    u8 * success,
-    char * error_message,
-    u32 error_message_cap)
+    char ** const sticky_error)
 {
-    *success = 0;
+    if (*sticky_error != 0) { return; }
     
     T1Img stack_img;
     T1Img * img = &stack_img;
-    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
+    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0, sticky_error);
     
-    if (!img->good) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Couldn't read file: ");
-        T1_std_strcat_cap(
-            error_message,
-            error_message_cap,
-            filename);
+    if (*sticky_error != 0 || !img->good) {
+        T1_assert(*sticky_error != 0);
+        T1_assert(!img->good);
         return;
     }
     
@@ -386,16 +403,14 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
         rows,
         columns,
         free_rgba);
-    
-    *success = 1;
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const char * filename,
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     char filepath[256];
     T1_std_memset(filepath, 0, 256);
@@ -404,7 +419,15 @@ void T1_tex_files_runtime_reg_png_from_writables(
     T1_std_strcat_cap(filepath, 256, filename);
     
     u64 contents_cap = T1_os_get_filesize(filepath);
-    if (contents_cap <= 28) {
+    if (*sticky_error != 0) {
+        return;
+    } else if (contents_cap <= 28) {
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
+        T1_std_strcpy_cap(*sticky_error, 512, "Impossibly small filesize for png resource: ");
+        T1_std_strcat_cap(*sticky_error, 512, filename);
+        T1_std_strcat_cap(*sticky_error, 512, " ");
+        T1_std_strcat_u32_cap(*sticky_error, 512, (u32)contents_cap);
         return;
     }
     char * contents = T1_mem_malloc_managed(contents_cap+1);
@@ -419,8 +442,8 @@ void T1_tex_files_runtime_reg_png_from_writables(
             &contents_size,
         /* const u64 recip_cap: */
             contents_cap,
-        /* u8 * good: */
-            good);
+        /* sticky_error: */
+            sticky_error);
     
     u32 width = 0;
     u32 height = 0;
@@ -433,9 +456,9 @@ void T1_tex_files_runtime_reg_png_from_writables(
             &width,
         /* u32 *out_height: */
             &height,
-        /* u32 *out_good: */
-            good);
-    if (!*good) {
+        /* sticky_error: */
+            sticky_error);
+    if (*sticky_error != 0) {
         T1_mem_free_managed(contents);
         return;
     }
@@ -486,8 +509,8 @@ void T1_tex_files_runtime_reg_png_from_writables(
                 rgba_values_size,
         /* const u32 thread_id: */
             0,
-        /* u8 * out_good: */
-            &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image.good);
+        /* sticky_error: */
+            sticky_error);
     
     T1_os_gpu_push_tex_slice(
         /* const s32 texture_array_i: */
@@ -498,7 +521,6 @@ void T1_tex_files_runtime_reg_png_from_writables(
             true);
     
     T1_mem_free_managed(contents);
-    *good = 1;
 }
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
@@ -507,9 +529,9 @@ void T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const char * filename,
-    b8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     u64 contents_cap = T1_os_get_resource_size(filename);
     if (contents_cap > 28) {
@@ -519,11 +541,11 @@ void T1_tex_files_prereg_png_res(
     }
     char * contents = T1_mem_malloc_managed(contents_cap+1);
     
-    T1_os_read_resource_file(filename, contents, contents_cap, good);
-    if (!*good) {
+    T1_os_read_resource_file(filename, contents, contents_cap, sticky_error);
+    if (*sticky_error != 0) {
         T1_mem_free_managed(contents);
         return;
-    } else { *good = 0; }
+    }
     
     u32 width = 0;
     u32 height = 0;
@@ -536,12 +558,12 @@ void T1_tex_files_prereg_png_res(
             &width,
         /* u32 *out_height: */
             &height,
-        /* u32 *out_good: */
-            good);
-    if (!*good) {
+        /* sticky_error: */
+            sticky_error);
+    if (*sticky_error != 0) {
         T1_mem_free_managed(contents);
         return;
-    } else { *good = 0; }
+    }
     
     T1_tex_array_reg_img(
         /* const char * filename: */
@@ -556,7 +578,6 @@ void T1_tex_files_prereg_png_res(
             false);
     
     T1_mem_free_managed(contents);
-    *good = 1;
 }
 
 typedef struct {
@@ -574,9 +595,9 @@ typedef struct {
 
 void T1_tex_files_prereg_dds_res(
     const char * filename,
-    b8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     u64 contents_cap = T1_os_get_resource_size(filename);
     if (contents_cap > 28) {
@@ -586,9 +607,9 @@ void T1_tex_files_prereg_dds_res(
     }
     char * contents = T1_mem_malloc_managed(contents_cap+1);
     
-    T1_os_read_resource_file(filename, contents, contents_cap, good);
+    T1_os_read_resource_file(filename, contents, contents_cap, sticky_error);
     
-    if (!*good) { return; } else { *good = 0; }
+    if (*sticky_error != 0) { return; }
     
     DDS_Header * header = (DDS_Header *)contents;
     T1_log_assert(header->magic_number_dds[0] == 'D');
@@ -598,13 +619,17 @@ void T1_tex_files_prereg_dds_res(
     T1_log_assert(header->size == 124);
     
     if (
+        1 ||
         header->magic_number_dds[0] != 'D' ||
         header->magic_number_dds[1] != 'D' ||
         header->magic_number_dds[2] != 'S' ||
         header->magic_number_dds[3] != ' ' ||
         header->size != 124)
     {
-        *good = 0;
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
+        T1_std_strcpy_cap(*sticky_error, 512, "Error: not a .dds file: ");
+        T1_std_strcat_cap(*sticky_error, 512, filename); 
         return;
     }
     
@@ -621,13 +646,15 @@ void T1_tex_files_prereg_dds_res(
             true);
     
     T1_mem_free_managed(contents);
-    *good = 1;
 }
 
 void T1_tex_files_decode_all_prereg(
     const u32 thread_id,
-    const u32 using_num_threads)
+    const u32 using_num_threads,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     s32 texture_arrays_to_init = (s32)T1_tex_arrays_size - 1;
     s32 texture_arrays_per_thread =
         texture_arrays_to_init / (s32)using_num_threads;
@@ -695,7 +722,8 @@ void T1_tex_files_decode_all_prereg(
                 /* const char * filename: */
                     T1_tex_arrays[ta_i].images[t_i].name,
                 /* const u32 thread_id: */
-                    thread_id);
+                    thread_id,
+                    sticky_error);
             
             if (!T1_tex_arrays[ta_i].bc1_compressed) {
                 T1_global->startup_bytes_loaded += (

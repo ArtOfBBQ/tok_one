@@ -101,9 +101,9 @@ void T1_token_init(
     void * (* arg_memset_func)(void *, int, u64),
     u64 (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(size_t),
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
     assert(tts == NULL); // aready initted
@@ -126,13 +126,12 @@ void T1_token_init(
         return;
     }
     
-    T1_token_reset(good);
-    if (!*good) {
+    T1_token_reset(sticky_error);
+    if (*sticky_error != 0) {
         tts->good = 0;
         return;
     }
     
-    *good = 1;
     tts->good = 1;
 }
 
@@ -143,10 +142,11 @@ void T1_token_deinit(
     tts = NULL;
 }
 
-void T1_token_reset(u8 * good) {
-    *good = 0;
+void T1_token_reset(char ** const sticky_error) {
+    if (*sticky_error != 0) { return; }
+    
     if (tts == NULL) {
-        // init() failed or wasn't called yet
+        *sticky_error = "Can't use T1_token_reset() before T1_token_init()";
         return;
     }
     
@@ -180,8 +180,6 @@ void T1_token_reset(u8 * good) {
     #else
     #error
     #endif
-    
-    *good = 1;
 }
 
 void T1_token_set_store_mode(const T1TokenStoreMode mode) {
@@ -322,9 +320,9 @@ void toktoken_register_string_literal_enum(
 
 void T1_token_set_string_literal(
     const u32 enum_value,
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     if (
         tts == NULL ||
@@ -334,20 +332,19 @@ void T1_token_set_string_literal(
     }
     
     tts->string_literal_enum_value = enum_value;
-    *good = 1;
 }
 
 static char * copy_string_to_ascii_store(
     const char * to_copy,
     const u32 data_len,
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return NULL; }
     
     char * return_value = tts->ascii_store + tts->ascii_store_next_i;
     
     if (tts->ascii_store_next_i + data_len >= ASCII_STORE_CAP) {
-        *good = 0;
+        *sticky_error = "T1_token ran out of ASCII_STORE memory";
         return NULL;
     } else {
         tts->ascii_store_next_i += (data_len + 1);
@@ -360,20 +357,20 @@ static char * copy_string_to_ascii_store(
     }
     return_value[i] = '\0';
     
-    *good = 1;
     return return_value;
 }
 
 void T1_token_register(
     const u32 enum_value,
-    u8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     if (
         tts == NULL ||
         !tts->good)
     {
+        *sticky_error = "T1_token_register() before T1_token was initialized";
         return;
     }
     
@@ -381,6 +378,7 @@ void T1_token_register(
     if (
         tts->regs_size + 1 >= REGISTERED_TOKENS_CAP)
     {
+        *sticky_error = "T1_token exceeded REGISTERED_TOKENS_CAP";
         tts->good = 0;
         return;
     }
@@ -393,7 +391,7 @@ void T1_token_register(
                 tts->next_reg.start_pattern.ascii,
                 (u32)tts->strlen(
                     tts->next_reg.start_pattern.ascii),
-                good);
+                sticky_error);
     }
     
     for (u32 i = 0; i < PATTERNS_CAP; i++) {
@@ -403,11 +401,9 @@ void T1_token_register(
                     tts->next_reg.stop_patterns[i].ascii,
                     (u32)tts->strlen(
                         tts->next_reg.stop_patterns[i].ascii),
-                    good);
-            if (*good) { *good = 0; } else { return; }
+                    sticky_error);
         }
     }
-    
     
     new->enum_value = enum_value;
     new->middle_cap = tts->next_reg.middle_cap;
@@ -416,28 +412,9 @@ void T1_token_register(
     
     if ((new->bitflags & T1_TOKEN_FLAG_IGNORE_CASE) > 0)
     {
-        // TODO: implement ignore case tokens
-        *good = 0;
+        *sticky_error = "T1_token IGNORE_CASE is unimplemented";
         return;
     }
-    
-    // keep the ascii value in our persistent local store
-    //    u32 i = 0;
-    //    while (
-    //        ascii_value[i] != '\0' &&
-    //        tts->ascii_store_next_i < ASCII_STORE_CAP)
-    //    {
-    //        tts->ascii_store[tts->ascii_store_next_i++] = ascii_value[i];
-    //        i += 1;
-    //    }
-    //    if (tts->ascii_store_next_i + 1 >= ASCII_STORE_CAP) {
-    //        tts->good = 0;
-    //        return;
-    //    }
-    //    tts->ascii_store[tts->ascii_store_next_i++] = '\0';
-    
-    
-    *good = 1;
 }
 
 static u32 T1_token_strmatch(
@@ -819,19 +796,13 @@ static void T1_token_set_number_flags(
 
 void T1_token_run(
     const char * input,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     tts->tokens_size = 0;
     tts->numbers_size = 0;
     
-    #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(good != NULL);
-    #elif T1_TOKEN_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    *good = 0;
     if (
         input == NULL ||
         tts == NULL ||
@@ -839,6 +810,7 @@ void T1_token_run(
         tts->string_literal_enum_value == UINT32_MAX ||
         tts->string_literal_enum_value == UINT32_MAX)
     {
+        *sticky_error = "T1_token_run() called when T1_token was uninitialized";
         return;
     }
     
@@ -875,7 +847,7 @@ void T1_token_run(
             {
                 previous_lit_token = &tts->tokens[tts->tokens_size];
                 if (tts->tokens_size + 1 >= TOKENS_CAP) {
-                    *good = 0;
+                    *sticky_error = "T1_token_run() exceeded TOKENS_CAP";
                     tts->good = 0;
                     return;
                 }
@@ -917,23 +889,21 @@ void T1_token_run(
             
             T1Token * new = &tts->tokens[tts->tokens_size];
             if (tts->tokens_size + 1 >= TOKENS_CAP) {
-                *good = 0;
+                *sticky_error = "T1_token_run() exceeded TOKENS_CAP";
                 tts->good = 0;
                 return;
             }
             
             // Commit the previous string literal if it was going
             if (previous_lit_token) {
-                u8 copy_good = 0;
                 previous_lit_token->string_value =
                     copy_string_to_ascii_store(
                         previous_lit_token->string_value,
                         (u32)tts->strlen(
                             previous_lit_token->string_value),
-                        &copy_good);
+                        sticky_error);
                 
-                if (!copy_good) {
-                    *good = 0;
+                if (*sticky_error != 0) {
                     return;
                 }
                 previous_lit_token = NULL;
@@ -1031,8 +1001,6 @@ void T1_token_run(
                 // tts->string_literal_bitflags);
         }
     }
-    
-    *good = 1;
 }
 
 u32 T1_token_get_enum_value(u16 token_i) {

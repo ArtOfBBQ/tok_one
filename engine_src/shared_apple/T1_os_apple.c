@@ -219,8 +219,10 @@ void T1_os_read_file(
     char * recip,
     u32 * recip_size,
     const u64 recip_cap,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     //@autoreleasepool {
     void * nsfilepath = T1_objc_nsstring_construct(filepath);
     
@@ -239,9 +241,8 @@ void T1_os_read_file(
         recip_cap >= UINT32_MAX ||
         T1_objc_msg(file_data, T1_os_apple_s->sel_length) >= UINT32_MAX)
     {
-        T1_log_append("Error - failed [NSData initWithContentsOfFile:]\n");
+        *sticky_error = "Error - failed [NSData initWithContentsOfFile:]";
         *recip_size = 0;
-        *good = false;
         return;
     }
     
@@ -256,8 +257,6 @@ void T1_os_read_file(
         *recip_size);
     
     recip[*recip_size] = '\0';
-    
-    *good = true;
 }
 
 u8 T1_os_file_exists(

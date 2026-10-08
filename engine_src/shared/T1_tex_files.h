@@ -13,29 +13,26 @@ void T1_tex_files_reg_new_by_splitting_file(
     const c8 * filename,
     u32 rows,
     u32 columns,
-    b8 free_rgba);
+    b8 free_rgba,
+    char ** const sticky_error);
 
 void T1_tex_files_load_font_images(
-    u8 * success,
-    c8 * error_message,
-    u32 error_message_cap);
+    char ** const sticky_error);
 
 void T1_tex_files_prereg_and_decode_png_res(
     const char * resource_name,
-    u8 * success);
+    char ** const sticky_error);
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const c8 * filename,
     u32 rows, u32 columns,
     b8 free_rgba,
-    u8 * success,
-    char * error_message,
-    u32 error_message_cap);
+    char ** const sticky_error);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const c8 * filename,
-    u8 * good);
+    char ** const sticky_error);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error
@@ -43,17 +40,18 @@ void T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const c8 * filename,
-    b8 * good);
+    char ** const sticky_error);
 
 void T1_tex_files_prereg_dds_res(
     const c8 * filename,
-    b8 * good);
+    char ** const sticky_error);
 
 /*
 Internal engine use
 */
 void T1_tex_files_decode_all_prereg(
     u32 thread_id,
-    u32 using_num_threads);
+    u32 using_num_threads,
+    char ** const sticky_error);
 
 #endif // T1_TEX_FILES_H

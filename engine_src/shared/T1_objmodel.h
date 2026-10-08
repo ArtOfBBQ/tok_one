@@ -14,8 +14,7 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     const u8 flip_uv_u,
     const u8 flip_uv_v,
-    u8 * success,
-    char * error_message);
+    char ** const sticky_error);
 
 s32 T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
@@ -38,7 +37,8 @@ void T1_objmodel_init(void);
 s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_obj_filename,
     const char * obj_text,
-    const char * mtl_text);
+    const char * mtl_text,
+    char ** const sticky_error);
 
 void T1_objmodel_center_mesh_offsets(const s32 mesh_id);
 

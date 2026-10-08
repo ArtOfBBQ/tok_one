@@ -25,34 +25,27 @@ void T1_meta_init(
     const u16 meta_fields_cap,
     const u16 meta_enums_cap,
     const u16 meta_enum_vals_cap,
-    b8 * good);
+    char ** const sticky_error);
 
-#define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
+#define T1_meta_enum(enum_type_name, T1_data_type, sticky_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), sticky_error)
 void T1_meta_reg_enum(
     const char * enum_type_name,
     const T1MetaType T1_type,
     const u32 type_size_check,
-    u8 * good);
-#define T1_meta_enum_value(enum_type_name, enum_value, good) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, good)
+    char ** const sticky_error);
+#define T1_meta_enum_value(enum_type_name, enum_value, sticky_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, sticky_error)
 void T1_meta_reg_enum_value(
     const char * enum_type_name,
     const char * value_name,
     const s64 value,
-    u8 * good);
+    char ** const sticky_error);
 
-#define T1_meta_struct(struct_name, good) T1_meta_reg_struct(#struct_name, sizeof(struct_name), good)
+#define T1_meta_struct(struct_name, sticky_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), sticky_error)
 void T1_meta_reg_struct(
     const char * struct_name,
     const u32 size_bytes,
-    u8 * good);
+    char ** const sticky_error);
 
-//#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, false, good)
-//#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, true, good)
-//#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, true, good)
-//#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, false, good)
-//#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, false, good)
-//#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, false, good)
-//#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, false, good)
 void T1_meta_reg_field(
     const char * field_name,
     const u32 field_offset,
@@ -62,7 +55,7 @@ void T1_meta_reg_field(
     const u16 field_array_size_2,
     const u16 field_array_size_3,
     const u8 is_enum,
-    u8 * good);
+    char ** const sticky_error);
 
 void T1_meta_reg_f32_limits_for_last_field(
     const f64 min,
@@ -84,7 +77,7 @@ T1_meta_reg_u4_subname_for_last_field(
     const char * subname,
     const char * enum_name_if_any,
     const u8 is_right_nibble,
-    u8 * good);
+    char ** const sticky_error);
 
 #define T1_META_ARRAY_SIZES_CAP 3
 #if 1
@@ -124,14 +117,14 @@ void T1_meta_write_to_known_field_str(
     const char * target_field_name,
     const char * value_to_write_str,
     void * target_parent_ptr,
-    u8 * good);
+    char ** const sticky_error);
 
 void T1_meta_write_to_known_field_uint(
     const char * target_parent_type,
     const char * target_field_name,
     u64 value_to_write_uint,
     void * target_parent_ptr,
-    u8 * good);
+    char ** const sticky_error);
 
 #define T1_meta_get_num_of_fields_in_struct(struct_type) internal_T1_meta_get_num_of_fields_in_struct(#struct_type)
 u32 internal_T1_meta_get_num_of_fields_in_struct(
@@ -142,7 +135,8 @@ T1_meta_get_offset_and_type(
     const char * struct_name,
     const char * field_name,
     s32 * out_offset,
-    T1MetaType * out_data_type);
+    T1MetaType * out_data_type,
+    char ** const sticky_error);
 
 #if 0
 T1MetaField T1_meta_get_field_at_index(
@@ -163,7 +157,7 @@ void T1_meta_deserialize_instance_from_buffer(
     void * recipient,
     char * buffer,
     const u32 buffer_size,
-    u8 * good);
+    char ** const sticky_error);
 
 char * T1_meta_enum_uint_to_string(
     const char * enum_type_name,

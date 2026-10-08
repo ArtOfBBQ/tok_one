@@ -169,20 +169,20 @@ void T1_os_read_resource_file(
     const c8 * filename,
     c8 * recip,
     u64 recip_cap,
-    u8 * good);
+    char ** const sticky_error);
 
 void T1_os_read_file(
     const c8 * filepath,
     c8 * recip,
     u32 * recip_size,
     u64 recip_cap,
-    u8 * good);
+    char ** const sticky_error);
 
 void T1_os_read_file_from_writables(
     const c8 * filepath_inside_writables,
     c8 * recipient,
     u32 recipient_size,
-    u8 * good);
+    char ** const sticky_error);
 
 void T1_os_gpu_get_device_name(
     c8 * recipient,
@@ -289,13 +289,11 @@ void T1_os_mutex_unlock(u32 mutex_id);
 
 void T1_os_layer_start_window_resize(u64 timestamp);
 
-void T1_os_create_main_window(b8 * good);
+void T1_os_create_main_window(char ** const sticky_error);
 void T1_os_destroy_main_window_if_possible(void);
 
 void T1_os_link_gpu_to_main_window(
-    c8 * errmsg,
-    u32 errmsg_cap,
-    b8 * good);
+    char ** const sticky_error);
 
 void T1_os_shutdown(void);
 

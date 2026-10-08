@@ -38,14 +38,12 @@ void T1_mtlparser_init(
     void * (* malloc_func)(size_t),
     u64 (* strlcat)(char *, const char *, u64));
 
-const char * T1_mtlparser_get_last_error_msg(void);
-
 void T1_mtlparser_parse(
     T1ParsedMaterial * recipient,
     u32 * recipient_size,
     const u32 recipient_cap,
     const char * input,
-    u8 * good);
+    char ** const sticky_error);
 
 #endif // MTLPARSER_H
 

@@ -49,17 +49,16 @@ typedef struct {
 
 static T1ObjCState * T1_objc_s = NULL;
 
-b8 T1_objc_init(
+void T1_objc_init(
     void * (* malloc_perma)(size_t),
-    char * error_message,
-    u32 error_message_cap)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     T1_objc_s = malloc_perma(sizeof(T1ObjCState));
     if (!T1_objc_s) {
-        T1_std_strcpy_cap(
-            error_message,
-            error_message_cap,
-            "Failed T1_objc_init() - no memory");
+        *sticky_error = "Failed T1_objc_init() - no memory";
+        return;
     }
     T1_std_memset(T1_objc_s, 0, sizeof(T1ObjCState));
     
@@ -67,25 +66,24 @@ b8 T1_objc_init(
         "/usr/lib/libobjc.A.dylib",
         RTLD_LAZY);
     if (!libobjc) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load libobjc.A.dylib");
-        return 0;
+        *sticky_error = "Failed to load libobjc.A.dylib";
+        return;
     }
     
     void * libfoundation = dlopen(
         "/System/Library/Frameworks/Foundation.framework/Foundation",
         RTLD_LAZY);
     if (!libfoundation) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load Foundation.framework");
-        return 0;
+        *sticky_error = "Failed to load Foundation.framework";
+        return;
     }
     
     T1_objc_s->msg = dlsym(
         libobjc,
         "objc_msgSend");
     if (!T1_objc_s->msg) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "objc_msgSend");
-        return 0;
+        *sticky_error = "Failed to load ";
+        return;
     }
     
     T1_objc_s->msg_get_f32      = (f32       (*)(void *, void *))T1_objc_s->msg;
@@ -115,45 +113,40 @@ b8 T1_objc_init(
         libobjc,
         "sel_registerName");
     if (!T1_objc_s->reg_name) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "sel_registerName");
-        return 0;
+        *sticky_error = "Failed to load sel_registerName";
+        return;
     }
     
     T1_objc_s->get_class = dlsym(
         libobjc,
         "objc_getClass");
     if (!T1_objc_s->get_class) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "objc_getClass");
-        return 0;
+        *sticky_error = "Failed to load objc_getClass";
+        return;
     }
     
     T1_objc_s->register_class_pair = dlsym(
         libobjc,
         "objc_registerClassPair");
     if (!T1_objc_s->register_class_pair) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "objc_registerClassPair");
-        return 0;
+        *sticky_error = "Failed to load objc_registerClassPair";
+        return;
     }
     
     T1_objc_s->class_add_method = dlsym(
         libobjc,
         "class_addMethod");
     if (!T1_objc_s->class_add_method) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "class_addMethod");
-        return 0;
+        *sticky_error = "Failed to load class_addMethod";
+        return;
     }
     
     T1_objc_s->allocate_class_pair = dlsym(
         libobjc,
         "objc_allocateClassPair");
     if (!T1_objc_s->allocate_class_pair) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "objc_allocateClassPair");
-        return 0;
+        *sticky_error = "Failed to load objc_allocateClassPair";
+        return;
     }
     
     T1_objc_s->good = 1;
@@ -161,18 +154,15 @@ b8 T1_objc_init(
     T1_objc_s->class_nsstring = T1_objc_s->get_class(
         "NSString");
     if (!T1_objc_s->good) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "NSString");
-        return 0;
+        *sticky_error = "Failed to load NSString";
+        return;
     }
     
     T1_objc_s->sel_string_with_utf8_string = T1_objc_s->reg_name("stringWithUTF8String:");
     T1_objc_s->sel_c_string_using_encoding = T1_objc_s->reg_name("cStringUsingEncoding:");
     if (!T1_objc_s->good) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "NSString");
-        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
-        return 0;
+        *sticky_error = "Failed to load NSString selectors.";
+        return;
     }
     
     T1_objc_s->sel_run = T1_objc_reg_sel("run");
@@ -181,32 +171,11 @@ b8 T1_objc_init(
     T1_objc_s->sel_run_modal = T1_objc_reg_sel(
         "runModal");
     if (!T1_objc_s->good) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "NSAlert");
-        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
-        return 0;
+        *sticky_error = "Failed to load NSAlert selectors.";
+        return;
     }
     
-    #if 0
-    T1_objc_s->class_ns_application = T1_objc_get_class(
-        "NSApplication");
-    if (!T1_objc_s->good) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "NSApplication");
-        return 0;
-    }
-    
-    T1_objc_s->sel_shared_application = T1_objc_reg_sel(
-        "sharedApplication");
-    if (!T1_objc_s->good) {
-        T1_std_strcpy_cap(error_message, error_message_cap, "Failed to load ");
-        T1_std_strcat_cap(error_message, error_message_cap, "NSApplication");
-        T1_std_strcat_cap(error_message, error_message_cap, " selectors.");
-        return 0;
-    }
-    #endif
-    
-    return T1_objc_s->good;
+    return;
 }
 
 b8 T1_objc_open_framework(

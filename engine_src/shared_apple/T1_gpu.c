@@ -324,20 +324,18 @@ static void T1_gpu_render_pl_descriptor_remove_color_attachment_at(
         index);
 }
 
-u8 T1_apple_gpu_init(
+void T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
-    c8 * error_msg_string,
-    uint32_t error_msg_cap)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     if (T1_cpu_to_gpu_data == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "GPU frame buffer was not initialized");
-        return false;
+        *sticky_error = "T1_apple_gpu_init() before T1_cpu_to_gpu_data was allocated";
+        return;
     }
     
     ags = T1_mem_malloc_unmanaged(sizeof(AppleGPUState));
@@ -516,11 +514,6 @@ u8 T1_apple_gpu_init(
     
     ags->frame_i = 0;
     
-    T1_std_strcpy_cap(
-        error_msg_string,
-        error_msg_cap,
-        "");
-    
     ags->device = with_metal_device;
     
     if (ags->lib == NULL) {
@@ -539,21 +532,21 @@ u8 T1_apple_gpu_init(
         if (error) {
             void * nsstr_error_desc = (void *)T1_objc_msg(error, ags->sel_description);
             char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc);
-            if (strlen(error_desc) > (error_msg_cap / 2)) {
-                error_desc[(error_msg_cap / 2)] = '\0';
+            if (strlen(error_desc) > 400) {
+                error_desc[400] = '\0';
             }
-            T1_std_strcat_cap(error_msg_string, error_msg_cap, error_desc);
-            return false;
+            
+            *sticky_error = T1_mem_malloc_unmanaged(512);
+            T1_std_strcat_cap(*sticky_error, 512, error_desc);
+            return;
         }
     }
     
     if (ags->lib == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
+        *sticky_error =
             "Failed to load shaders, and further "
-            "failed to compile them from source");
-        return false;
+            "failed to compile them from source";
+        return;
     }
     
     void * nsstring_vert_shader = T1_objc_nsstring_construct(
@@ -563,11 +556,8 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_vert_shader);
     if (vertex_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: vertex_shader()");
-        return false;
+        *sticky_error = "Missing function: vertex_shader()";
+        return;
     }
     
     void * nsstring_fragment_shader = T1_objc_nsstring_construct(
@@ -577,11 +567,8 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_fragment_shader);
     if (fragment_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: frag_shader()");
-        return false;
+        *sticky_error = "Missing function: frag_shader()";
+        return;
     }
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
@@ -592,11 +579,8 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_alphablending_fragment_shader);
     if (alphablending_fragment_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: alphablending_frag_shader()");
-        return false;
+        *sticky_error = "Missing function: alphablending_frag_shader()";
+        return;
     }
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
@@ -611,11 +595,8 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_vertex_shader);
     if (z_prepass_vertex_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: vertex_shader()");
-        return false;
+        *sticky_error = "Missing function: vertex_shader()";
+        return;
     }
     
     void * nsstring_z_prepass_frag_shader = T1_objc_nsstring_construct(
@@ -629,11 +610,8 @@ u8 T1_apple_gpu_init(
     {
         T1_log_append("Missing function: z_prepass_frag_shader()!");
         
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: z_prepass_fragment_shader()");
-        return false;
+        *sticky_error = "Missing function: z_prepass_fragment_shader()";
+        return;
     }
     
     void * z_prepass_pls_desc = T1_gpu_new_render_pipeline_descriptor(
@@ -659,11 +637,8 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_outlines_vertex_shader);
     if (outlines_vertex_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: outlines_vertex_shader()");
-        return false;
+        *sticky_error = "Missing function: outlines_vertex_shader()";
+        return;
     }
     
     void * nsstring_outlines_fragment_shader =
@@ -675,11 +650,8 @@ u8 T1_apple_gpu_init(
             ags->sel_new_function_with_name,
             (uintptr_t)nsstring_outlines_fragment_shader);
     if (outlines_fragment_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: outlines_frag_shader()");
-        return false;
+        *sticky_error = "Missing function: outlines_frag_shader()";
+        return;
     }
     
     void * outlines_pls_desc = (void *)T1_objc_msg(
@@ -717,7 +689,8 @@ u8 T1_apple_gpu_init(
         0);
     
     if (ags->outlines_pls == NULL) {
-        return false;
+        *sticky_error = "failed to register outlines pipeline state";
+        return;
     }
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
@@ -733,12 +706,10 @@ u8 T1_apple_gpu_init(
         (uintptr_t)nsstring_flat_billboard_quad_vert_shader);
     if (flat_billboard_quad_vert_shader == NULL)
     {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
+        *sticky_error =
             "Missing function: "
-            "flat_billboard_quad_vertex_shader()");
-        return false;
+            "flat_billboard_quad_vertex_shader()";
+        return;
     }
     
     void * nsstring_flat_billboard_quad_frag_shader =
@@ -749,12 +720,10 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_flat_billboard_quad_frag_shader);
     if (flat_billboard_quad_frag_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
+        *sticky_error =
             "Missing function: "
-            "flat_billboard_quad_fragment_shader()");
-        return false;
+            "flat_billboard_quad_fragment_shader()";
+        return;
     }
     
     void * flat_billboard_quad_pls_desc =
@@ -791,12 +760,10 @@ u8 T1_apple_gpu_init(
             (uintptr_t)nsstring_flat_texquad_vert_shader);
     if (flat_texquad_vert_shader == NULL)
     {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
+        *sticky_error =
             "Missing function: "
-            "flat_texquad_vertex_shader()");
-        return false;
+            "flat_texquad_vertex_shader()";
+        return;
     }
     
     void * nsstring_flat_texquad_frag_shader =
@@ -807,12 +774,10 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_flat_texquad_frag_shader);
     if (flat_texquad_frag_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
+        *sticky_error =
             "Missing function: "
-            "flat_texquad_frag_shader()");
-        return false;
+            "flat_texquad_frag_shader()";
+        return;
     }
     
     void * flat_texquad_pls_desc =
@@ -843,11 +808,8 @@ u8 T1_apple_gpu_init(
     
     if (ags->diamond_touch_pls == NULL)
     {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Failed to init diamond pipeline");
-        return false;
+        *sticky_error = "Failed to init diamond pipeline";
+        return;
     }
     T1_gpu_render_pl_descriptor_remove_color_attachment_at(
         diamond_pls_desc,
@@ -882,11 +844,8 @@ u8 T1_apple_gpu_init(
         0);
     if (ags->blend_touch_pls == NULL)
     {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Failed to load the alphablending shader");
-        return false;
+        *sticky_error = "Failed to load the alphablending shader";
+        return;
     }
     
     T1_gpu_render_pl_descriptor_remove_color_attachment_at(
@@ -918,11 +877,8 @@ u8 T1_apple_gpu_init(
         (uintptr_t)depth_desc);
     if (ags->opaque_depth_stencil_state == NULL)
     {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Failed to load the depth stencil state");
-        return false;
+        *sticky_error = "Failed to load the depth stencil state";
+        return;
     }
     
     for (
@@ -1125,16 +1081,10 @@ u8 T1_apple_gpu_init(
         ags->sel_new_function_with_name,
         (uintptr_t)nsstring_singlequad_vertex_shader);
     if (singlequad_vertex_shader == NULL) {
-        T1_log_append(
+        *sticky_error =
             "Missing function: "
-            "postprocess_vertex_shader()!");
-        
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: "
-            "postprocess_vertex_shader()");
-        return false;
+            "postprocess_vertex_shader()";
+        return;
     }
     
     void * nsstring_singlequad_fragment_shader = T1_objc_nsstring_construct(
@@ -1145,12 +1095,8 @@ u8 T1_apple_gpu_init(
         (uintptr_t)nsstring_singlequad_fragment_shader);
     if (singlequad_fragment_shader == NULL)
     {
-        T1_log_append("Missing function: downsampling_frag_shader()!");
-        T1_std_strcpy_cap(
-            error_msg_string,
-            error_msg_cap,
-            "Missing function: downsampling_fragment_shader()");
-        return false;
+        *sticky_error = "Missing function: downsampling_fragment_shader()";
+        return;
     }
     
     void * singlequad_pipeline_descriptor =
@@ -1218,7 +1164,7 @@ u8 T1_apple_gpu_init(
     
     ags->metal_active = true;
     
-    return true;
+    return;
 }
 
 #if T1_BLOOM_ACTIVE == T1_ACTIVE

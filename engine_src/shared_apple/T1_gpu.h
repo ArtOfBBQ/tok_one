@@ -7,14 +7,13 @@
 
 extern u64 last_resize_request_at;
 
-u8 T1_apple_gpu_init(
+void T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)
         (T1GPUFrame *),
     void (* arg_funcptr_gameloop_update_after_render)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
-    char * error_msg_string,
-    uint32_t error_msg_cap);
+    char ** const sticky_error);
 
 void T1_gpu_update_render_view_size(s32 at_i);
 void T1_gpu_update_final_window_size(void);

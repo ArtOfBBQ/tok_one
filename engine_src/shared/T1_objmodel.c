@@ -1168,10 +1168,12 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
 s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_obj_filename,
     const char * obj_text,
-    const char * mtl_text)
+    const char * mtl_text,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return -1; }
     T1_log_assert(parsed_obj != NULL);
-    
+   
     u8 good = 0;
     T1_objparser_parse(
         /* ParsedObj * recipient: */
@@ -1186,11 +1188,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_obj->vertices_count < 1 ||
         (parsed_obj->triangles_count + parsed_obj->quads_count) < 1)
     {
-        good = 0;
-    }
-    T1_log_assert(good);
-    
-    if (!good) {
+        *sticky_error = "T1_objmodel parsed obj has no vertices or no triangles";
         return -1;
     }
     
@@ -1223,15 +1221,10 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         /* const char * input: */
             mtl_text,
         /* u32 * good: */
-            &good);
+            sticky_error);
     
     if (!good) {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_dump_and_crash(T1_mtlparser_get_last_error_msg());
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
+        *sticky_error = "T1_objmodel unhandled error";
         return -1;
     }
     
@@ -1427,49 +1420,38 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     const u8 flip_uv_u,
     const u8 flip_uv_v,
-    u8 * success,
-    char * error_message)
+    char ** const sticky_error)
 {
-    *success = 0;
+    if (*sticky_error != 0) { return -1; }
     
     T1_log_assert(
         T1_mesh_summary_list_size <
             T1_MESH_CAP);
-    
-    if (!T1_log_app_running) {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Early exit from "
-            "objmodel_new_mesh_id_from_res()"
-            ", application not running...\n");
-        return -1;
-    }
     
     u64 contents_cap = T1_os_get_resource_size(obj_filename);
     char * contents = NULL;
     
     if (contents_cap < 1)
     {
+        *sticky_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*sticky_error, 0, 512);
         T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Early exit from "
-            "objmodel_new_mesh_id_from_res(), "
+            *sticky_error,
+            512,
+            "Early exit from objmodel_new_mesh_id_from_res(), "
             "obj resource: ");
         T1_std_strcat_cap(
-            error_message,
+            *sticky_error,
             128,
             obj_filename);
         T1_std_strcat_cap(
-            error_message,
+            *sticky_error,
             128,
             " doesn't exist...\n");
         return -1;
     }
     
     contents = (char *)T1_mem_malloc_managed(contents_cap + 1);
-    u8 contents_good = false;
     
     T1_os_read_resource_file(
         /* const char * filename: */
@@ -1478,26 +1460,10 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             contents,
         /* const u64 recip_cap: */
             contents_cap,
-        /* u8 * good: */
-            &contents_good);
+        /* sticky_error: */
+            sticky_error);
     
-    if (!contents_good) {
-        T1_mem_free_managed(contents);
-        
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "Early exit from "
-            "objmodel_new_mesh_id_from_res(), "
-            "resource: ");
-        T1_std_strcat_cap(
-            error_message,
-            128,
-            obj_filename);
-        T1_log_append(
-            " exists but failed to read...\n");
-        return -1;
-    }
+    if (*sticky_error != 0) { return -1; }
     
     u64 mtl_contents_cap = 0;
     char * mtl_contents = NULL;
@@ -1510,19 +1476,21 @@ s32 T1_objmodel_new_mesh_id_from_resources(
         
         if (mtl_contents_cap < 1)
         {
+            *sticky_error = T1_mem_malloc_unmanaged(512);
+            T1_std_memset(*sticky_error, 0, 512);
             T1_std_strcpy_cap(
-                error_message,
-                128,
+                *sticky_error,
+                512,
                 "Early exit from "
                 "objmodel_new_mesh_id_from_res(), "
                 " mtl resource: ");
             T1_std_strcat_cap(
-                error_message,
-                128,
+                *sticky_error,
+                512,
                 mtl_filename);
             T1_std_strcat_cap(
-                error_message,
-                128,
+                *sticky_error,
+                512,
                 " doesn't exist...\n");
             return -1;
         }
@@ -1538,26 +1506,11 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             /* const u64 recip_cap: */
                 mtl_contents_cap,
             /* u8 * good: */
-                &mtl_contents_good);
+                sticky_error);
         
-        if (!mtl_contents_good) {
+        if (*sticky_error != 0) {
             T1_mem_free_managed(contents);
             T1_mem_free_managed(mtl_contents);
-            
-            T1_std_strcpy_cap(
-                error_message,
-                128,
-                "Early exit from "
-                "objmodel_new_mesh_id_from_res(),"
-                "resource: ");
-            T1_std_strcat_cap(
-                error_message,
-                128,
-                mtl_filename);
-            T1_std_strcat_cap(
-                error_message,
-                128,
-                " exists but failed to read...\n");
             return -1;
         }
     }
@@ -1567,15 +1520,14 @@ s32 T1_objmodel_new_mesh_id_from_resources(
         /* const char * obj_text: */
             contents,
         /* const char * mtl_text: */
-            mtl_contents);
+            mtl_contents,
+        /* sticky_error: */ 
+            sticky_error);
     
-    if (return_value < 0) {
-        T1_std_strcpy_cap(
-            error_message,
-            128,
-            "objmodel_new_mesh_id_from_res() "
-            "failed (undocumented)");
-        return -1;
+    if (return_value < 0 || *sticky_error != 0) {
+        T1_assert(*sticky_error != 0);
+        T1_assert(return_value < 0);
+        return return_value;
     }
     
     T1_std_strcpy_cap(
@@ -1612,7 +1564,6 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     #error
     #endif
     
-    *success = 1;
     return return_value;
 }
 

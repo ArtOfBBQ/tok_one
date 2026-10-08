@@ -1243,11 +1243,14 @@ void T1_os_toggle_fullscreen(void) {
 
 __attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
-    b8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
-    if (!T1_global) { return; }
+    if (!T1_global) {
+        *sticky_error = "Tried to T1_os_create_main_window() before T1_global existed";
+        return;
+    }
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
@@ -1314,8 +1317,6 @@ void T1_os_create_main_window(
         window,
         T1_os_macos_s->sel_make_key_and_order_front,
         0);
-    
-    *good = 1;
 }
 
 void T1_os_destroy_main_window_if_possible(void) {
@@ -1325,11 +1326,9 @@ void T1_os_destroy_main_window_if_possible(void) {
 }
 
 void T1_os_link_gpu_to_main_window(
-    c8 * errmsg,
-    u32 errmsg_cap,
-    b8 * good)
+    char ** const sticky_error)
 {
-    *good = 0;
+    if (*sticky_error != 0) { return; }
     
     typedef void *(* mtl_fn)(void);
     mtl_fn fn = (mtl_fn)T1_os_macos_s->
@@ -1386,7 +1385,7 @@ void T1_os_link_gpu_to_main_window(
         T1_os_macos_s->sel_set_delegate,
         (uintptr_t)apple_gpu_delegate);
     
-    b8 result = T1_apple_gpu_init(
+    T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             T1_gameloop_update_before_render_pass,
             T1_gameloop_update_after_render_pass,
@@ -1395,19 +1394,6 @@ void T1_os_link_gpu_to_main_window(
         /* bool32_t has_retina_screen: */
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],
-        /* char * error_msg_string: */
-            errmsg,
-            errmsg_cap);
-    
-    if (!result || !T1_log_app_running) {
-        if (errmsg[0] == '\0') {
-            T1_std_strcpy_cap(
-                errmsg,
-                errmsg_cap,
-                "Failed Metal init (unhandled)"); 
-        }
-        return;
-    }
-    
-    *good = 1;
+        /* sticky_error: */
+            sticky_error);
 }
