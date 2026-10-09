@@ -165,13 +165,17 @@ void T1_make_shadowmap_and_attach_to_light(
 
 void T1_cam_create_main_view(
     u32 new_cam_width,
-    u32 new_cam_height)
+    u32 new_cam_height,
+    char ** const sticky_error)
 {
     T1_log_assert(T1_render_views->size == 0);
     
     s32 rv_i = T1_tex_array_create_new_render_view(
         new_cam_width,
-        new_cam_height);
+        new_cam_height,
+        sticky_error);
+    if (*sticky_error != 0) { return; }
+    
     if (rv_i != 0) { return; }
     
     T1CPURenderView * rv = T1_render_views->cpu + rv_i;
@@ -207,12 +211,15 @@ void T1_make_reflection_cam(
     u32 new_cam_h,
     f32 reflection_z)
 {
+    char * dud_error = 0;
     s32 new_rv_i =
         T1_tex_array_create_new_render_view(
             /* u32 width: */
                 new_cam_w,
             /* u32 height: */
-                new_cam_h);
+                new_cam_h,
+                &dud_error);
+    T1_log_assert(dud_error == 0);
     
     T1_log_assert(new_rv_i >= 0);
     if (new_rv_i < 0) { return; }

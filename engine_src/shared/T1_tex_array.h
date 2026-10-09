@@ -40,11 +40,13 @@ T1Tex T1_tex_array_reg_img(
     u32 width,
     u32 height,
     b8 is_render_target,
-    b8 use_bc1_compression);
+    b8 use_bc1_compression,
+    char ** const sticky_error);
 
 s32 T1_tex_array_create_new_render_view(
     const u32 width,
-    const u32 height);
+    const u32 height,
+    char ** const sticky_error);
 
 b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in);
 u32 T1_tex_array_get_img_height(s32 array_i);
@@ -69,7 +71,8 @@ void T1_tex_array_reg_new_by_splitting_img(
     const char * filename_prefix,
     u32 rows,
     u32 columns,
-    b8 free_rgba);
+    b8 free_rgba,
+    char ** const sticky_error);
 
 T1Tex T1_tex_array_create_new_in_array(s32 array_i);
 

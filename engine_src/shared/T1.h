@@ -193,7 +193,8 @@ float T1_screen_height_to_height_noz(float screen_h);
 void T1_make_shadowmap_and_attach_to_light(
     uint32_t T1_id, uint32_t w, uint32_t h);
 
-void T1_cam_create_main_view(uint32_t new_w, uint32_t new_h);
+void T1_cam_create_main_view(
+    uint32_t new_w, uint32_t new_h, char ** const sticky_error);
 void T1_make_reflection_cam(
     uint32_t new_w, uint32_t new_h, float reflection_z);
 
@@ -223,7 +224,9 @@ uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
 uint16_t T1_tex_array_reg_img(
     const char * filename,
     uint32_t w, uint32_t h,
-    uint8_t is_render_target, uint8_t use_bc1_compression);
+    uint8_t is_render_target,
+    uint8_t use_bc1_compression,
+    char ** const sticky_error);
 void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
     const uint8_t * rgba, uint32_t rgba_size);

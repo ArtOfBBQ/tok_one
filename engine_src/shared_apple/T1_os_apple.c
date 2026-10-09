@@ -241,7 +241,15 @@ void T1_os_read_file(
         recip_cap >= UINT32_MAX ||
         T1_objc_msg(file_data, T1_os_apple_s->sel_length) >= UINT32_MAX)
     {
-        *sticky_error = "Error - failed [NSData initWithContentsOfFile:]";
+        T1_sticky_error_new(
+            sticky_error,  
+            "T1_os_read_file() Error - failed [NSData initWithContentsOfFile:] ");
+        if (T1_std_strlen(filepath) < 450) {
+            T1_std_strcat_cap(
+                *sticky_error,
+                512,
+                filepath);
+        }
         *recip_size = 0;
         return;
     }

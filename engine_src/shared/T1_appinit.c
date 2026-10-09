@@ -708,7 +708,7 @@ static void * T1_appinit_asset_loading_thread(
         ias->image_decoding_threads,
         &sticky_error);
     
-    T1_assert(sticky_error == 0);
+    if (sticky_error != 0) { return 0; }
     
     if (asset_thread_id > 0) {
         decode_png_deinit((u32)asset_thread_id);
@@ -746,7 +746,10 @@ void T1_appinit_after_gpu_init_step1(
     
     T1_tex_array_create_new_render_view(
         rv_width,
-        rv_height);
+        rv_height,
+        sticky_error);
+    
+    if (*sticky_error != 0) { return; }
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or T1_log_assert() errors before this.
@@ -766,25 +769,19 @@ void T1_appinit_after_gpu_init_step1(
                 T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
     
-    b8 perlin_good = 0;
     const char * perlin_noise_fn = "perlin_noise.png";
     T1_tex_files_prereg_and_decode_png_res(
         perlin_noise_fn,
         sticky_error);
     
-    if (!perlin_good) {
-        *sticky_error = "Failed to load perlin_noise data";
-        T1_global->postproc_consts.perlin_texturearray_i = 1;
-        T1_global->postproc_consts.perlin_texture_i = 0;
-        return;
-    } else {
-        T1Tex perlin_tex = T1_tex_array_get_filename_loc(
+    if (*sticky_error != 0) { return; }
+    
+    T1Tex perlin_tex = T1_tex_array_get_filename_loc(
             perlin_noise_fn);
-        T1_global->postproc_consts.perlin_texturearray_i = 
-            T1_tex_to_array_i(perlin_tex);
-        T1_global->postproc_consts.perlin_texture_i =
-            T1_tex_to_slice_i(perlin_tex);
-    }
+    T1_global->postproc_consts.perlin_texturearray_i = 
+        T1_tex_to_array_i(perlin_tex);
+    T1_global->postproc_consts.perlin_texture_i =
+        T1_tex_to_slice_i(perlin_tex);
     
     if (
         T1_global->postproc_consts.perlin_texturearray_i < 1 ||
@@ -909,6 +906,8 @@ void T1_appinit_after_gpu_init_step2(
         T1_gameloop_active = true;
         return;
     }
+    
+    if (!T1_cpu_to_gpu_data) { return; }
     
     T1_std_memcpy(
         /* void * dst: */

@@ -51,30 +51,27 @@ static T1Img * extract_image(
     u32 sprite_columns,
     u32 sprite_rows,
     u32 x,
-    u32 y)
+    u32 y,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return NULL; }
+    
     T1_log_assert(x > 0);
     T1_log_assert(y > 0);
     T1_log_assert(original != NULL);
     T1_log_assert(original->rgba_values_freeable != NULL);
     T1_log_assert(original->rgba_values_page_aligned != NULL);
     
-    if (!T1_log_app_running) { return NULL; }
     T1_log_assert(sprite_columns > 0);
     T1_log_assert(sprite_rows > 0);
     T1_log_assert(x <= sprite_columns);
     T1_log_assert(y <= sprite_rows);
-    if (!T1_log_app_running) { return NULL; }
     
     T1Img * new_image = T1_mem_malloc_unmanaged(sizeof(T1Img));
-    T1_log_assert(new_image != NULL);
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    if (!T1_log_app_running) { return NULL; }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    if (!new_image) {
+        *sticky_error = "Malloc fail";
+        return NULL;
+    }
     
     u32 slice_size_bytes =
         (original->rgba_values_size
@@ -102,6 +99,10 @@ static T1Img * extract_image(
             (void *)&new_image->rgba_values_page_aligned,
         /* u64 subptr_size: */
             new_image->rgba_values_size);
+    if (!new_image->rgba_values_page_aligned) {
+        *sticky_error = "Page-aligned malloc failure";
+        return NULL;
+    }
     T1_std_memset(
         new_image->rgba_values_page_aligned,
         0,
@@ -126,11 +127,6 @@ static T1Img * extract_image(
             ((start_x_pixels - 1) * 4)
                 + ((cur_y_pixels - 1) * original->width * 4);
         
-        if (!T1_log_app_running) {
-            new_image->good = false;
-            break;
-        }
-        
         for (
             u32 _ = 0;
             _ < (slice_width_pixels * 4);
@@ -144,7 +140,6 @@ static T1Img * extract_image(
         }
     }
     
-    new_image->good = true;
     return new_image;
 }
 
@@ -174,8 +169,11 @@ register_to_texturearray_by_splitting_image(
     s32 ta_i,
     u32 rows,
     u32 columns,
-    b8 free_rgba)
+    b8 free_rgba,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
     T1_log_assert(new_image->rgba_values_freeable != NULL);
@@ -183,7 +181,10 @@ register_to_texturearray_by_splitting_image(
     T1_log_assert(rows >= 1);
     T1_log_assert(columns >= 1);
     
-    if (new_image->rgba_values_size < 1) { return; }
+    if (new_image->rgba_values_size < 1) {
+        *sticky_error = "register_to_texturearray_by_splitting_image() but rgba_values_size was 0";
+        return;
+    }
         
     char * filenames[256];
     for (u32 i = 0; i < 256; i++) {
@@ -216,16 +217,20 @@ register_to_texturearray_by_splitting_image(
                 /* u32 x: */
                     (u32)col_i + 1,
                 /* u32 y: */
-                    (u32)row_i + 1);
+                    (u32)row_i + 1,
+                    sticky_error);
+            
+            if (*sticky_error != 0) {
+                return;
+            }
             
             if (split_img == NULL ||
                 split_img->rgba_values_freeable == NULL ||
                 split_img->rgba_values_page_aligned == NULL)
             {
-                T1_log_assert(0);
-                continue;
+                *sticky_error = "register_to_texturearray_by_splitting_image() failed to split image";
+                return;
             }
-            T1_log_assert(split_img->good);
             
             T1_log_assert(split_img->width  == expected_width);
             T1_log_assert(split_img->height == expected_height);
@@ -285,8 +290,11 @@ register_to_texturearray_by_splitting_image(
 
 s32 T1_tex_array_create_new_render_view(
     u32 width,
-    u32 height)
+    u32 height,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return -1; }
+    
     T1_log_assert(T1_render_views != NULL);
     
     if (width < 10 || height < 10) {
@@ -337,7 +345,9 @@ s32 T1_tex_array_create_new_render_view(
         /* u32 is_render_target: */
             true,
         /* u32 use_bc1_compression: */
-            false);
+            false,
+        /* sticky_error: */
+            sticky_error);
     
     #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
     s32 tex_array_i = T1_tex_to_array_i(tex);
@@ -499,8 +509,11 @@ void T1_tex_array_reg_new_by_splitting_img(
     const char * filename_prefix,
     u32 rows,
     u32 columns,
-    b8 free_rgba)
+    b8 free_rgba,
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
     
@@ -515,7 +528,8 @@ void T1_tex_array_reg_new_by_splitting_img(
         /* s32 texture_array_i: */ new_texture_array_i,
         /* u32 rows: */ rows,
         /* u32 columns: */ columns,
-        /* b8 free_rgba: */ free_rgba);
+        /* b8 free_rgba: */ free_rgba,
+        sticky_error);
 }
 
 T1Tex T1_tex_array_reg_img(
@@ -523,9 +537,11 @@ T1Tex T1_tex_array_reg_img(
     u32 width,
     u32 height,
     b8 is_render_target,
-    b8 use_bc1_compression)
+    b8 use_bc1_compression,
+    char ** const sticky_error)
 {
     T1Tex retval = T1_TEX_NONE;
+    if (*sticky_error != 0) { return retval; }
     
     T1_log_assert(width > 0);
     T1_log_assert(height > 0);
@@ -538,6 +554,8 @@ T1Tex T1_tex_array_reg_img(
         i < (s16)T1_tex_arrays_size;
         i++)
     {
+        if (*sticky_error != 0) { return retval; }
+        
         T1_log_assert(i < T1_TEXARRAYS_CAP);
         if (
             !T1_tex_arrays[i].deleted &&
@@ -558,7 +576,6 @@ T1Tex T1_tex_array_reg_img(
                 height;
             T1_tex_arrays[i].images[slice_i].image.rgba_values_size =
                 width * height * 4;
-            T1_tex_arrays[i].images[slice_i].image.good = 1;
             
             T1_log_assert(slice_i >= 1);
             T1_log_assert(slice_i < T1_TEX_SLICES_CAP);
@@ -598,7 +615,6 @@ T1Tex T1_tex_array_reg_img(
             height;
         T1_tex_arrays[array_i].images[0].image.rgba_values_size =
             width * height * 4;
-        T1_tex_arrays[array_i].images[0].image.good = 1;
     } else {
         T1_log_assert(T1_tex_to_slice_i(retval) > 0);
     }

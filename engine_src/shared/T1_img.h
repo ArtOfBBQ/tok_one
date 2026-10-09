@@ -10,7 +10,6 @@ typedef struct {
     u32 width;
     u32 height;
     u32 pixel_count; // rgba_values_size / 4
-    u8  good;
 } T1Img;
 
 u64

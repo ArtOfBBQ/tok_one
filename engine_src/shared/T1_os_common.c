@@ -371,9 +371,9 @@ void T1_os_read_resource_file(
     
     T1_mem_free_managed(pathfile);
     
-    if (1 || bytes_read != recip_cap) {
+    if (bytes_read != recip_cap) {
         *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_strcpy_cap(*sticky_error, 512, "Error reading resource: '");
+        T1_std_strcpy_cap(*sticky_error, 512, "T1_os_read_resource_file() Error reading: '");
         T1_std_strcat_cap(*sticky_error, 512, filename);
         T1_std_strcat_cap(*sticky_error, 512, " expected ");
         T1_std_strcat_u32_cap(*sticky_error, 512, (u32)recip_cap);
