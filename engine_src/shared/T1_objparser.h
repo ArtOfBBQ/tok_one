@@ -69,7 +69,7 @@ void T1_objparser_init(
 void T1_objparser_parse(
     T1ParsedObj * recipient,
     const char * raw_buffer,
-    u8 * success);
+    char ** const sticky_error);
 
 /*
 -> init_obj_parser() must run before this

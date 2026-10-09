@@ -1174,15 +1174,23 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     if (*sticky_error != 0) { return -1; }
     T1_log_assert(parsed_obj != NULL);
    
-    u8 good = 0;
     T1_objparser_parse(
         /* ParsedObj * recipient: */
             parsed_obj,
         /* char * raw_buffer: */
             obj_text,
-        /* u32 * success: */
-            &good);
-    T1_log_assert(good);
+        /* sticky_error: */
+            sticky_error);
+    
+    if (*sticky_error != 0) {
+        char prepend[256];
+        T1_std_memset(prepend, 0, 256);
+        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from(): ");
+        T1_std_strcat_cap(prepend, 512, original_obj_filename);
+        T1_std_strcat_cap(prepend, 512, " error: ");
+        T1_std_strcat_cap(*sticky_error, 512, prepend);
+        return -1;
+    }
     
     if (
         parsed_obj->vertices_count < 1 ||
@@ -1199,8 +1207,6 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
             NULL,
             0);
     }
-    
-    good = 0;
     
     u32 parsed_materials_cap = 20;
     T1ParsedMaterial * parsed_materials = T1_mem_malloc_managed(
@@ -1223,8 +1229,13 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         /* u32 * good: */
             sticky_error);
     
-    if (!good) {
-        *sticky_error = "T1_objmodel unhandled error";
+    if (*sticky_error != 0) {
+        char prepend[256];
+        T1_std_memset(prepend, 0, 256);
+        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from(): ");
+        T1_std_strcat_cap(prepend, 512, original_obj_filename);
+        T1_std_strcat_cap(prepend, 512, " materials error: ");
+        T1_std_strcat_cap(*sticky_error, 512, prepend);
         return -1;
     }
     
@@ -1433,21 +1444,12 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     
     if (contents_cap < 1)
     {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
-        T1_std_strcpy_cap(
-            *sticky_error,
-            512,
+        T1_sticky_error_new(
+            sticky_error,
             "Early exit from objmodel_new_mesh_id_from_res(), "
             "obj resource: ");
-        T1_std_strcat_cap(
-            *sticky_error,
-            128,
-            obj_filename);
-        T1_std_strcat_cap(
-            *sticky_error,
-            128,
-            " doesn't exist...\n");
+        T1_std_strcat_cap(*sticky_error, 256, obj_filename);
+        T1_std_strcat_cap(*sticky_error, 256, " doesn't exist...\n");
         return -1;
     }
     

@@ -367,12 +367,6 @@ void T1_zsprite_set_occlusion(
 #else
 #error
 #endif
-//#if 0
-//void T1_zsprite_construct_quad(
-//    float left_x, float bottom_y, float z,
-//    float width, float height,
-//    T1zSpriteRequest * stack_recipient);
-//#endif
 
 /*
 z-Lights (3D lights)
@@ -558,6 +552,64 @@ void T1_meta_write_to_known_field_str(
     const char * value_to_write_str,
     void * target_parent_ptr,
     char ** const sticky_error);
+
+/*
+STICKY ERRORS
+
+I consistently use char ** const sticky_error as a 
+'first error encountered' tracker, a pattern I found and
+like in the NextStep code on Apple's objective-c libs.
+
+All of the functions that take a 'sticky error' argument
+will exit immediately if the error is already set. The
+idea is for you to use it repeatedly so you don't have
+to check for errors after every call.
+
+These 2 functions are helpers, both allocating memory
+for a new error string.
+
+T1_sticky_error_new(my_message) is equivalent to this
+*sticky_error = malloc(512);
+*sticky_error[0] = '\0';
+strcat(*sticky_error, my_message);
+
+T1_sticky_error_prepend_if_bad() is for when you want
+to add additional text to the start of an error if there,
+is one, usually because of a subprocess that may have
+gone wrong. For example, if you have a filename, pass
+data to a parser, and the parser sets the sticky error,
+it probably didn't have the filename where the error
+happened. You can then prepend that information so it
+gets passed up. It just copies the data to a new string,
+leaking the old one.
+
+***
+Example code
+***
+char * sticky_error = 0;
+do_dangerous_thing_1(&sticky_error);
+do_dangerous_thing_2(&sticky_error);
+    -> inside this:
+    do_another_dangerous_thing(sticky_error);
+do_dangerous_thing_3(&sticky_error);
+
+if (*sticky_error != 0) {
+    // prepend extra info if needed
+    return; // early exit
+}
+
+do_extra_things();
+***
+End of example code
+***
+*/
+void T1_sticky_error_new(
+    char ** const sticky_error,
+    const char * with_string);
+
+void T1_sticky_error_prepend_if_bad(
+    char ** const sticky_error,
+    const char * to_append);
 
 /*
 OPERATING SYSTEM

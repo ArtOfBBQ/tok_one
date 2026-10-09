@@ -20,8 +20,10 @@ void T1_objparser_init(
 
 static u32 consume_u32(
     char ** raw_buffer,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return 0; }
+    
     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
     assert(*raw_buffer[0] >= '0');
     assert(*raw_buffer[0] <= '9');
@@ -31,8 +33,10 @@ static u32 consume_u32(
     #endif
     
     if ((*raw_buffer)[0] < '0' || (*raw_buffer)[0] > '9') {
-        *good = 0;
-        return 0.0f;
+        *sticky_error =
+            "T1_objcparser consume_u32() but 1st digit "
+            "is not numerical";
+        return 0;
     }
     
     u32 return_value = 0;
@@ -49,8 +53,10 @@ static u32 consume_u32(
 
 static f32 consume_f32(
     char ** raw_buffer,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return 0.0f; }
+    
     f32 final_multiplier = 1.0f;
     if ((*raw_buffer)[0] == '-') {
         final_multiplier = -1.0f;
@@ -66,11 +72,11 @@ static f32 consume_f32(
     #endif
     
     if ((*raw_buffer)[0] < '0' || (*raw_buffer)[0] > '9') {
-        *good = 0;
+        *sticky_error = "T1_objparser consume_f32() but first digit is not numerical";
         return 0.0f;
     }
     
-    u32 above_comma = consume_u32(raw_buffer, good);
+    u32 above_comma = consume_u32(raw_buffer, sticky_error);
     u32 below_comma = 0;
     f32 below_comma_adj = 0.0f;
     u32 below_comma_leading_zeros = 0;
@@ -84,9 +90,8 @@ static f32 consume_f32(
         }
         
         if (*raw_buffer[0] >= '0' && *raw_buffer[0] <= '9') {
-            below_comma = consume_u32(raw_buffer, good);
+            below_comma = consume_u32(raw_buffer, sticky_error);
         }
-        if (!*good) { return above_comma; }
     }
     
     if (below_comma != 0) {
@@ -124,8 +129,7 @@ static f32 consume_f32(
         #error
         #endif
         
-        u32 e_num = consume_u32(raw_buffer, good);
-        if (!good) { return 0.0f; }
+        u32 e_num = consume_u32(raw_buffer, sticky_error);
         
         u32 extracted_mod = 10;
         for (u32 _ = 1; _ < e_num; _++) {
@@ -148,20 +152,14 @@ static f32 consume_f32(
 static void consume_separated_u32s(
     char ** from_buffer,
     s32 * recipient,
-    u8 * good)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     u32 new_num = consume_u32(
         from_buffer,
-        good);
+        sticky_error);
     
-    if (!*good) { return; }
-    
-    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(new_num < 2147483647);
-    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     recipient[0] = (s32)new_num;
     
     u32 recipient_i = 0;
@@ -176,10 +174,10 @@ static void consume_separated_u32s(
         } else {
             new_num = consume_u32(
                 from_buffer,
-                good);
+                sticky_error);
         }
         
-        if (!good) { return; }
+        if (*sticky_error != 0) { return; }
         
         #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
         assert(new_num < 2147483647);
@@ -307,8 +305,10 @@ static s32 get_material_i_or_register_new(
 void T1_objparser_parse(
     T1ParsedObj * recipient,
     const char * raw_buf,
-    u8 * success)
+    char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return; }
+    
     char * raw_buffer = (char *)raw_buf;
     
     #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
@@ -318,8 +318,6 @@ void T1_objparser_parse(
     #else
     #error
     #endif
-    
-    *success = 1;
     
     recipient->triangles = 0;
     recipient->triangle_textures = 0;
@@ -417,17 +415,7 @@ void T1_objparser_parse(
             } else if (spacenums_before_lb == 4) {
                 recipient->quads_count += 1;
             } else {
-                // We're not supporting faces with more than 4 vertices for now
-                // (we just count spaces, so this can also be triggered by
-                // consecutive spaces)
-                #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                assert(0);
-                #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                #else
-                #error
-                #endif
-                
-                *success = 0;
+                *sticky_error = "T1_objparser_parse(): faces with more than 4 vertices unsupported. Avoid double spaces.";
                 return;
             }
         }
@@ -436,13 +424,9 @@ void T1_objparser_parse(
     
     if (recipient->vertices_count < 3) {
         // We didn't even find 1 triangle's worth of vertices?
-        #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(0);
-        #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        *success = 0;
+        *sticky_error =
+            "T1_objparser_parse() didn't find a "
+            "triangle's worth of vertices";
         return;
     }
     if (recipient->material_names != 0) {
@@ -617,14 +601,9 @@ void T1_objparser_parse(
                 smooth_shading = 0;
             } else {
                 // expected 's on', 's off', 's 1', or 's 0'
-                #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                assert(0);
-                #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                #else
-                #error
-                #endif
-                
-                *success = 0;
+                *sticky_error =
+                    "T1_objparser_parse() expected "
+                    "'s on', 's off', 's 1', or 's 0'";
                 return;
             }
             
@@ -659,14 +638,8 @@ void T1_objparser_parse(
                 #error
                 #endif
                 recipient->vertices[cur_vertex_i][axis_i] =
-                    consume_f32(&raw_buffer, success);
-                if (!*success) {
-                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                    assert(0);
-                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                    #else
-                    #error
-                    #endif
+                    consume_f32(&raw_buffer, sticky_error);
+                if (*sticky_error != 0) {
                     return;
                 }
                 
@@ -723,26 +696,14 @@ void T1_objparser_parse(
                         consume_separated_u32s(
                             &raw_buffer,
                             indexes,
-                            success);
+                            sticky_error);
                         
-                        if (!success) {
-                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                            assert(0);
-                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                            #else
-                            #error
-                            #endif
+                        if (*sticky_error != 0) {
                             return;
                         }
                         
                         if (indexes[0] < 0) {
-                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                            assert(0);
-                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                            #else
-                            #error
-                            #endif
-                            success = 0;
+                            *sticky_error = "T1_objparser_parse() botched index";
                             return;
                         }
                         
@@ -785,13 +746,7 @@ void T1_objparser_parse(
                         #endif
                         
                         if (indexes[3] != -1) {
-                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                            assert(0);
-                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                            #else
-                            #error
-                            #endif
-                            *success = 0;
+                            *sticky_error = "T1_objparser_parse() botched indexes[3]";
                             return;
                         }
                         
@@ -827,18 +782,12 @@ void T1_objparser_parse(
                         consume_separated_u32s(
                             &raw_buffer,
                             indexes,
-                            success);
+                            sticky_error);
                         
-                        if (!success) { return; }
+                        if (*sticky_error != 0) { return; }
                         
                         if (indexes[0] < 0) {
-                            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                            assert(0);
-                            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                            #else
-                            #error
-                            #endif
-                            success = 0;
+                            *sticky_error = "T1_objparser_parse() botched indexes[0]";
                             return;
                         }
                         
@@ -924,8 +873,8 @@ void T1_objparser_parse(
             
             for (u32 uv_i = 0; uv_i < 2; uv_i++) {
                 recipient->textures_vt_uv[cur_texture_i][uv_i] =
-                    consume_f32(&raw_buffer, success);
-                if (!*success) { return; }
+                    consume_f32(&raw_buffer, sticky_error);
+                if (*sticky_error != 0) { return; }
                 
                 while (raw_buffer[0] == ' ') {
                     raw_buffer++;
@@ -934,16 +883,10 @@ void T1_objparser_parse(
             
             if (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                 // w coordinate of uv coordinate
-                f32 w_coordinate = consume_f32(&raw_buffer, success);
+                f32 w_coordinate = consume_f32(&raw_buffer, sticky_error);
                 (void)w_coordinate;
                 
-                if (!*success) {
-                    #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-                    assert(0);
-                    #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-                    #else
-                    #error
-                    #endif
+                if (*sticky_error != 0) {
                     return;
                 }
                 
@@ -971,8 +914,8 @@ void T1_objparser_parse(
             
             for (u32 axis_i = 0; axis_i < 3; axis_i++) {
                 recipient->normals_vn[cur_normal_i][axis_i] =
-                    consume_f32(&raw_buffer, success);
-                if (!*success) { return; }
+                    consume_f32(&raw_buffer, sticky_error);
+                if (*sticky_error != 0) { return; }
                 
                 while (raw_buffer[0] == ' ') {
                     raw_buffer++;
@@ -1015,13 +958,14 @@ void T1_objparser_parse(
                 recipient,
                 material_name);
         } else {
-            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-            assert(0);
-            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-            #else
-            #error
-            #endif
-            *success = 0;
+            T1_sticky_error_new(
+                sticky_error,
+                "expected 'v', 'vt', 'usemtl' but got "
+                "unrecognized: ");
+            T1_std_strcat_cap(
+                *sticky_error,
+                512,
+                raw_buffer);
             return;
         }
         
@@ -1030,13 +974,11 @@ void T1_objparser_parse(
         }
         
         if (raw_buffer[0] != '\n' && raw_buffer[0] != '\r') {
-            *success = 0;
-            #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
-            assert(0);
-            #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE
-            #else
-            #error
-            #endif
+            T1_sticky_error_new(
+                sticky_error,
+                "T1_objcparser expected linebreak, "
+                "got:");
+            T1_std_strcat_c8_cap(*sticky_error, raw_buffer[0]);
             return;
         }
         
