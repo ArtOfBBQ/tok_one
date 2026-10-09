@@ -612,8 +612,11 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
      const char * original_obj_filename,
      T1ParsedObj * arg_parsed_obj,
      T1ParsedMaterial * parsed_materials,
-     const u32 parsed_materials_size)
+     const u32 parsed_materials_size,
+     char ** const sticky_error)
 {
+    if (*sticky_error != 0) { return -1; }
+    
     f32 invert_z_axis_modifier = -1.0f;
     
     s32 new_mesh_head_id =
@@ -726,23 +729,14 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                     parsed_materials[matching_parsed_materials_i].
                         diffuse_map[0] != '\0')
                 {
-                    T1_log_append("WARNING: missing material texture: ");
-                    T1_log_append(parsed_materials[matching_parsed_materials_i].diffuse_map);
-                    T1_log_append(" in object: ");
-                    T1_log_append(original_obj_filename);
-                    T1_log_append("\n");
-                    
-                    if (
-                        (locked_mat_s32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
+                    if ((locked_mat_s32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
                     {
-                        char errmsg[128];
-                        T1_std_strcpy_cap(errmsg, 128, "Missing material texture: ");
-                        T1_std_strcat_cap(
-                            errmsg,
-                            128,
+                        *sticky_error = T1_mem_malloc_unmanaged(512);
+                        T1_std_memset(*sticky_error, 0, 512);
+                        T1_std_strcpy_cap(*sticky_error, 512, "Missing material texture: ");
+                        T1_std_strcat_cap(*sticky_error, 512,
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
-                        T1_log_dump_and_crash(errmsg);
                         return -1;
                     }
                 } else {
@@ -993,6 +987,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 T1_mesh_summary_all_vertices->
                     size >= T1_LOCKED_VERTEX_CAP)
             {
+                *sticky_error = "overflowing T1_LOCKED_VERTEX_CAP";
                 return -1;
             }
             
@@ -1167,6 +1162,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
 
 s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_obj_filename,
+    const char * original_mtl_filename,
     const char * obj_text,
     const char * mtl_text,
     char ** const sticky_error)
@@ -1185,10 +1181,12 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     if (*sticky_error != 0) {
         char prepend[256];
         T1_std_memset(prepend, 0, 256);
-        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from(): ");
+        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
         T1_std_strcat_cap(prepend, 512, original_obj_filename);
-        T1_std_strcat_cap(prepend, 512, " error: ");
-        T1_std_strcat_cap(*sticky_error, 512, prepend);
+        T1_std_strcat_cap(prepend, 512, " & .mtl: ");
+        T1_std_strcat_cap(prepend, 512, original_mtl_filename);
+        T1_std_strcat_cap(prepend, 512, " parser error: ");
+        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
         return -1;
     }
     
@@ -1205,7 +1203,8 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
             original_obj_filename,
             parsed_obj,
             NULL,
-            0);
+            0,
+            sticky_error);
     }
     
     u32 parsed_materials_cap = 20;
@@ -1232,18 +1231,35 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     if (*sticky_error != 0) {
         char prepend[256];
         T1_std_memset(prepend, 0, 256);
-        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from(): ");
+        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
         T1_std_strcat_cap(prepend, 512, original_obj_filename);
-        T1_std_strcat_cap(prepend, 512, " materials error: ");
-        T1_std_strcat_cap(*sticky_error, 512, prepend);
+        T1_std_strcat_cap(prepend, 512, " & .mtl: ");
+        T1_std_strcat_cap(prepend, 512, original_mtl_filename);
+        T1_std_strcat_cap(prepend, 512, " parser error: ");
+        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
         return -1;
     }
     
-    return new_mesh_id_from_parsed_obj_and_parsed_materials(
+    s32 out = new_mesh_id_from_parsed_obj_and_parsed_materials(
         original_obj_filename,
         parsed_obj,
         parsed_materials,
-        parsed_materials_size);
+        parsed_materials_size,
+        sticky_error);
+    
+    if (*sticky_error != 0) {
+        char prepend[256];
+        T1_std_memset(prepend, 0, 256);
+        T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
+        T1_std_strcat_cap(prepend, 512, original_obj_filename);
+        T1_std_strcat_cap(prepend, 512, " & .mtl: ");
+        T1_std_strcat_cap(prepend, 512, original_mtl_filename);
+        T1_std_strcat_cap(prepend, 512, " parser error: ");
+        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
+        return -1;
+    }
+    
+    return out;
 }
 
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE
@@ -1519,6 +1535,7 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     
     s32 return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
             obj_filename,
+            mtl_filename,
         /* const char * obj_text: */
             contents,
         /* const char * mtl_text: */

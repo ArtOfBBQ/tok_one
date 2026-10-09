@@ -36,6 +36,7 @@ void T1_objmodel_init(void);
 
 s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_obj_filename,
+    const char * original_mtl_filename,
     const char * obj_text,
     const char * mtl_text,
     char ** const sticky_error);
