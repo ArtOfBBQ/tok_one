@@ -192,9 +192,9 @@ void T1_appinit_before_gpu_init(
     void (* callback_onappclose_fptr)(void),
     void (* callback_on_terminal_cmd)(
         char * command, char * response, u32),
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1_gameloop_active = false;
     T1_log_app_running = true;
@@ -204,7 +204,7 @@ void T1_appinit_before_gpu_init(
             T1_UNMANAGED_MEM_CAP + 7232);
     
     if (!unmanaged_memory_store) {
-        *sticky_error = "Failed to preallocate memory on startup";
+        *fatal_error = "Failed to preallocate memory on startup";
         return;
     }
     
@@ -222,7 +222,7 @@ void T1_appinit_before_gpu_init(
     
     T1_objc_init(
         T1_mem_malloc_unmanaged,
-        sticky_error);
+        fatal_error);
     
     if (!T1_objc_open_framework(
         "/System/Library/Frameworks/MetalKit.framework/MetalKit"))
@@ -236,7 +236,7 @@ void T1_appinit_before_gpu_init(
         return;
     }
     
-    T1_settings_init(T1_mem_malloc_unmanaged, sticky_error);
+    T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
     
     T1_meta_init(
         T1_std_memcpy,
@@ -256,12 +256,12 @@ void T1_appinit_before_gpu_init(
         /* const u16 meta_enum_vals_cap: */
             200,
         /* b8 * good: */
-            sticky_error);
+            fatal_error);
     
     ias = T1_mem_malloc_unmanaged(
         sizeof(T1InitApplicationState));
     if (!ias) {
-        *sticky_error = "Malloc fail";
+        *fatal_error = "Malloc fail";
         return;
     }
     T1_std_memset(ias, 0, sizeof(T1InitApplicationState));
@@ -292,7 +292,7 @@ void T1_appinit_before_gpu_init(
         T1_std_memset,
         T1_std_strlen,
         T1_mem_malloc_managed,
-        sticky_error);
+        fatal_error);
     
     T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
     T1_mtlparser_init(
@@ -359,7 +359,7 @@ void T1_appinit_before_gpu_init(
         512);
     
     if (full_writable_pathfile[0] == '\0') {
-        *sticky_error = "Failed to find enginestate.dat";
+        *fatal_error = "Failed to find enginestate.dat";
         return;
     }
     
@@ -377,8 +377,8 @@ void T1_appinit_before_gpu_init(
             engine_save_contents,
             &engine_save_size,
             engine_save_cap_noterm,
-            sticky_error);
-        if (*sticky_error != 0) { return; }
+            fatal_error);
+        if (*fatal_error != 0) { return; }
         *engine_save_file = *(T1EngineSaveFile *)engine_save_contents;
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
@@ -679,7 +679,7 @@ void T1_appinit_before_gpu_init(
     b8 initial_log_dump_succesful = false;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        *sticky_error =
+        *fatal_error =
             "Error - couldn't write the log file to "
             "disk at startup";
         return;
@@ -690,7 +690,7 @@ void T1_appinit_before_gpu_init(
 static void * T1_appinit_asset_loading_thread(
     void * asset_thread_id_u32_me)
 {
-    char * sticky_error = 0;
+    char * fatal_error = 0;
     
     u32 asset_thread_id = (u32)(uintptr_t)asset_thread_id_u32_me;
     if (asset_thread_id > 0) {
@@ -706,9 +706,9 @@ static void * T1_appinit_asset_loading_thread(
     T1_tex_files_decode_all_prereg(
         (u32)asset_thread_id,
         ias->image_decoding_threads,
-        &sticky_error);
+        &fatal_error);
     
-    if (sticky_error != 0) { return 0; }
+    if (fatal_error != 0) { return 0; }
     
     if (asset_thread_id > 0) {
         decode_png_deinit((u32)asset_thread_id);
@@ -725,16 +725,16 @@ static void * T1_appinit_asset_loading_thread(
 #endif
 
 void T1_appinit_after_gpu_init_step1(
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     if (!T1_log_app_running) {
-        *sticky_error = "T1_appinit_after_gpu_init_step1 before T1_log_app_running";
+        *fatal_error = "T1_appinit_after_gpu_init_step1 before T1_log_app_running";
         return;
     }
     
-    T1_tex_files_load_font_images(sticky_error);
+    T1_tex_files_load_font_images(fatal_error);
     
     u32 rv_width = T1_settings_get_render_width();
     u32 rv_height = T1_settings_get_render_height();
@@ -747,9 +747,9 @@ void T1_appinit_after_gpu_init_step1(
     T1_tex_array_create_new_render_view(
         rv_width,
         rv_height,
-        sticky_error);
+        fatal_error);
     
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or T1_log_assert() errors before this.
@@ -772,9 +772,9 @@ void T1_appinit_after_gpu_init_step1(
     const char * perlin_noise_fn = "perlin_noise.png";
     T1_tex_files_prereg_and_decode_png_res(
         perlin_noise_fn,
-        sticky_error);
+        fatal_error);
     
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1Tex perlin_tex = T1_tex_array_get_filename_loc(
             perlin_noise_fn);

@@ -43,7 +43,7 @@ void T1_mtlparser_parse(
     u32 * recipient_size,
     const u32 recipient_cap,
     const char * input,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 #endif // MTLPARSER_H
 

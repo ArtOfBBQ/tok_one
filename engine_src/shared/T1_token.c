@@ -101,9 +101,9 @@ void T1_token_init(
     void * (* arg_memset_func)(void *, int, u64),
     u64 (* arg_strlen_func)(const char *),
     void * (* arg_malloc_func)(size_t),
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     #if T1_TOKEN_ASSERTS_ACTIVE == T1_ACTIVE
     assert(tts == NULL); // aready initted
@@ -126,8 +126,8 @@ void T1_token_init(
         return;
     }
     
-    T1_token_reset(sticky_error);
-    if (*sticky_error != 0) {
+    T1_token_reset(fatal_error);
+    if (*fatal_error != 0) {
         tts->good = 0;
         return;
     }
@@ -142,11 +142,11 @@ void T1_token_deinit(
     tts = NULL;
 }
 
-void T1_token_reset(char ** const sticky_error) {
-    if (*sticky_error != 0) { return; }
+void T1_token_reset(char ** const fatal_error) {
+    if (*fatal_error != 0) { return; }
     
     if (tts == NULL) {
-        *sticky_error = "Can't use T1_token_reset() before T1_token_init()";
+        *fatal_error = "Can't use T1_token_reset() before T1_token_init()";
         return;
     }
     
@@ -320,9 +320,9 @@ void toktoken_register_string_literal_enum(
 
 void T1_token_set_string_literal(
     const u32 enum_value,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     if (
         tts == NULL ||
@@ -337,14 +337,14 @@ void T1_token_set_string_literal(
 static char * copy_string_to_ascii_store(
     const char * to_copy,
     const u32 data_len,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return NULL; }
+    if (*fatal_error != 0) { return NULL; }
     
     char * return_value = tts->ascii_store + tts->ascii_store_next_i;
     
     if (tts->ascii_store_next_i + data_len >= ASCII_STORE_CAP) {
-        *sticky_error = "T1_token ran out of ASCII_STORE memory";
+        *fatal_error = "T1_token ran out of ASCII_STORE memory";
         return NULL;
     } else {
         tts->ascii_store_next_i += (data_len + 1);
@@ -362,15 +362,15 @@ static char * copy_string_to_ascii_store(
 
 void T1_token_register(
     const u32 enum_value,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     if (
         tts == NULL ||
         !tts->good)
     {
-        *sticky_error = "T1_token_register() before T1_token was initialized";
+        *fatal_error = "T1_token_register() before T1_token was initialized";
         return;
     }
     
@@ -378,7 +378,7 @@ void T1_token_register(
     if (
         tts->regs_size + 1 >= REGISTERED_TOKENS_CAP)
     {
-        *sticky_error = "T1_token exceeded REGISTERED_TOKENS_CAP";
+        *fatal_error = "T1_token exceeded REGISTERED_TOKENS_CAP";
         tts->good = 0;
         return;
     }
@@ -391,7 +391,7 @@ void T1_token_register(
                 tts->next_reg.start_pattern.ascii,
                 (u32)tts->strlen(
                     tts->next_reg.start_pattern.ascii),
-                sticky_error);
+                fatal_error);
     }
     
     for (u32 i = 0; i < PATTERNS_CAP; i++) {
@@ -401,7 +401,7 @@ void T1_token_register(
                     tts->next_reg.stop_patterns[i].ascii,
                     (u32)tts->strlen(
                         tts->next_reg.stop_patterns[i].ascii),
-                    sticky_error);
+                    fatal_error);
         }
     }
     
@@ -412,7 +412,7 @@ void T1_token_register(
     
     if ((new->bitflags & T1_TOKEN_FLAG_IGNORE_CASE) > 0)
     {
-        *sticky_error = "T1_token IGNORE_CASE is unimplemented";
+        *fatal_error = "T1_token IGNORE_CASE is unimplemented";
         return;
     }
 }
@@ -796,9 +796,9 @@ static void T1_token_set_number_flags(
 
 void T1_token_run(
     const char * input,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     tts->tokens_size = 0;
     tts->numbers_size = 0;
@@ -810,7 +810,7 @@ void T1_token_run(
         tts->string_literal_enum_value == UINT32_MAX ||
         tts->string_literal_enum_value == UINT32_MAX)
     {
-        *sticky_error = "T1_token_run() called when T1_token was uninitialized";
+        *fatal_error = "T1_token_run() called when T1_token was uninitialized";
         return;
     }
     
@@ -847,7 +847,7 @@ void T1_token_run(
             {
                 previous_lit_token = &tts->tokens[tts->tokens_size];
                 if (tts->tokens_size + 1 >= TOKENS_CAP) {
-                    *sticky_error = "T1_token_run() exceeded TOKENS_CAP";
+                    *fatal_error = "T1_token_run() exceeded TOKENS_CAP";
                     tts->good = 0;
                     return;
                 }
@@ -889,7 +889,7 @@ void T1_token_run(
             
             T1Token * new = &tts->tokens[tts->tokens_size];
             if (tts->tokens_size + 1 >= TOKENS_CAP) {
-                *sticky_error = "T1_token_run() exceeded TOKENS_CAP";
+                *fatal_error = "T1_token_run() exceeded TOKENS_CAP";
                 tts->good = 0;
                 return;
             }
@@ -901,9 +901,9 @@ void T1_token_run(
                         previous_lit_token->string_value,
                         (u32)tts->strlen(
                             previous_lit_token->string_value),
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) {
+                if (*fatal_error != 0) {
                     return;
                 }
                 previous_lit_token = NULL;

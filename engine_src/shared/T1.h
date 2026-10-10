@@ -63,7 +63,7 @@ uint8_t T1_running(void);
 
 __attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_os_run_app(void);
 
 void T1_appinit_before_gpu_init(
@@ -73,13 +73,13 @@ void T1_appinit_before_gpu_init(
     void (* callback_onappclose_fptr)(void),
     void (* callback_evaluate_terminal_command)(
         char * command, char * response, uint32_t),
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_appinit_after_gpu_init_step1(
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_appinit_after_gpu_init_step2(
     int32_t throwaway_threadarg);
 void T1_os_link_gpu_to_main_window(
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 /*
 PROFILER
@@ -194,7 +194,7 @@ void T1_make_shadowmap_and_attach_to_light(
     uint32_t T1_id, uint32_t w, uint32_t h);
 
 void T1_cam_create_main_view(
-    uint32_t new_w, uint32_t new_h, char ** const sticky_error);
+    uint32_t new_w, uint32_t new_h, char ** const fatal_error);
 void T1_make_reflection_cam(
     uint32_t new_w, uint32_t new_h, float reflection_z);
 
@@ -205,20 +205,20 @@ uint8_t * T1_png_malloc_managed_from_resource(
     const char * resource_name,
     uint32_t * out_width,
     uint32_t * out_height,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 /*
 MANAGE TEXTURES
 */
 int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
 int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const char * filename, char ** const sticky_error);
-void T1_tex_files_prereg_dds_res(const char * filename, char ** const sticky_error);
+void T1_tex_files_prereg_png_res(const char * filename, char ** const fatal_error);
+void T1_tex_files_prereg_dds_res(const char * filename, char ** const fatal_error);
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
     uint32_t rows, uint32_t cols,
     uint8_t free_rgba,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
 uint16_t T1_tex_array_reg_img(
@@ -226,7 +226,7 @@ uint16_t T1_tex_array_reg_img(
     uint32_t w, uint32_t h,
     uint8_t is_render_target,
     uint8_t use_bc1_compression,
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
     const uint8_t * rgba, uint32_t rgba_size);
@@ -247,7 +247,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     uint8_t flip_uv_u,
     uint8_t flip_uv_v,
-    char ** const sticky_error);
+    char ** const fatal_error);
 int32_t T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
 float T1_objmodel_get_x_multiplier_for_width(
@@ -448,7 +448,7 @@ uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_
 /*
 TOKENIZER
 */
-void T1_token_reset(char ** const sticky_error);
+void T1_token_reset(char ** const fatal_error);
 #define T1_TOKEN_FLAG_IGNORE_CASE 1
 #define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
 #define T1_TOKEN_FLAG_LEAD_DOT_OK 4
@@ -464,9 +464,9 @@ void T1_token_set_reg_middle_cap(uint32_t middle_cap);
 void T1_token_set_reg_stop_pattern(
     const char * stop_pattern,
     uint32_t pattern_index);
-void T1_token_set_string_literal(uint32_t enum_val, char ** const sticky_error);
-void T1_token_register(uint32_t enum_value, char ** const sticky_error);
-void T1_token_run(const char * input, char ** const sticky_error);
+void T1_token_set_string_literal(uint32_t enum_val, char ** const fatal_error);
+void T1_token_register(uint32_t enum_value, char ** const fatal_error);
+void T1_token_run(const char * input, char ** const fatal_error);
 uint32_t T1_token_get_token_count(void);
 uint32_t T1_token_get_enum_value(uint16_t token_i);
 void T1_token_overwrite_enum_val(uint16_t token_i, uint32_t new_enum_val);
@@ -491,18 +491,18 @@ double T1_token_as_number_floating(int32_t at_i);
 /*
 META TYPES (registration)
 */
-#define T1_meta_struct(struct_name, sticky_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), sticky_error)
+#define T1_meta_struct(struct_name, fatal_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), fatal_error)
 void T1_meta_reg_struct(
     const char * struct_name,
     const uint32_t size_bytes,
-    char ** const sticky_error);
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, sticky_error)
-#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, sticky_error)
-#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, sticky_error)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, sticky_error)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, sticky_error)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, sticky_error)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, sticky_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, sticky_error)
+    char ** const fatal_error);
+#define T1_meta_field(parent_type_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, fatal_error)
+#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, fatal_error)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, fatal_error)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, fatal_error)
+#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, fatal_error)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, fatal_error)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, fatal_error)
 void T1_meta_reg_field(
     const char * field_name,
     uint32_t field_offset,
@@ -512,24 +512,24 @@ void T1_meta_reg_field(
     uint16_t field_array_size_2,
     uint16_t field_array_size_3,
     uint8_t is_enum,
-    char ** const sticky_error);
-#define T1_meta_enum(enum_type_name, T1_data_type, sticky_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), sticky_error)
+    char ** const fatal_error);
+#define T1_meta_enum(enum_type_name, T1_data_type, fatal_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), fatal_error)
 void T1_meta_reg_enum(
     const char * enum_type_name,
     const T1MetaType T1_type,
     const uint32_t type_size_check,
-    char ** const sticky_error);
-#define T1_meta_enum_value(enum_type_name, enum_value, sticky_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, sticky_error)
+    char ** const fatal_error);
+#define T1_meta_enum_value(enum_type_name, enum_value, fatal_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, fatal_error)
 void T1_meta_reg_enum_value(
     const char * enum_type_name,
     const char * value_name,
     int64_t value,
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_meta_reg_u4_subname_for_last_field(
     const char * subname,
     const char * enum_name_if_any,
     uint8_t is_right_nibble,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 /*
 META TYPES (querying)
@@ -539,45 +539,57 @@ void T1_meta_get_offset_and_type(
     const char * field_name,
     int32_t * out_offset,
     T1MetaType * out_data_type,
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_meta_write_to_known_field_uint(
     const char * target_parent_type,
     const char * target_field_name,
     uint64_t value_to_write_uint,
     void * target_parent_ptr,
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_meta_write_to_known_field_str(
     const char * target_parent_type,
     const char * target_field_name,
     const char * value_to_write_str,
     void * target_parent_ptr,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 /*
-STICKY ERRORS
+FATAL ERRORS
 
-I consistently use char ** const sticky_error as a 
+I consistently use char ** const fatal_error as a 
 'first error encountered' tracker, a pattern I found and
 like in the NextStep code on Apple's objective-c libs.
 
-All of the functions that take a 'sticky error' argument
-will exit immediately if the error is already set. The
-idea is for you to use it repeatedly so you don't have
-to check for errors after every call.
+- My functions taking a 'fatal error' will crash if you
+  pass NULL, it's not optional. You must declare a string
+  of your own and pass an address to it
+- My functions taking a 'fatal error' exit immediately
+  if *fatal_error is 0
+- That means you must initialize them to 0 (NULL)! Else
+  all T1 functions will just return
+- My functions refuse to overwrite an existing 'fatal
+  error', they only prepend info the string. So you
+  always have access to the first thing that went wrong,
+  even if you only check after many functions
+- Fatal errors are always fatal, the entire library will
+  become unusable when one fires. Non-fatal failures will
+  be signaled by other variables
+- Fatal errors are owned by the library, never free them
 
 These 2 functions are helpers, both allocating memory
-for a new error string.
+for a new error string. You don't need to use them if
+you don't like this error system, it's optional
 
-T1_sticky_error_new(my_message) is equivalent to this
-*sticky_error = malloc(512);
-*sticky_error[0] = '\0';
-strcat(*sticky_error, my_message);
+T1_fatal_error_new(my_message) is equivalent to this
+*fatal_error = malloc(512);
+*fatal_error[0] = '\0';
+strcat(*fatal_error, my_message);
 
-T1_sticky_error_prepend_if_bad() is for when you want
+T1_fatal_error_prepend_if_bad() is for when you want
 to add additional text to the start of an error if there,
 is one, usually because of a subprocess that may have
 gone wrong. For example, if you have a filename, pass
-data to a parser, and the parser sets the sticky error,
+data to a parser, and the parser sets the fatal error,
 it probably didn't have the filename where the error
 happened. You can then prepend that information so it
 gets passed up. It just copies the data to a new string,
@@ -586,29 +598,31 @@ leaking the old one.
 ***
 Example code
 ***
-char * sticky_error = 0;
-do_dangerous_thing_1(&sticky_error);
-do_dangerous_thing_2(&sticky_error);
+char * fatal_error = 0;
+do_dangerous_thing_1(&fatal_error);
+do_dangerous_thing_2(&fatal_error);
     -> inside this:
-    do_another_dangerous_thing(sticky_error);
-do_dangerous_thing_3(&sticky_error);
+    do_another_dangerous_thing(fatal_error);
+do_dangerous_thing_3(&fatal_error);
 
-if (*sticky_error != 0) {
-    // prepend extra info if needed
+if (*fatal_error != 0) {
+    T1_fatal_error_prepend_if_bad(
+        fatal_error,
+        "While handling foo: ");
     return; // early exit
 }
 
-do_extra_things();
+do_extra_things(); // happy path assured
 ***
 End of example code
 ***
 */
-void T1_sticky_error_new(
-    char ** const sticky_error,
+void T1_fatal_error_new(
+    char ** const fatal_error,
     const char * with_string);
 
-void T1_sticky_error_prepend_if_bad(
-    char ** const sticky_error,
+void T1_fatal_error_prepend_if_bad(
+    char ** const fatal_error,
     const char * to_append);
 
 /*
@@ -644,11 +658,18 @@ void T1_os_del_file(const char * filepath);
 void T1_os_copy_file(
     const char * filepath_src, const char * filepath_dest);
 uint64_t T1_os_get_filesize(const char * filepath);
+uint64_t T1_os_get_writable_size(const char * filename);
 uint64_t T1_os_get_resource_size(const char * res_name);
 void T1_os_read_file(const char * filepath,
-    char * recip, uint32_t * recip_size, uint64_t recip_cap, char ** const sticky_error);
+    char * recip, uint32_t * recip_size, uint64_t recip_cap, char ** const fatal_error);
 void T1_os_read_resource_file(
-    const char * filen, char * recip, uint64_t recip_cap, char ** const sticky_error);
+    const char * filename,
+    char * recip, uint64_t recip_cap,
+    char ** const fatal_error);
+void T1_os_read_writable_file(
+    const char * filename,
+    char * recip, uint64_t recip_cap,
+    char ** const fatal_error);
 void T1_os_get_dir_separator(char * recip);
 uint32_t T1_os_get_dir_separator_size(void);
 void T1_os_writable_filename_to_pathfile(

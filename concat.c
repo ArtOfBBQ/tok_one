@@ -48,7 +48,7 @@ static const char * c_files[] = {
 "decode_png.c",
 "decode_bmp.c",
 "T1_embedded_data.c",
-"T1_sticky_error.c",
+"T1_fatal_error.c",
 "T1_objc.c",
 "T1_settings.c",
 "T1_texquad.c",

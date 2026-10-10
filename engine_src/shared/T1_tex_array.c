@@ -52,9 +52,9 @@ static T1Img * extract_image(
     u32 sprite_rows,
     u32 x,
     u32 y,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return NULL; }
+    if (*fatal_error != 0) { return NULL; }
     
     T1_log_assert(x > 0);
     T1_log_assert(y > 0);
@@ -69,7 +69,7 @@ static T1Img * extract_image(
     
     T1Img * new_image = T1_mem_malloc_unmanaged(sizeof(T1Img));
     if (!new_image) {
-        *sticky_error = "Malloc fail";
+        *fatal_error = "Malloc fail";
         return NULL;
     }
     
@@ -100,7 +100,7 @@ static T1Img * extract_image(
         /* u64 subptr_size: */
             new_image->rgba_values_size);
     if (!new_image->rgba_values_page_aligned) {
-        *sticky_error = "Page-aligned malloc failure";
+        *fatal_error = "Page-aligned malloc failure";
         return NULL;
     }
     T1_std_memset(
@@ -170,9 +170,9 @@ register_to_texturearray_by_splitting_image(
     u32 rows,
     u32 columns,
     b8 free_rgba,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -182,7 +182,7 @@ register_to_texturearray_by_splitting_image(
     T1_log_assert(columns >= 1);
     
     if (new_image->rgba_values_size < 1) {
-        *sticky_error = "register_to_texturearray_by_splitting_image() but rgba_values_size was 0";
+        *fatal_error = "register_to_texturearray_by_splitting_image() but rgba_values_size was 0";
         return;
     }
         
@@ -218,9 +218,9 @@ register_to_texturearray_by_splitting_image(
                     (u32)col_i + 1,
                 /* u32 y: */
                     (u32)row_i + 1,
-                    sticky_error);
+                    fatal_error);
             
-            if (*sticky_error != 0) {
+            if (*fatal_error != 0) {
                 return;
             }
             
@@ -228,7 +228,7 @@ register_to_texturearray_by_splitting_image(
                 split_img->rgba_values_freeable == NULL ||
                 split_img->rgba_values_page_aligned == NULL)
             {
-                *sticky_error = "register_to_texturearray_by_splitting_image() failed to split image";
+                *fatal_error = "register_to_texturearray_by_splitting_image() failed to split image";
                 return;
             }
             
@@ -291,9 +291,9 @@ register_to_texturearray_by_splitting_image(
 s32 T1_tex_array_create_new_render_view(
     u32 width,
     u32 height,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return -1; }
+    if (*fatal_error != 0) { return -1; }
     
     T1_log_assert(T1_render_views != NULL);
     
@@ -346,8 +346,8 @@ s32 T1_tex_array_create_new_render_view(
             true,
         /* u32 use_bc1_compression: */
             false,
-        /* sticky_error: */
-            sticky_error);
+        /* fatal_error: */
+            fatal_error);
     
     #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
     s32 tex_array_i = T1_tex_to_array_i(tex);
@@ -510,9 +510,9 @@ void T1_tex_array_reg_new_by_splitting_img(
     u32 rows,
     u32 columns,
     b8 free_rgba,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1_log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
@@ -529,7 +529,7 @@ void T1_tex_array_reg_new_by_splitting_img(
         /* u32 rows: */ rows,
         /* u32 columns: */ columns,
         /* b8 free_rgba: */ free_rgba,
-        sticky_error);
+        fatal_error);
 }
 
 T1Tex T1_tex_array_reg_img(
@@ -538,10 +538,10 @@ T1Tex T1_tex_array_reg_img(
     u32 height,
     b8 is_render_target,
     b8 use_bc1_compression,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
     T1Tex retval = T1_TEX_NONE;
-    if (*sticky_error != 0) { return retval; }
+    if (*fatal_error != 0) { return retval; }
     
     T1_log_assert(width > 0);
     T1_log_assert(height > 0);
@@ -554,7 +554,7 @@ T1Tex T1_tex_array_reg_img(
         i < (s16)T1_tex_arrays_size;
         i++)
     {
-        if (*sticky_error != 0) { return retval; }
+        if (*fatal_error != 0) { return retval; }
         
         T1_log_assert(i < T1_TEXARRAYS_CAP);
         if (

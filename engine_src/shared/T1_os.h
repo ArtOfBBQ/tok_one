@@ -165,24 +165,24 @@ end to make windows happy
 If there's an error reading the file, the buffer's 'good' field will be set to
 0, else to 1
 */
-void T1_os_read_resource_file(
-    const c8 * filename,
-    c8 * recip,
-    u64 recip_cap,
-    char ** const sticky_error);
-
 void T1_os_read_file(
     const c8 * filepath,
     c8 * recip,
     u32 * recip_size,
     u64 recip_cap,
-    char ** const sticky_error);
+    char ** const fatal_error);
 
-void T1_os_read_file_from_writables(
+void T1_os_read_resource_file(
+    const c8 * filename,
+    c8 * recip,
+    u64 recip_cap,
+    char ** const fatal_error);
+
+void T1_os_read_writable_file(
     const c8 * filepath_inside_writables,
-    c8 * recipient,
-    u32 recipient_size,
-    char ** const sticky_error);
+    c8 * recip,
+    u64 recip_cap,
+    char ** const fatal_error);
 
 void T1_os_gpu_get_device_name(
     c8 * recipient,
@@ -289,11 +289,11 @@ void T1_os_mutex_unlock(u32 mutex_id);
 
 void T1_os_layer_start_window_resize(u64 timestamp);
 
-void T1_os_create_main_window(char ** const sticky_error);
+void T1_os_create_main_window(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
 void T1_os_link_gpu_to_main_window(
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 void T1_os_shutdown(void);
 

@@ -204,18 +204,18 @@ u64 T1_os_get_writable_size(const char * filename) {
     return T1_os_get_filesize(pathfile);
 }
 
-void T1_os_read_file_from_writables(
-    const char * filepath_in_writables,
+void T1_os_read_writable_file(
+    const char * filename,
     char * recip,
-    const u32 recip_size,
-    char ** const sticky_error)
+    const u64 recip_cap,
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     char filepath[512];
     T1_os_writable_filename_to_pathfile(
         /* filename: */
-            filepath_in_writables,
+            filename,
         /* recipient: */
             filepath,
         /* recipient_capacity: */
@@ -229,19 +229,19 @@ void T1_os_read_file_from_writables(
             recip,
             &bytes_read,
         /* u64 * size_without_term: */
-            recip_size,
-        /* char ** const sticky_error: */
-            sticky_error);
+            recip_cap,
+        /* char ** const fatal_error: */
+            fatal_error);
     
-    if (bytes_read != recip_size) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
-        T1_std_strcpy_cap(*sticky_error, 512, "Error reading writable folder resource: "); 
-        T1_std_strcat_cap(*sticky_error, 512, filepath_in_writables);
-        T1_std_strcat_cap(*sticky_error, 512, ", expected ");
-        T1_std_strcat_u32_cap(*sticky_error, 512, recip_size);
-        T1_std_strcat_cap(*sticky_error, 512, " bytes, got: ");
-        T1_std_strcat_u32_cap(*sticky_error, 512, bytes_read);
+    if (bytes_read != recip_cap) {
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
+        T1_std_strcpy_cap(*fatal_error, 512, "Error reading writable folder resource: "); 
+        T1_std_strcat_cap(*fatal_error, 512, filename);
+        T1_std_strcat_cap(*fatal_error, 512, ", expected ");
+        T1_std_strcat_u32_cap(*fatal_error, 512, (u32)recip_cap);
+        T1_std_strcat_cap(*fatal_error, 512, " bytes, got: ");
+        T1_std_strcat_u32_cap(*fatal_error, 512, bytes_read);
         return;
     }
 }
@@ -272,13 +272,10 @@ void T1_os_write_file_to_writables(
             good);
 }
 
-void
-T1_os_write_rgba_to_writables(
+void T1_os_write_rgba_to_writables(
     const char * local_filename,
-    u8 * rgba,
-    const u32 rgba_size,
-    const u32 width,
-    const u32 height,
+    u8 * rgba, u32 rgba_size,
+    u32 width, u32 height,
     u8 * good)
 {
     u32 bmp_cap = rgba_size + 10000;
@@ -327,7 +324,6 @@ T1_os_write_rgba_to_writables(
             good);
 }
 
-
 u8 T1_os_res_exists(const char * resource_name) {
     char pathfile[500];
     T1_os_res_filename_to_pathfile(
@@ -343,9 +339,9 @@ void T1_os_read_resource_file(
     const char * filename,
     char * recip,
     const u64 recip_cap,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     char * pathfile = T1_mem_malloc_managed(500);
     T1_std_memset(pathfile, 0, 500);
@@ -364,25 +360,24 @@ void T1_os_read_resource_file(
             &bytes_read,
         /* const u64 recip_cap :*/
             recip_cap,
-        /* char ** const sticky_error: */
-            sticky_error);
+        /* char ** const fatal_error: */
+            fatal_error);
     
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1_mem_free_managed(pathfile);
     
     if (bytes_read != recip_cap) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_strcpy_cap(*sticky_error, 512, "T1_os_read_resource_file() Error reading: '");
-        T1_std_strcat_cap(*sticky_error, 512, filename);
-        T1_std_strcat_cap(*sticky_error, 512, " expected ");
-        T1_std_strcat_u32_cap(*sticky_error, 512, (u32)recip_cap);
-        T1_std_strcat_cap(*sticky_error, 512, " bytes, got: ");
-        T1_std_strcat_u32_cap(*sticky_error, 512, bytes_read);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_strcpy_cap(*fatal_error, 512, "T1_os_read_resource_file() Error reading: '");
+        T1_std_strcat_cap(*fatal_error, 512, filename);
+        T1_std_strcat_cap(*fatal_error, 512, " expected ");
+        T1_std_strcat_u32_cap(*fatal_error, 512, (u32)recip_cap);
+        T1_std_strcat_cap(*fatal_error, 512, " bytes, got: ");
+        T1_std_strcat_u32_cap(*fatal_error, 512, bytes_read);
         return;
     }
 }
-
 
 void T1_os_res_filename_to_pathfile(
     const char * filename,

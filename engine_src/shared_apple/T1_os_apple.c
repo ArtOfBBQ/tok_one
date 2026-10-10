@@ -219,12 +219,12 @@ void T1_os_read_file(
     char * recip,
     u32 * recip_size,
     const u64 recip_cap,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     if (filepath == NULL || filepath[0] == '\0') {
-        *sticky_error = "T1_os_read_file() was passed an empty filepath param";
+        *fatal_error = "T1_os_read_file() was passed an empty filepath param";
         return;
     }
     
@@ -246,15 +246,15 @@ void T1_os_read_file(
         recip_cap >= UINT32_MAX ||
         T1_objc_msg(file_data, T1_os_apple_s->sel_length) >= UINT32_MAX)
     {
-        T1_sticky_error_new(
-            sticky_error,  
+        T1_fatal_error_new(
+            fatal_error,  
             "T1_os_read_file() Error - failed [NSData initWithContentsOfFile: ");
         if (T1_std_strlen(filepath) < 450) {
-            T1_std_strcat_cap(*sticky_error, 512, filepath);
+            T1_std_strcat_cap(*fatal_error, 512, filepath);
         } else {
-            T1_std_strcat_cap(*sticky_error, 512, "450+ bytes filepath");
+            T1_std_strcat_cap(*fatal_error, 512, "450+ bytes filepath");
         }
-        T1_std_strcat_cap(*sticky_error, 512, "]");
+        T1_std_strcat_cap(*fatal_error, 512, "]");
         *recip_size = 0;
         return;
     }

@@ -166,15 +166,15 @@ void T1_make_shadowmap_and_attach_to_light(
 void T1_cam_create_main_view(
     u32 new_cam_width,
     u32 new_cam_height,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
     T1_log_assert(T1_render_views->size == 0);
     
     s32 rv_i = T1_tex_array_create_new_render_view(
         new_cam_width,
         new_cam_height,
-        sticky_error);
-    if (*sticky_error != 0) { return; }
+        fatal_error);
+    if (*fatal_error != 0) { return; }
     
     if (rv_i != 0) { return; }
     
@@ -263,9 +263,9 @@ u8 * T1_png_malloc_managed_from_resource(
     const c8 * resource_name,
     u32 * out_width,
     u32 * out_height,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return NULL; }
+    if (*fatal_error != 0) { return NULL; }
     *out_width = 0;
     *out_height = 0;
     
@@ -277,7 +277,7 @@ u8 * T1_png_malloc_managed_from_resource(
     
     char * png = T1_mem_malloc_managed(png_cap+1);
     if (!png) {
-        *sticky_error = "Malloc fail";
+        *fatal_error = "Malloc fail";
         return NULL;
     }
     
@@ -304,10 +304,10 @@ u8 * T1_png_malloc_managed_from_resource(
             &png_size,
         /* u64 recip_cap: */
             png_cap,
-        /* char ** const sticky_error: */
-            sticky_error);
+        /* char ** const fatal_error: */
+            fatal_error);
     
-    if (*sticky_error != 0) {
+    if (*fatal_error != 0) {
         T1_mem_free_managed(png);
         return NULL;
     }
@@ -317,9 +317,9 @@ u8 * T1_png_malloc_managed_from_resource(
         png_size,
         out_width,
         out_height,
-        sticky_error);
+        fatal_error);
     
-    if (*sticky_error != 0) {
+    if (*fatal_error != 0) {
         T1_mem_free_managed(png);
         return NULL;
     }
@@ -340,7 +340,7 @@ u8 * T1_png_malloc_managed_from_resource(
         /* u32 thread_id: */
             0,
         /* u8 * good: */
-            sticky_error);
+            fatal_error);
     
     T1_mem_free_managed(png);
     return rgba;

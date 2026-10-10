@@ -118,9 +118,9 @@ static void T1_mtlparser_parse_single_string_stat(
     u16 * i,
     const char * material_name,
     char * string_stat,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     char initial_token_name[64];
     initial_token_name[0] = '\0';
@@ -134,27 +134,27 @@ static void T1_mtlparser_parse_single_string_stat(
     stack_string_64bytes[0] = '\0';
     
     if (!T1_mtlparser_s->first_newmtl_found) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "Material: ",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             material_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             " '",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             initial_token_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "' call before newmtl!",
             512);
         return;
@@ -174,22 +174,22 @@ static void T1_mtlparser_parse_single_string_stat(
         !T1_token_get_string_value(*i) ||
         T1_token_get_string_value_size(*i) < 1)
     {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "Material: ",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             material_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "- expected a string literal after '",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             T1_token_get_string_value(*i),
             512);
         return;
@@ -206,9 +206,9 @@ static void T1_mtlparser_parse_single_f32_stat(
     u16 * i,
     const char * material_name,
     f32 * f32_stat,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     (void)material_name;
     
@@ -227,18 +227,18 @@ static void T1_mtlparser_parse_single_f32_stat(
     stack_string_64bytes[0] = '\0';
     
     if (!T1_mtlparser_s->first_newmtl_found) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "'",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             initial_token_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "' call before newmtl!",
             512);
         return;
@@ -255,18 +255,18 @@ static void T1_mtlparser_parse_single_f32_stat(
         !T1_token_is_number(*i) ||
         !T1_token_fits_f64(*i))
     {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "Expected a f32 after '",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             initial_token_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "'.",
             512);
         return;
@@ -280,9 +280,9 @@ static void T1_mtlparser_parse_rgb_token(
     const char * material_name,
     f32 * rgb_stat,
     u32 * already_set_flag,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     char initial_token_name[64];
     initial_token_name[0] = '\0';
@@ -297,46 +297,46 @@ static void T1_mtlparser_parse_rgb_token(
     stack_string_64bytes[0] = '\0';
     
     if (!T1_mtlparser_s->first_newmtl_found) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "'",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             initial_token_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "' call before newmtl!",
             512);
         return;
     }
     
     if (*already_set_flag) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "Duplicate '",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             T1_token_get_string_value(*i) == NULL ?
                 "NULL" :
                 T1_token_get_string_value(*i),
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "' entry for same material (",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             material_name,
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             ")",
             512);
         return;
@@ -345,19 +345,19 @@ static void T1_mtlparser_parse_rgb_token(
     
     // we expect 3 f32 tokens to follow
     if (*i + 3 >= T1_token_get_token_count()) {
-        *sticky_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*sticky_error, 0, 512);
+        *fatal_error = T1_mem_malloc_unmanaged(512);
+        T1_std_memset(*fatal_error, 0, 512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "Expected 3+ more tokens after '",
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             T1_token_get_string_value(*i) == NULL ?
                 "NULL" : T1_token_get_string_value(*i),
             512);
         T1_mtlparser_s->mtlparser_strlcat(
-            *sticky_error,
+            *fatal_error,
             "' token",
             512);
         return;
@@ -378,8 +378,8 @@ static void T1_mtlparser_parse_rgb_token(
             !T1_token_is_number(*i) ||
             !T1_token_fits_f64(*i))
         {
-            *sticky_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*sticky_error, 0, 512);
+            *fatal_error = T1_mem_malloc_unmanaged(512);
+            T1_std_memset(*fatal_error, 0, 512);
             stack_string_64bytes[0] = (char)('0' + rgb_i);
             stack_string_64bytes[1] = '\0';
             T1_mtlparser_uint_to_string(
@@ -387,20 +387,20 @@ static void T1_mtlparser_parse_rgb_token(
                 stack_string_64bytes);
             
             T1_mtlparser_s->mtlparser_strlcat(
-                *sticky_error,
+                *fatal_error,
                 "Expected 3 f32 values (rgb values)"
                 " after '",
                 512);
             T1_mtlparser_s->mtlparser_strlcat(
-                *sticky_error,
+                *fatal_error,
                 initial_token_name,
                 512);
             T1_mtlparser_s->mtlparser_strlcat(
-                *sticky_error,
+                *fatal_error,
                 "', got: ",
                 512);
             T1_mtlparser_s->mtlparser_strlcat(
-                *sticky_error,
+                *fatal_error,
                 stack_string_64bytes,
                 512);
             return;
@@ -431,13 +431,13 @@ void T1_mtlparser_parse(
     u32 * recipient_size,
     const u32 recipient_cap,
     const char * input,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     *recipient_size = 0;
     
-    T1_token_reset(sticky_error);
-    if (*sticky_error != 0) { return; }
+    T1_token_reset(fatal_error);
+    if (*fatal_error != 0) { return; }
     
     T1_token_set_reg_bitflags(
         T1_TOKEN_FLAG_LEAD_DOT_OK |
@@ -448,190 +448,190 @@ void T1_mtlparser_parse(
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("newmtl ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_NEWMTL, sticky_error);
+    T1_token_register(MTLTOKEN_NEWMTL, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("USE_BASE_MATERIAL");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_USEBASEMTL, sticky_error);
+    T1_token_register(MTLTOKEN_USEBASEMTL, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("#T1");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_T1_COMMENT, sticky_error);
+    T1_token_register(MTLTOKEN_T1_COMMENT, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("#");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_COMMENT, sticky_error);
+    T1_token_register(MTLTOKEN_COMMENT, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("\n");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_NEWLINE, sticky_error);
+    T1_token_register(MTLTOKEN_NEWLINE, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern(" ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_SPACE, sticky_error);
+    T1_token_register(MTLTOKEN_SPACE, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ns ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_NS, sticky_error);
+    T1_token_register(MTLTOKEN_NS, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_Ka ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_AMBIENT_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_AMBIENT_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_Kd ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_DIFFUSE_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_DIFFUSE_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_Ks ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_SPECULAR_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_SPECULAR_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_d ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ALPHA_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_ALPHA_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("bump ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_bump ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_Bump ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, sticky_error);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("-bm ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_BUMP_MAP_ARG_INTENSITY, sticky_error);
+    T1_token_register(MTLTOKEN_BUMP_MAP_ARG_INTENSITY, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("map_Ns ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_SPECULAR_EXPONENT_MAP,sticky_error);
+    T1_token_register(MTLTOKEN_SPECULAR_EXPONENT_MAP,fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ka ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_AMBIENT_KA, sticky_error);
+    T1_token_register(MTLTOKEN_AMBIENT_KA, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Kd ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_DIFFUSE_KD, sticky_error);
+    T1_token_register(MTLTOKEN_DIFFUSE_KD, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ks ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_SPECULAR_KS, sticky_error);
+    T1_token_register(MTLTOKEN_SPECULAR_KS, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ke ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_EMISSIVE_KE, sticky_error);
+    T1_token_register(MTLTOKEN_EMISSIVE_KE, fatal_error);
 
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ni ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_REFRACTION_NI, sticky_error);
+    T1_token_register(MTLTOKEN_REFRACTION_NI, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("d ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ALPHA_d, sticky_error);
+    T1_token_register(MTLTOKEN_ALPHA_d, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("illum ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ILLUM, sticky_error);
+    T1_token_register(MTLTOKEN_ILLUM, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Pr ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ROUGHNESS, sticky_error);
+    T1_token_register(MTLTOKEN_ROUGHNESS, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Pm ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_METALLIC, sticky_error);
+    T1_token_register(MTLTOKEN_METALLIC, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Ps ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_SHEEN, sticky_error);
+    T1_token_register(MTLTOKEN_SHEEN, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Pc ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_CLEARCOAT, sticky_error);
+    T1_token_register(MTLTOKEN_CLEARCOAT, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("Pcr ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_CLEARCOAT_ROUGHNESS, sticky_error);
+    T1_token_register(MTLTOKEN_CLEARCOAT_ROUGHNESS, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("aniso ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ANISOTROPY, sticky_error);
+    T1_token_register(MTLTOKEN_ANISOTROPY, fatal_error);
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("anisor ");
     T1_token_set_reg_middle_cap(0);
-    T1_token_register(MTLTOKEN_ANISOTROPY_ROTATION, sticky_error);
+    T1_token_register(MTLTOKEN_ANISOTROPY_ROTATION, fatal_error);
     
-    T1_token_set_string_literal(MTLTOKEN_STRINGLITERAL, sticky_error);
-    if (*sticky_error != 0) { return; }
+    T1_token_set_string_literal(MTLTOKEN_STRINGLITERAL, fatal_error);
+    if (*fatal_error != 0) { return; }
     
     T1_token_run(
         /* const char * input: */
             input,
         /* u8 * good: */
-            sticky_error);
+            fatal_error);
     
     T1ParsedMaterial * current_material = NULL;
     
@@ -663,7 +663,7 @@ void T1_mtlparser_parse(
                 T1_mtlparser_s->first_newmtl_found = 1;
                 
                 if (*recipient_size + 1 >= recipient_cap) {
-                    *sticky_error = "T1_mtlparser_parse() overflowing recipient";
+                    *fatal_error = "T1_mtlparser_parse() overflowing recipient";
                     return;
                 }
                 current_material = recipient + *recipient_size;
@@ -680,7 +680,7 @@ void T1_mtlparser_parse(
                     T1_token_get_enum_value(i) != MTLTOKEN_STRINGLITERAL ||
                     T1_token_get_string_value_size(i) < 1)
                 {
-                    *sticky_error = "T1_mtlparser_parse() expected a material name after newmtl";
+                    *fatal_error = "T1_mtlparser_parse() expected a material name after newmtl";
                     return;
                 }
                 T1_mtlparser_s->mtlparser_strlcat(
@@ -706,10 +706,10 @@ void T1_mtlparser_parse(
                 
                 i++;
                 if (T1_token_get_enum_value(i) != MTLTOKEN_SPACE) {
-                    *sticky_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*sticky_error, 0, 512);
+                    *fatal_error = T1_mem_malloc_unmanaged(512);
+                    T1_std_memset(*fatal_error, 0, 512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         "T1_mtlparser_parse() expected a space after special comment #T1",
                         512);
                     return;
@@ -717,17 +717,17 @@ void T1_mtlparser_parse(
                 
                 i++;
                 if (T1_token_get_enum_value(i) != MTLTOKEN_STRINGLITERAL) {
-                    *sticky_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*sticky_error, 0, 512);
+                    *fatal_error = T1_mem_malloc_unmanaged(512);
+                    T1_std_memset(*fatal_error, 0, 512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         "T1_mtlparser_parse() expected a "
                         "string literal describing a "
                         "special property after special "
                         "comment #T1, got: ",
                         512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         T1_token_get_string_value(i),
                         512);
                     return;
@@ -747,14 +747,14 @@ void T1_mtlparser_parse(
                 {
                     target_f32 = &current_material->T1_uv_scroll[1];
                 } else {
-                    *sticky_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*sticky_error, 0, 512);
+                    *fatal_error = T1_mem_malloc_unmanaged(512);
+                    T1_std_memset(*fatal_error, 0, 512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         "T1_mtlparser_parse(): unrecognized special embedded comment property: ",
                         512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         T1_token_get_string_value(i),
                         512);
                     return;
@@ -767,10 +767,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         target_f32,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 
                 break;
             }
@@ -783,9 +783,9 @@ void T1_mtlparser_parse(
                     /* f32 * f32_stat: */
                         &current_material->specular_exponent,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_ALPHA_d: {
@@ -796,10 +796,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->alpha,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_ILLUM: {
@@ -811,9 +811,9 @@ void T1_mtlparser_parse(
                     /* f32 * f32_stat: */
                         &current_material->illum,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_REFRACTION_NI: {
@@ -828,9 +828,9 @@ void T1_mtlparser_parse(
                     /* f32 * f32_stat: */
                         &current_material->refraction,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_AMBIENT_KA: {
@@ -845,9 +845,9 @@ void T1_mtlparser_parse(
                     /* u32 * already_set_flag: */
                         &T1_mtlparser_s->ambient_set_for_current_mtl,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_DIFFUSE_KD: {
@@ -861,9 +861,9 @@ void T1_mtlparser_parse(
                     /* u32 * already_set_flag: */
                         &T1_mtlparser_s->diffuse_set_for_current_mtl,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_SPECULAR_KS: {
@@ -877,9 +877,9 @@ void T1_mtlparser_parse(
                     /* u32 * already_set_flag: */
                         &T1_mtlparser_s->specular_set_for_current_mtl,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }                
+                if (*fatal_error != 0) { return; }                
                 break;
             }
             case MTLTOKEN_EMISSIVE_KE: {
@@ -892,26 +892,26 @@ void T1_mtlparser_parse(
                         current_material->emissive_rgb,
                     /* u32 * already_set_flag: */
                         &T1_mtlparser_s->emissive_set_for_current_mtl,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_STRINGLITERAL: {
-                *sticky_error = T1_mem_malloc_unmanaged(512);
-                T1_std_memset(*sticky_error, 0, 512);
+                *fatal_error = T1_mem_malloc_unmanaged(512);
+                T1_std_memset(*fatal_error, 0, 512);
                 
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     "T1_mtlparser_parse(): unexpected string literal: '",
                     512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     T1_token_get_string_value(i),
                     512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     "' (",
                     512);
                 stack_string_64bytes[0] = '\0';
@@ -919,11 +919,11 @@ void T1_mtlparser_parse(
                     T1_token_get_string_value_size(i),
                     stack_string_64bytes);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     stack_string_64bytes,
                     512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     " bytes)",
                     512);
                 return;
@@ -938,10 +938,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->ambient_map,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_DIFFUSE_MAP: {
@@ -953,10 +953,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->diffuse_map,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_SPECULAR_MAP: {
@@ -971,9 +971,9 @@ void T1_mtlparser_parse(
                     /* char * string_stat: */
                         current_material->specular_exponent_map,
                     /* u8 * good: */
-                        sticky_error);
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }                
+                if (*fatal_error != 0) { return; }                
                 break;
             }
             case MTLTOKEN_ALPHA_MAP: {
@@ -981,14 +981,14 @@ void T1_mtlparser_parse(
                 i++;
                 
                 if (T1_token_get_enum_value(i) != MTLTOKEN_STRINGLITERAL) {
-                    *sticky_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*sticky_error, 0, 512);
+                    *fatal_error = T1_mem_malloc_unmanaged(512);
+                    T1_std_memset(*fatal_error, 0, 512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         "T1_mtlparser_parse(): unexpected token type after map_d: ",
                         512);
                     T1_mtlparser_s->mtlparser_strlcat(
-                        *sticky_error,
+                        *fatal_error,
                         T1_token_get_string_value(i),
                         512);
                     return;
@@ -1007,8 +1007,8 @@ void T1_mtlparser_parse(
                             current_material->name,
                         /* f32 * f32_stat: */
                             &current_material->bump_map_intensity,
-                        /* sticky_error: */
-                            sticky_error);
+                        /* fatal_error: */
+                            fatal_error);
                 } else {
                     current_material->bump_map_intensity = 1.0f;
                 }
@@ -1020,10 +1020,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* char * string_stat: */
                         current_material->bump_or_normal_map,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_ROUGHNESS: {
@@ -1034,10 +1034,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->roughness,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_METALLIC: {
@@ -1048,10 +1048,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->metallic,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_SHEEN: {
@@ -1062,10 +1062,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->sheen,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_CLEARCOAT: {
@@ -1076,10 +1076,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->clearcoat,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_CLEARCOAT_ROUGHNESS: {
@@ -1090,10 +1090,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->clearcoat_roughness,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_ANISOTROPY: {
@@ -1104,10 +1104,10 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->anisotropy,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_ANISOTROPY_ROTATION: {
@@ -1118,19 +1118,19 @@ void T1_mtlparser_parse(
                         current_material->name,
                     /* f32 * f32_stat: */
                         &current_material->anisotropy_rotation,
-                    /* sticky_error: */
-                        sticky_error);
+                    /* fatal_error: */
+                        fatal_error);
                 
-                if (*sticky_error != 0) { return; }
+                if (*fatal_error != 0) { return; }
                 break;
             }
             case MTLTOKEN_SPACE:
                 break;
             default:
-                *sticky_error = T1_mem_malloc_unmanaged(512);
-                T1_std_memset(*sticky_error, 0, 512);
+                *fatal_error = T1_mem_malloc_unmanaged(512);
+                T1_std_memset(*fatal_error, 0, 512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     "T1_mtlparser_parse(): unhandled token type: ",
                     512);
                 stack_string_64bytes[0] = '\0';
@@ -1138,15 +1138,15 @@ void T1_mtlparser_parse(
                     T1_token_get_enum_value(i),
                     stack_string_64bytes);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     stack_string_64bytes,
                     512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     " with value: ",
                     512);
                 T1_mtlparser_s->mtlparser_strlcat(
-                    *sticky_error,
+                    *fatal_error,
                     T1_token_get_string_value(i) == NULL ?
                         "NULL" : T1_token_get_string_value(i),
                     512);

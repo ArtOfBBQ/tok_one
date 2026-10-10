@@ -51,13 +51,13 @@ static T1ObjCState * T1_objc_s = NULL;
 
 void T1_objc_init(
     void * (* malloc_perma)(size_t),
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     T1_objc_s = malloc_perma(sizeof(T1ObjCState));
     if (!T1_objc_s) {
-        *sticky_error = "Failed T1_objc_init() - no memory";
+        *fatal_error = "Failed T1_objc_init() - no memory";
         return;
     }
     T1_std_memset(T1_objc_s, 0, sizeof(T1ObjCState));
@@ -66,7 +66,7 @@ void T1_objc_init(
         "/usr/lib/libobjc.A.dylib",
         RTLD_LAZY);
     if (!libobjc) {
-        *sticky_error = "Failed to load libobjc.A.dylib";
+        *fatal_error = "Failed to load libobjc.A.dylib";
         return;
     }
     
@@ -74,7 +74,7 @@ void T1_objc_init(
         "/System/Library/Frameworks/Foundation.framework/Foundation",
         RTLD_LAZY);
     if (!libfoundation) {
-        *sticky_error = "Failed to load Foundation.framework";
+        *fatal_error = "Failed to load Foundation.framework";
         return;
     }
     
@@ -82,7 +82,7 @@ void T1_objc_init(
         libobjc,
         "objc_msgSend");
     if (!T1_objc_s->msg) {
-        *sticky_error = "Failed to load ";
+        *fatal_error = "Failed to load ";
         return;
     }
     
@@ -113,7 +113,7 @@ void T1_objc_init(
         libobjc,
         "sel_registerName");
     if (!T1_objc_s->reg_name) {
-        *sticky_error = "Failed to load sel_registerName";
+        *fatal_error = "Failed to load sel_registerName";
         return;
     }
     
@@ -121,7 +121,7 @@ void T1_objc_init(
         libobjc,
         "objc_getClass");
     if (!T1_objc_s->get_class) {
-        *sticky_error = "Failed to load objc_getClass";
+        *fatal_error = "Failed to load objc_getClass";
         return;
     }
     
@@ -129,7 +129,7 @@ void T1_objc_init(
         libobjc,
         "objc_registerClassPair");
     if (!T1_objc_s->register_class_pair) {
-        *sticky_error = "Failed to load objc_registerClassPair";
+        *fatal_error = "Failed to load objc_registerClassPair";
         return;
     }
     
@@ -137,7 +137,7 @@ void T1_objc_init(
         libobjc,
         "class_addMethod");
     if (!T1_objc_s->class_add_method) {
-        *sticky_error = "Failed to load class_addMethod";
+        *fatal_error = "Failed to load class_addMethod";
         return;
     }
     
@@ -145,7 +145,7 @@ void T1_objc_init(
         libobjc,
         "objc_allocateClassPair");
     if (!T1_objc_s->allocate_class_pair) {
-        *sticky_error = "Failed to load objc_allocateClassPair";
+        *fatal_error = "Failed to load objc_allocateClassPair";
         return;
     }
     
@@ -154,14 +154,14 @@ void T1_objc_init(
     T1_objc_s->class_nsstring = T1_objc_s->get_class(
         "NSString");
     if (!T1_objc_s->good) {
-        *sticky_error = "Failed to load NSString";
+        *fatal_error = "Failed to load NSString";
         return;
     }
     
     T1_objc_s->sel_string_with_utf8_string = T1_objc_s->reg_name("stringWithUTF8String:");
     T1_objc_s->sel_c_string_using_encoding = T1_objc_s->reg_name("cStringUsingEncoding:");
     if (!T1_objc_s->good) {
-        *sticky_error = "Failed to load NSString selectors.";
+        *fatal_error = "Failed to load NSString selectors.";
         return;
     }
     
@@ -171,7 +171,7 @@ void T1_objc_init(
     T1_objc_s->sel_run_modal = T1_objc_reg_sel(
         "runModal");
     if (!T1_objc_s->good) {
-        *sticky_error = "Failed to load NSAlert selectors.";
+        *fatal_error = "Failed to load NSAlert selectors.";
         return;
     }
     

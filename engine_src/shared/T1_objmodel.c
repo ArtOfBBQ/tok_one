@@ -613,9 +613,9 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
      T1ParsedObj * arg_parsed_obj,
      T1ParsedMaterial * parsed_materials,
      const u32 parsed_materials_size,
-     char ** const sticky_error)
+     char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return -1; }
+    if (*fatal_error != 0) { return -1; }
     
     f32 invert_z_axis_modifier = -1.0f;
     
@@ -731,10 +731,10 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 {
                     if ((locked_mat_s32->normalmap_tex_and_tex & 0x0000FFFF) == T1_TEX_NONE)
                     {
-                        *sticky_error = T1_mem_malloc_unmanaged(512);
-                        T1_std_memset(*sticky_error, 0, 512);
-                        T1_std_strcpy_cap(*sticky_error, 512, "Missing material texture: ");
-                        T1_std_strcat_cap(*sticky_error, 512,
+                        *fatal_error = T1_mem_malloc_unmanaged(512);
+                        T1_std_memset(*fatal_error, 0, 512);
+                        T1_std_strcpy_cap(*fatal_error, 512, "Missing material texture: ");
+                        T1_std_strcat_cap(*fatal_error, 512,
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
                         return -1;
@@ -987,7 +987,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 T1_mesh_summary_all_vertices->
                     size >= T1_LOCKED_VERTEX_CAP)
             {
-                *sticky_error = "overflowing T1_LOCKED_VERTEX_CAP";
+                *fatal_error = "overflowing T1_LOCKED_VERTEX_CAP";
                 return -1;
             }
             
@@ -1165,9 +1165,9 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * original_mtl_filename,
     const char * obj_text,
     const char * mtl_text,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return -1; }
+    if (*fatal_error != 0) { return -1; }
     T1_log_assert(parsed_obj != NULL);
    
     T1_objparser_parse(
@@ -1175,10 +1175,10 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
             parsed_obj,
         /* char * raw_buffer: */
             obj_text,
-        /* sticky_error: */
-            sticky_error);
+        /* fatal_error: */
+            fatal_error);
     
-    if (*sticky_error != 0) {
+    if (*fatal_error != 0) {
         char prepend[256];
         T1_std_memset(prepend, 0, 256);
         T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
@@ -1186,7 +1186,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         T1_std_strcat_cap(prepend, 512, " & .mtl: ");
         T1_std_strcat_cap(prepend, 512, original_mtl_filename);
         T1_std_strcat_cap(prepend, 512, " parser error: ");
-        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
+        T1_fatal_error_prepend_if_bad(fatal_error, prepend);
         return -1;
     }
     
@@ -1194,7 +1194,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_obj->vertices_count < 1 ||
         (parsed_obj->triangles_count + parsed_obj->quads_count) < 1)
     {
-        *sticky_error = "T1_objmodel parsed obj has no vertices or no triangles";
+        *fatal_error = "T1_objmodel parsed obj has no vertices or no triangles";
         return -1;
     }
     
@@ -1204,7 +1204,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
             parsed_obj,
             NULL,
             0,
-            sticky_error);
+            fatal_error);
     }
     
     u32 parsed_materials_cap = 20;
@@ -1226,9 +1226,9 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         /* const char * input: */
             mtl_text,
         /* u32 * good: */
-            sticky_error);
+            fatal_error);
     
-    if (*sticky_error != 0) {
+    if (*fatal_error != 0) {
         char prepend[256];
         T1_std_memset(prepend, 0, 256);
         T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
@@ -1236,7 +1236,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         T1_std_strcat_cap(prepend, 512, " & .mtl: ");
         T1_std_strcat_cap(prepend, 512, original_mtl_filename);
         T1_std_strcat_cap(prepend, 512, " parser error: ");
-        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
+        T1_fatal_error_prepend_if_bad(fatal_error, prepend);
         return -1;
     }
     
@@ -1245,9 +1245,9 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_obj,
         parsed_materials,
         parsed_materials_size,
-        sticky_error);
+        fatal_error);
     
-    if (*sticky_error != 0) {
+    if (*fatal_error != 0) {
         char prepend[256];
         T1_std_memset(prepend, 0, 256);
         T1_std_strcpy_cap(prepend, 256, "T1_objmodel_new_mesh_from() .obj: ");
@@ -1255,7 +1255,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
         T1_std_strcat_cap(prepend, 512, " & .mtl: ");
         T1_std_strcat_cap(prepend, 512, original_mtl_filename);
         T1_std_strcat_cap(prepend, 512, " parser error: ");
-        T1_sticky_error_prepend_if_bad(sticky_error, prepend);
+        T1_fatal_error_prepend_if_bad(fatal_error, prepend);
         return -1;
     }
     
@@ -1447,9 +1447,9 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     const u8 flip_uv_u,
     const u8 flip_uv_v,
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return -1; }
+    if (*fatal_error != 0) { return -1; }
     
     T1_log_assert(
         T1_mesh_summary_list_size <
@@ -1460,12 +1460,12 @@ s32 T1_objmodel_new_mesh_id_from_resources(
     
     if (contents_cap < 1)
     {
-        T1_sticky_error_new(
-            sticky_error,
+        T1_fatal_error_new(
+            fatal_error,
             "Early exit from objmodel_new_mesh_id_from_res(), "
             "obj resource: ");
-        T1_std_strcat_cap(*sticky_error, 256, obj_filename);
-        T1_std_strcat_cap(*sticky_error, 256, " doesn't exist...\n");
+        T1_std_strcat_cap(*fatal_error, 256, obj_filename);
+        T1_std_strcat_cap(*fatal_error, 256, " doesn't exist...\n");
         return -1;
     }
     
@@ -1478,10 +1478,10 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             contents,
         /* const u64 recip_cap: */
             contents_cap,
-        /* sticky_error: */
-            sticky_error);
+        /* fatal_error: */
+            fatal_error);
     
-    if (*sticky_error != 0) { return -1; }
+    if (*fatal_error != 0) { return -1; }
     
     u64 mtl_contents_cap = 0;
     char * mtl_contents = NULL;
@@ -1494,20 +1494,20 @@ s32 T1_objmodel_new_mesh_id_from_resources(
         
         if (mtl_contents_cap < 1)
         {
-            *sticky_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*sticky_error, 0, 512);
+            *fatal_error = T1_mem_malloc_unmanaged(512);
+            T1_std_memset(*fatal_error, 0, 512);
             T1_std_strcpy_cap(
-                *sticky_error,
+                *fatal_error,
                 512,
                 "Early exit from "
                 "objmodel_new_mesh_id_from_res(), "
                 " mtl resource: ");
             T1_std_strcat_cap(
-                *sticky_error,
+                *fatal_error,
                 512,
                 mtl_filename);
             T1_std_strcat_cap(
-                *sticky_error,
+                *fatal_error,
                 512,
                 " doesn't exist...\n");
             return -1;
@@ -1524,9 +1524,9 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             /* const u64 recip_cap: */
                 mtl_contents_cap,
             /* u8 * good: */
-                sticky_error);
+                fatal_error);
         
-        if (*sticky_error != 0) {
+        if (*fatal_error != 0) {
             T1_mem_free_managed(contents);
             T1_mem_free_managed(mtl_contents);
             return -1;
@@ -1540,11 +1540,11 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             contents,
         /* const char * mtl_text: */
             mtl_contents,
-        /* sticky_error: */ 
-            sticky_error);
+        /* fatal_error: */ 
+            fatal_error);
     
-    if (return_value < 0 || *sticky_error != 0) {
-        T1_assert(*sticky_error != 0);
+    if (return_value < 0 || *fatal_error != 0) {
+        T1_assert(*fatal_error != 0);
         T1_assert(return_value < 0);
         return return_value;
     }

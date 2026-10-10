@@ -78,7 +78,7 @@ static void sample_messaging_use_repeatedly(void) {
 
 void T1_objc_init(
     void * (* malloc_perma)(size_t),
-    char ** const sticky_error);
+    char ** const fatal_error);
 
 b8 T1_objc_open_framework(
     const char * framework_name);

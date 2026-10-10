@@ -14,9 +14,9 @@ void T1_appinit_before_gpu_init(
     void (* callback_onappclose_fptr)(void),
     void (* callback_evaluate_terminal_command)(
         char * command, char * response, u32),
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_appinit_after_gpu_init_step1(
-    char ** const sticky_error);
+    char ** const fatal_error);
 void T1_appinit_after_gpu_init_step2(
     s32 throwaway_threadarg);
 
