@@ -503,7 +503,6 @@ void T1_os_write_file(
     T1_objc_autorelease_pool_pop(pool);
 }
 
-__attribute__((no_sanitize("address")))
 void T1_os_get_filenames_in(
     const char * directory,
     char * filenames,

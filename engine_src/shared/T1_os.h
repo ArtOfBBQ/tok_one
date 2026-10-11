@@ -118,7 +118,6 @@ void T1_os_copy_file(
 b8 T1_os_mkdir_if_not_exist(
     const c8 * dirname);
 
-__attribute__((no_sanitize("address")))
 void T1_os_get_filenames_in(
     const c8 * directory,
     char * filenames,

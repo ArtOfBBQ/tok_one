@@ -1256,7 +1256,6 @@ void T1_os_toggle_fullscreen(void) {
         (uintptr_t)window);
 }
 
-__attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
     char ** const sticky_error)
 {

@@ -61,7 +61,6 @@ APPLICATION STARTUP
 */
 uint8_t T1_running(void);
 
-__attribute__((no_sanitize("address")))
 void T1_os_create_main_window(
     char ** const fatal_error);
 void T1_os_run_app(void);
@@ -646,7 +645,6 @@ void T1_os_mutex_lock(uint32_t mutex_id);
 void T1_os_mutex_unlock(uint32_t mutex_id);
 void T1_os_get_res_dir(char * recip, uint32_t recip_cap);
 
-__attribute__((no_sanitize("address")))
 void T1_os_get_filenames_in(
     const char * directory,
     char * filenames,

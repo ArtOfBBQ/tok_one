@@ -76,11 +76,13 @@ void T1_std_strcpy_cap(
     const u32 recip_cap,
     const c8 * origin);
 
+#if 0
 void T1_std_copy_strings(
     c8 * recipient,
     u32 recip_size,
     const c8 * origin,
     u32 origin_size);
+#endif
 
 u64 T1_std_strlen(const c8 * nullterm_str);
 

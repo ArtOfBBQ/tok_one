@@ -465,6 +465,7 @@ T1_std_strcpy_cap(
     recipient[i] = '\0';
 }
 
+#if 0
 void
 T1_std_copy_strings(
     char * recipient,
@@ -481,12 +482,13 @@ T1_std_copy_strings(
         recipient[i] = '\0';
     }
 }
+#endif
 
-__attribute__((no_sanitize("address")))
 u64 T1_std_strlen(const char * null_terminated_string)
 {
     u32 return_value = 0;
     
+    #if 0
     #ifdef __ARM_NEON
     s8 * str_as_i8 = (s8 *)null_terminated_string;
     s8 nullchar = (s8)'\0';
@@ -501,6 +503,7 @@ u64 T1_std_strlen(const char * null_terminated_string)
         return_value += 16;
         str_as_i8 += 16;
     }
+    #endif
     #endif
     
     while (
