@@ -195,13 +195,19 @@ u64 T1_os_get_resource_size(const char * filename)
 }
 
 u64 T1_os_get_writable_size(const char * filename) {
-    char pathfile[512];
+    char * pathfile = T1_mem_malloc_managed(512);
+    T1_std_memset(pathfile, 0, 512);
+    
     T1_os_writable_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
         /* assert_capacity: */ 512);
     
-    return T1_os_get_filesize(pathfile);
+    uint32_t out = T1_os_get_filesize(pathfile);
+    
+    T1_mem_free_managed(pathfile);
+    
+    return out;
 }
 
 void T1_os_read_writable_file(
@@ -252,6 +258,8 @@ void T1_os_write_file_to_writables(
     const u32 output_size,
     b8 * good)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     char recipient[500];
     T1_os_writable_filename_to_pathfile(
         /* filename: */
@@ -270,6 +278,8 @@ void T1_os_write_file_to_writables(
             output_size,
         /* bool32_t * good: */
             good);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_write_rgba_to_writables(
@@ -278,6 +288,8 @@ void T1_os_write_rgba_to_writables(
     u32 width, u32 height,
     u8 * good)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     u32 bmp_cap = rgba_size + 10000;
     u8 * bmp = T1_mem_malloc_managed(bmp_cap);
     u32 bmp_size = 0;
@@ -322,9 +334,13 @@ void T1_os_write_rgba_to_writables(
             bmp_size,
         /* u32 * good: */
             good);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 u8 T1_os_res_exists(const char * resource_name) {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     char pathfile[500];
     T1_os_res_filename_to_pathfile(
         resource_name,
@@ -333,6 +349,8 @@ u8 T1_os_res_exists(const char * resource_name) {
     
     return T1_os_file_exists(
         /* filepath: */ pathfile);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_read_resource_file(
@@ -342,6 +360,8 @@ void T1_os_read_resource_file(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
+    
+    void * pool = T1_objc_autorelease_pool_push();
     
     char * pathfile = T1_mem_malloc_managed(500);
     T1_std_memset(pathfile, 0, 500);
@@ -363,7 +383,10 @@ void T1_os_read_resource_file(
         /* char ** const fatal_error: */
             fatal_error);
     
-    if (*fatal_error != 0) { return; }
+    if (*fatal_error != 0) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1_mem_free_managed(pathfile);
     
@@ -375,8 +398,11 @@ void T1_os_read_resource_file(
         T1_std_strcat_u32_cap(*fatal_error, 512, (u32)recip_cap);
         T1_std_strcat_cap(*fatal_error, 512, " bytes, got: ");
         T1_std_strcat_u32_cap(*fatal_error, 512, bytes_read);
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_res_filename_to_pathfile(
@@ -384,26 +410,19 @@ void T1_os_res_filename_to_pathfile(
     char * recipient,
     u32 recip_cap)
 {
+    void * pool = T1_objc_autorelease_pool_push();
     assert(filename != NULL);
     assert(recipient != NULL);
+    T1_std_memset(recipient, 0, recip_cap);
     
-    const u32 resource_path_size = 512;
-    char * resource_path = T1_mem_malloc_managed(
-        resource_path_size);
-    T1_std_memset(resource_path, 0, resource_path_size);
+    T1_os_get_res_dir(recipient, recip_cap);
     
-    T1_os_get_res_dir(
-        resource_path,
-        resource_path_size);
-    T1_std_strcpy_cap(
-        recipient,
-        recip_cap,
-        resource_path);
     // u32 separator_size = platform_get_directory_separator_size();
     char separator[MAX_SEPARATOR_SIZE];
     T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(
         /* recipient: */ separator);
+    
     T1_std_strcat_cap(
         recipient,
         recip_cap,
@@ -415,90 +434,45 @@ void T1_os_res_filename_to_pathfile(
     
     T1_log_assert(recipient[0] != '\0');
     
-    T1_mem_free_managed(resource_path);
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
-    u32 assert_capacity)
+    u32 recip_cap)
 {
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)assert_capacity;
-    #else
-    #error
-    #endif
-    
     assert(filename != NULL);
     assert(recipient != NULL);
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    u32 separator_size = T1_os_get_dir_separator_size();
-    u32 filename_length = (u32)T1_std_strlen(filename);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    void * pool = T1_objc_autorelease_pool_push();
     
     char separator[MAX_SEPARATOR_SIZE];
     T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(/* recipient: */ separator);
     
-    char separator_and_filename[MAX_FILENAME_SIZE];
-    T1_std_memset(separator_and_filename, 0, MAX_FILENAME_SIZE);
-    
-    T1_std_strcpy_cap(
-        separator_and_filename,
-        filename_length + separator_size + 1,
+    T1_os_get_writables_dir(recipient, 256);
+    if (recipient[0] == '\0') {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    T1_log_assert(recipient[0] != '\0');
+    T1_std_strcat_cap(
+        recipient,
+        recip_cap,
         separator);
     T1_std_strcat_cap(
-        separator_and_filename,
-        filename_length + separator_size + 1,
+        recipient,
+        recip_cap,
         filename);
     
-    char writables_path[256];
-    T1_std_memset(writables_path, 0, 256);
-    
-    T1_os_get_writables_dir(writables_path, 256);
-    
-    if (writables_path[0] == '\0') {
-        return;
-    }
-    
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    u32 writables_path_length =
-        (u32)T1_std_strlen(writables_path);
-    u32 full_filename_size =
-        (filename_length
-            + writables_path_length
-            + 2); // +1 for \0, +1 to add a '/'
-    
-    assert(assert_capacity >= full_filename_size);
-    if (!T1_log_app_running) {
-        recipient[0] = '\0';
-        return;
-    }
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1_std_strcpy_cap(
-        recipient,
-        assert_capacity,
-        writables_path);
-    T1_std_strcat_cap(
-        recipient,
-        assert_capacity,
-        separator_and_filename);
-    
-    T1_log_assert(recipient[0] != '\0');
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_del_writable(
     const char * writable_filename)
 {
+    void * pool = T1_objc_autorelease_pool_push();
     char filepath[500];
     
     T1_os_writable_filename_to_pathfile(
@@ -510,6 +484,8 @@ void T1_os_del_writable(
             500);
     
     T1_os_del_file(writable_filename);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_layer_start_window_resize(

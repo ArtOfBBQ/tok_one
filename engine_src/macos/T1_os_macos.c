@@ -1098,6 +1098,8 @@ void T1_os_get_writables_dir(
     char * recipient,
     const u32 recipient_size)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     typedef void *(* search_fn)(
         uintptr_t,
         uintptr_t,
@@ -1105,22 +1107,33 @@ void T1_os_get_writables_dir(
     search_fn fn = (search_fn)T1_os_macos_s->
         func_ns_search_path_dirs_in_domains;
     
-    if (fn == NULL) { return; }
+    if (fn == NULL) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * paths = fn(
         T1NSApplicationSupportDirectory,
         T1NSUserDomainMask,
         1);
+    if (!paths) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * lib_dir = (void *)T1_objc_msg_1arg(
         paths,
         T1_os_macos_s->sel_object_at_index,
         0);
-    if (!lib_dir) { return; }
+    if (!lib_dir) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     char * lib_dir_cstr = T1_objc_nsstring_to_cstring(lib_dir);
     
     if (lib_dir_cstr == NULL || lib_dir_cstr[0] == '\0') {
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1131,6 +1144,8 @@ void T1_os_get_writables_dir(
     if (!T1_os_mkdir_if_not_exist(recipient)) {
         recipient[0] = '\0';
     }
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void * T1_os_malloc_unaligned_block(
@@ -1252,6 +1267,8 @@ void T1_os_create_main_window(
         return;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
         /* x: */ T1_global->window_left,
@@ -1317,6 +1334,8 @@ void T1_os_create_main_window(
         window,
         T1_os_macos_s->sel_make_key_and_order_front,
         0);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_destroy_main_window_if_possible(void) {
@@ -1330,11 +1349,12 @@ void T1_os_link_gpu_to_main_window(
 {
     if (*sticky_error != 0) { return; }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     typedef void *(* mtl_fn)(void);
     mtl_fn fn = (mtl_fn)T1_os_macos_s->
         func_mtl_create_system_default_device;
     
-    if (fn == NULL) { return; }
     void * metal_device_for_window = fn();
     
     T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
@@ -1396,4 +1416,6 @@ void T1_os_link_gpu_to_main_window(
             // (float)[[window screen] backingScaleFactor],
         /* sticky_error: */
             sticky_error);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }

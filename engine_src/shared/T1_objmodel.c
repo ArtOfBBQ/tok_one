@@ -64,7 +64,9 @@ static void normalize_vector_inplace(
     vector[2] /= magnitude;
 }
 
-static void guess_gpu_triangle_normal(T1GPULockedVertex * to_change) {
+static void guess_gpu_triangle_normal(
+    T1GPULockedVertex * to_change)
+{
     f32 vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
     f32 vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
     f32 vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];

@@ -390,7 +390,13 @@ void T1_gameloop_update_after_render_pass(void) {
     }
     
     T1_io_update_and_clear_for_next_frame();
+    
+    #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
     T1_os_poll_gamepad_events();
+    #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     if (T1_global->upcoming_fullscreen_request) {
         T1_global->upcoming_fullscreen_request = false;

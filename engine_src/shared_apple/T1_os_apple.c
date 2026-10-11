@@ -178,6 +178,8 @@ Get a file's size. Returns 0 if no such file
 u64 T1_os_get_filesize(
     const char * filepath)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsstrfilepath = T1_objc_nsstring_construct(
         filepath);
     void * error_value = NULL;
@@ -189,6 +191,7 @@ u64 T1_os_get_filesize(
     
     if (file_manager == NULL) {
         T1_log_dump_and_crash("ERROR - failed to get default NSFileManager\n");
+        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     
@@ -197,20 +200,21 @@ u64 T1_os_get_filesize(
         file_manager,
         T1_os_apple_s->sel_attributes_of_item_at_path_error,
         (uintptr_t)nsstrfilepath,
-        (uintptr_t)&error_value
-    );
-
+        (uintptr_t)(&error_value));
+    
     if (attrib_dict == NULL || error_value != NULL) {
         T1_log_append("WARNING - failed to get size of file - ");
         T1_log_append(filepath);
         T1_log_append("\n");
+        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
-
+    
     // [attrib_dict fileSize] returns unsigned long long (u64)
     u64 file_size = T1_objc_msg(
         attrib_dict, T1_os_apple_s->sel_file_size);
     
+    T1_objc_autorelease_pool_pop(pool);
     return file_size;
 }
 
@@ -228,7 +232,8 @@ void T1_os_read_file(
         return;
     }
     
-    //@autoreleasepool {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsfilepath = T1_objc_nsstring_construct(filepath);
     
     void * error = NULL;
@@ -256,6 +261,7 @@ void T1_os_read_file(
         }
         T1_std_strcat_cap(*fatal_error, 512, "]");
         *recip_size = 0;
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -270,11 +276,15 @@ void T1_os_read_file(
         *recip_size);
     
     recip[*recip_size] = '\0';
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 u8 T1_os_file_exists(
     const char * filepath)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsfilepath = T1_objc_nsstring_construct(
         filepath);
     
@@ -294,28 +304,38 @@ u8 T1_os_file_exists(
             T1_log_append("warning filepath: ");
             T1_log_append(filepath);
             T1_log_append(" is a directory, returnin FALSE for existence\n");
-                return false;
+            T1_objc_autorelease_pool_pop(pool);
+            return false;
         }
         
+        T1_objc_autorelease_pool_pop(pool);
         return true;
     }
     
     T1_log_append("filepath: ");
     T1_log_append(filepath);
     T1_log_append(" does not exist, returning FALSE...\n");
+    T1_objc_autorelease_pool_pop(pool);
     return false;
 }
 
 b8 T1_os_mkdir_if_not_exist(
     const char * dirname)
 {
+    return 1; // TODO: remove me
+    
     if (dirname == NULL || dirname[0] == '\0') {
         return 0;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * ns_dirname = T1_objc_nsstring_construct(
         dirname);
-    if (!ns_dirname) { return 0; }
+    if (!ns_dirname) {
+        T1_objc_autorelease_pool_pop(pool);
+        return 0;
+    }
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     void * directory_url = (void *)T1_objc_msg_2arg(
@@ -324,6 +344,7 @@ b8 T1_os_mkdir_if_not_exist(
         (uintptr_t)ns_dirname,
         true);
     if (directory_url == NULL) {
+        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -334,7 +355,10 @@ b8 T1_os_mkdir_if_not_exist(
     void * manager = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
-    if (!manager) { return 0; }
+    if (!manager) {
+        T1_objc_autorelease_pool_pop(pool);
+        return 0;
+    }
     
     if (
         !T1_objc_msg_1arg(
@@ -353,20 +377,19 @@ b8 T1_os_mkdir_if_not_exist(
             (uintptr_t)&error);
         
         if (!success) {
+            T1_objc_autorelease_pool_pop(pool);
             return 0;
         }
     }
     
+    T1_objc_autorelease_pool_pop(pool);
     return 1;
 }
 
 void T1_os_del_file(
     const char * filepath)
 {
-    T1_log_append(
-        "trying to delete a file with NSFileManager: ");
-    T1_log_append(filepath);
-    T1_log_append("\n");
+    void * pool = T1_objc_autorelease_pool_push();
     
     void * nsfilepath = T1_objc_nsstring_construct(
         filepath); 
@@ -375,13 +398,18 @@ void T1_os_del_file(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
     
-    if (!manager) { return; }
+    if (!manager) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1_objc_msg_2arg(
         manager,
         T1_os_apple_s->sel_remove_item_at_path_error,
         /* removeItemAtPath: */ (uintptr_t)nsfilepath,
         /* error: */ 0);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_copy_file(
@@ -399,6 +427,8 @@ void T1_os_copy_file(
     T1_log_append(filepath_destination);
     T1_log_append_c8('\n');
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsfilepath_source = T1_objc_nsstring_construct(
         filepath_source);
     
@@ -408,7 +438,10 @@ void T1_os_copy_file(
     void * manager = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
-    if (!manager) { return; }
+    if (!manager) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1_objc_msg_3arg(
         manager,
@@ -416,6 +449,8 @@ void T1_os_copy_file(
         /* copyItemAtPath: */ (uintptr_t)nsfilepath_source,
         /* toPath: */ (uintptr_t)nsfilepath_dest,
         /* error: */ 0);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_write_file(
@@ -426,20 +461,31 @@ void T1_os_write_file(
 {
     *good = false;
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsfilepath = T1_objc_nsstring_construct(filepath);
-    if (!nsfilepath) { return; }
+    if (!nsfilepath) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * nsdata = (void *)T1_objc_msg_2arg(
         T1_os_apple_s->class_ns_data,
         T1_os_apple_s->sel_data_with_bytes_length,
         /* dataWithBytes: */ (uintptr_t)output,
         /* length: */ output_size);
-    if (!nsdata) { return; }
+    if (!nsdata) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * manager = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
-    if (!manager) { return; }
+    if (!manager) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     uintptr_t result = T1_objc_msg_3arg(
             manager,
@@ -453,6 +499,8 @@ void T1_os_write_file(
             0);
     
     *good = result > 0;
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 __attribute__((no_sanitize("address")))
@@ -496,6 +544,8 @@ void T1_os_get_filenames_in(
     
     closedir(dir);
     #else
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * ns_path = T1_objc_nsstring_construct(
         directory);
     // NSURL * url = [NSURL URLWithString: path];
@@ -513,6 +563,7 @@ void T1_os_get_filenames_in(
         0);
     
     if (results == NULL) {
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -538,6 +589,7 @@ void T1_os_get_filenames_in(
         
         u32 new_len = (u32)T1_std_strlen(cur_result);
         if (char_i + new_len + 1 >= filenames_cap) {
+            T1_objc_autorelease_pool_pop(pool);
             return;
         }
         
@@ -548,6 +600,7 @@ void T1_os_get_filenames_in(
         char_i += new_len;
         char_i += 1;
     }
+    T1_objc_autorelease_pool_pop(pool);
     #endif
 }
 
@@ -555,6 +608,8 @@ void T1_os_get_app_dir(
     char * recipient,
     const u32 recipient_size)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     recipient[0] = '\0';
     
     void * main_bundle = (void *)T1_objc_msg(
@@ -568,12 +623,16 @@ void T1_os_get_app_dir(
         recipient,
         recipient_size,
         cstr_main_bundle);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_get_res_dir(
     char * recip,
     u32 recip_cap)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * bundle = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_bundle,
         T1_os_apple_s->sel_main_bundle);
@@ -589,6 +648,8 @@ void T1_os_get_res_dir(
         recip,
         recip_cap,
         cstr);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_start_thread(
@@ -609,6 +670,8 @@ void T1_os_start_thread(
 
 u32 T1_os_get_cpu_logical_core_count(void)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * process_info = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_process_info,
         T1_os_apple_s->sel_process_info);
@@ -617,9 +680,13 @@ u32 T1_os_get_cpu_logical_core_count(void)
         process_info,
         T1_os_apple_s->sel_active_processor_count);
     return (core_count > 0) ? (unsigned int)core_count : 1;
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_run_app(void) {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * ns_app = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_application,
         T1_os_apple_s->sel_shared_application);
@@ -627,4 +694,6 @@ void T1_os_run_app(void) {
     if (ns_app) {
         T1_objc_msg(ns_app, T1_os_apple_s->sel_run);
     }
+    
+    T1_objc_autorelease_pool_pop(pool);
 }

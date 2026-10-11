@@ -692,7 +692,12 @@ uint64_t T1_os_get_current_time_us(void);
 /*
 TERMINAL
 */
+#if T1_TERM_ACTIVE == T1_ACTIVE
 void T1_term_manually_deactivate(void);
+#elif T1_TERM_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 /*
 AUDIO

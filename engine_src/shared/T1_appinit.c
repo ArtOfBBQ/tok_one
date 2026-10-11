@@ -57,20 +57,38 @@ static T1InitApplicationState * ias;
 typedef struct {
     f32 imanf32[16];
 } T1SimdTestStruct;
-static void 
-test_simd_functions_f32s(void) {
-    T1_log_assert(sizeof(T1zLight) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPURenderView) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUzSpriteu32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1CPUzSpritef32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUMatf32) % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUMatu32) % (SIMD_FLOAT_LANES * 4) == 0);    
-    T1_log_assert(sizeof(T1GPUTexQuadf32)   % (SIMD_FLOAT_LANES * 4) == 0);
-    T1_log_assert(sizeof(T1GPUTexQuadu32)   % (SIMD_INT32_LANES * 4) == 0);
+ 
+static void test_simd_struct(
+    char ** const fatal_error,
+    uint32_t struct_size,
+    char * struct_size_str)
+{
+    s32 extra_padding = (struct_size %
+        (SIMD_FLOAT_LANES * 4));
+    if (extra_padding != 0) {
+        T1_fatal_error_new(fatal_error, struct_size_str);
+        T1_std_strcat_cap(*fatal_error, 512, " needs ");
+        T1_std_strcat_s32_cap(*fatal_error, 512, extra_padding);
+        T1_std_strcat_cap(*fatal_error, 512, " bytes of padding");
+        return; 
+    }
+}
+#define test_simd_struct_macro(fatal_error, struct) test_simd_struct(fatal_error, sizeof(struct), #struct)
+
+static void test_simd_functions_f32s(char ** const fatal_error) {
+    if (*fatal_error != 0) { return; }
     
+    test_simd_struct_macro(fatal_error, T1zLight);
+    test_simd_struct_macro(fatal_error, T1GPURenderView);
+    test_simd_struct_macro(fatal_error, T1GPUzSpritef32);
+    test_simd_struct_macro(fatal_error, T1GPUzSpriteu32);
+    test_simd_struct_macro(fatal_error, T1CPUzSpritef32);
+    test_simd_struct_macro(fatal_error, T1GPUMatf32);
+    test_simd_struct_macro(fatal_error, T1GPUMatu32);
+    test_simd_struct_macro(fatal_error, T1GPUTexQuadf32);
+    test_simd_struct_macro(fatal_error, T1GPUTexQuadu32);
+    test_simd_struct_macro(fatal_error, T1SimdTestStruct);
     
-    T1_log_assert(sizeof(T1SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     T1SimdTestStruct * structs = T1_mem_malloc_managed(
         sizeof(T1SimdTestStruct) * 10);
     f32 * sets = T1_mem_malloc_managed(
@@ -236,6 +254,8 @@ void T1_appinit_before_gpu_init(
         return;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
     
     T1_meta_init(
@@ -280,13 +300,7 @@ void T1_appinit_before_gpu_init(
         /* const u32 thread_id: */
             0);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    test_simd_functions_f32s();
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
+    test_simd_functions_f32s(fatal_error);
     
     T1_token_init(
         T1_std_memset,
@@ -426,10 +440,10 @@ void T1_appinit_before_gpu_init(
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     T1_global->fullscreen = false;
-    T1_global->window_wh[0]  = INITIAL_WINDOW_WIDTH;
-    T1_global->window_wh[1]  = INITIAL_WINDOW_HEIGHT;
-    T1_global->window_left   = INITIAL_WINDOW_LEFT;
-    T1_global->window_bottom = INITIAL_WINDOW_BOTTOM;
+    T1_global->window_wh[0]  = T1_INITIAL_WINDOW_WIDTH;
+    T1_global->window_wh[1]  = T1_INITIAL_WINDOW_HEIGHT;
+    T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
+    T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_state->music_volume  = 0.5f;
@@ -684,6 +698,7 @@ void T1_appinit_before_gpu_init(
             "disk at startup";
         return;
     }
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -734,6 +749,8 @@ void T1_appinit_after_gpu_init_step1(
         return;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     T1_tex_files_load_font_images(fatal_error);
     
     u32 rv_width = T1_settings_get_render_width();
@@ -749,7 +766,11 @@ void T1_appinit_after_gpu_init_step1(
         rv_height,
         fatal_error);
     
+    T1_objc_autorelease_pool_pop(pool);
+    
     if (*fatal_error != 0) { return; }
+    
+    pool = T1_objc_autorelease_pool_push();
     
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or T1_log_assert() errors before this.
@@ -774,7 +795,10 @@ void T1_appinit_after_gpu_init_step1(
         perlin_noise_fn,
         fatal_error);
     
-    if (*fatal_error != 0) { return; }
+    if (*fatal_error != 0) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1Tex perlin_tex = T1_tex_array_get_filename_loc(
             perlin_noise_fn);
@@ -789,10 +813,13 @@ void T1_appinit_after_gpu_init_step1(
     {
         T1_gameloop_active = true;
         T1_log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
     T1_gameloop_active = true;
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_appinit_after_gpu_init_step2(

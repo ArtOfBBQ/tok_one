@@ -196,19 +196,33 @@ b8 T1_objc_open_framework(
         RTLD_LAZY) != 0;
 }
 
+typedef void * (*objc_ar_push_fn_type)(void);
+static objc_ar_push_fn_type objc_ar_push_fn = NULL;
+
+typedef void (*objc_ar_pop_fn_type)(void *);
+static objc_ar_pop_fn_type objc_ar_pop_fn = NULL;
+
 void * T1_objc_autorelease_pool_push(void) {
     // objc_autoreleasePoolPush()
-    typedef void * (*push_fn)(void);
-    static push_fn fn = NULL;
-    if (!fn) fn = (push_fn)dlsym(RTLD_DEFAULT, "objc_autoreleasePoolPush");
-    return fn ? fn() : NULL;
+    if (!objc_ar_push_fn) {
+        objc_ar_push_fn =
+            (objc_ar_push_fn_type)dlsym(
+                RTLD_DEFAULT,
+                "objc_autoreleasePoolPush");
+    }
+    
+    return objc_ar_push_fn();
 }
 
 void T1_objc_autorelease_pool_pop(void * pool) {
-    typedef void (*pop_fn)(void *);
-    static pop_fn fn = NULL;
-    if (!fn) fn = (pop_fn)dlsym(RTLD_DEFAULT, "objc_autoreleasePoolPop");
-    if (fn && pool) fn(pool);
+    if (!objc_ar_pop_fn) {
+        objc_ar_pop_fn = (objc_ar_pop_fn_type)dlsym(
+            RTLD_DEFAULT,
+            "objc_autoreleasePoolPop");
+    }
+    
+    assert(pool != 0);
+    objc_ar_pop_fn(pool);
 }
 
 void * T1_objc_get_func(
@@ -721,6 +735,11 @@ f64 T1_objc_msg_get_f64(
 void * T1_objc_nsstring_construct(
     const char * from)
 {
+    T1_assert(T1_objc_s->class_nsstring != 0);
+    T1_assert(T1_objc_s->sel_string_with_utf8_string != 0);
+    T1_assert(from != 0);
+    T1_assert(from[0] != '\0');
+    
     void * out = (void *)T1_objc_msg_1arg(
         T1_objc_s->class_nsstring,
         T1_objc_s->sel_string_with_utf8_string,

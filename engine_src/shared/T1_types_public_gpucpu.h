@@ -8,76 +8,62 @@
 
 #define T1_TEX_NONE 32109
 
-typedef union {
-    struct {
-        uint32_t reserved_and_tex;
-        uint32_t touch_id;
-    };
-    uint8_t size_with_padding[16];
+typedef struct {
+    uint32_t reserved_and_tex;
+    uint32_t touch_id;
+    uint32_t padding[2];
 } T1GPUTexQuadu32;
 
-typedef union {
-    struct {
-        float xyz[3];
-        float offset_xy[2];
-        float wh[2];
-        float rgba[4];
-    };
-    uint8_t size_with_padding[64];
-} __attribute__((aligned(16))) T1GPUTexQuadf32;
+typedef struct {
+    float xyz[3];
+    float offset_xy[2];
+    float wh[2];
+    float rgba[4];
+    float padding[5];
+} T1GPUTexQuadf32;
 
-typedef union {
-    struct {
-        float xyz[3];
-        float offset_xyz[3];
-        float mul_xyz[3];
-        float angle_xyz[3];
-        float bloom_on;
-        float alpha_on;
-    };
-    uint8_t size_with_padding[64];
+typedef struct {
+    float xyz[3];
+    float offset_xyz[3];
+    float mul_xyz[3];
+    float angle_xyz[3];
+    float bloom_on;
+    float alpha_on;
+    float padding[2];
 } T1CPUzSpritef32;
 
-typedef union {
-    struct {
-        float bonus_rgb[3];
-        float base_mat_uv_offsets[2];
-        float alpha;
-        float no_light;
-        float no_cam;
-        float outline_alpha;
-        float shadow_strength;
-    };
-    uint8_t size_with_padding[48];
+typedef struct {
+    float bonus_rgb[3];
+    float base_mat_uv_offsets[2];
+    float alpha;
+    float no_light;
+    float no_cam;
+    float outline_alpha;
+    float shadow_strength;
+    float padding[2];
 } T1GPUzSpritef32;
 
-typedef union {
-    struct {
-        uint32_t touch_id;
-        uint32_t mix_rv_and_mix_tex;
-    };
-    uint8_t size_with_padding[16];
+typedef struct {
+    uint32_t touch_id;
+    uint32_t mix_rv_and_mix_tex;
+    uint32_t padding[2];
 } T1GPUzSpriteu32;
 
-typedef union {
-    struct {
-        float ambient_rgb[3];
-        float diffuse_rgb[3];
-        float specular_rgb[3];
-        float uv_scroll[2];
-        float specular_exponent;
-        float refraction;
-        float alpha;
-        float illum;
-    };
-    uint8_t size_with_padding[64];
+typedef struct {
+    float ambient_rgb[3];
+    float diffuse_rgb[3];
+    float specular_rgb[3];
+    float uv_scroll[2];
+    float specular_exponent;
+    float refraction;
+    float alpha;
+    float illum;
+    float padding[1];
 } T1GPUMatf32;
 
-typedef union {
-    struct {
-        uint32_t normalmap_tex_and_tex;
-    };
-    uint8_t size_with_padding[16];
+typedef struct {
+    uint32_t normalmap_tex_and_tex;
+    uint32_t padding[3];
 } T1GPUMatu32;
 
 typedef struct {

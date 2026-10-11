@@ -250,6 +250,7 @@ static void * T1_gpu_new_render_pipeline_descriptor(
     b8 has_touch_tex,
     b8 blending_enabled)
 {
+    void * pool = T1_objc_autorelease_pool_push();
     void * desc = (void *)T1_objc_msg(
         ags->class_mtl_render_pipeline_desc,
         ags->sel_new);
@@ -307,6 +308,7 @@ static void * T1_gpu_new_render_pipeline_descriptor(
         ags->sel_set_depth_attachment_pixel_format,
         T1MTLPixelFormatDepth32Float);
     
+    T1_objc_autorelease_pool_pop(pool);
     return desc;
 }
 
@@ -2209,6 +2211,7 @@ static void T1_gpu_draw_single_pass(
                 ags->sel_end_encoding);
             #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
             #else
+            assert(0);
             #error
             #endif
         }
@@ -2363,6 +2366,7 @@ static void T1_gpu_draw_single_pass(
         break;
         case T1RENDERPASS_BLOOM:
         {
+            #if T1_BLOOM_ACTIVE == T1_ACTIVE
             T1_log_assert(
                 T1_render_views->cpu[cam_i].
                     write_type ==
@@ -2375,7 +2379,6 @@ static void T1_gpu_draw_single_pass(
                 break;
             }
             
-            #if T1_BLOOM_ACTIVE == T1_ACTIVE
             // only render target can bloom atm
             T1_log_assert(cam_i == 0);
             
@@ -2631,6 +2634,8 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     T1_log_assert(at_i >= 0);
     T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     ags->render_viewports[at_i].originX = 0;
     ags->render_viewports[at_i].originY = 0;
     ags->render_viewports[at_i].width   =
@@ -2654,7 +2659,10 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     void * zbuffer_desc = (void *)T1_objc_msg(
         ags->class_mtl_texture_desc,
         ags->sel_new);
-    if (!zbuffer_desc) { return; }
+    if (!zbuffer_desc) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     T1_objc_msg_1arg(zbuffer_desc,
         ags->sel_set_texture_type, T1MTLTextureType2D);
     T1_objc_msg_1arg(zbuffer_desc,
@@ -2677,7 +2685,10 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         ags->sel_new_tex_with_desc,
         (uintptr_t)zbuffer_desc);
     
-    if (at_i != 0) { return; }
+    if (at_i != 0) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * touch_id_tex_desc = (void *)T1_objc_msg(
         ags->class_mtl_texture_desc,
@@ -2791,6 +2802,8 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     #else
     #error
     #endif
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_gpu_draw_in_mtk_view(void * view)
@@ -2806,6 +2819,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
     {
         return;
     }
+    
+    void * pool = T1_objc_autorelease_pool_push();
     
     T1_log_assert(
         T1_render_views->cpu[0].write_tex != T1_TEX_NONE);
@@ -2824,11 +2839,13 @@ void T1_gpu_draw_in_mtk_view(void * view)
             T1_global->last_resize_request_us)
                 < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
     if (!ags || !ags->metal_active || !ags->viewports_set[0])
     {
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -2841,6 +2858,7 @@ void T1_gpu_draw_in_mtk_view(void * view)
         log_dump_and_crash("error - can't get metal command buffer\n");
         #endif
         
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -3011,6 +3029,10 @@ void T1_gpu_draw_in_mtk_view(void * view)
         view,
         ags->sel_current_render_pass_desc);
     
+    //    set_defaults_for_render_descriptor(
+    //        pass_5_comp_desc,
+    //        0);
+    
     void * pass_5_comp = (void *)T1_objc_msg_1arg(
         combuf,
         ags->sel_render_cmd_enc_with_desc,
@@ -3151,6 +3173,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
     // T1_objc_msg(combuf, ags->sel_wait_until_completed);
     
     funcptr_gameloop_after_render();
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_gpu_update_internal_render_viewport(
@@ -3174,6 +3198,8 @@ s16 T1_apple_gpu_make_depth_tex(
     u32 width,
     u32 height)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     s16 slice_i = 0;
     while (ags->depth_textures[slice_i] != NULL) {
         slice_i += 1;
@@ -3181,12 +3207,16 @@ s16 T1_apple_gpu_make_depth_tex(
     }
     
     if (slice_i >= T1_RENDER_VIEW_CAP) {
+        T1_objc_autorelease_pool_pop(pool);
         return -1;
     }
     
     void * desc = (void *)T1_objc_msg(
         ags->class_mtl_texture_desc, ags->sel_new);
-    if (!desc) { return -1; }
+    if (!desc) {
+        T1_objc_autorelease_pool_pop(pool);
+        return -1;
+    }
     T1_objc_msg_1arg(desc, ags->sel_set_width, width);
     T1_objc_msg_1arg(desc, ags->sel_set_height, height);
     T1_objc_msg_1arg(desc, ags->sel_set_texture_type, T1MTLTextureType2D);
@@ -3201,5 +3231,6 @@ s16 T1_apple_gpu_make_depth_tex(
     
     T1_log_assert(ags->depth_textures[slice_i] != NULL);
     
+    T1_objc_autorelease_pool_pop(pool);
     return slice_i;
 }

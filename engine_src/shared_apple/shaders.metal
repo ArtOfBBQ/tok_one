@@ -1480,4 +1480,4 @@ fragment float4 outlines_frag_shader(
     
     return ret * in.outline_alpha;
 }
-#endif
+#endif // T1_OUTLINES_ACTIVE
