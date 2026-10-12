@@ -340,7 +340,10 @@ void T1_apple_gpu_init(
         return;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     ags = T1_mem_malloc_unmanaged(sizeof(AppleGPUState));
+    T1_std_memset(ags, 0, sizeof(AppleGPUState));
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
     
@@ -519,7 +522,7 @@ void T1_apple_gpu_init(
     ags->device = with_metal_device;
     
     if (ags->lib == NULL) {
-        // Try to compile a shader lib from src
+        // From embedded data
         void * nsstr_source = T1_objc_nsstring_construct(
             T1_embedded_data_shaders_metal);
         
@@ -540,6 +543,8 @@ void T1_apple_gpu_init(
             
             *sticky_error = T1_mem_malloc_unmanaged(512);
             T1_std_strcat_cap(*sticky_error, 512, error_desc);
+            
+            T1_objc_autorelease_pool_pop(pool);
             return;
         }
     }
@@ -548,6 +553,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Failed to load shaders, and further "
             "failed to compile them from source";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -559,6 +565,7 @@ void T1_apple_gpu_init(
         (uintptr_t)nsstring_vert_shader);
     if (vertex_shader == NULL) {
         *sticky_error = "Missing function: vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -570,6 +577,7 @@ void T1_apple_gpu_init(
         (uintptr_t)nsstring_fragment_shader);
     if (fragment_shader == NULL) {
         *sticky_error = "Missing function: frag_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -582,6 +590,7 @@ void T1_apple_gpu_init(
         (uintptr_t)nsstring_alphablending_fragment_shader);
     if (alphablending_fragment_shader == NULL) {
         *sticky_error = "Missing function: alphablending_frag_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
@@ -598,6 +607,7 @@ void T1_apple_gpu_init(
         (uintptr_t)nsstring_vertex_shader);
     if (z_prepass_vertex_shader == NULL) {
         *sticky_error = "Missing function: vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -613,6 +623,7 @@ void T1_apple_gpu_init(
         T1_log_append("Missing function: z_prepass_frag_shader()!");
         
         *sticky_error = "Missing function: z_prepass_fragment_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -640,6 +651,7 @@ void T1_apple_gpu_init(
         (uintptr_t)nsstring_outlines_vertex_shader);
     if (outlines_vertex_shader == NULL) {
         *sticky_error = "Missing function: outlines_vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -653,6 +665,7 @@ void T1_apple_gpu_init(
             (uintptr_t)nsstring_outlines_fragment_shader);
     if (outlines_fragment_shader == NULL) {
         *sticky_error = "Missing function: outlines_frag_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -692,6 +705,7 @@ void T1_apple_gpu_init(
     
     if (ags->outlines_pls == NULL) {
         *sticky_error = "failed to register outlines pipeline state";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
@@ -711,6 +725,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Missing function: "
             "flat_billboard_quad_vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -725,6 +740,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Missing function: "
             "flat_billboard_quad_fragment_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -765,6 +781,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Missing function: "
             "flat_texquad_vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -779,6 +796,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Missing function: "
             "flat_texquad_frag_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -811,6 +829,7 @@ void T1_apple_gpu_init(
     if (ags->diamond_touch_pls == NULL)
     {
         *sticky_error = "Failed to init diamond pipeline";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     T1_gpu_render_pl_descriptor_remove_color_attachment_at(
@@ -847,6 +866,7 @@ void T1_apple_gpu_init(
     if (ags->blend_touch_pls == NULL)
     {
         *sticky_error = "Failed to load the alphablending shader";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -880,6 +900,7 @@ void T1_apple_gpu_init(
     if (ags->opaque_depth_stencil_state == NULL)
     {
         *sticky_error = "Failed to load the depth stencil state";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1086,6 +1107,7 @@ void T1_apple_gpu_init(
         *sticky_error =
             "Missing function: "
             "postprocess_vertex_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1098,6 +1120,7 @@ void T1_apple_gpu_init(
     if (singlequad_fragment_shader == NULL)
     {
         *sticky_error = "Missing function: downsampling_fragment_shader()";
+        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1166,6 +1189,7 @@ void T1_apple_gpu_init(
     
     ags->metal_active = true;
     
+    T1_objc_autorelease_pool_pop(pool);
     return;
 }
 
@@ -1803,8 +1827,16 @@ void T1_os_gpu_copy_locked_vertices(void)
     T1_objc_msg(combuf, ags->sel_commit);
 }
 
-void T1_os_gpu_copy_locked_materials(void)
+void T1_os_gpu_copy_locked_materials(
+    char ** const fatal_error)
 {
+    if (*fatal_error != 0) { return; }
+    
+    if (ags->command_queue == 0) {
+        *fatal_error = "T1_os_gpu_copy_locked_materials() before T1_os_link_gpu_to_main_window()";
+        return;
+    }
+    
     T1_cpu_to_gpu_data->const_mats_size =
         all_mesh_materials->size;
     

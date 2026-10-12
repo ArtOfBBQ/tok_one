@@ -739,7 +739,7 @@ void T1_text_draw_label(
         }
         
         if (T1_text_props->opaque_back_active) {
-            T1_assert(0); // TODO: implement me
+            T1_log_warn_if_false(0, "TODO: implement opaque_back_active text property");
         }
         
         i++;

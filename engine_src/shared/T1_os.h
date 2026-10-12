@@ -228,7 +228,8 @@ void T1_os_gpu_update_window_viewport(void);
 
 void T1_os_gpu_copy_locked_vertices(void);
 
-void T1_os_gpu_copy_locked_materials(void);
+void T1_os_gpu_copy_locked_materials(
+    char ** const fatal_error);
 
 u32 T1_os_gpu_get_touch_id_at_screen_pos(
     f32 screen_x,

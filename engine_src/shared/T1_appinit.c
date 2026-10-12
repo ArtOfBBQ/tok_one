@@ -823,13 +823,16 @@ void T1_appinit_after_gpu_init_step1(
 }
 
 void T1_appinit_after_gpu_init_step2(
-    s32 throwaway_threadarg)
+    s32 throwaway_threadarg,
+    char ** const fatal_error)
 {
     (void)throwaway_threadarg;
     
     if (!T1_log_app_running) {
         return;
     }
+    
+    if (*fatal_error != 0) { return; }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;
@@ -842,7 +845,7 @@ void T1_appinit_after_gpu_init_step2(
     #endif
     
     char errmsg[256];
-    errmsg[0] = '\0';
+    T1_std_memset(errmsg, 0, 256);
     
     if (T1_log_app_running) {
         u32 core_count = T1_os_get_cpu_logical_core_count();
@@ -962,19 +965,17 @@ void T1_appinit_after_gpu_init_step2(
             all_mesh_materials->gpu_s32,
         /* u64 n: */
             sizeof(T1GPUMatu32) * T1_ALL_LOCKED_MATERIALS_SIZE);
-    T1_os_gpu_copy_locked_materials();
     
-    if (!T1_log_app_running) {
-        return;
-    }
+    T1_os_gpu_copy_locked_materials(fatal_error);
+    if (*fatal_error != 0) { return; }
+    
+    if (!T1_log_app_running) { return; }
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     uintptr_t zero = 0;
     T1_appinit_asset_loading_thread((void *)zero);
     
-    if (!T1_log_app_running) {
-        return;
-    }
+    if (!T1_log_app_running) { return; }
     
     // Wait until all worker threads are finished
     while (!ias->all_finished) {

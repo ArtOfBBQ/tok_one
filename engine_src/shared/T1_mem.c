@@ -169,11 +169,14 @@ void * T1_mem_malloc_unmanaged_aligned(
 // __attribute__((used, noinline))
 void * T1_mem_malloc_unmanaged(size_t size) {
     T1_log_assert(size > 0);
-    
+    #if 1
+    return malloc(size);
+    #else
     void * return_value = T1_mem_malloc_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
     return return_value;
+    #endif
 }
 
 void T1_mem_malloc_managed_page_aligned(

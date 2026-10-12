@@ -18,6 +18,7 @@ void T1_appinit_before_gpu_init(
 void T1_appinit_after_gpu_init_step1(
     char ** const fatal_error);
 void T1_appinit_after_gpu_init_step2(
-    s32 throwaway_threadarg);
+    s32 throwaway_threadarg,
+    char ** const fatal_error);
 
 #endif // INIT_APPLICATION_H

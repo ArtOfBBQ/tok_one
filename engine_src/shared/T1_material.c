@@ -40,14 +40,12 @@ void T1_material_construct(
     // you should review it when normal mapping comes
     // back online
     T1_log_assert(0);
-    to_construct_s32->normalmap_tex_and_tex = 0;
+    to_construct_u32->normalmap_tex_and_tex = 0;
     T1Tex tex_none = T1_TEX_NONE;
     u32 tex_none_u32 = tex_none;
-    s32 tex_none_s32;
-    T1_std_memcpy(&tex_none_s32, &tex_none_u32, sizeof(s32));
-     
-    to_construct_s32->normalmap_tex_and_tex |=
-        ((tex_none_s32 << 16) & tex_none_s32);
+    
+    to_construct_u32->normalmap_tex_and_tex |=
+        ((tex_none_u32 << 16) & tex_none_u32);
     #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
     to_construct_u32->normalmap_tex_and_tex =
         (T1_TEX_NONE << 16);

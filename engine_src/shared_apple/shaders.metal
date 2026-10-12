@@ -1356,7 +1356,7 @@ fragment FragmentAndTouchOut flat_texquad_frag_shader(
     return packed_out;
 }
 
-#if T1_OUTLINES_ACTIVE == T1_ACTIVE
+#if T1_OUTLINES_ACTIVE == 1
 typedef struct
 {
     float4 pos [[position]];
@@ -1480,4 +1480,7 @@ fragment float4 outlines_frag_shader(
     
     return ret * in.outline_alpha;
 }
+#elif T1_OUTLINES_ACTIVE == 2
+#else
+#error
 #endif // T1_OUTLINES_ACTIVE

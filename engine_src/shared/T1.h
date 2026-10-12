@@ -76,7 +76,8 @@ void T1_appinit_before_gpu_init(
 void T1_appinit_after_gpu_init_step1(
     char ** const fatal_error);
 void T1_appinit_after_gpu_init_step2(
-    int32_t throwaway_threadarg);
+    int32_t throwaway_threadarg,
+    char ** const fatal_error);
 void T1_os_link_gpu_to_main_window(
     char ** const fatal_error);
 
