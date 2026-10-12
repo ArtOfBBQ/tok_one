@@ -21,6 +21,8 @@ that modify the behavior of the engine.
 #define T1_WAV_PRINTF_ACTIVE 2
 #define T1_COLLISION_PRINTF_ACTIVE 2
 
+#define DECODE_PNG_ASSERTS_ACTIVE 1
+#define DECODE_BMP_ASSERTS_ACTIVE 1
 #define T1_RAND_ASSERTS_ACTIVE 1
 #define T1_TOKEN_ASSERTS_ACTIVE 1
 #define T1_LOG_ASSERTS_ACTIVE 1
@@ -90,7 +92,7 @@ Your application's pre-allocated memory pool.
 #define T1_MAX_FLATQUADS_PER_BUFFER 75000
 #define T1_MAX_TEXQUADS_PER_BUFFER 7500
 
-#define T1_ZLIGHTS_CAP 4
+#define T1_ZLIGHTS_CAP 5
 
 #define T1_ZFAR 12.0f
 #define T1_SHADOW_BIAS 0.0008f
@@ -115,19 +117,6 @@ The maximum number of 'scheduled animations' simultaneously running
 */
 #define T1_ANIMS_CAP 9000
 
-/*
-The maximum number of 'points' in 1 frame of your app
-(can be 0)
-*/
-// #define MAX_POINT_VERTICES 3000
-
-/*
-The maximum number of 'line' vertices in 1 frame of your app
-Each line has 2 vertices
-(can be 0)
-*/
-// #define MAX_LINE_VERTICES 5000
-
 // the max # of 3d models in your app
 #define T1_MESH_CAP 120
 // the max # of triangles in all of your 3d models.
@@ -145,8 +134,8 @@ be confusing - if you refer to the functions in particle.h a bunch of times in
 your code and then set this to 0, you will suddenly have a bunch of broken
 references to functions that don't exist, and you might not know to look here)
 */
-#define T1_PARTICLE_EFFECTS_SIZE  30
-#define T1_SHATTER_EFFECTS_SIZE   20
+#define T1_PARTICLE_EFFECTS_SIZE   5
+#define T1_SHATTER_EFFECTS_SIZE    5
 
 // these will be ignored on platforms where window size/position
 // can't be selected
