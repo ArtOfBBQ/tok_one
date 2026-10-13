@@ -6,6 +6,7 @@
 #include "T1_types_gpucpu.h"
 #include "T1_global.h"
 #include "T1_mem.h"
+#include "T1_fatal_error.h"
 #include "T1_tex.h"
 #include "T1_log.h"
 #include "T1_triangle.h"
@@ -1516,7 +1517,7 @@ s32 T1_objmodel_new_mesh_id_from_resources(
         }
         
         mtl_contents = (char *)T1_mem_malloc_managed(mtl_contents_cap + 1);
-        mtl_contents_good = false;
+        mtl_contents_good = 0;
         
         T1_os_read_resource_file(
             /* const char * filename: */
@@ -1546,8 +1547,8 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             fatal_error);
     
     if (return_value < 0 || *fatal_error != 0) {
-        T1_assert(*fatal_error != 0);
-        T1_assert(return_value < 0);
+        T1_log_assert(*fatal_error != 0);
+        T1_log_assert(return_value < 0);
         return return_value;
     }
     

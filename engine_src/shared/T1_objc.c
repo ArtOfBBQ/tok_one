@@ -3,7 +3,6 @@
 #include "T1_std.h"
 #include "T1_log.h"
 
-#include <stdlib.h>
 #include <dlfcn.h>
 
 #define T1NSASCIIStringEncoding 1
@@ -221,7 +220,7 @@ void T1_objc_autorelease_pool_pop(void * pool) {
             "objc_autoreleasePoolPop");
     }
     
-    assert(pool != 0);
+    T1_log_assert(pool != 0);
     objc_ar_pop_fn(pool);
 }
 
@@ -735,10 +734,10 @@ f64 T1_objc_msg_get_f64(
 void * T1_objc_nsstring_construct(
     const char * from)
 {
-    T1_assert(T1_objc_s->class_nsstring != 0);
-    T1_assert(T1_objc_s->sel_string_with_utf8_string != 0);
-    T1_assert(from != 0);
-    T1_assert(from[0] != '\0');
+    T1_log_assert(T1_objc_s->class_nsstring != 0);
+    T1_log_assert(T1_objc_s->sel_string_with_utf8_string != 0);
+    T1_log_assert(from != 0);
+    T1_log_assert(from[0] != '\0');
     
     void * out = (void *)T1_objc_msg_1arg(
         T1_objc_s->class_nsstring,

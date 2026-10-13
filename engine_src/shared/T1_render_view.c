@@ -354,7 +354,7 @@ void T1_render_view_delete(
         T1_render_views->gpu + rv_i,
         0,
         0);
-    T1_render_views->cpu[rv_i].deleted = true;
+    T1_render_views->cpu[rv_i].deleted = 1;
     
     while (
         T1_render_views->size > 0 &&

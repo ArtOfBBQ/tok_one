@@ -100,7 +100,7 @@ T1_zsprite_defragment(void) {
         if (T1_zsprite_list->cpu[i].deleted) {
             T1_zsprite_list->cpu[i] = T1_zsprite_list->cpu[j];
             T1_zsprite_list->gpu[i] = T1_zsprite_list->gpu[j];
-            T1_zsprite_list->cpu[j].deleted = true;
+            T1_zsprite_list->cpu[j].deleted = 1;
             j--;
         }
     }
@@ -125,8 +125,8 @@ T1_zsprite_fetch_next_noconstruct(
     stack_recipient->gpu_data =
         &T1_zsprite_list->gpu[T1_zsprite_list->size];
     stack_recipient->cpu_data[T1_zsprite_list->size].
-        deleted = false;
-    stack_recipient->cpu_data->committed = false;
+        deleted = 0;
+    stack_recipient->cpu_data->committed = 0;
     
     T1_zsprite_list->size += 1;
     T1_log_assert(T1_zsprite_list->size + 1 <
@@ -177,7 +177,7 @@ T1_zsprite_commit(
         /* T1CPUzSpritef32 * recip_cpu_f32s: */
             &to_commit->cpu_data->zs_cpu_f32s);
     
-    to_commit->cpu_data->committed = true;
+    to_commit->cpu_data->committed = 1;
 }
 
 void
@@ -238,7 +238,7 @@ void T1_zsprite_delete(u32 with_T1_id)
                 T1_id == with_T1_id)
         {
             T1_zsprite_list->cpu[i].
-                deleted = true;
+                deleted = 1;
             T1_zsprite_list->cpu[i].T1_id = T1_ID_NONE;
         }
     }
@@ -374,7 +374,7 @@ void T1_zsprite_construct(
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->T1_id = T1_ID_NONE;
-    to_construct->cpu_data->visible = true;
+    to_construct->cpu_data->visible = 1;
     
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     to_construct->gpu_data->f32s.outline_alpha = -1.0f;
@@ -425,8 +425,8 @@ void T1_zsprite_construct_quad(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->visible = true;
-    stack_recipient->gpu_data->f32s.no_cam = false;
+    stack_recipient->cpu_data->visible = 1;
+    stack_recipient->gpu_data->f32s.no_cam = 0;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     stack_recipient->cpu_data->mesh_id = 0;
@@ -465,7 +465,7 @@ void T1_zsprite_construct_quad_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->visible = true;
+    stack_recipient->cpu_data->visible = 1;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -522,7 +522,7 @@ T1_zsprite_construct_cube_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0]  = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1]  = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2]  = z;
-    stack_recipient->cpu_data->visible = true;
+    stack_recipient->cpu_data->visible = 1;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -1453,7 +1453,7 @@ T1_zsprite_copy_data_for_shatter_effect(
 {
     (void)cpu_recip;
     
-    b8 found = false;
+    b8 found = 0;
     
     for (
         s32 zp_i = 0;
@@ -1466,7 +1466,7 @@ T1_zsprite_copy_data_for_shatter_effect(
         }
         
         if (!found) {
-            found = true;
+            found = 1;
             T1_std_memcpy(
                 gpu_recip,
                 T1_zsprite_list->gpu + zp_i,
@@ -1477,6 +1477,6 @@ T1_zsprite_copy_data_for_shatter_effect(
                 sizeof(T1CPUzSprite));
         }
         
-        T1_zsprite_list->cpu[zp_i].deleted = true;
+        T1_zsprite_list->cpu[zp_i].deleted = 1;
     }
 }

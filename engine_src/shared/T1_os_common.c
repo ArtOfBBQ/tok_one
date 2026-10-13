@@ -73,7 +73,7 @@ u32 T1_os_init_mutex_and_return_id(void)
     
     u32 return_value = T1_os_s->next_mutex_id;
     
-    T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized = true;
+    T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized = 1;
     
     T1_os_s->next_mutex_id++;
     return return_value;
@@ -258,8 +258,6 @@ void T1_os_write_file_to_writables(
     const u32 output_size,
     b8 * good)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     char recipient[500];
     T1_os_writable_filename_to_pathfile(
         /* filename: */
@@ -278,8 +276,6 @@ void T1_os_write_file_to_writables(
             output_size,
         /* bool32_t * good: */
             good);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_write_rgba_to_writables(
@@ -288,8 +284,6 @@ void T1_os_write_rgba_to_writables(
     u32 width, u32 height,
     u8 * good)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     u32 bmp_cap = rgba_size + 10000;
     u8 * bmp = T1_mem_malloc_managed(bmp_cap);
     u32 bmp_size = 0;
@@ -334,13 +328,9 @@ void T1_os_write_rgba_to_writables(
             bmp_size,
         /* u32 * good: */
             good);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 u8 T1_os_res_exists(const char * resource_name) {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     char pathfile[500];
     T1_os_res_filename_to_pathfile(
         resource_name,
@@ -349,8 +339,6 @@ u8 T1_os_res_exists(const char * resource_name) {
     
     return T1_os_file_exists(
         /* filepath: */ pathfile);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_read_resource_file(
@@ -360,8 +348,6 @@ void T1_os_read_resource_file(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-    
-    void * pool = T1_objc_autorelease_pool_push();
     
     char * pathfile = T1_mem_malloc_managed(500);
     T1_std_memset(pathfile, 0, 500);
@@ -384,7 +370,6 @@ void T1_os_read_resource_file(
             fatal_error);
     
     if (*fatal_error != 0) {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -398,11 +383,8 @@ void T1_os_read_resource_file(
         T1_std_strcat_u32_cap(*fatal_error, 512, (u32)recip_cap);
         T1_std_strcat_cap(*fatal_error, 512, " bytes, got: ");
         T1_std_strcat_u32_cap(*fatal_error, 512, bytes_read);
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_res_filename_to_pathfile(
@@ -410,7 +392,6 @@ void T1_os_res_filename_to_pathfile(
     char * recipient,
     u32 recip_cap)
 {
-    void * pool = T1_objc_autorelease_pool_push();
     assert(filename != NULL);
     assert(recipient != NULL);
     T1_std_memset(recipient, 0, recip_cap);
@@ -433,8 +414,6 @@ void T1_os_res_filename_to_pathfile(
         filename);
     
     T1_log_assert(recipient[0] != '\0');
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_writable_filename_to_pathfile(
@@ -445,15 +424,12 @@ void T1_os_writable_filename_to_pathfile(
     assert(filename != NULL);
     assert(recipient != NULL);
     
-    void * pool = T1_objc_autorelease_pool_push();
-    
     char separator[MAX_SEPARATOR_SIZE];
     T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(/* recipient: */ separator);
     
     T1_os_get_writables_dir(recipient, 256);
     if (recipient[0] == '\0') {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     T1_log_assert(recipient[0] != '\0');
@@ -465,14 +441,11 @@ void T1_os_writable_filename_to_pathfile(
         recipient,
         recip_cap,
         filename);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_del_writable(
     const char * writable_filename)
 {
-    void * pool = T1_objc_autorelease_pool_push();
     char filepath[500];
     
     T1_os_writable_filename_to_pathfile(
@@ -484,8 +457,6 @@ void T1_os_del_writable(
             500);
     
     T1_os_del_file(writable_filename);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_layer_start_window_resize(
@@ -542,7 +513,7 @@ void T1_os_shutdown(void)
     engine_save_file->window_fullscreen =
         T1_global->fullscreen;
     
-    b8 good = false;
+    b8 good = 0;
     T1_os_del_writable("enginestate.dat");
     
     T1_os_write_file_to_writables(

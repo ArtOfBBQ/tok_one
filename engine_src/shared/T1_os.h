@@ -142,7 +142,7 @@ u64 T1_os_get_filesize(
     const c8 * filepath);
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-void T1_os_audio_init(void);
+void T1_os_audio_init(u8 * good);
 void T1_os_audio_start_loop(void);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else

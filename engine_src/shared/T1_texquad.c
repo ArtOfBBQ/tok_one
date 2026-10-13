@@ -112,7 +112,7 @@ void T1_texquad_delete(u32 T1_id)
     {
         if (T1_texquads->cpu[i].T1_id == T1_id)
         {
-            T1_texquads->cpu[i].deleted = true;
+            T1_texquads->cpu[i].deleted = 1;
             T1_texquads->cpu[i].T1_id = T1_ID_NONE;
         }
     }
@@ -214,7 +214,7 @@ void T1_texquad_defragment(void) {
         if (T1_texquads->cpu[i].deleted) {
             T1_texquads->cpu[i] = T1_texquads->cpu[j];
             T1_texquads->gpu[i] = T1_texquads->gpu[j];
-            T1_texquads->cpu[j].deleted = true;
+            T1_texquads->cpu[j].deleted = 1;
             j--;
         }
     }
@@ -569,7 +569,7 @@ void T1_texquad_copy_to_frame_data(
         }
         
         if (T1_texquads->cpu[i].one_frame_only) {
-            T1_texquads->cpu[i].deleted = true;
+            T1_texquads->cpu[i].deleted = 1;
         }
     }
     

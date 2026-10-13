@@ -6,7 +6,6 @@
 #include "T1_global.h"
 #include "T1_ui_widget.h"
 #include "T1_zsprite.h"
-#include "T1_client.h"
 #include "T1_os.h"
 #include "T1_gpu.h"
 #include "T1_gameloop.h"

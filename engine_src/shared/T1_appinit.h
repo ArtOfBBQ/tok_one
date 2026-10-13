@@ -1,8 +1,6 @@
 #ifndef INIT_APPLICATION_H
 #define INIT_APPLICATION_H
 
-#include <string.h> // strlcat
-
 #include "T1_stdint.h"
 
 extern u32 block_drawinmtkview;

@@ -22,7 +22,7 @@ void T1_settings_init(
         sizeof(T1PerfSettings));
     
     T1_perf_settings->render_width_max  = 2160;
-    T1_perf_settings->skip_background_shading = false;
+    T1_perf_settings->skip_background_shading = 0;
 }
 
 static f32 T1_settings_get_render_mult(void) {

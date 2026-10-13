@@ -36,7 +36,7 @@ void T1_tex_array_push_all(void)
                     /* s32 texture_i: */
                         sl_i,
                     /* free_rgba: */
-                        true);
+                        1);
             }
         }
     }
@@ -199,8 +199,8 @@ register_to_texturearray_by_splitting_image(
     T1_tex_arrays[ta_i].single_img_height = expected_height;
     
     T1_tex_arrays[ta_i].images_size = rows * columns;
-    T1_tex_arrays[ta_i].is_render_target = false;
-    T1_tex_arrays[ta_i].bc1_compressed = false;
+    T1_tex_arrays[ta_i].is_render_target = 0;
+    T1_tex_arrays[ta_i].bc1_compressed = 0;
     
     for (s32 row_i = (s32)rows-1; row_i >= 0; row_i--) {
         for (s32 col_i = (s32)columns-1; col_i >= 0; col_i--)
@@ -343,9 +343,9 @@ s32 T1_tex_array_create_new_render_view(
         /* u32 height: */
             T1_render_views->cpu[rv_i].height,
         /* u32 is_render_target: */
-            true,
+            1,
         /* u32 use_bc1_compression: */
-            false,
+            0,
         /* fatal_error: */
             fatal_error);
     
@@ -410,7 +410,7 @@ void T1_tex_array_delete_array(
         T1_tex_arrays + array_i,
         0,
         sizeof(T1TexArray));
-    T1_tex_arrays[array_i].deleted = true;
+    T1_tex_arrays[array_i].deleted = 1;
 }
 
 void T1_tex_array_delete_slice(
@@ -436,8 +436,7 @@ void T1_tex_array_delete_slice(
             T1_tex_arrays[array_i].images + slice_i,
             0,
             sizeof(T1TexArrayImg));
-        T1_tex_arrays[array_i].images[slice_i].
-            deleted = true;
+        T1_tex_arrays[array_i].images[slice_i].deleted = 1;
         
         while (
             T1_tex_arrays[array_i].images_size > 0 &&
@@ -518,7 +517,7 @@ void T1_tex_array_reg_new_by_splitting_img(
     if (new_image == NULL) { return; }
     
     s32 new_texture_array_i = (int)T1_tex_arrays_size;
-    T1_tex_arrays[new_texture_array_i].request_init = true;
+    T1_tex_arrays[new_texture_array_i].request_init = 1;
     T1_tex_arrays_size++;
     T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
     
@@ -692,14 +691,14 @@ void T1_tex_array_debug_dump_to_writables(
         
         if (!fetched) {
             if (texture_i == 0) {
-                *success = false;
+                *success = 0;
                 return;
             }
             continue;
         }
         
         if (rgba_size < 4) {
-            *success = false;
+            *success = 0;
             return;
         }
         
@@ -728,7 +727,7 @@ void T1_tex_array_debug_dump_to_writables(
         T1_mem_free_managed(rgba);
         
         if (!write_good) {
-            *success = false;
+            *success = 0;
             return;
         }
     }

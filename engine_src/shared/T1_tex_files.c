@@ -3,11 +3,13 @@
 #include "decode_png.h"
 #include "decode_bmp.h"
 #include "T1_global.h"
+#include "T1_embedded_data.h"
 #include "T1_mem.h"
 #include "T1_log.h"
 #include "T1_img.h"
 #include "T1_tex_array.h"
 #include "T1_os.h"
+#include "T1_fatal_error.h"
 
 static void malloc_img_from_embedded_png(
     T1Img * recip,
@@ -334,10 +336,10 @@ void T1_tex_files_load_font_images(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10,
-        false,
+        0,
         fatal_error);
     if (*fatal_error != 0) { return; }
-    T1_tex_arrays[0].request_init = false;
+    T1_tex_arrays[0].request_init = 0;
 }
 
 void T1_tex_files_prereg_and_decode_png_res(
@@ -355,8 +357,8 @@ void T1_tex_files_prereg_and_decode_png_res(
         resource_name,
         img.width,
         img.height,
-        false,
-        false,
+        0,
+        0,
         fatal_error);
     
     if (*fatal_error != 0) { return; }
@@ -463,9 +465,9 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* const u32 width: */
             width,
         /* const u32 is_render_target,: */
-            false,
+            0,
         /* const u32 is_dds_image: */
-            false,
+            0,
         /* fatal_error: */
             fatal_error);
     
@@ -513,7 +515,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* const s32 texture_i: */
             T1_tex_to_slice_i(loc),
         /* free_rgba: */
-            true);
+            1);
     
     T1_mem_free_managed(contents);
 }
@@ -575,9 +577,9 @@ void T1_tex_files_prereg_png_res(
         /* const u32 height: */
             height,
         /* const u32 is_render_target: */
-            false,
+            0,
         /* const u32 is_dds_image: */
-            false,
+            0,
         /* fatal_error: */
             fatal_error);
     
@@ -644,9 +646,9 @@ void T1_tex_files_prereg_dds_res(
         /* const u32 height: */
             header->height,
         /* const u32 is_render_target: */
-            false,
+            0,
         /* const u32 is_dds_image: */
-            true,
+            1,
         /* fatal_error: */
             fatal_error);
     

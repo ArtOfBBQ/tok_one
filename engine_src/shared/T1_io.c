@@ -165,7 +165,7 @@ T1_io_register_keyup(u32 key_id, u8 debounces)
     T1IOFrameEvent * next = T1_io_get_open_event(key_id);
     
     if (next) {
-        next->is_active = true;
+        next->is_active = 1;
         next->timestamp = T1_os_get_current_time_us();
         
         if (last_down >= next->timestamp) {
@@ -198,7 +198,7 @@ void T1_io_register_keyup_force_up_short(
     T1IOFrameEvent * next = T1_io_get_open_event(key_id);
     
     if (next) {
-        next->is_active = true;
+        next->is_active = 1;
         next->timestamp = T1_os_get_current_time_us();
         
         next->is_up_long = 0;
@@ -262,9 +262,9 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
     if (next) {
         next->timestamp = T1_io->frame_map[key_id].
             last_down_timestamp;
-        next->is_active = true;
-        next->is_up_long = false;
-        next->is_up_short = false;
+        next->is_active = 1;
+        next->is_up_long = 0;
+        next->is_up_short = 0;
     }
 }
 
@@ -338,7 +338,7 @@ T1_io_update_and_clear_for_next_frame(void)
     // at the end, reset the frame data
     for (T1IOKey i = 0; i < T1_IO_KEY_ABOVEBOUNDS; i++) {
         for (uint32_t j = 0; j < T1_IO_MAX_EVENTS_PER_FRAME; j++) {
-            T1_io->frame_map[i].list[j].is_active = false;
+            T1_io->frame_map[i].list[j].is_active = 0;
         }
     }
     
@@ -417,12 +417,12 @@ b8 T1_io_key_consume_tap_began_frame(
             !T1_io->frame_map[key].list[i].is_up_short &&
             !T1_io->frame_map[key].list[i].is_up_long)
         {
-            T1_io->frame_map[key].list[i].is_active = false;
-            return true;
+            T1_io->frame_map[key].list[i].is_active = 0;
+            return 1;
         }
     }
     
-    return false;
+    return 0;
 }
 
 b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id) {        
@@ -443,12 +443,12 @@ b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id) {
             T1_io->frame_map[key].list[i].is_up_short &&
             !T1_io->frame_map[key].list[i].is_up_long)
         {
-            T1_io->frame_map[key].list[i].is_active = false;
-            return true;
+            T1_io->frame_map[key].list[i].is_active = 0;
+            return 1;
         }
     }
     
-    return false;
+    return 0;
 }
 
 b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id) {        
@@ -467,12 +467,12 @@ b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id) {
             T1_io->frame_map[key].list[i].is_active &&
             T1_io->frame_map[key].list[i].is_up_long)
         {
-            T1_io->frame_map[key].list[i].is_active = false;
-            return true;
+            T1_io->frame_map[key].list[i].is_active = 0;
+            return 1;
         }
     }
     
-    return false;
+    return 0;
 }
 
 u32 T1_io_get_mouse_touch_id_this_frame(void) {
@@ -492,8 +492,8 @@ b8 T1_io_consume_mouse_drag(
         *delta_y = T1_io->last_drag_start_y - mouse_y;
         T1_io->last_drag_start_x = mouse_x;
         T1_io->last_drag_start_y = mouse_y;
-        return true;
+        return 1;
     }
     
-    return false;
+    return 0;
 }

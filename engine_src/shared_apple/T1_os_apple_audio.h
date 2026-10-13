@@ -3,7 +3,7 @@
 
 #include "T1_audio.h"
 
-void T1_apple_audio_init(void);
+void T1_apple_audio_init(u8 * good);
 
 void T1_apple_audio_start_loop(void);
 

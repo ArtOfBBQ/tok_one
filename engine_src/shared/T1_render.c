@@ -13,13 +13,12 @@
 #include "T1_particle.h"
 #include "T1_io.h"
 #include "T1_zlight.h"
-#include "T1_frame_anim.h"
 #include "T1_render_view.h"
 
-static u32 T1_render_active = false;
+static u32 T1_render_active = 0;
 
 void T1_render_init(void) {
-    T1_render_active = true;
+    T1_render_active = 1;
 }
 
 static void
@@ -163,7 +162,7 @@ void T1_render_update(
 {
     (void)elapsed_us;
     
-    if (T1_render_active != true) {
+    if (T1_render_active != 1) {
         T1_log_append(
             "renderer not initialized, aborting...\n");
         return;

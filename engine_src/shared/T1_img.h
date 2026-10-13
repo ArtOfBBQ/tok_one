@@ -12,14 +12,11 @@ typedef struct {
     u32 pixel_count; // rgba_values_size / 4
 } T1Img;
 
-u64
-T1_img_get_sum_rgba(const T1Img * input);
+u64 T1_img_get_sum_rgba(const T1Img * input);
 
-u32
-T1_img_get_avg_rgba(const T1Img * input);
+u32 T1_img_get_avg_rgba(const T1Img * input);
 
-void
-T1_img_overwrite_subregion(
+void T1_img_overwrite_subregion(
     T1Img * whole_image,
     const T1Img * new_image,
     const u32 column_count,

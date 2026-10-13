@@ -117,7 +117,7 @@ void T1_anim_init(
         T1_anims,
         0,
         sizeof(T1AnimPrivate) * T1_ANIMS_CAP);
-    T1_anims[0].deleted = true;
+    T1_anims[0].deleted = 1;
     
     as = (T1AnimState *)T1_mem_malloc_unmanaged(
         sizeof(T1AnimState));
@@ -433,8 +433,8 @@ static void T1_anim_delete(T1AnimPrivate * a) {
         as->store_taken[a->tq_gpu_u32s_store_i] &= ~(1);
     }
     
-    a->deleted = true;
-    a->committed = false;
+    a->deleted = 1;
+    a->committed = 0;
     
     if (a == (T1_anims + (s32)T1_anims_size-1)) { T1_anims_size -= 1; }
 }
@@ -654,13 +654,13 @@ void T1_anim_commit_and_instarun(T1Anim * to_commit)
     
     parent->remaining_pause_us = to_commit->pause_us;
     parent->remaining_duration_us = to_commit->duration_us;
-    parent->committed = true;
+    parent->committed = 1;
     
     T1_anim_sanity_check(parent);
     
     T1_anim_resolve_single(parent);
     T1_anim_delete(parent);
-    parent->committed = false;
+    parent->committed = 0;
     T1_log_assert(parent->remaining_duration_us == 0);
     
     as->mutex_unlock(as->mutex_id);
@@ -787,7 +787,7 @@ void T1_anim_commit(T1Anim * c)
     parent->remaining_duration_us = c->duration_us;
     
     T1_log_assert(parent->remaining_duration_us > 0);
-    parent->committed = true;
+    parent->committed = 1;
     
     T1_log_assert(parent->committed);
     T1_log_assert(!parent->deleted);
@@ -815,32 +815,32 @@ void T1_anim_shatter_and_destroy(
     
     T1Anim * set_scatter_mesh =
     T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ true,
-        /* b8 zs_gpu_f32s: */ false,
-        /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 1,
+        /* b8 zs_gpu_f32s: */ 0,
+        /* b8 zs_cpu_f32s: */ 1,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
     T1_anim_commit_and_instarun(set_scatter_mesh);
     
     T1Anim * scatter = T1_anim_request_next(
-        true,
-        /* b8 zs_gpu_f32s: */ true,
-        /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        1,
+        /* b8 zs_gpu_f32s: */ 1,
+        /* b8 zs_cpu_f32s: */ 0,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     scatter->zs_gpu_f32s->alpha = 0.0f;
     scatter->target_T1_id = T1_id;
     scatter->duration_us = duration_us;
     scatter->easing_type = T1_EASINGTYPE_NONE;
     scatter->runs = 1;
-    scatter->del_obj_on_finish = true;
+    scatter->del_obj_on_finish = 1;
     T1_anim_commit(scatter);
 }
 
@@ -857,32 +857,32 @@ void T1_anim_evaporate_and_destroy(
     
     T1Anim * set_scatter_mesh =
     T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ true,
-        /* b8 zs_gpu_f32s: */ false,
-        /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 1,
+        /* b8 zs_gpu_f32s: */ 0,
+        /* b8 zs_cpu_f32s: */ 1,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     set_scatter_mesh->target_T1_id = T1_id;
     set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
     set_scatter_mesh->duration_us = 1;
     T1_anim_commit_and_instarun(set_scatter_mesh);
     
     T1Anim * evap = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ true,
-        /* b8 zs_gpu_f32s: */ true,
-        /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 1,
+        /* b8 zs_gpu_f32s: */ 1,
+        /* b8 zs_cpu_f32s: */ 0,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     evap->zs_gpu_f32s->alpha = 0.0f;
     evap->target_T1_id = T1_id;
     evap->duration_us = duration_us;
     evap->easing_type = T1_EASINGTYPE_NONE;
     evap->runs = 1;
-    evap->del_obj_on_finish = true;
+    evap->del_obj_on_finish = 1;
     T1_anim_commit(evap);
 }
 
@@ -894,13 +894,13 @@ void T1_anim_fade_and_destroy(
     T1_log_assert(duration_us > 0);
     
     T1Anim * fade_destroy = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */  true,
-        /* b8 zs_gpu_f32s: */ true,
-        /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ true,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ true);
+        /* b8 endpoints_not_deltas: */  1,
+        /* b8 zs_gpu_f32s: */ 1,
+        /* b8 zs_cpu_f32s: */ 1,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 1,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 1);
     fade_destroy->target_T1_id = T1_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->zs_gpu_f32s->alpha = 0.0f;
@@ -919,7 +919,7 @@ void T1_anim_fade_and_destroy(
     fade_destroy->zl_gpu_f32s->diffuse = 0.0f;
     fade_destroy->zl_gpu_f32s->specular = 0.0f;
     fade_destroy->pause_us = pause_first;
-    fade_destroy->del_obj_on_finish = true;
+    fade_destroy->del_obj_on_finish = 1;
     T1_anim_commit(fade_destroy);
 }
 
@@ -944,17 +944,17 @@ void T1_anim_fade_to(
     
     // register scheduled animation
     T1Anim * modify_alpha = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ true,
-        /* b8 zs_gpu_f32s: */ true,
-        /* b8 zs_cpu_f32s: */ false,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 1,
+        /* b8 zs_gpu_f32s: */ 1,
+        /* b8 zs_cpu_f32s: */ 0,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     modify_alpha->target_T1_id = T1_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->zs_gpu_f32s->alpha = target_alpha;
-    modify_alpha->del_obj_on_finish = true;
+    modify_alpha->del_obj_on_finish = 1;
     if (duration_us < 50) {
         T1_anim_commit_and_instarun(modify_alpha);
     } else {
@@ -984,13 +984,13 @@ void T1_anim_dud_dance(
 {
     T1Anim * move_request =
     T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ false,
-        /* b8 zs_gpu_f32s: */ false,
-        /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 0,
+        /* b8 zs_gpu_f32s: */ 0,
+        /* b8 zs_cpu_f32s: */ 1,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     move_request->easing_type = T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->target_T1_id = T1_id;
     move_request->zs_cpu_f32s->xyz[0] = magnitude * 0.05f;
@@ -1011,13 +1011,13 @@ void T1_anim_bump(
     #endif
     
     T1Anim * bump_req = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ false,
-        /* b8 zs_gpu_f32s: */ false,
-        /* b8 zs_cpu_f32s: */ true,
-        /* b8 zs_gpu_u32s: */ false,
-        /* b8 tq_gpu_f32s: */ false,
-        /* b8 tq_gpu_u32s: */ false,
-        /* b8 zl_gpu_f32s: */ false);
+        /* b8 endpoints_not_deltas: */ 0,
+        /* b8 zs_gpu_f32s: */ 0,
+        /* b8 zs_cpu_f32s: */ 1,
+        /* b8 zs_gpu_u32s: */ 0,
+        /* b8 tq_gpu_f32s: */ 0,
+        /* b8 tq_gpu_u32s: */ 0,
+        /* b8 zl_gpu_f32s: */ 0);
     bump_req->easing_type =
         T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     bump_req->target_T1_id = T1_id;

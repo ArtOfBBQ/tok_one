@@ -15,14 +15,12 @@
 #include "T1_zsprite.h"
 #include "T1_zlight.h"
 #include "T1_anim.h"
-#include "T1_client.h"
 #include "T1_profiler.h"
 #include "T1_particle.h"
-#include "T1_frame_anim.h"
 #include "T1_render_view.h"
 
-u8 T1_gameloop_active = false;
-u8 T1_gameloop_loading_texs = false;
+u8 T1_gameloop_active = 0;
+u8 T1_gameloop_loading_texs = 0;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
@@ -113,10 +111,10 @@ static void show_dead_simple_text(
             T1_settings_get_render_width() - 30);
     
     T1_global->draw_fps = 0;
-    T1_global->draw_triangles = true;
+    T1_global->draw_triangles = 1;
     T1_global->draw_axes = 0;
     T1_global->draw_fps = 0;
-    T1_global->show_profiler = false;
+    T1_global->show_profiler = 0;
     T1_global->postproc_consts.perlin_texturearray_i = 0;
     T1_global->postproc_consts.perlin_texture_i = 0;
     T1_global->postproc_consts.color_quantization = 1;
@@ -399,7 +397,7 @@ void T1_gameloop_update_after_render_pass(void) {
     #endif
     
     if (T1_global->upcoming_fullscreen_request) {
-        T1_global->upcoming_fullscreen_request = false;
+        T1_global->upcoming_fullscreen_request = 0;
         T1_os_enter_fullscreen();
     }
     

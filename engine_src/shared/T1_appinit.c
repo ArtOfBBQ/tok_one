@@ -1,12 +1,11 @@
 #include "T1_appinit.h"
 
-#include <stdlib.h>
-
 #include "decode_png.h"
 
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_objc.h"
+#include "T1_embedded_data.h"
 #include "T1_settings.h"
 #include "T1_meta.h"
 #include "T1_log.h"
@@ -32,15 +31,12 @@
 #include "T1_mtlparser.h"
 #include "T1_objparser.h"
 #include "T1_particle.h"
-#include "T1_frame_anim.h"
 #include "T1_mesh_summary.h"
 #include "T1_material.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
 
-#include "T1_client.h"
 #include "T1_os.h"
-
 
 #define T1_IMAGE_DECODING_THREADS_MAX 10
 typedef struct {
@@ -214,8 +210,8 @@ void T1_appinit_before_gpu_init(
 {
     if (*fatal_error != 0) { return; }
     
-    T1_gameloop_active = false;
-    T1_log_app_running = true;
+    T1_gameloop_active = 0;
+    T1_log_app_running = 1;
     
     void * unmanaged_memory_store =
         T1_os_malloc_unaligned_block(
@@ -259,12 +255,7 @@ void T1_appinit_before_gpu_init(
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
     
     T1_meta_init(
-        T1_std_memcpy,
         T1_mem_malloc_unmanaged,
-        T1_std_memset,
-        strcmp,
-        T1_std_strlen,
-        strtoull,
         /* const u32 ascii_store_cap: */
             30000,
         /* const u16 meta_structs_cap: */
@@ -342,7 +333,13 @@ void T1_appinit_before_gpu_init(
     T1_audio_init(
         /* void *(*arg_malloc_function)(u64): */
             T1_mem_malloc_unmanaged);
-    T1_platform_audio_init();
+    
+    u8 audio_good;
+    T1_os_audio_init(&audio_good);
+    
+    T1_log_warn_if_false(
+        audio_good,
+        "Audio initialization failed!\n");
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -426,7 +423,7 @@ void T1_appinit_before_gpu_init(
         #error "T1_AUDIO_ACTIVE undefined!"
         #endif // T1_AUDIO_ACTIVE
     } else {
-        T1_global->fullscreen = false;
+        T1_global->fullscreen = 0;
         T1_global_update_window_size(
             T1_INITIAL_WINDOW_WIDTH,
             T1_INITIAL_WINDOW_HEIGHT,
@@ -519,7 +516,7 @@ void T1_appinit_before_gpu_init(
     
     T1_tex_array_init();
     
-    T1_assert(T1_embedded_data_fontmetrics_dat_size > 0);
+    T1_log_assert(T1_embedded_data_fontmetrics_dat_size > 0);
     
     T1_text_init(
         T1_mem_malloc_unmanaged,
@@ -690,7 +687,7 @@ void T1_appinit_before_gpu_init(
         0,
         sd->const_matss32_alloc_size);
     
-    b8 initial_log_dump_succesful = false;
+    b8 initial_log_dump_succesful = 0;
     T1_log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
         *fatal_error =
@@ -811,13 +808,13 @@ void T1_appinit_after_gpu_init_step1(
         T1_global->postproc_consts.perlin_texturearray_i < 1 ||
         T1_global->postproc_consts.perlin_texture_i != 0)
     {
-        T1_gameloop_active = true;
+        T1_gameloop_active = 1;
         T1_log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
-    T1_gameloop_active = true;
+    T1_gameloop_active = 1;
     
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -856,7 +853,7 @@ void T1_appinit_after_gpu_init_step2(
             ias->thread_finished,
             0,
             sizeof(u32) * T1_IMAGE_DECODING_THREADS_MAX);
-        ias->thread_finished[0] = true;
+        ias->thread_finished[0] = 1;
         
         T1_log_assert(T1_global->startup_bytes_to_load == 0);
         T1_log_assert(T1_global->startup_bytes_loaded == 0);
@@ -866,7 +863,7 @@ void T1_appinit_after_gpu_init_step2(
         }
         
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-        T1_gameloop_loading_texs = true;
+        T1_gameloop_loading_texs = 1;
         for (
             s32 i = 1;
             i < (s32)ias->
@@ -933,7 +930,7 @@ void T1_appinit_after_gpu_init_step2(
     #endif
     
     if (!T1_log_app_running) {
-        T1_gameloop_active = true;
+        T1_gameloop_active = 1;
         return;
     }
     
@@ -979,14 +976,14 @@ void T1_appinit_after_gpu_init_step2(
     
     // Wait until all worker threads are finished
     while (!ias->all_finished) {
-        ias->all_finished = true;
+        ias->all_finished = 1;
         for (u32 i = 1; i < ias->image_decoding_threads; i++) {
             if (!ias->thread_finished[i]) {
-                ias->all_finished = false;
+                ias->all_finished = 0;
             }
         }
     }
-    T1_gameloop_loading_texs = false;
+    T1_gameloop_loading_texs = 0;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     #else
     #error "T1_TEXTURES_ACTIVE undefined!"
@@ -1044,12 +1041,12 @@ void T1_appinit_after_gpu_init_step2(
         T1_os_get_current_time_us());
     
     if (!T1_log_app_running) {
-        T1_gameloop_active = true;
+        T1_gameloop_active = 1;
         return;
     }
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_platform_audio_start_loop();
+    T1_os_audio_start_loop();
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else

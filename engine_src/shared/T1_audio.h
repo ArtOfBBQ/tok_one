@@ -85,7 +85,8 @@ u64 T1_audio_get_play_cursor(void);
 void T1_audio_clear_global_buffer(void);
 
 s32 T1_audio_get_permasound_id_or_register_new(
-    const char * for_resource_name);
+    const char * for_resource_name,
+    char ** const fatal_error);
 
 void T1_audio_register_samples_to_permasound(
     s32 permasound_id,

@@ -1,8 +1,6 @@
 #ifndef T1_GLOBAL_H
 #define T1_GLOBAL_H
 
-#include <math.h>
-
 #include "T1_std.h"
 #include "T1_types_gpucpu.h"
 #include "T1_types_public.h"

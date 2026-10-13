@@ -9,4 +9,4 @@ void T1_fatal_error_prepend_if_bad(
     char ** const fatal_error,
     const char * to_append);
 
-#endif
+#endif // T1_FATAL_ERROR_H

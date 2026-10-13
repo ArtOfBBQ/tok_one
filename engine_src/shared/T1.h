@@ -711,7 +711,8 @@ void T1_audio_register_samples_to_permasound(
     int16_t * samples,
     int32_t samples_size);
 int32_t T1_audio_get_permasound_id_or_register_new(
-    const char * for_res_name);
+    const char * for_res_name,
+    char ** const fatal_error);
 void T1_audio_add_permasound_to_global_buffer(
     int32_t permasound_id,
     float volume_f32);

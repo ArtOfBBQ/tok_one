@@ -7,7 +7,6 @@
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_text.h"
-#include "T1_client.h"
 #include "T1_wav.h"
 #include "T1_audio.h"
 
@@ -37,7 +36,7 @@ typedef struct {
     char history[T1_TERM_HIST_CAP];
 } T1TermState;
 
-static b8 T1_term_active = false;
+static b8 T1_term_active = 0;
 static T1TermState * T1_trms = NULL;
 
 #define T1_TERM_WHITESPACE    7.0f
@@ -50,7 +49,7 @@ static T1TermState * T1_trms = NULL;
 #define T1_TERM_INPUT_BOX_MID_Y ((T1_TERM_INPUT_BOX_HEIGHT * 0.5f) + T1_TERM_WHITESPACE)
 
 
-static u8 requesting_label_update = false;
+static u8 requesting_label_update = 0;
 
 static void T1_term_describe_zpolygon(
     char * append_to,
@@ -223,7 +222,7 @@ static void T1_term_render(void) {
     if (T1_trms->cur_command[0] == '\0') {
         T1_text_props->font_height =
             previous_font_height;
-        requesting_label_update = false;
+        requesting_label_update = 0;
         return;
     }
     
@@ -250,7 +249,7 @@ static void T1_term_render(void) {
     T1_text_props->font_height =
         previous_font_height;
     
-    requesting_label_update = false;
+    requesting_label_update = 0;
 }
 
 static void T1_term_destroy_all(void) {
@@ -270,9 +269,9 @@ static void T1_term_sendchar(u32 to_send) {
     if (to_send == T1_IO_KEYBOARD_ESCAPE) {
         // ESC key
         T1_trms->cur_command[0] = '\0';
-        T1_term_active = false;
+        T1_term_active = 0;
         T1_term_destroy_all();
-        requesting_label_update = true;
+        requesting_label_update = 1;
         return;
     }
     
@@ -296,7 +295,7 @@ static void T1_term_sendchar(u32 to_send) {
         last_i > 0)
     {
         T1_trms->cur_command[last_i - 1] = '\0';
-        requesting_label_update = true;
+        requesting_label_update = 1;
     }
     
     if (
@@ -306,7 +305,7 @@ static void T1_term_sendchar(u32 to_send) {
     {
         T1_trms->cur_command[last_i] = (char)to_send;
         T1_trms->cur_command[last_i + 1] = '\0';
-        requesting_label_update = true;
+        requesting_label_update = 1;
     }
 }
 
@@ -347,7 +346,7 @@ static u8 T1_term_evaluate(
         #else
         #error
         #endif
-        return true;
+        return 1;
     }
     
     if (
@@ -359,9 +358,9 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Enabling render view position updates...");
-        T1_global->block_render_view_pos_updates = false;
+        T1_global->block_render_view_pos_updates = 0;
         
-        return true;
+        return 1;
     }
     
     if (
@@ -373,9 +372,9 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Blocking render view position updates...");
-        T1_global->block_render_view_pos_updates = true;
+        T1_global->block_render_view_pos_updates = 1;
         
-        return true;
+        return 1;
     }
     
     if (
@@ -398,7 +397,7 @@ static u8 T1_term_evaluate(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
                 command + 15);
-            return true;
+            return 1;
         }
         
         T1_std_strcpy_cap(
@@ -423,7 +422,7 @@ static u8 T1_term_evaluate(
         T1_cam->angle_xyz[2] = T1_render_views->
             cpu[jump_rv].angle_xyz[2];
         
-        return true;
+        return 1;
     }
     
     if (
@@ -432,7 +431,7 @@ static u8 T1_term_evaluate(
             "PAUSE PROFILER"))
     {
         if (!T1_global->pause_profiler) {
-            T1_global->pause_profiler = true;
+            T1_global->pause_profiler = 1;
             T1_std_strcpy_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
@@ -443,7 +442,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Profiler was already paused...");
         }
-        return true;
+        return 1;
     }
     
     if (
@@ -452,7 +451,7 @@ static u8 T1_term_evaluate(
         T1_std_are_equal_strings(command, "UNPAUSE PROFILER"))
     {
         if (T1_global->pause_profiler) {
-            T1_global->pause_profiler = false;
+            T1_global->pause_profiler = 0;
             T1_std_strcpy_cap(
                 response,
                 T1_TERM_SINGLE_LINE_MAX,
@@ -463,7 +462,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Profiler was already running...");
         }
-        return true;
+        return 1;
     }
     
     if (
@@ -475,7 +474,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Reset camera position and angles to {0,0,0}");
-        return true;
+        return 1;
     }
     
     if (
@@ -537,7 +536,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "].");
-        return true;
+        return 1;
     }
     
     if (
@@ -566,7 +565,7 @@ static u8 T1_term_evaluate(
             T1_TERM_SINGLE_LINE_MAX,
             "Can't draw axes because raw shader (points & lines) is disabled");
         #endif
-        return true;
+        return 1;
     }
     
     if (
@@ -588,7 +587,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the mouse pointer...");
         }
-        return true;
+        return 1;
     }
     
     
@@ -649,7 +648,7 @@ static u8 T1_term_evaluate(
         #else
         #error
         #endif
-        return true;
+        return 1;
     }
     
     
@@ -662,7 +661,7 @@ static u8 T1_term_evaluate(
             "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
         T1_global->postproc_consts.nonblur_pct = 0.02f;
         T1_global->postproc_consts.blur_pct = 1.0f;
-        return true;
+        return 1;
     }
     
     if (
@@ -674,7 +673,7 @@ static u8 T1_term_evaluate(
             "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
         T1_global->postproc_consts.nonblur_pct = 1.0f;
         T1_global->postproc_consts.blur_pct = 0.0f;
-        return true;
+        return 1;
     }
     
     if (
@@ -687,7 +686,7 @@ static u8 T1_term_evaluate(
             "Reverted to standard blur+non-blur composite...");
         T1_global->postproc_consts.nonblur_pct = 1.0f;
         T1_global->postproc_consts.blur_pct = 1.0f;
-        return true;
+        return 1;
     }
     
     if (
@@ -709,7 +708,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             (u32)T1_render_views->cpu[0].width);
-        return true;
+        return 1;
     }
     
     if (
@@ -731,7 +730,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             zp_i);
-        return true;
+        return 1;
     }
     
     if (
@@ -745,7 +744,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Toggled mouse block");
-        return true;
+        return 1;
     }
     
     if (
@@ -767,7 +766,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the fps counter...");
         }
-        return true;
+        return 1;
     }
     
     if (
@@ -789,7 +788,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the touch_id...");
         }
-        return true;
+        return 1;
     }
     
     if (
@@ -814,7 +813,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing the 'imputed normals' for the last touch...");
         }
-        return true;
+        return 1;
     }
     
     if (
@@ -850,7 +849,7 @@ static u8 T1_term_evaluate(
                     response,
                     T1_TERM_SINGLE_LINE_MAX,
                     ", so please pass a number below that.");
-                return true;
+                return 1;
             }
             
             T1_std_strcpy_cap(
@@ -881,7 +880,7 @@ static u8 T1_term_evaluate(
                     "Failed to dump texturearray\n");
         }
         
-        return true;
+        return 1;
     }
     
     if (
@@ -892,7 +891,7 @@ static u8 T1_term_evaluate(
         T1_os_get_writables_dir(writables_path, 512);
         T1_os_open_dir_in_file_explorer_window_if_possible(writables_path);
         
-        return true;
+        return 1;
     }
     
     if (
@@ -912,7 +911,7 @@ static u8 T1_term_evaluate(
                 T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing triangles...");
         }
-        return true;
+        return 1;
     }
     
     if (T1_std_are_equal_strings(command, "FS") ||
@@ -923,7 +922,7 @@ static u8 T1_term_evaluate(
             T1_TERM_SINGLE_LINE_MAX,
             "Entering full screen...");
         T1_trms->to_fullscreen_fncptr();
-        return true;
+        return 1;
     }
     
     if (T1_std_are_equal_strings(command, "quit") ||
@@ -934,7 +933,7 @@ static u8 T1_term_evaluate(
         T1_std_are_equal_strings(command, "EXIT"))
     {
         T1_os_close_app();
-        return true;
+        return 1;
     }
     
     #if T1_LOGGER_ASSERTS_ACTIVE
@@ -944,7 +943,7 @@ static u8 T1_term_evaluate(
             T1_TERM_SINGLE_LINE_MAX,
             "Forcing the app to crash...");
         log_dump_and_crash("Terminal-induced crash");
-        return true;
+        return 1;
     }
     #endif
     
@@ -967,7 +966,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             " lights in this scene.\n");
-        return true;
+        return 1;
     }
     
     if (
@@ -992,10 +991,10 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             T1_global->timedelta_mult);
-        return true;
+        return 1;
     }
     
-    return false;
+    return 0;
 }
 
 static void T1_term_update_history_size(void) {
@@ -1070,7 +1069,7 @@ static void T1_term_commit_or_activate(void) {
         T1_trms->cur_command[0] = '\0';
         T1_term_update_history_size();
         T1_term_redraw_backgrounds();
-        requesting_label_update = true;
+        requesting_label_update = 1;
         return;
     }
     
@@ -1081,7 +1080,7 @@ static void T1_term_commit_or_activate(void) {
         T1_assert(!T1_term_active_b4);
         T1_io_scene_stack_push(T1_trms->scene_id);
         T1_term_redraw_backgrounds();
-        requesting_label_update = true;
+        requesting_label_update = 1;
     } else {
         T1_assert(T1_term_active_b4);
         T1_io_scene_stack_pop();
@@ -1115,7 +1114,7 @@ void T1_term_update(void) {
 }
 
 void T1_term_manually_deactivate(void) {
-    T1_term_active = false;
+    T1_term_active = 0;
     
     T1_term_destroy_all();
     

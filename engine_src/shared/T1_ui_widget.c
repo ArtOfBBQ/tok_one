@@ -83,7 +83,7 @@ static void T1_ui_widget_update_pos_if_needed(
     ActiveUIElement * ae)
 {
     if (!ae->pos_updated_this_frame) {
-        ae->pos_updated_this_frame = true;
+        ae->pos_updated_this_frame = 1;
         
         f32 avg_xyz[3];
         b8 found;
@@ -377,7 +377,7 @@ next_active_ui_element(void)
     T1_log_assert(T1_ui_widget_list_size <
         ACTIVE_UI_ELEMENTS_SIZE);
     T1_ui_widget_list[T1_ui_widget_list_size].
-        deleted = true;
+        deleted = 1;
     T1_ui_widget_list_size += 1;
     T1_std_memset(
         &T1_ui_widget_list
@@ -474,7 +474,7 @@ static void redraw_dirty_labels(void) {
             T1_ui_widget_list[i].label_dirty)
         {
             T1_ui_widget_list[i].label_dirty =
-                false;
+                0;
             
             T1_texquad_delete(
                 T1_ui_widget_list[i].label_T1_id);
@@ -532,7 +532,7 @@ static void redraw_dirty_labels(void) {
 b8 T1_ui_widget_handle_lclick(void) {
     T1_log_assert(0);
     
-    return false;
+    return 0;
 }
 
 void T1_ui_widget_handle_touches(u64 ms_elapsed)
@@ -545,7 +545,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
         w_i++)
     {
         T1_ui_widget_list[w_i].
-            pos_updated_this_frame = false;
+            pos_updated_this_frame = 0;
     }
     
     if (T1_ui_widget_sliding_touch_id >= 0)
@@ -568,7 +568,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
             {
                 T1_io->events
                     [T1_IO_TOUCH_OR_LCLICK_START].
-                        handled = true;
+                        handled = 1;
                 ui_elem_i = elem_i;
                 break;
             }
@@ -581,7 +581,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                     slideable);
             
             T1_ui_widget_list[ui_elem_i].
-                label_dirty = true;
+                label_dirty = 1;
             
             f64 pin_pct = 0.0f;
             f32 pin_offset_x =
@@ -591,12 +591,12 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                     [T1_IO_MOUSE_OR_TOUCH_MOVE].screen_x,
                 &pin_pct);
             
-            T1TexQuadAnim * slide = T1_texquad_anim_request_next(true);
+            T1TexQuadAnim * slide = T1_texquad_anim_request_next(1);
             slide->affect_touch_id =
                 T1_ui_widget_sliding_touch_id;
             slide->gpu_vals.f32s.offset_xy[0] = pin_offset_x;
             slide->duration_us = 1;
-            slide->gpu_f32_active = true;
+            slide->gpu_f32_active = 1;
             T1_texquad_anim_commit_and_instarun(slide);
             
             T1_log_assert(
@@ -708,7 +708,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                         touch_id)
                 {
                     T1_io->events[T1_IO_TOUCH_OR_LCLICK_END].
-                        handled = true;
+                        handled = 1;
                     T1_ui_widget_list[ui_elem_i].
                         clicked_funcptr(
                             T1_ui_widget_list[ui_elem_i].clicked_arg);
@@ -752,7 +752,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                             touch_id;
                     T1_io->events
                         [T1_IO_TOUCH_OR_LCLICK_END].
-                            handled = true;
+                            handled = 1;
                 }
                 
                 if (T1_ui_widget_list[i].clicked_funcptr != NULL) {
@@ -778,7 +778,7 @@ void T1_ui_widget_handle_touches(u64 ms_elapsed)
                 }
                 
                 T1_io->events[T1_IO_TOUCH_OR_LCLICK_START].
-                    handled = true;
+                    handled = 1;
             }
         }
     }
@@ -811,7 +811,7 @@ void T1_ui_widget_request_slider(
         next_active_ui_element();
     next_ae->props = *T1_ui_widget_next_props;
     next_ae->has_label = next_ae->props.label_prefix[0] != '\0';
-    next_ae->label_dirty = true;
+    next_ae->label_dirty = 1;
     next_ae->back_T1_id = back_T1_id;
     next_ae->pin_T1_id = pin_T1_id;
     next_ae->label_T1_id = label_T1_id;
@@ -849,8 +849,8 @@ void T1_ui_widget_request_slider(
         }
     }
     
-    next_ae->slideable = true;
-    next_ae->deleted = false;
+    next_ae->slideable = 1;
+    next_ae->deleted = 0;
     next_ae->slider_linked_value = linked_value_ptr;
     next_ae->touch_id = T1_id_next_ui_element_touch_id();
     
@@ -939,15 +939,15 @@ void T1_ui_widget_request_button(
     next_ae->has_label = T1_ui_widget_next_props->
         label_prefix[0] != '\0';
     
-    next_ae->label_dirty = true;
-    next_ae->slideable = false;
+    next_ae->label_dirty = 1;
+    next_ae->slideable = 0;
     next_ae->clicked_funcptr = onclick_funcptr;
     
     next_ae->back_T1_id = button_object_id;
     next_ae->pin_T1_id = T1_ID_NONE;
     next_ae->label_T1_id = button_label_id;
     
-    next_ae->deleted = false;
+    next_ae->deleted = 0;
     next_ae->slider_linked_value = NULL;
     next_ae->touch_id = T1_id_next_ui_element_touch_id();
     
@@ -990,7 +990,7 @@ void T1_ui_widget_delete(u32 with_T1_id) {
         {
             T1_ui_widget_list[i].slider_linked_value = NULL;
             T1_ui_widget_list[i].touch_id = T1_TOUCH_ID_NONE;
-            T1_ui_widget_list[i].deleted = true;
+            T1_ui_widget_list[i].deleted = 1;
         }
     }
 }
@@ -1001,7 +1001,7 @@ void T1_ui_widget_delete_all(void) {
         i < T1_ui_widget_list_size;
         i++)
     {
-        T1_ui_widget_list[i].deleted = false;
+        T1_ui_widget_list[i].deleted = 0;
     }
     T1_id_clear_ui_element_touch_ids();
     T1_ui_widget_list_size = 0;

@@ -2,9 +2,7 @@
 
 #include "T1_conditional_includes.h"
 
-u64
-T1_img_get_sum_rgba(
-    const T1Img * input)
+u64 T1_img_get_sum_rgba(const T1Img * input)
 {
     assert(input->rgba_values_size > 0);
     
@@ -16,17 +14,14 @@ T1_img_get_sum_rgba(
     return return_value;
 }
 
-u32
-T1_img_get_avg_rgba(
-    const T1Img * input)
+u32 T1_img_get_avg_rgba(const T1Img * input)
 {
     assert(input->rgba_values_size > 0);
     
     return (u32)(T1_img_get_sum_rgba(input) / input->rgba_values_size);
 }
 
-void
-T1_img_overwrite_subregion(
+void T1_img_overwrite_subregion(
     T1Img * whole_image,
     const T1Img * new_image,
     const u32 column_count,

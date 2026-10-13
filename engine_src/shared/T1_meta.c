@@ -1,5 +1,90 @@
 #include "T1_meta.h"
 
+#include "T1_std.h"
+#include "T1_fatal_error.h"
+
+unsigned long long T1_meta_strtoull(
+    const char *nptr,
+    char **endptr,
+    int base)
+{
+    const char * p = nptr;
+    unsigned long long acc = 0;
+    unsigned long long cutoff;
+    int cutlim;
+    int neg = 0, any = 0, digit;
+    char c;
+    
+    while (
+        *p == ' '  || *p == '\t' || *p == '\n' ||
+        *p == '\v' || *p == '\f' || *p == '\r')
+    {
+        p++;
+    }
+    
+    if (*p == '-') {
+        neg = 1;
+        p++;
+    } else if (*p == '+') {
+        p++;
+    }
+    
+    if ((base == 0 || base == 16) && *p == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        p += 2;
+        base = 16;
+    }
+    if (base == 0) {
+        base = (*p == '0') ? 8 : 10;
+    }
+    
+    /* Base validation */
+    if (base < 2 || base > 36) {
+        if (endptr != NULL)
+            *endptr = (char *)nptr;
+        return 0;
+    }
+    
+    /* Cutoff for overflow checking */
+    cutoff = UINT64_MAX / (unsigned long long)base;
+    cutlim = (int)(UINT64_MAX % (unsigned long long)base);
+    
+    /* 4. Conversion loop */
+    while (1) {
+        c = *p;
+        if (c >= '0' && c <= '9')
+            digit = c - '0';
+        else if (c >= 'a' && c <= 'z')
+            digit = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'Z')
+            digit = c - 'A' + 10;
+        else
+            break;
+        
+        if (digit >= base)
+            break;
+        
+        p++;
+        any = 1;
+        
+        if (acc > cutoff || (acc == cutoff && (unsigned long long)digit > (unsigned long long)cutlim)) {
+            acc = UINT64_MAX;
+        } else {
+            acc = acc * base + digit;
+        }
+    }
+    
+    /* Handle negation for unsigned return */
+    if (neg && any)
+        acc = -acc;
+    
+    /* 5. Set endptr */
+    if (endptr != NULL)
+        *endptr = (char *)(any ? p : nptr);
+    
+    return acc;
+}
+
+
 #define T1_META_ARRAY_SLICE_NONE UINT16_MAX
 #define T1_META_SUBNAMES_CAP 2
 typedef struct {
@@ -73,11 +158,6 @@ typedef struct {
 
 typedef struct {
     T1MetaSerializationState ss;
-    void *(* fp_memcpy)(void *, const void *, u64);
-    void *(* fp_memset)(void *, s32, u64);
-    s32 (* fp_strcmp)(const char *, const char *);
-    u64 (* fp_strlen)(const char *);
-    u64 (* fp_strtoull)(const char*, char**, s32);
     char * ascii_store;
     MetaEnum * meta_enums;
     MetaEnumValue * meta_enum_vals;
@@ -98,7 +178,7 @@ typedef struct {
 static T1MetaState * t1ms = NULL;
 
 static void construct_metastruct(MetaStruct * to_construct) {
-    t1ms->fp_memset(to_construct, 0, sizeof(MetaStruct));
+    T1_std_memset(to_construct, 0, sizeof(MetaStruct));
     to_construct->head_fields_i = UINT16_MAX;
 }
 
@@ -113,7 +193,7 @@ metafield_construct(
     #error
     #endif
     
-    t1ms->fp_memset(to_construct, 0, sizeof(MetaField));
+    T1_std_memset(to_construct, 0, sizeof(MetaField));
     
     to_construct->next_i = UINT16_MAX;
     to_construct->data_type = T1_TYPE_NOTSET;
@@ -128,18 +208,18 @@ static MetaField * metafield_i_to_ptr(const u16 field_i) {
 }
 
 static void T1_meta_reset(void) {
-    t1ms->fp_memset(
+    T1_std_memset(
         (char *)t1ms +
             offsetof(T1MetaState, meta_structs_size),
             0,
             sizeof(T1MetaState) -
                 offsetof(T1MetaState, meta_structs_size));
     
-    t1ms->fp_memset(
+    T1_std_memset(
         t1ms->metastructs, 0, t1ms->meta_structs_cap);
-    t1ms->fp_memset(
+    T1_std_memset(
         t1ms->meta_enums, 0, t1ms->meta_enums_cap);
-    t1ms->fp_memset(
+    T1_std_memset(
         t1ms->ascii_store, 0, t1ms->ascii_store_cap);
     
     for (u32 i = 0; i < t1ms->meta_fields_store_cap; i++) {
@@ -148,12 +228,7 @@ static void T1_meta_reset(void) {
 }
 
 void T1_meta_init(
-    void *(* T1_meta_memcpy)(void *, const void *, u64),
     void *(* T1_meta_malloc_func)(size_t),
-    void *(* T1_meta_memset_func)(void *, s32, u64),
-    s32 (* T1_meta_strcmp_func)(const char *, const char *),
-    u64 (* T1_meta_strlen_func)(const char *),
-    u64 (* T1_meta_strtoull_func)(const char*, char**, s32),
     u32 ascii_store_cap,
     u16 meta_structs_cap,
     u16 meta_fields_cap,
@@ -168,12 +243,6 @@ void T1_meta_init(
         *fatal_error = "Malloc fail";
         return;
     }
-    
-    t1ms->fp_memcpy = T1_meta_memcpy;
-    t1ms->fp_memset =  T1_meta_memset_func;
-    t1ms->fp_strcmp = T1_meta_strcmp_func;
-    t1ms->fp_strlen = T1_meta_strlen_func;
-    t1ms->fp_strtoull = T1_meta_strtoull_func;
     
     t1ms->ascii_store_cap = ascii_store_cap;
     t1ms->ascii_store = T1_meta_malloc_func(t1ms->ascii_store_cap);
@@ -440,7 +509,7 @@ static void T1_meta_f32_to_string(
         recipient + rlen,
         recipient_cap,
         good);
-    rlen = t1ms->fp_strlen(recipient);
+    rlen = T1_std_strlen(recipient);
     
     if (below_decimal > 0) {
         recipient[rlen++] = '.';
@@ -487,17 +556,17 @@ static void T1_meta_reverse_array(
     char swap[single_element_size];
     
     while (i < j) {
-        t1ms->fp_memcpy(
+        T1_std_memcpy(
             swap,
             array + (i * single_element_size),
             single_element_size);
         
-        t1ms->fp_memcpy(
+        T1_std_memcpy(
             array + (i * single_element_size),
             array + (j * single_element_size),
             single_element_size);
         
-        t1ms->fp_memcpy(
+        T1_std_memcpy(
             array + (j * single_element_size),
             swap,
             single_element_size);
@@ -528,7 +597,7 @@ static char * T1_meta_copy_str_to_store(
 {
     if (*fatal_error != 0) { return NULL; }
     
-    u64 len = t1ms->fp_strlen(to_copy);
+    u64 len = T1_std_strlen(to_copy);
     
     #if T1_META_ASSERTS == T1_ACTIVE
     assert(len > 0);
@@ -551,7 +620,7 @@ static char * T1_meta_copy_str_to_store(
     
     char * return_value = t1ms->ascii_store + t1ms->ascii_store_next_i;
     
-    t1ms->fp_memcpy(return_value, to_copy, len);
+    T1_std_memcpy(return_value, to_copy, len);
     
     return_value[len] = '\0';
     
@@ -569,9 +638,9 @@ static MetaStruct * find_struct_by_name(
         if (
             t1ms->metastructs[i].name != NULL &&
             t1ms->metastructs[i].name[0] != '\0' &&
-            t1ms->fp_strcmp(
+            T1_std_are_equal_strings(
                 t1ms->metastructs[i].name,
-                struct_name) == 0)
+                struct_name))
         {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(return_value == 0);
@@ -599,19 +668,18 @@ static MetaField * find_field_in_struct_by_name(
     
     while (i != NULL)
     {
-        u8 match_name =
-            i->name != NULL &&
-                t1ms->fp_strcmp(
-                    i->name,
-                    property_name) == 0;
+        u8 match_name = i->name != NULL &&
+            T1_std_are_equal_strings(
+                i->name,
+                property_name);
         
         for (u8 j = 0; j < T1_META_SUBNAMES_CAP; j++) {
             if (
                 i->subnames[j] != NULL &&
                 i->subnames[j][0] != '\0' &&
-                t1ms->fp_strcmp(
+                T1_std_are_equal_strings(
                     i->subnames[j],
-                    property_name) == 0)
+                    property_name))
             {
                 *hit_subname_i = j;
             }
@@ -776,9 +844,9 @@ void T1_meta_reg_enum_value(
     new_value->metaenum_id = UINT16_MAX;
     for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
         if (
-            t1ms->fp_strcmp(
+            T1_std_are_equal_strings(
                 t1ms->meta_enums[i].name,
-                enum_type_name) == 0)
+                enum_type_name))
         {
             new_value->metaenum_id = i;
             break;
@@ -806,12 +874,7 @@ void T1_meta_reg_struct(
     MetaStruct * target_mstruct = find_struct_by_name(struct_name);
     
     if (target_mstruct != NULL) {
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(
-            *fatal_error,
-            512,
-            "T1_meta_reg_struct - struct name was already registered: ");
+        T1_fatal_error_new(fatal_error, "T1_meta_reg_struct - struct name was already registered: ");
         T1_std_strcat_cap(
             *fatal_error,
             512,
@@ -1090,13 +1153,11 @@ void T1_meta_reg_field(
         #error
         #endif
         if (field_struct_type_name_or_null == NULL) {
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
+            T1_fatal_error_new(
+                fatal_error,
                 "T1_meta_reg_field() "
-                "field_struct_type_name_or_null can't be "
-                "NULL for enum value ");
+                "field_struct_type_name_or_null can't "
+                "be NULL for enum value ");
             T1_std_strcat_cap(
                 *fatal_error, 512,
                 tgt_mfield->name);
@@ -1112,9 +1173,9 @@ void T1_meta_reg_field(
         tgt_mfield->parent_enum_id = UINT16_MAX;
         for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
             if (
-                t1ms->fp_strcmp(
+                T1_std_are_equal_strings(
                     field_struct_type_name_or_null,
-                    t1ms->meta_enums[i].name) == 0)
+                    t1ms->meta_enums[i].name))
             {
                 tgt_mfield->enum_type_name =
                     t1ms->meta_enums[i].name;
@@ -1129,12 +1190,11 @@ void T1_meta_reg_field(
                     #else
                     #error
                     #endif
-                    *fatal_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*fatal_error, 0, 512);
-                    T1_std_strcpy_cap(
-                        *fatal_error, 512,
-                        "T1_meta_reg_field with mismatched "
-                        "enum data type, enum: ");
+                    T1_fatal_error_new(
+                        fatal_error,
+                        "T1_meta_reg_field with "
+                        "mismatched enum data type, "
+                        "enum: ");
                     T1_std_strcat_cap(
                         *fatal_error, 512,
                         tgt_mfield->enum_type_name);
@@ -1151,10 +1211,8 @@ void T1_meta_reg_field(
         }
         
         if (tgt_mfield->parent_enum_id >= UINT16_MAX) {
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
+            T1_fatal_error_new(
+                fatal_error,
                 "T1_meta_reg_field to nonexistant enum: ");
             T1_std_strcat_cap(
                 *fatal_error, 512,
@@ -1162,11 +1220,10 @@ void T1_meta_reg_field(
             return;
         }
     } else if (field_struct_type_name_or_null != NULL) {
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(
-            *fatal_error, 512,
-            "T1_meta_reg_field to non-struct field, but got struct name: ");
+        T1_fatal_error_new(
+            fatal_error,
+            "T1_meta_reg_field to non-struct field, but got "
+            "struct name: ");
         T1_std_strcat_cap(
             *fatal_error, 512,
             field_struct_type_name_or_null);
@@ -1412,17 +1469,17 @@ T1_meta_reg_u4_subname_for_last_field(
             me_i < t1ms->meta_enums_size;
             me_i++)
         {
-            if (t1ms->fp_strcmp(t1ms->meta_enums[me_i].name, enum_name_if_any) == 0)
+            if (T1_std_are_equal_strings(
+                t1ms->meta_enums[me_i].name,
+                enum_name_if_any))
             {
                 enum_i = me_i;
             }
         }
         
         if (enum_i >= UINT16_MAX) {
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
+            T1_fatal_error_new(
+                fatal_error,
                 "T1_meta_reg_u4_subname_for_last_field() "
                 "enum not found: ");
             T1_std_strcat_cap(
@@ -1440,8 +1497,8 @@ static void strip_array_brackets_and_get_array_indices(
     u32 * array_indices,
     u32 * array_indices_found)
 {
-    u64 field_name_len = t1ms->fp_strlen(to_strip);
-    t1ms->fp_memset(
+    u64 field_name_len = T1_std_strlen(to_strip);
+    T1_std_memset(
         array_indices,
         0,
         sizeof(u32) * T1_META_ARRAY_SIZES_CAP);
@@ -1527,9 +1584,7 @@ static u32 T1_meta_get_field_recursive(
     if (metastruct == NULL) {
         return_value->internal_field = NULL;
         return_value->internal_parent = NULL;
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(*fatal_error, 512, "No such metastruct: ");
+        T1_fatal_error_new(fatal_error, "No such metastruct: ");
         T1_std_strcat_cap(*fatal_error, 512, struct_name); 
         return UINT32_MAX;
     }
@@ -1567,9 +1622,8 @@ static u32 T1_meta_get_field_recursive(
     if (metafield == NULL) {
         return_value->internal_field = NULL;
         t1ms->ascii_store_next_i = pop_ascii_store_next_i;
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(*fatal_error, 512,
+        T1_fatal_error_new(
+            fatal_error,
             "T1_meta_get_field_recursive(): can't find ");
         T1_std_strcat_cap(*fatal_error, 512,
             first_part);
@@ -1608,9 +1662,7 @@ static u32 T1_meta_get_field_recursive(
                 substruct = find_struct_by_name(
                     metafield->struct_type_name);
                 if (substruct == NULL) {
-                    *fatal_error = T1_mem_malloc_unmanaged(512);
-                    T1_std_memset(*fatal_error, 0, 512);
-                    T1_std_strcpy_cap(*fatal_error, 512,
+                    T1_fatal_error_new(fatal_error,
                         "T1_meta can't find struct: ");
                     T1_std_strcat_cap(*fatal_error, 512,
                         metafield->struct_type_name);
@@ -1829,7 +1881,7 @@ static void parse_string_to_value(
     if (val_starts_minus) { string++; }
     
     char * endptr = NULL;
-    recipient->value_u64 = (u64)t1ms->fp_strtoull(string, &endptr, 10);
+    recipient->value_u64 = T1_meta_strtoull(string, &endptr, 10);
     recipient->value_is_u64 = *endptr == '\0' && !val_starts_minus;
     
     recipient->value_is_i64 =
@@ -1934,9 +1986,9 @@ void T1_meta_write_to_known_field_str(
             if (
                 t1ms->meta_enum_vals[i].
                     metaenum_id == enum_id &&
-                t1ms->fp_strcmp(
+                T1_std_are_equal_strings(
                     t1ms->meta_enum_vals[i].name,
-                    value_adj) == 0)
+                    value_adj))
             {
                 found_enum_field = 1;
                 parsed.value_i64 =
@@ -2003,7 +2055,7 @@ void T1_meta_write_to_known_field_str(
             }
             
             f32 value_f32 = (f32)parsed.value_f64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (f32 *)((char *)target_parent_ptr + total_offset),
                 &value_f32,
                 4);
@@ -2024,7 +2076,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             s8 value_i8 = (s8)parsed.value_i64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (s8 *)((char *)target_parent_ptr + total_offset),
                 &value_i8,
                 1);
@@ -2045,7 +2097,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             s16 value_i16 = (s16)parsed.value_i64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (s16 *)((char *)target_parent_ptr + total_offset),
                 &value_i16,
                 2);
@@ -2066,7 +2118,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             s32 value_s32 = (s32)parsed.value_i64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (s32 *)((char *)target_parent_ptr + total_offset),
                 &value_s32,
                 4);
@@ -2126,7 +2178,7 @@ void T1_meta_write_to_known_field_str(
             
             value_u4 = (u8)value_recip;
             
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u4,
                 1);
@@ -2146,7 +2198,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             u8 value_u8 = (u8)parsed.value_u64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u8,
                 1);
@@ -2166,7 +2218,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             u16 value_u16 = (u16)parsed.value_u64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u16 *)((char *)target_parent_ptr + total_offset),
                 &value_u16,
                 2);
@@ -2185,7 +2237,7 @@ void T1_meta_write_to_known_field_str(
                 *fatal_error = "Couldn't parse to u32";
                 return;
             }
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u32 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 4);
@@ -2204,7 +2256,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u64 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 8);
@@ -2218,7 +2270,7 @@ void T1_meta_write_to_known_field_str(
             }
             
             if (
-                t1ms->fp_strlen(value_to_write_str) >
+                T1_std_strlen(value_to_write_str) >
                     field.internal_field->array_sizes[rightmost_array_i])
             {
                 #if T1_META_ASSERTS == T1_ACTIVE
@@ -2232,12 +2284,12 @@ void T1_meta_write_to_known_field_str(
             }
             
             #if T1_META_ASSERTS == T1_ACTIVE
-            assert(t1ms->fp_memcpy != NULL);
+            assert(T1_std_memcpy != NULL);
             #elif T1_META_ASSERTS == T1_INACTIVE
             #else
             #error
             #endif
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 ((char *)target_parent_ptr + total_offset),
                 value_to_write_str,
                 field.internal_field->array_sizes[rightmost_array_i]);
@@ -2392,7 +2444,7 @@ void T1_meta_write_to_known_field_uint(
             
             value_u4 = (u8)value_recip;
             
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u4,
                 1);
@@ -2411,7 +2463,7 @@ void T1_meta_write_to_known_field_uint(
                 return;
             }
             u8 value_u8 = (u8)parsed.value_u64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u8 *)((char *)target_parent_ptr + total_offset),
                 &value_u8,
                 1);
@@ -2430,7 +2482,7 @@ void T1_meta_write_to_known_field_uint(
                 return;
             }
             u16 value_u16 = (u16)parsed.value_u64;
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u16 *)((char *)target_parent_ptr + total_offset),
                 &value_u16,
                 2);
@@ -2448,7 +2500,7 @@ void T1_meta_write_to_known_field_uint(
                 #endif
                 return;
             }
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u32 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 4);
@@ -2466,7 +2518,7 @@ void T1_meta_write_to_known_field_uint(
                 return;
             }
             
-            t1ms->fp_memcpy(
+            T1_std_memcpy(
                 (u64 *)((char *)target_parent_ptr + total_offset),
                 &parsed.value_u64,
                 8);
@@ -2542,7 +2594,7 @@ static void T1_meta_serialize_cat_str_to_buf(
 {
     *t1ms->ss.good = 0;
     
-    u64 to_copy_len = t1ms->fp_strlen(to_copy);
+    u64 to_copy_len = T1_std_strlen(to_copy);
     
     if (*t1ms->ss.buffer_size + to_copy_len + 1 >= t1ms->ss.buffer_cap) {
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -2554,7 +2606,7 @@ static void T1_meta_serialize_cat_str_to_buf(
         return;
     }
     
-    t1ms->fp_memcpy(
+    T1_std_memcpy(
         t1ms->ss.buffer + *t1ms->ss.buffer_size,
         to_copy,
         to_copy_len);
@@ -2572,9 +2624,9 @@ static void T1_meta_serialize_cat_str_to_prefix(
 {
     *t1ms->ss.good = 0;
     
-    u64 to_copy_len = t1ms->fp_strlen(to_copy);
+    u64 to_copy_len = T1_std_strlen(to_copy);
     
-    u64 field_prefix_len = t1ms->fp_strlen(t1ms->ss.field_prefix);
+    u64 field_prefix_len = T1_std_strlen(t1ms->ss.field_prefix);
     
     if (
         to_copy_len + field_prefix_len + 1 >=
@@ -2589,7 +2641,7 @@ static void T1_meta_serialize_cat_str_to_prefix(
         return;
     }
     
-    t1ms->fp_memcpy(
+    T1_std_memcpy(
         t1ms->ss.field_prefix + field_prefix_len,
         to_copy,
         to_copy_len);
@@ -2636,7 +2688,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
     
     char slice_text[32];
-    t1ms->fp_memset(slice_text, 0, 32);
+    T1_std_memset(slice_text, 0, 32);
     
     if (field_array_sizes[0] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[0] = '[';
@@ -2646,9 +2698,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
             31,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        slice_text[t1ms->fp_strlen(slice_text)] = ']';
+        slice_text[T1_std_strlen(slice_text)] = ']';
     }
-    u64 len = t1ms->fp_strlen(slice_text);
+    u64 len = T1_std_strlen(slice_text);
     if (field_array_sizes[1] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[len++] = '[';
         #if T1_META_ASSERTS == T1_ACTIVE
@@ -2663,7 +2715,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
             32 - (u32)len,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        len = t1ms->fp_strlen(slice_text);
+        len = T1_std_strlen(slice_text);
         slice_text[len++] = ']';
     }
     if (field_array_sizes[2] != T1_META_ARRAY_SLICE_NONE) {
@@ -2680,7 +2732,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
             32 - (u32)len,
             t1ms->ss.good);
         if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
-        len = t1ms->fp_strlen(slice_text);
+        len = T1_std_strlen(slice_text);
         slice_text[len++] = ']';
     }
     
@@ -2702,7 +2754,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     }
     
     u32 to_reverse_start_i = t1ms->ss.field_stack_size;
-    u16 prefix_start_i = (u16)t1ms->fp_strlen(
+    u16 prefix_start_i = (u16)T1_std_strlen(
         t1ms->ss.field_prefix);
     
     u16 field_i = parent->head_fields_i;
@@ -2872,7 +2924,7 @@ void T1_meta_serialize_instance_to_buffer(
             T1_meta_serialize_cat_str_to_buf(field->name);
             
             char value_as_str[128];
-            t1ms->fp_memset(value_as_str, 0, 128);
+            T1_std_memset(value_as_str, 0, 128);
             
             if (top.field_array_slices[0] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2887,7 +2939,7 @@ void T1_meta_serialize_instance_to_buffer(
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->fp_memset(value_as_str, 0, 128);
+                T1_std_memset(value_as_str, 0, 128);
             }
             if (top.field_array_slices[1] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2902,7 +2954,7 @@ void T1_meta_serialize_instance_to_buffer(
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->fp_memset(value_as_str, 0, 128);
+                T1_std_memset(value_as_str, 0, 128);
             }
             if (top.field_array_slices[2] != T1_META_ARRAY_SLICE_NONE) {
                 T1_meta_serialize_cat_str_to_buf("[");
@@ -2917,7 +2969,7 @@ void T1_meta_serialize_instance_to_buffer(
                 if (!*good) { return; } else { *good = 0; }
                 T1_meta_serialize_cat_str_to_buf(value_as_str);
                 T1_meta_serialize_cat_str_to_buf("]");
-                t1ms->fp_memset(value_as_str, 0, 128);
+                T1_std_memset(value_as_str, 0, 128);
             }
             
             T1_meta_serialize_cat_str_to_buf(" = ");
@@ -2954,7 +3006,7 @@ void T1_meta_serialize_instance_to_buffer(
                         #error
                         #endif
                         
-                        u64 enumvalstrlen = t1ms->fp_strlen(t1ms->meta_enum_vals[mev_i].name);
+                        u64 enumvalstrlen = T1_std_strlen(t1ms->meta_enum_vals[mev_i].name);
                         
                         #if T1_META_ASSERTS == T1_ACTIVE
                         assert(enumvalstrlen > 0);
@@ -2963,7 +3015,7 @@ void T1_meta_serialize_instance_to_buffer(
                         #error
                         #endif
                         
-                        t1ms->fp_memcpy(
+                        T1_std_memcpy(
                             value_as_str,
                             t1ms->meta_enum_vals[mev_i].name,
                             enumvalstrlen);
@@ -2989,7 +3041,7 @@ void T1_meta_serialize_instance_to_buffer(
                                 good);
                         if (!*good) { return; } else { *good = 0; }
                         
-                        u64 vaslen = t1ms->fp_strlen(value_as_str);
+                        u64 vaslen = T1_std_strlen(value_as_str);
                         
                         if (vaslen + 1 >= 128) {
                             return;
@@ -3108,10 +3160,8 @@ void T1_meta_deserialize_instance_from_buffer(
         #else
         #error
         #endif
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(
-            *fatal_error, 512,
+        T1_fatal_error_new(
+            fatal_error,
             "T1_meta_deserialize_instance_from_buffer() expected: ");
         T1_std_strcat_cap(
             *fatal_error, 512,
@@ -3121,13 +3171,11 @@ void T1_meta_deserialize_instance_from_buffer(
             " after T1_META_START");
         return;
     }
-    at_i += t1ms->fp_strlen(struct_name);
+    at_i += T1_std_strlen(struct_name);
     
     if (!T1_meta_string_starts_with(buffer + at_i, "\n")) {
-        *fatal_error = T1_mem_malloc_unmanaged(512);
-        T1_std_memset(*fatal_error, 0, 512);
-        T1_std_strcpy_cap(
-            *fatal_error, 512,
+        T1_fatal_error_new(
+            fatal_error,
             "T1_meta_deserialize_instance_from_buffer() expected immediate newline after struct name: ");
         T1_std_strcat_cap(
             *fatal_error, 512,
@@ -3155,10 +3203,8 @@ void T1_meta_deserialize_instance_from_buffer(
             #else
             #error
             #endif
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
+            T1_fatal_error_new(
+                fatal_error,
                 "T1_meta_deserialize_instance_from_buffer() expected fields to start with 's->' for struct name: ");
             T1_std_strcat_cap(
                 *fatal_error, 512,
@@ -3179,10 +3225,8 @@ void T1_meta_deserialize_instance_from_buffer(
         recursive_field_name[write_i] = '\0';
         
         if (!T1_meta_string_starts_with(buffer + at_i, " = ")) {
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
+            T1_fatal_error_new(
+                fatal_error,
                 "T1_meta_deserialize_instance_from_buffer() ' = ' for struct name: ");
             T1_std_strcat_cap(
                 *fatal_error, 512,
@@ -3252,11 +3296,10 @@ void T1_meta_deserialize_instance_from_buffer(
                 fatal_error);
         
         if (!T1_meta_string_starts_with(buffer + at_i, ";\n")) {
-            *fatal_error = T1_mem_malloc_unmanaged(512);
-            T1_std_memset(*fatal_error, 0, 512);
-            T1_std_strcpy_cap(
-                *fatal_error, 512,
-                "T1_meta_deserialize_instance_from_buffer() ' = ' for struct name: ");
+            T1_fatal_error_new(
+                fatal_error,
+                "T1_meta_deserialize_instance_from_buffer() "
+                "' = ' for struct name: ");
             T1_std_strcat_cap(
                 *fatal_error, 512,
                 struct_name);
@@ -3296,9 +3339,9 @@ char * T1_meta_enum_uint_to_string(
     u16 parent_enum_id = UINT16_MAX;
     for (u16 i = 0; i < t1ms->meta_enums_size; i++) {
         if (
-            t1ms->fp_strcmp(
+            T1_std_are_equal_strings(
                 t1ms->meta_enums[i].name,
-                enum_type_name) == 0)
+                enum_type_name))
         {
             parent_enum_id = i;
             break;

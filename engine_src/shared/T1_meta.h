@@ -14,12 +14,7 @@
 #endif
 
 void T1_meta_init(
-    void *(* T1_meta_memcpy)(void *, const void *, u64),
     void *(* malloc_func)(size_t),
-    void *(* memset_func)(void *, s32, u64),
-    s32 (* strcmp_func)(const char *, const char *),
-    u64 (* strlen_func)(const char *),
-    u64 (* T1_meta_strtoull_func)(const char*, char**, s32),
     const u32 ascii_store_cap,
     const u16 meta_structs_cap,
     const u16 meta_fields_cap,

@@ -59,11 +59,11 @@ void T1_audio_init(
     all_permasounds = (PermaSound *)
         arg_malloc_function(
             sizeof(PermaSound) *
-                T1_ALL_PERMASOUNDS_SIZE);
+                T1_ALL_PERMASOUNDS_CAP);
     
     for (
         u32 i = 0;
-        i < T1_ALL_PERMASOUNDS_SIZE;
+        i < T1_ALL_PERMASOUNDS_CAP;
         i++)
     {
         all_permasounds[i].name[0] = '\0';
@@ -351,7 +351,8 @@ void T1_audio_clear_global_buffer(void)
 }
 
 s32 T1_audio_get_permasound_id_or_register_new(
-    const char * for_resource_name)
+    const char * for_resource_name,
+    char ** const fatal_error)
 {
     for (s32 i = 0; i < all_permasounds_size; i++) {
         if (
@@ -361,6 +362,11 @@ s32 T1_audio_get_permasound_id_or_register_new(
         {
             return i;
         }
+    }
+    
+    if ((all_permasounds_size + 1) >= T1_ALL_PERMASOUNDS_CAP) {
+        *fatal_error = "T1_audio_get_permasound_id_or_register_new() overflowing T1_ALL_PERMASOUNDS_CAP";
+        return -1;
     }
     
     T1_std_strcpy_cap(

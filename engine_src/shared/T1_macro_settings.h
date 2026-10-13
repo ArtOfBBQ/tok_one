@@ -17,10 +17,11 @@ that modify the behavior of the engine.
 #define DECODED_IMAGE_PRINTF_ACTIVE 2
 #define INFLATE_PRINTF_ACTIVE 2
 #define T1_IMG_PRINTF_ACTIVE 2
-#define T1_LOG_PRINTF_ACTIVE 1
+#define T1_LOG_PRINTF_ACTIVE 2
 #define T1_WAV_PRINTF_ACTIVE 2
 #define T1_COLLISION_PRINTF_ACTIVE 2
 
+#define INFLATE_ASSERTS_ACTIVE 1
 #define DECODE_PNG_ASSERTS_ACTIVE 1
 #define DECODE_BMP_ASSERTS_ACTIVE 1
 #define T1_RAND_ASSERTS_ACTIVE 1
@@ -31,7 +32,7 @@ that modify the behavior of the engine.
 #define T1_STD_ASSERTS_ACTIVE 1
 
 #define T1_GAMEPAD_ACTIVE 1
-#define T1_Z_PREPASS_ACTIVE 2
+#define T1_Z_PREPASS_ACTIVE 1
 #define T1_BLENDING_SHADER_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 1
 #define T1_OCCLUSION_ACTIVE 2
@@ -47,7 +48,7 @@ that modify the behavior of the engine.
 #define T1_BLOOM_ACTIVE 1
 #define T1_PARTICLES_ACTIVE 2
 #define T1_OUTLINES_ACTIVE 1
-#define T1_AUDIO_ACTIVE 2
+#define T1_AUDIO_ACTIVE 1
 #define T1_ENGINE_SAVEFILE_ACTIVE 1
 #define T1_PROFILER_ACTIVE 2
 #define T1_TONE_MAPPING_ACTIVE 1
@@ -123,7 +124,7 @@ The maximum number of 'scheduled animations' simultaneously running
 #define T1_LOCKED_VERTEX_CAP 330000
 
 // the max # of perma stored sounds in your app
-#define T1_ALL_PERMASOUNDS_SIZE 75
+#define T1_ALL_PERMASOUNDS_CAP 75
 // 60million samples = 120MB     60...000
 #define T1_ALL_AUDIOSAMPLES_SIZE 45000000
 

@@ -1,5 +1,8 @@
 #include "T1_objparser.h"
 
+#include "T1_std.h"
+#include "T1_fatal_error.h"
+
 #if T1_OBJPARSER_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h> 
 #elif T1_OBJPARSER_ASSERTS_ACTIVE == T1_INACTIVE

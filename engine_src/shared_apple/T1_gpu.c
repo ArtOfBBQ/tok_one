@@ -5,6 +5,7 @@
 #include "T1_global.h"
 #include "T1_mem.h"
 #include "T1_log.h"
+#include "T1_embedded_data.h"
 #include "T1_objc.h"
 #include "T1_settings.h"
 #include "T1_material.h"

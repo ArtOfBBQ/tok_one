@@ -9,6 +9,7 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_log.h"
+#include "T1_fatal_error.h"
 #include "T1_os_apple_audio.h"
 #include "T1_objc.h"
 
@@ -159,11 +160,11 @@ u64 T1_os_get_clock_frequency(void) {
 }
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-void T1_platform_audio_init(void) {
-    T1_apple_audio_init();
+void T1_os_audio_init(u8 * good) {
+    T1_apple_audio_init(good);
 }
 
-void T1_platform_audio_start_loop(void)
+void T1_os_audio_start_loop(void)
 {
     T1_apple_audio_start_loop();
 }
@@ -288,7 +289,7 @@ u8 T1_os_file_exists(
     void * nsfilepath = T1_objc_nsstring_construct(
         filepath);
     
-    uintptr_t is_directory = false;
+    uintptr_t is_directory = 0;
     
     void * manager = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_filemanager,
@@ -305,18 +306,18 @@ u8 T1_os_file_exists(
             T1_log_append(filepath);
             T1_log_append(" is a directory, returnin FALSE for existence\n");
             T1_objc_autorelease_pool_pop(pool);
-            return false;
+            return 0;
         }
         
         T1_objc_autorelease_pool_pop(pool);
-        return true;
+        return 1;
     }
     
     T1_log_append("filepath: ");
     T1_log_append(filepath);
     T1_log_append(" does not exist, returning FALSE...\n");
     T1_objc_autorelease_pool_pop(pool);
-    return false;
+    return 0;
 }
 
 b8 T1_os_mkdir_if_not_exist(
@@ -342,7 +343,7 @@ b8 T1_os_mkdir_if_not_exist(
         T1_os_apple_s->class_ns_url,
         T1_os_apple_s->sel_file_url_with_path_is_directory,
         (uintptr_t)ns_dirname,
-        true);
+        1);
     if (directory_url == NULL) {
         T1_objc_autorelease_pool_pop(pool);
         return 0;
@@ -372,7 +373,7 @@ b8 T1_os_mkdir_if_not_exist(
             manager,
             T1_os_apple_s->sel_create_diectory_at_path,
             (uintptr_t)ns_dirname,
-            (uintptr_t)true,
+            (uintptr_t)1,
             (uintptr_t)NULL,
             (uintptr_t)&error);
         
@@ -459,7 +460,7 @@ void T1_os_write_file(
     u32 output_size,
     u8 * good)
 {
-    *good = false;
+    *good = 0;
     
     void * pool = T1_objc_autorelease_pool_push();
     
