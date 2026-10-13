@@ -1,5 +1,6 @@
 #include "T1_os.h"
 
+#include <stdio.h> // TODO: delete me
 #include <pthread.h>
 #include <dirent.h>
 #include <errno.h> // for pthreads error codes
@@ -46,6 +47,7 @@ typedef struct {
     void * sel_active_processor_count; // activeProcessorCount
     void * sel_remove_item_at_path_error; // removeItemAtPath:error:
     void * sel_copy_item_at_path_to_path_error; // copyItemAtPath:toPath:error:
+    s32 mutex_id;
     b8 framework_good;
 } T1OSAppleState;
 
@@ -55,6 +57,8 @@ void T1_apple_os_init(void) {
     T1_os_apple_s = T1_mem_malloc_unmanaged(
         sizeof(T1OSAppleState));
     T1_std_memset(T1_os_apple_s, 0, sizeof(T1OSAppleState));
+    
+    T1_os_apple_s->mutex_id = T1_os_init_mutex_and_return_id();
     
     // classes
     T1_os_apple_s->class_ns_application = T1_objc_get_class(
@@ -179,8 +183,6 @@ Get a file's size. Returns 0 if no such file
 u64 T1_os_get_filesize(
     const char * filepath)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     void * nsstrfilepath = T1_objc_nsstring_construct(
         filepath);
     void * error_value = NULL;
@@ -192,7 +194,6 @@ u64 T1_os_get_filesize(
     
     if (file_manager == NULL) {
         T1_log_dump_and_crash("ERROR - failed to get default NSFileManager\n");
-        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     
@@ -201,13 +202,12 @@ u64 T1_os_get_filesize(
         file_manager,
         T1_os_apple_s->sel_attributes_of_item_at_path_error,
         (uintptr_t)nsstrfilepath,
-        (uintptr_t)(&error_value));
+        (uintptr_t)&error_value);
     
     if (attrib_dict == NULL || error_value != NULL) {
         T1_log_append("WARNING - failed to get size of file - ");
         T1_log_append(filepath);
         T1_log_append("\n");
-        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     
@@ -215,7 +215,6 @@ u64 T1_os_get_filesize(
     u64 file_size = T1_objc_msg(
         attrib_dict, T1_os_apple_s->sel_file_size);
     
-    T1_objc_autorelease_pool_pop(pool);
     return file_size;
 }
 
@@ -232,8 +231,6 @@ void T1_os_read_file(
         *fatal_error = "T1_os_read_file() was passed an empty filepath param";
         return;
     }
-    
-    void * pool = T1_objc_autorelease_pool_push();
     
     void * nsfilepath = T1_objc_nsstring_construct(filepath);
     
@@ -262,7 +259,6 @@ void T1_os_read_file(
         }
         T1_std_strcat_cap(*fatal_error, 512, "]");
         *recip_size = 0;
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -277,8 +273,6 @@ void T1_os_read_file(
         *recip_size);
     
     recip[*recip_size] = '\0';
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 u8 T1_os_file_exists(
@@ -323,18 +317,13 @@ u8 T1_os_file_exists(
 b8 T1_os_mkdir_if_not_exist(
     const char * dirname)
 {
-    return 1; // TODO: remove me
-    
     if (dirname == NULL || dirname[0] == '\0') {
         return 0;
     }
     
-    void * pool = T1_objc_autorelease_pool_push();
-    
     void * ns_dirname = T1_objc_nsstring_construct(
         dirname);
     if (!ns_dirname) {
-        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     
@@ -345,7 +334,6 @@ b8 T1_os_mkdir_if_not_exist(
         (uintptr_t)ns_dirname,
         1);
     if (directory_url == NULL) {
-        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -357,7 +345,6 @@ b8 T1_os_mkdir_if_not_exist(
         T1_os_apple_s->class_ns_filemanager,
         T1_os_apple_s->sel_default_manager);
     if (!manager) {
-        T1_objc_autorelease_pool_pop(pool);
         return 0;
     }
     
@@ -378,12 +365,10 @@ b8 T1_os_mkdir_if_not_exist(
             (uintptr_t)&error);
         
         if (!success) {
-            T1_objc_autorelease_pool_pop(pool);
             return 0;
         }
     }
     
-    T1_objc_autorelease_pool_pop(pool);
     return 1;
 }
 
@@ -608,8 +593,6 @@ void T1_os_get_app_dir(
     char * recipient,
     const u32 recipient_size)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     recipient[0] = '\0';
     
     void * main_bundle = (void *)T1_objc_msg(
@@ -623,16 +606,12 @@ void T1_os_get_app_dir(
         recipient,
         recipient_size,
         cstr_main_bundle);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_get_res_dir(
     char * recip,
     u32 recip_cap)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     void * bundle = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_bundle,
         T1_os_apple_s->sel_main_bundle);
@@ -648,8 +627,26 @@ void T1_os_get_res_dir(
         recip,
         recip_cap,
         cstr);
+}
+
+static void *(* T1_os_next_thread_function_to_run)(void *) = NULL;
+
+static void * T1_os_apple_start_thread_with_autorelease(
+    void * argument)
+{
+    char * dud_error = 0;
+    u64 T1_thread_id = T1_os_get_T1_thread_id(&dud_error);
+    assert(dud_error == 0);
+    
+    printf("starting apple thread with T1_thread_id: %llu\n",
+        T1_thread_id);
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    void * out = T1_os_next_thread_function_to_run(argument);
     
     T1_objc_autorelease_pool_pop(pool);
+    
+    return out;
 }
 
 void T1_os_start_thread(
@@ -659,19 +656,30 @@ void T1_os_start_thread(
     // TODO: maybe we should just use pthread for threads instead of
     // dispatch_async, since we need pthreads for mutex locks anyway
     // Let's revisit this when we port to other platforms
+    T1_os_mutex_lock(T1_os_apple_s->mutex_id);
+    
+    T1_os_next_thread_function_to_run = function_to_run;
     pthread_t thread;
     u32 result = (u32)pthread_create(
         &thread,
         NULL,
-        function_to_run,
+        T1_os_apple_start_thread_with_autorelease,
         argument);
     T1_log_assert(result == 0);
+    
+    T1_os_mutex_unlock(T1_os_apple_s->mutex_id);
+}
+u64 T1_os_get_T1_thread_id(char ** const fatal_error) {
+    if (*fatal_error != 0) { return 0; }
+    
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+    
+    return T1_os_raw_thread_id_to_T1_thread_id(tid, fatal_error);
 }
 
 u32 T1_os_get_cpu_logical_core_count(void)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     void * process_info = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_process_info,
         T1_os_apple_s->sel_process_info);
@@ -679,9 +687,8 @@ u32 T1_os_get_cpu_logical_core_count(void)
     uintptr_t core_count = T1_objc_msg(
         process_info,
         T1_os_apple_s->sel_active_processor_count);
-    return (core_count > 0) ? (unsigned int)core_count : 1;
     
-    T1_objc_autorelease_pool_pop(pool);
+    return (core_count > 0) ? (unsigned int)core_count : 1;
 }
 
 void T1_os_run_app(void) {

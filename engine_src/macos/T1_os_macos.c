@@ -1092,13 +1092,10 @@ void T1_os_poll_gamepad_events(void) {
 #error
 #endif
 
-
 void T1_os_get_writables_dir(
     char * recipient,
     const u32 recipient_size)
 {
-    void * pool = T1_objc_autorelease_pool_push();
-    
     typedef void *(* search_fn)(
         uintptr_t,
         uintptr_t,
@@ -1107,7 +1104,6 @@ void T1_os_get_writables_dir(
         func_ns_search_path_dirs_in_domains;
     
     if (fn == NULL) {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1116,7 +1112,6 @@ void T1_os_get_writables_dir(
         T1NSUserDomainMask,
         1);
     if (!paths) {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
@@ -1125,26 +1120,18 @@ void T1_os_get_writables_dir(
         T1_os_macos_s->sel_object_at_index,
         0);
     if (!lib_dir) {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
     char * lib_dir_cstr = T1_objc_nsstring_to_cstring(lib_dir);
     
     if (lib_dir_cstr == NULL || lib_dir_cstr[0] == '\0') {
-        T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
     T1_std_strcpy_cap(recipient, recipient_size, lib_dir_cstr);
     T1_std_strcat_cap(recipient, recipient_size, "/");
     T1_std_strcat_cap(recipient, recipient_size, T1_APP_NAME);
-    
-    if (!T1_os_mkdir_if_not_exist(recipient)) {
-        recipient[0] = '\0';
-    }
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void * T1_os_malloc_unaligned_block(
@@ -1256,12 +1243,12 @@ void T1_os_toggle_fullscreen(void) {
 }
 
 void T1_os_create_main_window(
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     if (!T1_global) {
-        *sticky_error = "Tried to T1_os_create_main_window() before T1_global existed";
+        *fatal_error = "Tried to T1_os_create_main_window() before T1_global existed";
         return;
     }
     
@@ -1290,6 +1277,10 @@ void T1_os_create_main_window(
         /* backing: */
             T1NSBackingStoreBuffered,
         /* defer: */ 0);
+    if (!window) {
+        *fatal_error = "Failed to create an NSWindow";
+        return;
+    }
     
     T1_objc_msg_1arg(
         window,
@@ -1343,17 +1334,27 @@ void T1_os_destroy_main_window_if_possible(void) {
 }
 
 void T1_os_link_gpu_to_main_window(
-    char ** const sticky_error)
+    char ** const fatal_error)
 {
-    if (*sticky_error != 0) { return; }
+    if (*fatal_error != 0) { return; }
     
     void * pool = T1_objc_autorelease_pool_push();
     
     typedef void *(* mtl_fn)(void);
     mtl_fn fn = (mtl_fn)T1_os_macos_s->
         func_mtl_create_system_default_device;
+    if (!fn) {
+        *fatal_error = "Failed to fetch basic Metal function";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     void * metal_device_for_window = fn();
+    if (!metal_device_for_window) {
+        *fatal_error = "Failed to create Metal device";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
         /* x: */ T1_global->window_left,
@@ -1364,12 +1365,22 @@ void T1_os_link_gpu_to_main_window(
     mtk_view = (void *)T1_objc_msg(
         T1_os_macos_s->class_mtk_view,
         T1_os_macos_s->sel_alloc);
+    if (!mtk_view) {
+        *fatal_error = "Failed to alloc an MTKView";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     mtk_view = (void *)T1_objc_msg_1quadf64_1arg(
         mtk_view,
         T1_os_macos_s->sel_init_with_frame_device,
         window_rect,
         (uintptr_t)metal_device_for_window);
+    if (!mtk_view) {
+        *fatal_error = "Failed to init the MTKView";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_auto_resize_drawable, true);
@@ -1398,6 +1409,11 @@ void T1_os_link_gpu_to_main_window(
     apple_gpu_delegate = (void *)T1_objc_msg(
         T1_os_macos_s->class_T1_mtk_view_delegate,
         T1_os_macos_s->sel_new);
+    if (!apple_gpu_delegate) {
+        *fatal_error = "Failed to alloc & init an MTKViewDelegate";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_delegate,
@@ -1412,8 +1428,8 @@ void T1_os_link_gpu_to_main_window(
         /* bool32_t has_retina_screen: */
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],
-        /* sticky_error: */
-            sticky_error);
+        /* fatal_error: */
+            fatal_error);
     
     T1_objc_autorelease_pool_pop(pool);
 }

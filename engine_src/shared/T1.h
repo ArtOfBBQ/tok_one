@@ -40,22 +40,6 @@ void T1_log_dump_and_crash(const char * crash_message);
 #error
 #endif
 
-#if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
-void T1_log_append(const char *);
-void T1_log_append_c8(char c8val);
-void T1_log_append_f32(float f32val);
-void T1_log_append_s32(int32_t s32val);
-void T1_log_append_u32(uint32_t u32val);
-#elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
-#define T1_log_append(string)
-#define T1_log_append_c8(num)
-#define T1_log_append_f32(num)
-#define T1_log_append_s32(num)
-#define T1_log_append_u32(num)
-#else
-#error
-#endif
-
 /*
 APPLICATION STARTUP
 */
@@ -651,6 +635,7 @@ void T1_os_get_filenames_in(
     char * filenames,
     uint32_t filenames_cap);
 
+uint8_t T1_os_writable_exists(const char * resource_name);
 uint8_t T1_os_res_exists(const char * resource_name);
 uint8_t T1_os_file_exists(const char * filepath);
 void T1_os_del_file(const char * filepath);

@@ -3,12 +3,23 @@
 #include "T1_std.h"
 #include "T1_log.h"
 
+#ifdef NDEBUG
+#else
+#include "T1_os.h"
+#endif
+
+#include <assert.h>
 #include <dlfcn.h>
 
 #define T1NSASCIIStringEncoding 1
 #define T1NSModalPanelWindowLevel 8
 
+#define T1_OBJC_THREAD_CAP   20
+#define T1_OBJC_PUSHPOP_CAP 128
+
 typedef struct {
+    u64 pushpop_stack[T1_OBJC_THREAD_CAP][T1_OBJC_PUSHPOP_CAP];
+    u64 pushpop_stack_size[T1_OBJC_THREAD_CAP];
     uintptr_t (* msg)(void *, void *);
     uintptr_t (* msg_arg)(void *, void *, uintptr_t);
     uintptr_t (* msg_2arg)(void *, void *, uintptr_t, uintptr_t);
@@ -195,13 +206,34 @@ b8 T1_objc_open_framework(
         RTLD_LAZY) != 0;
 }
 
+#ifdef NDEBUG
+#else
+static u64 T1_objc_func_name_to_u64(
+    const char * func_name)
+{
+    T1_log_assert(func_name != NULL);
+    T1_log_assert(func_name[0] != '\0');
+    
+    u64 len = T1_std_strlen(func_name);
+    
+    u64 out = 0;
+    
+    for (u32 i = 0; i < 8; i++) {
+        u64 cur_char = func_name[len - (i % len)];
+        out |= (cur_char << (i * 8));
+    }
+    
+    return out;
+}
+#endif
+
 typedef void * (*objc_ar_push_fn_type)(void);
 static objc_ar_push_fn_type objc_ar_push_fn = NULL;
 
 typedef void (*objc_ar_pop_fn_type)(void *);
 static objc_ar_pop_fn_type objc_ar_pop_fn = NULL;
 
-void * T1_objc_autorelease_pool_push(void) {
+void * T1_objc_autorelease_pool_push_internal(void) {
     // objc_autoreleasePoolPush()
     if (!objc_ar_push_fn) {
         objc_ar_push_fn =
@@ -213,7 +245,26 @@ void * T1_objc_autorelease_pool_push(void) {
     return objc_ar_push_fn();
 }
 
-void T1_objc_autorelease_pool_pop(void * pool) {
+#ifdef NDEBUG
+#else
+void * T1_objc_autorelease_pool_push_internal_with_func(
+    const char * func)
+{
+    u64 val = T1_objc_func_name_to_u64(func);
+    char * dud_error = 0;
+    u64 thread_id = T1_os_get_T1_thread_id(&dud_error);
+    assert(dud_error == 0);
+    assert(thread_id < T1_OBJC_THREAD_CAP);
+    
+    T1_objc_s->pushpop_stack[thread_id][
+        T1_objc_s->pushpop_stack_size[thread_id]] = val;
+    T1_objc_s->pushpop_stack_size[thread_id] += 1;
+    
+    return T1_objc_autorelease_pool_push_internal();
+}
+#endif
+
+void T1_objc_autorelease_pool_pop_internal(void * pool) {
     if (!objc_ar_pop_fn) {
         objc_ar_pop_fn = (objc_ar_pop_fn_type)dlsym(
             RTLD_DEFAULT,
@@ -223,6 +274,30 @@ void T1_objc_autorelease_pool_pop(void * pool) {
     T1_log_assert(pool != 0);
     objc_ar_pop_fn(pool);
 }
+
+#ifdef NDEBUG
+#else
+void T1_objc_autorelease_pool_pop_internal_with_func(
+    void * pool,
+    const char * func)
+{
+    u64 val = T1_objc_func_name_to_u64(func);
+    char * dud_error = 0;
+    u64 thread_id = T1_os_get_T1_thread_id(&dud_error);
+    assert(dud_error == 0);
+    assert(thread_id < T1_OBJC_THREAD_CAP);
+    
+    u64 sz = T1_objc_s->pushpop_stack_size[thread_id];
+    assert(sz > 0);
+    T1_objc_s->pushpop_stack_size[thread_id] -= 1;
+    
+    u64 prev_val = T1_objc_s->pushpop_stack[thread_id][sz-1];
+    
+    assert(val == prev_val);
+    
+    T1_objc_autorelease_pool_pop_internal(pool);
+}
+#endif
 
 void * T1_objc_get_func(
     const char * func_name)

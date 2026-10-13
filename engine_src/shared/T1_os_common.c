@@ -1,5 +1,7 @@
 #include "T1_os.h"
 
+#include <stdio.h>
+
 #include "decode_png.h"
 #include "decode_bmp.h"
 #include "T1_mem.h"
@@ -17,8 +19,11 @@ typedef struct {
     b8 initialized;
 } OSMutexID;
 
-#define T1_MUTEXES_CAP 40
+#define T1_THREAD_IDS_CAP 50
+#define T1_MUTEXES_CAP 50
 typedef struct {
+    u64 thread_id_map[T1_THREAD_IDS_CAP];
+    u64 thread_id_map_size;
     OSMutexID mutexes[T1_MUTEXES_CAP];
     void (* newthread_main_fptr)(s32);
     void (* appwillclose_fptr)(void);
@@ -50,6 +55,29 @@ void T1_os_init(
     
     T1_os_s->newthread_main_fptr = newthread_main_fptr;
     T1_os_s->appwillclose_fptr = appwillclose_fptr;
+}
+
+u64 T1_os_raw_thread_id_to_T1_thread_id(
+    u64 raw_in,
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return UINT64_MAX; }
+    
+    for (u64 i = 0; i < T1_os_s->thread_id_map_size; i++) {
+        if (T1_os_s->thread_id_map[i] == raw_in) {
+            return i;
+        }
+    }
+    
+    if ((T1_os_s->thread_id_map_size + 1) >= T1_THREAD_IDS_CAP) {
+        *fatal_error = "T1_os_raw_thread_id_to_T1_thread_id() overflowing T1_THREAD_IDS_CAP";
+        return UINT64_MAX;
+    }
+    
+    T1_os_s->thread_id_map[T1_os_s->thread_id_map_size] = raw_in;
+    T1_os_s->thread_id_map_size += 1;
+    
+    return T1_os_s->thread_id_map_size - 1;
 }
 
 u32 T1_os_init_mutex_and_return_id(void)
@@ -203,7 +231,7 @@ u64 T1_os_get_writable_size(const char * filename) {
         /* recipient: */ pathfile,
         /* assert_capacity: */ 512);
     
-    uint32_t out = T1_os_get_filesize(pathfile);
+    uint32_t out = (uint32_t)T1_os_get_filesize(pathfile);
     
     T1_mem_free_managed(pathfile);
     
@@ -330,15 +358,40 @@ void T1_os_write_rgba_to_writables(
             good);
 }
 
+uint8_t T1_os_writable_exists(const char * writable_name) {
+    u32 pathfile_cap = 512;
+    char * pathfile = T1_mem_malloc_managed(pathfile_cap);
+    T1_std_memset(pathfile, 0, pathfile_cap);
+    
+    T1_os_writable_filename_to_pathfile(
+        writable_name,
+        /* recipient: */ pathfile,
+        /* capacity: */ pathfile_cap);
+    
+    u8 out = T1_os_file_exists(
+        /* filepath: */ pathfile);
+    
+    T1_mem_free_managed(pathfile);
+    
+    return out;
+}
+
 u8 T1_os_res_exists(const char * resource_name) {
-    char pathfile[500];
+    u32 pathfile_cap = 512;
+    char * pathfile = T1_mem_malloc_managed(pathfile_cap);
+    T1_std_memset(pathfile, 0, pathfile_cap);
+    
     T1_os_res_filename_to_pathfile(
         resource_name,
         /* recipient: */ pathfile,
-        /* capacity: */ 500);
+        /* capacity: */ pathfile_cap);
     
-    return T1_os_file_exists(
+    u8 out = T1_os_file_exists(
         /* filepath: */ pathfile);
+    
+    T1_mem_free_managed(pathfile);
+    
+    return out;
 }
 
 void T1_os_read_resource_file(
@@ -399,15 +452,8 @@ void T1_os_res_filename_to_pathfile(
     T1_os_get_res_dir(recipient, recip_cap);
     
     // u32 separator_size = platform_get_directory_separator_size();
-    char separator[MAX_SEPARATOR_SIZE];
-    T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
     T1_os_get_dir_separator(
-        /* recipient: */ separator);
-    
-    T1_std_strcat_cap(
-        recipient,
-        recip_cap,
-        separator);
+        /* recipient: */ recipient + T1_std_strlen(recipient));
     T1_std_strcat_cap(
         recipient,
         recip_cap,
@@ -423,30 +469,26 @@ void T1_os_writable_filename_to_pathfile(
 {
     assert(filename != NULL);
     assert(recipient != NULL);
-    
-    char separator[MAX_SEPARATOR_SIZE];
-    T1_std_memset(separator, 0, MAX_SEPARATOR_SIZE);
-    T1_os_get_dir_separator(/* recipient: */ separator);
-    
-    T1_os_get_writables_dir(recipient, 256);
+        
+    T1_os_get_writables_dir(recipient, recip_cap);
     if (recipient[0] == '\0') {
         return;
     }
     T1_log_assert(recipient[0] != '\0');
-    T1_std_strcat_cap(
-        recipient,
-        recip_cap,
-        separator);
+    T1_os_get_dir_separator(
+        recipient + T1_std_strlen(recipient));
     T1_std_strcat_cap(
         recipient,
         recip_cap,
         filename);
+    
+    T1_log_assert(T1_std_strlen(recipient) < recip_cap);
 }
 
 void T1_os_del_writable(
     const char * writable_filename)
 {
-    char filepath[500];
+    char * filepath = T1_mem_malloc_managed(512);
     
     T1_os_writable_filename_to_pathfile(
         /* const char * filename: */
@@ -454,9 +496,11 @@ void T1_os_del_writable(
         /* char * recipient: */
             filepath,
         /* const u32 assert_capacity: */
-            500);
+            512);
     
-    T1_os_del_file(writable_filename);
+    T1_os_del_file(filepath);
+    
+    T1_mem_free_managed(filepath);
 }
 
 void T1_os_layer_start_window_resize(
@@ -526,7 +570,7 @@ void T1_os_shutdown(void)
         /* u32 good: */
             &good);
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    u32 good = true;
+    u32 good = 1;
     #else
     #error
     #endif

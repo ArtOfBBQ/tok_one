@@ -105,11 +105,19 @@ static void malloc_img_from_resource_name(
     
     if (T1_std_are_equal_strings(filename, "perlin_noise.png")) {
         // TODO: use perlin data, not font
+        #if 1
         malloc_img_from_embedded_png(
             recipient,
-            T1_embedded_data_font_png, // T1_embedded_data_perlin_noise_png,
-            T1_embedded_data_font_png_size, // T1_embedded_data_perlin_noise_png_size,
+            T1_embedded_data_font_png,
+            T1_embedded_data_font_png_size,
             fatal_error);
+        #else
+        malloc_img_from_embedded_png(
+            recipient,
+            T1_embedded_data_perlin_noise_png,
+            T1_embedded_data_perlin_noise_png_size,
+            fatal_error);
+        #endif
         T1_fatal_error_prepend_if_bad(
             fatal_error,
             "Embedded perlin_noise.png: ");
@@ -661,9 +669,13 @@ void T1_tex_files_decode_all_prereg(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-    if (!T1_tex_arrays) { return; }
+    if (!T1_tex_arrays) {
+        *fatal_error = "T1_tex_files_decode_all_prereg but T1_tex_arrays isn't initialized yet!";
+        return;
+    }
     
     s32 texture_arrays_to_init = (s32)T1_tex_arrays_size - 1;
+    
     s32 texture_arrays_per_thread =
         texture_arrays_to_init / (s32)using_num_threads;
     if (texture_arrays_per_thread < 1) {

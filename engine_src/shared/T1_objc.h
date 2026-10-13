@@ -83,9 +83,24 @@ void T1_objc_init(
 b8 T1_objc_open_framework(
     const char * framework_name);
 
-void * T1_objc_autorelease_pool_push(void);
+#ifdef NDEBUG
+#define T1_objc_autorelease_pool_push(x) T1_objc_autorelease_pool_push_internal()
+void * T1_objc_autorelease_pool_push_internal(void);
+#else
+#define T1_objc_autorelease_pool_push(x) T1_objc_autorelease_pool_push_internal_with_func(__func__)
+void * T1_objc_autorelease_pool_push_internal_with_func(
+    const char * func);
+#endif
 
-void T1_objc_autorelease_pool_pop(void * pool);
+#ifdef NDEBUG
+#define T1_objc_autorelease_pool_pop(pool) T1_objc_autorelease_pool_pop_internal(pool)
+void T1_objc_autorelease_pool_pop_internal(void * pool);
+#else
+#define T1_objc_autorelease_pool_pop(pool) T1_objc_autorelease_pool_pop_internal_with_func(pool, __func__)
+void T1_objc_autorelease_pool_pop_internal_with_func(
+    void * pool,
+    const char * func);
+#endif
 
 void * T1_objc_get_func(
     const char * func_name);

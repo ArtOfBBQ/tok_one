@@ -103,11 +103,6 @@ void T1_log_append(
     // logger_mutex_lock_func(logger_mutex_id);
 }
 #elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
-void T1_log_append_u32(u32 to_append) {}
-void T1_log_append_c8(c8 to_append) {}
-void T1_log_append_s32(s32 to_append) {}
-void T1_log_append_f32(f32 to_append) {}
-void T1_log_append(const c8 * to_append) {}
 #else
 #error
 #endif

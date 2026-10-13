@@ -83,6 +83,7 @@ void T1_os_get_writables_dir(
     c8 * recipient,
     u32 recipient_size);
 
+u8 T1_os_writable_exists(const c8 * writable_name);
 u8 T1_os_res_exists(const c8 * resource_name);
 
 u8 T1_os_file_exists(const c8 * filepath);
@@ -208,6 +209,10 @@ that id
 void T1_os_start_thread(
     void *(*function_to_run)(void *),
     void * argument);
+u64 T1_os_get_T1_thread_id(char ** const fatal_error);
+u64 T1_os_raw_thread_id_to_T1_thread_id(
+    u64 raw_in,
+    char ** const fatal_error);
 
 u64 T1_os_get_current_time_us(void);
 

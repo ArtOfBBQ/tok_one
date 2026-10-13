@@ -225,7 +225,9 @@ void * T1_mem_malloc_managed(
     size_t size)
 {
     #if 1
-    return malloc(size);
+    void * out = malloc(size);
+    // T1_std_memset(out, 0, size);
+    return out;
     #else
     memstore_mutex_lock(malloc_mutex_id);
     

@@ -85,8 +85,10 @@ void T1_text_init(
     codepoint_metrics_size = (u32)global_font_metrics->codepoints_in_font;
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if 0
     u64 filesize_remaining =
         raw_fontmetrics_file_size - sizeof(FontMetrics);
+    #endif
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error

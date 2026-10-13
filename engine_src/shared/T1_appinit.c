@@ -436,15 +436,15 @@ void T1_appinit_before_gpu_init(
         T1_mem_free_managed(engine_save_contents);
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    T1_global->fullscreen = false;
+    T1_global->fullscreen = 0;
     T1_global->window_wh[0]  = T1_INITIAL_WINDOW_WIDTH;
     T1_global->window_wh[1]  = T1_INITIAL_WINDOW_HEIGHT;
     T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
     T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_state->music_volume  = 0.5f;
-    T1_audio_state->sfx_volume    = 0.5f;
+    T1_audio_state->music_volume  = 0.6f;
+    T1_audio_state->sfx_volume    = 0.8f;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -610,38 +610,56 @@ void T1_appinit_before_gpu_init(
             T1_mem_malloc_unmanaged_aligned(
                 sd->vertices_alloc_size,
                 T1_mem_page_size);
-        if (!f->verts) { return; }
+        if (!f->verts) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         f->flat_bb_quads = (T1GPUFlatQuad *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->flat_quads_alloc_size,
                 T1_mem_page_size);
-        if (!f->flat_bb_quads) { return; }
+        if (!f->flat_bb_quads) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         f->flat_tex_quads = (T1GPUTexQuad *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->flat_texquads_alloc_size,
                 T1_mem_page_size);
-        if (!f->flat_tex_quads) { return; }
+        if (!f->flat_tex_quads) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         f->zsprite_list = (T1GPUzSpriteList *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->polygons_alloc_size,
                 T1_mem_page_size);
-        if (!f->zsprite_list) { return; }
+        if (!f->zsprite_list) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         T1_log_assert(sd->lights_alloc_size > 0);
         f->lights = (T1GPULight *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->lights_alloc_size,
                 T1_mem_page_size);
-        if (!f->lights) { return; }
+        if (!f->lights) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         f->render_views = (T1GPURenderView *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->render_views_alloc_size,
                 T1_mem_page_size);
-        if (!f->render_views) { return; }
+        if (!f->render_views) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         
         T1_std_memset_f32(
             f->render_views,
@@ -653,7 +671,10 @@ void T1_appinit_before_gpu_init(
             T1_mem_malloc_unmanaged_aligned(
                 sd->postprocessing_constants_alloc_size,
                 T1_mem_page_size);
-        if (!f->postproc_consts) { return; }
+        if (!f->postproc_consts) {
+            *fatal_error = "Malloc fail";
+            return;
+        }
         T1_std_memset(f->postproc_consts, 0, sd->postprocessing_constants_alloc_size);
     }
     
@@ -661,7 +682,10 @@ void T1_appinit_before_gpu_init(
         (T1GPULockedVertex *)T1_mem_malloc_unmanaged_aligned(
             sd->locked_vertices_alloc_size,
             T1_mem_page_size);
-    if (!sd->locked_vertices) { return; }
+    if (!sd->locked_vertices) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     T1_std_memset(
         sd->locked_vertices,
         0,
@@ -671,7 +695,10 @@ void T1_appinit_before_gpu_init(
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matsf32_alloc_size,
             T1_mem_page_size);
-    if (!sd->const_mats_f32) { return; }
+    if (!sd->const_mats_f32) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     T1_std_memset(
         sd->const_mats_f32,
         0,
@@ -681,7 +708,10 @@ void T1_appinit_before_gpu_init(
         T1_mem_malloc_unmanaged_aligned(
             sd->const_matss32_alloc_size,
             T1_mem_page_size);
-    if (!sd->const_mats_s32) { return; }
+    if (!sd->const_mats_s32) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     T1_std_memset(
         sd->const_mats_s32,
         0,
