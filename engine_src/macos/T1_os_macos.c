@@ -25,6 +25,29 @@
 #define T1MTLPixelFormatDepth32Float 252
 
 typedef struct {
+    double x;
+    double y;
+} T1CGPoint;
+
+typedef struct {
+    T1CGPoint origin;
+    T1CGPoint size;
+} T1NSRect;
+
+static T1NSRect T1_nsrect_make(
+    double origin_x, double origin_y,
+    double width, double height)
+{
+    T1NSRect out;
+    out.origin.x = origin_x;
+    out.origin.y = origin_y;
+    out.size.x   = width;
+    out.size.y   = height;
+    
+    return out;
+}
+
+typedef struct {
     void * class_T1_ns_window; // T1NSWindow
     void * class_T1_ns_window_delegate; // T1NSWindowDelegate
     void * class_T1_mtk_view_delegate; // T1MTKViewDelegate
@@ -463,14 +486,14 @@ static void T1_os_macos_ns_window_scroll_wheel(
     }
 }
 
-static T1ObjcQuadf64 T1_os_macos_ns_window_get_content_frame(
+static T1NSRect T1_os_macos_ns_window_get_content_frame(
     void * self_ptr)
 {
-    T1ObjcQuadf64 out;
-    out.a = 0.0;
-    out.b = 0.0;
-    out.c = 0.0;
-    out.d = 0.0;
+    T1NSRect out;
+    out.origin.x = 0.0;
+    out.origin.y = 0.0;
+    out.size.x = 0.0;
+    out.size.y = 0.0;
     
     // 1. Get contentView
     void * content_view = (void *)T1_objc_msg(
@@ -479,9 +502,11 @@ static T1ObjcQuadf64 T1_os_macos_ns_window_get_content_frame(
     
     if (content_view) {
         // 2. Call [contentView frame] (returns NSRect: 4 doubles / 32 bytes)
-        out = T1_objc_msg_get_quadf64(
+        
+        typedef T1NSRect (* frameFuncType)(void *, void *);
+        out = ((frameFuncType)T1_objc_unsafe_get_raw_msg_send())(
             content_view,
-            T1_os_macos_s->sel_frame);    
+            T1_os_macos_s->sel_frame);
     }
     
     return out;
@@ -493,9 +518,9 @@ static f32 T1_os_macos_ns_window_get_width(
 {
     (void)selector;
     
-    T1ObjcQuadf64 frame = T1_os_macos_ns_window_get_content_frame(self_ptr);
+    T1NSRect frame = T1_os_macos_ns_window_get_content_frame(self_ptr);
     
-    return (f32)frame.c;
+    return (f32)frame.size.x;
 }
 
 static f32 T1_os_macos_ns_window_get_height(
@@ -504,9 +529,9 @@ static f32 T1_os_macos_ns_window_get_height(
 {
     (void)selector;
     
-    T1ObjcQuadf64 frame = T1_os_macos_ns_window_get_content_frame(self_ptr);
+    T1NSRect frame = T1_os_macos_ns_window_get_content_frame(self_ptr);
     
-    return (f32)frame.d;
+    return (f32)frame.size.y;
 }
 
 static u8 T1_os_macos_ns_window_always_true(
@@ -1262,7 +1287,7 @@ void T1_os_create_main_window(
     void * pool = T1_objc_autorelease_pool_push();
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
-    T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
+    T1NSRect window_rect = T1_nsrect_make(
         /* x: */ T1_global->window_left,
         /* y: */ T1_global->window_bottom,
         /* width: */ T1_global->window_wh[0],
@@ -1272,9 +1297,22 @@ void T1_os_create_main_window(
         T1_os_macos_s->class_T1_ns_window,
         T1_os_macos_s->sel_alloc);
     
-    window = (void *)T1_objc_msg_1quadf64_3arg(
-            window_alloc,
-            T1_os_macos_s->sel_init_with_content_rect_style_mask,
+    /*
+    - (instancetype)
+        initWithContentRect:(NSRect) contentRect 
+        styleMask:(NSWindowStyleMask) style 
+        backing:(NSBackingStoreType) backingStoreType 
+        defer:(BOOL) flag;
+    */
+    typedef void *(* initWithContentRectFuncType)(
+        void *, void *,
+        T1NSRect,
+        uintptr_t,
+        uintptr_t,
+        uint8_t);
+    window = ((initWithContentRectFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        window_alloc,
+        T1_os_macos_s->sel_init_with_content_rect_style_mask,
         /* initWithContentRect: */
             window_rect,
         /* styleMask: */ 
@@ -1369,7 +1407,7 @@ void T1_os_link_gpu_to_main_window(
         return;
     }
     
-    T1ObjcQuadf64 window_rect = T1_objc_quadf64_construct(
+    T1NSRect window_rect = T1_nsrect_make(
         /* x: */ T1_global->window_left,
         /* y: */ T1_global->window_bottom,
         /* width: */ T1_global->window_wh[0],
@@ -1384,11 +1422,20 @@ void T1_os_link_gpu_to_main_window(
         return;
     }
     
-    mtk_view = (void *)T1_objc_msg_1quadf64_1arg(
+    /*
+    - (instancetype)
+        initWithFrame:(CGRect) frameRect 
+        device:(id<MTLDevice>) device;
+    */
+    typedef void * (* initWithFrameDeviceFuncType)(
+        void *, void *,
+        /* initWithFrame: T1NSRect: */ T1NSRect,
+        /* device: id<MTLDevice>: */ void *);
+    mtk_view = ((initWithFrameDeviceFuncType)T1_objc_unsafe_get_raw_msg_send())(
         mtk_view,
         T1_os_macos_s->sel_init_with_frame_device,
         window_rect,
-        (uintptr_t)metal_device_for_window);
+        metal_device_for_window);
     if (!mtk_view) {
         *fatal_error = "Failed to init the MTKView";
         T1_objc_autorelease_pool_pop(pool);

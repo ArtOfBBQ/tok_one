@@ -35,18 +35,10 @@ typedef struct {
     uintptr_t (* msg_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_1f64)(void *, void *, f64);
-    uintptr_t (* msg_1quadf64)(void *, void *, T1ObjcQuadf64);
-    uintptr_t (* msg_1quadf64_1arg)(void *, void *, T1ObjcQuadf64, uintptr_t);
-    uintptr_t (* msg_1quadf64_3arg)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t);
-    uintptr_t (* msg_1sextf64)(void *, void *, T1ObjcSextf64);
     uintptr_t (* msg_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
-    uintptr_t (* msg_2set)(void *, void *, T1ObjcSet, T1ObjcSet);
-    uintptr_t (* msg_3arg_2set_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
-    uintptr_t (* msg_4arg_1set_3arg_1set)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet);
     f32    (* msg_get_f32)(void *, void *);
     f64    (* msg_get_f64)(void *, void *);
     T1ObjcPairf64 (* msg_get_pairf64)(void *, void *);
-    T1ObjcQuadf64 (* msg_get_quadf64)(void *, void *);
     void * (* get_class)(const char *);
     void (* register_class_pair)(void *);
     b8 (* class_add_method)(void *, void *, void *, const char *); // class_addMethod
@@ -171,25 +163,13 @@ void T1_objc_init(
     T1_objc_s->msg_get_f32      = (f32       (*)(void *, void *))T1_objc_s->msg;
     T1_objc_s->msg_get_f64      = (f64       (*)(void *, void *))T1_objc_s->msg;
     T1_objc_s->msg_get_pairf64  = (T1ObjcPairf64(*)(void *, void*))T1_objc_s->msg;
-    T1_objc_s->msg_get_quadf64  = (T1ObjcQuadf64(*)(void *, void*))T1_objc_s->msg;
     T1_objc_s->msg_arg          = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_2arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_3arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_4arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_5arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_1f64         = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
-    T1_objc_s->msg_1quadf64     = (uintptr_t (*)(void *, void *, T1ObjcQuadf64))T1_objc_s->msg;
-    T1_objc_s->
-        msg_1quadf64_1arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->
-        msg_1quadf64_3arg       = (uintptr_t (*)(void *, void *, T1ObjcQuadf64, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->msg_1sextf64     = (uintptr_t (*)(void *, void *, T1ObjcSextf64))T1_objc_s->msg;
     T1_objc_s->msg_2arg_2pair   = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
-    T1_objc_s->msg_2set         = (uintptr_t (*)(void *, void *, T1ObjcSet, T1ObjcSet))T1_objc_s->msg;
-    T1_objc_s->
-        msg_3arg_2set_4arg      = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
-    T1_objc_s->
-        msg_4arg_1set_3arg_1set = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet, uintptr_t, uintptr_t, uintptr_t, T1ObjcSet))T1_objc_s->msg;
     
     T1_objc_s->reg_name = dlsym(
         libobjc,
@@ -756,77 +736,6 @@ T1ObjcPair T1_objc_pair_construct(
     return (T1ObjcPair){a, b};
 }
 
-T1ObjcSet T1_objc_set_construct(
-    uintptr_t x,
-    uintptr_t y,
-    uintptr_t z)
-{
-    return (T1ObjcSet){x, y, z};
-}
-
-T1ObjcQuadf64 T1_objc_quadf64_construct(
-    double a, double b, double c, double d)
-{
-    return (T1ObjcQuadf64){a, b, c, d};
-}
-
-T1ObjcSextf64 T1_objc_sextf64_construct(
-    f64 a, f64 b, f64 c, f64 d, f64 e, f64 f)
-{
-    return (T1ObjcSextf64){a, b, c, d, e, f};
-}
-
-uintptr_t T1_objc_msg_1quadf64(
-    void * target,
-    void * sel,
-    T1ObjcQuadf64 quad1)
-{   
-    T1_log_assert(target != NULL);
-    T1_log_assert(sel != NULL);
-    
-    return T1_objc_s->msg_1quadf64(target, sel, quad1);    
-}
-
-uintptr_t T1_objc_msg_1quadf64_1arg(
-    void * target,
-    void * sel,
-    T1ObjcQuadf64 quad_1,
-    uintptr_t arg_1)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(sel != NULL);
-    
-    return T1_objc_s->msg_1quadf64_1arg(
-        target, sel, quad_1, arg_1);
-}
-
-
-uintptr_t T1_objc_msg_1quadf64_3arg(
-    void * target,
-    void * sel,
-    T1ObjcQuadf64 quad_1,
-    uintptr_t arg_1,
-    uintptr_t arg_2,
-    uintptr_t arg_3)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(sel != NULL);
-    
-    return T1_objc_s->msg_1quadf64_3arg(
-        target, sel, quad_1, arg_1, arg_2, arg_3);
-}
-
-uintptr_t T1_objc_msg_1sextf64(
-    void * target,
-    void * sel,
-    T1ObjcSextf64 sext1)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(sel != NULL);
-    
-    return T1_objc_s->msg_1sextf64(target, sel, sext1);
-}
-
 uintptr_t T1_objc_msg_2arg_2pair(
     void *target, 
     void *sel, 
@@ -840,71 +749,6 @@ uintptr_t T1_objc_msg_2arg_2pair(
     
     return T1_objc_s->msg_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
 }
-
-uintptr_t T1_objc_msg_2set(
-    void * target,
-    void * selector,
-    T1ObjcSet set1,
-    T1ObjcSet set2)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(selector != NULL);
-    
-    return T1_objc_s->msg_2set(
-        target, selector,
-        set1, set2);
-}
-
-/*
-uintptr_t T1_objc_msg_3arg_2set_4arg(
-    void * target,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    T1ObjcSet set1,
-    T1ObjcSet set2,
-    uintptr_t arg4,
-    uintptr_t arg5,
-    uintptr_t arg6,
-    uintptr_t arg7)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(selector != NULL);
-    
-    return T1_objc_s->msg_3arg_2set_4arg(
-        target, selector,
-        arg1, arg2, arg3,
-        set1, set2,
-        arg4, arg5, arg6, arg7);
-}
-*/
-
-#if 1
-uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
-    void * target,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    uintptr_t arg4,
-    T1ObjcSet set1,
-    uintptr_t arg5,
-    uintptr_t arg6,
-    uintptr_t arg7,
-    T1ObjcSet set2)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(selector != NULL);
-    
-    return T1_objc_s->msg_4arg_1set_3arg_1set(
-        target, selector,
-        arg1, arg2, arg3, arg4,
-        set1,
-        arg5, arg6, arg7,
-        set2);
-}
-#endif
 
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
     void * recip,
@@ -922,28 +766,6 @@ T1ObjcPairf64 T1_objc_msg_get_pairf64(
     }
     
     out = T1_objc_s->msg_get_pairf64(recip, selector);
-    
-    return out;
-}
-
-T1ObjcQuadf64 T1_objc_msg_get_quadf64(
-    void * recip,
-    void * selector)
-{
-    T1ObjcQuadf64 out;
-    out.a = 0.0;
-    out.b = 0.0;
-    out.c = 0.0;
-    out.d = 0.0;
-    
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
-    
-    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
-        return out;
-    }
-    
-    out = T1_objc_s->msg_get_quadf64(recip, selector);
     
     return out;
 }

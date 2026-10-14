@@ -51,8 +51,72 @@
 #define T1MTLStoreActionStore 1
 
 typedef struct {
+    uintptr_t width, height, depth;
+} T1MTLSize;
+
+static T1MTLSize T1_mtlsize_make(
+    uintptr_t width,
+    uintptr_t height,
+    uintptr_t depth)
+{
+    T1MTLSize sz;
+    sz.width  = width;
+    sz.height = height;
+    sz.depth  = depth;
+    
+    return sz;
+}
+
+typedef struct {
+    uintptr_t x, y, z;
+} T1MTLOrigin;
+
+static T1MTLOrigin T1_mtlorigin_make(
+    uintptr_t x,
+    uintptr_t y,
+    uintptr_t z)
+{
+    T1MTLOrigin out;
+    out.x = x;
+    out.y = y;
+    out.z = z;
+    
+    return out;
+}
+
+typedef struct {
     double originX, originY, width, height, znear, zfar;
 } T1MTLViewport;
+
+typedef void (* dispatchThreadsFuncType)(
+    void *, void *,
+    /* dispatchThreads:(MTLSize): */ T1MTLSize,
+    /* threadsPerThreadgroup:(MTLSize): */ T1MTLSize);
+
+typedef struct {
+    double alpha;
+    double blue;
+    double green;
+    double red;
+} T1MTLClearColor;
+
+static T1MTLClearColor T1_mtl_clearcolor_make(
+    double alpha,
+    double blue,
+    double green,
+    double red)
+{
+    T1MTLClearColor out;
+    out.alpha = alpha;
+    out.blue  = blue;
+    out.green = green;
+    out.red   = red;
+    return out;
+}
+
+typedef void (* setClearColorFuncType)(
+    void *, void *,
+    T1MTLClearColor);
 
 typedef struct {
     uintptr_t pixel_format_renderpass1;
@@ -1618,8 +1682,8 @@ void T1_os_gpu_fetch_rgba_at(
         /* copyFromTexture:(id<MTLTexture>) */ void *,
         /* sourceSlice:(NSUInteger): */ uintptr_t,
         /* sourceLevel:(NSUInteger): */ uintptr_t,
-        /* sourceOrigin:(MTLOrigin): */ T1ObjcSet,
-        /* sourceSize:(MTLSize)    : */ T1ObjcSet,
+        /* sourceOrigin:(MTLOrigin): */ T1MTLOrigin,
+        /* sourceSize:(MTLSize)    : */ T1MTLSize,
         /* toBuffer:(id<MTLBuffer>): */ void *,
         /* destinationOffset:(NSUInteger): */ uintptr_t,
         /* destinationBytesPerRow:(NSUInteger): */ uintptr_t,
@@ -1630,8 +1694,8 @@ void T1_os_gpu_fetch_rgba_at(
         texture,
         (uintptr_t)texture_i,
         0,
-        T1_objc_set_construct(0, 0, 0),
-        T1_objc_set_construct(
+        T1_mtlorigin_make(0, 0, 0),
+        T1_mtlsize_make(
             T1_objc_msg(texture, ags->sel_width),
             T1_objc_msg(texture, ags->sel_height),
             1),
@@ -1646,8 +1710,8 @@ void T1_os_gpu_fetch_rgba_at(
         texture,
         (uintptr_t)texture_i,
         0,
-        T1_objc_set_construct(0, 0, 0),
-        T1_objc_set_construct(
+        T1_mtlorigin_make(0, 0, 0),
+        T1_mtlsize_make(
             T1_objc_msg(texture, ags->sel_width),
             T1_objc_msg(texture, ags->sel_height),
             1),
@@ -1788,13 +1852,30 @@ void T1_os_gpu_push_tex_slice(
         combuf,
         ags->sel_blit_command_encoder);
     
-    T1ObjcSet size = T1_objc_set_construct(img_width, img_height, 1);
-    T1ObjcSet origin = T1_objc_set_construct(0, 0, 0);
+    T1MTLSize   size   = T1_mtlsize_make(img_width, img_height, 1);
+    T1MTLOrigin origin = T1_mtlorigin_make(0, 0, 0);
     
-    T1_objc_msg_4arg_1set_3arg_1set(
+    /*
+    - (void)
+        
+        destinationLevel 
+       destinationOrigin;    
+    */
+    typedef void (* copy_from_buf_src_offset_type)(
+        void *, void *,
+        /* copyFromBuffer:(id<MTLBuffer>): */ void *,
+        /* sourceOffset:(NSUInteger): */ uintptr_t,
+        /* sourceBytesPerRow:(NSUInteger): */ uintptr_t,
+        /* sourceBytesPerImage:(NSUInteger): */ uintptr_t,
+        /* sourceSize:(MTLSize): */ T1MTLSize,
+        /* toTexture:(id<MTLTexture>): */ void *,
+        /* destinationSlice:(NSUInteger): */ uintptr_t,
+        /* destinationLevel:(NSUInteger): */ uintptr_t,
+        /* destinationOrigin:(MTLOrigin): */ T1MTLOrigin);
+    ((copy_from_buf_src_offset_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_copy_encoder,
         ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
-        (uintptr_t)temp_source_buf,
+        temp_source_buf,
         0,
         T1_tex_arrays[tex_array_i].bc1_compressed ?
                 ((img_width + 3) / 4) * 8 :
@@ -1803,7 +1884,7 @@ void T1_os_gpu_push_tex_slice(
                 ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8 :
                 img_width * img_height * 4,
         size,
-        (uintptr_t)(ags->metal_textures[tex_array_i]),
+        ags->metal_textures[tex_array_i],
         (uintptr_t)tex_slice_i,
         0,
         origin);
@@ -1967,10 +2048,10 @@ static void set_defaults_for_render_descriptor(
             ags->sel_set_load_action,
             T1MTLLoadActionClear);
         
-        T1_objc_msg_1quadf64(
+        ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
             color_attachment_0,
             ags->sel_set_clear_color,
-            T1_objc_quadf64_construct(0.0f, 0.0f, 0.1f, 1.0f));
+            T1_mtl_clearcolor_make(0.0f, 0.0f, 0.1f, 1.0f));
         
         ags->rtt_cleared = true;
     } else {
@@ -2028,9 +2109,6 @@ static void set_defaults_for_encoder(
     T1_objc_msg_1arg(encoder,
         ags->sel_set_front_facing_winding,
             T1MTLWindingCounterClockwise);
-    T1_objc_msg_1sextf64(encoder,
-        ags->sel_set_viewport,
-            *(T1ObjcSextf64 *)(ags->render_viewports + cam_i));
     T1_objc_msg_3arg(encoder,
         ags->sel_set_vertex_buffer_offset_atindex,
             /* setVertexBuffer: */
@@ -2465,13 +2543,14 @@ static void T1_gpu_draw_single_pass(
                     0);
                 T1_objc_msg_1arg(color_att_0,
                     ags->sel_set_texture, (uintptr_t)bloom_rtt);
-                T1_objc_msg_1quadf64(color_att_0,
+                
+                ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
+                    color_att_0,
                     ags->sel_set_clear_color,
-                        T1_objc_quadf64_construct(0.0, 0.0, 0.0, 0.0));
+                    T1_mtl_clearcolor_make(0.0, 0.0, 0.0, 0.0));
                 T1_objc_msg_1arg(
                     color_att_0,
                     ags->sel_set_load_action, T1MTLLoadActionClear);
-                
             }
             
             void * bloom_enc = (void *)T1_objc_msg_1arg(
@@ -2514,12 +2593,12 @@ static void T1_gpu_draw_single_pass(
                         ags->downsampled_rtts[ds_i],
                         ags->sel_height);
                 
-                T1ObjcSet grid = T1_objc_set_construct(
+                T1MTLSize grid = T1_mtlsize_make(
                     (uintptr_t)smaller_viewport.width,
                     (uintptr_t)smaller_viewport.height,
                     1);
                 
-                T1ObjcSet threadgroup = T1_objc_set_construct(16, 16, 1);
+                T1MTLSize threadgroup = T1_mtlsize_make(16, 16, 1);
                 
                 if (ds_i < T1_DOWNSAMPLES_CUTOFF) {
                     void * compute_enc = (void *)T1_objc_msg(
@@ -2543,7 +2622,7 @@ static void T1_gpu_draw_single_pass(
                         (uintptr_t)ags->downsampled_rtts[ds_i],
                         1);
                     
-                    T1_objc_msg_2set(
+                    ((dispatchThreadsFuncType)T1_objc_unsafe_get_raw_msg_send())(
                         compute_enc,
                         ags->sel_dispatch_threads_threadsperthreadgroup,
                         grid,
@@ -2562,7 +2641,8 @@ static void T1_gpu_draw_single_pass(
                     ags->sel_set_texture_at_index,
                     (uintptr_t)ags->downsampled_rtts[ds_i],
                     0);
-                T1_objc_msg_2set(
+                
+                ((dispatchThreadsFuncType)T1_objc_unsafe_get_raw_msg_send())(
                         boxblur_enc,
                         ags->sel_dispatch_threads_threadsperthreadgroup,
                     /* dispatchThreads: */
@@ -2939,22 +3019,33 @@ void T1_gpu_draw_in_mtk_view(void * view)
         ags->sel_height);
     u64 size_bytes = touch_id_w * touch_id_h * 8;
     
-    T1ObjcSet touch_buf_size = T1_objc_set_construct(touch_id_w, touch_id_h, 1);
-    T1ObjcSet touch_buf_origin = T1_objc_set_construct(0, 0, 0);
+    T1MTLSize touch_buf_size = T1_mtlsize_make(touch_id_w, touch_id_h, 1);
+    T1MTLOrigin touch_buf_origin = T1_mtlorigin_make(0, 0, 0);
     
     {
     void * clear_touch_tex_blit_enc = (void *)T1_objc_msg(
         combuf, ags->sel_blit_command_encoder);
     
-    T1_objc_msg_4arg_1set_3arg_1set(
+    typedef void (* copy_from_buf_src_offset_type)(
+        void *, void *,
+        /* copyFromBuffer:(id<MTLBuffer>): */ void *,
+        /* sourceOffset:(NSUInteger): */ uintptr_t,
+        /* sourceBytesPerRow:(NSUInteger): */ uintptr_t,
+        /* sourceBytesPerImage:(NSUInteger): */ uintptr_t,
+        /* sourceSize:(MTLSize): */ T1MTLSize,
+        /* toTexture:(id<MTLTexture>): */ void *,
+        /* destinationSlice:(NSUInteger): */ uintptr_t,
+        /* destinationLevel:(NSUInteger): */ uintptr_t,
+        /* destinationOrigin:(MTLOrigin): */ T1MTLOrigin);
+    ((copy_from_buf_src_offset_type)T1_objc_unsafe_get_raw_msg_send())(
         clear_touch_tex_blit_enc,
         ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
-        (uintptr_t)ags->touch_id_buffer_all_zeros,
+        ags->touch_id_buffer_all_zeros,
         0,
         touch_id_w * 4,
         size_bytes,
         touch_buf_size,
-        (uintptr_t)(ags->touch_id_texture),
+        ags->touch_id_texture,
         0,
         0,
         touch_buf_origin);
@@ -3080,8 +3171,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
         /* copyFromTexture:(id<MTLTexture>) */ void *,
         /* sourceSlice:(NSUInteger)    : */ uintptr_t,
         /* sourceLevel:(NSUInteger)    : */ uintptr_t,
-        /* sourceOrigin:(MTLOrigin)    : */ T1ObjcSet,
-        /* sourceSize:(MTLSize)        : */ T1ObjcSet,
+        /* sourceOrigin:(MTLOrigin)    : */ T1MTLOrigin,
+        /* sourceSize:(MTLSize)        : */ T1MTLSize,
         /* toBuffer:(id<MTLBuffer>)    : */ void *,
         /* destOffset:(NSUInteger)     : */ uintptr_t,
         /* destBytesPerRow:(NSUInteger): */ uintptr_t,
@@ -3118,10 +3209,11 @@ void T1_gpu_draw_in_mtk_view(void * view)
         ags->sel_render_cmd_enc_with_desc,
         (uintptr_t)pass_5_comp_desc);
     
-    T1_objc_msg_1sextf64(
+    typedef void (* setViewportFuncType)(void *, void *, T1MTLViewport);
+    ((setViewportFuncType)T1_objc_unsafe_get_raw_msg_send())(
         pass_5_comp,
         ags->sel_set_viewport,
-        *((T1ObjcSextf64 *)&ags->window_viewport));
+        ags->window_viewport);
     
     T1_objc_msg_1arg(
         pass_5_comp,

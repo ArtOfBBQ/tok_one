@@ -179,56 +179,9 @@ typedef struct {
     f64 a, b;
 } T1ObjcPairf64;
 
-typedef struct {
-    uintptr_t a, b, c;
-} T1ObjcSet;
-
-typedef struct {
-    f64 a, b, c, d;
-} T1ObjcQuadf64;
-
 T1ObjcPair T1_objc_pair_construct(
     uintptr_t a,
     uintptr_t b);
-
-T1ObjcSet T1_objc_set_construct(
-    uintptr_t a,
-    uintptr_t b,
-    uintptr_t c);
-
-T1ObjcQuadf64 T1_objc_quadf64_construct(
-    f64 a, f64 b, f64 c, f64 d);
-
-typedef struct {
-    f64 a, b, c, d, e, f;
-} T1ObjcSextf64;
-
-T1ObjcSextf64 T1_objc_sextf64_construct(
-    f64 a, f64 b, f64 c, f64 d, f64 e, f64 f);
-
-uintptr_t T1_objc_msg_1quadf64(
-    void * target,
-    void * selector,
-    T1ObjcQuadf64);
-
-uintptr_t T1_objc_msg_1quadf64_1arg(
-    void * target,
-    void * selector,
-    T1ObjcQuadf64 quad_1,
-    uintptr_t arg_1);
-
-uintptr_t T1_objc_msg_1quadf64_3arg(
-    void * target,
-    void * selector,
-    T1ObjcQuadf64 quad_1,
-    uintptr_t arg_1,
-    uintptr_t arg_2,
-    uintptr_t arg_3);
-
-uintptr_t T1_objc_msg_1sextf64(
-    void * target,
-    void * selector,
-    T1ObjcSextf64);
 
 uintptr_t T1_objc_msg_2arg_2pair(
     void * target, 
@@ -238,17 +191,7 @@ uintptr_t T1_objc_msg_2arg_2pair(
     T1ObjcPair pair1, 
     T1ObjcPair pair2);
 
-uintptr_t T1_objc_msg_2set(
-    void * target,
-    void * selector,
-    T1ObjcSet a,
-    T1ObjcSet b);
-
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
-    void * target,
-    void * selector);
-
-T1ObjcQuadf64 T1_objc_msg_get_quadf64(
     void * target,
     void * selector);
 
