@@ -20,6 +20,14 @@
 typedef struct {
     u64 pushpop_stack[T1_OBJC_THREAD_CAP][T1_OBJC_PUSHPOP_CAP];
     u64 pushpop_stack_size[T1_OBJC_THREAD_CAP];
+    const c8 * (* class_get_name)(void *); // class_getName()
+    void * (* class_get_instance_method)(void *, void *);  // class_getInstanceMethod()
+    void * (* object_get_class)(void *); // object_getClass()
+    void * (* method_get_name)(void *); // method_getName()
+    void   (* method_get_return_type)(void *, char *, size_t); // method_getReturnType
+    unsigned int (* method_get_number_of_arguments)(void *); // method_getNumberOfArguments()
+    void (* method_get_argument_type)(void *, unsigned int, char *, size_t); // method_getArgumentType
+    const char * (* selector_get_name)(void *); // sel_getName
     uintptr_t (* msg)(void *, void *);
     uintptr_t (* msg_arg)(void *, void *, uintptr_t);
     uintptr_t (* msg_2arg)(void *, void *, uintptr_t, uintptr_t);
@@ -88,11 +96,75 @@ void T1_objc_init(
         return;
     }
     
+    T1_objc_s->class_get_name = dlsym(
+        libobjc,
+        "class_getName");
+    if (!T1_objc_s->class_get_name) {
+        *fatal_error = "Failed to load class_getName()";
+        return;
+    }
+    
+    T1_objc_s->class_get_instance_method = dlsym(
+        libobjc,
+        "class_getInstanceMethod");
+    if (!T1_objc_s->class_get_instance_method) {
+        *fatal_error = "Failed to load class_getInstanceMethod()";
+        return;
+    }
+    
+    T1_objc_s->object_get_class = dlsym(
+        libobjc,
+        "object_getClass");
+    if (!T1_objc_s->object_get_class) {
+        *fatal_error = "Failed to load object_getClass()";
+        return;
+    }
+    
+    T1_objc_s->method_get_name = dlsym(
+        libobjc,
+        "method_getName");
+    if (!T1_objc_s->method_get_name) {
+        *fatal_error = "Failed to load method_getName()";
+        return;
+    }
+    
+    T1_objc_s->method_get_return_type = dlsym(
+        libobjc,
+        "method_getReturnType");
+    if (!T1_objc_s->method_get_return_type) {
+        *fatal_error = "Failed to load method_getReturnType()";
+        return;
+    }
+    
+    T1_objc_s->method_get_number_of_arguments = dlsym(
+        libobjc,
+        "method_getNumberOfArguments");
+    if (!T1_objc_s->method_get_number_of_arguments) {
+        *fatal_error = "Failed to load method_getNumberOfArguments()";
+        return;
+    }
+    
+    T1_objc_s->method_get_argument_type = dlsym(
+        libobjc,
+        "method_getArgumentType");
+    if (!T1_objc_s->method_get_argument_type) {
+        *fatal_error = "Failed to load method_getArgumentType()";
+        return;
+    }
+    
+    T1_objc_s->selector_get_name = dlsym(
+        libobjc,
+        "sel_getName");
+    if (!T1_objc_s->selector_get_name) {
+        *fatal_error = "Failed to load sel_getName()";
+        return;
+    }
+    
     T1_objc_s->msg = dlsym(
         libobjc,
         "objc_msgSend");
     if (!T1_objc_s->msg) {
-        *fatal_error = "Failed to load ";
+        *fatal_error = "Failed to load objc_msgSend()";
         return;
     }
     
@@ -186,6 +258,10 @@ void T1_objc_init(
     }
     
     return;
+}
+
+T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void) {
+    return (T1ObjcRawFn)T1_objc_s->msg;
 }
 
 b8 T1_objc_open_framework(
@@ -410,11 +486,148 @@ uintptr_t T1_objc_msg(
     return out;
 }
 
+static u8 T1_objc_value_fits_encoding_in_register(
+    uintptr_t value,
+    const char * t)
+{
+    // discard 'qualifier prefixes' like const
+    while (*t == 'r' || *t == 'n' || *t == 'N' ||
+           *t == 'o' || *t == 'O' || *t == 'R' || *t == 'V')
+    {
+        t++;
+    }
+    
+    const int64_t signed_value = (int64_t)value;
+    
+    switch (t[0]) {
+        // 64-bit
+        case 'Q': case 'q': // NSUInteger / NSInteger (long also encodes as q/Q on LP64)
+        case '*':           // char *
+        case '#':           // Class
+        case ':':           // SEL
+        case '^':           // any pointer
+        case '@':           // id, or '@?' for a block
+            return 1;
+        // 32-bit
+        case 'i':
+            return value <= UINT32_MAX ||
+                   (signed_value >= INT32_MIN && signed_value < 0);
+        case 'I':
+            return value <= UINT32_MAX;
+        // 16-bit
+        case 's':
+            return value <= UINT16_MAX || (signed_value >= INT16_MIN && signed_value < 0);
+        case 'S':
+            return value <= UINT16_MAX;
+        // arm64 BOOL / C99 bool
+        case 'B':
+            return value <= 1;
+        // 8-bit (on x86-64 BOOL is signed char, which encodes as 'c')
+        case 'c':
+            return value <= UINT8_MAX || (signed_value >= INT8_MIN && signed_value < 0);
+        case 'C':
+            return value <= UINT8_MAX;
+        // 'f', 'd' (wrong register file), '{' structs, '(' unions,
+        // '[' arrays, 'b' bitfields, 'v', '?' ...
+    }
+    
+    return 0;
+}
+
+static int T1_objc_encoding_is_representable_by_uintptr_t_in_register(
+    const char * t)
+{
+    // discard 'qualifier prefixes' like const
+    while (*t == 'r' || *t == 'n' || *t == 'N' ||
+           *t == 'o' || *t == 'O' || *t == 'R' || *t == 'V')
+    {
+        t++;
+    }
+    
+    switch (t[0]) {
+        case 'Q': case 'q': // 64-bit ints (NSUInteger / NSInteger)
+        case '*':           // char *
+        case '#':           // Class
+        case ':':           // SEL
+        case '^':           // any pointer: ^v, ^@, ^{struct=...}
+        case 'B':           // BOOL, also 64-bit in register
+            return 1;
+        case '@':           // id; also '@?' for a block
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+static void assert_arg_uintptr_t(
+    void * recip,
+    void * selector,
+    u32 args_count,
+    u32 arg_i,
+    uintptr_t arg)
+{
+    void * m = T1_objc_s->class_get_instance_method(
+        T1_objc_s->object_get_class(recip), selector);
+    unsigned int n = T1_objc_s->method_get_number_of_arguments(m);
+    T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
+    char ret[16];
+    T1_objc_s->method_get_return_type(
+        m, ret, sizeof(ret));
+    
+    char t[64];
+    T1_std_memset(t, 0, 64);
+    T1_objc_s->method_get_argument_type(m, 2 + arg_i, t, sizeof(t));
+    
+    if (!T1_objc_encoding_is_representable_by_uintptr_t_in_register(t))
+    {
+        char errmsg[128];
+        T1_std_memset(errmsg, 0, 128);
+        T1_std_strcat_cap(errmsg, 128, "Class ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->class_get_name(T1_objc_s->object_get_class(recip)));
+        T1_std_strcat_cap(errmsg, 128, " selector ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
+        T1_std_strcat_cap(errmsg, 128, " can't take argument type as uintptr_t: ");
+        T1_std_strcat_cap(errmsg, 128, t);
+        T1_log_dump_and_crash(errmsg);
+        T1_log_assert(0);
+        return;
+    }
+    
+    if (!T1_objc_value_fits_encoding_in_register(arg, t)) {
+        char errmsg[128];
+        T1_std_memset(errmsg, 0, 128);
+        T1_std_strcat_cap(errmsg, 128, "Class ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->class_get_name(T1_objc_s->object_get_class(recip)));
+        T1_std_strcat_cap(errmsg, 128, " selector ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
+        T1_std_strcat_cap(errmsg, 128, " argument 1's value is out of boudns for: ");
+        T1_std_strcat_cap(errmsg, 128, t);
+        T1_log_dump_and_crash(errmsg);
+        T1_log_assert(0);
+    }
+    return;
+}
+#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 uintptr_t T1_objc_msg_1arg(
     void * recip,
     void * selector,
     uintptr_t arg1)
 {
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 1, /* arg_i: */ 0,
+        arg1);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_log_assert(recip != NULL);
     T1_log_assert(selector != NULL);
     
@@ -425,35 +638,25 @@ uintptr_t T1_objc_msg_1arg(
     return T1_objc_s->msg_arg(recip, selector, arg1);
 }
 
-uintptr_t T1_objc_msg_1bigstructarg(
-    void * recip,
-    void * selector,
-    void * struct_16bytesplus_arg)
-{
-    #if defined(__x86_64__)
-    #error "x86-64 ABI not implemented for objc-messaging"
-    T1_log_assert(0);
-    return NULL;
-    #elif defined(__arm64__) || defined(__aarch64__)
-    return T1_objc_msg_1arg(
-        recip,
-        selector,
-        (uintptr_t)struct_16bytesplus_arg);
-    #else
-    #error "unexpected CPU architecture"
-    T1_log_assert(0);
-    return NULL;
-    #endif
-}
-
 uintptr_t T1_objc_msg_2arg(
     void * recip,
     void * selector,
     uintptr_t arg1,
     uintptr_t arg2)
 {
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 2, /* arg_i: */ 0,
+        arg1);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 2, /* arg_i: */ 1,
+        arg2);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
@@ -469,8 +672,23 @@ uintptr_t T1_objc_msg_3arg(
     uintptr_t arg2,
     uintptr_t arg3)
 {
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 3, /* arg_i: */ 0,
+        arg1);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 3, /* arg_i: */ 1,
+        arg2);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 3, /* arg_i: */ 2,
+        arg3);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
@@ -487,8 +705,27 @@ uintptr_t T1_objc_msg_4arg(
     uintptr_t arg3,
     uintptr_t arg4)
 {
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 4, /* arg_i: */ 0,
+        arg1);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 4, /* arg_i: */ 1,
+        arg2);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 4, /* arg_i: */ 2,
+        arg3);
+    assert_arg_uintptr_t(
+        recip, selector,
+        /* args_count: */ 4, /* arg_i: */ 3,
+        arg4);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
@@ -678,6 +915,7 @@ uintptr_t T1_objc_msg_3arg_2set_4arg(
         arg4, arg5, arg6, arg7);
 }
 
+#if 1
 uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
     void * target,
     void * selector,
@@ -701,6 +939,7 @@ uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
         arg5, arg6, arg7,
         set2);
 }
+#endif
 
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
     void * recip,

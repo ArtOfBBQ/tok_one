@@ -20,58 +20,6 @@ just assign to them from a uintptr_t return value
 directly. Any pointer can also be assigned directly.
 (Or you can use an implicit cast to silence compiler
 warnings.)
-
-If your return value is something smaller like an
-int32_t, it comes in the form of a uintptr_t with some
-useless bytes, so make sure you're extracting the
-exact bytes you want.
-
-When you pass or receive floats or doubles, they use
-the floating point registers, so you have to use
-dedicated functions for that. You can't use the
-functions that return uintpr_t or that take uintptr_t
-as an argument, it won't work. 
-
-During initialization, you don't need to early exit
-when something goes wrong or constantly check the
-"perma_good_checker" value is 1, you can set up your
-entire framework and check if everything worked once
-at the end. 
-
-*******************
-Example usage:
-*******************
-static u8 good = false; // track if somehting went wrong
-static void * class_mtl_texture_desc = NULL;
-static void * sel_new = NULL;
-
-static void sample_initialization_once_only(void) {
-    // Try to open the Metal framework at runtime
-    T1_objc_open_framework_and_link_perma_good_val(
-        "/System/Library/Frameworks/MetalKit.framework/MetalKit",
-        &good);
-    
-    // fetch a class from the framework
-    class_mtl_texture_desc = T1_objc_get_class("MTLTextureDescriptor");
-    
-    // register a "selector" to send as a "message" to "objects"
-    sel_new = T1_objc_reg_sel("new");
-    
-    T1_objc_close_current_framework();
-    
-    if (!good) {
-        // failure path
-    }
-}
-
-static void sample_messaging_use_repeatedly(void) {
-    // this is equivalent to
-    // id<MTLTextureDescriptor> a = [MTLTextureDescriptor new];
-    void * a =
-        (void *)T1_objc_msg(
-            class_mtl_texture_desc,
-            sel_new);
-}
 */
 
 #include "T1_stdint.h"
@@ -79,6 +27,20 @@ static void sample_messaging_use_repeatedly(void) {
 void T1_objc_init(
     void * (* malloc_perma)(size_t),
     char ** const fatal_error);
+
+// This fetches a raw objc_msgSend() function, which
+// you can manually cast to a complex function signature.
+// This is only necessary for complex objective-c
+// functions that take structs by value or a huge
+// number of arguments, for simpler functions I
+// recommend using the helper functions like
+// T1_objc_msg_2arg(). They will give you error
+// checking in debug mode also.
+// This is a huge source of bugs, so don't use it
+// unless absolutely necessary
+typedef void (* T1ObjcRawFn)(void);
+
+T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void);
 
 b8 T1_objc_open_framework(
     const char * framework_name);
@@ -133,13 +95,14 @@ d  = double / CGFloat (64-bit IEEE float)
 :  = Selector (SEL)
 ^v = Raw pointer (void *)
 
-Note: Every method implicitly receives self (@) and _cmd (:) as its first two parameters.
+Note: Every method implicitly receives self (@) and _cmd (:) as its first two
+parameters.
 
 Example Type Encodings:
 "v@:@" <- void return, self (@), _cmd (:), 1 object arg (@) [e.g., keyDown:]
-"B@:"  <- BOOL return, self (@), _cmd (:)             [e.g., canBecomeKeyWindow]
-"d@:"  <- double/CGFloat return, self (@), _cmd (:)   [e.g., button value]
-"Q@:"  <- NSUInteger return, self (@), _cmd (:)       [e.g., array count]
+"B@:"  <- BOOL return, self (@), _cmd (:)           [e.g., canBecomeKeyWindow]
+"d@:"  <- double/CGFloat return, self (@), _cmd (:) [e.g., button value]
+"Q@:"  <- NSUInteger return, self (@), _cmd (:)     [e.g., array count]
 */
 void T1_objc_add_method(
     void * to_class,
@@ -195,11 +158,6 @@ uintptr_t T1_objc_msg_1f64(
     void * recip,
     void * selector,
     f64 arg1);
-
-uintptr_t T1_objc_msg_1bigstructarg(
-    void * recip,
-    void * selector,
-    void * struct_16bytesplus_arg);
 
 void * T1_objc_msgx2_get_ptr(
     void * recip,
@@ -305,6 +263,7 @@ uintptr_t T1_objc_msg_3arg_2set_4arg(
     uintptr_t arg6,
     uintptr_t arg7);
 
+#if 0
 uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
     void * target,
     void * selector,
@@ -317,6 +276,7 @@ uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
     uintptr_t arg6,
     uintptr_t arg7,
     T1ObjcSet set2);
+#endif
 
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
     void * target,

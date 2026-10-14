@@ -1912,12 +1912,12 @@ static void set_defaults_for_render_descriptor(
 {
     void * depth_attachm = (void *)T1_objc_msg(desc, ags->sel_depth_attachment);
     if (!ags->zbuf_cleared) {
-        T1_objc_msg_1arg(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionClear);
+        T1_objc_msg_1f64(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionClear);
         T1_objc_msg_1f64(depth_attachm, ags->sel_set_clear_depth, 1.0);
         
         ags->zbuf_cleared = true;
     } else {
-        T1_objc_msg_1arg(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionLoad);
+        T1_objc_msg_1f64(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionLoad);
     }
     T1_log_assert(ags->cur_depth != NULL);
     
@@ -2205,10 +2205,11 @@ static void T1_gpu_draw_single_pass(
                 pass_1_outline_enc,
                 (u32)cam_i);
             
-            T1_objc_msg_1bigstructarg(
+            typedef void (* set_viewport_msg_type)(void *, void *, T1MTLViewport);
+            ((set_viewport_msg_type)T1_objc_unsafe_get_raw_msg_send())(
                 pass_1_outline_enc,
                 ags->sel_set_viewport,
-                &ags->render_viewports[cam_i]);
+                ags->render_viewports[cam_i]);
             
             // outlines pipeline
             T1_objc_msg_1arg(

@@ -1292,9 +1292,15 @@ void T1_os_create_main_window(
         T1_os_macos_s->sel_new);
     
     #ifdef T1_APP_NAME
-    void * nsstring_app_name = T1_objc_nsstring_construct(T1_APP_NAME);
+    const char * cstring_app_name = T1_APP_NAME;
+    void * nsstring_app_name = NULL;
+    if (cstring_app_name == NULL || cstring_app_name[0] == '\0') {
+        nsstring_app_name = T1_objc_nsstring_construct("Invalid app name");
+    } else {
+        nsstring_app_name = T1_objc_nsstring_construct(T1_APP_NAME);
+    }
     #else
-    #error
+    #error "T1_APP_NAME undefined!"
     #endif
     
     T1_objc_msg_1arg(
@@ -1393,7 +1399,8 @@ void T1_os_link_gpu_to_main_window(
         T1_os_macos_s->sel_set_depth_stencil_pixel_format,
         T1MTLPixelFormatDepth32Float);
     
-    T1_objc_msg_1arg(mtk_view,
+    T1_objc_msg_1f64(
+        mtk_view,
         T1_os_macos_s->sel_set_clear_depth,
         T1_GLOBAL_CLEARDEPTH);
     T1_objc_msg_1arg(mtk_view,
