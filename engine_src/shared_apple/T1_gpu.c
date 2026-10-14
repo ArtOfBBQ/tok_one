@@ -1600,7 +1600,31 @@ void T1_os_gpu_fetch_rgba_at(
         command_buffer,
         ags->sel_blit_command_encoder);
     
-    T1_objc_mtl_copy_texture_to_buffer(
+    /*
+    - (void)
+        copyFromTexture:(id<MTLTexture>) sourceTexture 
+        sourceSlice:(NSUInteger) sourceSlice 
+        sourceLevel:(NSUInteger) sourceLevel 
+        sourceOrigin:(MTLOrigin) sourceOrigin 
+        sourceSize:(MTLSize) sourceSize 
+        toBuffer:(id<MTLBuffer>) destinationBuffer 
+        destinationOffset:(NSUInteger) destinationOffset 
+        destinationBytesPerRow:(NSUInteger) destinationBytesPerRow 
+        destinationBytesPerImage:(NSUInteger) destinationBytesPerImage 
+        options:(MTLBlitOption) options;
+    */
+    typedef void (* mtl_copy_texture_to_buffer_type)(
+        void *, void *,
+        /* copyFromTexture:(id<MTLTexture>) */ void *,
+        /* sourceSlice:(NSUInteger): */ uintptr_t,
+        /* sourceLevel:(NSUInteger): */ uintptr_t,
+        /* sourceOrigin:(MTLOrigin): */ T1ObjcSet,
+        /* sourceSize:(MTLSize)    : */ T1ObjcSet,
+        /* toBuffer:(id<MTLBuffer>): */ void *,
+        /* destinationOffset:(NSUInteger): */ uintptr_t,
+        /* destinationBytesPerRow:(NSUInteger): */ uintptr_t,
+        /* destinationBytesPerImage:(NSUInteger): */ uintptr_t);
+    ((mtl_copy_texture_to_buffer_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_encoder,
         ags->sel_copy_from_texture_to_buffer,
         texture,
@@ -1616,7 +1640,7 @@ void T1_os_gpu_fetch_rgba_at(
         bytes_per_row,
         bytes_per_image);
     
-    T1_objc_mtl_copy_texture_to_buffer(
+    ((mtl_copy_texture_to_buffer_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_encoder,
         ags->sel_copy_from_texture_to_buffer,
         texture,
@@ -1814,12 +1838,20 @@ void T1_os_gpu_copy_locked_vertices(void)
         combuf,
         ags->sel_blit_command_encoder);
     
-    T1_objc_msg_5arg(
+    /*
+    - (void) copyFromBuffer:(id<MTLBuffer>) sourceBuffer 
+           sourceOffset:(NSUInteger) sourceOffset 
+               toBuffer:(id<MTLBuffer>) destinationBuffer 
+      destinationOffset:(NSUInteger) destinationOffset 
+                   size:(NSUInteger) size;
+    */
+    typedef void (* copy_from_buf_type)(void *, void *, void *, uintptr_t, void *, uintptr_t, uintptr_t);
+    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_copy_encoder,
         ags->sel_copy_from_buffer_source_offset_to_buffer,
-        (uintptr_t)ags->locked_vertex_populator_buffer,
+        ags->locked_vertex_populator_buffer,
         0,
-        (uintptr_t)ags->locked_vertex_buffer,
+        ags->locked_vertex_buffer,
         0,
         T1_cpu_to_gpu_data->locked_vertices_alloc_size);
     
@@ -1849,21 +1881,22 @@ void T1_os_gpu_copy_locked_materials(
         combuf,
         ags->sel_blit_command_encoder);
     
-    T1_objc_msg_5arg(
+    typedef void (* copy_from_buf_type)(void *, void *, void *, uintptr_t, void *, uintptr_t, uintptr_t);
+    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_copy_encoder,
         ags->sel_copy_from_buffer_source_offset_to_buffer,
-        (uintptr_t)ags->locked_matf32_populator_buffer,
+        ags->locked_matf32_populator_buffer,
         0,
-        (uintptr_t)ags->locked_matf32_buffer,
+        ags->locked_matf32_buffer,
         0,
         T1_cpu_to_gpu_data->const_matsf32_alloc_size);
     
-    T1_objc_msg_5arg(
+    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_copy_encoder,
         ags->sel_copy_from_buffer_source_offset_to_buffer,
-        (uintptr_t)ags->locked_mats32_populator_buffer,
+        ags->locked_mats32_populator_buffer,
         0,
-        (uintptr_t)ags->locked_mats32_buffer,
+        ags->locked_mats32_buffer,
         0,
         T1_cpu_to_gpu_data->const_matss32_alloc_size);
     
@@ -2206,7 +2239,7 @@ static void T1_gpu_draw_single_pass(
                 (u32)cam_i);
             
             typedef void (* set_viewport_msg_type)(void *, void *, T1MTLViewport);
-            ((set_viewport_msg_type)T1_objc_unsafe_get_raw_msg_send())(
+            ((set_viewport_msg_type)T1_objc_unsafe_get_raw_msg_send)(
                 pass_1_outline_enc,
                 ags->sel_set_viewport,
                 ags->render_viewports[cam_i]);
@@ -3042,22 +3075,35 @@ void T1_gpu_draw_in_mtk_view(void * view)
     void * blit_touch_tex_to_cpu_enc = (void *)T1_objc_msg(
         combuf, ags->sel_blit_command_encoder);
     
-    T1_objc_msg_3arg_2set_4arg(
+    typedef void (* copy_from_tex_to_buf_type)(
+        void *, void *,
+        /* copyFromTexture:(id<MTLTexture>) */ void *,
+        /* sourceSlice:(NSUInteger)    : */ uintptr_t,
+        /* sourceLevel:(NSUInteger)    : */ uintptr_t,
+        /* sourceOrigin:(MTLOrigin)    : */ T1ObjcSet,
+        /* sourceSize:(MTLSize)        : */ T1ObjcSet,
+        /* toBuffer:(id<MTLBuffer>)    : */ void *,
+        /* destOffset:(NSUInteger)     : */ uintptr_t,
+        /* destBytesPerRow:(NSUInteger): */ uintptr_t,
+        /* destBytesPerImg:(NSUInteger): */ uintptr_t);
+    ((copy_from_tex_to_buf_type)T1_objc_unsafe_get_raw_msg_send())(
         blit_touch_tex_to_cpu_enc,
         ags->sel_copy_from_texture_to_buffer,
-        (uintptr_t)ags->touch_id_texture,
+        ags->touch_id_texture,
         /* source_slice: */ 0,
         /* source_level: */ 0,
         /* source_origin: */ touch_buf_origin,
         /* source_size: */ touch_buf_size,
-        /* to_buffer: */ (uintptr_t)ags->touch_id_buffer,
+        /* to_buffer: */ ags->touch_id_buffer,
         /* destination_offset: */ 0,
         /* destination_bytes_per_row: */ touch_id_w * 4,
         /* destination_bytes_per_image: */ touch_id_w * touch_id_h * 4);
     
-    T1_objc_msg(blit_touch_tex_to_cpu_enc, ags->sel_end_encoding);
+    T1_objc_msg(
+        blit_touch_tex_to_cpu_enc,
+        ags->sel_end_encoding);
     }
-     
+    
     // Pass 5 puts a quad on the full screen
     void * pass_5_comp_desc = (void *)T1_objc_msg(
         view,

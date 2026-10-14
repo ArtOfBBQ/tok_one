@@ -1057,31 +1057,38 @@ void T1_os_poll_gamepad_events(void) {
     update_chain_key(g, T1_mpl_objc->sel_button_options, T1_IO_GAMEPAD_OPTIONS);
     
     // thumbsticks
-    void * xaxis = T1_objc_msgx2_get_ptr(
+    void * left_thumb = (void *)T1_objc_msg(
         g,
-        T1_mpl_objc->sel_left_thumbstick,
+        T1_mpl_objc->sel_left_thumbstick);
+    void * xaxis = (void *)T1_objc_msg(
+        left_thumb,
         T1_mpl_objc->sel_xaxis);
-    f32 xval = (f32)T1_objc_msg_get_f64(xaxis, T1_mpl_objc->sel_value);
-    void * yaxis = T1_objc_msgx2_get_ptr(
-        g,
-        T1_mpl_objc->sel_left_thumbstick,
+    f32 xval = (f32)T1_objc_msg_get_f64(
+        xaxis,
+        T1_mpl_objc->sel_value);
+    
+    void * yaxis = (void *)T1_objc_msg(
+        left_thumb,
         T1_mpl_objc->sel_yaxis);
     f32 yval = (f32)T1_objc_msg_get_f64(yaxis, T1_mpl_objc->sel_value);
+    
     T1_io_register_key_move_to_pos(
         T1_IO_GAMEPAD_LTHUMBSTICK,
         xval,
         yval);
     
-    xaxis = T1_objc_msgx2_get_ptr(
+    void * right_thumb = (void *)T1_objc_msg(
         g,
-        T1_mpl_objc->sel_right_thumbstick,
+        T1_mpl_objc->sel_right_thumbstick);
+    xaxis = (void *)T1_objc_msg(
+        right_thumb,
         T1_mpl_objc->sel_xaxis);
-    yaxis = T1_objc_msgx2_get_ptr(
-        g,
-        T1_mpl_objc->sel_right_thumbstick,
+    yaxis = (void *)T1_objc_msg(
+        right_thumb,
         T1_mpl_objc->sel_yaxis);
     xval = (f32)T1_objc_msg_get_f64(xaxis, T1_mpl_objc->sel_value);
     yval = (f32)T1_objc_msg_get_f64(yaxis, T1_mpl_objc->sel_value);
+    
     T1_io_register_key_move_to_pos(
         T1_IO_GAMEPAD_RTHUMBSTICK,
         xval,

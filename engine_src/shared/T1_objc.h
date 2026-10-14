@@ -28,18 +28,26 @@ void T1_objc_init(
     void * (* malloc_perma)(size_t),
     char ** const fatal_error);
 
-// This fetches a raw objc_msgSend() function, which
-// you can manually cast to a complex function signature.
-// This is only necessary for complex objective-c
-// functions that take structs by value or a huge
-// number of arguments, for simpler functions I
-// recommend using the helper functions like
-// T1_objc_msg_2arg(). They will give you error
-// checking in debug mode also.
-// This is a huge source of bugs, so don't use it
-// unless absolutely necessary
-typedef void (* T1ObjcRawFn)(void);
+/*
+This fetches a raw objc_msgSend() function, which
+you can manually cast to a complex function signature.
+This is only necessary for complex objective-c
+functions that take structs by value or a huge
+number of arguments, for simpler functions I
+recommend using the helper functions like
+T1_objc_msg_2arg(). They will give you error
+checking in debug mode also.
+This is a huge source of bugs, so don't use it
+unless absolutely necessary
 
+Example usage:
+typedef void (* my_function_type)(void *, void *, MyCustomStruct);
+((my_function_type)T1_objc_unsafe_get_raw_msg_send())(
+    my_class_arg,
+    my_selector_arg,
+    my_custom_struct_instance);
+*/
+typedef void (* T1ObjcRawFn)(void);
 T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void);
 
 b8 T1_objc_open_framework(
@@ -145,24 +153,10 @@ uintptr_t T1_objc_msg_4arg(
     uintptr_t arg3,
     uintptr_t arg4);
 
-uintptr_t T1_objc_msg_5arg(
-    void * recip,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    uintptr_t arg4,
-    uintptr_t arg5);
-
 uintptr_t T1_objc_msg_1f64(
     void * recip,
     void * selector,
     f64 arg1);
-
-void * T1_objc_msgx2_get_ptr(
-    void * recip,
-    void * selector_1,
-    void * selector_2);
 
 f64 T1_objc_msg_get_f64(
     void * recip,
@@ -250,34 +244,6 @@ uintptr_t T1_objc_msg_2set(
     T1ObjcSet a,
     T1ObjcSet b);
 
-uintptr_t T1_objc_msg_3arg_2set_4arg(
-    void * target,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    T1ObjcSet set1,
-    T1ObjcSet set2,
-    uintptr_t arg4,
-    uintptr_t arg5,
-    uintptr_t arg6,
-    uintptr_t arg7);
-
-#if 0
-uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
-    void * target,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    uintptr_t arg4,
-    T1ObjcSet set1,
-    uintptr_t arg5,
-    uintptr_t arg6,
-    uintptr_t arg7,
-    T1ObjcSet set2);
-#endif
-
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
     void * target,
     void * selector);
@@ -285,18 +251,5 @@ T1ObjcPairf64 T1_objc_msg_get_pairf64(
 T1ObjcQuadf64 T1_objc_msg_get_quadf64(
     void * target,
     void * selector);
-
-void T1_objc_mtl_copy_texture_to_buffer(
-    void *    command_encoder,
-    void *    sel_copy_to_buf,
-    void *    src_texture,
-    uintptr_t src_slice,
-    uintptr_t src_level,
-    T1ObjcSet src_origin,
-    T1ObjcSet src_size,
-    void *    dst_buffer,
-    uintptr_t dst_offset,
-    uintptr_t dst_bytes_per_row,
-    uintptr_t dst_bytes_per_image);
 
 #endif // T1_OBJC_H

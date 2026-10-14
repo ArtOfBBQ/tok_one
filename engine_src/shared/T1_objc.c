@@ -734,25 +734,6 @@ uintptr_t T1_objc_msg_4arg(
     return T1_objc_s->msg_4arg(recip, selector, arg1, arg2, arg3, arg4);
 }
 
-uintptr_t T1_objc_msg_5arg(
-    void * recip,
-    void * selector,
-    uintptr_t arg1,
-    uintptr_t arg2,
-    uintptr_t arg3,
-    uintptr_t arg4,
-    uintptr_t arg5)
-{
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
-    
-    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
-        return 0;
-    }
-    
-    return T1_objc_s->msg_5arg(recip, selector, arg1, arg2, arg3, arg4, arg5);
-}
-
 uintptr_t T1_objc_msg_1f64(
     void * recip,
     void * selector,
@@ -766,24 +747,6 @@ uintptr_t T1_objc_msg_1f64(
     }
     
     return T1_objc_s->msg_1f64(recip, selector, arg1);
-}
-
-void * T1_objc_msgx2_get_ptr(
-    void * recip,
-    void * selector_1,
-    void * selector_2)
-{
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector_1 != NULL);
-    T1_log_assert(selector_2 != NULL);
-    
-    void * step1 = (void *)T1_objc_msg(
-        recip,
-        selector_1);
-    
-    return (void *)T1_objc_msg(
-        step1,
-        selector_2);
 }
 
 T1ObjcPair T1_objc_pair_construct(
@@ -892,6 +855,7 @@ uintptr_t T1_objc_msg_2set(
         set1, set2);
 }
 
+/*
 uintptr_t T1_objc_msg_3arg_2set_4arg(
     void * target,
     void * selector,
@@ -914,6 +878,7 @@ uintptr_t T1_objc_msg_3arg_2set_4arg(
         set1, set2,
         arg4, arg5, arg6, arg7);
 }
+*/
 
 #if 1
 uintptr_t T1_objc_msg_4arg_1set_3arg_1set(
@@ -983,6 +948,7 @@ T1ObjcQuadf64 T1_objc_msg_get_quadf64(
     return out;
 }
 
+#if 0
 void T1_objc_mtl_copy_texture_to_buffer(
     void *    command_encoder,
     void *    sel_copy_to_buf,
@@ -1031,6 +997,7 @@ void T1_objc_mtl_copy_texture_to_buffer(
         dst_bytes_per_image);
     #endif
 }
+#endif
 
 f64 T1_objc_msg_get_f64(
     void * recip,
