@@ -46,6 +46,13 @@ typedef void (* my_function_type)(void *, void *, MyCustomStruct);
     my_class_arg,
     my_selector_arg,
     my_custom_struct_instance);
+
+Even if you use this correctly, there is an additional trap:
+on intel x86-64 architectures when returning a struct that
+doesn't fit neatly in int registers (size > 16 bytes or
+contains floats), you should not use raw_msg_send but use
+a special deprecated 'stret' (struct return) function
+instead.
 */
 typedef void (* T1ObjcRawFn)(void);
 T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void);
@@ -167,16 +174,5 @@ void * T1_objc_nsstring_construct(
 
 char * T1_objc_nsstring_to_cstring(
     void * nsstring);
-
-/*
-Passing structs
-*/
-typedef struct {
-    f64 a, b;
-} T1ObjcPairf64;
-
-T1ObjcPairf64 T1_objc_msg_get_pairf64(
-    void * target,
-    void * selector);
 
 #endif // T1_OBJC_H

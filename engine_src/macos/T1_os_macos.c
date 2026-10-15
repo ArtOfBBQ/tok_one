@@ -48,6 +48,23 @@ static T1NSRect T1_nsrect_make(
 }
 
 typedef struct {
+    f64 x;
+    f64 y;
+} T1NSPoint;
+
+T1NSPoint T1_nspoint_make(f32 x, f32 y) {
+    T1NSPoint out;
+    out.x = x;
+    out.y = y;
+    return out;
+}
+
+typedef struct {
+    f64 width;
+    f64 height;
+} T1NSSize;
+
+typedef struct {
     void * class_T1_ns_window; // T1NSWindow
     void * class_T1_ns_window_delegate; // T1NSWindowDelegate
     void * class_T1_mtk_view_delegate; // T1MTKViewDelegate
@@ -132,11 +149,16 @@ static void T1_mtkviewdel_draw_in_mtk_view(
     T1_gpu_draw_in_mtk_view(mtk_view);
 }
 
+/*
+- (void)
+    mtkView:(MTKView *) view 
+    drawableSizeWillChange:(CGSize) size;
+*/
 static void T1_mtkviewdel_mtkview_drawable_size_will_change(
     void * selfptr,
     void * selectptr,
     void * mtk_view,
-    T1ObjcPairf64 size)
+    T1NSSize size)
 {
     (void)selfptr; (void)selectptr;
     (void)mtk_view;
@@ -323,15 +345,15 @@ static void T1_os_macos_ns_window_mouse_moved(
         return;
     }
     
-    T1ObjcPairf64 window_location =
-        T1_objc_msg_get_pairf64(
-            event,
-            T1_os_macos_s->sel_location_in_window);
+    typedef T1NSPoint (* locationInWindowFuncType)(void *, void *);
+    T1NSPoint window_location = ((locationInWindowFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        event,
+        T1_os_macos_s->sel_location_in_window);
     
     T1_io_register_key_move_to_pos(
         T1_IO_MOUSE,
-        (f32)window_location.a,
-        (f32)window_location.b);
+        (f32)window_location.x,
+        (f32)window_location.y);
 }
 
 static void T1_os_macos_ns_window_mouse_down(
@@ -611,12 +633,12 @@ static void T1_os_macos_ns_window_delegate_window_did_move(
 }
 #endif
 
-static T1ObjcPairf64
+static T1NSSize
 T1_os_macos_ns_window_delegate_window_will_resize_to_size(
     void * self_ptr,
     void * selector,
     void * sender,
-    T1ObjcPairf64 frame_size)
+    T1NSSize frame_size)
 {
     (void)self_ptr; (void)selector; (void)sender;
     

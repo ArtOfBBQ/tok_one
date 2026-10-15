@@ -37,7 +37,6 @@ typedef struct {
     uintptr_t (* msg_1f64)(void *, void *, f64);
     f32    (* msg_get_f32)(void *, void *);
     f64    (* msg_get_f64)(void *, void *);
-    T1ObjcPairf64 (* msg_get_pairf64)(void *, void *);
     void * (* get_class)(const char *);
     void (* register_class_pair)(void *);
     b8 (* class_add_method)(void *, void *, void *, const char *); // class_addMethod
@@ -161,7 +160,6 @@ void T1_objc_init(
     
     T1_objc_s->msg_get_f32      = (f32       (*)(void *, void *))T1_objc_s->msg;
     T1_objc_s->msg_get_f64      = (f64       (*)(void *, void *))T1_objc_s->msg;
-    T1_objc_s->msg_get_pairf64  = (T1ObjcPairf64(*)(void *, void*))T1_objc_s->msg;
     T1_objc_s->msg_arg          = (uintptr_t (*)(void *, void *, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_2arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_3arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
@@ -790,27 +788,6 @@ uintptr_t T1_objc_msg_1f64(
     return T1_objc_s->msg_1f64(recip, selector, arg1);
 }
 
-T1ObjcPairf64 T1_objc_msg_get_pairf64(
-    void * recip,
-    void * selector)
-{
-    T1ObjcPairf64 out;
-    out.a = 0.0;
-    out.b = 0.0;
-    
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
-    
-    if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
-        T1_log_assert(0);
-        return out;
-    }
-    
-    out = T1_objc_s->msg_get_pairf64(recip, selector);
-    
-    return out;
-}
-
 f64 T1_objc_msg_get_f64(
     void * recip,
     void * selector)
@@ -818,6 +795,36 @@ f64 T1_objc_msg_get_f64(
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
     }
+    
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    {
+        T1_log_assert(recip != NULL);
+        T1_log_assert(selector != NULL);
+        
+        void * m = T1_objc_s->class_get_instance_method(
+            T1_objc_s->object_get_class(recip), selector);
+        // use the class-method lookup if recip is a Class
+        T1_log_assert(m != NULL);
+        
+        unsigned n = T1_objc_s->method_get_number_of_arguments(m);
+        T1_log_assert(n == 2); // self and _cmd only
+        
+        char ret[16];
+        T1_std_memset(ret, 0, 16);
+        T1_objc_s->method_get_return_type(m, ret, sizeof(ret));
+        
+        if (!T1_objc_encoding_is_f64(ret)) {
+            // build errmsg as before: class, selector, "return type is not double: ", ret
+            char errmsg[256];
+            T1_std_memset(errmsg, 0, 256);
+            T1_std_strcat_cap(errmsg, 256, "T1_objc_msg_get_f64() but float not returned by selector: ");
+            T1_std_strcat_cap(errmsg, 256, T1_objc_s->selector_get_name(selector));
+            T1_log_dump_and_crash(errmsg);
+            T1_log_assert(0);
+            return 0;
+        }
+    }
+    #endif
     
     f64 out = T1_objc_s->msg_get_f64(recip, selector);
     
