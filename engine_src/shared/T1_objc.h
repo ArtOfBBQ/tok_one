@@ -172,24 +172,8 @@ char * T1_objc_nsstring_to_cstring(
 Passing structs
 */
 typedef struct {
-    uintptr_t a, b;
-} T1ObjcPair;
-
-typedef struct {
     f64 a, b;
 } T1ObjcPairf64;
-
-T1ObjcPair T1_objc_pair_construct(
-    uintptr_t a,
-    uintptr_t b);
-
-uintptr_t T1_objc_msg_2arg_2pair(
-    void * target, 
-    void * selector, 
-    uintptr_t arg1, 
-    uintptr_t arg2, 
-    T1ObjcPair pair1, 
-    T1ObjcPair pair2);
 
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
     void * target,

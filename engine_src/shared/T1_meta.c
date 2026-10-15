@@ -243,6 +243,7 @@ void T1_meta_init(
         *fatal_error = "Malloc fail";
         return;
     }
+    T1_std_memset(t1ms, 0, sizeof(T1MetaState));
     
     t1ms->ascii_store_cap = ascii_store_cap;
     t1ms->ascii_store = T1_meta_malloc_func(t1ms->ascii_store_cap);
@@ -250,10 +251,18 @@ void T1_meta_init(
     t1ms->meta_structs_cap = meta_structs_cap;
     t1ms->metastructs = T1_meta_malloc_func(
         sizeof(MetaStruct) * t1ms->meta_structs_cap);
+    if (!t1ms->metastructs) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     
     t1ms->meta_fields_store_cap = meta_fields_cap;
     t1ms->metafields_store = T1_meta_malloc_func(
         sizeof(MetaField) * t1ms->meta_fields_store_cap);
+    if (!t1ms->metafields_store) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     
     t1ms->meta_enums_cap = meta_enums_cap;
     t1ms->meta_enums = T1_meta_malloc_func(

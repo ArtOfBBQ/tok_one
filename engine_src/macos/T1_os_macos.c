@@ -1422,14 +1422,9 @@ void T1_os_link_gpu_to_main_window(
         return;
     }
     
-    /*
-    - (instancetype)
-        initWithFrame:(CGRect) frameRect 
-        device:(id<MTLDevice>) device;
-    */
     typedef void * (* initWithFrameDeviceFuncType)(
         void *, void *,
-        /* initWithFrame: T1NSRect: */ T1NSRect,
+        /* initWithFrame: CGRect: */ T1NSRect,
         /* device: id<MTLDevice>: */ void *);
     mtk_view = ((initWithFrameDeviceFuncType)T1_objc_unsafe_get_raw_msg_send())(
         mtk_view,

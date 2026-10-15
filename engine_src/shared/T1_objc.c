@@ -35,7 +35,6 @@ typedef struct {
     uintptr_t (* msg_4arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_5arg)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t);
     uintptr_t (* msg_1f64)(void *, void *, f64);
-    uintptr_t (* msg_2arg_2pair)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair);
     f32    (* msg_get_f32)(void *, void *);
     f64    (* msg_get_f64)(void *, void *);
     T1ObjcPairf64 (* msg_get_pairf64)(void *, void *);
@@ -169,7 +168,6 @@ void T1_objc_init(
     T1_objc_s->msg_4arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_5arg         = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t))T1_objc_s->msg;
     T1_objc_s->msg_1f64         = (uintptr_t (*)(void *, void *, f64))T1_objc_s->msg;
-    T1_objc_s->msg_2arg_2pair   = (uintptr_t (*)(void *, void *, uintptr_t, uintptr_t, T1ObjcPair, T1ObjcPair))T1_objc_s->msg;
     
     T1_objc_s->reg_name = dlsym(
         libobjc,
@@ -514,7 +512,23 @@ static u8 T1_objc_value_fits_encoding_in_register(
     return 0;
 }
 
-static int T1_objc_encoding_is_representable_by_uintptr_t_in_register(
+static u8 T1_objc_encoding_is_f64(
+    const char * t)
+{
+    // discard 'qualifier prefixes' like const
+    while (*t == 'r' || *t == 'n' || *t == 'N' ||
+           *t == 'o' || *t == 'O' || *t == 'R' || *t == 'V')
+    {
+        t++;
+    }
+    
+    // 'd' is double, which on 64-bit Apple platforms is also CGFloat.
+    // 'f' (32-bit float) is NOT acceptable: the callee would read a
+    // 32-bit value from the register, but you passed a 64-bit double.
+    return t[0] == 'd' && t[1] == '\0';
+}
+
+static u8 T1_objc_encoding_is_representable_by_uintptr_t_in_register(
     const char * t)
 {
     // discard 'qualifier prefixes' like const
@@ -540,6 +554,43 @@ static int T1_objc_encoding_is_representable_by_uintptr_t_in_register(
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+static void assert_arg_f64(
+    void * recip,
+    void * selector,
+    u32 args_count,
+    u32 arg_i,
+    uintptr_t arg)
+{
+    void * m = T1_objc_s->class_get_instance_method(
+        T1_objc_s->object_get_class(recip), selector);
+    unsigned int n = T1_objc_s->method_get_number_of_arguments(m);
+    T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
+    char ret[16];
+    T1_objc_s->method_get_return_type(
+        m, ret, sizeof(ret));
+    
+    char t[64];
+    T1_std_memset(t, 0, 64);
+    T1_objc_s->method_get_argument_type(m, 2 + arg_i, t, sizeof(t));
+    
+    if (!T1_objc_encoding_is_f64(t))
+    {
+        char errmsg[128];
+        T1_std_memset(errmsg, 0, 128);
+        T1_std_strcat_cap(errmsg, 128, "Class ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->class_get_name(T1_objc_s->object_get_class(recip)));
+        T1_std_strcat_cap(errmsg, 128, " selector ");
+        T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
+        T1_std_strcat_cap(errmsg, 128, " can't take argument type as f64: ");
+        T1_std_strcat_cap(errmsg, 128, t);
+        T1_log_dump_and_crash(errmsg);
+        T1_log_assert(0);
+        return;
+    }
+    
+    return;
+}
+
 static void assert_arg_uintptr_t(
     void * recip,
     void * selector,
@@ -719,35 +770,24 @@ uintptr_t T1_objc_msg_1f64(
     void * selector,
     f64 arg1)
 {
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(recip != NULL);
     T1_log_assert(selector != NULL);
     
+    assert_arg_f64(
+        recip, selector,
+        /* args_count: */ 1, /* arg_i: */ 0,
+        arg1);
+    #else
+    #error
+    #endif
+    
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        T1_log_assert(0);
         return 0;
     }
     
     return T1_objc_s->msg_1f64(recip, selector, arg1);
-}
-
-T1ObjcPair T1_objc_pair_construct(
-    uintptr_t a,
-    uintptr_t b)
-{
-    return (T1ObjcPair){a, b};
-}
-
-uintptr_t T1_objc_msg_2arg_2pair(
-    void *target, 
-    void *sel, 
-    uintptr_t arg1, 
-    uintptr_t arg2, 
-    T1ObjcPair pair1, 
-    T1ObjcPair pair2)
-{
-    T1_log_assert(target != NULL);
-    T1_log_assert(sel != NULL);
-    
-    return T1_objc_s->msg_2arg_2pair(target, sel, arg1, arg2, pair1, pair2);
 }
 
 T1ObjcPairf64 T1_objc_msg_get_pairf64(
@@ -762,6 +802,7 @@ T1ObjcPairf64 T1_objc_msg_get_pairf64(
     T1_log_assert(selector != NULL);
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
+        T1_log_assert(0);
         return out;
     }
     
@@ -769,57 +810,6 @@ T1ObjcPairf64 T1_objc_msg_get_pairf64(
     
     return out;
 }
-
-#if 0
-void T1_objc_mtl_copy_texture_to_buffer(
-    void *    command_encoder,
-    void *    sel_copy_to_buf,
-    void *    src_texture,
-    uintptr_t src_slice,
-    uintptr_t src_level,
-    T1ObjcSet src_origin,
-    T1ObjcSet src_size,
-    void *    dst_buffer,
-    uintptr_t dst_offset,
-    uintptr_t dst_bytes_per_row,
-    uintptr_t dst_bytes_per_image)
-{
-    T1_log_assert(command_encoder != NULL);
-    T1_log_assert(sel_copy_to_buf != NULL);
-    
-    // TODO: fix intel ABI
-    #if defined(__x86_64__)
-    #error
-    #else
-    // for ARM64 ABI:
-    typedef void (*copy_fn)(
-        void *,
-        void *,
-        void *, 
-        uintptr_t,
-        uintptr_t, 
-        T1ObjcSet,
-        T1ObjcSet, 
-        void *,
-        uintptr_t,
-        uintptr_t,
-        uintptr_t);
-    
-    ((copy_fn)T1_objc_s->msg)(
-        command_encoder,
-        sel_copy_to_buf,
-        src_texture,
-        src_slice,
-        src_level,
-        src_origin,
-        src_size,
-        dst_buffer,
-        dst_offset,
-        dst_bytes_per_row,
-        dst_bytes_per_image);
-    #endif
-}
-#endif
 
 f64 T1_objc_msg_get_f64(
     void * recip,

@@ -45,10 +45,30 @@
 #define T1MTLResourceStorageModeManaged 16
 #define T1MTLResourceStorageModePrivate 32
 #define T1MTLTextureUsageRenderTarget 0x0004
+
+#define T1MTLLoadActionDontCare 0
+#define T1MTLLoadActionLoad 1
 #define T1MTLLoadActionClear 2
 
-#define T1MTLLoadActionLoad 1
 #define T1MTLStoreActionStore 1
+
+typedef struct {
+    uintptr_t location;
+    uintptr_t length;
+} T1NSRange;
+
+static T1NSRange T1_nsrange_make(
+    uintptr_t location,
+    uintptr_t length)
+{
+    // 0 length NSRange is legal, but why do it in T1?
+    T1_log_assert(length != 0);
+    
+    T1NSRange out;
+    out.length = length;
+    out.location = location;
+    return out;
+}
 
 typedef struct {
     uintptr_t width, height, depth;
@@ -59,6 +79,10 @@ static T1MTLSize T1_mtlsize_make(
     uintptr_t height,
     uintptr_t depth)
 {
+    T1_log_assert(width > 0);
+    T1_log_assert(height > 0);
+    T1_log_assert(depth > 0);
+    
     T1MTLSize sz;
     sz.width  = width;
     sz.height = height;
@@ -76,6 +100,10 @@ static T1MTLOrigin T1_mtlorigin_make(
     uintptr_t y,
     uintptr_t z)
 {
+    T1_log_assert(x < UINT16_MAX); // TODO: delete me
+    T1_log_assert(y < UINT16_MAX); // TODO: delete me
+    T1_log_assert(z < UINT16_MAX); // TODO: delete me
+    
     T1MTLOrigin out;
     out.x = x;
     out.y = y;
@@ -92,6 +120,20 @@ typedef void (* dispatchThreadsFuncType)(
     void *, void *,
     /* dispatchThreads:(MTLSize): */ T1MTLSize,
     /* threadsPerThreadgroup:(MTLSize): */ T1MTLSize);
+
+/*
+- (id<MTLTexture>)
+    newTextureViewWithPixelFormat:(MTLPixelFormat) pixelFormat 
+    textureType:(MTLTextureType) textureType 
+    levels:(NSRange) levelRange 
+    slices:(NSRange) sliceRange;
+*/
+typedef void * (* newTextureViewFuncType)(
+    void *, void *,
+    /* withPixelFormat : */ uintptr_t,
+    /* MTLTextureType  : */ uintptr_t,
+    /* levels:(NSRange): */ T1NSRange,
+    /* slices:(NSRange): */ T1NSRange);
 
 typedef struct {
     double alpha;
@@ -1855,12 +1897,6 @@ void T1_os_gpu_push_tex_slice(
     T1MTLSize   size   = T1_mtlsize_make(img_width, img_height, 1);
     T1MTLOrigin origin = T1_mtlorigin_make(0, 0, 0);
     
-    /*
-    - (void)
-        
-        destinationLevel 
-       destinationOrigin;    
-    */
     typedef void (* copy_from_buf_src_offset_type)(
         void *, void *,
         /* copyFromBuffer:(id<MTLBuffer>): */ void *,
@@ -1990,48 +2026,18 @@ void T1_os_gpu_copy_locked_materials(
         ags->sel_commit);
 }
 
-static void * get_tex_slice(
-    s32 at_array_i,
-    s32 at_slice_i)
-{
-    T1_log_assert(at_array_i >= 0);
-    T1_log_assert(at_array_i < T1_TEXARRAYS_CAP);
-    T1_log_assert(at_slice_i >= 0);
-    
-    void * parent = ags->metal_textures[at_array_i];
-    
-    T1ObjcPair ns_range_level = T1_objc_pair_construct(
-        0,
-        T1_objc_msg(
-            parent,
-            ags->sel_mipmap_level_count));
-    T1ObjcPair ns_range_slice = T1_objc_pair_construct(
-        (uintptr_t)at_slice_i,
-        1);
-    
-    void * retval = (void *)T1_objc_msg_2arg_2pair(
-        parent,
-        ags->sel_new_texture_view_with_pixel_format,
-        T1_objc_msg(parent, ags->sel_pixel_format),
-        T1MTLTextureType2D,
-        ns_range_level,
-        ns_range_slice);
-    
-    return retval;
-}
-
 static void set_defaults_for_render_descriptor(
     void * desc,
     s32 cam_i)
 {
     void * depth_attachm = (void *)T1_objc_msg(desc, ags->sel_depth_attachment);
     if (!ags->zbuf_cleared) {
-        T1_objc_msg_1f64(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionClear);
+        T1_objc_msg_1arg(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionClear);
         T1_objc_msg_1f64(depth_attachm, ags->sel_set_clear_depth, 1.0);
         
         ags->zbuf_cleared = true;
     } else {
-        T1_objc_msg_1f64(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionLoad);
+        T1_objc_msg_1arg(depth_attachm, ags->sel_set_load_action, T1MTLLoadActionLoad);
     }
     T1_log_assert(ags->cur_depth != NULL);
     
@@ -2051,7 +2057,7 @@ static void set_defaults_for_render_descriptor(
         ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
             color_attachment_0,
             ags->sel_set_clear_color,
-            T1_mtl_clearcolor_make(0.0f, 0.0f, 0.1f, 1.0f));
+            T1_mtl_clearcolor_make(0.0, 0.0, 0.1, 1.0));
         
         ags->rtt_cleared = true;
     } else {
@@ -2288,11 +2294,14 @@ static void T1_gpu_draw_single_pass(
             void * outlines_desc = (void *)T1_objc_msg(
                 view,
                 ags->sel_current_render_pass_desc);
+            T1_log_assert(outlines_desc != NULL);
+            if (!outlines_desc) {
+                return;
+            }
             
             set_defaults_for_render_descriptor(
                 outlines_desc,
                 cam_i);
-            
             {
                 void * color_attachments = (void *)T1_objc_msg(
                     outlines_desc,
@@ -2380,7 +2389,8 @@ static void T1_gpu_draw_single_pass(
             
             void * pass_2_opaque_tris_enc =
                 (void *)T1_objc_msg_1arg(
-                    combuf, ags->sel_render_cmd_enc_with_desc,
+                    combuf,
+                    ags->sel_render_cmd_enc_with_desc,
                     (uintptr_t)diamond_desc);
             
             T1_objc_msg_1arg(
@@ -2953,6 +2963,36 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     T1_objc_autorelease_pool_pop(pool);
 }
 
+static void * get_tex_slice(
+    s32 at_array_i,
+    s32 at_slice_i)
+{
+    T1_log_assert(at_array_i >= 0);
+    T1_log_assert(at_array_i < T1_TEXARRAYS_CAP);
+    T1_log_assert(at_slice_i >= 0);
+    
+    void * parent = ags->metal_textures[at_array_i];
+    
+    T1NSRange ns_range_level = T1_nsrange_make(
+        0,
+        T1_objc_msg(
+            parent,
+            ags->sel_mipmap_level_count));
+    T1NSRange ns_range_slice = T1_nsrange_make(
+        (uintptr_t)at_slice_i,
+        1);
+    
+    void * retval = ((newTextureViewFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        parent,
+        ags->sel_new_texture_view_with_pixel_format,
+        T1_objc_msg(parent, ags->sel_pixel_format),
+        T1MTLTextureType2D,
+        ns_range_level,
+        ns_range_slice);
+    
+    return retval;
+}
+
 void T1_gpu_draw_in_mtk_view(void * view)
 {
     if (!ags || !ags->metal_active) {
@@ -3247,12 +3287,13 @@ void T1_gpu_draw_in_mtk_view(void * view)
     
     void * arr_tex =
         ags->metal_textures[T1_tex_to_array_i(T1_render_views->cpu[0].write_tex)];
-    T1ObjcPair levels_range = T1_objc_pair_construct(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
-    T1ObjcPair slices_range = T1_objc_pair_construct(
+    T1NSRange levels_range = T1_nsrange_make(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
+    T1NSRange slices_range = T1_nsrange_make(
         (uintptr_t)T1_tex_to_slice_i(
             T1_render_views->cpu[0].write_tex),
         1);
-    void * sliced_tex = (void *)T1_objc_msg_2arg_2pair(
+    
+    void * sliced_tex = ((newTextureViewFuncType)T1_objc_unsafe_get_raw_msg_send())(
         arr_tex,
         ags->sel_new_texture_view_with_pixel_format,
         T1_objc_msg(arr_tex, ags->sel_pixel_format),
@@ -3263,8 +3304,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
     T1_objc_msg_2arg(
         pass_5_comp,
         ags->sel_set_fragment_texture_at_index,
-            /* setFragmentTexture: */ (uintptr_t)sliced_tex,
-            /* atIndex: */ 0);
+        /* setFragmentTexture: */ (uintptr_t)sliced_tex,
+        /* atIndex: */ 0);
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     T1_objc_msg_2arg(

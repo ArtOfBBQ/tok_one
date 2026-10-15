@@ -170,7 +170,9 @@ void * T1_mem_malloc_unmanaged_aligned(
 void * T1_mem_malloc_unmanaged(size_t size) {
     T1_log_assert(size > 0);
     #if 1
-    return malloc(size);
+    void * out = malloc(size);
+    T1_std_memset(out, 0xCD, size);
+    return out;
     #else
     void * return_value = T1_mem_malloc_unmanaged_aligned(
         size,
@@ -226,7 +228,7 @@ void * T1_mem_malloc_managed(
 {
     #if 1
     void * out = malloc(size);
-    // T1_std_memset(out, 0, size);
+    T1_std_memset(out, 0xCD, size);
     return out;
     #else
     memstore_mutex_lock(malloc_mutex_id);
