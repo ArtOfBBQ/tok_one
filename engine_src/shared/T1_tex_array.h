@@ -35,12 +35,13 @@ void T1_tex_array_init(void);
 
 void T1_tex_array_push_all(void);
 
-T1Tex T1_tex_array_reg_img(
+T1Tex T1_tex_array_prereg_img(
     const c8 * filename,
     u32 width,
     u32 height,
     b8 is_render_target,
     b8 use_bc1_compression,
+    b8 never_delete,
     char ** const fatal_error);
 
 s32 T1_tex_array_create_new_render_view(

@@ -820,6 +820,7 @@ void T1_appinit_after_gpu_init_step1(
     const char * perlin_noise_fn = "perlin_noise.png";
     T1_tex_files_prereg_and_decode_png_res(
         perlin_noise_fn,
+        /* never_delete: */ true,
         fatal_error);
     
     if (*fatal_error != 0) {

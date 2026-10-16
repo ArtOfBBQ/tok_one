@@ -601,6 +601,7 @@ static void assert_arg_uintptr_t(
     unsigned int n = T1_objc_s->method_get_number_of_arguments(m);
     T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
     char ret[16];
+    T1_std_memset(ret, 0, 16);
     T1_objc_s->method_get_return_type(
         m, ret, sizeof(ret));
     

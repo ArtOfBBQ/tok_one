@@ -196,7 +196,7 @@ MANAGE TEXTURES
 */
 int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
 int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const char * filename, char ** const fatal_error);
+void T1_tex_files_prereg_png_res(const char * filename, b8 never_delete, char ** const fatal_error);
 void T1_tex_files_prereg_dds_res(const char * filename, char ** const fatal_error);
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
@@ -205,11 +205,12 @@ void T1_tex_files_reg_new_by_splitting_file(
     char ** const fatal_error);
 
 uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
-uint16_t T1_tex_array_reg_img(
+uint16_t T1_tex_array_prereg_img(
     const char * filename,
     uint32_t w, uint32_t h,
     uint8_t is_render_target,
     uint8_t use_bc1_compression,
+    b8 never_delete,
     char ** const fatal_error);
 void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
@@ -667,8 +668,7 @@ void T1_os_write_file_to_writables(
     uint32_t output_size, uint8_t * good);
 void T1_os_gpu_push_tex_slice(
     int32_t tex_array_i,
-    int32_t tex_slice_i,
-    uint8_t free_rgba);
+    int32_t tex_slice_i);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath);
 uint64_t T1_os_get_current_time_us(void);

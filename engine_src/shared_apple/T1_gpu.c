@@ -1818,8 +1818,7 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 
 void T1_os_gpu_push_tex_slice(
     s32 tex_array_i,
-    s32 tex_slice_i,
-    b8 free_rgba)
+    s32 tex_slice_i)
 {
     if (!ags || !ags->metal_active) { return; }
     
@@ -1828,7 +1827,11 @@ void T1_os_gpu_push_tex_slice(
     u8 * rgba_page_aligned =
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_page_aligned;
     
-    T1_log_assert(rgba_freeable != NULL);
+    if (!T1_tex_arrays[tex_array_i].images[tex_slice_i].image.never_delete_me) {
+        T1_log_assert(rgba_freeable != NULL);
+    } else {
+        T1_log_assert(rgba_freeable == NULL);
+    }
     T1_log_assert(rgba_page_aligned != NULL);
     
     T1_log_assert(tex_slice_i >= 0);
@@ -1932,7 +1935,7 @@ void T1_os_gpu_push_tex_slice(
     
     vm_deallocate(mach_task_self(), vm_ptr, vm_size);
     
-    if (free_rgba) {
+    if (rgba_freeable != NULL) {
         T1_mem_free_managed(rgba_freeable);
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.
             rgba_values_freeable = NULL;

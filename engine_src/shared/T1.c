@@ -218,6 +218,7 @@ void T1_make_reflection_cam(
                 new_cam_w,
             /* u32 height: */
                 new_cam_h,
+            /* char ** const fatal_error: */
                 &dud_error);
     T1_log_assert(dud_error == 0);
     

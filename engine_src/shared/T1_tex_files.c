@@ -15,6 +15,7 @@ static void malloc_img_from_embedded_png(
     T1Img * recip,
     const unsigned char * embedded_data,
     u64 embedded_data_size,
+    b8 never_delete,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -83,6 +84,11 @@ static void malloc_img_from_embedded_png(
         /* fatal_error: */
             fatal_error);
     
+    recip->never_delete_me = never_delete;
+    if (recip->never_delete_me) {
+        recip->rgba_values_freeable = NULL;
+    }
+    
     T1_mem_free_managed((u8 *)contents);
 }
 
@@ -99,6 +105,7 @@ static void malloc_img_from_resource_name(
             recipient,
             T1_embedded_data_font_png,
             T1_embedded_data_font_png_size,
+            /* b8 never_delete: */ true,
             fatal_error);
         return;
     }
@@ -110,12 +117,14 @@ static void malloc_img_from_resource_name(
             recipient,
             T1_embedded_data_font_png,
             T1_embedded_data_font_png_size,
+            /* b8 never_delete: */ true,
             fatal_error);
         #else
         malloc_img_from_embedded_png(
             recipient,
             T1_embedded_data_perlin_noise_png,
             T1_embedded_data_perlin_noise_png_size,
+            /* b8 never_delete: */ true,
             fatal_error);
         #endif
         T1_fatal_error_prepend_if_bad(
@@ -344,7 +353,7 @@ void T1_tex_files_load_font_images(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10,
-        0,
+        /* never_delete: */ 1,
         fatal_error);
     if (*fatal_error != 0) { return; }
     T1_tex_arrays[0].request_init = 0;
@@ -352,6 +361,7 @@ void T1_tex_files_load_font_images(
 
 void T1_tex_files_prereg_and_decode_png_res(
     const char * resource_name,
+    b8 never_delete,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -361,23 +371,35 @@ void T1_tex_files_prereg_and_decode_png_res(
     
     if (*fatal_error != 0) { return; }
     
-    T1_tex_array_reg_img(
+    T1_tex_array_prereg_img(
         resource_name,
         img.width,
         img.height,
         0,
         0,
+        never_delete,
         fatal_error);
     
     if (*fatal_error != 0) { return; }
     
-    T1_tex_array_push_all();
+    T1Tex tex = T1_tex_array_get_filename_loc(resource_name);
+    int a = T1_tex_to_array_i(tex);
+    int s = T1_tex_to_slice_i(tex);
+    if (tex == T1_TEX_NONE || a < 0 || s < 0) {
+        T1_fatal_error_new(fatal_error, "Failed to prereg_and_decode resource: ");
+        T1_std_strcat_cap(*fatal_error, 512, resource_name);
+    }
+    T1_tex_arrays[a].images[s].image = img;
+    T1_log_assert(!T1_tex_arrays[a].images[s].deleted);
+    T1_log_assert(!T1_tex_arrays[a].bc1_compressed);
+    T1_log_assert(!T1_tex_arrays[a].images[s].request_update);
+    T1_log_assert(!T1_tex_arrays[a].request_init);
 }
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
     const char * filename,
     u32 rows, u32 columns,
-    b8 free_rgba,
+    b8 never_delete,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -391,6 +413,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
     }
     
     char filename_prefix[256];
+    T1_std_memset(filename_prefix, 0, 256);
     T1_std_strcpy_cap(filename_prefix, 256, filename);
     u32 i = 0;
     while (filename_prefix[i] != '\0' && filename_prefix[i] != '.') {
@@ -403,13 +426,14 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
         filename_prefix,
         rows,
         columns,
-        free_rgba,
+        never_delete,
         fatal_error);
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const char * filename,
+    b8 never_delete_img,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -465,7 +489,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
         return;
     }
     
-    T1Tex loc = T1_tex_array_reg_img(
+    T1Tex loc = T1_tex_array_prereg_img(
         /* const char * filename: */
             filename,
         /* const u32 height: */
@@ -476,6 +500,8 @@ void T1_tex_files_runtime_reg_png_from_writables(
             0,
         /* const u32 is_dds_image: */
             0,
+        /* b8 never_delete: */
+            never_delete_img,
         /* fatal_error: */
             fatal_error);
     
@@ -484,10 +510,11 @@ void T1_tex_files_runtime_reg_png_from_writables(
     T1Img * recipient =
         &T1_tex_arrays[T1_tex_to_array_i(loc)].images[T1_tex_to_slice_i(loc)].image;
     
-    recipient->width = width;
+    recipient->width  = width;
     recipient->height = height;
     recipient->pixel_count = recipient->width * recipient->height;
     recipient->rgba_values_size = recipient->pixel_count * 4;
+    recipient->never_delete_me = never_delete_img;
     T1_mem_malloc_managed_page_aligned(
         /* void *base_pointer_for_freeing: */
             (void *)&recipient->rgba_values_freeable,
@@ -495,6 +522,10 @@ void T1_tex_files_runtime_reg_png_from_writables(
             (void *)&recipient->rgba_values_page_aligned,
         /* const u64 subptr_size: */
             recipient->rgba_values_size);
+    
+    if (never_delete_img) {
+        recipient->rgba_values_freeable = NULL;
+    }
     
     T1_std_memset(
         recipient->rgba_values_page_aligned,
@@ -521,9 +552,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
         /* const s32 texture_array_i: */
             T1_tex_to_array_i(loc),
         /* const s32 texture_i: */
-            T1_tex_to_slice_i(loc),
-        /* free_rgba: */
-            1);
+            T1_tex_to_slice_i(loc));
     
     T1_mem_free_managed(contents);
 }
@@ -534,6 +563,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const char * filename,
+    b8 never_delete,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -577,7 +607,7 @@ void T1_tex_files_prereg_png_res(
         return;
     }
     
-    T1_tex_array_reg_img(
+    T1_tex_array_prereg_img(
         /* const char * filename: */
             filename,
         /* const u32 width: */
@@ -588,6 +618,8 @@ void T1_tex_files_prereg_png_res(
             0,
         /* const u32 is_dds_image: */
             0,
+        /* b8 never_delete: */
+            never_delete,
         /* fatal_error: */
             fatal_error);
     
@@ -646,7 +678,7 @@ void T1_tex_files_prereg_dds_res(
         return;
     }
     
-    T1_tex_array_reg_img(
+    T1_tex_array_prereg_img(
         /* const char * filename: */
             filename,
         /* const u32 width: */
@@ -657,6 +689,8 @@ void T1_tex_files_prereg_dds_res(
             0,
         /* const u32 is_dds_image: */
             1,
+        /* b8 never_delete: */
+            false,
         /* fatal_error: */
             fatal_error);
     
@@ -722,15 +756,15 @@ void T1_tex_files_decode_all_prereg(
                 T1_tex_arrays[ta_i].images[t_i].image.
                     rgba_values_freeable != NULL ||
                 T1_tex_arrays[ta_i].images[t_i].image.
-                    rgba_values_size == 0)
+                    rgba_values_size == 0 ||
+                T1_tex_arrays[ta_i].images[t_i].
+                    image.rgba_values_page_aligned != 0)
             {
                 continue;
             }
             
             T1_log_assert(T1_tex_arrays[ta_i].images[t_i].
                 image.rgba_values_freeable == NULL);
-            T1_log_assert(T1_tex_arrays[ta_i].images[t_i].
-                image.rgba_values_page_aligned == NULL);
             T1_log_assert(T1_tex_arrays[ta_i].images[t_i].
                 image.rgba_values_size > 0);
             

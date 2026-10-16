@@ -21,6 +21,7 @@ void T1_tex_files_load_font_images(
 
 void T1_tex_files_prereg_and_decode_png_res(
     const char * resource_name,
+    b8 never_delete,
     char ** const fatal_error);
 
 void T1_tex_files_reg_new_by_splitting_file_error_handling(
@@ -32,6 +33,7 @@ void T1_tex_files_reg_new_by_splitting_file_error_handling(
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_tex_files_runtime_reg_png_from_writables(
     const c8 * filename,
+    b8 never_delete_img,
     char ** const fatal_error);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
@@ -40,6 +42,7 @@ void T1_tex_files_runtime_reg_png_from_writables(
 
 void T1_tex_files_prereg_png_res(
     const c8 * filename,
+    b8 never_delete,
     char ** const fatal_error);
 
 void T1_tex_files_prereg_dds_res(
