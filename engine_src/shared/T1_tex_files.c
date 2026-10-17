@@ -30,7 +30,10 @@ static void malloc_img_from_embedded_png(
         *fatal_error = "Malloc fail";
         return;
     }
-    T1_std_memcpy(contents, embedded_data, embedded_data_size);
+    T1_std_memcpy(
+        contents,
+        embedded_data,
+        embedded_data_size);
     
     u8 is_png =
         contents[1] == 'P' &&
@@ -111,22 +114,12 @@ static void malloc_img_from_resource_name(
     }
     
     if (T1_std_are_equal_strings(filename, "perlin_noise.png")) {
-        // TODO: use perlin data, not font
-        #if 1
-        malloc_img_from_embedded_png(
-            recipient,
-            T1_embedded_data_font_png,
-            T1_embedded_data_font_png_size,
-            /* b8 never_delete: */ true,
-            fatal_error);
-        #else
         malloc_img_from_embedded_png(
             recipient,
             T1_embedded_data_perlin_noise_png,
             T1_embedded_data_perlin_noise_png_size,
             /* b8 never_delete: */ true,
             fatal_error);
-        #endif
         T1_fatal_error_prepend_if_bad(
             fatal_error,
             "Embedded perlin_noise.png: ");

@@ -54,6 +54,13 @@ void T1_text_draw_label(
     f32 tab_width,
     f32 max_width);
 
+void T1_text_draw_label_around(
+    u8 * on_rgba, u32 rgba_w, u32 rgba_h,
+    const char * text_to_draw,
+    f32 mid_x_pixelspace,
+    f32 mid_y_pixelspace,
+    f32 max_width);
+
 void T1_text_request_label_leftx_toplinemidy(
     u32 with_object_id,
     const char * text_to_draw,

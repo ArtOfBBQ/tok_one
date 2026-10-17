@@ -97,7 +97,7 @@ static const char * c_files[] = {
 };
 
 #define PERMA_CAP    50000
-#define ARENA_CAP 40000000
+#define ARENA_CAP 60000000
 #define OBSERVED_INCLUDES_CAP 1000
 #define FILESTACK_CAP 200
 #define OUTPUT_CAP 10000000
@@ -526,7 +526,7 @@ static void append_embedded_file_to_out(
     uint32_t pop_arena_i = asm_state->arena_i;
     
     char * to_embed = asm_state->arena + asm_state->arena_i;
-    uint32_t to_embed_cap =  900000;
+    uint32_t to_embed_cap = 50000000;
     assert(ARENA_CAP > to_embed_cap);
     asm_state->arena_i += to_embed_cap;
     uint32_t to_embed_size = 0;

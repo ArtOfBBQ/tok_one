@@ -9,6 +9,94 @@ typedef uchar uint8_t;
 
 using namespace metal;
 
+/*
+Noise-threshold dissolve ("stochastic transparency").
+*/
+static inline uint ntd_hash3(uint3 p, uint seed)
+{
+    uint h = p.x * 374761393u + p.y * 668265263u
+           + p.z * 3266489917u + seed * 2246822519u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    return h ^ (h >> 16);
+}
+
+static inline float ntd_hash3f(uint3 p, uint seed)    // [0,1)
+{
+    return float(ntd_hash3(p, seed) & 0xFFFFFFu) * (1.0f / 16777216.0f);
+}
+
+static inline float ntd_vnoise3(float3 p, uint seed)
+{
+    float3 fl = floor(p);
+    float3 f  = p - fl;
+    f = f * f * (3.0f - 2.0f * f);
+    uint3 b = uint3(int3(fl));
+
+    float c000 = ntd_hash3f(b + uint3(0,0,0), seed);
+    float c100 = ntd_hash3f(b + uint3(1,0,0), seed);
+    float c010 = ntd_hash3f(b + uint3(0,1,0), seed);
+    float c110 = ntd_hash3f(b + uint3(1,1,0), seed);
+    float c001 = ntd_hash3f(b + uint3(0,0,1), seed);
+    float c101 = ntd_hash3f(b + uint3(1,0,1), seed);
+    float c011 = ntd_hash3f(b + uint3(0,1,1), seed);
+    float c111 = ntd_hash3f(b + uint3(1,1,1), seed);
+    
+    return mix(mix(mix(c000, c100, f.x), mix(c010, c110, f.x), f.y),
+               mix(mix(c001, c101, f.x), mix(c011, c111, f.x), f.y),
+               f.z);
+}
+
+static inline float ntd_fbm3(float3 p, uint seed)
+{
+    float sum = 0.0f, amp = 0.5f, norm = 0.0f;
+    for (uint o = 0; o < 4; o++) {
+        sum  += amp * ntd_vnoise3(p, seed + o * 101u);
+        norm += amp;
+        amp  *= 0.5f;
+        p = p * 2.03f + float3(17.3f, 9.1f, 5.7f);   // offset: decorrelate octaves
+    }
+    return sum / norm;
+}
+
+struct NTDDissolveParams {
+    float  scale;        // noise features per object unit (try 4..12)
+    float  sweep;        // 0 = pure noise, 1 = mostly a directional wipe
+    float  grain;        // 0..0.2: pixel-level roughness at the edge
+    float  edge_width;   // burn band width, in alpha units (try 0.06..0.15)
+    float3 edge_color;   // e.g. float3(1.0, 0.45, 0.1)
+    float  edge_glow;    // multiplier on edge_color (try 1.5..3)
+    uint   seed;
+};
+
+static inline bool ntd_dissolve(
+    thread float4 & color,
+    float3 p, float sweep_coord, float2 pix,
+    NTDDissolveParams d)
+{
+    float a = color.a;
+    float t = saturate((a - 0.05f) / 0.9f);   // keeps your 0.05/0.95 dead zones
+    
+    float n = ntd_fbm3(p * d.scale, d.seed);
+    n = smoothstep(0.25f, 0.75f, n);
+    
+    // little bit of pixel-scale noise so the edge isn't perfectly smooth
+    float g = ntd_hash3f(uint3(uint2(pix), 7u), d.seed + 99u);
+    n = mix(n, g, d.grain);
+    
+    float T = mix(n, saturate(sweep_coord), d.sweep) * 0.98f;
+    
+    if (t <= T) { return false; }
+    
+    // burning edge
+    float k = saturate(1.0f - (t - T) / max(d.edge_width, 1e-4f));
+    k *= saturate((1.0f - t) * 20.0f);
+    color.rgb = mix(color.rgb, d.edge_color * d.edge_glow, k);
+    return true;
+}
+/*
+end of noise-threshold dissolve
+*/
+
 float4 x_rotate(const float4 verts, f32 x_angle) {
     float4 rot_verts = verts;
     f32 cos_angle = cos(x_angle);
@@ -57,6 +145,7 @@ float4 xyz_rotate(const float4 vertices, const float4 xyz_angle) {
 typedef struct
 {
     float4 projpos [[position]];
+    float4 objectpos;
     float4 worldpos;
     float4 viewpos;
     float2 texcoord;
@@ -125,7 +214,7 @@ vertex_shader(
         return out;
     }
     
-    float4 mesh_vertices = vector_float4(
+    out.objectpos = vector_float4(
         lv->xyz[0],
         lv->xyz[1],
         lv->xyz[2],
@@ -169,7 +258,7 @@ vertex_shader(
         m->m_4x4[ 8], m->m_4x4[ 9], m->m_4x4[10], m->m_4x4[11],
         m->m_4x4[12], m->m_4x4[13], m->m_4x4[14], m->m_4x4[15]);
     
-    out.worldpos = mesh_vertices * model;
+    out.worldpos = out.objectpos * model;
     
     #if 0
     f32 dist = distance(
@@ -819,22 +908,25 @@ frag_shader(
         /* const bool is_base_mtl: */
             mat_i == PARENT_MATERIAL_BASE);
     
-    s32 diamond_size = 35.0f;
-    s32 neghalfdiamond = -1.0f * (diamond_size / 2);
-    
-    s32 alpha_tresh = (s32)(lit_color[3] * diamond_size);
-    
-    if (
-        lit_color[3] < 0.05f ||
-        (
-            lit_color[3] < 0.95f &&
-            (
-                abs((neghalfdiamond + (s32)in.projpos.x % diamond_size)) +
-                abs((neghalfdiamond + (s32)in.projpos.y % diamond_size))
-            ) > alpha_tresh
-        ))
-    {
-        discard_fragment();
+    if (lit_color[3] < 0.95f) {
+        if (lit_color[3] < 0.05f) {
+            discard_fragment();
+        }
+        NTDDissolveParams dp;
+        dp.scale      = 6.0f;
+        dp.sweep      = 0.35f;
+        dp.grain      = 0.08f;
+        dp.edge_width = 0.02f;
+        dp.edge_color = float3(1.0f, 0.0f, 0.0f);
+        dp.edge_glow  = 1.25f;
+        dp.seed       = 1234u;
+        
+        // 3D model: use OBJECT-space position so noise rides on the mesh
+        // card:     float3(in.uv * dp.scale_unused, 0.0f) with 2D uv
+        float3 p = vector_float3(in.objectpos);
+        if (!ntd_dissolve(lit_color, p, in.texcoord.y, in.projpos.xy, dp)) {
+           discard_fragment();
+        }
     }
     
     lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
