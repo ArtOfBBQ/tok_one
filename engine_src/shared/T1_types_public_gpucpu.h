@@ -47,7 +47,8 @@ typedef struct {
 typedef struct {
     uint32_t touch_id;
     uint32_t mix_rv_and_mix_tex;
-    uint32_t padding[2];
+    uint32_t active_render_view_flags; // rightmost bit 1 = render view 0 active
+    uint32_t padding[1];
 } T1GPUzSpriteu32;
 
 typedef struct {

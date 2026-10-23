@@ -174,12 +174,14 @@ vertex_shader(
     const device T1GPURenderView * c = rv + rv_i;
     
     if (
-        c->write_to_shadow_maps && (
+        !((zs->u32s.active_render_view_flags >> rv_i) & 1) ||
+        (c->write_to_shadow_maps && (
             zs->f32s.shadow_strength < 0.1f ||
-            zs->f32s.alpha < 0.1f))
+            zs->f32s.alpha < 0.1f
+        )))
     {
         out.projpos = vector_float4(
-            0.0f, 0.0f, 500.0f, 1.0f);
+            0.0f, 0.0f, 9999.0f, 1.0f);
         return out;
     }
     
@@ -201,12 +203,6 @@ vertex_shader(
         m->m_4x4[12], m->m_4x4[13], m->m_4x4[14], m->m_4x4[15]);
     
     out.worldpos = out.objectpos * model;
-    
-    if (zs->f32s.vertex_noise_z > 0.001f) {
-        
-        out.worldpos[2] += (zs->f32s.vertex_noise_z * fractal_brownian_noise(
-            out.worldpos[0] * 10.0f, out.worldpos[1] * 10.0f, 30.0f));    
-    }
     
     #if 0
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
@@ -234,10 +230,6 @@ vertex_shader(
     #else
     #error
     #endif
-    
-    
-    
-    
     
     #if 0
     f32 dist = distance(
@@ -566,6 +558,7 @@ float4 get_lit(
         f32 fade_y = refl_uv.y * (1.0f - refl_uv.y) * 8.0f;
         f32 fade = clamp(min(fade_x, fade_y), 0.0f, 1.0f);
         mix_strength *= fade;
+        mix_strength = clamp(mix_strength, 0.0f, 1.0f);
         
         const half4 color_sample =
             color_textures[mix_array_i].

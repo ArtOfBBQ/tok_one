@@ -369,8 +369,10 @@ void T1_zsprite_construct(
     to_construct->cpu_data->zs_cpu_f32s.mul_xyz[0] = 1.0f;
     to_construct->cpu_data->zs_cpu_f32s.mul_xyz[1] = 1.0f;
     to_construct->cpu_data->zs_cpu_f32s.mul_xyz[2] = 1.0f;
-    to_construct->gpu_data->u32s.touch_id = T1_TOUCH_ID_NONE;
     to_construct->gpu_data->f32s.alpha = 1.0f;
+    to_construct->gpu_data->u32s.touch_id = T1_TOUCH_ID_NONE;
+    to_construct->gpu_data->u32s.
+        active_render_view_flags = 0xFFFFFFFF;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->T1_id = T1_ID_NONE;

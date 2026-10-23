@@ -624,13 +624,11 @@ static void T1_tex_draw_letter(
     {
         for (u32 y = 0; y < letter->wh[1]; y++)
         {
-            if (x >= rgba_w || y >= rgba_h)
-            {
-                continue;
-            }
-            
             u32 tgt_x = (u32)(letter->xy[0] + letter->offset_xy[0]) + x;
             u32 tgt_y = (u32)(letter->xy[1] - letter->offset_xy[1]) + y;
+            if (tgt_x >= rgba_w || tgt_y >= rgba_h) {
+                continue;
+            }
             
             const u8 * src_rgba =
                 T1_tex_array_get_const_rgba(
