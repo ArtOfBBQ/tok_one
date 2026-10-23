@@ -119,21 +119,21 @@ typedef struct {
     char * name;
     s64 value;
     u16 metaenum_id;
-} MetaEnumValue;
+} T1MetaEnumValue;
 
 typedef struct {
     char * name;
     T1MetaType T1_type;
-} MetaEnum;
+} T1MetaEnum;
 
 typedef struct {
     char * name;
     u32 size_bytes;
     u16 head_fields_i;
-} MetaStruct;
+} T1MetaStruct;
 
 typedef struct {
-    MetaStruct * internal_parent;
+    T1MetaStruct * internal_parent;
     MetaField * internal_field;
     u8 subname_i;
 } T1MetaFieldInternal;
@@ -143,7 +143,7 @@ typedef struct {
     u16 field_array_slices[T1_META_ARRAY_SIZES_CAP];
     u16 prefix_start_i;
     u16 field_i;
-} StackedFieldEntry;
+} T1MetaStackedFieldEntry;
 
 #define T1_META_SERIAL_FIELD_PREFIX_CAP 256
 typedef struct {
@@ -152,7 +152,7 @@ typedef struct {
     u32 * buffer_size;
     u8 * good;
     u32 buffer_cap;
-    StackedFieldEntry field_stack[256];
+    T1MetaStackedFieldEntry field_stack[256];
     u16 field_stack_size;
     char field_prefix[T1_META_SERIAL_FIELD_PREFIX_CAP];
 } T1MetaSerializationState;
@@ -160,10 +160,10 @@ typedef struct {
 typedef struct {
     T1MetaSerializationState ss;
     char * ascii_store;
-    MetaEnum * meta_enums;
-    MetaEnumValue * meta_enum_vals;
+    T1MetaEnum * meta_enums;
+    T1MetaEnumValue * meta_enum_vals;
     MetaField * metafields_store;
-    MetaStruct * metastructs;
+    T1MetaStruct * metastructs;
     u32 ascii_store_cap;
     u16 meta_fields_store_cap;
     u16 meta_structs_cap;
@@ -178,13 +178,12 @@ typedef struct {
 
 static T1MetaState * t1ms = NULL;
 
-static void construct_metastruct(MetaStruct * to_construct) {
-    T1_std_memset(to_construct, 0, sizeof(MetaStruct));
+static void construct_metastruct(T1MetaStruct * to_construct) {
+    T1_std_memset(to_construct, 0, sizeof(T1MetaStruct));
     to_construct->head_fields_i = UINT16_MAX;
 }
 
-static void
-metafield_construct(
+static void metafield_construct(
     MetaField * to_construct)
 {
     #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
@@ -251,7 +250,7 @@ void T1_meta_init(
     
     t1ms->meta_structs_cap = meta_structs_cap;
     t1ms->metastructs = T1_meta_malloc_func(
-        sizeof(MetaStruct) * t1ms->meta_structs_cap);
+        sizeof(T1MetaStruct) * t1ms->meta_structs_cap);
     if (!t1ms->metastructs) {
         *fatal_error = "Malloc fail";
         return;
@@ -267,7 +266,7 @@ void T1_meta_init(
     
     t1ms->meta_enums_cap = meta_enums_cap;
     t1ms->meta_enums = T1_meta_malloc_func(
-        sizeof(MetaEnum) * t1ms->meta_enums_cap);
+        sizeof(T1MetaEnum) * t1ms->meta_enums_cap);
     if (!t1ms->meta_enums) {
         *fatal_error = "Malloc fail";
         return;
@@ -275,7 +274,7 @@ void T1_meta_init(
     
     t1ms->meta_enum_vals_cap = meta_enum_vals_cap;
     t1ms->meta_enum_vals = T1_meta_malloc_func(
-        sizeof(MetaEnumValue) * t1ms->meta_enum_vals_cap);
+        sizeof(T1MetaEnumValue) * t1ms->meta_enum_vals_cap);
     if (!t1ms->meta_enum_vals) {
         *fatal_error = "Malloc fail";
         return;
@@ -639,10 +638,10 @@ static char * T1_meta_copy_str_to_store(
     return return_value;
 }
 
-static MetaStruct * find_struct_by_name(
+static T1MetaStruct * find_struct_by_name(
     const char * struct_name)
 {
-    MetaStruct * return_value = NULL;
+    T1MetaStruct * return_value = NULL;
     
     for (s32 i = 0; i < (s32)t1ms->meta_structs_size; i++) {
         if (
@@ -667,7 +666,7 @@ static MetaStruct * find_struct_by_name(
 }
 
 static MetaField * find_field_in_struct_by_name(
-    const MetaStruct * in_struct,
+    const T1MetaStruct * in_struct,
     const char * property_name,
     u8 * hit_subname_i)
 {
@@ -795,7 +794,7 @@ void T1_meta_reg_enum(
         return;
     }
     
-    MetaEnum * new_enum = &t1ms->meta_enums[t1ms->meta_enums_size];
+    T1MetaEnum * new_enum = &t1ms->meta_enums[t1ms->meta_enums_size];
     t1ms->meta_enums_size += 1;
     
     new_enum->name = T1_meta_copy_str_to_store(enum_type_name, fatal_error);
@@ -844,7 +843,7 @@ void T1_meta_reg_enum_value(
         return;
     }
     
-    MetaEnumValue * new_value = &t1ms->
+    T1MetaEnumValue * new_value = &t1ms->
         meta_enum_vals[t1ms->meta_enum_vals_size];
     t1ms->meta_enum_vals_size += 1;
     
@@ -881,7 +880,7 @@ void T1_meta_reg_struct(
 {
     if (*fatal_error != 0) { return; }
     
-    MetaStruct * target_mstruct = find_struct_by_name(struct_name);
+    T1MetaStruct * target_mstruct = find_struct_by_name(struct_name);
     
     if (target_mstruct != NULL) {
         T1_fatal_error_new(fatal_error, "T1_meta_reg_struct - struct name was already registered: ");
@@ -992,7 +991,7 @@ void T1_meta_reg_field(
     }
     
     // We only support registering to the most recently registered struct
-    MetaStruct * target_mstruct = &t1ms->
+    T1MetaStruct * target_mstruct = &t1ms->
         metastructs[t1ms->meta_structs_size-1];
     
     #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
@@ -1588,7 +1587,7 @@ static u32 T1_meta_get_field_recursive(
     
     u32 out_cumul_offset = 0;
     
-    MetaStruct * metastruct = find_struct_by_name(struct_name);
+    T1MetaStruct * metastruct = find_struct_by_name(struct_name);
     return_value->internal_parent = metastruct;
     
     if (metastruct == NULL) {
@@ -1652,7 +1651,7 @@ static u32 T1_meta_get_field_recursive(
     
     s32 offset_per_array_index = 0;
     if (flat_array_index > 0 ) {
-        MetaStruct * substruct = NULL;
+        T1MetaStruct * substruct = NULL;
         switch (metafield->data_type) {
             case T1_TYPE_I8:
             case T1_TYPE_U8:
@@ -1747,7 +1746,7 @@ static u64 T1_meta_shared_get_element_size_bytes(
             #error
             #endif
             
-            MetaStruct * mstruct = find_struct_by_name(struct_name_or_null);
+            T1MetaStruct * mstruct = find_struct_by_name(struct_name_or_null);
             
             if (mstruct == NULL)
             {
@@ -1955,7 +1954,7 @@ void T1_meta_write_to_known_field_str(
     T1MetaParsedvalue parsed;
     parse_string_to_value(&parsed, value_adj);
     
-    MetaEnum * parent_enum = NULL;
+    T1MetaEnum * parent_enum = NULL;
     T1MetaType type_adj = field.internal_field->data_type;
     u8 found_enum_field = 0;
         
@@ -2550,7 +2549,7 @@ void T1_meta_write_to_known_field_uint(
 u32 internal_T1_meta_get_num_of_fields_in_struct(
     const char * struct_name)
 {
-    MetaStruct * parent = find_struct_by_name(struct_name);
+    T1MetaStruct * parent = find_struct_by_name(struct_name);
     
     if (parent == NULL) { return 0; }
     
@@ -2683,7 +2682,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     #error
     #endif
     
-    MetaStruct * parent = find_struct_by_name(struct_name);
+    T1MetaStruct * parent = find_struct_by_name(struct_name);
     if (parent == NULL) {
         #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
@@ -2828,7 +2827,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     
     T1_meta_reverse_array(
         (char *)(t1ms->ss.field_stack + to_reverse_start_i),
-        sizeof(StackedFieldEntry),
+        sizeof(T1MetaStackedFieldEntry),
         t1ms->ss.field_stack_size - to_reverse_start_i);
     
     *t1ms->ss.good = 1;
@@ -2862,7 +2861,7 @@ void T1_meta_serialize_instance_to_buffer(
     T1_meta_serialize_cat_str_to_buf("\n");
     if (!*good) { return; } else { *good = 0; }
     
-    MetaStruct * parent = find_struct_by_name(struct_name);
+    T1MetaStruct * parent = find_struct_by_name(struct_name);
     if (parent == NULL) {
         #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
@@ -2909,7 +2908,7 @@ void T1_meta_serialize_instance_to_buffer(
     
     while (t1ms->ss.field_stack_size > 0) {
         
-        StackedFieldEntry top =
+        T1MetaStackedFieldEntry top =
             t1ms->ss.field_stack[t1ms->ss.field_stack_size-1];
         t1ms->ss.field_stack_size -= 1;
         t1ms->ss.field_prefix[top.prefix_start_i] = '\0';

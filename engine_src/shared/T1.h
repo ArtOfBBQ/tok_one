@@ -81,6 +81,7 @@ int32_t  T1_std_mini(int32_t x, int32_t y);
 int32_t  T1_std_maxi(int32_t x, int32_t y);
 float    T1_std_minf(float x, float y);
 float    T1_std_maxf(float x, float y);
+float    T1_std_clampf(float x, float lo, float hi);
 void *   T1_std_memset(void * input, int32_t value, uint64_t size_bytes);
 void     T1_std_memset_i16(void * input, int16_t value, uint32_t size_bytes);
 void *   T1_std_memcpy(void * dest, const void * src, uint64_t n_bytes);
@@ -196,7 +197,7 @@ MANAGE TEXTURES
 */
 int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
 int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const char * filename, b8 never_delete, char ** const fatal_error);
+void T1_tex_files_prereg_png_res(const char * filename, uint8_t never_delete, char ** const fatal_error);
 void T1_tex_files_prereg_dds_res(const char * filename, char ** const fatal_error);
 void T1_tex_files_reg_new_by_splitting_file(
     const char * filename,
@@ -210,7 +211,7 @@ uint16_t T1_tex_array_prereg_img(
     uint32_t w, uint32_t h,
     uint8_t is_render_target,
     uint8_t use_bc1_compression,
-    b8 never_delete,
+    uint8_t never_delete,
     char ** const fatal_error);
 void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
@@ -257,6 +258,12 @@ void T1_text_draw_label(
     const char * text_to_draw,
     float left_x_pixelspace, float top_y_pixelspace,
     float tab_width, float max_width);
+void T1_text_draw_label_around(
+    uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
+    const char * text_to_draw,
+    float mid_x_pixelspace,
+    float mid_y_pixelspace,
+    float max_width);
 void T1_text_request_label_offset_around(
     uint32_t with_T1_id, const char * text,
     float mid_screen_x, float mid_screen_y, float z,

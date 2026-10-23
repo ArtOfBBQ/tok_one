@@ -1,5 +1,6 @@
 #include "T1.h"
 
+#include "T1_stdint.h"
 #include "T1_conditional_includes.h"
 
 #include "decode_png.h"
