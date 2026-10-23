@@ -841,8 +841,7 @@ void T1_text_draw_label_around(
         line_i++)
     {
         f32 cur_x_offset_pixelspace =
-            (T1_text_props->font_height * 0.5f) -
-            (lines[line_i].width * 0.5f);
+            -(lines[line_i].width * 0.5f);
         
         for (
             s32 j = lines[line_i].start_i;
