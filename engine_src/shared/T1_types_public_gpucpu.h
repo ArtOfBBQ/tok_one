@@ -40,7 +40,8 @@ typedef struct {
     float no_cam;
     float outline_alpha;
     float shadow_strength;
-    float padding[2];
+    float vertex_noise_z;
+    float padding[1];
 } T1GPUzSpritef32;
 
 typedef struct {

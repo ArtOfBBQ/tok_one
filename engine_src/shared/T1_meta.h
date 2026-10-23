@@ -5,14 +5,6 @@
 
 #include "T1_types_public.h"
 
-#define T1_META_ASSERTS T1_ACTIVE
-#if T1_META_ASSERTS == T1_ACTIVE
-#include <assert.h>
-#elif T1_META_ASSERTS == T1_INACTIVE
-#else
-#error
-#endif
-
 void T1_meta_init(
     void *(* malloc_func)(size_t),
     const u32 ascii_store_cap,

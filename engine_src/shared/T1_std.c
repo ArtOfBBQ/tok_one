@@ -236,6 +236,11 @@ T1_std_maxf(const f32 x, const f32 y)
     return ((x >  y) * x) + ((x <= y) * y);
 }
 
+f32 T1_std_clampf(f32 x, f32 lo, f32 hi) {
+    f32 out = T1_std_maxf(x, lo);
+    return T1_std_minf(out, hi);
+}
+
 s32
 T1_std_mini(const s32 x, const s32 y)
 {

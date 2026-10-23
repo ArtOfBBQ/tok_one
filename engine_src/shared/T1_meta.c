@@ -2,6 +2,7 @@
 
 #include "T1_std.h"
 #include "T1_fatal_error.h"
+#include "T1_conditional_includes.h"
 
 unsigned long long T1_meta_strtoull(
     const char *nptr,
@@ -186,9 +187,9 @@ static void
 metafield_construct(
     MetaField * to_construct)
 {
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(to_construct != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -291,9 +292,9 @@ static u64 T1_meta_string_to_u64(
     *good = 0;
     
     if (input == NULL || input[0] == '\0') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -325,9 +326,9 @@ static f64 T1_meta_string_to_f64(
     *good = 0;
     
     if (input == NULL || input[0] == '\0') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -384,9 +385,9 @@ static f64 T1_meta_string_to_f64(
         
         below_decimal /= div;
         
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(below_decimal < 1.0f);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -414,9 +415,9 @@ static void T1_meta_uint_to_string(
     while (mult == 1 || mult <= input) {
         u32 rightmost = (input / mult) % 10;
         if (recip_i + 1 >= (s32)recipient_cap) {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -424,9 +425,9 @@ static void T1_meta_uint_to_string(
         }
         
         if (rightmost > 9) {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -451,9 +452,9 @@ static void T1_meta_uint_to_string(
         j -= 1;
     }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(recipient[0] != '\0');
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -484,9 +485,9 @@ static void T1_meta_f32_to_string(
     u32 recipient_cap,
     u8 * good)
 {
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(precision <= 15);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -536,9 +537,9 @@ static void T1_meta_f32_to_string(
         }
     }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(recipient[0] != '.');
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -551,10 +552,10 @@ static void T1_meta_reverse_array(
     u64 single_element_size,
     u32 array_size)
 {
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(array_size > 0);
     assert(single_element_size > 0);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -608,18 +609,18 @@ static char * T1_meta_copy_str_to_store(
     
     u64 len = T1_std_strlen(to_copy);
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(len > 0);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     if (t1ms->ascii_store_next_i + len >= t1ms->ascii_store_cap)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -651,9 +652,9 @@ static MetaStruct * find_struct_by_name(
                 t1ms->metastructs[i].name,
                 struct_name))
         {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(return_value == 0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -715,9 +716,9 @@ void T1_meta_reg_enum(
     if (*fatal_error != 0) { return; }
     
     if (enum_type_name == NULL || enum_type_name[0] == '\0') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // invalid argument
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -728,9 +729,9 @@ void T1_meta_reg_enum(
     switch (T1_type) {
         case T1_TYPE_U4x2:
             if (type_size_check != 1) {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0); // Incorrect T1_TYPE passed? sizeof() is not 8
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -740,9 +741,9 @@ void T1_meta_reg_enum(
         case T1_TYPE_I8:
         case T1_TYPE_U8:
             if (type_size_check != 1) {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0); // Incorrect T1_TYPE passed? sizeof() is not 8
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -752,9 +753,9 @@ void T1_meta_reg_enum(
         case T1_TYPE_I16:
         case T1_TYPE_U16:
             if (type_size_check != 2) {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0); // Incorrect T1_TYPE passed? sizeof() is not 16
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -764,9 +765,9 @@ void T1_meta_reg_enum(
         case T1_TYPE_I32:
         case T1_TYPE_U32:
             if (type_size_check != 4) {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0); // Incorrect T1_TYPE passed? sizeof() is not 32
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -774,9 +775,9 @@ void T1_meta_reg_enum(
             }
         break;
         default:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0); // Unsupported type for enums
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -784,9 +785,9 @@ void T1_meta_reg_enum(
     }
     
     if (t1ms->meta_enums_size + 1 >= t1ms->meta_enums_cap) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // not enough memory, init() with higher meta_enums_cap
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -811,9 +812,9 @@ void T1_meta_reg_enum_value(
     if (*fatal_error != 0) { return; }
     
     if (enum_type_name == NULL || enum_type_name[0] == '\0') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // invalid argument
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -822,9 +823,9 @@ void T1_meta_reg_enum_value(
     }
     
     if (value_name == NULL || value_name[0] == '\0') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // invalid argument
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -833,9 +834,9 @@ void T1_meta_reg_enum_value(
     }
     
     if (t1ms->meta_enum_vals_size + 1 >= t1ms->meta_enum_vals_cap) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // not enough memory, init() with higher meta_enums_cap
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -863,9 +864,9 @@ void T1_meta_reg_enum_value(
     }
     
     if (new_value->metaenum_id >= UINT16_MAX) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // Tried to register enum value to non-existant enum
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -890,9 +891,9 @@ void T1_meta_reg_struct(
             struct_name);
         return;
     }
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(target_mstruct == NULL); // name already taken
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -940,7 +941,7 @@ void T1_meta_reg_field(
         field_struct_type_name_or_null = NULL;
     }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(field_name != NULL);
     // When invoking the macro versions of this function, call using
     // the actual name, not a string containing the name
@@ -950,7 +951,7 @@ void T1_meta_reg_field(
         // the actual type name, not a string containing the type name
         assert(field_struct_type_name_or_null[0] != '"');
     }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -959,9 +960,9 @@ void T1_meta_reg_field(
     // should be registered separately
     for (u32 i = 0; i < UINT16_MAX; i++) {
         if (field_name[i] == '.') {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -971,18 +972,18 @@ void T1_meta_reg_field(
         if (field_name[i] == '\0') {
             break;
         }
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < 250); // 250 character property is absurd
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
     }
     
     if (t1ms->meta_structs_size < 1) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // use T1_meta_reg_struct() first
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -994,9 +995,9 @@ void T1_meta_reg_field(
     MetaStruct * target_mstruct = &t1ms->
         metastructs[t1ms->meta_structs_size-1];
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(target_mstruct != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1011,9 +1012,9 @@ void T1_meta_reg_field(
     if (tgt_mfield == NULL) {
         if (t1ms->meta_fields_size + 1 >= t1ms->meta_fields_store_cap)
         {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0); // provide more memory on init()
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -1047,9 +1048,9 @@ void T1_meta_reg_field(
     tgt_mfield->is_enum = is_enum;
     switch (tgt_mfield->data_type) {
         case T1_TYPE_NOTSET:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0); // field type should have been set on registration
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -1104,16 +1105,16 @@ void T1_meta_reg_field(
         break;
     }
     tgt_mfield->offset = field_offset;
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(tgt_mfield->offset < (1 << 24));
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     tgt_mfield->array_sizes[0] = field_array_size_1;
     tgt_mfield->array_sizes[1] = field_array_size_2;
     tgt_mfield->array_sizes[2] = field_array_size_3;
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     if (tgt_mfield->array_sizes[1] < 2) {
         assert(tgt_mfield->array_sizes[2] < 2);
     }
@@ -1123,7 +1124,7 @@ void T1_meta_reg_field(
     for (u32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
         assert(tgt_mfield->array_sizes[i] > 0);
     }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1133,9 +1134,9 @@ void T1_meta_reg_field(
         fatal_error);
     
     if (tgt_mfield->data_type == T1_TYPE_STRUCT) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(field_struct_type_name_or_null != NULL);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1154,10 +1155,10 @@ void T1_meta_reg_field(
                 /* u8 * good: */
                     fatal_error);
     } else if (is_enum) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(field_struct_type_name_or_null != NULL);
         assert(tgt_mfield->is_enum);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1193,9 +1194,9 @@ void T1_meta_reg_field(
                     t1ms->meta_enums[i].T1_type != 
                         tgt_mfield->data_type)
                 {
-                    #if T1_META_ASSERTS == T1_ACTIVE
+                    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                     assert(0); // enum's data type is mismatched
-                    #elif T1_META_ASSERTS == T1_INACTIVE
+                    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                     #else
                     #error
                     #endif
@@ -1239,7 +1240,7 @@ void T1_meta_reg_field(
         return;
     }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     MetaField * previous_link = metafield_i_to_ptr(
         target_mstruct->head_fields_i);
     while (previous_link != NULL) {
@@ -1253,7 +1254,7 @@ void T1_meta_reg_field(
         }
         previous_link = next_link;
     }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1266,12 +1267,12 @@ void T1_meta_reg_f32_limits_for_last_field(
 {
     *good = 0;
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     // We only support registering to the most recently registered struct
     MetaStruct * target_mstruct = &t1ms->metastructs[t1ms->meta_structs_size-1];
     assert(target_mstruct != NULL);
     if (target_mstruct == NULL) { return; }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1280,9 +1281,9 @@ void T1_meta_reg_f32_limits_for_last_field(
     MetaField * target_mfield = &t1ms->metafields_store[t1ms->meta_fields_size-1];
     
     if (target_mfield == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set limits, no such field
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1290,9 +1291,9 @@ void T1_meta_reg_f32_limits_for_last_field(
     }
     
     if (target_mfield->data_type != T1_TYPE_F32) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set f32 limits, not an f32/f64
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1300,9 +1301,9 @@ void T1_meta_reg_f32_limits_for_last_field(
     }
     
     if (min >= max) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1322,13 +1323,13 @@ void T1_meta_reg_int_limits_for_last_field(
 {
     *good = 0;
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     // We only support registering to the most recently registered struct
     MetaStruct * target_mstruct = &t1ms->
         metastructs[t1ms->meta_structs_size-1];
     assert(target_mstruct != NULL);
     if (target_mstruct == NULL) { return; }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1337,9 +1338,9 @@ void T1_meta_reg_int_limits_for_last_field(
     MetaField * target_mfield = &t1ms->metafields_store[t1ms->meta_fields_size-1];
     
     if (target_mfield == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set limits, no such field
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1352,9 +1353,9 @@ void T1_meta_reg_int_limits_for_last_field(
         target_mfield->data_type != T1_TYPE_I16 &&
         target_mfield->data_type != T1_TYPE_I8)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set s32 limits, not an s32 field
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1362,9 +1363,9 @@ void T1_meta_reg_int_limits_for_last_field(
     }
     
     if (int_min >= int_max) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1386,12 +1387,12 @@ void T1_meta_reg_uint_limits_for_last_field(
     
     // We only support registering to the most recently registered struct
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     MetaStruct * target_mstruct = &t1ms->
         metastructs[t1ms->meta_structs_size-1];
     assert(target_mstruct != NULL);
     if (target_mstruct == NULL) { return; }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1400,9 +1401,9 @@ void T1_meta_reg_uint_limits_for_last_field(
     MetaField * target_mfield = &t1ms->metafields_store[t1ms->meta_fields_size-1];
     
     if (target_mfield == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set limits, no such field
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1415,9 +1416,9 @@ void T1_meta_reg_uint_limits_for_last_field(
         target_mfield->data_type != T1_TYPE_U16 &&
         target_mfield->data_type != T1_TYPE_U8)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // can't set unsigned limits on field type
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1425,9 +1426,9 @@ void T1_meta_reg_uint_limits_for_last_field(
     }
     
     if (uint_min >= uint_max) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1553,11 +1554,11 @@ static u32 array_indices_to_flat_array_index(
     u32 * array_indices,
     MetaField * field)
 {
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     for (u32 i = 0; i < T1_META_ARRAY_SIZES_CAP; i++) {
         assert(array_indices[i] < field->array_sizes[i]);
     }
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1686,9 +1687,9 @@ static u32 T1_meta_get_field_recursive(
                 break;
             case T1_TYPE_NOTSET:
             default:
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -1697,20 +1698,20 @@ static u32 T1_meta_get_field_recursive(
                 return UINT32_MAX;
         }
         
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(offset_per_array_index > 0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
     }
     
     if (second_part != NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(return_value->internal_field->data_type == T1_TYPE_STRUCT);
         assert(metafield->struct_type_name != NULL);
         assert(metafield->struct_type_name[0] != '\0');
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -1738,10 +1739,10 @@ static u64 T1_meta_shared_get_element_size_bytes(
 {
     switch (data_type) {
         case T1_TYPE_STRUCT:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(struct_name_or_null != NULL);
             assert(struct_name_or_null[0] != '\0');
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -1750,9 +1751,9 @@ static u64 T1_meta_shared_get_element_size_bytes(
             
             if (mstruct == NULL)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -1794,9 +1795,9 @@ static u64 T1_meta_shared_get_element_size_bytes(
         case T1_TYPE_NOTSET:
             // Reminder: enum should never happen here because it should be
             // adjusted above at the top of this function
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -1850,9 +1851,9 @@ static u64 T1_meta_field_get_element_size_bytes(T1MetaField * field) {
         break;
         case T1_TYPE_NOTSET:
         case T1_TYPE_STRING:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -1910,7 +1911,7 @@ void T1_meta_write_to_known_field_str(
 {
     if (*fatal_error != 0) { return; }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(value_to_write_str != NULL);
     assert(value_to_write_str[0] != '\0');
     assert(target_parent_type != NULL);
@@ -1918,7 +1919,7 @@ void T1_meta_write_to_known_field_str(
     assert(target_field_name != NULL);
     assert(target_field_name[0] != '"');
     assert(target_parent_ptr != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1937,10 +1938,10 @@ void T1_meta_write_to_known_field_str(
         target_field_name,
         fatal_error);
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(field.internal_field->name != NULL);
     assert(field.internal_field->data_type != T1_TYPE_NOTSET);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1976,9 +1977,9 @@ void T1_meta_write_to_known_field_str(
             enum_id >= t1ms->meta_enums_size ||
             enum_id >= t1ms->meta_enums_cap)
         {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2010,9 +2011,9 @@ void T1_meta_write_to_known_field_str(
         }
         
         if (!found_enum_field) {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0); // enum is registered, but that value isn't
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2026,9 +2027,9 @@ void T1_meta_write_to_known_field_str(
         !parsed.value_is_i64 &&
         !parsed.value_is_f64)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // trying to write string to non-enum non-char field?
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2039,9 +2040,9 @@ void T1_meta_write_to_known_field_str(
     s32 rightmost_array_i = 2;
     switch (type_adj) {
         case T1_TYPE_NOTSET:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2053,9 +2054,9 @@ void T1_meta_write_to_known_field_str(
                 parsed.value_f64 > 3.4028235+36 ||
                 parsed.value_f64 < -3.40282347E+36)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2075,9 +2076,9 @@ void T1_meta_write_to_known_field_str(
                 parsed.value_i64 > INT8_MAX ||
                 parsed.value_i64 < INT8_MIN)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2096,9 +2097,9 @@ void T1_meta_write_to_known_field_str(
                 parsed.value_i64 > INT16_MAX ||
                 parsed.value_i64 < INT16_MIN)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2117,9 +2118,9 @@ void T1_meta_write_to_known_field_str(
                 parsed.value_i64 > INT32_MAX ||
                 parsed.value_i64 < INT32_MIN)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2133,9 +2134,9 @@ void T1_meta_write_to_known_field_str(
                 4);
         break;
         case T1_TYPE_I64:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2147,9 +2148,9 @@ void T1_meta_write_to_known_field_str(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > 15)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2175,9 +2176,9 @@ void T1_meta_write_to_known_field_str(
             } else
             {
                 // trying to write a u4, but subfield > 1
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2197,9 +2198,9 @@ void T1_meta_write_to_known_field_str(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT8_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2217,9 +2218,9 @@ void T1_meta_write_to_known_field_str(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT16_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2237,9 +2238,9 @@ void T1_meta_write_to_known_field_str(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT32_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2255,9 +2256,9 @@ void T1_meta_write_to_known_field_str(
             if (
                 !parsed.value_is_u64)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2282,9 +2283,9 @@ void T1_meta_write_to_known_field_str(
                 T1_std_strlen(value_to_write_str) >
                     field.internal_field->array_sizes[rightmost_array_i])
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2292,9 +2293,9 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(T1_std_memcpy != NULL);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2304,9 +2305,9 @@ void T1_meta_write_to_known_field_str(
                 field.internal_field->array_sizes[rightmost_array_i]);
         break;
         default:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2324,13 +2325,13 @@ void T1_meta_write_to_known_field_uint(
 {
     if (*fatal_error != 0) { return; }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(target_parent_type != NULL);
     assert(target_parent_type[0] != '"');
     assert(target_field_name != NULL);
     assert(target_field_name[0] != '"');
     assert(target_parent_ptr != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -2349,10 +2350,10 @@ void T1_meta_write_to_known_field_uint(
         target_field_name,
         fatal_error);
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(field.internal_field->name != NULL);
     assert(field.internal_field->data_type != T1_TYPE_NOTSET);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -2377,9 +2378,9 @@ void T1_meta_write_to_known_field_uint(
         !parsed.value_is_i64 &&
         !parsed.value_is_f64)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // trying to write string to non-enum non-char field?
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2388,9 +2389,9 @@ void T1_meta_write_to_known_field_uint(
     
     switch (type_adj) {
         case T1_TYPE_NOTSET:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2415,9 +2416,9 @@ void T1_meta_write_to_known_field_uint(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > 15)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2442,9 +2443,9 @@ void T1_meta_write_to_known_field_uint(
             } else
             {
                 // trying to write a u4, but subfield > 1
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2463,9 +2464,9 @@ void T1_meta_write_to_known_field_uint(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT8_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2482,9 +2483,9 @@ void T1_meta_write_to_known_field_uint(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT16_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2501,9 +2502,9 @@ void T1_meta_write_to_known_field_uint(
                 !parsed.value_is_u64 ||
                 parsed.value_u64 > UINT32_MAX)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2518,9 +2519,9 @@ void T1_meta_write_to_known_field_uint(
             if (
                 !parsed.value_is_u64)
             {
-                #if T1_META_ASSERTS == T1_ACTIVE
+                #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                 assert(0);
-                #elif T1_META_ASSERTS == T1_INACTIVE
+                #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -2536,9 +2537,9 @@ void T1_meta_write_to_known_field_uint(
             return;
         break;
         default:
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -2575,9 +2576,9 @@ T1_meta_get_offset_and_type(
     
     T1MetaFieldInternal field;
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(field_name != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -2606,9 +2607,9 @@ static void T1_meta_serialize_cat_str_to_buf(
     u64 to_copy_len = T1_std_strlen(to_copy);
     
     if (*t1ms->ss.buffer_size + to_copy_len + 1 >= t1ms->ss.buffer_cap) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2641,9 +2642,9 @@ static void T1_meta_serialize_cat_str_to_prefix(
         to_copy_len + field_prefix_len + 1 >=
             T1_META_SERIAL_FIELD_PREFIX_CAP)
     {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2669,7 +2670,7 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
 {
     *t1ms->ss.good = 0;
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(struct_name != NULL);
     assert(struct_name[0] != '\0');
     assert(field_text != NULL);
@@ -2677,16 +2678,16 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     assert(field_dot_or_arrow != NULL);
     assert(field_dot_or_arrow[0] != '\0');
     assert((field_dot_or_arrow[0] == '.' || field_dot_or_arrow[0] == '-'));
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     MetaStruct * parent = find_struct_by_name(struct_name);
     if (parent == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2712,9 +2713,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     u64 len = T1_std_strlen(slice_text);
     if (field_array_sizes[1] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[len++] = '[';
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(len < 31);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2729,9 +2730,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     }
     if (field_array_sizes[2] != T1_META_ARRAY_SLICE_NONE) {
         slice_text[len++] = '[';
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(len < 31);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2753,9 +2754,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     
     MetaField * field = metafield_i_to_ptr(parent->head_fields_i);
     if (field == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // this type has no fields registered to it?
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2769,9 +2770,9 @@ static void T1_meta_serialize_add_struct_fields_to_stack(
     u16 field_i = parent->head_fields_i;
     
     u32 array_slices[T1_META_ARRAY_SIZES_CAP];
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(T1_META_ARRAY_SIZES_CAP == 3);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -2863,9 +2864,9 @@ void T1_meta_serialize_instance_to_buffer(
     
     MetaStruct * parent = find_struct_by_name(struct_name);
     if (parent == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2874,18 +2875,18 @@ void T1_meta_serialize_instance_to_buffer(
     
     MetaField * field = metafield_i_to_ptr(parent->head_fields_i);
     if (field == NULL) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // this type has no fields registered to it?
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
         return;
     }
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(T1_META_ARRAY_SIZES_CAP == 3);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -2996,9 +2997,9 @@ void T1_meta_serialize_instance_to_buffer(
                             T1_TYPE_U8 ||
                         field->data_type != T1_TYPE_U8)
                     {
-                        #if T1_META_ASSERTS == T1_ACTIVE
+                        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                         assert(0); // only supporting u8 enums for now
-                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                         #else
                         #error
                         #endif
@@ -3008,18 +3009,18 @@ void T1_meta_serialize_instance_to_buffer(
                         t1ms->meta_enum_vals[mev_i].metaenum_id == field->parent_enum_id &&
                         t1ms->meta_enum_vals[mev_i].value == val_u8)
                     {
-                        #if T1_META_ASSERTS == T1_ACTIVE
+                        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                         assert(t1ms->meta_enum_vals[mev_i].name != NULL);
-                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                         #else
                         #error
                         #endif
                         
                         u64 enumvalstrlen = T1_std_strlen(t1ms->meta_enum_vals[mev_i].name);
                         
-                        #if T1_META_ASSERTS == T1_ACTIVE
+                        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                         assert(enumvalstrlen > 0);
-                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                         #else
                         #error
                         #endif
@@ -3118,9 +3119,9 @@ void T1_meta_serialize_instance_to_buffer(
                         if (!*good) { return; } else { *good = 0; }
                     break;
                     default:
-                        #if T1_META_ASSERTS == T1_ACTIVE
+                        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
                         assert(0); // this type has no fields registered to it?
-                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
                         #else
                         #error
                         #endif
@@ -3128,9 +3129,9 @@ void T1_meta_serialize_instance_to_buffer(
                 }
             }
             
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(value_as_str[0] != '\0');
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -3163,9 +3164,9 @@ void T1_meta_deserialize_instance_from_buffer(
     at_i += 14;
     
     if (!T1_meta_string_starts_with(buffer + at_i, struct_name)) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -3198,17 +3199,17 @@ void T1_meta_deserialize_instance_from_buffer(
     u32 write_i;
     
     while (buffer[at_i] == 's') {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(at_i < buffer_size);
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
         
         if (!T1_meta_string_starts_with(buffer + at_i, "s->")) {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -3263,9 +3264,9 @@ void T1_meta_deserialize_instance_from_buffer(
         value_to_assign[write_i] = '\0';
         
         if (write_i < 1) {
-            #if T1_META_ASSERTS == T1_ACTIVE
+            #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
+            #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
@@ -3334,9 +3335,9 @@ char * T1_meta_enum_uint_to_string(
 {
     *good = 0;
     
-    #if T1_META_ASSERTS == T1_ACTIVE
+    #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
     assert(enum_type_name != NULL);
-    #elif T1_META_ASSERTS == T1_INACTIVE
+    #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -3358,9 +3359,9 @@ char * T1_meta_enum_uint_to_string(
     }
     
     if (parent_enum_id == UINT16_MAX) {
-        #if T1_META_ASSERTS == T1_ACTIVE
+        #if T1_META_ASSERTS_ACTIVE == T1_ACTIVE
         assert(0); // no such enum
-        #elif T1_META_ASSERTS == T1_INACTIVE
+        #elif T1_META_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

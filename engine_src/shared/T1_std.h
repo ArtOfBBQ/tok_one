@@ -42,6 +42,7 @@ s32 T1_std_mini(s32 x, s32 y);
 s32 T1_std_maxi(s32 x, s32 y);
 f32 T1_std_minf(f32 x, f32 y);
 f32 T1_std_maxf(f32 x, f32 y);
+f32 T1_std_clampf(f32 x, f32 lo, f32 hi);
 
 void T1_std_strcat_cap(
     c8 * recipient,

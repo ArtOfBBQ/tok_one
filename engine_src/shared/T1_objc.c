@@ -25,8 +25,8 @@ typedef struct {
     void * (* object_get_class)(void *); // object_getClass()
     void * (* method_get_name)(void *); // method_getName()
     void   (* method_get_return_type)(void *, char *, size_t); // method_getReturnType
-    unsigned int (* method_get_number_of_arguments)(void *); // method_getNumberOfArguments()
-    void (* method_get_argument_type)(void *, unsigned int, char *, size_t); // method_getArgumentType
+    s32 (* method_get_number_of_arguments)(void *); // method_getNumberOfArguments()
+    void (* method_get_argument_type)(void *, s32, char *, size_t); // method_getArgumentType
     const char * (* selector_get_name)(void *); // sel_getName
     uintptr_t (* msg)(void *, void *);
     uintptr_t (* msg_arg)(void *, void *, uintptr_t);
@@ -50,7 +50,6 @@ typedef struct {
     void * sel_run_modal; // runModal
     void * sel_set_message_text; // setMessageText:
     void * sel_string_with_utf8_string;
-    // void * sel_make_key_and_order_front;
     void * sel_c_string_using_encoding; // cStringUsingEncoding:
     u8 good;
 } T1ObjCState;
@@ -561,7 +560,7 @@ static void assert_arg_f64(
 {
     void * m = T1_objc_s->class_get_instance_method(
         T1_objc_s->object_get_class(recip), selector);
-    unsigned int n = T1_objc_s->method_get_number_of_arguments(m);
+    s32 n = T1_objc_s->method_get_number_of_arguments(m);
     T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
     char ret[16];
     T1_objc_s->method_get_return_type(
@@ -598,7 +597,7 @@ static void assert_arg_uintptr_t(
 {
     void * m = T1_objc_s->class_get_instance_method(
         T1_objc_s->object_get_class(recip), selector);
-    unsigned int n = T1_objc_s->method_get_number_of_arguments(m);
+    s32 n = T1_objc_s->method_get_number_of_arguments(m);
     T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
     char ret[16];
     T1_std_memset(ret, 0, 16);
@@ -807,7 +806,7 @@ f64 T1_objc_msg_get_f64(
         // use the class-method lookup if recip is a Class
         T1_log_assert(m != NULL);
         
-        unsigned n = T1_objc_s->method_get_number_of_arguments(m);
+        s32 n = T1_objc_s->method_get_number_of_arguments(m);
         T1_log_assert(n == 2); // self and _cmd only
         
         char ret[16];
