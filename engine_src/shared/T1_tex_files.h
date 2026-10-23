@@ -1,10 +1,9 @@
 #ifndef T1_TEX_FILES_H
 #define T1_TEX_FILES_H
 
-#include <stdint.h>
-
 #include "T1_types_public.h"
 #include "T1_std.h"
+#include "T1_stdint.h"
 
 /*
 For "client" use in clientlogic.c or similar
