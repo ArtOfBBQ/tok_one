@@ -167,14 +167,6 @@ uint32_t  T1_id_next_ui_element_id(void);
 uint32_t  T1_id_next_nonui_id(void);
 
 /*
-RANDOM NUMBERS
-*/
-#define T1_RAND_SEQUENCE_SIZE 999
-int32_t  T1_rand(void);
-int32_t  T1_rand_at_i(uint64_t index);
-void T1_rand_shuf_array(void * array, uint32_t array_sz, uint32_t elem_sz);
-
-/*
 CAMERA MANIPULATION
 */
 void  T1_cam_set_us_to_dest(int32_t cam_i, uint64_t us);

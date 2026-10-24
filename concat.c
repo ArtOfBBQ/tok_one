@@ -91,7 +91,6 @@ static const char * c_files[] = {
 "T1_profiler.c",
 "T1_objmodel.c",
 "T1_io.c",
-"T1_rand.c",
 "T1_gpu.c",
 "T1_tex.c",
 "T1_tex_array.c",
