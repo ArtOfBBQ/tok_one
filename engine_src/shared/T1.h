@@ -449,39 +449,6 @@ int32_t   T1_io_create_scene_and_return_id(void);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
 
 /*
-TOKENIZER
-*/
-void T1_token_reset(char ** const fatal_error);
-#define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
-#define T1_TOKEN_FLAG_LEAD_DOT_OK 4
-#define T1_TOKEN_FLAG_PRECISE 8
-#define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
-void T1_token_set_reg_bitflags(uint8_t bitflags);
-void T1_token_clear_start_pattern(void);
-void T1_token_set_reg_start_pattern(
-    const char * start_pattern);
-void T1_token_clear_stop_patterns(void);
-void T1_token_set_store_mode(T1TokenStoreMode mode);
-void T1_token_set_reg_middle_cap(uint32_t middle_cap);
-void T1_token_set_reg_stop_pattern(
-    const char * stop_pattern,
-    uint32_t pattern_index);
-void T1_token_set_string_literal(uint32_t enum_val, char ** const fatal_error);
-void T1_token_register(uint32_t enum_value, char ** const fatal_error);
-void T1_token_run(const char * input, char ** const fatal_error);
-uint32_t T1_token_get_token_count(void);
-uint32_t T1_token_get_enum_value(uint16_t token_i);
-void T1_token_overwrite_enum_val(uint16_t token_i, uint32_t new_enum_val);
-char * T1_token_get_string_value(uint16_t token_i);
-uint32_t T1_token_get_string_value_size(uint16_t token_i);
-uint32_t T1_token_get_line_num(uint16_t token_i);
-uint8_t T1_token_is_number(int32_t at_i);
-uint8_t T1_token_fits_s8(int32_t at_i);
-uint8_t T1_token_fits_u8(int32_t at_i);
-uint64_t T1_token_as_number_unsigned(int32_t at_i);
-int64_t T1_token_as_number_signed(int32_t at_i);
-
-/*
 META TYPES (registration)
 */
 #define T1_meta_struct(struct_name, fatal_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), fatal_error)
