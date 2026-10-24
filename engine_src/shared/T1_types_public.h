@@ -179,8 +179,6 @@ typedef struct {
     uint8_t draw_fps;
     uint8_t draw_touch_id;
     uint8_t draw_scene_id;
-    uint8_t show_profiler;
-    uint8_t pause_profiler;
     uint8_t block_mouse;
     uint8_t block_render_view_pos_updates;
     uint8_t fullscreen;

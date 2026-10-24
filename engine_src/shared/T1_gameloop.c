@@ -115,7 +115,6 @@ static void show_dead_simple_text(
     T1_global->draw_triangles = 1;
     T1_global->draw_axes = 0;
     T1_global->draw_fps = 0;
-    T1_global->show_profiler = 0;
     T1_global->postproc_consts.perlin_texturearray_i = 0;
     T1_global->postproc_consts.perlin_texture_i = 0;
     T1_global->postproc_consts.color_quantization = 1;
@@ -362,8 +361,8 @@ u8 T1_window_visible(void) {
 
 /*
 What used to run after each rendered frame: clears the frame's one-shot
-input events (the client has seen them by now), polls gamepads, handles
-fullscreen requests and starts a new profiler frame.
+input events (the client has seen them by now), polls gamepads and handles
+fullscreen requests.
 */
 static void T1_gameloop_after_frame(void) {
     T1_io_update_and_clear_for_next_frame();

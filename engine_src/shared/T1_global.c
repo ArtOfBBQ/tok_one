@@ -16,8 +16,6 @@ void T1_global_init(void) {
     T1_global->draw_imputed_normals   = 0;
     T1_global->draw_fps               = 0;
     T1_global->draw_triangles         = 1;
-    T1_global->show_profiler          = 0;
-    T1_global->pause_profiler         = 0;
     T1_global->block_mouse            = 0;
         
     T1_global->timedelta_mult = 1.00f;

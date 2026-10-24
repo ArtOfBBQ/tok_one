@@ -390,46 +390,6 @@ static u8 T1_term_evaluate(
     }
     
     if (
-        T1_std_are_equal_strings(
-            command,
-            "PAUSE PROFILER"))
-    {
-        if (!T1_global->pause_profiler) {
-            T1_global->pause_profiler = 1;
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Paused profiler...");
-        } else {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Profiler was already paused...");
-        }
-        return 1;
-    }
-    
-    if (
-        T1_std_are_equal_strings(command, "RESUME PROFILER") ||
-        T1_std_are_equal_strings(command, "RUN PROFILER") ||
-        T1_std_are_equal_strings(command, "UNPAUSE PROFILER"))
-    {
-        if (T1_global->pause_profiler) {
-            T1_global->pause_profiler = 0;
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Resuming profiler...");
-        } else {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Profiler was already running...");
-        }
-        return 1;
-    }
-    
-    if (
         T1_std_are_equal_strings(command, "RESET CAMERA") ||
         T1_std_are_equal_strings(command, "CENTER CAMERA"))
     {

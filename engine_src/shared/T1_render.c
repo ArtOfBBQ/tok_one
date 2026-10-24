@@ -258,13 +258,6 @@ void T1_render_update(
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start(
-        "T1_particle_add_all_to_frame_data()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
     T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
             f,
@@ -272,13 +265,6 @@ void T1_render_update(
             elapsed_us);
     T1_log_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end(
-        "T1_particle_add_all_to_frame_data()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
     
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass

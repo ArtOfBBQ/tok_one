@@ -139,12 +139,6 @@ void T1_term_set_command_handler(
     void (* handler)(char * command, char * response, uint32_t response_cap));
 
 /*
-PROFILER
-*/
-void T1_profiler_start(const char * func_name);
-void T1_profiler_end(const char * func_name);
-
-/*
 T1_mem - allocate memory
 */
 void * T1_mem_malloc_unmanaged(size_t size);
