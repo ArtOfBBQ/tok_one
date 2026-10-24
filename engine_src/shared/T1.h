@@ -249,14 +249,6 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     char ** const fatal_error);
 int32_t T1_objmodel_resource_name_to_mesh_id(
     const char * obj_filename);
-float T1_objmodel_get_x_multiplier_for_width(
-    int32_t mesh_id,
-    float screenspace_width,
-    float given_z);
-float T1_objmodel_get_y_multiplier_for_height(
-    int32_t mesh_id,
-    float screenspace_height,
-    float given_z);
 float T1_get_x_mul_for_width(int32_t for_mesh_id, float for_width);
 float T1_get_y_mul_for_height(int32_t for_mesh_id, float for_height);
 float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);

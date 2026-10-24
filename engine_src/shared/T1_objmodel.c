@@ -15,7 +15,6 @@
 #include "T1_mtlparser.h"
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
-#include "T1_render_view.h"
 #include "T1_os.h"
 
 static void construct_mesh_summary(
@@ -1603,32 +1602,6 @@ s32 T1_objmodel_resource_name_to_mesh_id(
     }
     
     return -1;
-}
-
-f32 T1_objmodel_get_x_multiplier_for_width(
-    const s32 mesh_id,
-    const f32 screenspace_width,
-    const f32 given_z)
-{
-    return T1_render_view_screen_width_to_width(
-        /* const f32 screenspace_width: */
-            screenspace_width /
-                T1_mesh_summary_list[mesh_id].base_width,
-        /* const f32 given_z: */
-            given_z);
-}
-
-f32 T1_objmodel_get_y_multiplier_for_height(
-    const s32 mesh_id,
-    const f32 screenspace_height,
-    const f32 given_z)
-{
-    return T1_render_view_screen_height_to_height(
-        /* const f32 screenspace_width: */
-            screenspace_height /
-                T1_mesh_summary_list[mesh_id].base_height,
-        /* const f32 given_z: */
-            given_z);
 }
 
 void T1_objmodel_center_mesh_offsets(
