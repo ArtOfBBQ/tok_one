@@ -233,6 +233,8 @@ void T1_texquad_commit(
     T1_log_assert(!request->cpu->deleted);
     T1_log_assert(request->gpu->f32s.wh[0] > 0.0f);
     T1_log_assert(request->gpu->f32s.wh[1] > 0.0f);
+    // xyz is in world units, projected by the distance xyz[2]
+    T1_log_assert(request->gpu->f32s.xyz[2] > 0.0f);
     T1_log_assert(!request->cpu->deleted);
     T1_log_assert(request->cpu->visible);
     

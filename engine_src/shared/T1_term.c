@@ -85,15 +85,17 @@ static void T1_term_redraw_backgrounds(void) {
     input_req.cpu->T1_id = T1_trms->back_T1_id;
     input_req.gpu->f32s.xyz[0] = 0.0f;
     input_req.gpu->f32s.xyz[1] =
-        T1_render_view_screen_y_to_y_noz(
-            T1_TERM_INPUT_BOX_MID_Y);
+        T1_render_view_screen_y_to_y(
+            T1_TERM_INPUT_BOX_MID_Y,
+            T1_TERM_Z);
     input_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     
     input_req.gpu->f32s.wh[0] =
-        T1_render_view_screen_width_to_width_noz(width);
+        T1_render_view_screen_width_to_width(width, T1_TERM_Z);
     input_req.gpu->f32s.wh[1] =
-        T1_render_view_screen_height_to_height_noz(
-            T1_TERM_INPUT_BOX_HEIGHT);
+        T1_render_view_screen_height_to_height(
+            T1_TERM_INPUT_BOX_HEIGHT,
+            T1_TERM_Z);
     input_req.gpu->u32s.reserved_and_tex =
         0x00000000 | T1_TEX_NONE;
     input_req.gpu->f32s.rgba[0] =
@@ -111,18 +113,21 @@ static void T1_term_redraw_backgrounds(void) {
     T1_texquad_fetch_next(&history_req);
     history_req.gpu->f32s.xyz[0] = 0.0f;
     history_req.gpu->f32s.xyz[1] =
-        T1_render_view_screen_y_to_y_noz(
+        T1_render_view_screen_y_to_y(
            (command_history_height / 2) +
                T1_TERM_INPUT_BOX_HEIGHT +
-               (T1_TERM_WHITESPACE * 2.0f));
+               (T1_TERM_WHITESPACE * 2.0f),
+           T1_TERM_Z);
     history_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     history_req.gpu->f32s.wh[0] =
-        T1_render_view_screen_width_to_width_noz(
+        T1_render_view_screen_width_to_width(
                 T1_render_views->cpu[0].width -
-                    (T1_TERM_WHITESPACE * 2));
+                    (T1_TERM_WHITESPACE * 2),
+                T1_TERM_Z);
     history_req.gpu->f32s.wh[1] =
-        T1_render_view_screen_height_to_height_noz(
-            command_history_height);
+        T1_render_view_screen_height_to_height(
+            command_history_height,
+            T1_TERM_Z);
     history_req.cpu->T1_id = INT32_MAX;
     history_req.gpu->u32s.touch_id = T1_TOUCH_ID_NONE;
     history_req.gpu->f32s.rgba[0] =

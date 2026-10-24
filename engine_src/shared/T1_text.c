@@ -321,19 +321,23 @@ void T1_text_request_label_offset_around(
             letter.gpu->f32s = T1_text_props->f32s;
             
             letter.gpu->f32s.xyz[0] =
-                T1_render_view_screen_x_to_x_noz(
-                    mid_x_pixelspace);
+                T1_render_view_screen_x_to_x(
+                    mid_x_pixelspace,
+                    z);
             letter.gpu->f32s.xyz[1] =
-                T1_render_view_screen_y_to_y_noz(
-                    mid_y_pixelspace);
+                T1_render_view_screen_y_to_y(
+                    mid_y_pixelspace,
+                    z);
             letter.gpu->f32s.xyz[2] = z;
             
             letter.gpu->f32s.wh[0] =
-                T1_render_view_screen_width_to_width_noz(
-                    T1_text_props->font_height);
+                T1_render_view_screen_width_to_width(
+                    T1_text_props->font_height,
+                    z);
             letter.gpu->f32s.wh[1] =
-                T1_render_view_screen_height_to_height_noz(
-                    T1_text_props->font_height);
+                T1_render_view_screen_height_to_height(
+                    T1_text_props->font_height,
+                    z);
             
             letter.cpu->T1_id = with_T1_id;
             
@@ -344,14 +348,16 @@ void T1_text_request_label_offset_around(
             }
             
             letter.cpu->offset_xyz[0] =
-                T1_render_view_screen_width_to_width_noz(
+                T1_render_view_screen_width_to_width(
                     (cur_x_offset_pixelspace +
-                        get_left_side_bearing(text_to_draw[j])));
+                        get_left_side_bearing(text_to_draw[j])),
+                    z);
             letter.cpu->offset_xyz[1] =
-                T1_render_view_screen_height_to_height_noz(
+                T1_render_view_screen_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
-                        (T1_text_props->font_height * 0.5f)));
+                        (T1_text_props->font_height * 0.5f)),
+                    z);
             
             T1Tex tex;
             T1_tex_set_array_i(&tex, 0);
@@ -435,7 +441,7 @@ void T1_text_request_label_renderable(
     f32 max_width)
 {
     T1_log_assert(max_width > 0.005f);
-    T1_log_assert(z >= 0.0f);
+    T1_log_assert(z > 0.0f);
     T1_log_assert(z <= 1.0f);
     
     T1_log_assert(text_to_draw[0] != '\0');
@@ -453,11 +459,13 @@ void T1_text_request_label_renderable(
     T1TexQuadRequest letter;
     
     f32 letter_width = 
-        T1_render_view_screen_width_to_width_noz(
-            T1_text_props->font_height);
+        T1_render_view_screen_width_to_width(
+            T1_text_props->font_height,
+            z);
     f32 letter_height = 
-        T1_render_view_screen_height_to_height_noz(
-            T1_text_props->font_height);
+        T1_render_view_screen_height_to_height(
+            T1_text_props->font_height,
+            z);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
@@ -525,11 +533,13 @@ void T1_text_request_label_renderable(
         letter.gpu->f32s = T1_text_props->f32s;
         
         letter.gpu->f32s.xyz[0] =
-            T1_render_view_screen_x_to_x_noz(
-                left_x_pixelspace + (T1_text_props->font_height / 2));
+            T1_render_view_screen_x_to_x(
+                left_x_pixelspace + (T1_text_props->font_height / 2),
+                z);
         letter.gpu->f32s.xyz[1] =
-            T1_render_view_screen_y_to_y_noz(
-                top_y_pixelspace); // (get_newline_advance() / 2)
+            T1_render_view_screen_y_to_y(
+                top_y_pixelspace,
+                z); // (get_newline_advance() / 2)
         letter.gpu->f32s.xyz[2] = z;
         
         letter.gpu->f32s.wh[0] = letter_width;
@@ -554,12 +564,14 @@ void T1_text_request_label_renderable(
         letter.gpu->u32s.touch_id = T1_text_props->u32s.touch_id;
         
         letter.cpu->offset_xyz[0] = 
-            T1_render_view_screen_width_to_width_noz(
+            T1_render_view_screen_width_to_width(
                 cur_x_offset + get_left_side_bearing(
-                    text_to_draw[i]));
+                    text_to_draw[i]),
+                z);
         f32 y_offset =
-            T1_render_view_screen_height_to_height_noz(
-                cur_y_offset - get_y_offset(text_to_draw[i]));
+            T1_render_view_screen_height_to_height(
+                cur_y_offset - get_y_offset(text_to_draw[i]),
+                z);
         letter.cpu->offset_xyz[1] = y_offset;
         
         cur_x_offset += get_advance_width(text_to_draw[i]);
@@ -591,6 +603,16 @@ void T1_text_request_label_renderable(
             back.gpu->f32s.rgba[1] = 0.15f;
             back.gpu->f32s.rgba[2] = 0.60f;
             back.gpu->f32s.rgba[3] = 1.00f;
+            
+            // One step further back. Positions and sizes are world units
+            // at the quad's depth, so scale them to stay on the same pixels.
+            f32 back_mult = (z + 0.01f) / z;
+            back.gpu->f32s.xyz[0] *= back_mult;
+            back.gpu->f32s.xyz[1] *= back_mult;
+            back.gpu->f32s.wh[0] *= back_mult;
+            back.gpu->f32s.wh[1] *= back_mult;
+            back.cpu->offset_xyz[0] *= back_mult;
+            back.cpu->offset_xyz[1] *= back_mult;
             back.gpu->f32s.xyz[2] += 0.01f;
             T1_texquad_commit(&back);
         }
