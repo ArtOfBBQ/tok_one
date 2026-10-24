@@ -12,6 +12,9 @@ void T1_apple_gpu_init(
     f32 backing_scale_factor,
     char ** const sticky_error);
 
+// The id<MTLDevice> T1_gpu_init() created, or NULL before that
+void * T1_gpu_get_device(void);
+
 void T1_gpu_update_render_view_size(s32 at_i);
 void T1_gpu_update_final_window_size(void);
 /*

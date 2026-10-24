@@ -1017,7 +1017,7 @@ void T1_os_gpu_try_shader_source(
     }
     
     if (!ags || !ags->metal_active) {
-        *fatal_error = "T1_os_gpu_try_shader_source() before T1_os_link_gpu_to_main_window()";
+        *fatal_error = "T1_gpu_try_shader_source() before T1_gpu_init()";
         return;
     }
     
@@ -2108,7 +2108,7 @@ void T1_os_gpu_copy_locked_materials(
     if (*fatal_error != 0) { return; }
     
     if (ags->command_queue == 0) {
-        *fatal_error = "T1_os_gpu_copy_locked_materials() before T1_os_link_gpu_to_main_window()";
+        *fatal_error = "T1_os_gpu_copy_locked_materials() before T1_gpu_init()";
         return;
     }
     
@@ -3857,4 +3857,40 @@ s16 T1_apple_gpu_make_depth_tex(
     
     T1_objc_autorelease_pool_pop(pool);
     return slice_i;
+}
+
+void T1_os_gpu_init(char ** const fatal_error) {
+    if (*fatal_error != 0) { return; }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    typedef void *(* mtl_fn)(void);
+    mtl_fn fn = (mtl_fn)T1_objc_get_func(
+        "MTLCreateSystemDefaultDevice");
+    if (!fn) {
+        *fatal_error = "Failed to fetch basic Metal function";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    void * device = fn();
+    if (!device) {
+        *fatal_error = "Failed to create Metal device";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    T1_apple_gpu_init(
+        /* id<MTLDevice> with_metal_device: */
+            device,
+        /* f32 backing_scale_factor: */
+            T1_os_get_screen_backing_scale_factor(),
+        /* fatal_error: */
+            fatal_error);
+    
+    T1_objc_autorelease_pool_pop(pool);
+}
+
+void * T1_gpu_get_device(void) {
+    return ags != NULL ? ags->device : NULL;
 }

@@ -42,20 +42,21 @@ void T1_log_dump_and_crash(const char * crash_message);
 
 /*
 APPLICATION STARTUP
+Each step reports problems through fatal_error and does nothing if it's
+already set, so you can call them in a row and check once at the end:
+
+T1_init(&fatal_error);          // memory, subsystems: no window or GPU yet
+T1_gpu_init(&fatal_error);      // GPU device, T1's own textures
+T1_gpu_try_shader_source(...);  // at least once successfully
+T1_window_open(&fatal_error);   // any time after T1_gpu_init()
+... preregister your textures and meshes ...
+T1_assets_load_all(&fatal_error);
 */
 uint8_t T1_running(void);
 
-void T1_os_create_main_window(
+void T1_init(
     char ** const fatal_error);
-
-void T1_appinit_before_gpu_init(
-    char ** const fatal_error);
-void T1_appinit_after_gpu_init_step1(
-    char ** const fatal_error);
-void T1_appinit_after_gpu_init_step2(
-    int32_t throwaway_threadarg,
-    char ** const fatal_error);
-void T1_os_link_gpu_to_main_window(
+void T1_gpu_init(
     char ** const fatal_error);
 
 /*
@@ -66,14 +67,24 @@ copied to error_recip (optional, may be NULL, else
 needs a cap of at least 512), and any
 shaders loaded by a previous successful call stay in
 place, so you can retry with a different source.
-You must succeed at least once before
-T1_appinit_after_gpu_init_step1(), else that's fatal.
+Needs T1_gpu_init(). You must succeed at least once
+before T1_assets_load_all(), else that's fatal.
 */
-void T1_os_gpu_try_shader_source(
+void T1_gpu_try_shader_source(
     const char * shader_source,
     uint8_t * good,
     char * error_recip,
     const uint32_t error_recip_cap,
+    char ** const fatal_error);
+
+// Opens the (one) window your frames are presented in
+void T1_window_open(
+    char ** const fatal_error);
+void T1_window_toggle_fullscreen(void);
+
+// Decodes and uploads all preregistered textures, meshes and materials.
+// Blocks until done.
+void T1_assets_load_all(
     char ** const fatal_error);
 
 /*
@@ -691,7 +702,6 @@ is allowed to write, so you can store files with data about
 your user's progress or preferences, etc.
 */
 uint64_t T1_os_get_current_time_us(void);
-void T1_os_toggle_fullscreen(void);
 void T1_os_start_thread(void *(*function_to_run)(void *), void * arg_on_heap);
 uint32_t T1_os_init_mutex_and_return_id(void);
 uint8_t T1_os_mutex_trylock(uint32_t mutex_id);

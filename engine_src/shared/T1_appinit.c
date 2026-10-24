@@ -199,7 +199,7 @@ static u32 pad_to_page_size(u32 base_allocation) {
     return return_value;
 }
 
-void T1_appinit_before_gpu_init(
+void T1_init(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -767,18 +767,18 @@ static void * T1_appinit_asset_loading_thread(
 #error "T1_TEXTURES_ACTIVE undefined!"
 #endif
 
-void T1_appinit_after_gpu_init_step1(
+/*
+The GPU resources T1 itself needs: font images, render view 0's target,
+viewports, perlin noise. These come before the client preregisters its own
+assets.
+*/
+static void T1_appinit_gpu_resources(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
     if (!T1_log_app_running) {
-        *fatal_error = "T1_appinit_after_gpu_init_step1 before T1_log_app_running";
-        return;
-    }
-    
-    if (!T1_os_gpu_shaders_ready()) {
-        *fatal_error = "T1_appinit_after_gpu_init_step1 before T1_os_gpu_try_shader_source() succeeded";
+        *fatal_error = "T1_gpu_init() before T1_init()";
         return;
     }
     
@@ -856,17 +856,43 @@ void T1_appinit_after_gpu_init_step1(
     T1_objc_autorelease_pool_pop(pool);
 }
 
-void T1_appinit_after_gpu_init_step2(
-    s32 throwaway_threadarg,
+void T1_gpu_init(
     char ** const fatal_error)
 {
-    (void)throwaway_threadarg;
-    
+    T1_os_gpu_init(fatal_error);
+    T1_appinit_gpu_resources(fatal_error);
+}
+
+void T1_gpu_try_shader_source(
+    const char * shader_source,
+    u8 * good,
+    char * error_recip,
+    const u32 error_recip_cap,
+    char ** const fatal_error)
+{
+    T1_os_gpu_try_shader_source(
+        shader_source,
+        good,
+        error_recip,
+        error_recip_cap,
+        fatal_error);
+}
+
+void T1_assets_load_all(
+    char ** const fatal_error)
+{
     if (!T1_log_app_running) {
         return;
     }
     
     if (*fatal_error != 0) { return; }
+    
+    // Nothing can be drawn without shaders, so fail loudly here, the last
+    // startup step before the client's loop
+    if (!T1_os_gpu_shaders_ready()) {
+        *fatal_error = "T1_assets_load_all() before T1_gpu_try_shader_source() succeeded";
+        return;
+    }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;

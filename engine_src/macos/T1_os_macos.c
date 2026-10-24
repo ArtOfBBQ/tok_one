@@ -99,7 +99,6 @@ typedef struct {
     void * sel_file_url_with_path; // fileURLWithPath:
     void * sel_shared_workspace; // sharedWorkspace
     void * func_ns_search_path_dirs_in_domains; // NSSearchPathForDirectoriesInDomains
-    void * func_mtl_create_system_default_device; // MTLCreateSystemDefaultDevice()
     void * sel_delta_y; // deltaY
     void * sel_open_url; // openURL:
     void * sel_content_view; // contentView
@@ -891,10 +890,6 @@ void T1_os_macos_init(void) {
         T1_objc_get_func(
             "NSSearchPathForDirectoriesInDomains");
     
-    T1_os_macos_s->func_mtl_create_system_default_device =
-        T1_objc_get_func(
-            "MTLCreateSystemDefaultDevice");
-    
     T1_os_macos_s->sel_delta_y = T1_objc_reg_sel(
         "deltaY");
     T1_os_macos_s->sel_open_url = T1_objc_reg_sel(
@@ -1322,13 +1317,13 @@ void T1_os_toggle_fullscreen(void) {
         (uintptr_t)window);
 }
 
-void T1_os_create_main_window(
+static void T1_os_macos_create_window(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
     if (!T1_global) {
-        *fatal_error = "Tried to T1_os_create_main_window() before T1_global existed";
+        *fatal_error = "Tried to T1_window_open() before T1_init()";
         return;
     }
     
@@ -1432,28 +1427,22 @@ void T1_os_destroy_main_window_if_possible(void) {
     }
 }
 
-void T1_os_link_gpu_to_main_window(
+/*
+Makes the window's content view a CAMetalLayer-backed NSView that presents
+frames rendered with the device T1_gpu_init() created.
+*/
+static void T1_os_macos_attach_metal_layer(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    typedef void *(* mtl_fn)(void);
-    mtl_fn fn = (mtl_fn)T1_os_macos_s->
-        func_mtl_create_system_default_device;
-    if (!fn) {
-        *fatal_error = "Failed to fetch basic Metal function";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * metal_device_for_window = fn();
+    void * metal_device_for_window = T1_gpu_get_device();
     if (!metal_device_for_window) {
-        *fatal_error = "Failed to create Metal device";
-        T1_objc_autorelease_pool_pop(pool);
+        *fatal_error = "Tried to T1_window_open() before T1_gpu_init()";
         return;
     }
+    
+    void * pool = T1_objc_autorelease_pool_push();
     
     T1NSRect window_rect = T1_nsrect_make(
         /* x: */ T1_global->window_left,
@@ -1535,16 +1524,14 @@ void T1_os_link_gpu_to_main_window(
         T1_os_macos_s->sel_set_content_view,
         (uintptr_t)metal_view);
     
-    T1_apple_gpu_init(
-        /* id<MTLDevice> with_metal_device: */
-            metal_device_for_window,
-        /* bool32_t has_retina_screen: */
-            T1_os_get_screen_backing_scale_factor(),
-            // (float)[[window screen] backingScaleFactor],
-        /* fatal_error: */
-            fatal_error);
-    
     T1_objc_autorelease_pool_pop(pool);
+}
+
+void T1_os_window_open(
+    char ** const fatal_error)
+{
+    T1_os_macos_create_window(fatal_error);
+    T1_os_macos_attach_metal_layer(fatal_error);
 }
 
 static void T1_os_macos_set_up_main_menu(void * ns_app) {

@@ -3,14 +3,20 @@
 
 #include "T1_stdint.h"
 
-extern u32 block_drawinmtkview;
+void T1_init(
+    char ** const fatal_error);
 
-void T1_appinit_before_gpu_init(
+void T1_gpu_init(
     char ** const fatal_error);
-void T1_appinit_after_gpu_init_step1(
+
+void T1_gpu_try_shader_source(
+    const char * shader_source,
+    u8 * good,
+    char * error_recip,
+    const u32 error_recip_cap,
     char ** const fatal_error);
-void T1_appinit_after_gpu_init_step2(
-    s32 throwaway_threadarg,
+
+void T1_assets_load_all(
     char ** const fatal_error);
 
 void T1_shutdown(void);

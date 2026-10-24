@@ -12,6 +12,8 @@ void T1_gameloop_init(
     void *(* arg_malloc_fptr)(size_t));
 
 // The client's main loop, see T1.h
+void T1_window_open(char ** const fatal_error);
+void T1_window_toggle_fullscreen(void);
 void T1_window_poll_events(void);
 u8   T1_window_close_requested(void);
 u8   T1_window_visible(void);

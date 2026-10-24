@@ -434,6 +434,14 @@ void T1_window_present(void) {
     T1_gl_s->frame_presented = T1_os_window_present();
 }
 
+void T1_window_open(char ** const fatal_error) {
+    T1_os_window_open(fatal_error);
+}
+
+void T1_window_toggle_fullscreen(void) {
+    T1_os_toggle_fullscreen();
+}
+
 u8 T1_window_close_requested(void) {
     return T1_os_window_close_requested();
 }

@@ -289,11 +289,12 @@ void T1_os_mutex_unlock(u32 mutex_id);
 
 void T1_os_layer_start_window_resize(u64 timestamp);
 
-void T1_os_create_main_window(char ** const fatal_error);
-void T1_os_destroy_main_window_if_possible(void);
+// Creates the GPU device and T1's GPU resources, no window needed
+void T1_os_gpu_init(char ** const fatal_error);
 
-void T1_os_link_gpu_to_main_window(
-    char ** const fatal_error);
+// Opens the main window, presenting with the device from T1_os_gpu_init()
+void T1_os_window_open(char ** const fatal_error);
+void T1_os_destroy_main_window_if_possible(void);
 
 /*
 Compiles shader_source (with T1's GPU struct headers
@@ -304,7 +305,7 @@ needs a cap of at least 512), and any
 shaders loaded by a previous successful call stay in
 place, so you can retry with a different source.
 You must succeed at least once before
-T1_appinit_after_gpu_init_step1(), else that's fatal.
+T1_assets_load_all(), else that's fatal.
 */
 void T1_os_gpu_try_shader_source(
     const char * shader_source,
