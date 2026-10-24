@@ -438,6 +438,7 @@ void T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
+    const char * shader_source,
     char ** const sticky_error)
 {
     if (*sticky_error != 0) { return; }
@@ -628,11 +629,17 @@ void T1_apple_gpu_init(
     
     ags->device = with_metal_device;
     
+    if (shader_source == NULL || shader_source[0] == '\0') {
+        *sticky_error = "T1_apple_gpu_init() without any shader source";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+
     if (ags->lib == NULL) {
-        // From embedded data: T1's shader includes, then the shaders
+        // T1's embedded shader includes, then the client's shaders
         u32 full_source_cap = (u32)(
             T1_std_strlen(T1_embedded_data_shader_includes) +
-            T1_std_strlen(T1_embedded_data_shaders_metal) + 1);
+            T1_std_strlen(shader_source) + 1);
         char * full_source = T1_mem_malloc_managed(full_source_cap);
         T1_std_strcpy_cap(
             full_source,
@@ -641,7 +648,7 @@ void T1_apple_gpu_init(
         T1_std_strcat_cap(
             full_source,
             full_source_cap,
-            T1_embedded_data_shaders_metal);
+            shader_source);
 
         // stringWithUTF8String: copies, so we can free right away
         void * nsstr_source = T1_objc_nsstring_construct(full_source);
@@ -663,7 +670,7 @@ void T1_apple_gpu_init(
             }
             
             *sticky_error = T1_mem_malloc_unmanaged(512);
-            T1_std_strcat_cap(*sticky_error, 512, error_desc);
+            T1_std_strcpy_cap(*sticky_error, 512, error_desc);
             
             T1_objc_autorelease_pool_pop(pool);
             return;

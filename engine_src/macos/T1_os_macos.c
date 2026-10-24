@@ -1407,6 +1407,7 @@ void T1_os_destroy_main_window_if_possible(void) {
 }
 
 void T1_os_link_gpu_to_main_window(
+    const char * shader_source,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -1506,6 +1507,8 @@ void T1_os_link_gpu_to_main_window(
         /* bool32_t has_retina_screen: */
             T1_os_get_screen_backing_scale_factor(),
             // (float)[[window screen] backingScaleFactor],
+        /* const char * shader_source: */
+            shader_source,
         /* fatal_error: */
             fatal_error);
     

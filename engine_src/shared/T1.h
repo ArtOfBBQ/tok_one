@@ -63,6 +63,7 @@ void T1_appinit_after_gpu_init_step2(
     int32_t throwaway_threadarg,
     char ** const fatal_error);
 void T1_os_link_gpu_to_main_window(
+    const char * shader_source,
     char ** const fatal_error);
 
 /*

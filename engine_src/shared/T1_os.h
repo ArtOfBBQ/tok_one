@@ -297,6 +297,7 @@ void T1_os_create_main_window(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
 void T1_os_link_gpu_to_main_window(
+    const char * shader_source,
     char ** const fatal_error);
 
 void T1_os_shutdown(void);

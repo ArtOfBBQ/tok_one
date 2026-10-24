@@ -33,15 +33,13 @@ typedef struct {
     char * name;
     uint8_t hexify;
     uint8_t inlineify;
-    // 0 = comment out #include "..." instead of pasting the file in
-    uint8_t inline_local_includes;
     // NULL = embed the file called name, else inline these files (NULL
     // terminated) one after the other, name is then only the variable name
     const char ** inline_files;
 } Embeddable;
 
 // The T1 types that shaders need to know about. T1 prepends these to the
-// shader source before compiling it into a metal library
+// shader source the client passes before compiling it into a metal library
 static const char * shader_include_files[] = {
     "T1_stdint.h",
     "T1_types_gpucpu.h",
@@ -50,11 +48,10 @@ static const char * shader_include_files[] = {
 };
 
 static const Embeddable to_embed_files[] = {
-    {"shader_includes",  0, 1, 1, shader_include_files},
-    {"shaders.metal",    0, 1, 0, NULL},
-    {"fontmetrics.dat",  1, 0, 0, NULL},
-    {"font.png",         1, 0, 0, NULL},
-    {"perlin_noise.png", 1, 0, 0, NULL},
+    {"shader_includes",  0, 1, shader_include_files},
+    {"fontmetrics.dat",  1, 0, NULL},
+    {"font.png",         1, 0, NULL},
+    {"perlin_noise.png", 1, 0, NULL},
 };
 
 static const char * c_files[] = {
@@ -206,8 +203,7 @@ static void try_get_file_from_filename(
 }
 
 void parse_file_recursively(
-    const char * filename,
-    const uint8_t inline_local_includes)
+    const char * filename)
 {
     uint32_t arena_pop_i = asm_state->arena_i;
     
@@ -264,12 +260,10 @@ void parse_file_recursively(
                     includefile);
                 
                 if (to_match == '"') {
-                    if (observed_i == UINT32_MAX && inline_local_includes) {
+                    if (observed_i == UINT32_MAX) {
                         parse_file_recursively(
                             /* const char * filename: */
-                                includefile,
-                            /* const uint8_t inline_local_includes: */
-                                1);
+                                includefile);
                     }
                 }
                 
@@ -553,9 +547,7 @@ static void append_embedded_file_to_out(
     if (to_embed_files[to_embed_i].inlineify) {
         const char ** inline_files = to_embed_files[to_embed_i].inline_files;
         if (inline_files == NULL) {
-            parse_file_recursively(
-                to_embed_files[to_embed_i].name,
-                to_embed_files[to_embed_i].inline_local_includes);
+            parse_file_recursively(to_embed_files[to_embed_i].name);
         } else {
             for (uint32_t i = 0; inline_files[i] != NULL; i++) {
                 // register first so later files don't include it again
@@ -565,9 +557,7 @@ static void append_embedded_file_to_out(
                 {
                     continue;
                 }
-                parse_file_recursively(
-                    inline_files[i],
-                    to_embed_files[to_embed_i].inline_local_includes);
+                parse_file_recursively(inline_files[i]);
             }
         }
         uint32_t new_output_size =
@@ -734,8 +724,7 @@ int main(void) {
     memset(asm_state->arena, 0, ARENA_CAP);
     
     parse_file_recursively(
-        /* filename: */ encapsulation_h_file,
-        /* inline_local_includes: */ 1);
+        /* filename: */ encapsulation_h_file);
     
     deduplicate_includes_clean_comments(asm_state->output);
     write_output_to("T1.h", "build/");
@@ -747,8 +736,7 @@ int main(void) {
         const char * filename = c_files[i];
         
         parse_file_recursively(
-            /* filename: */ filename,
-            /* inline_local_includes: */ 1);
+            /* filename: */ filename);
     }
     
     deduplicate_includes_clean_comments(asm_state->output);
