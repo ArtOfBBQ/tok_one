@@ -9,7 +9,7 @@
 #endif
 
 #if (T1_LOG_ASSERTS_ACTIVE == 1) || \
-    (!defined(T1_COLLISION_IGNORE_ASSERTS)) || \
+    (T1_COLLISION_ASSERTS_ACTIVE == 1) || \
     (T1_LOG_ASSERTS_ACTIVE == 1) || \
     (T1_META_ASSERTS_ACTIVE == 1)
 #include <assert.h>
