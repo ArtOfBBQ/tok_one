@@ -137,10 +137,10 @@ void T1_frame_begin(void)
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
-    T1_gl_s->frame_should_update = false;
-    T1_gl_s->frame_resized = false;
-    T1_gl_s->frame_post_update = false;
-    T1_gl_s->frame_tail = false;
+    T1_gl_s->frame_should_update = 0;
+    T1_gl_s->frame_resized = 0;
+    T1_gl_s->frame_post_update = 0;
+    T1_gl_s->frame_tail = 0;
     
     // Waits until the GPU is done with this frame's buffers
     T1GPUFrame * f = T1_os_gpu_begin_frame();
@@ -284,7 +284,7 @@ void T1_frame_begin(void)
             T1_log_append("\nOK, resize window\n");
             
             // The client rebuilds its size dependent state now
-            T1_gl_s->frame_resized = true;
+            T1_gl_s->frame_resized = 1;
        }
     } else if (
         T1_log_app_running &&
@@ -320,11 +320,11 @@ void T1_frame_begin(void)
         
         // The client runs its update between T1_frame_begin() and
         // T1_frame_render()
-        T1_gl_s->frame_should_update = true;
-        T1_gl_s->frame_post_update = true;
+        T1_gl_s->frame_should_update = 1;
+        T1_gl_s->frame_post_update = 1;
     }
     
-    T1_gl_s->frame_tail = true;
+    T1_gl_s->frame_tail = 1;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     T1_profiler_end("T1_frame_begin()");
@@ -349,7 +349,7 @@ u64 T1_frame_elapsed_us(void) {
 void T1_frame_render(void) {
     T1GPUFrame * f = T1_gl_s->frame;
     T1_gl_s->frame = NULL;
-    T1_gl_s->frame_rendered = false;
+    T1_gl_s->frame_rendered = 0;
     
     if (f == NULL) {
         return;
@@ -497,12 +497,12 @@ void T1_window_poll_events(void) {
     // rendered (e.g. while a resize settles)
     if (T1_gl_s->frame_rendered) {
         T1_gameloop_after_frame();
-        T1_gl_s->frame_rendered = false;
+        T1_gl_s->frame_rendered = 0;
     }
     
     // Presenting blocks at the display's refresh rate. Without it, wait
     // a little for input instead, so the client's loop doesn't spin.
     T1_os_window_pump_events(
         T1_gl_s->frame_presented ? 0 : T1_GAMELOOP_IDLE_WAIT_US);
-    T1_gl_s->frame_presented = false;
+    T1_gl_s->frame_presented = 0;
 }

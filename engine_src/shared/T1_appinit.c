@@ -1120,6 +1120,6 @@ void T1_assets_load_all(
 void T1_shutdown(void) {
     T1_os_shutdown();
     
-    b8 write_succesful = false;
+    b8 write_succesful = 0;
     T1_log_dump(&write_succesful);
 }
