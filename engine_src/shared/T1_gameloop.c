@@ -15,7 +15,6 @@
 #include "T1_zsprite.h"
 #include "T1_zlight.h"
 #include "T1_anim.h"
-#include "T1_profiler.h"
 #include "T1_particle.h"
 #include "T1_render_view.h"
 
@@ -130,13 +129,6 @@ static void show_dead_simple_text(
 
 void T1_frame_begin(void)
 {
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_frame_begin()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     T1_gl_s->frame_should_update = 0;
     T1_gl_s->frame_resized = 0;
     T1_gl_s->frame_post_update = 0;
@@ -146,12 +138,6 @@ void T1_frame_begin(void)
     T1GPUFrame * f = T1_os_gpu_begin_frame();
     T1_gl_s->frame = f;
     if (f == NULL) {
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_frame_begin()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         return;
     }
     
@@ -200,23 +186,10 @@ void T1_frame_begin(void)
             256,
             "%");
         show_dead_simple_text(f, loading_text, 1);
-        
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_frame_begin()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         return;
     }
     
     if (!T1_gameloop_active) {
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_frame_begin()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         return;
     }
     
@@ -228,13 +201,6 @@ void T1_frame_begin(void)
     
     if (T1_gl_s->previous_time < 1) {
         T1_gl_s->previous_time = T1_global->this_frame_timestamp_us;
-        
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_frame_begin()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         return;
     }
     
@@ -243,13 +209,6 @@ void T1_frame_begin(void)
             f,
             T1_log_crash_msg,
             T1_global->elapsed);
-        
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_frame_begin()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         return;
     }
     
@@ -269,13 +228,6 @@ void T1_frame_begin(void)
             // we break, not return, because we do want to render an
             // empty screen
             T1_log_append("w82RZ - ");
-            
-            #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end("T1_frame_begin()");
-            #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-            #else
-            #error "T1_PROFILER_ACTIVE undefined"
-            #endif
             return;
         } else {
             T1_global_init();
@@ -325,13 +277,6 @@ void T1_frame_begin(void)
     }
     
     T1_gl_s->frame_tail = 1;
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("T1_frame_begin()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
 }
 
 u8 T1_frame_should_update(void) {
@@ -355,13 +300,6 @@ void T1_frame_render(void) {
         return;
     }
     
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_frame_render()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     if (T1_gl_s->frame_post_update) {
         T1_zlight_clean_all_deleted();
         
@@ -372,21 +310,7 @@ void T1_frame_render(void) {
         T1_render_view_update_positions(
             T1_global->elapsed);
         
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_start(
-            "T1_renderer_hardware_render()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         T1_render_update(f, T1_global->elapsed);
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end(
-            "T1_renderer_hardware_render()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
         
         T1_texquad_defragment();
         T1_zsprite_defragment();
@@ -407,23 +331,9 @@ void T1_frame_render(void) {
         
         f->postproc_consts->timestamp = (u32)T1_global->
             this_frame_timestamp_us;
-        
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_draw_labels();
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
     }
     
     T1_gl_s->frame_rendered = T1_os_gpu_render_frame();
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("T1_frame_render()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
 }
 
 void T1_window_present(void) {
@@ -456,13 +366,6 @@ input events (the client has seen them by now), polls gamepads, handles
 fullscreen requests and starts a new profiler frame.
 */
 static void T1_gameloop_after_frame(void) {
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_gameloop_after_frame()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
     T1_io_update_and_clear_for_next_frame();
     
     #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
@@ -476,20 +379,6 @@ static void T1_gameloop_after_frame(void) {
         T1_global->upcoming_fullscreen_request = 0;
         T1_os_enter_fullscreen();
     }
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("T1_gameloop_after_frame()");
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE undefined"
-    #endif
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_new_frame();
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
 }
 
 void T1_window_poll_events(void) {

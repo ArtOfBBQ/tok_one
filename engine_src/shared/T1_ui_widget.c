@@ -11,7 +11,6 @@
 #include "T1_tex_array.h"
 #include "T1_anim.h"
 #include "T1_text.h"
-#include "T1_profiler.h"
 #include "T1_render_view.h"
 
 #define T1_UI_WIDGET_STR_CAP 128

@@ -314,42 +314,6 @@ static u8 T1_term_evaluate(
     char * response)
 {
     if (
-        T1_std_are_equal_strings(
-            command, "PROFILE") ||
-        T1_std_are_equal_strings(
-            command, "PROFILER") ||
-        T1_std_are_equal_strings(
-            command, "PROFILE TREE"))
-    {
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_global->show_profiler =
-            !T1_global->show_profiler;
-        
-        if (T1_global->show_profiler) {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Showing profiler results...");
-        } else {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "Stopped showing profiler results...");
-        }
-        
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "PROFILER_ACTIVE was undefined at compile time, no profiler data "
-            "is available.");
-        #else
-        #error
-        #endif
-        return 1;
-    }
-    
-    if (
         T1_std_string_starts_with(
             command,
             "UNBLOCK RENDER VIEW UPDATES"))

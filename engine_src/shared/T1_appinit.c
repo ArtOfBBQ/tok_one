@@ -11,7 +11,6 @@
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_tex_files.h"
-#include "T1_profiler.h"
 #include "T1_rand.h"
 #include "T1_objmodel.h"
 #include "T1_audio.h"
@@ -319,15 +318,6 @@ void T1_init(
             T1_os_mutex_lock,
         /* s32 arg_mutex_unlock_function(const u32 mutex_id): */
             T1_os_mutex_unlock);
-    
-    #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_init(
-        T1_os_get_clock_frequency(),
-            T1_mem_malloc_unmanaged);
-    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_PROFILER_ACTIVE not set"
-    #endif
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
         sizeof(T1Globals));

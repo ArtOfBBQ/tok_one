@@ -54,7 +54,6 @@ that modify the behavior of the engine.
 #define T1_OUTLINES_ACTIVE 1
 #define T1_AUDIO_ACTIVE 2
 #define T1_ENGINE_SAVEFILE_ACTIVE 2
-#define T1_PROFILER_ACTIVE 2
 #define T1_TONE_MAPPING_ACTIVE 1
 #define T1_COLOR_QUANTIZATION_ACTIVE 1
 #define T1_FOG_ACTIVE 2
@@ -70,24 +69,9 @@ Your application's pre-allocated memory pool.
 */
 // 425mb ->                   425...000
 #if defined(NDEBUG) || defined(NS_BLOCK_ASSERTIONS)
-
-#if T1_PROFILER_ACTIVE == T1_ACTIVE
-#define T1_UNMANAGED_MEM_CAP 333000000
-#elif T1_PROFILER_ACTIVE == T1_INACTIVE
-#define T1_UNMANAGED_MEM_CAP 333000000 // production
+#define T1_UNMANAGED_MEM_CAP 313000000 // production
 #else
-#error
-#endif
-
-#else
-
-#if T1_PROFILER_ACTIVE == T1_ACTIVE
 #define T1_UNMANAGED_MEM_CAP 333000000
-#elif T1_PROFILER_ACTIVE == T1_INACTIVE
-#define T1_UNMANAGED_MEM_CAP 333000000
-#else
-#error
-#endif
 #endif
 
 // set to 3 for triple-buffering
