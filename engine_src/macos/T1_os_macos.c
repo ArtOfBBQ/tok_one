@@ -22,7 +22,6 @@
 #define T1NSWindowStyleMaskTitled (1 << 0)
 #define T1NSWindowStyleMaskClosable (1 << 1)
 #define T1NSWindowStyleMaskResizable (1 << 3)
-#define T1MTLPixelFormatDepth32Float 252
 
 typedef struct {
     double x;
@@ -111,8 +110,6 @@ typedef struct {
     void * sel_set_auto_resize_drawable; // setAutoResizeDrawable:
     void * sel_set_preferred_frames_per_second; // setPreferredFramesPerSecond:
     void * sel_set_enable_set_needs_display; // setEnableSetNeedsDisplay:
-    void * sel_set_depth_stencil_pixel_format; // setDepthStencilPixelFormat:
-    void * sel_set_clear_depth; // setClearDepth:
     void * sel_set_paused;
     void * sel_set_needs_display; 
     b8 framework_good;
@@ -932,10 +929,6 @@ void T1_os_macos_init(void) {
         "setPreferredFramesPerSecond:");
     T1_os_macos_s->sel_set_enable_set_needs_display = T1_objc_reg_sel(
         "setEnableSetNeedsDisplay:");
-    T1_os_macos_s->sel_set_depth_stencil_pixel_format = T1_objc_reg_sel(
-        "setDepthStencilPixelFormat:");
-    T1_os_macos_s->sel_set_clear_depth = T1_objc_reg_sel(
-        "setClearDepth:");
     T1_os_macos_s->sel_set_paused = T1_objc_reg_sel(
         "setPaused:");
     T1_os_macos_s->sel_set_needs_display = T1_objc_reg_sel(
@@ -1466,14 +1459,6 @@ void T1_os_link_gpu_to_main_window(
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_enable_set_needs_display, false);
     
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_depth_stencil_pixel_format,
-        T1MTLPixelFormatDepth32Float);
-    
-    T1_objc_msg_1f64(
-        mtk_view,
-        T1_os_macos_s->sel_set_clear_depth,
-        T1_GLOBAL_CLEARDEPTH);
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_paused, false);
     T1_objc_msg_1arg(mtk_view,

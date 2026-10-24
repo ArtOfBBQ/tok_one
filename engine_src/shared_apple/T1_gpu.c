@@ -28,6 +28,7 @@
 #define T1MTLTextureType2D 2
 #define T1MTLTextureType2DArray 3
 #define T1MTLCompareFunctionLessEqual 3
+#define T1MTLPixelFormatInvalid 0
 #define T1MTLPixelFormatRGBA8Unorm 70
 #define T1MTLPixelFormatBGRA8Unorm 80
 #define T1MTLPixelFormatBC1_RGBA 130
@@ -251,6 +252,7 @@ typedef struct {
     void * class_mtl_texture_desc; // MTLTextureDescriptor
     void * class_mtl_render_pipeline_desc; // MTLRenderPipelineDescriptor
     void * class_mtl_depth_stencil_desc; // MTLDepthStencilDescriptor
+    void * class_mtl_render_pass_desc; // MTLRenderPassDescriptor
     void * class_nsurl; // NSURL;
     // objective-c selectors
     void * sel_set_depth_attachment_pixel_format; // setDepthAttachmentPixelFormat
@@ -318,6 +320,7 @@ typedef struct {
     void * sel_wait_until_completed; // waitUntilCompleted
     void * sel_end_encoding; // endEncoding
     void * sel_current_drawable; // currentDrawable
+    void * sel_texture; // texture
     void * sel_copy_from_texture_to_texture; // copyFromTexture:toTexture:
     void * sel_copy_from_texture_to_buffer; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:
     void * sel_new_buffer_with_bytes_no_copy; // newBufferWithBytesNoCopy:length:options:deallocator:
@@ -331,7 +334,7 @@ typedef struct {
     void * sel_set_texture; // setTexture:
     void * sel_set_depth_write_enabled; // setDepthWriteEnabled:
     void * sel_set_depth_compare_function; // setDepthCompareFunction:
-    void * sel_current_render_pass_desc; // currentRenderPassDescriptor
+    void * sel_render_pass_desc; // renderPassDescriptor
     void * sel_file_URL_with_path_is_directory; // fileURLWithPath:isDirectory:
     void * sel_dispatch_threads_threadsperthreadgroup; // dispatchThreads:threadsPerThreadsGroup:
     void * sel_new_lib_with_source_options_error; // newLibraryWithSource:options:error:
@@ -458,6 +461,7 @@ void T1_apple_gpu_init(
     ags->class_mtl_texture_desc = T1_objc_get_class("MTLTextureDescriptor");
     ags->class_mtl_render_pipeline_desc = T1_objc_get_class("MTLRenderPipelineDescriptor");
     ags->class_mtl_depth_stencil_desc = T1_objc_get_class("MTLDepthStencilDescriptor");
+    ags->class_mtl_render_pass_desc = T1_objc_get_class("MTLRenderPassDescriptor");
     ags->class_nsurl = T1_objc_get_class("NSURL");
     ags->sel_set_depth_attachment_pixel_format = T1_objc_reg_sel(
         "setDepthAttachmentPixelFormat:");
@@ -582,6 +586,8 @@ void T1_apple_gpu_init(
         "endEncoding");
     ags->sel_current_drawable = T1_objc_reg_sel(
         "currentDrawable");
+    ags->sel_texture = T1_objc_reg_sel(
+        "texture");
     ags->sel_copy_from_texture_to_texture = T1_objc_reg_sel(
         "copyFromTexture:toTexture:");
     ags->sel_copy_from_texture_to_buffer = T1_objc_reg_sel(
@@ -608,8 +614,8 @@ void T1_apple_gpu_init(
         "setDepthWriteEnabled:");
     ags->sel_set_depth_compare_function = T1_objc_reg_sel(
         "setDepthCompareFunction:");
-    ags->sel_current_render_pass_desc = T1_objc_reg_sel(
-        "currentRenderPassDescriptor");
+    ags->sel_render_pass_desc = T1_objc_reg_sel(
+        "renderPassDescriptor");
     ags->sel_file_URL_with_path_is_directory = T1_objc_reg_sel(
         "fileURLWithPath:isDirectory:");
     ags->sel_dispatch_threads_threadsperthreadgroup = T1_objc_reg_sel(
@@ -1243,6 +1249,11 @@ void T1_os_gpu_try_shader_source(
             ags->sel_set_pixel_format,
             T1MTLPixelFormatBGRA8Unorm);
     }
+    // The final composite pass writes only color, no depth
+    T1_objc_msg_1arg(
+        singlequad_pipeline_descriptor,
+        ags->sel_set_depth_attachment_pixel_format,
+        T1MTLPixelFormatInvalid);
     void * vert_buffers = (void *)T1_objc_msg(
         singlequad_pipeline_descriptor,
         ags->sel_vertex_buffers);
@@ -2054,6 +2065,17 @@ void T1_os_gpu_copy_locked_materials(
         ags->sel_commit);
 }
 
+/*
+Returns a fresh, autoreleased MTLRenderPassDescriptor with no attachments,
+so each pass starts from a clean slate instead of inheriting the previous
+pass's settings. It lives until the frame's autorelease pool is popped.
+*/
+static void * T1_gpu_new_render_pass_descriptor(void) {
+    return (void *)T1_objc_msg(
+        ags->class_mtl_render_pass_desc,
+        ags->sel_render_pass_desc);
+}
+
 static void set_defaults_for_render_descriptor(
     void * desc,
     s32 cam_i)
@@ -2290,7 +2312,6 @@ static void set_defaults_for_encoder(
 static void T1_gpu_draw_single_pass(
     s32 pass_i,
     s32 cam_i,
-    void * view,
     void * combuf)
 {
     T1RenderPass * pass =
@@ -2319,18 +2340,17 @@ static void T1_gpu_draw_single_pass(
                     write_type !=
                         T1RENDERVIEW_WRITE_DEPTH);
             
-            void * outlines_desc = (void *)T1_objc_msg(
-                view,
-                ags->sel_current_render_pass_desc);
+            void * outlines_desc = T1_gpu_new_render_pass_descriptor();
             T1_log_assert(outlines_desc != NULL);
             if (!outlines_desc) {
                 return;
             }
-            
+
             set_defaults_for_render_descriptor(
                 outlines_desc,
                 cam_i);
             {
+                // The outlines pipeline has no touch id attachment
                 void * color_attachments = (void *)T1_objc_msg(
                     outlines_desc,
                     ags->sel_color_attachments);
@@ -2342,7 +2362,7 @@ static void T1_gpu_draw_single_pass(
                     ags->sel_set_texture,
                     (uintptr_t)NULL);
             }
-            
+
             void * pass_1_outline_enc =
                 (void *)T1_objc_msg_1arg(
                     combuf,
@@ -2407,9 +2427,7 @@ static void T1_gpu_draw_single_pass(
             }
             
             // opaque triangles
-            void * diamond_desc = (void *)T1_objc_msg(
-                view,
-                ags->sel_current_render_pass_desc);
+            void * diamond_desc = T1_gpu_new_render_pass_descriptor();
             
             set_defaults_for_render_descriptor(
                 diamond_desc,
@@ -2454,8 +2472,7 @@ static void T1_gpu_draw_single_pass(
                 break;
             }
             
-            void * alpha_desc = (void *)T1_objc_msg(
-                view, ags->sel_current_render_pass_desc);
+            void * alpha_desc = T1_gpu_new_render_pass_descriptor();
             
             set_defaults_for_render_descriptor(
                 alpha_desc,
@@ -2501,8 +2518,7 @@ static void T1_gpu_draw_single_pass(
                 break;
             }
             
-            void * bb_desc = (void *)T1_objc_msg(
-                view, ags->sel_current_render_pass_desc);
+            void * bb_desc = T1_gpu_new_render_pass_descriptor();
             
             set_defaults_for_render_descriptor(
                 bb_desc,
@@ -2565,8 +2581,7 @@ static void T1_gpu_draw_single_pass(
             // only render target can bloom atm
             T1_log_assert(cam_i == 0);
             
-            void * bloom_desc = (void *)T1_objc_msg(view,
-                ags->sel_current_render_pass_desc);
+            void * bloom_desc = T1_gpu_new_render_pass_descriptor();
             set_defaults_for_render_descriptor(
                 bloom_desc,
                 cam_i);
@@ -2704,9 +2719,7 @@ static void T1_gpu_draw_single_pass(
                 break;
             }
             
-            void * flat_texq_desc = (void *)T1_objc_msg(
-                view,
-                ags->sel_current_render_pass_desc);
+            void * flat_texq_desc = T1_gpu_new_render_pass_descriptor();
             
             set_defaults_for_render_descriptor(
                 flat_texq_desc,
@@ -3021,6 +3034,168 @@ static void * get_tex_slice(
     return retval;
 }
 
+/*
+Pass 5 puts a quad on the full screen, compositing render view 0 (plus bloom)
+into target_tex, which must be BGRA8 to match the singlequad pipeline.
+*/
+static void T1_gpu_encode_composite_pass(
+    void * combuf,
+    T1GPUFrame * f,
+    void * target_tex)
+{
+    void * pass_5_comp_desc = T1_gpu_new_render_pass_descriptor();
+    {
+        void * color_attachments = (void *)T1_objc_msg(
+            pass_5_comp_desc,
+            ags->sel_color_attachments);
+        void * color_att_0 = (void *)T1_objc_msg_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            0);
+        T1_objc_msg_1arg(
+            color_att_0,
+            ags->sel_set_texture,
+            (uintptr_t)target_tex);
+        T1_objc_msg_1arg(
+            color_att_0,
+            ags->sel_set_load_action,
+            T1MTLLoadActionClear);
+        // MTKView's default clear color, which this pass used to inherit
+        ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
+            color_att_0,
+            ags->sel_set_clear_color,
+            T1_mtl_clearcolor_make(0.0, 0.0, 0.0, 1.0));
+        T1_objc_msg_1arg(
+            color_att_0,
+            ags->sel_set_store_action,
+            T1MTLStoreActionStore);
+    }
+    
+    void * pass_5_comp = (void *)T1_objc_msg_1arg(
+        combuf,
+        ags->sel_render_cmd_enc_with_desc,
+        (uintptr_t)pass_5_comp_desc);
+    
+    typedef void (* setViewportFuncType)(void *, void *, T1MTLViewport);
+    ((setViewportFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        pass_5_comp,
+        ags->sel_set_viewport,
+        ags->window_viewport);
+    
+    T1_objc_msg_1arg(
+        pass_5_comp,
+        ags->sel_set_cull_mode,
+        T1MTLCullModeNone);
+    T1_objc_msg_1arg(
+        pass_5_comp,
+        ags->sel_set_render_pls, (uintptr_t)ags->singlequad_pls);
+    T1_objc_msg_3arg(
+        pass_5_comp,
+        ags->sel_set_vertex_bytes_length_atindex,
+        (uintptr_t)ags->quad_vertices,
+        sizeof(T1PostProcessingVertex)*6,
+        0);
+    T1_objc_msg_3arg(
+        pass_5_comp,
+        ags->sel_set_vertex_buffer_offset_atindex,
+        /* setVertexBuffer: */
+            (uintptr_t)ags->postprocessing_constants_buffers[ags->frame_i],
+        /* offset: */
+            0,
+        /* atIndex: */
+            1);
+    
+    // The main camera must have a target to write to
+    T1_log_assert(
+        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) >= 0);
+    T1_log_assert(
+        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) <
+            (s32)T1_tex_arrays_size);
+    
+    void * arr_tex =
+        ags->metal_textures[T1_tex_to_array_i(T1_render_views->cpu[0].write_tex)];
+    T1NSRange levels_range = T1_nsrange_make(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
+    T1NSRange slices_range = T1_nsrange_make(
+        (uintptr_t)T1_tex_to_slice_i(
+            T1_render_views->cpu[0].write_tex),
+        1);
+    
+    void * sliced_tex = ((newTextureViewFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        arr_tex,
+        ags->sel_new_texture_view_with_pixel_format,
+        T1_objc_msg(arr_tex, ags->sel_pixel_format),
+        T1MTLTextureType2D,
+        levels_range,
+        slices_range);
+    
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)sliced_tex,
+        /* atIndex: */ 0);
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[1],
+        /* atIndex: */ 1);
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[2],
+        /* atIndex: */ 2);
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[3],
+        /* atIndex: */ 3);
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[4],
+        /* atIndex: */ 4);
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
+    #endif
+    
+    s32 perlin_ta_i =
+        f->postproc_consts->perlin_texturearray_i;
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    s32 perlin_t_i =
+        f->postproc_consts->perlin_texture_i;
+    // log_assert(perlin_ta_i >= 1);
+    T1_log_assert(perlin_t_i == 0);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
+    #endif
+    
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->metal_textures[perlin_ta_i],
+        /* atIndex: */ 6);
+    
+    T1_objc_msg_2arg(
+        pass_5_comp,
+        ags->sel_set_fragment_texture_at_index,
+        /* setFragmentTexture: */ (uintptr_t)ags->depth_textures[0],
+        /* atIndex: */ T1_CAM_DEPTH_FRAGARG_I);
+    
+    T1_objc_msg_3arg(
+        pass_5_comp,
+        ags->sel_draw_primitives_vertex_start_vertex_count,
+        /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
+        /* vertexStart: */ 0,
+        /* vertexCount: */ 6);
+    
+    T1_objc_msg(pass_5_comp, ags->sel_end_encoding);
+}
+
 void T1_gpu_draw_in_mtk_view(void * view)
 {
     if (!ags || !ags->metal_active || !ags->shaders_ready) {
@@ -3221,7 +3396,7 @@ void T1_gpu_draw_in_mtk_view(void * view)
                 passes_size;
             pass_i++)
         {
-            T1_gpu_draw_single_pass(pass_i, cam_i, view, combuf);
+            T1_gpu_draw_single_pass(pass_i, cam_i, combuf);
         }
         
         T1_log_assert(ags->viewports_set[cam_i]);
@@ -3266,148 +3441,28 @@ void T1_gpu_draw_in_mtk_view(void * view)
         ags->sel_end_encoding);
     }
     
-    // Pass 5 puts a quad on the full screen
-    void * pass_5_comp_desc = (void *)T1_objc_msg(
-        view,
-        ags->sel_current_render_pass_desc);
-    
-    //    set_defaults_for_render_descriptor(
-    //        pass_5_comp_desc,
-    //        0);
-    
-    void * pass_5_comp = (void *)T1_objc_msg_1arg(
-        combuf,
-        ags->sel_render_cmd_enc_with_desc,
-        (uintptr_t)pass_5_comp_desc);
-    
-    typedef void (* setViewportFuncType)(void *, void *, T1MTLViewport);
-    ((setViewportFuncType)T1_objc_unsafe_get_raw_msg_send())(
-        pass_5_comp,
-        ags->sel_set_viewport,
-        ags->window_viewport);
-    
-    T1_objc_msg_1arg(
-        pass_5_comp,
-        ags->sel_set_cull_mode,
-        T1MTLCullModeNone);
-    T1_objc_msg_1arg(
-        pass_5_comp,
-        ags->sel_set_render_pls, (uintptr_t)ags->singlequad_pls);
-    T1_objc_msg_3arg(
-        pass_5_comp,
-        ags->sel_set_vertex_bytes_length_atindex,
-        (uintptr_t)ags->quad_vertices,
-        sizeof(T1PostProcessingVertex)*6,
-        0);
-    T1_objc_msg_3arg(
-        pass_5_comp,
-        ags->sel_set_vertex_buffer_offset_atindex,
-        /* setVertexBuffer: */
-            (uintptr_t)ags->postprocessing_constants_buffers[ags->frame_i],
-        /* offset: */
-            0,
-        /* atIndex: */
-            1);
-    
-    // The main camera must have a target to write to
-    T1_log_assert(
-        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) >= 0);
-    T1_log_assert(
-        T1_tex_to_array_i(T1_render_views->cpu[0].write_tex) <
-            (s32)T1_tex_arrays_size);
-    
-    void * arr_tex =
-        ags->metal_textures[T1_tex_to_array_i(T1_render_views->cpu[0].write_tex)];
-    T1NSRange levels_range = T1_nsrange_make(0, T1_objc_msg(arr_tex, ags->sel_mipmap_level_count));
-    T1NSRange slices_range = T1_nsrange_make(
-        (uintptr_t)T1_tex_to_slice_i(
-            T1_render_views->cpu[0].write_tex),
-        1);
-    
-    void * sliced_tex = ((newTextureViewFuncType)T1_objc_unsafe_get_raw_msg_send())(
-        arr_tex,
-        ags->sel_new_texture_view_with_pixel_format,
-        T1_objc_msg(arr_tex, ags->sel_pixel_format),
-        T1MTLTextureType2D,
-        levels_range,
-        slices_range);
-    
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)sliced_tex,
-        /* atIndex: */ 0);
-    
-    #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[1],
-        /* atIndex: */ 1);
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[2],
-        /* atIndex: */ 2);
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[3],
-        /* atIndex: */ 3);
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->downsampled_rtts[4],
-        /* atIndex: */ 4);
-    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
-    
-    s32 perlin_ta_i =
-        f->postproc_consts->perlin_texturearray_i;
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 perlin_t_i =
-        f->postproc_consts->perlin_texture_i;
-    // log_assert(perlin_ta_i >= 1);
-    T1_log_assert(perlin_t_i == 0);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
-    
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->metal_textures[perlin_ta_i],
-        /* atIndex: */ 6);
-    
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->depth_textures[0],
-        /* atIndex: */ T1_CAM_DEPTH_FRAGARG_I);
-    
-    T1_objc_msg_3arg(
-        pass_5_comp,
-        ags->sel_draw_primitives_vertex_start_vertex_count,
-        /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-        /* vertexStart: */ 0,
-        /* vertexCount: */ 6);
-    
-    T1_objc_msg(pass_5_comp, ags->sel_end_encoding);
-    
+    // Only now grab the drawable, so we hold it as briefly as possible
     void * current_drawable = (void *)T1_objc_msg(
         view,
         ags->sel_current_drawable);
     T1_log_assert(current_drawable != NULL);
     
-    T1_objc_msg_1arg(
-        combuf, ags->sel_present_drawable,
-        /* presentDrawable: */
-            (uintptr_t)current_drawable);
+    if (current_drawable != NULL) {
+        T1_gpu_encode_composite_pass(
+            /* void * combuf: */
+                combuf,
+            /* T1GPUFrame * f: */
+                f,
+            /* void * target_tex: */
+                (void *)T1_objc_msg(
+                    current_drawable,
+                    ags->sel_texture));
+        
+        T1_objc_msg_1arg(
+            combuf, ags->sel_present_drawable,
+            /* presentDrawable: */
+                (uintptr_t)current_drawable);
+    }
     
     ags->frame_i += 1;
     ags->frame_i %= T1_FRAMES_CAP;
