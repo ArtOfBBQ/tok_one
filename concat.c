@@ -98,7 +98,6 @@ static const char * c_files[] = {
 "T1_anim.c",
 "T1_text.c",
 "T1_render_view.c",
-"T1_ui_widget.c",
 "T1_term.c",
 "T1_render.c",
 "T1_gameloop.c",
