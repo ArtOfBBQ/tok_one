@@ -629,10 +629,24 @@ void T1_apple_gpu_init(
     ags->device = with_metal_device;
     
     if (ags->lib == NULL) {
-        // From embedded data
-        void * nsstr_source = T1_objc_nsstring_construct(
+        // From embedded data: T1's shader includes, then the shaders
+        u32 full_source_cap = (u32)(
+            T1_std_strlen(T1_embedded_data_shader_includes) +
+            T1_std_strlen(T1_embedded_data_shaders_metal) + 1);
+        char * full_source = T1_mem_malloc_managed(full_source_cap);
+        T1_std_strcpy_cap(
+            full_source,
+            full_source_cap,
+            T1_embedded_data_shader_includes);
+        T1_std_strcat_cap(
+            full_source,
+            full_source_cap,
             T1_embedded_data_shaders_metal);
-        
+
+        // stringWithUTF8String: copies, so we can free right away
+        void * nsstr_source = T1_objc_nsstring_construct(full_source);
+        T1_mem_free_managed(full_source);
+
         void * error = NULL;
         ags->lib = (void *)T1_objc_msg_3arg(
             ags->device,
@@ -644,7 +658,7 @@ void T1_apple_gpu_init(
         if (error) {
             void * nsstr_error_desc = (void *)T1_objc_msg(error, ags->sel_description);
             char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc);
-            if (strlen(error_desc) > 400) {
+            if (T1_std_strlen(error_desc) > 400) {
                 error_desc[400] = '\0';
             }
             
