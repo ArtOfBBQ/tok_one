@@ -161,24 +161,10 @@ uint32_t T1_settings_get_render_height(void);
 T1_id
 */
 #define T1_ID_FPS_COUNTER 0
-#define T1_ID_DEBUG_TEXT 1
 #define T1_ID_MAX 8000
-#define T1_ID_FIRST_NONUI 1011
-#define T1_ID_LAST_UI_TOUCH 1000
 #define T1_ID_FIRST_NONUI_TOUCH 1001
 uint32_t  T1_id_next_ui_element_id(void);
 uint32_t  T1_id_next_nonui_id(void);
-uint32_t  T1_id_next_ui_element_touch_id(void);
-void T1_id_clear_ui_element_touch_ids(void);
-uint32_t  T1_id_next_nonui_touch_id(void);
-
-/*
-RANDOM NUMBERS
-*/
-#define T1_RAND_SEQUENCE_SIZE 999
-int32_t  T1_rand(void);
-int32_t  T1_rand_at_i(uint64_t index);
-void T1_rand_shuf_array(void * array, uint32_t array_sz, uint32_t elem_sz);
 
 /*
 CAMERA MANIPULATION
@@ -196,7 +182,6 @@ void  T1_cam_set_angle_xyz_max(int32_t cam_i, int32_t i, float val);
 // to unclamp, clamp to T1_id = -1
 void  T1_cam_set_clamped_to_T1_id(int32_t cam_i, uint32_t T1_id);
 void  T1_cam_set_movement_enabled(int32_t cam_i, uint8_t newval);
-void  T1_cam_delete(int32_t cam_i);
 void  T1_cam_delete_all(void);
 T1Tex T1_cam_get_write_tex(int32_t cam_i);
 void  T1_cam_reset(int32_t at_i);
@@ -205,12 +190,8 @@ void  T1_cam_reset(int32_t at_i);
 // the position of zpolygons
 float T1_screen_x_to_x(float screen_x, float given_z);
 float T1_screen_y_to_y(float screen_y, float at_z);
-float T1_x_to_screen_x(float screen_x, float at_z);
-float T1_y_to_screen_y(float y, float given_z);
 float T1_screen_x_to_x_noz(float screen_x);
 float T1_screen_y_to_y_noz(float screen_y);
-float T1_x_to_screen_x_noz(float y);
-float T1_y_to_screen_y_noz(float y);
 float T1_screen_height_to_height(float screen_h, float at_z);
 float T1_screen_width_to_width(float screen_w, float at_z);
 float T1_screen_width_to_width_noz(float screen_w);
@@ -258,9 +239,6 @@ void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
     const uint8_t * rgba, uint32_t rgba_size);
 uint8_t T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
-const uint8_t * T1_tex_array_get_const_rgba(
-    int32_t array_i,
-    int32_t slice_i);
 uint32_t T1_tex_array_get_img_height(int32_t array_i);
 uint32_t T1_tex_array_get_img_width(int32_t array_i);
 
@@ -294,11 +272,6 @@ the font properties etc. for your next label
 */
 extern T1TextFontSettings * T1_text_props;
 
-void T1_text_draw_label(
-    uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
-    const char * text_to_draw,
-    float left_x_pixelspace, float top_y_pixelspace,
-    float tab_width, float max_width);
 void T1_text_draw_label_around(
     uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
     const char * text_to_draw,
@@ -351,7 +324,7 @@ void T1_ui_widget_requester_set_screen_x(int32_t x);
 void T1_ui_widget_requester_set_screen_y(int32_t y);
 void T1_ui_widget_requester_set_z(float z);
 void T1_ui_widget_requester_set_custom_minmax_f32(uint8_t active, float min, float max);
-void T1_ui_widget_requester_set_linked_type(T1MetaType type);
+void T1_ui_widget_requester_set_linked_type(T1DataType type);
 void T1_ui_widget_request_slider(
     uint32_t background_T1_id, uint32_t label_T1_id, uint32_t pin_T1_id,
     void * linked_value_ptr);
@@ -427,9 +400,6 @@ void T1_anim_commit_and_instarun(
 void T1_anim_fade_destroy_all(
     uint64_t pause_first,
     uint64_t duration_us);
-void T1_anim_bump(
-    uint32_t T1_id,
-    uint32_t wait);
 void T1_anim_dud_dance(
     uint32_t T1_id,
     float magnitude);
@@ -477,114 +447,6 @@ float     T1_io_get_pos_x_this_frame(T1IOKey key);
 float     T1_io_get_pos_y_this_frame(T1IOKey key);
 int32_t   T1_io_create_scene_and_return_id(void);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
-
-/*
-TOKENIZER
-*/
-void T1_token_reset(char ** const fatal_error);
-#define T1_TOKEN_FLAG_IGNORE_CASE 1
-#define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
-#define T1_TOKEN_FLAG_LEAD_DOT_OK 4
-#define T1_TOKEN_FLAG_PRECISE 8
-#define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
-void T1_token_set_reg_bitflags(uint8_t bitflags);
-void T1_token_clear_start_pattern(void);
-void T1_token_set_reg_start_pattern(
-    const char * start_pattern);
-void T1_token_clear_stop_patterns(void);
-void T1_token_set_store_mode(T1TokenStoreMode mode);
-void T1_token_set_reg_middle_cap(uint32_t middle_cap);
-void T1_token_set_reg_stop_pattern(
-    const char * stop_pattern,
-    uint32_t pattern_index);
-void T1_token_set_string_literal(uint32_t enum_val, char ** const fatal_error);
-void T1_token_register(uint32_t enum_value, char ** const fatal_error);
-void T1_token_run(const char * input, char ** const fatal_error);
-uint32_t T1_token_get_token_count(void);
-uint32_t T1_token_get_enum_value(uint16_t token_i);
-void T1_token_overwrite_enum_val(uint16_t token_i, uint32_t new_enum_val);
-char * T1_token_get_string_value(uint16_t token_i);
-uint32_t T1_token_get_string_value_size(uint16_t token_i);
-uint32_t T1_token_get_line_num(uint16_t token_i);
-uint8_t T1_token_is_number(int32_t at_i);
-uint8_t T1_token_fits_f64(int32_t at_i);
-uint8_t T1_token_fits_f32(int32_t at_i);
-uint8_t T1_token_fits_s64(int32_t at_i);
-uint8_t T1_token_fits_s32(int32_t at_i);
-uint8_t T1_token_fits_s16(int32_t at_i);
-uint8_t T1_token_fits_s8(int32_t at_i);
-uint8_t T1_token_fits_u64(int32_t at_i);
-uint8_t T1_token_fits_u32(int32_t at_i);
-uint8_t T1_token_fits_u16(int32_t at_i);
-uint8_t T1_token_fits_u8(int32_t at_i);
-uint64_t T1_token_as_number_unsigned(int32_t at_i);
-int64_t T1_token_as_number_signed(int32_t at_i);
-double T1_token_as_number_floating(int32_t at_i);
-
-/*
-META TYPES (registration)
-*/
-#define T1_meta_struct(struct_name, fatal_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), fatal_error)
-void T1_meta_reg_struct(
-    const char * struct_name,
-    const uint32_t size_bytes,
-    char ** const fatal_error);
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, fatal_error)
-#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, fatal_error)
-#define T1_meta_enum_array(parent_type_name, field_enum_name, field_T1_type, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_enum_name, array_size, 1, 1, 1, fatal_error)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, fatal_error)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, fatal_error)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, fatal_error)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, fatal_error)
-void T1_meta_reg_field(
-    const char * field_name,
-    uint32_t field_offset,
-    T1MetaType field_type,
-    const char * field_struct_type_name_or_null,
-    uint16_t field_array_size_1,
-    uint16_t field_array_size_2,
-    uint16_t field_array_size_3,
-    uint8_t is_enum,
-    char ** const fatal_error);
-#define T1_meta_enum(enum_type_name, T1_data_type, fatal_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), fatal_error)
-void T1_meta_reg_enum(
-    const char * enum_type_name,
-    const T1MetaType T1_type,
-    const uint32_t type_size_check,
-    char ** const fatal_error);
-#define T1_meta_enum_value(enum_type_name, enum_value, fatal_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, fatal_error)
-void T1_meta_reg_enum_value(
-    const char * enum_type_name,
-    const char * value_name,
-    int64_t value,
-    char ** const fatal_error);
-void T1_meta_reg_u4_subname_for_last_field(
-    const char * subname,
-    const char * enum_name_if_any,
-    uint8_t is_right_nibble,
-    char ** const fatal_error);
-
-/*
-META TYPES (querying)
-*/
-void T1_meta_get_offset_and_type(
-    const char * struct_name,
-    const char * field_name,
-    int32_t * out_offset,
-    T1MetaType * out_data_type,
-    char ** const fatal_error);
-void T1_meta_write_to_known_field_uint(
-    const char * target_parent_type,
-    const char * target_field_name,
-    uint64_t value_to_write_uint,
-    void * target_parent_ptr,
-    char ** const fatal_error);
-void T1_meta_write_to_known_field_str(
-    const char * target_parent_type,
-    const char * target_field_name,
-    const char * value_to_write_str,
-    void * target_parent_ptr,
-    char ** const fatal_error);
 
 /*
 FATAL ERRORS
@@ -673,7 +535,6 @@ uint64_t T1_os_get_current_time_us(void);
 void T1_os_start_thread(void *(*function_to_run)(void *), void * arg_on_heap);
 uint32_t T1_os_init_mutex_and_return_id(void);
 uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
-void T1_os_assert_mutex_locked(uint32_t mutex_id);
 void T1_os_mutex_lock(uint32_t mutex_id);
 void T1_os_mutex_unlock(uint32_t mutex_id);
 void T1_os_get_res_dir(char * recip, uint32_t recip_cap);
@@ -689,11 +550,8 @@ uint8_t T1_os_file_exists(const char * filepath);
 void T1_os_del_file(const char * filepath);
 void T1_os_copy_file(
     const char * filepath_src, const char * filepath_dest);
-uint64_t T1_os_get_filesize(const char * filepath);
 uint64_t T1_os_get_writable_size(const char * filename);
 uint64_t T1_os_get_resource_size(const char * res_name);
-void T1_os_read_file(const char * filepath,
-    char * recip, uint32_t * recip_size, uint64_t recip_cap, char ** const fatal_error);
 void T1_os_read_resource_file(
     const char * filename,
     char * recip, uint64_t recip_cap,
@@ -702,13 +560,10 @@ void T1_os_read_writable_file(
     const char * filename,
     char * recip, uint64_t recip_cap,
     char ** const fatal_error);
-void T1_os_get_dir_separator(char * recip);
-uint32_t T1_os_get_dir_separator_size(void);
 void T1_os_writable_filename_to_pathfile(
     const char * filen, char * recip, uint32_t recip_cap);
 void T1_os_res_filename_to_pathfile(
     const char * filen, char * recip, uint32_t recip_cap);
-void T1_os_get_app_dir(char * recip, uint32_t recip_size);
 void T1_os_get_writables_dir(char * recip, uint32_t recip_size);
 void T1_os_write_file_to_writables(
     const char * filepath_in_writables, const char * out,
@@ -748,10 +603,6 @@ int32_t T1_audio_get_permasound_id_or_register_new(
 void T1_audio_add_permasound_to_global_buffer(
     int32_t permasound_id,
     float volume_f32);
-void T1_audio_add_permasound_to_global_buffer_at_offset(
-    int32_t permasound_id,
-    uint64_t play_cursor_offset,
-    float volume_mult);
 void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
     int32_t  permasound_id,
     uint64_t permasound_offset,

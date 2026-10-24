@@ -7,11 +7,9 @@
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
 #include "T1_settings.h"
-#include "T1_meta.h"
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_tex_files.h"
-#include "T1_rand.h"
 #include "T1_objmodel.h"
 #include "T1_audio.h"
 #include "T1_zsprite.h"
@@ -258,21 +256,6 @@ void T1_init(
     
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
     
-    T1_meta_init(
-        T1_mem_malloc_unmanaged,
-        /* const u32 ascii_store_cap: */
-            30000,
-        /* const u16 meta_structs_cap: */
-            30,
-        /* const u16 meta_fields_cap: */
-            500,
-        /* const u16 meta_enums_cap: */
-            30,
-        /* const u16 meta_enum_vals_cap: */
-            200,
-        /* b8 * good: */
-            fatal_error);
-    
     ias = T1_mem_malloc_unmanaged(
         sizeof(T1InitApplicationState));
     if (!ias) {
@@ -517,16 +500,6 @@ void T1_init(
     T1_render_view_init();
     
     T1_render_init();
-    
-    T1_rand_init(
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_os_get_current_time_us() % T1_RAND_SEQUENCE_SIZE
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-        0
-        #else
-        #error
-        #endif
-        );
     
     T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
         sizeof(T1CPUToGPUData));

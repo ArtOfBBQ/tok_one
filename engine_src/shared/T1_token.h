@@ -5,6 +5,13 @@
 
 #include "T1_types_public.h"
 
+typedef enum : uint8_t {
+    T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
+    T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
+    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
+    T1_TOKEN_STOREMODE_MIDDLE_STRING     // Register token, save string
+} T1TokenStoreMode;
+
 /*
 THE API FOR TRANSFORMING TEXT TO TOKENS (below)
 */
@@ -102,14 +109,7 @@ big for a uint64, even if it's composed of all numbers
 */
 b8 T1_token_is_number(s32 at_i);
 b8 T1_token_fits_f64(s32 at_i);
-b8 T1_token_fits_f32(s32 at_i);
-b8 T1_token_fits_s64(s32 at_i);
-b8 T1_token_fits_s32(s32 at_i);
-b8 T1_token_fits_s16(s32 at_i);
 b8 T1_token_fits_s8(s32 at_i);
-b8 T1_token_fits_u64(s32 at_i);
-b8 T1_token_fits_u32(s32 at_i);
-b8 T1_token_fits_u16(s32 at_i);
 b8 T1_token_fits_u8(s32 at_i);
 
 u64 T1_token_as_number_unsigned(s32 at_i);

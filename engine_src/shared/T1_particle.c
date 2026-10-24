@@ -3,7 +3,7 @@
 #include "T1_mem.h"
 #include "T1_log.h"
 #include "T1_global.h"
-#include "T1_rand.h"
+#include "T1_simd.h"
 #include "T1_zsprite.h"
 #include "T1_mesh_summary.h"
 
@@ -13,6 +13,32 @@
 
 T1ParticleEffect * T1_particle_effects = NULL;
 u32 T1_particle_effects_size = 0;
+
+/*
+Random numbers for particles, computed on the fly: the same index always
+gives the same value. (An integer hash, Chris Wellons' "lowbias32".)
+*/
+static u32 T1_particle_noise_u32(u32 i) {
+    i ^= i >> 16;
+    i *= 0x21F0AAADu;
+    i ^= i >> 15;
+    i *= 0x735A2D97u;
+    i ^= i >> 15;
+    return i;
+}
+
+// SIMD_FLOAT_LANES consecutive noise values, each 0.0f..1.0f
+static SIMD_FLOAT T1_particle_noise_simd(u32 i) {
+    f32 out[SIMD_FLOAT_LANES];
+    for (u32 lane_i = 0; lane_i < SIMD_FLOAT_LANES; lane_i++) {
+        out[lane_i] =
+            (f32)T1_particle_noise_u32(i + lane_i) / 4294967295.0f;
+    }
+    return simd_load_f32s(out);
+}
+
+// Gives each new effect its own seed
+static u32 T1_particle_seeds_handed_out = 0;
 
 #if 0
 T1ShatterEffect * T1_shatter_effects = NULL;
@@ -51,8 +77,8 @@ void T1_particle_effect_construct(
     
     to_construct->T1_id = -1;
     
-    to_construct->random_seed = (u32)T1_rand() %
-        (T1_RAND_SEQUENCE_SIZE - 100);
+    to_construct->random_seed = T1_particle_noise_u32(
+        T1_particle_seeds_handed_out++);
     to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
     to_construct->modifiers_size = 1;
@@ -67,8 +93,8 @@ void T1_shatter_effect_construct(
     
     to_construct->T1_id = -1;
     
-    to_construct->random_seed = (u32)
-        T1_rand() % (RANDOM_SEQUENCE_SIZE - 100);
+    to_construct->random_seed = T1_particle_noise_u32(
+        T1_particle_seeds_handed_out++);
     to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
     to_construct->modifiers_size = 1;
@@ -297,12 +323,10 @@ static void T1_particle_add_single_to_frame_data(
         f32 one_percent = 0.01f;
         f32 hundred_percent = 1.0f;
         
-        u64 rand_i =
-            (pe->random_seed +
-                (mod_i << 2) +
-                (spawn_i * 9)) %
-                (T1_RAND_SEQUENCE_SIZE -
-                    sizeof(T1GPUFlatQuad));
+        u32 rand_i = (u32)(
+            pe->random_seed +
+            (mod_i << 2) +
+            (spawn_i * 9));
         
         if (t < 0.0f) { continue; }
         
@@ -314,7 +338,7 @@ static void T1_particle_add_single_to_frame_data(
             j += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT fvar_add =
-                T1_rand_simd_at_i(
+                T1_particle_noise_simd(
                     rand_i + j);
             fvar_add = simd_mul_f32s(
                 fvar_add,
@@ -327,7 +351,7 @@ static void T1_particle_add_single_to_frame_data(
                 simd_set1_f32(hundred_percent));
             
             SIMD_FLOAT fvar_sub =
-                T1_rand_simd_at_i(
+                T1_particle_noise_simd(
                     rand_i + j + 4);
             fvar_sub = simd_mul_f32s(
                 fvar_sub,
@@ -448,12 +472,10 @@ T1_zsprite_add_single_shatter_to_frame_data(
         f32 one_percent = 0.01f;
         f32 hundred_percent = 1.0f;
         
-        u64 rand_i =
-            (se->random_seed +
-                (mod_i << 2) +
-                (spawn_i * 9)) %
-                (RANDOM_SEQUENCE_SIZE -
-                    sizeof(T1GPUFlatQuad));
+        u32 rand_i = (u32)(
+            se->random_seed +
+            (mod_i << 2) +
+            (spawn_i * 9));
         
         if (t < 0.0f) { continue; }
         
@@ -465,7 +487,7 @@ T1_zsprite_add_single_shatter_to_frame_data(
             j += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT fvar_add =
-                T1_rand_simd_at_i(
+                T1_particle_noise_simd(
                     rand_i + j);
             fvar_add = simd_mul_f32s(
                 fvar_add,
@@ -478,7 +500,7 @@ T1_zsprite_add_single_shatter_to_frame_data(
                 simd_set1_f32(hundred_percent));
             
             SIMD_FLOAT fvar_sub =
-                T1_rand_simd_at_i(
+                T1_particle_noise_simd(
                     rand_i + j + 4);
             fvar_sub = simd_mul_f32s(
                 fvar_sub,

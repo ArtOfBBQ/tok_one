@@ -5,7 +5,6 @@
 #include "T1_mem.h"
 #include "T1_global.h"
 #include "T1_id.h"
-#include "T1_meta.h"
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_tex_array.h"
@@ -15,7 +14,6 @@
 
 #define T1_UI_WIDGET_STR_CAP 128
 typedef struct {
-    char meta_struct_name[T1_UI_WIDGET_STR_CAP];
     union {
         u64 custom_umax;
         s64 custom_smax;
@@ -44,8 +42,7 @@ typedef struct {
     c8 sfx_filename[T1_UI_WIDGET_STR_CAP];
     c8 label_prefix[T1_UI_WIDGET_STR_CAP];
     b8 custom_min_max_vals;
-    b8 is_meta_enum;
-    T1MetaType linked_type;
+    T1DataType linked_type;
     b8 label_shows_value;
 } T1UIWidgetProps;
 
@@ -264,9 +261,7 @@ static void T1_ui_widget_set_label(
     u32 recip_cap,
     ActiveUIElement * widget)
 {
-    if (
-        widget->props.label_prefix[0] != '\0' &&
-        !widget->props.is_meta_enum)
+    if (widget->props.label_prefix[0] != '\0')
     {
         T1_std_strcpy_cap(
             recip,
@@ -274,81 +269,56 @@ static void T1_ui_widget_set_label(
             widget->props.label_prefix);
     }
     
-    u8 good = 0;
-    
     if (widget->slider_linked_value != NULL)
     {
-        if (widget->props.is_meta_enum)
+        T1_std_strcat_cap(
+            recip,
+            recip_cap,
+            ": ");
+        
+        switch (widget->props.linked_type)
         {
-            char * enum_as_str = NULL;
-            
-            switch (widget->props.linked_type)
-            {
-            case T1_TYPE_U8:
-                enum_as_str = T1_meta_enum_uint_to_string(
-                    widget->props.meta_struct_name,
-                    *(u8 *)widget->slider_linked_value,
-                    &good);
-                assert(good);
-            break;
-            default:
-            assert(0);
-            }
-            
+        case T1_TYPE_F32:
+            T1_std_strcat_f32_cap(
+                recip,
+                recip_cap,
+                *(f32 *)widget->
+                    slider_linked_value);
+        break;
+        case T1_TYPE_U64:
+            T1_std_strcat_u32_cap(
+                recip,
+                recip_cap,
+                (u32)*(u64 *)widget->
+                    slider_linked_value);
+        break;
+        case T1_TYPE_U32:
+            T1_std_strcat_u32_cap(
+                recip,
+                recip_cap,
+                *(u32 *)widget->
+                    slider_linked_value);
+        break;
+        case T1_TYPE_U16:
+            T1_std_strcat_u32_cap(
+                recip,
+                recip_cap,
+                *(u16 *)widget->
+                    slider_linked_value);
+        break;
+        case T1_TYPE_U8:
+            T1_std_strcat_u32_cap(
+                recip,
+                recip_cap,
+                *(u8 *)widget->
+                    slider_linked_value);
+        break;
+        default:
             T1_std_strcat_cap(
                 recip,
                 recip_cap,
-                enum_as_str == NULL ? "N/A" : enum_as_str);
-        } else {
-            T1_std_strcat_cap(
-                recip,
-                recip_cap,
-                ": ");
-            
-            switch (widget->props.linked_type)
-            {
-            case T1_TYPE_F32:
-                T1_std_strcat_f32_cap(
-                    recip,
-                    recip_cap,
-                    *(f32 *)widget->
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U64:
-                T1_std_strcat_u32_cap(
-                    recip,
-                    recip_cap,
-                    (u32)*(u64 *)widget->
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U32:
-                T1_std_strcat_u32_cap(
-                    recip,
-                    recip_cap,
-                    *(u32 *)widget->
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U16:
-                T1_std_strcat_u32_cap(
-                    recip,
-                    recip_cap,
-                    *(u16 *)widget->
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U8:
-                T1_std_strcat_u32_cap(
-                    recip,
-                    recip_cap,
-                    *(u8 *)widget->
-                        slider_linked_value);
-            break;
-            default:
-                T1_std_strcat_cap(
-                    recip,
-                    recip_cap,
-                    "?DATA");
-            break;
-            }
+                "?DATA");
+        break;
         }
     }
 }
@@ -434,7 +404,7 @@ void T1_ui_widget_requester_set_custom_minmax_f32(
     T1_ui_widget_next_props->custom_fmin = min;
     T1_ui_widget_next_props->custom_fmax = max;
 }
-void T1_ui_widget_requester_set_linked_type(T1MetaType type) {
+void T1_ui_widget_requester_set_linked_type(T1DataType type) {
     T1_ui_widget_next_props->linked_type = type;
 }
 

@@ -417,32 +417,6 @@ void T1_render_view_validate(void) {
             T1RENDERVIEW_WRITE_RENDER_TARGET);
 }
 
-f32 T1_render_view_x_to_screen_x(
-    const f32 x,
-    const f32 given_z)
-{
-    const T1CPURenderView * cpu = &T1_render_views->cpu[0];
-    
-    f32 viewport_width  = (f32)cpu->width;
-    f32 viewport_height = (f32)cpu->height;
-    f32 aspect_ratio = viewport_width / viewport_height;
-    
-    const f32 vertical_fov_degrees = 75.0f;
-    f32 half_fov_y_rad =
-        (vertical_fov_degrees * 0.5f) *
-            (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
-    
-    f32 full_frustum_width_at_z =
-        2.0f * given_z * tan_half_fov_y * aspect_ratio;
-    
-    f32 ndc_x = x / (full_frustum_width_at_z * 0.5f);
-    
-    f32 screen_x = (ndc_x + 1.0f) * 0.5f * viewport_width;
-    
-    return screen_x;
-}
-
 f32 T1_render_view_x_to_screen_x_noz(
     const f32 x)
 {
@@ -481,28 +455,6 @@ f32 T1_render_view_screen_x_to_x(
         ndc_x * (full_frustum_width_at_z * 0.5f);
     
     return view_space_x;
-}
-
-f32 T1_render_view_y_to_screen_y(
-    const f32 y,
-    const f32 given_z)
-{
-    const T1CPURenderView * cpu = &T1_render_views->cpu[0];
-    
-    f32 viewport_height = (f32)cpu->height;
-    
-    const f32 vertical_fov_degrees = 75.0f;
-    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
-    
-    f32 full_frustum_height_at_z =
-        2.0f * given_z * tan_half_fov_y;
-    
-    f32 ndc_y = y / (full_frustum_height_at_z * 0.5f);
-    
-    f32 screen_y = (1.0f - ndc_y) * 0.5f * viewport_height;
-    
-    return screen_y;
 }
 
 f32 T1_render_view_y_to_screen_y_noz(

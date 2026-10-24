@@ -5,7 +5,7 @@
 
 #include "T1_std.h"
 #include "T1_tex.h"
-#include "T1_meta.h"
+#include "T1_types_public.h"
 
 /*
 These options are applied to every new UI element (like a button or a slider)
@@ -26,7 +26,7 @@ void T1_ui_widget_requester_set_screen_x(s32 x);
 void T1_ui_widget_requester_set_screen_y(s32 y);
 void T1_ui_widget_requester_set_z(f32 z);
 void T1_ui_widget_requester_set_custom_minmax_f32(b8 active, f32 min, f32 max);
-void T1_ui_widget_requester_set_linked_type(T1MetaType type);
+void T1_ui_widget_requester_set_linked_type(T1DataType type);
 // allocates memory for state
 void T1_ui_widget_init(void);
 

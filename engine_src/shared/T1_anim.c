@@ -1004,36 +1004,6 @@ void T1_anim_dud_dance(
     T1_anim_commit(move_request);
 }
 
-void T1_anim_bump(
-    u32 T1_id,
-    u32 wait)
-{
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(wait == 0.0f);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)wait;
-    #else
-    #error
-    #endif
-    
-    T1Anim * bump_req = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 0,
-        /* b8 zs_gpu_f32s: */ 0,
-        /* b8 zs_cpu_f32s: */ 1,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    bump_req->easing_type =
-        T1_EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
-    bump_req->target_T1_id = T1_id;
-    bump_req->zs_cpu_f32s->mul_xyz[0] = 0.05f;
-    bump_req->zs_cpu_f32s->mul_xyz[1] = 0.05f;
-    bump_req->zs_cpu_f32s->mul_xyz[2] = 0.05f;
-    bump_req->duration_us = 200000;
-    T1_anim_commit(bump_req);
-}
-
 void T1_anim_delete_all(void) {
     as->mutex_lock(as->mutex_id);
     for (u32 i = 0; i < T1_anims_size; i++) {

@@ -47,7 +47,6 @@ void T1_os_close_app(void);
 void * T1_os_malloc_unaligned_block(
     u64 size);
 
-u32 T1_os_get_dir_separator_size(void);
 
 void T1_os_get_dir_separator(c8 * recipient);
 
@@ -65,9 +64,6 @@ void T1_os_open_dir_in_file_explorer_window_if_possible(
     const c8 * folderpath);
 
 // get current working directory
-void T1_os_get_app_dir(
-    c8 * recipient,
-    u32 recipient_size);
 
 void T1_os_get_res_dir(
     c8 * recip,
@@ -281,7 +277,6 @@ u32 T1_os_init_mutex_and_return_id(void);
 /* returns true if mutex succesfully locked */
 u8 T1_os_mutex_trylock(u32 mutex_id);
 
-void T1_os_assert_mutex_locked(u32 mutex_id);
 
 void T1_os_mutex_lock(u32 mutex_id);
 

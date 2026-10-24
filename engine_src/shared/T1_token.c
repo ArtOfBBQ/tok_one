@@ -1045,29 +1045,8 @@ b8 T1_token_is_number(s32 at_i) {
 b8 T1_token_fits_f64(s32 at_i) {
     return (tts->tokens[at_i].castable_flags & 2) > 0;
 }
-b8 T1_token_fits_f32(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 4) > 0;
-}
-b8 T1_token_fits_s64(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 1024) > 0;
-}
-b8 T1_token_fits_s32(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 512) > 0;
-}
-b8 T1_token_fits_s16(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 256) > 0;
-}
 b8 T1_token_fits_s8(s32 at_i) {
     return (tts->tokens[at_i].castable_flags & 128) > 0;
-}
-b8 T1_token_fits_u64(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 64) > 0;
-}
-b8 T1_token_fits_u32(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 32) > 0;
-}
-b8 T1_token_fits_u16(s32 at_i) {
-    return (tts->tokens[at_i].castable_flags & 16) > 0;
 }
 b8 T1_token_fits_u8(s32 at_i) {
     return (tts->tokens[at_i].castable_flags & 8) > 0;
