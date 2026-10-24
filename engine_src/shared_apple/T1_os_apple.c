@@ -115,10 +115,6 @@ void T1_apple_os_init(void) {
         "copyItemAtPath:toPath:error:");
 }
 
-f32 T1_os_get_screen_backing_scale_factor(void) {
-    return 1.0f;
-}
-
 u32 T1_os_get_dir_separator_size(void) {
     return 1;
 }
@@ -172,7 +168,7 @@ void T1_os_audio_start_loop(void)
 /*
 Get a file's size. Returns 0 if no such file
 */
-u64 T1_os_get_filesize(
+static u64 T1_os_apple_get_filesize_unpooled(
     const char * filepath)
 {
     void * nsstrfilepath = T1_objc_nsstring_construct(
@@ -210,7 +206,21 @@ u64 T1_os_get_filesize(
     return file_size;
 }
 
-void T1_os_read_file(
+u64 T1_os_get_filesize(
+    const char * filepath)
+{
+    // Frees the NSStrings etc. this autoreleases right away, also when
+    // called outside the main loop (e.g. at startup), where nothing would
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    u64 return_value = T1_os_apple_get_filesize_unpooled(filepath);
+    
+    T1_objc_autorelease_pool_pop(pool);
+    
+    return return_value;
+}
+
+static void T1_os_apple_read_file_unpooled(
     const char * filepath,
     char * recip,
     u32 * recip_size,
@@ -267,6 +277,27 @@ void T1_os_read_file(
     recip[*recip_size] = '\0';
 }
 
+void T1_os_read_file(
+    const char * filepath,
+    char * recip,
+    u32 * recip_size,
+    const u64 recip_cap,
+    char ** const fatal_error)
+{
+    // Frees the NSStrings etc. this autoreleases right away, also when
+    // called outside the main loop (e.g. at startup), where nothing would
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    T1_os_apple_read_file_unpooled(
+        filepath,
+        recip,
+        recip_size,
+        recip_cap,
+        fatal_error);
+    
+    T1_objc_autorelease_pool_pop(pool);
+}
+
 u8 T1_os_file_exists(
     const char * filepath)
 {
@@ -306,7 +337,7 @@ u8 T1_os_file_exists(
     return 0;
 }
 
-b8 T1_os_mkdir_if_not_exist(
+static b8 T1_os_apple_mkdir_if_not_exist_unpooled(
     const char * dirname)
 {
     if (dirname == NULL || dirname[0] == '\0') {
@@ -362,6 +393,20 @@ b8 T1_os_mkdir_if_not_exist(
     }
     
     return 1;
+}
+
+b8 T1_os_mkdir_if_not_exist(
+    const char * dirname)
+{
+    // Frees the NSStrings etc. this autoreleases right away, also when
+    // called outside the main loop (e.g. at startup), where nothing would
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    b8 return_value = T1_os_apple_mkdir_if_not_exist_unpooled(dirname);
+    
+    T1_objc_autorelease_pool_pop(pool);
+    
+    return return_value;
 }
 
 void T1_os_del_file(
@@ -587,6 +632,8 @@ void T1_os_get_app_dir(
 {
     recipient[0] = '\0';
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * main_bundle = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_bundle,
         T1_os_apple_s->sel_bundle_path);
@@ -598,12 +645,16 @@ void T1_os_get_app_dir(
         recipient,
         recipient_size,
         cstr_main_bundle);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_get_res_dir(
     char * recip,
     u32 recip_cap)
 {
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * bundle = (void *)T1_objc_msg(
         T1_os_apple_s->class_ns_bundle,
         T1_os_apple_s->sel_main_bundle);
@@ -619,6 +670,8 @@ void T1_os_get_res_dir(
         recip,
         recip_cap,
         cstr);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 static void *(* T1_os_next_thread_function_to_run)(void *) = NULL;

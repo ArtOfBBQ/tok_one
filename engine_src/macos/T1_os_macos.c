@@ -82,6 +82,7 @@ typedef struct {
     void * class_ns_menu; // NSMenu
     void * class_ns_menu_item; // NSMenuItem
     void * class_ns_date; // NSDate
+    void * class_ns_screen; // NSScreen
     void * ns_default_run_loop_mode; // NSDefaultRunLoopMode (an NSString *)
     void * sel_new; // new
     void * sel_window; // window
@@ -136,6 +137,8 @@ typedef struct {
     void * sel_distant_past; // distantPast
     void * sel_date_with_time_interval_since_now; // dateWithTimeIntervalSinceNow:
     void * sel_occlusion_state; // occlusionState
+    void * sel_main_screen; // mainScreen
+    void * sel_backing_scale_factor; // backingScaleFactor
     void * sel_add_item; // addItem:
     void * sel_set_submenu; // setSubmenu:
     void * sel_set_main_menu; // setMainMenu:
@@ -833,6 +836,8 @@ void T1_os_macos_init(void) {
         "NSMenuItem");
     T1_os_macos_s->class_ns_date = T1_objc_get_class(
         "NSDate");
+    T1_os_macos_s->class_ns_screen = T1_objc_get_class(
+        "NSScreen");
     T1_log_assert(T1_os_macos_s->class_ns_date != NULL);
     
     // A global variable, so dlsym gives us its address
@@ -960,6 +965,10 @@ void T1_os_macos_init(void) {
         "dateWithTimeIntervalSinceNow:");
     T1_os_macos_s->sel_occlusion_state = T1_objc_reg_sel(
         "occlusionState");
+    T1_os_macos_s->sel_main_screen = T1_objc_reg_sel(
+        "mainScreen");
+    T1_os_macos_s->sel_backing_scale_factor = T1_objc_reg_sel(
+        "backingScaleFactor");
     T1_os_macos_s->sel_add_item = T1_objc_reg_sel(
         "addItem:");
     T1_os_macos_s->sel_set_submenu = T1_objc_reg_sel(
@@ -1174,7 +1183,7 @@ void T1_os_poll_gamepad_events(void) {
 #error
 #endif
 
-void T1_os_get_writables_dir(
+static void T1_os_macos_get_writables_dir_unpooled(
     char * recipient,
     const u32 recipient_size)
 {
@@ -1216,6 +1225,21 @@ void T1_os_get_writables_dir(
     T1_std_strcat_cap(recipient, recipient_size, T1_APP_NAME);
 }
 
+void T1_os_get_writables_dir(
+    char * recipient,
+    const u32 recipient_size)
+{
+    // Frees the NSStrings etc. this autoreleases right away, also when
+    // called outside the main loop (e.g. at startup), where nothing would
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    T1_os_macos_get_writables_dir_unpooled(
+        recipient,
+        recipient_size);
+    
+    T1_objc_autorelease_pool_pop(pool);
+}
+
 void * T1_os_malloc_unaligned_block(
     const u64 size)
 {
@@ -1245,7 +1269,44 @@ void T1_os_close_app(void) {
     T1_os_macos_s->quit_requested = true;
 }
 
+/*
+Pixels per point of the main screen: 2 on retina displays, 1 otherwise.
+Read once at startup (T1_gpu_init(), T1_window_open()), so moving the window
+to a screen with a different scale isn't handled yet.
+*/
+f32 T1_os_get_screen_backing_scale_factor(void) {
+    if (
+        T1_os_macos_s == NULL ||
+        T1_os_macos_s->class_ns_screen == NULL)
+    {
+        return 1.0f;
+    }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    // [[NSScreen mainScreen] backingScaleFactor]
+    void * screen = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_screen,
+        T1_os_macos_s->sel_main_screen);
+    
+    f64 scale = screen ?
+        T1_objc_msg_get_f64(
+            screen,
+            T1_os_macos_s->sel_backing_scale_factor) :
+        1.0;
+    
+    T1_objc_autorelease_pool_pop(pool);
+    
+    // Unexpected values (e.g. 0 when there's no screen) fall back to 1
+    if (scale < 1.0 || scale > 8.0) {
+        return 1.0f;
+    }
+    
+    return (f32)scale;
+}
+
 void T1_os_get_cwd(char * recip, u32 recip_size) {
+    void * pool = T1_objc_autorelease_pool_push();
     
     void * manager = (void *)T1_objc_msg(
         T1_os_macos_s->class_ns_file_manager,
@@ -1258,6 +1319,8 @@ void T1_os_get_cwd(char * recip, u32 recip_size) {
         nsstr_cwd);
     
     T1_std_strcpy_cap(recip, recip_size, return_value);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 float T1_os_x_to_x(const float x) {
@@ -1279,6 +1342,8 @@ void T1_os_open_dir_in_file_explorer_window_if_possible(
         return;
     }
     
+    void * pool = T1_objc_autorelease_pool_push();
+    
     void * nsstr_folderpath =
         T1_objc_nsstring_construct(folderpath);
     
@@ -1296,6 +1361,8 @@ void T1_os_open_dir_in_file_explorer_window_if_possible(
         shared_ws,
         T1_os_macos_s->sel_open_url,
         (uintptr_t)folder_url);
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_enter_fullscreen(void) {
