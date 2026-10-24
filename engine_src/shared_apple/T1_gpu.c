@@ -398,6 +398,20 @@ typedef struct {
 
 static AppleGPUState * ags = NULL;
 
+/*
+Objects returned by new... methods (textures, texture views, descriptors) are
+owned by us: autorelease pools never free them, so we have to release them
+when we drop them. It's safe to release a texture the GPU is still using,
+command buffers keep their own reference until they're done.
+Releases *obj if it's set and clears it.
+*/
+static void T1_gpu_release(void ** obj) {
+    if (*obj != NULL) {
+        T1_objc_msg(*obj, ags->sel_release);
+        *obj = NULL;
+    }
+}
+
 
 static void * T1_gpu_new_render_pipeline_descriptor(
     void * vertex_shader,
@@ -1448,7 +1462,7 @@ void T1_os_gpu_update_capacity_if_needed(
     void * prev_copy = NULL;
     
     if (T1_tex_arrays[tex_array_i].deleted) {
-        ags->metal_textures[tex_array_i] = NULL;
+        T1_gpu_release(&ags->metal_textures[tex_array_i]);
         return;
     } else if (
         ags->metal_textures[tex_array_i] == NULL ||
@@ -1471,7 +1485,7 @@ void T1_os_gpu_update_capacity_if_needed(
                     ags->metal_textures[tex_array_i],
                     ags->sel_height))
     {
-        ags->metal_textures[tex_array_i] = NULL;
+        T1_gpu_release(&ags->metal_textures[tex_array_i]);
         copy_prev = false;
     } else if (
         T1_tex_arrays[tex_array_i].images_size >
@@ -1591,6 +1605,7 @@ void T1_os_gpu_update_capacity_if_needed(
         ags->sel_new_tex_with_desc,
         (uintptr_t)texture_descriptor);
     T1_log_assert(ags->metal_textures[tex_array_i] != NULL);
+    T1_gpu_release(&texture_descriptor);
     
     T1_tex_arrays[tex_array_i].gpu_capacity =
         T1_tex_arrays[tex_array_i].images_size;
@@ -1612,6 +1627,9 @@ void T1_os_gpu_update_capacity_if_needed(
         
         T1_objc_msg(combuf, ags->sel_commit);
         T1_objc_msg(combuf, ags->sel_wait_until_completed);
+        
+        // We were its only owner once metal_textures moved on
+        T1_gpu_release(&prev_copy);
     }
 }
 
@@ -1731,7 +1749,7 @@ void T1_os_gpu_delete_texture_array(
 {
     T1_log_assert(array_i != T1_DEPTH_TEXTUREARRAYS_I);
     
-    ags->metal_textures[array_i] = NULL;
+    T1_gpu_release(&ags->metal_textures[array_i]);
 }
 
 void T1_os_gpu_delete_depth_tex(
@@ -1739,7 +1757,7 @@ void T1_os_gpu_delete_depth_tex(
 {
     T1_log_assert(slice_i < T1_RENDER_VIEW_CAP);
     
-    ags->depth_textures[slice_i] = NULL;
+    T1_gpu_release(&ags->depth_textures[slice_i]);
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
@@ -2974,10 +2992,12 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         T1MTLTextureUsageRenderTarget |
         T1MTLTextureUsageShaderRead);
     
+    T1_gpu_release(&ags->depth_textures[at_i]);
     ags->depth_textures[at_i] = (void *)T1_objc_msg_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)zbuffer_desc);
+    T1_gpu_release(&zbuffer_desc);
     
     if (at_i != 0) {
         T1_objc_autorelease_pool_pop(pool);
@@ -3003,10 +3023,12 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         ags->sel_set_usage,
         T1MTLTextureUsageRenderTarget |
         T1MTLTextureUsageShaderRead);
+    T1_gpu_release(&ags->touch_id_texture);
     ags->touch_id_texture = (void *)T1_objc_msg_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)touch_id_tex_desc);
+    T1_gpu_release(&touch_id_tex_desc);
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (
@@ -3014,7 +3036,7 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         i < T1_DOWNSAMPLES_SIZE;
         i++)
     {
-        ags->downsampled_rtts[i] = NULL;
+        T1_gpu_release(&ags->downsampled_rtts[i]);
         
         void * downsampled_rtt_desc = (void *)T1_objc_msg(
             ags->class_mtl_texture_desc,
@@ -3065,6 +3087,7 @@ void T1_gpu_update_render_view_size(s32 at_i) {
             ags->device,
             ags->sel_new_tex_with_desc,
             (uintptr_t)downsampled_rtt_desc);
+        T1_gpu_release(&downsampled_rtt_desc);
     }
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
@@ -3074,6 +3097,10 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     T1_objc_autorelease_pool_pop(pool);
 }
 
+/*
+Returns a new texture view (that the caller owns and must release) of one
+slice of a texture array.
+*/
 static void * get_tex_slice(
     s32 at_array_i,
     s32 at_slice_i)
@@ -3534,7 +3561,8 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
             continue;
         }
         
-        ags->cur_rtt = NULL;
+        // A view from get_tex_slice() for the previous render view
+        T1_gpu_release(&ags->cur_rtt);
         ags->cur_depth = NULL;
         ags->cur_opq_pls = NULL;
         ags->cur_blnd_pls = NULL;
@@ -3628,7 +3656,10 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
         T1_log_assert(T1_tex_to_slice_i(T1_render_views->cpu[cam_i].
             write_tex) >= 0);
     }
-    
+
+    // The last render view's texture view, the command buffer keeps its own
+    T1_gpu_release(&ags->cur_rtt);
+
     T1_gpu_encode_touch_sample(
         combuf,
         &ags->touch_samples[ags->frame_i]);
@@ -3852,6 +3883,7 @@ s16 T1_apple_gpu_make_depth_tex(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)desc);
+    T1_gpu_release(&desc);
     
     T1_log_assert(ags->depth_textures[slice_i] != NULL);
     
