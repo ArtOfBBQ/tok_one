@@ -24,6 +24,8 @@
 #define ZS_CPU T1_PROP_STORE_ZS_CPU_F32, T1CPUzSpritef32
 #define ZS_GPU T1_PROP_STORE_ZS_GPU_F32, T1GPUzSpritef32
 #define ZS_U32 T1_PROP_STORE_ZS_GPU_U32, T1GPUzSpriteu32
+#define ZS_MAT T1_PROP_STORE_ZS_MAT_F32, T1GPUMatf32
+#define ZS_MTU T1_PROP_STORE_ZS_MAT_U32, T1GPUMatu32
 #define TQ_CPU T1_PROP_STORE_TQ_CPU_F32, T1CPUTexQuad
 #define TQ_GPU T1_PROP_STORE_TQ_GPU_F32, T1GPUTexQuadf32
 #define TQ_U32 T1_PROP_STORE_TQ_GPU_U32, T1GPUTexQuadu32
@@ -64,6 +66,21 @@ static const T1Property T1_properties[] = {
         "mix_render_view", ZS_U32, mix_rv_and_mix_tex, 0x0000FFFF, 0),
     T1_PROP_U32_PACKED(
         "mix_texture", ZS_U32, mix_rv_and_mix_tex, 0xFFFF0000, 16),
+
+    // the zsprite's base material (alpha is left out, use the sprite's)
+    T1_PROP_F32(ZS_MAT, ambient_rgb[0]),
+    T1_PROP_F32(ZS_MAT, ambient_rgb[1]),
+    T1_PROP_F32(ZS_MAT, ambient_rgb[2]),
+    T1_PROP_F32(ZS_MAT, diffuse_rgb[0]),
+    T1_PROP_F32(ZS_MAT, diffuse_rgb[1]),
+    T1_PROP_F32(ZS_MAT, diffuse_rgb[2]),
+    T1_PROP_F32(ZS_MAT, specular_rgb[0]),
+    T1_PROP_F32(ZS_MAT, specular_rgb[1]),
+    T1_PROP_F32(ZS_MAT, specular_rgb[2]),
+    T1_PROP_F32(ZS_MAT, specular_exponent),
+    // the shader reads tex from the low 16 bits, the normal map from the high
+    T1_PROP_U32_PACKED(
+        "texture", ZS_MTU, normalmap_tex_and_tex, 0x0000FFFF, 0),
 
     T1_PROP_F32(TQ_CPU, offset_xyz[0]),
     T1_PROP_F32(TQ_CPU, offset_xyz[1]),
@@ -169,6 +186,13 @@ b8 T1_property_is_packed(const T1Property * p) {
     return p->mask != 0xFFFFFFFF;
 }
 
+b8 T1_property_is_animatable(const T1Property * p) {
+    return
+        p->store != T1_PROP_STORE_ZS_MAT_F32 &&
+        p->store != T1_PROP_STORE_ZS_MAT_U32 &&
+        p->store != T1_PROP_STORE_TQ_CPU_F32;
+}
+
 static u32 T1_property_set_bits(
     const u32 T1_id,
     const T1Property * p,
@@ -178,6 +202,8 @@ static u32 T1_property_set_bits(
         case T1_PROP_STORE_ZS_CPU_F32:
         case T1_PROP_STORE_ZS_GPU_F32:
         case T1_PROP_STORE_ZS_GPU_U32:
+        case T1_PROP_STORE_ZS_MAT_F32:
+        case T1_PROP_STORE_ZS_MAT_U32:
             return T1_zsprite_set_property(T1_id, p, bits);
         case T1_PROP_STORE_TQ_CPU_F32:
         case T1_PROP_STORE_TQ_GPU_F32:

@@ -304,6 +304,12 @@ u32 T1_zsprite_set_property(
             case T1_PROP_STORE_ZS_GPU_U32:
                 store_struct = &T1_zsprite_list->gpu[i].u32s;
                 break;
+            case T1_PROP_STORE_ZS_MAT_F32:
+                store_struct = &T1_zsprite_list->gpu[i].base_mat_f32;
+                break;
+            case T1_PROP_STORE_ZS_MAT_U32:
+                store_struct = &T1_zsprite_list->gpu[i].base_mat_u32;
+                break;
             default:
                 T1_log_assert(0);
                 return count;

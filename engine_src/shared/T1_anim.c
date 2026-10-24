@@ -1138,8 +1138,8 @@ static void T1_anim_set_bits(
     for (u32 i = 0; i < matches_size; i++) {
         const T1Property * p = matches[i];
         
-        // texquad offsets have no anim store
-        if (p->store == T1_PROP_STORE_TQ_CPU_F32) { continue; }
+        // e.g. texquad offsets and materials have no anim store
+        if (!T1_property_is_animatable(p)) { continue; }
         // TODO: deltas aren't implemented for zlights
         if (
             !a->endpoints_not_deltas &&
@@ -1204,7 +1204,12 @@ void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void)) {
 }
 
 void T1_anim_commit_id(u32 anim) {
-    T1_anim_commit(&T1_anim_from_handle(anim)->pub);
+    T1Anim * pub = &T1_anim_from_handle(anim)->pub;
+    if (pub->duration_us == 1) {
+        T1_anim_commit_and_instarun(pub);
+    } else {
+        T1_anim_commit(pub);
+    }
 }
 
 void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id) {

@@ -433,6 +433,7 @@ void T1_anim_set_cancel_conflicting(
 void T1_anim_set_run_func_on_finish(
     uint32_t anim,
     void (* func)(void));
+// A duration of 1 microsecond applies the anim immediately
 void T1_anim_commit_id(uint32_t anim);
 
 /*

@@ -85,6 +85,7 @@ void T1_anim_set_runs(u32 anim, u32 runs);
 void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
 void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void));
+// A duration of 1 microsecond applies the anim immediately
 // TODO: rename to T1_anim_commit once the T1Anim * version is gone
 void T1_anim_commit_id(u32 anim);
 

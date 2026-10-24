@@ -14,6 +14,8 @@ typedef enum : u8 {
     T1_PROP_STORE_ZS_CPU_F32 = 0,
     T1_PROP_STORE_ZS_GPU_F32,
     T1_PROP_STORE_ZS_GPU_U32,
+    T1_PROP_STORE_ZS_MAT_F32, // not animatable
+    T1_PROP_STORE_ZS_MAT_U32, // not animatable
     T1_PROP_STORE_TQ_CPU_F32, // not animatable
     T1_PROP_STORE_TQ_GPU_F32,
     T1_PROP_STORE_TQ_GPU_U32,
@@ -49,6 +51,8 @@ void T1_property_write(
     const u32 bits);
 
 b8 T1_property_is_packed(const T1Property * property);
+
+b8 T1_property_is_animatable(const T1Property * property);
 
 void T1_set_f32(
     u32 T1_id,
