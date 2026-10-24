@@ -226,25 +226,6 @@ typedef struct {
     uint32_t       gpu_data_size;
 } T1zSpriteRequest;
 
-/*
-DATA TYPES, e.g. of the value a UI slider is linked to
-*/
-typedef enum : uint8_t {
-    T1_TYPE_NOTSET,
-    T1_TYPE_STRUCT,
-    T1_TYPE_F32,
-    T1_TYPE_U64,
-    T1_TYPE_U32,
-    T1_TYPE_U16,
-    T1_TYPE_U8,
-    T1_TYPE_U4x2,
-    T1_TYPE_I64,
-    T1_TYPE_I32,
-    T1_TYPE_I16,
-    T1_TYPE_I8,
-    T1_TYPE_CHAR,
-} T1DataType;
-
 typedef struct {
     float volume;
     float sfx_volume;

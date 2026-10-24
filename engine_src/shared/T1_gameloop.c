@@ -255,10 +255,6 @@ void T1_frame_begin(void)
         
         T1_zsprite_handle_timed_occlusion();
         
-        #if 0
-        T1_ui_widget_handle_touches(T1_global->elapsed);
-        #endif
-        
         #if T1_TERM_ACTIVE == T1_ACTIVE
         update_terminal();
         #elif T1_TERM_ACTIVE == T1_INACTIVE
