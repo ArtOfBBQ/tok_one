@@ -4,6 +4,7 @@
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_render_view.h"
+#include "T1_id.h"
 
 T1zLight * T1_zlights = NULL;
 u32 T1_zlights_size = 0;
@@ -53,6 +54,43 @@ void T1_zlight_commit(T1zLight * to_request)
 {
     T1_log_assert(!to_request->deleted);
     to_request->committed = 1;
+}
+
+u32 T1_zlight_new(void)
+{
+    T1zLight * light = T1_zlight_next();
+    light->T1_id = T1_id_next_nonui_id();
+    T1_zlight_commit(light);
+    return light->T1_id;
+}
+
+u32 T1_zlight_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits)
+{
+    T1_log_assert(property->store == T1_PROP_STORE_ZL_F32);
+    
+    u32 count = 0;
+    for (u32 i = 0; i < T1_zlights_size; i++) {
+        if (T1_zlights[i].T1_id != T1_id || T1_zlights[i].deleted) {
+            continue;
+        }
+        
+        T1_property_write(&T1_zlights[i].f32s, property, bits);
+        count += 1;
+    }
+    
+    return count;
+}
+
+void T1_zlight_rename_T1_id(u32 from_T1_id, u32 to_T1_id)
+{
+    for (u32 i = 0; i < T1_zlights_size; i++) {
+        if (T1_zlights[i].T1_id == from_T1_id) {
+            T1_zlights[i].T1_id = to_T1_id;
+        }
+    }
 }
 
 void T1_zlight_clean_all_deleted(void)

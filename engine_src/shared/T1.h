@@ -294,6 +294,33 @@ void T1_text_request_label_around(
     float max_width);
 
 /*
+Objects by T1_id, with properties set by name (e.g. "xyz[0]", "alpha").
+Every new object gets a unique T1_id and is visible from the next frame on,
+no commit needed. Merging makes objects move, fade and get deleted together.
+*/
+uint32_t T1_zsprite_new(int32_t mesh_id);
+uint32_t T1_zsprite_new_quad(
+    float mid_x,
+    float mid_y,
+    float z,
+    float width,
+    float height);
+uint32_t T1_texquad_new(void);
+uint32_t T1_zlight_new(void);
+void T1_set_f32(
+    uint32_t T1_id,
+    const char * property,
+    float value);
+void T1_set_u32(
+    uint32_t T1_id,
+    const char * property,
+    uint32_t value);
+void T1_merge_T1_ids(
+    uint32_t T1_id_to_add,
+    uint32_t T1_id_to_keep);
+void T1_delete(uint32_t T1_id);
+
+/*
 TexQuads (textured 2D quads)
 */
 void T1_texquad_fetch_next(T1TexQuadRequest * stack_recip);
@@ -378,6 +405,35 @@ void T1_anim_fade_to(
     float target_alpha);
 void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
 void T1_anim_delete_all(void);
+
+/*
+Animations by property name. mode is T1_ANIM_MODE_TO or T1_ANIM_MODE_BY.
+The returned handle is only valid until it's committed. f32 properties
+interpolate, u32 properties jump to their value at the end (TO mode only).
+*/
+uint32_t T1_anim_new(uint32_t T1_id, uint8_t mode);
+void T1_anim_set_f32(
+    uint32_t anim,
+    const char * property,
+    float value);
+void T1_anim_set_u32(
+    uint32_t anim,
+    const char * property,
+    uint32_t value);
+void T1_anim_set_duration_us(uint32_t anim, uint64_t duration_us);
+void T1_anim_set_pause_us(uint32_t anim, uint64_t pause_us);
+void T1_anim_set_easing(uint32_t anim, T1EasingType easing_type);
+void T1_anim_set_runs(uint32_t anim, uint32_t runs); // 0 = forever
+void T1_anim_set_delete_target_on_finish(
+    uint32_t anim,
+    uint8_t delete_target);
+void T1_anim_set_cancel_conflicting(
+    uint32_t anim,
+    uint8_t cancel_conflicting);
+void T1_anim_set_run_func_on_finish(
+    uint32_t anim,
+    void (* func)(void));
+void T1_anim_commit_id(uint32_t anim);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD

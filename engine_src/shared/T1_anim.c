@@ -1033,6 +1033,193 @@ void T1_anim_delete_endpoint_anims_targeting(
 }
 #endif
 
+static T1AnimPrivate * T1_anim_from_handle(u32 anim)
+{
+    T1_log_assert(anim < T1_anims_size);
+    T1AnimPrivate * a = &T1_anims[anim];
+    // handles are only valid until they're committed
+    T1_log_assert(!a->deleted);
+    T1_log_assert(!a->committed);
+    return a;
+}
+
+u32 T1_anim_new(u32 T1_id, u8 mode)
+{
+    T1_log_assert(T1_id != T1_ID_NONE);
+    T1_log_assert(mode == T1_ANIM_MODE_TO || mode == T1_ANIM_MODE_BY);
+    
+    T1Anim * pub = T1_anim_request_next(
+        /* b8 endpoints_not_deltas: */ mode == T1_ANIM_MODE_TO,
+        0, 0, 0, 0, 0, 0);
+    pub->target_T1_id = T1_id;
+    
+    return (u32)(T1_anim_get_container(pub) - T1_anims);
+}
+
+// fetches the anim's store for this kind of property on first use
+static void * T1_anim_get_store(
+    T1AnimPrivate * a,
+    const u8 store)
+{
+    void * out = NULL;
+    u32 size = 0;
+    
+    switch (store) {
+        case T1_PROP_STORE_ZS_CPU_F32:
+            if (a->pub.zs_cpu_f32s) { return a->pub.zs_cpu_f32s; }
+            a->pub.zs_cpu_f32s = T1_anim_fetch_next_store_zs_cpu_f32s(
+                &a->zs_cpu_f32s_store_i);
+            out = a->pub.zs_cpu_f32s;
+            size = sizeof(T1CPUzSpritef32);
+            break;
+        case T1_PROP_STORE_ZS_GPU_F32:
+            if (a->pub.zs_gpu_f32s) { return a->pub.zs_gpu_f32s; }
+            a->pub.zs_gpu_f32s = T1_anim_fetch_next_store_zs_gpu_f32s(
+                &a->zs_gpu_f32s_store_i);
+            out = a->pub.zs_gpu_f32s;
+            size = sizeof(T1GPUzSpritef32);
+            break;
+        case T1_PROP_STORE_ZS_GPU_U32:
+            if (a->pub.zs_gpu_u32s) { return a->pub.zs_gpu_u32s; }
+            a->pub.zs_gpu_u32s = T1_anim_fetch_next_store_zs_gpu_u32s(
+                &a->zs_gpu_u32s_store_i);
+            out = a->pub.zs_gpu_u32s;
+            size = sizeof(T1GPUzSpriteu32);
+            break;
+        case T1_PROP_STORE_TQ_GPU_F32:
+            if (a->pub.tq_gpu_f32s) { return a->pub.tq_gpu_f32s; }
+            a->pub.tq_gpu_f32s = T1_anim_fetch_next_store_tq_gpu_f32s(
+                &a->tq_gpu_f32s_store_i);
+            out = a->pub.tq_gpu_f32s;
+            size = sizeof(T1GPUTexQuadf32);
+            break;
+        case T1_PROP_STORE_TQ_GPU_U32:
+            if (a->pub.tq_gpu_u32s) { return a->pub.tq_gpu_u32s; }
+            a->pub.tq_gpu_u32s = T1_anim_fetch_next_store_tq_gpu_u32s(
+                &a->tq_gpu_u32s_store_i);
+            out = a->pub.tq_gpu_u32s;
+            size = sizeof(T1GPUTexQuadu32);
+            break;
+        case T1_PROP_STORE_ZL_F32:
+            if (a->pub.zl_gpu_f32s) { return a->pub.zl_gpu_f32s; }
+            a->pub.zl_gpu_f32s = T1_anim_fetch_next_store_zl_gpu_f32s(
+                &a->zl_f32s_store_i);
+            out = a->pub.zl_gpu_f32s;
+            size = sizeof(T1zLightf32);
+            break;
+        default:
+            T1_log_assert(0);
+            return NULL;
+    }
+    
+    // fetched stores are zeroed, which is "no effect" for deltas
+    if (a->endpoints_not_deltas) {
+        T1_std_memset_f32(out, T1_ANIM_NO_EFFECT, size);
+    }
+    
+    return out;
+}
+
+static void T1_anim_set_bits(
+    const u32 anim,
+    const c8 * name,
+    const u8 is_u32,
+    const u32 bits)
+{
+    T1AnimPrivate * a = T1_anim_from_handle(anim);
+    
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        name, is_u32, matches, T1_PROPERTY_MATCHES_CAP);
+    
+    as->mutex_lock(as->mutex_id);
+    
+    u32 stores_set = 0;
+    for (u32 i = 0; i < matches_size; i++) {
+        const T1Property * p = matches[i];
+        
+        // texquad offsets have no anim store
+        if (p->store == T1_PROP_STORE_TQ_CPU_F32) { continue; }
+        // TODO: deltas aren't implemented for zlights
+        if (
+            !a->endpoints_not_deltas &&
+            p->store == T1_PROP_STORE_ZL_F32)
+        {
+            continue;
+        }
+        // TODO: animate values that share a u32
+        T1_log_assert(!T1_property_is_packed(p));
+        // u32s jump to their endpoint, they can't be deltas
+        T1_log_assert(a->endpoints_not_deltas || !p->is_u32);
+        
+        void * store_struct = T1_anim_get_store(a, p->store);
+        T1_property_write(store_struct, p, bits);
+        stores_set += 1;
+    }
+    
+    as->mutex_unlock(as->mutex_id);
+    
+    // this property can't be animated (in this mode)
+    T1_log_assert(stores_set > 0);
+}
+
+void T1_anim_set_f32(u32 anim, const c8 * property, f32 value)
+{
+    u32 bits;
+    T1_std_memcpy(&bits, &value, 4);
+    T1_anim_set_bits(anim, property, 0, bits);
+}
+
+void T1_anim_set_u32(u32 anim, const c8 * property, u32 value)
+{
+    T1_anim_set_bits(anim, property, 1, value);
+}
+
+void T1_anim_set_duration_us(u32 anim, u64 duration_us) {
+    T1_anim_from_handle(anim)->pub.duration_us = duration_us;
+}
+
+void T1_anim_set_pause_us(u32 anim, u64 pause_us) {
+    T1_anim_from_handle(anim)->pub.pause_us = pause_us;
+}
+
+void T1_anim_set_easing(u32 anim, T1EasingType easing_type) {
+    T1_anim_from_handle(anim)->pub.easing_type = easing_type;
+}
+
+void T1_anim_set_runs(u32 anim, u32 runs) {
+    T1_anim_from_handle(anim)->pub.runs = runs;
+}
+
+void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target) {
+    T1_anim_from_handle(anim)->pub.del_obj_on_finish = delete_target;
+}
+
+void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting) {
+    T1_anim_from_handle(anim)->pub.del_conflict_anims = cancel_conflicting;
+}
+
+void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void)) {
+    T1_anim_from_handle(anim)->pub.run_func_on_finish = func;
+}
+
+void T1_anim_commit_id(u32 anim) {
+    T1_anim_commit(&T1_anim_from_handle(anim)->pub);
+}
+
+void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id) {
+    as->mutex_lock(as->mutex_id);
+    for (u32 i = 0; i < T1_anims_size; i++) {
+        if (
+            !T1_anims[i].deleted &&
+            T1_anims[i].pub.target_T1_id == from_T1_id)
+        {
+            T1_anims[i].pub.target_T1_id = to_T1_id;
+        }
+    }
+    as->mutex_unlock(as->mutex_id);
+}
+
 void T1_anim_delete_all_anims_targeting(u32 T1_id) {
     as->mutex_lock(as->mutex_id);
     for (u32 i = 0; i < T1_anims_size; i++) {

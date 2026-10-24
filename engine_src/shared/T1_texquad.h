@@ -4,6 +4,7 @@
 #include "T1.h"
 #include "T1_std.h"
 #include "T1_types_public.h"
+#include "T1_property.h"
 
 void T1_texquad_construct(
     T1GPUTexQuadf32 * f32,
@@ -21,6 +22,16 @@ void T1_texquad_get_avg_xyz(
     b8 * found);
 
 void T1_texquad_delete_all(void);
+
+u32 T1_texquad_new(void);
+
+// returns how many texquads with this T1_id were written
+u32 T1_texquad_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits);
+
+void T1_texquad_rename_T1_id(u32 from_T1_id, u32 to_T1_id);
 
 void T1_texquad_fetch_next(
     T1TexQuadRequest * request);

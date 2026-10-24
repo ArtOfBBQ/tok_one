@@ -8,6 +8,7 @@
 #include "T1_std.h"
 #include "T1_global.h"
 #include "T1_triangle.h"
+#include "T1_property.h"
 
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
@@ -18,6 +19,16 @@ extern u32 T1_zlights_size;
 T1zLight * T1_zlight_next(void);
 
 void T1_zlight_commit(T1zLight * to_request);
+
+u32 T1_zlight_new(void);
+
+// returns how many zlights with this T1_id were written
+u32 T1_zlight_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits);
+
+void T1_zlight_rename_T1_id(u32 from_T1_id, u32 to_T1_id);
 
 void T1_zlight_clean_all_deleted(void);
 

@@ -13,6 +13,7 @@
 #include "T1_simd.h"
 #include "T1_tex.h"
 #include "T1_log.h"
+#include "T1_id.h"
 
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
@@ -165,6 +166,67 @@ void T1_texquad_get_avg_xyz(
 void T1_texquad_delete_all(void)
 {
     T1_texquads->size = 0;
+}
+
+u32 T1_texquad_new(void)
+{
+    T1TexQuadRequest request;
+    T1_texquad_fetch_next(&request);
+    request.cpu->T1_id = T1_id_next_nonui_id();
+    // xyz[2] is the distance and also the depth, which must be in (0, 1)
+    request.gpu->f32s.xyz[2] = 0.5f;
+    T1_texquad_commit(&request);
+    return request.cpu->T1_id;
+}
+
+u32 T1_texquad_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits)
+{
+    u32 count = 0;
+    
+    for (s32 i = 0; i < T1_texquads->size; i++) {
+        if (
+            T1_texquads->cpu[i].T1_id != T1_id ||
+            T1_texquads->cpu[i].deleted)
+        {
+            continue;
+        }
+        
+        void * store_struct = NULL;
+        switch (property->store) {
+            case T1_PROP_STORE_TQ_CPU_F32:
+                store_struct = &T1_texquads->cpu[i];
+                break;
+            case T1_PROP_STORE_TQ_GPU_F32:
+                store_struct = &T1_texquads->gpu[i].f32s;
+                break;
+            case T1_PROP_STORE_TQ_GPU_U32:
+                store_struct = &T1_texquads->gpu[i].u32s;
+                break;
+            default:
+                T1_log_assert(0);
+                return count;
+        }
+        
+        T1_property_write(store_struct, property, bits);
+        assert_sanity_check_texquad_vals(
+            &T1_texquads->gpu[i].f32s,
+            &T1_texquads->gpu[i].u32s);
+        count += 1;
+    }
+    
+    return count;
+}
+
+void T1_texquad_rename_T1_id(u32 from_T1_id, u32 to_T1_id)
+{
+    for (s32 i = 0; i < T1_texquads->size; i++) {
+        if (T1_texquads->cpu[i].T1_id == from_T1_id) {
+            T1_texquads->cpu[i].T1_id = to_T1_id;
+        }
+    }
 }
 
 void T1_texquad_fetch_next(

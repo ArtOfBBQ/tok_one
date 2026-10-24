@@ -6,6 +6,7 @@
 
 #include "T1_types_cpu_to_gpu.h"
 #include "T1_types_public.h"
+#include "T1_property.h"
 
 void T1_zsprite_init(void);
 
@@ -33,6 +34,23 @@ void T1_zsprite_get_pos_xyz(
 void T1_zsprite_delete(u32 with_T1_id);
 
 void T1_zsprite_delete_all(void);
+
+u32 T1_zsprite_new(s32 mesh_id);
+
+u32 T1_zsprite_new_quad(
+    f32 mid_x,
+    f32 mid_y,
+    f32 z,
+    f32 width,
+    f32 height);
+
+// returns how many zsprites with this T1_id were written
+u32 T1_zsprite_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits);
+
+void T1_zsprite_rename_T1_id(u32 from_T1_id, u32 to_T1_id);
 
 void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,

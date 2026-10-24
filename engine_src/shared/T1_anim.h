@@ -7,6 +7,7 @@
 #include "T1_simd.h"
 #include "T1_types_public.h"
 #include "T1_easing.h"
+#include "T1_property.h"
 
 
 void T1_anim_init(
@@ -61,6 +62,33 @@ void T1_anim_dud_dance(
 void T1_anim_delete_all(void);
 
 void T1_anim_delete_all_anims_targeting(u32 T1_id);
+
+/*
+Animations by property name, e.g.:
+u32 anim = T1_anim_new(my_T1_id, T1_ANIM_MODE_TO);
+T1_anim_set_f32(anim, "xyz[0]", 0.5f);
+T1_anim_set_duration_us(anim, 250000);
+T1_anim_commit_id(anim);
+
+The returned handle is only valid until it's committed. f32 properties
+interpolate, u32 properties jump to their value at the end (and only work
+with T1_ANIM_MODE_TO).
+*/
+u32 T1_anim_new(u32 T1_id, u8 mode);
+void T1_anim_set_f32(u32 anim, const c8 * property, f32 value);
+void T1_anim_set_u32(u32 anim, const c8 * property, u32 value);
+void T1_anim_set_duration_us(u32 anim, u64 duration_us);
+void T1_anim_set_pause_us(u32 anim, u64 pause_us);
+void T1_anim_set_easing(u32 anim, T1EasingType easing_type);
+// 0 = repeat forever
+void T1_anim_set_runs(u32 anim, u32 runs);
+void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
+void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
+void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void));
+// TODO: rename to T1_anim_commit once the T1Anim * version is gone
+void T1_anim_commit_id(u32 anim);
+
+void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id);
 
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     u32 T1_id,

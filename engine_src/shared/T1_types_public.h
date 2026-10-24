@@ -14,6 +14,10 @@
 #define T1_ANIM_NO_EFFECT 0x0FFFFFFF
 #define T1_ANIM_HIT_EVERYTHING 0x0AAAAAAA
 
+// T1_anim_new() modes: animate to a value, or by an amount
+#define T1_ANIM_MODE_TO 1
+#define T1_ANIM_MODE_BY 2
+
 // Basic quads and cubes are predefined, they can be used without registering
 // an .obj file.
 #define T1_BASIC_QUAD_MESH_ID 0

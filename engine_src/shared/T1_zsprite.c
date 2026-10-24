@@ -10,6 +10,7 @@
 #include "T1_zlight.h"
 #include "T1_render_view.h"
 #include "T1_linalg3d.h"
+#include "T1_id.h"
 
 T1zSpriteCollection * T1_zsprite_list = NULL;
 
@@ -124,8 +125,7 @@ T1_zsprite_fetch_next_noconstruct(
         &T1_zsprite_list->cpu[T1_zsprite_list->size];
     stack_recipient->gpu_data =
         &T1_zsprite_list->gpu[T1_zsprite_list->size];
-    stack_recipient->cpu_data[T1_zsprite_list->size].
-        deleted = 0;
+    stack_recipient->cpu_data->deleted = 0;
     stack_recipient->cpu_data->committed = 0;
     
     T1_zsprite_list->size += 1;
@@ -246,6 +246,84 @@ void T1_zsprite_delete(u32 with_T1_id)
 
 void T1_zsprite_delete_all(void) {
     T1_zsprite_list->size = 0;
+}
+
+static u32 T1_zsprite_commit_with_new_T1_id(
+    T1zSpriteRequest * request)
+{
+    request->cpu_data->T1_id = T1_id_next_nonui_id();
+    T1_zsprite_commit(request);
+    return request->cpu_data->T1_id;
+}
+
+u32 T1_zsprite_new(s32 mesh_id)
+{
+    T1zSpriteRequest request;
+    T1_zsprite_fetch_next_noconstruct(&request);
+    T1_zsprite_construct_with_mesh_id(&request, mesh_id);
+    return T1_zsprite_commit_with_new_T1_id(&request);
+}
+
+u32 T1_zsprite_new_quad(
+    f32 mid_x,
+    f32 mid_y,
+    f32 z,
+    f32 width,
+    f32 height)
+{
+    T1zSpriteRequest request;
+    T1_zsprite_fetch_next_noconstruct(&request);
+    T1_zsprite_construct_quad_around(
+        mid_x, mid_y, z, width, height, &request);
+    return T1_zsprite_commit_with_new_T1_id(&request);
+}
+
+u32 T1_zsprite_set_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 bits)
+{
+    u32 count = 0;
+    
+    for (u32 i = 0; i < T1_zsprite_list->size; i++) {
+        if (
+            T1_zsprite_list->cpu[i].T1_id != T1_id ||
+            T1_zsprite_list->cpu[i].deleted)
+        {
+            continue;
+        }
+        
+        void * store_struct = NULL;
+        switch (property->store) {
+            case T1_PROP_STORE_ZS_CPU_F32:
+                store_struct = &T1_zsprite_list->cpu[i].zs_cpu_f32s;
+                break;
+            case T1_PROP_STORE_ZS_GPU_F32:
+                store_struct = &T1_zsprite_list->gpu[i].f32s;
+                break;
+            case T1_PROP_STORE_ZS_GPU_U32:
+                store_struct = &T1_zsprite_list->gpu[i].u32s;
+                break;
+            default:
+                T1_log_assert(0);
+                return count;
+        }
+        
+        T1_property_write(store_struct, property, bits);
+        assert_sanity_check_zsprite_vals_by_id((s32)i);
+        count += 1;
+    }
+    
+    return count;
+}
+
+void T1_zsprite_rename_T1_id(u32 from_T1_id, u32 to_T1_id)
+{
+    for (u32 i = 0; i < T1_zsprite_list->size; i++) {
+        if (T1_zsprite_list->cpu[i].T1_id == from_T1_id) {
+            T1_zsprite_list->cpu[i].T1_id = to_T1_id;
+        }
+    }
 }
 
 static f32
