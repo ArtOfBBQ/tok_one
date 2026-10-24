@@ -17,9 +17,6 @@
 #define T1NSDataReadingUncached 2
 
 typedef struct {
-    void * class_ns_application;
-    void * sel_shared_application; // sharedApplication
-    void * sel_run;
     void * class_ns_filemanager; // NSFileManager
     void * class_ns_data; // NSData
     void * class_ns_url; // NSURL
@@ -61,8 +58,6 @@ void T1_apple_os_init(void) {
     T1_os_apple_s->mutex_id = T1_os_init_mutex_and_return_id();
     
     // classes
-    T1_os_apple_s->class_ns_application = T1_objc_get_class(
-        "NSApplication");
     T1_os_apple_s->class_ns_filemanager = T1_objc_get_class(
         "NSFileManager");
     T1_os_apple_s->class_ns_data = T1_objc_get_class(
@@ -75,9 +70,6 @@ void T1_apple_os_init(void) {
         T1_objc_get_class("NSProcessInfo");
     
     // selectors
-    T1_os_apple_s->sel_shared_application = T1_objc_reg_sel(
-        "sharedApplication");
-    T1_os_apple_s->sel_run = T1_objc_reg_sel("run");
     T1_os_apple_s->sel_default_manager = T1_objc_reg_sel(
         "defaultManager");
     T1_os_apple_s->sel_attributes_of_item_at_path_error = T1_objc_reg_sel(
@@ -689,18 +681,4 @@ u32 T1_os_get_cpu_logical_core_count(void)
         T1_os_apple_s->sel_active_processor_count);
     
     return (core_count > 0) ? (unsigned int)core_count : 1;
-}
-
-void T1_os_run_app(void) {
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    void * ns_app = (void *)T1_objc_msg(
-        T1_os_apple_s->class_ns_application,
-        T1_os_apple_s->sel_shared_application);
-    
-    if (ns_app) {
-        T1_objc_msg(ns_app, T1_os_apple_s->sel_run);
-    }
-    
-    T1_objc_autorelease_pool_pop(pool);
 }

@@ -163,6 +163,11 @@ typedef void (* setClearColorFuncType)(
     void *, void *,
     T1MTLClearColor);
 
+typedef struct {
+    f64 width;
+    f64 height;
+} T1CGSize;
+
 /*
 The CPU only ever asks for the touch id under the mouse, so instead of
 reading back the whole touch id texture every frame we copy a small square
@@ -265,6 +270,9 @@ typedef struct {
     void * final_texture;
     u32 final_texture_w;
     u32 final_texture_h;
+    // The drawableSize we last gave the CAMetalLayer
+    u32 layer_drawable_w;
+    u32 layer_drawable_h;
     T1GPUTouchSample touch_samples[T1_FRAMES_CAP];
     // CPU copy of the newest finished sample (buffer & combuf unused)
     T1GPUTouchSample touch_latest;
@@ -354,7 +362,8 @@ typedef struct {
     void * sel_retain; // retain
     void * sel_release; // release
     void * sel_end_encoding; // endEncoding
-    void * sel_current_drawable; // currentDrawable
+    void * sel_next_drawable; // nextDrawable
+    void * sel_set_drawable_size; // setDrawableSize:
     void * sel_texture; // texture
     void * sel_copy_from_texture_to_texture; // copyFromTexture:toTexture:
     void * sel_copy_from_texture_region_to_texture; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:
@@ -627,8 +636,10 @@ void T1_apple_gpu_init(
         "release");
     ags->sel_end_encoding = T1_objc_reg_sel(
         "endEncoding");
-    ags->sel_current_drawable = T1_objc_reg_sel(
-        "currentDrawable");
+    ags->sel_next_drawable = T1_objc_reg_sel(
+        "nextDrawable");
+    ags->sel_set_drawable_size = T1_objc_reg_sel(
+        "setDrawableSize:");
     ags->sel_texture = T1_objc_reg_sel(
         "texture");
     ags->sel_copy_from_texture_to_texture = T1_objc_reg_sel(
@@ -3648,32 +3659,55 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
 }
 
 /*
-Copies the final texture to the view's drawable and presents it. Grabs the
-drawable only now, so we hold it as briefly as possible. The copy is queued
-after the frame's command buffer, so it sees the finished frame.
+Copies the final texture to the layer's next drawable and presents it.
+Grabs the drawable only now, so we hold it as briefly as possible. The copy
+is queued after the frame's command buffer, so it sees the finished frame.
+nextDrawable blocks while all of the layer's drawables are in use, which is
+what paces the main loop to the display's refresh rate.
+Returns false if nothing was presented.
 */
-static void T1_gpu_present_final_texture(void * view) {
+static b8 T1_gpu_present_final_texture(void * metal_layer) {
+    if (metal_layer == NULL || ags->final_texture == NULL) {
+        return false;
+    }
+    
+    if (
+        ags->layer_drawable_w != ags->final_texture_w ||
+        ags->layer_drawable_h != ags->final_texture_h)
+    {
+        T1CGSize size;
+        size.width  = ags->final_texture_w;
+        size.height = ags->final_texture_h;
+        typedef void (* set_drawable_size_type)(void *, void *, T1CGSize);
+        ((set_drawable_size_type)T1_objc_unsafe_get_raw_msg_send())(
+            metal_layer,
+            ags->sel_set_drawable_size,
+            size);
+        ags->layer_drawable_w = ags->final_texture_w;
+        ags->layer_drawable_h = ags->final_texture_h;
+    }
+    
+    // Can be nil, e.g. after a 1 second timeout while the window is hidden
     void * drawable = (void *)T1_objc_msg(
-        view,
-        ags->sel_current_drawable);
-    T1_log_assert(drawable != NULL);
-    if (drawable == NULL || ags->final_texture == NULL) {
-        return;
+        metal_layer,
+        ags->sel_next_drawable);
+    if (drawable == NULL) {
+        return false;
     }
     
     void * drawable_tex = (void *)T1_objc_msg(drawable, ags->sel_texture);
     if (drawable_tex == NULL) {
-        return;
+        return false;
     }
     
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
     if (combuf == NULL) {
-        return;
+        return false;
     }
     
-    // The drawable can briefly differ in size while the window resizes
+    // Shouldn't differ since we set the drawable size above, but be safe
     u64 drawable_w = T1_objc_msg(drawable_tex, ags->sel_width);
     u64 drawable_h = T1_objc_msg(drawable_tex, ags->sel_height);
     u64 copy_w = drawable_w < ags->final_texture_w ?
@@ -3716,12 +3750,14 @@ static void T1_gpu_present_final_texture(void * view) {
             (uintptr_t)drawable);
     
     T1_objc_msg(combuf, ags->sel_commit);
+    
+    return true;
 }
 
-void T1_gpu_draw_in_mtk_view(void * view)
+b8 T1_gpu_draw_frame(void * metal_layer)
 {
     if (!ags || !ags->metal_active || !ags->shaders_ready) {
-        return;
+        return false;
     }
     
     if (
@@ -3729,7 +3765,7 @@ void T1_gpu_draw_in_mtk_view(void * view)
         T1_render_views->size < 1 ||
         T1_render_views->cpu[0].deleted)
     {
-        return;
+        return false;
     }
     
     void * pool = T1_objc_autorelease_pool_push();
@@ -3754,19 +3790,21 @@ void T1_gpu_draw_in_mtk_view(void * view)
                 < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
         T1_objc_autorelease_pool_pop(pool);
-        return;
+        return false;
     }
     
     if (!T1_gpu_render_frame(f)) {
         T1_objc_autorelease_pool_pop(pool);
-        return;
+        return false;
     }
     
-    T1_gpu_present_final_texture(view);
+    b8 presented = T1_gpu_present_final_texture(metal_layer);
     
     funcptr_gameloop_after_render();
     
     T1_objc_autorelease_pool_pop(pool);
+    
+    return presented;
 }
 
 void T1_os_gpu_update_internal_render_viewport(

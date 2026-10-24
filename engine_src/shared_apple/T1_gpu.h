@@ -17,7 +17,12 @@ void T1_apple_gpu_init(
 
 void T1_gpu_update_render_view_size(s32 at_i);
 void T1_gpu_update_final_window_size(void);
-void T1_gpu_draw_in_mtk_view(void * view);
+/*
+Runs the game loop callbacks, renders a frame and presents it on the given
+CAMetalLayer. Returns false if nothing was presented (and so nothing paced
+the caller to the display's refresh rate).
+*/
+b8 T1_gpu_draw_frame(void * metal_layer);
 
 // returns slice_i of new depth texture
 s16 T1_apple_gpu_make_depth_tex(

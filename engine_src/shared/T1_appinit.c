@@ -239,7 +239,20 @@ void T1_appinit_before_gpu_init(
         fatal_error);
     
     if (!T1_objc_open_framework(
-        "/System/Library/Frameworks/MetalKit.framework/MetalKit"))
+        "/System/Library/Frameworks/AppKit.framework/AppKit"))
+    {
+        return;
+    }
+    
+    // CAMetalLayer
+    if (!T1_objc_open_framework(
+        "/System/Library/Frameworks/QuartzCore.framework/QuartzCore"))
+    {
+        return;
+    }
+    
+    if (!T1_objc_open_framework(
+        "/System/Library/Frameworks/Metal.framework/Metal"))
     {
         return;
     }

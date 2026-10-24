@@ -22,6 +22,18 @@
 #define T1NSWindowStyleMaskTitled (1 << 0)
 #define T1NSWindowStyleMaskClosable (1 << 1)
 #define T1NSWindowStyleMaskResizable (1 << 3)
+#define T1NSWindowOcclusionStateVisible (1 << 1)
+#define T1NSApplicationActivationPolicyRegular 0
+#define T1NSTerminateCancel 0
+#define T1NSEventMaskAny 0xFFFFFFFFFFFFFFFFULL
+#define T1MTLPixelFormatBGRA8Unorm 80
+
+/*
+When the last loop iteration presented nothing (e.g. while loading or
+hidden), nextDrawable didn't pace us, so we wait for input up to this long
+instead of spinning.
+*/
+#define T1_OS_MACOS_IDLE_WAIT_S (1.0 / 60.0)
 
 typedef struct {
     double x;
@@ -66,12 +78,17 @@ typedef struct {
 typedef struct {
     void * class_T1_ns_window; // T1NSWindow
     void * class_T1_ns_window_delegate; // T1NSWindowDelegate
-    void * class_T1_mtk_view_delegate; // T1MTKViewDelegate
+    void * class_T1_app_delegate; // T1NSAppDelegate
     void * class_ns_app; // NSApp
     void * class_ns_url; // NSURL;
     void * class_ns_file_manager; // NSFileManager
     void * class_ns_workspace; // NSWorkspace
-    void * class_mtk_view; // MTKView
+    void * class_ns_view; // NSView
+    void * class_ca_metal_layer; // CAMetalLayer
+    void * class_ns_menu; // NSMenu
+    void * class_ns_menu_item; // NSMenuItem
+    void * class_ns_date; // NSDate
+    void * ns_default_run_loop_mode; // NSDefaultRunLoopMode (an NSString *)
     void * sel_new; // new
     void * sel_window; // window
     void * sel_make_key_and_order_front; // makeKeyAndOrderFront:
@@ -106,63 +123,52 @@ typedef struct {
     void * sel_set_content_view; // setContentView:
     void * sel_alloc;
     void * sel_init_with_content_rect_style_mask; // initWithContentRect:styleMask:backing:defer:
-    void * sel_init_with_frame_device; // initWithFrame:device:
-    void * sel_set_auto_resize_drawable; // setAutoResizeDrawable:
-    void * sel_set_preferred_frames_per_second; // setPreferredFramesPerSecond:
-    void * sel_set_enable_set_needs_display; // setEnableSetNeedsDisplay:
+    void * sel_init_with_frame; // initWithFrame:
+    void * sel_layer; // layer
+    void * sel_set_layer; // setLayer:
+    void * sel_set_wants_layer; // setWantsLayer:
+    void * sel_set_device; // setDevice:
+    void * sel_set_pixel_format; // setPixelFormat:
     void * sel_set_framebuffer_only; // setFramebufferOnly:
-    void * sel_set_paused;
-    void * sel_set_needs_display; 
+    void * sel_set_maximum_drawable_count; // setMaximumDrawableCount:
+    void * sel_set_display_sync_enabled; // setDisplaySyncEnabled:
+    void * sel_set_contents_scale; // setContentsScale:
+    void * sel_retain; // retain
+    void * sel_set_activation_policy; // setActivationPolicy:
+    void * sel_finish_launching; // finishLaunching
+    void * sel_activate_ignoring_other_apps; // activateIgnoringOtherApps:
+    void * sel_next_event; // nextEventMatchingMask:untilDate:inMode:dequeue:
+    void * sel_send_event; // sendEvent:
+    void * sel_update_windows; // updateWindows
+    void * sel_distant_past; // distantPast
+    void * sel_date_with_time_interval_since_now; // dateWithTimeIntervalSinceNow:
+    void * sel_occlusion_state; // occlusionState
+    void * sel_add_item; // addItem:
+    void * sel_set_submenu; // setSubmenu:
+    void * sel_set_main_menu; // setMainMenu:
+    void * sel_init_with_title_action_key_equivalent; // initWithTitle:action:keyEquivalent:
     b8 framework_good;
+    b8 quit_requested;
 } T1OSMacosState;
 
 static T1OSMacosState * T1_os_macos_s = NULL;
 
-static void T1_mtkviewdel_update_final_window_size(
-    void * selfptr,
-    void * selectptr)
-{
-    (void)selfptr; (void)selectptr;
-    
-    T1_gpu_update_final_window_size();
-}
-
-static void T1_mtkviewdel_update_render_view_size(
-    void * selfptr,
-    void * selectptr,
-    s32 at_i)
-{
-    (void)selfptr; (void)selectptr;
-    
-    T1_gpu_update_render_view_size(at_i);
-}
-
-static void T1_mtkviewdel_draw_in_mtk_view(
-    void * selfptr,
-    void * selectptr,
-    void * mtk_view)
-{
-    (void)selfptr; (void)selectptr;
-    
-    T1_gpu_draw_in_mtk_view(mtk_view);
-}
-
 /*
-- (void)
-    mtkView:(MTKView *) view 
-    drawableSizeWillChange:(CGSize) size;
+- (NSApplicationTerminateReply)
+    applicationShouldTerminate:(NSApplication *) sender;
+Cmd-Q and Quit from the Dock end up here. Instead of letting AppKit exit()
+we ask our own loop to stop, so we shut down the same way as always.
 */
-static void T1_mtkviewdel_mtkview_drawable_size_will_change(
+static uintptr_t T1_os_macos_app_delegate_should_terminate(
     void * selfptr,
     void * selectptr,
-    void * mtk_view,
-    T1NSSize size)
+    void * sender)
 {
-    (void)selfptr; (void)selectptr;
-    (void)mtk_view;
-    (void)size;
+    (void)selfptr; (void)selectptr; (void)sender;
     
-    // pass
+    T1_os_close_app();
+    
+    return T1NSTerminateCancel;
 }
 
 static u32 T1_apple_keycode_to_tokone_keycode(
@@ -565,8 +571,9 @@ static u8 T1_os_macos_ns_window_always_true(
 }
 
 static void * window = NULL; // id<T1NSWindow>
-static void * mtk_view = NULL; // id<MTKView>
-static void * apple_gpu_delegate = NULL; // id<T1MTKViewDelegate>
+static void * metal_view = NULL; // id<NSView>, the window's content view
+static void * metal_layer = NULL; // id<CAMetalLayer>, backs metal_view
+static void * app_delegate = NULL; // id<T1NSAppDelegate>
 
 static void T1_os_macos_ns_window_delegate_window_will_close(
     void * self_ptr,
@@ -575,11 +582,7 @@ static void T1_os_macos_ns_window_delegate_window_will_close(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_os_shutdown();
-    
-    uint8_t write_succesful = false;
-    T1_log_dump(&write_succesful);
-    
+    // T1_os_run_app() shuts down once its loop stops
     T1_os_close_app();
 }
 
@@ -800,34 +803,19 @@ void T1_os_macos_init(void) {
     T1_objc_commit_child_class(
         T1_os_macos_s->class_T1_ns_window_delegate);
     
-    T1_os_macos_s->class_T1_mtk_view_delegate =
+    T1_os_macos_s->class_T1_app_delegate =
         T1_objc_inherit_from_class(
             /* const char * base_class_name: */
                 "NSObject",
             /* const char * new_class_name: */
-                "T1MTKViewDelegate");
+                "T1NSAppDelegate");
     T1_objc_add_method(
-        T1_os_macos_s->class_T1_mtk_view_delegate,
-        "updateFinalWindowSize",
-        (void *)T1_mtkviewdel_update_final_window_size,
-        "v@:");
-    T1_objc_add_method(
-        T1_os_macos_s->class_T1_mtk_view_delegate,
-        "updateRenderViewSize:",
-        (void *)T1_mtkviewdel_update_render_view_size,
-        "v@:i");
-    T1_objc_add_method(
-        T1_os_macos_s->class_T1_mtk_view_delegate,
-        "drawInMTKView:",
-        (void *)T1_mtkviewdel_draw_in_mtk_view,
-        "v@:@");
-    T1_objc_add_method(
-        T1_os_macos_s->class_T1_mtk_view_delegate,
-        "mtkView:drawableSizeWillChange:",
-        (void *)T1_mtkviewdel_mtkview_drawable_size_will_change,
-        "v@:@{CGSize=dd}");
+        T1_os_macos_s->class_T1_app_delegate,
+        "applicationShouldTerminate:",
+        (void *)T1_os_macos_app_delegate_should_terminate,
+        "Q@:@");
     T1_objc_commit_child_class(
-        T1_os_macos_s->class_T1_mtk_view_delegate);
+        T1_os_macos_s->class_T1_app_delegate);
     
     T1_os_macos_s->class_ns_app = T1_objc_get_class(
         "NSApplication");
@@ -836,9 +824,26 @@ void T1_os_macos_init(void) {
     T1_log_assert(T1_os_macos_s->class_ns_app != NULL);
     T1_os_macos_s->class_ns_workspace = T1_objc_get_class(
         "NSWorkspace");
-    T1_os_macos_s->class_mtk_view = T1_objc_get_class(
-        "MTKView");
-    T1_log_assert(T1_os_macos_s->class_mtk_view != NULL);
+    T1_os_macos_s->class_ns_view = T1_objc_get_class(
+        "NSView");
+    T1_log_assert(T1_os_macos_s->class_ns_view != NULL);
+    T1_os_macos_s->class_ca_metal_layer = T1_objc_get_class(
+        "CAMetalLayer");
+    T1_log_assert(T1_os_macos_s->class_ca_metal_layer != NULL);
+    T1_os_macos_s->class_ns_menu = T1_objc_get_class(
+        "NSMenu");
+    T1_os_macos_s->class_ns_menu_item = T1_objc_get_class(
+        "NSMenuItem");
+    T1_os_macos_s->class_ns_date = T1_objc_get_class(
+        "NSDate");
+    T1_log_assert(T1_os_macos_s->class_ns_date != NULL);
+    
+    // A global variable, so dlsym gives us its address
+    void ** default_mode = (void **)T1_objc_get_func(
+        "NSDefaultRunLoopMode");
+    T1_log_assert(default_mode != NULL);
+    T1_os_macos_s->ns_default_run_loop_mode =
+        default_mode ? *default_mode : NULL;
     
     // selectors
     T1_os_macos_s->sel_new = T1_objc_reg_sel(
@@ -922,20 +927,54 @@ void T1_os_macos_init(void) {
         T1_objc_reg_sel("setContentView:");
     
     
-    T1_os_macos_s->sel_init_with_frame_device = T1_objc_reg_sel(
-        "initWithFrame:device:");
-    T1_os_macos_s->sel_set_auto_resize_drawable = T1_objc_reg_sel(
-        "setAutoResizeDrawable:");
-    T1_os_macos_s->sel_set_preferred_frames_per_second = T1_objc_reg_sel(
-        "setPreferredFramesPerSecond:");
-    T1_os_macos_s->sel_set_enable_set_needs_display = T1_objc_reg_sel(
-        "setEnableSetNeedsDisplay:");
+    T1_os_macos_s->sel_init_with_frame = T1_objc_reg_sel(
+        "initWithFrame:");
+    T1_os_macos_s->sel_layer = T1_objc_reg_sel(
+        "layer");
+    T1_os_macos_s->sel_set_layer = T1_objc_reg_sel(
+        "setLayer:");
+    T1_os_macos_s->sel_set_wants_layer = T1_objc_reg_sel(
+        "setWantsLayer:");
+    T1_os_macos_s->sel_set_device = T1_objc_reg_sel(
+        "setDevice:");
+    T1_os_macos_s->sel_set_pixel_format = T1_objc_reg_sel(
+        "setPixelFormat:");
     T1_os_macos_s->sel_set_framebuffer_only = T1_objc_reg_sel(
         "setFramebufferOnly:");
-    T1_os_macos_s->sel_set_paused = T1_objc_reg_sel(
-        "setPaused:");
-    T1_os_macos_s->sel_set_needs_display = T1_objc_reg_sel(
-        "setNeedsDisplay:");
+    T1_os_macos_s->sel_set_maximum_drawable_count = T1_objc_reg_sel(
+        "setMaximumDrawableCount:");
+    T1_os_macos_s->sel_set_display_sync_enabled = T1_objc_reg_sel(
+        "setDisplaySyncEnabled:");
+    T1_os_macos_s->sel_set_contents_scale = T1_objc_reg_sel(
+        "setContentsScale:");
+    T1_os_macos_s->sel_retain = T1_objc_reg_sel(
+        "retain");
+    T1_os_macos_s->sel_set_activation_policy = T1_objc_reg_sel(
+        "setActivationPolicy:");
+    T1_os_macos_s->sel_finish_launching = T1_objc_reg_sel(
+        "finishLaunching");
+    T1_os_macos_s->sel_activate_ignoring_other_apps = T1_objc_reg_sel(
+        "activateIgnoringOtherApps:");
+    T1_os_macos_s->sel_next_event = T1_objc_reg_sel(
+        "nextEventMatchingMask:untilDate:inMode:dequeue:");
+    T1_os_macos_s->sel_send_event = T1_objc_reg_sel(
+        "sendEvent:");
+    T1_os_macos_s->sel_update_windows = T1_objc_reg_sel(
+        "updateWindows");
+    T1_os_macos_s->sel_distant_past = T1_objc_reg_sel(
+        "distantPast");
+    T1_os_macos_s->sel_date_with_time_interval_since_now = T1_objc_reg_sel(
+        "dateWithTimeIntervalSinceNow:");
+    T1_os_macos_s->sel_occlusion_state = T1_objc_reg_sel(
+        "occlusionState");
+    T1_os_macos_s->sel_add_item = T1_objc_reg_sel(
+        "addItem:");
+    T1_os_macos_s->sel_set_submenu = T1_objc_reg_sel(
+        "setSubmenu:");
+    T1_os_macos_s->sel_set_main_menu = T1_objc_reg_sel(
+        "setMainMenu:");
+    T1_os_macos_s->sel_init_with_title_action_key_equivalent =
+        T1_objc_reg_sel("initWithTitle:action:keyEquivalent:");
     
     T1_log_assert(T1_os_macos_s->
         func_ns_search_path_dirs_in_domains != NULL);
@@ -1209,15 +1248,8 @@ void * T1_os_malloc_unaligned_block(
 }
 
 void T1_os_close_app(void) {
-    void * ns_app = (void *)T1_objc_msg(
-        T1_os_macos_s->class_ns_app,
-        T1_os_macos_s->sel_shared_application);
-    if (!ns_app) { return; }
-    
-    T1_objc_msg_1arg(
-        ns_app,
-        T1_os_macos_s->sel_terminate,
-        0);
+    // T1_os_run_app()'s loop notices this, then shuts down and returns
+    T1_os_macos_s->quit_requested = true;
 }
 
 void T1_os_get_cwd(char * recip, u32 recip_size) {
@@ -1431,62 +1463,79 @@ void T1_os_link_gpu_to_main_window(
         /* width: */ T1_global->window_wh[0],
         /* height: */ T1_global->window_wh[1]);
     
-    mtk_view = (void *)T1_objc_msg(
-        T1_os_macos_s->class_mtk_view,
+    metal_view = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_view,
         T1_os_macos_s->sel_alloc);
-    if (!mtk_view) {
-        *fatal_error = "Failed to alloc an MTKView";
+    if (!metal_view) {
+        *fatal_error = "Failed to alloc an NSView";
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
-    typedef void * (* initWithFrameDeviceFuncType)(
+    // The window resizes its content view, so the origin doesn't matter
+    T1NSRect view_rect = T1_nsrect_make(
+        0.0,
+        0.0,
+        window_rect.size.x,
+        window_rect.size.y);
+    typedef void * (* initWithFrameFuncType)(
         void *, void *,
-        /* initWithFrame: CGRect: */ T1NSRect,
-        /* device: id<MTLDevice>: */ void *);
-    mtk_view = ((initWithFrameDeviceFuncType)T1_objc_unsafe_get_raw_msg_send())(
-        mtk_view,
-        T1_os_macos_s->sel_init_with_frame_device,
-        window_rect,
-        metal_device_for_window);
-    if (!mtk_view) {
-        *fatal_error = "Failed to init the MTKView";
+        /* initWithFrame: NSRect: */ T1NSRect);
+    metal_view = ((initWithFrameFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        metal_view,
+        T1_os_macos_s->sel_init_with_frame,
+        view_rect);
+    if (!metal_view) {
+        *fatal_error = "Failed to init an NSView";
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_auto_resize_drawable, true);
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_preferred_frames_per_second, 60);
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_enable_set_needs_display, false);
-    // We blit our finished frame into the drawable
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_framebuffer_only, false);
+    // [CAMetalLayer layer] is autoreleased, we keep it forever
+    metal_layer = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ca_metal_layer,
+        T1_os_macos_s->sel_layer);
+    if (!metal_layer) {
+        *fatal_error = "Failed to create a CAMetalLayer";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    T1_objc_msg(metal_layer, T1_os_macos_s->sel_retain);
     
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_paused, false);
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_needs_display, false);
+    T1_objc_msg_1arg(metal_layer,
+        T1_os_macos_s->sel_set_device,
+        (uintptr_t)metal_device_for_window);
+    // Matches the final texture we copy into the drawables
+    T1_objc_msg_1arg(metal_layer,
+        T1_os_macos_s->sel_set_pixel_format,
+        T1MTLPixelFormatBGRA8Unorm);
+    // We blit our finished frame into the drawable
+    T1_objc_msg_1arg(metal_layer,
+        T1_os_macos_s->sel_set_framebuffer_only,
+        false);
+    // nextDrawable blocks when all 3 are in use, pacing our main loop
+    T1_objc_msg_1arg(metal_layer,
+        T1_os_macos_s->sel_set_maximum_drawable_count,
+        3);
+    T1_objc_msg_1arg(metal_layer,
+        T1_os_macos_s->sel_set_display_sync_enabled,
+        true);
+    T1_objc_msg_1f64(metal_layer,
+        T1_os_macos_s->sel_set_contents_scale,
+        (f64)T1_os_get_screen_backing_scale_factor());
+    
+    // Setting the layer before wantsLayer makes this a layer-hosting view
+    T1_objc_msg_1arg(metal_view,
+        T1_os_macos_s->sel_set_layer,
+        (uintptr_t)metal_layer);
+    T1_objc_msg_1arg(metal_view,
+        T1_os_macos_s->sel_set_wants_layer,
+        true);
     
     T1_objc_msg_1arg(
         window,
         T1_os_macos_s->sel_set_content_view,
-        (uintptr_t)mtk_view);
-    
-    apple_gpu_delegate = (void *)T1_objc_msg(
-        T1_os_macos_s->class_T1_mtk_view_delegate,
-        T1_os_macos_s->sel_new);
-    if (!apple_gpu_delegate) {
-        *fatal_error = "Failed to alloc & init an MTKViewDelegate";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    T1_objc_msg_1arg(mtk_view,
-        T1_os_macos_s->sel_set_delegate,
-        (uintptr_t)apple_gpu_delegate);
+        (uintptr_t)metal_view);
     
     T1_apple_gpu_init(
         /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
@@ -1501,4 +1550,174 @@ void T1_os_link_gpu_to_main_window(
             fatal_error);
     
     T1_objc_autorelease_pool_pop(pool);
+}
+
+static void T1_os_macos_set_up_main_menu(void * ns_app) {
+    void * menubar = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_menu,
+        T1_os_macos_s->sel_new);
+    void * app_menu_item = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_menu_item,
+        T1_os_macos_s->sel_new);
+    void * app_menu = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_menu,
+        T1_os_macos_s->sel_new);
+    if (!menubar || !app_menu_item || !app_menu) {
+        return;
+    }
+    
+    char quit_title[128];
+    T1_std_strcpy_cap(quit_title, 128, "Quit ");
+    T1_std_strcat_cap(quit_title, 128, T1_APP_NAME);
+    
+    // terminate: goes to our app delegate, which stops our loop
+    void * quit_item = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_menu_item,
+        T1_os_macos_s->sel_alloc);
+    quit_item = (void *)T1_objc_msg_3arg(
+        quit_item,
+        T1_os_macos_s->sel_init_with_title_action_key_equivalent,
+        /* initWithTitle: */
+            (uintptr_t)T1_objc_nsstring_construct(quit_title),
+        /* action: */
+            (uintptr_t)T1_os_macos_s->sel_terminate,
+        /* keyEquivalent: */
+            (uintptr_t)T1_objc_nsstring_construct("q"));
+    if (!quit_item) {
+        return;
+    }
+    
+    T1_objc_msg_1arg(
+        app_menu,
+        T1_os_macos_s->sel_add_item,
+        (uintptr_t)quit_item);
+    T1_objc_msg_1arg(
+        app_menu_item,
+        T1_os_macos_s->sel_set_submenu,
+        (uintptr_t)app_menu);
+    T1_objc_msg_1arg(
+        menubar,
+        T1_os_macos_s->sel_add_item,
+        (uintptr_t)app_menu_item);
+    T1_objc_msg_1arg(
+        ns_app,
+        T1_os_macos_s->sel_set_main_menu,
+        (uintptr_t)menubar);
+}
+
+/*
+Dispatches all pending events. If wait_s > 0, first waits up to that long
+for an event to arrive.
+*/
+static void T1_os_macos_pump_events(
+    void * ns_app,
+    const f64 wait_s)
+{
+    void * until = wait_s > 0.0 ?
+        (void *)T1_objc_msg_1f64(
+            T1_os_macos_s->class_ns_date,
+            T1_os_macos_s->sel_date_with_time_interval_since_now,
+            wait_s) :
+        (void *)T1_objc_msg(
+            T1_os_macos_s->class_ns_date,
+            T1_os_macos_s->sel_distant_past);
+    
+    typedef void * (* nextEventFuncType)(
+        void *, void *,
+        /* nextEventMatchingMask: */ u64,
+        /* untilDate: */ void *,
+        /* inMode: */ void *,
+        /* dequeue: */ u8);
+    
+    while (!T1_os_macos_s->quit_requested) {
+        void * event =
+            ((nextEventFuncType)T1_objc_unsafe_get_raw_msg_send())(
+                ns_app,
+                T1_os_macos_s->sel_next_event,
+                T1NSEventMaskAny,
+                until,
+                T1_os_macos_s->ns_default_run_loop_mode,
+                true);
+        
+        if (event == NULL) {
+            break;
+        }
+        
+        T1_objc_msg_1arg(
+            ns_app,
+            T1_os_macos_s->sel_send_event,
+            (uintptr_t)event);
+        
+        // Only the first wait may block, drain the rest right away
+        until = (void *)T1_objc_msg(
+            T1_os_macos_s->class_ns_date,
+            T1_os_macos_s->sel_distant_past);
+    }
+    
+    T1_objc_msg(ns_app, T1_os_macos_s->sel_update_windows);
+}
+
+void T1_os_run_app(void) {
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    void * ns_app = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_app,
+        T1_os_macos_s->sel_shared_application);
+    if (!ns_app) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    T1_objc_msg_1arg(
+        ns_app,
+        T1_os_macos_s->sel_set_activation_policy,
+        T1NSApplicationActivationPolicyRegular);
+    
+    app_delegate = (void *)T1_objc_msg(
+        T1_os_macos_s->class_T1_app_delegate,
+        T1_os_macos_s->sel_new);
+    T1_objc_msg_1arg(
+        ns_app,
+        T1_os_macos_s->sel_set_delegate,
+        (uintptr_t)app_delegate);
+    
+    T1_os_macos_set_up_main_menu(ns_app);
+    
+    // [NSApp run] would have done this for us
+    T1_objc_msg(ns_app, T1_os_macos_s->sel_finish_launching);
+    T1_objc_msg_1arg(
+        ns_app,
+        T1_os_macos_s->sel_activate_ignoring_other_apps,
+        true);
+    
+    T1_objc_autorelease_pool_pop(pool);
+    
+    b8 presented = true;
+    while (!T1_os_macos_s->quit_requested) {
+        pool = T1_objc_autorelease_pool_push();
+        
+        T1_os_macos_pump_events(
+            ns_app,
+            presented ? 0.0 : T1_OS_MACOS_IDLE_WAIT_S);
+        
+        presented = false;
+        
+        // Like MTKView did, we stop drawing (and so updating) while the
+        // window is minimized or fully covered
+        uintptr_t occlusion = window ?
+            T1_objc_msg(window, T1_os_macos_s->sel_occlusion_state) : 0;
+        if (
+            !T1_os_macos_s->quit_requested &&
+            (occlusion & T1NSWindowOcclusionStateVisible))
+        {
+            presented = T1_gpu_draw_frame(metal_layer);
+        }
+        
+        T1_objc_autorelease_pool_pop(pool);
+    }
+    
+    T1_os_shutdown();
+    
+    u8 write_succesful = false;
+    T1_log_dump(&write_succesful);
 }
