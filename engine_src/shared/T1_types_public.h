@@ -229,7 +229,7 @@ typedef struct {
 } T1zSpriteRequest;
 
 /*
-META TYPES aka "reflection"
+DATA TYPES, e.g. of the value a UI slider is linked to
 */
 typedef enum : uint8_t {
     T1_TYPE_NOTSET,
@@ -245,7 +245,7 @@ typedef enum : uint8_t {
     T1_TYPE_I16,
     T1_TYPE_I8,
     T1_TYPE_CHAR,
-} T1MetaType;
+} T1DataType;
 
 typedef struct {
     float volume;

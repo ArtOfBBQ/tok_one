@@ -324,7 +324,7 @@ void T1_ui_widget_requester_set_screen_x(int32_t x);
 void T1_ui_widget_requester_set_screen_y(int32_t y);
 void T1_ui_widget_requester_set_z(float z);
 void T1_ui_widget_requester_set_custom_minmax_f32(uint8_t active, float min, float max);
-void T1_ui_widget_requester_set_linked_type(T1MetaType type);
+void T1_ui_widget_requester_set_linked_type(T1DataType type);
 void T1_ui_widget_request_slider(
     uint32_t background_T1_id, uint32_t label_T1_id, uint32_t pin_T1_id,
     void * linked_value_ptr);
@@ -447,70 +447,6 @@ float     T1_io_get_pos_x_this_frame(T1IOKey key);
 float     T1_io_get_pos_y_this_frame(T1IOKey key);
 int32_t   T1_io_create_scene_and_return_id(void);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
-
-/*
-META TYPES (registration)
-*/
-#define T1_meta_struct(struct_name, fatal_error) T1_meta_reg_struct(#struct_name, sizeof(struct_name), fatal_error)
-void T1_meta_reg_struct(
-    const char * struct_name,
-    const uint32_t size_bytes,
-    char ** const fatal_error);
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, 0, fatal_error)
-#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, 1, fatal_error)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, 0, fatal_error)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, 0, fatal_error)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, 0, fatal_error)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, fatal_error) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, 0, fatal_error)
-void T1_meta_reg_field(
-    const char * field_name,
-    uint32_t field_offset,
-    T1MetaType field_type,
-    const char * field_struct_type_name_or_null,
-    uint16_t field_array_size_1,
-    uint16_t field_array_size_2,
-    uint16_t field_array_size_3,
-    uint8_t is_enum,
-    char ** const fatal_error);
-#define T1_meta_enum(enum_type_name, T1_data_type, fatal_error) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), fatal_error)
-void T1_meta_reg_enum(
-    const char * enum_type_name,
-    const T1MetaType T1_type,
-    const uint32_t type_size_check,
-    char ** const fatal_error);
-#define T1_meta_enum_value(enum_type_name, enum_value, fatal_error) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, fatal_error)
-void T1_meta_reg_enum_value(
-    const char * enum_type_name,
-    const char * value_name,
-    int64_t value,
-    char ** const fatal_error);
-void T1_meta_reg_u4_subname_for_last_field(
-    const char * subname,
-    const char * enum_name_if_any,
-    uint8_t is_right_nibble,
-    char ** const fatal_error);
-
-/*
-META TYPES (querying)
-*/
-void T1_meta_get_offset_and_type(
-    const char * struct_name,
-    const char * field_name,
-    int32_t * out_offset,
-    T1MetaType * out_data_type,
-    char ** const fatal_error);
-void T1_meta_write_to_known_field_uint(
-    const char * target_parent_type,
-    const char * target_field_name,
-    uint64_t value_to_write_uint,
-    void * target_parent_ptr,
-    char ** const fatal_error);
-void T1_meta_write_to_known_field_str(
-    const char * target_parent_type,
-    const char * target_field_name,
-    const char * value_to_write_str,
-    void * target_parent_ptr,
-    char ** const fatal_error);
 
 /*
 FATAL ERRORS

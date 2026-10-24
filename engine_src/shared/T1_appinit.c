@@ -7,7 +7,6 @@
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
 #include "T1_settings.h"
-#include "T1_meta.h"
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_tex_files.h"
@@ -257,21 +256,6 @@ void T1_init(
     void * pool = T1_objc_autorelease_pool_push();
     
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
-    
-    T1_meta_init(
-        T1_mem_malloc_unmanaged,
-        /* const u32 ascii_store_cap: */
-            30000,
-        /* const u16 meta_structs_cap: */
-            30,
-        /* const u16 meta_fields_cap: */
-            500,
-        /* const u16 meta_enums_cap: */
-            30,
-        /* const u16 meta_enum_vals_cap: */
-            200,
-        /* b8 * good: */
-            fatal_error);
     
     ias = T1_mem_malloc_unmanaged(
         sizeof(T1InitApplicationState));
