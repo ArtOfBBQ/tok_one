@@ -776,6 +776,11 @@ void T1_appinit_after_gpu_init_step1(
         return;
     }
     
+    if (!T1_os_gpu_shaders_ready()) {
+        *fatal_error = "T1_appinit_after_gpu_init_step1 before T1_os_gpu_try_shader_source() succeeded";
+        return;
+    }
+    
     void * pool = T1_objc_autorelease_pool_push();
     
     T1_tex_files_load_font_images(fatal_error);

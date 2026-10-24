@@ -341,6 +341,7 @@ typedef struct {
     u8  viewports_set[T1_RENDER_VIEW_CAP];
     u8  frame_i;
     b8  metal_active;
+    b8  shaders_ready;
     b8  zbuf_cleared;
     b8  rtt_cleared;
     b8  objc_metal_framework_good;
@@ -438,7 +439,6 @@ void T1_apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
-    const char * shader_source,
     char ** const sticky_error)
 {
     if (*sticky_error != 0) { return; }
@@ -629,390 +629,6 @@ void T1_apple_gpu_init(
     
     ags->device = with_metal_device;
     
-    if (shader_source == NULL || shader_source[0] == '\0') {
-        *sticky_error = "T1_apple_gpu_init() without any shader source";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-
-    if (ags->lib == NULL) {
-        // T1's embedded shader includes, then the client's shaders
-        u32 full_source_cap = (u32)(
-            T1_std_strlen(T1_embedded_data_shader_includes) +
-            T1_std_strlen(shader_source) + 1);
-        char * full_source = T1_mem_malloc_managed(full_source_cap);
-        T1_std_strcpy_cap(
-            full_source,
-            full_source_cap,
-            T1_embedded_data_shader_includes);
-        T1_std_strcat_cap(
-            full_source,
-            full_source_cap,
-            shader_source);
-
-        // stringWithUTF8String: copies, so we can free right away
-        void * nsstr_source = T1_objc_nsstring_construct(full_source);
-        T1_mem_free_managed(full_source);
-
-        void * error = NULL;
-        ags->lib = (void *)T1_objc_msg_3arg(
-            ags->device,
-            ags->sel_new_lib_with_source_options_error,
-            (uintptr_t)nsstr_source,
-            /* options: */ (uintptr_t)NULL,
-            /* error: */ (uintptr_t)&error);
-        
-        if (error) {
-            void * nsstr_error_desc = (void *)T1_objc_msg(error, ags->sel_description);
-            char * error_desc = T1_objc_nsstring_to_cstring(nsstr_error_desc);
-            if (T1_std_strlen(error_desc) > 400) {
-                error_desc[400] = '\0';
-            }
-            
-            *sticky_error = T1_mem_malloc_unmanaged(512);
-            T1_std_strcpy_cap(*sticky_error, 512, error_desc);
-            
-            T1_objc_autorelease_pool_pop(pool);
-            return;
-        }
-    }
-    
-    if (ags->lib == NULL) {
-        *sticky_error =
-            "Failed to load shaders, and further "
-            "failed to compile them from source";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_vert_shader = T1_objc_nsstring_construct(
-        "vertex_shader");
-    void * vertex_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_vert_shader);
-    if (vertex_shader == NULL) {
-        *sticky_error = "Missing function: vertex_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_fragment_shader = T1_objc_nsstring_construct(
-        "frag_shader");
-    void * fragment_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_fragment_shader);
-    if (fragment_shader == NULL) {
-        *sticky_error = "Missing function: frag_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-    void * nsstring_alphablending_fragment_shader = T1_objc_nsstring_construct(
-        "alphablending_frag_shader");
-    void * alphablending_fragment_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_alphablending_fragment_shader);
-    if (alphablending_fragment_shader == NULL) {
-        *sticky_error = "Missing function: alphablending_frag_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-        
-    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
-    void * nsstring_vertex_shader = T1_objc_nsstring_construct(
-        "vertex_shader");
-    void * z_prepass_vertex_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_vertex_shader);
-    if (z_prepass_vertex_shader == NULL) {
-        *sticky_error = "Missing function: vertex_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_z_prepass_frag_shader = T1_objc_nsstring_construct(
-        "z_prepass_frag_shader");
-    void * z_prepass_fragment_shader =
-        (void *)T1_objc_msg_1arg(
-            ags->lib,
-            ags->sel_new_function_with_name,
-            (uintptr_t)nsstring_z_prepass_frag_shader);
-    if (z_prepass_fragment_shader == NULL)
-    {
-        T1_log_append("Missing function: z_prepass_frag_shader()!");
-        
-        *sticky_error = "Missing function: z_prepass_fragment_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * z_prepass_pls_desc = T1_gpu_new_render_pipeline_descriptor(
-        z_prepass_vertex_shader,
-        z_prepass_fragment_shader,
-        /* has touch tex: */ false,
-        /* blending_enabled: */ false);
-    ags->z_prepass_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)z_prepass_pls_desc,
-        (uintptr_t)NULL);
-    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    void * nsstring_outlines_vertex_shader =
-        T1_objc_nsstring_construct("outlines_vertex_shader");
-    void * outlines_vertex_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_outlines_vertex_shader);
-    if (outlines_vertex_shader == NULL) {
-        *sticky_error = "Missing function: outlines_vertex_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_outlines_fragment_shader =
-        T1_objc_nsstring_construct(
-            "outlines_frag_shader");
-    void * outlines_fragment_shader =
-        (void *)T1_objc_msg_1arg(
-            ags->lib,
-            ags->sel_new_function_with_name,
-            (uintptr_t)nsstring_outlines_fragment_shader);
-    if (outlines_fragment_shader == NULL) {
-        *sticky_error = "Missing function: outlines_frag_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * outlines_pls_desc = (void *)T1_objc_msg(
-        ags->class_mtl_render_pipeline_desc,
-        ags->sel_new);
-    T1_objc_msg_1arg(
-        outlines_pls_desc,
-        ags->sel_set_vertex_function,
-        (uintptr_t)outlines_vertex_shader);
-    T1_objc_msg_1arg(
-        outlines_pls_desc,
-        ags->sel_set_fragment_function,
-        (uintptr_t)outlines_fragment_shader);
-    {
-        void * color_attachments = (void *)T1_objc_msg(
-            outlines_pls_desc,
-            ags->sel_color_attachments);
-        void * color_attachment_0 = (void *)T1_objc_msg_1arg(
-            color_attachments,
-            ags->sel_object_at_indexed_subscript,
-            0);
-        T1_objc_msg_1arg(
-            color_attachment_0,
-            ags->sel_set_pixel_format,
-            ags->pixel_format_renderpass1);
-    }
-    T1_objc_msg_1arg(
-        outlines_pls_desc,
-        ags->sel_set_depth_attachment_pixel_format,
-        T1MTLPixelFormatDepth32Float);
-    ags->outlines_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)outlines_pls_desc,
-        0);
-    
-    if (ags->outlines_pls == NULL) {
-        *sticky_error = "failed to register outlines pipeline state";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    void * nsstring_flat_billboard_quad_vert_shader =
-        T1_objc_nsstring_construct(
-            "flat_billboard_quad_vertex_shader");
-    void * flat_billboard_quad_vert_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_flat_billboard_quad_vert_shader);
-    if (flat_billboard_quad_vert_shader == NULL)
-    {
-        *sticky_error =
-            "Missing function: "
-            "flat_billboard_quad_vertex_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_flat_billboard_quad_frag_shader =
-        T1_objc_nsstring_construct(
-            "flat_billboard_quad_frag_shader");
-    void * flat_billboard_quad_frag_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_flat_billboard_quad_frag_shader);
-    if (flat_billboard_quad_frag_shader == NULL) {
-        *sticky_error =
-            "Missing function: "
-            "flat_billboard_quad_fragment_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * flat_billboard_quad_pls_desc =
-        T1_gpu_new_render_pipeline_descriptor(
-            flat_billboard_quad_vert_shader,
-            flat_billboard_quad_frag_shader,
-            /* has_touch_tex: */ true,
-            /* blending_enabled: */ false);
-    ags->bb_touch_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)flat_billboard_quad_pls_desc,
-        0);
-    
-    T1_log_assert(ags->bb_touch_pls != NULL);
-    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
-        flat_billboard_quad_pls_desc,
-        1);
-    
-    ags->bb_notouch_pls =
-        (void *)T1_objc_msg_2arg(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)flat_billboard_quad_pls_desc,
-            0);
-    
-    void * nsstring_flat_texquad_vert_shader =
-        T1_objc_nsstring_construct(
-            "flat_texquad_vertex_shader");
-    void * flat_texquad_vert_shader =
-        (void *)T1_objc_msg_1arg(
-            ags->lib,
-            ags->sel_new_function_with_name,
-            (uintptr_t)nsstring_flat_texquad_vert_shader);
-    if (flat_texquad_vert_shader == NULL)
-    {
-        *sticky_error =
-            "Missing function: "
-            "flat_texquad_vertex_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * nsstring_flat_texquad_frag_shader =
-        T1_objc_nsstring_construct(
-            "flat_texquad_frag_shader");
-    void * flat_texquad_frag_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_flat_texquad_frag_shader);
-    if (flat_texquad_frag_shader == NULL) {
-        *sticky_error =
-            "Missing function: "
-            "flat_texquad_frag_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    void * flat_texquad_pls_desc =
-        T1_gpu_new_render_pipeline_descriptor(
-            flat_texquad_vert_shader,
-            flat_texquad_frag_shader,
-            /* has_touch_tex: */ true,
-            /* blending_enabled: */ true);
-    ags->flat_texquad_touch_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)flat_texquad_pls_desc,
-        0);
-    
-    // Setup pipeline that uses diamonds instead of alphablending
-    void * diamond_pls_desc =
-        T1_gpu_new_render_pipeline_descriptor(
-            vertex_shader,
-            fragment_shader,
-            /* u8 has_touch_tex: */ true,
-            /* blending_enabled: */ false);
-    ags->diamond_touch_pls =
-        (void *)T1_objc_msg_2arg(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)diamond_pls_desc,
-            0);
-    
-    if (ags->diamond_touch_pls == NULL)
-    {
-        *sticky_error = "Failed to init diamond pipeline";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
-        diamond_pls_desc,
-        1);
-    ags->diamond_notouch_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)diamond_pls_desc,
-        0);
-    T1_log_assert(ags->diamond_notouch_pls != NULL);
-    
-    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
-        diamond_pls_desc,
-        0);
-    ags->depth_only_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)diamond_pls_desc,
-        0);
-    
-    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
-    void * alpha_pls_desc =
-        T1_gpu_new_render_pipeline_descriptor(
-            vertex_shader,
-            alphablending_fragment_shader,
-            true,
-            /* blending_enabled: */ true);
-    ags->blend_touch_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)alpha_pls_desc,
-        0);
-    if (ags->blend_touch_pls == NULL)
-    {
-        *sticky_error = "Failed to load the alphablending shader";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
-        alpha_pls_desc,
-        1);
-    ags->blend_notouch_pls =
-        (void *)T1_objc_msg_2arg(
-            ags->device,
-            ags->sel_new_render_pls_with_descriptor_error,
-            (uintptr_t)alpha_pls_desc,
-            0);
-    
-    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
     void * depth_desc = (void *)T1_objc_msg(
         ags->class_mtl_depth_stencil_desc,
         ags->sel_new);
@@ -1193,64 +809,419 @@ void T1_apple_gpu_init(
     ags->quad_vertices[5].texcoord[0] =  TEX_MAX;
     ags->quad_vertices[5].texcoord[1] =  TEX_MIN;
     
-    #if T1_BLOOM_ACTIVE == T1_ACTIVE
-    void * nsstring_downsample_texture = T1_objc_nsstring_construct(
-        "downsample_texture");
-    void * downsample_func = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_downsample_texture);
+    ags->command_queue = (void *)T1_objc_msg(
+        ags->device,
+        ags->sel_new_command_queue);
     
-    ags->downsample_compute_pls = (void *)T1_objc_msg_2arg(
+    ags->metal_active = true;
+    
+    T1_objc_autorelease_pool_pop(pool);
+    return;
+}
+
+// Copies a description of a failed shader attempt into the caller's
+// (optional) error recipient. nserror may be NULL.
+static void T1_gpu_shader_attempt_failed(
+    const char * msg,
+    void * nserror,
+    u8 * ok,
+    char * error_recip,
+    const u32 error_recip_cap)
+{
+    *ok = false;
+    
+    if (error_recip == NULL) { return; }
+    
+    T1_std_strcpy_cap(error_recip, error_recip_cap, msg);
+    
+    if (nserror != NULL) {
+        void * nsstr_error_desc = (void *)T1_objc_msg(
+            nserror,
+            ags->sel_description);
+        char * error_desc = T1_objc_nsstring_to_cstring(
+            nsstr_error_desc);
+        if (error_desc != NULL) {
+            if (T1_std_strlen(error_desc) > 400) {
+                error_desc[400] = '\0';
+            }
+            T1_std_strcat_cap(error_recip, error_recip_cap, ": ");
+            T1_std_strcat_cap(
+                error_recip,
+                error_recip_cap,
+                error_desc);
+        }
+    }
+}
+
+// Sticky: does nothing if *ok is already false
+static void * T1_gpu_new_shader_func(
+    void * lib,
+    const char * func_name,
+    u8 * ok,
+    char * error_recip,
+    const u32 error_recip_cap)
+{
+    if (!*ok) { return NULL; }
+    
+    void * nsstring_func_name = T1_objc_nsstring_construct(func_name);
+    void * func = (void *)T1_objc_msg_1arg(
+        lib,
+        ags->sel_new_function_with_name,
+        (uintptr_t)nsstring_func_name);
+    
+    if (func == NULL) {
+        char msg[128];
+        T1_std_strcpy_cap(msg, 128, "Missing function: ");
+        T1_std_strcat_cap(msg, 128, func_name);
+        T1_std_strcat_cap(msg, 128, "()");
+        T1_gpu_shader_attempt_failed(
+            msg, NULL, ok, error_recip, error_recip_cap);
+    }
+    
+    return func;
+}
+
+// Sticky: does nothing if *ok is already false
+static void * T1_gpu_new_render_pls(
+    void * desc,
+    const char * pls_name,
+    u8 * ok,
+    char * error_recip,
+    const u32 error_recip_cap)
+{
+    if (!*ok) { return NULL; }
+    
+    void * error = NULL;
+    void * pls = (void *)T1_objc_msg_2arg(
+        ags->device,
+        ags->sel_new_render_pls_with_descriptor_error,
+        (uintptr_t)desc,
+        (uintptr_t)&error);
+    
+    if (pls == NULL) {
+        char msg[128];
+        T1_std_strcpy_cap(msg, 128, "Failed to create pipeline: ");
+        T1_std_strcat_cap(msg, 128, pls_name);
+        T1_gpu_shader_attempt_failed(
+            msg, error, ok, error_recip, error_recip_cap);
+    }
+    
+    return pls;
+}
+
+#if T1_BLOOM_ACTIVE == T1_ACTIVE
+// Sticky: does nothing if *ok is already false
+static void * T1_gpu_new_compute_pls(
+    void * func,
+    const char * pls_name,
+    u8 * ok,
+    char * error_recip,
+    const u32 error_recip_cap)
+{
+    if (!*ok) { return NULL; }
+    
+    void * error = NULL;
+    void * pls = (void *)T1_objc_msg_2arg(
         ags->device,
         ags->sel_new_compute_pls_with_func,
-        (uintptr_t)downsample_func,
-        (uintptr_t)NULL);
+        (uintptr_t)func,
+        (uintptr_t)&error);
     
-    void * nsstring_boxblur_texture = T1_objc_nsstring_construct(
-        "boxblur_texture");
-    void * boxblur_texture = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_boxblur_texture);
+    if (pls == NULL) {
+        char msg[128];
+        T1_std_strcpy_cap(msg, 128, "Failed to create pipeline: ");
+        T1_std_strcat_cap(msg, 128, pls_name);
+        T1_gpu_shader_attempt_failed(
+            msg, error, ok, error_recip, error_recip_cap);
+    }
+    
+    return pls;
+}
+#elif T1_BLOOM_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
+void T1_os_gpu_try_shader_source(
+    const char * shader_source,
+    u8 * good,
+    char * error_recip,
+    const u32 error_recip_cap,
+    char ** const fatal_error)
+{
+    *good = false;
+    
+    if (*fatal_error != 0) { return; }
+    
+    if (error_recip != NULL) {
+        if (error_recip_cap < 512) {
+            *fatal_error = "T1_os_gpu_try_shader_source() needs an error_recip_cap of at least 512";
+            return;
+        }
+        error_recip[0] = '\0';
+    }
+    
+    if (!ags || !ags->metal_active) {
+        *fatal_error = "T1_os_gpu_try_shader_source() before T1_os_link_gpu_to_main_window()";
+        return;
+    }
+    
+    u8 ok = true;
+    
+    if (shader_source == NULL || shader_source[0] == '\0') {
+        T1_gpu_shader_attempt_failed(
+            "Empty shader source", NULL,
+            &ok, error_recip, error_recip_cap);
+        return;
+    }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    // T1's embedded shader includes, then the client's shaders
+    u32 full_source_cap = (u32)(
+        T1_std_strlen(T1_embedded_data_shader_includes) +
+        T1_std_strlen(shader_source) + 1);
+    char * full_source = T1_mem_malloc_managed(full_source_cap);
+    T1_std_strcpy_cap(
+        full_source,
+        full_source_cap,
+        T1_embedded_data_shader_includes);
+    T1_std_strcat_cap(
+        full_source,
+        full_source_cap,
+        shader_source);
+    
+    // stringWithUTF8String: copies, so we can free right away
+    void * nsstr_source = T1_objc_nsstring_construct(full_source);
+    T1_mem_free_managed(full_source);
+    
+    // Metal also reports mere warnings through 'error', so only a
+    // NULL library counts as a failure
     void * error = NULL;
-    ags->boxblur_compute_pls =
-        (void *)T1_objc_msg_2arg(
-            ags->device,
-            ags->sel_new_compute_pls_with_func,
-            (uintptr_t)boxblur_texture,
-            (uintptr_t)&error);
+    void * lib = (void *)T1_objc_msg_3arg(
+        ags->device,
+        ags->sel_new_lib_with_source_options_error,
+        (uintptr_t)nsstr_source,
+        /* options: */ (uintptr_t)NULL,
+        /* error: */ (uintptr_t)&error);
+    
+    if (lib == NULL) {
+        T1_gpu_shader_attempt_failed(
+            "Failed to compile shaders", error,
+            &ok, error_recip, error_recip_cap);
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    void * vertex_shader = T1_gpu_new_shader_func(
+        lib, "vertex_shader",
+        &ok, error_recip, error_recip_cap);
+    void * fragment_shader = T1_gpu_new_shader_func(
+        lib, "frag_shader",
+        &ok, error_recip, error_recip_cap);
+    
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
+    void * alphablending_fragment_shader = T1_gpu_new_shader_func(
+        lib, "alphablending_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    void * z_prepass_fragment_shader = T1_gpu_new_shader_func(
+        lib, "z_prepass_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    void * outlines_vertex_shader = T1_gpu_new_shader_func(
+        lib, "outlines_vertex_shader",
+        &ok, error_recip, error_recip_cap);
+    void * outlines_fragment_shader = T1_gpu_new_shader_func(
+        lib, "outlines_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    void * flat_billboard_quad_vert_shader = T1_gpu_new_shader_func(
+        lib, "flat_billboard_quad_vertex_shader",
+        &ok, error_recip, error_recip_cap);
+    void * flat_billboard_quad_frag_shader = T1_gpu_new_shader_func(
+        lib, "flat_billboard_quad_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    
+    void * flat_texquad_vert_shader = T1_gpu_new_shader_func(
+        lib, "flat_texquad_vertex_shader",
+        &ok, error_recip, error_recip_cap);
+    void * flat_texquad_frag_shader = T1_gpu_new_shader_func(
+        lib, "flat_texquad_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    void * downsample_func = T1_gpu_new_shader_func(
+        lib, "downsample_texture",
+        &ok, error_recip, error_recip_cap);
+    void * boxblur_func = T1_gpu_new_shader_func(
+        lib, "boxblur_texture",
+        &ok, error_recip, error_recip_cap);
     #elif T1_BLOOM_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    void * nsstring_singlequad_vertex_shader = T1_objc_nsstring_construct(
-        "single_quad_vertex_shader");
-    void * singlequad_vertex_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_singlequad_vertex_shader);
-    if (singlequad_vertex_shader == NULL) {
-        *sticky_error =
-            "Missing function: "
-            "postprocess_vertex_shader()";
+    void * singlequad_vertex_shader = T1_gpu_new_shader_func(
+        lib, "single_quad_vertex_shader",
+        &ok, error_recip, error_recip_cap);
+    void * singlequad_fragment_shader = T1_gpu_new_shader_func(
+        lib, "single_quad_frag_shader",
+        &ok, error_recip, error_recip_cap);
+    
+    if (!ok) {
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
     
-    void * nsstring_singlequad_fragment_shader = T1_objc_nsstring_construct(
-        "single_quad_frag_shader");
-    void * singlequad_fragment_shader = (void *)T1_objc_msg_1arg(
-        ags->lib,
-        ags->sel_new_function_with_name,
-        (uintptr_t)nsstring_singlequad_fragment_shader);
-    if (singlequad_fragment_shader == NULL)
+    // Build every pipeline into locals first, so a failed attempt
+    // leaves any previously loaded shaders untouched
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    void * z_prepass_pls_desc = T1_gpu_new_render_pipeline_descriptor(
+        vertex_shader,
+        z_prepass_fragment_shader,
+        /* has touch tex: */ false,
+        /* blending_enabled: */ false);
+    void * z_prepass_pls = T1_gpu_new_render_pls(
+        z_prepass_pls_desc, "z_prepass",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    void * outlines_pls_desc = (void *)T1_objc_msg(
+        ags->class_mtl_render_pipeline_desc,
+        ags->sel_new);
+    T1_objc_msg_1arg(
+        outlines_pls_desc,
+        ags->sel_set_vertex_function,
+        (uintptr_t)outlines_vertex_shader);
+    T1_objc_msg_1arg(
+        outlines_pls_desc,
+        ags->sel_set_fragment_function,
+        (uintptr_t)outlines_fragment_shader);
     {
-        *sticky_error = "Missing function: downsampling_fragment_shader()";
-        T1_objc_autorelease_pool_pop(pool);
-        return;
+        void * color_attachments = (void *)T1_objc_msg(
+            outlines_pls_desc,
+            ags->sel_color_attachments);
+        void * color_attachment_0 = (void *)T1_objc_msg_1arg(
+            color_attachments,
+            ags->sel_object_at_indexed_subscript,
+            0);
+        T1_objc_msg_1arg(
+            color_attachment_0,
+            ags->sel_set_pixel_format,
+            ags->pixel_format_renderpass1);
     }
+    T1_objc_msg_1arg(
+        outlines_pls_desc,
+        ags->sel_set_depth_attachment_pixel_format,
+        T1MTLPixelFormatDepth32Float);
+    void * outlines_pls = T1_gpu_new_render_pls(
+        outlines_pls_desc, "outlines",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    void * flat_billboard_quad_pls_desc =
+        T1_gpu_new_render_pipeline_descriptor(
+            flat_billboard_quad_vert_shader,
+            flat_billboard_quad_frag_shader,
+            /* has_touch_tex: */ true,
+            /* blending_enabled: */ false);
+    void * bb_touch_pls = T1_gpu_new_render_pls(
+        flat_billboard_quad_pls_desc, "billboard (touch)",
+        &ok, error_recip, error_recip_cap);
+    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
+        flat_billboard_quad_pls_desc,
+        1);
+    void * bb_notouch_pls = T1_gpu_new_render_pls(
+        flat_billboard_quad_pls_desc, "billboard (no touch)",
+        &ok, error_recip, error_recip_cap);
+    
+    void * flat_texquad_pls_desc =
+        T1_gpu_new_render_pipeline_descriptor(
+            flat_texquad_vert_shader,
+            flat_texquad_frag_shader,
+            /* has_touch_tex: */ true,
+            /* blending_enabled: */ true);
+    void * flat_texquad_touch_pls = T1_gpu_new_render_pls(
+        flat_texquad_pls_desc, "texquad",
+        &ok, error_recip, error_recip_cap);
+    
+    // Setup pipeline that uses diamonds instead of alphablending
+    void * diamond_pls_desc =
+        T1_gpu_new_render_pipeline_descriptor(
+            vertex_shader,
+            fragment_shader,
+            /* u8 has_touch_tex: */ true,
+            /* blending_enabled: */ false);
+    void * diamond_touch_pls = T1_gpu_new_render_pls(
+        diamond_pls_desc, "diamond (touch)",
+        &ok, error_recip, error_recip_cap);
+    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
+        diamond_pls_desc,
+        1);
+    void * diamond_notouch_pls = T1_gpu_new_render_pls(
+        diamond_pls_desc, "diamond (no touch)",
+        &ok, error_recip, error_recip_cap);
+    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
+        diamond_pls_desc,
+        0);
+    void * depth_only_pls = T1_gpu_new_render_pls(
+        diamond_pls_desc, "depth only",
+        &ok, error_recip, error_recip_cap);
+    
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
+    void * alpha_pls_desc =
+        T1_gpu_new_render_pipeline_descriptor(
+            vertex_shader,
+            alphablending_fragment_shader,
+            true,
+            /* blending_enabled: */ true);
+    void * blend_touch_pls = T1_gpu_new_render_pls(
+        alpha_pls_desc, "alphablending (touch)",
+        &ok, error_recip, error_recip_cap);
+    T1_gpu_render_pl_descriptor_remove_color_attachment_at(
+        alpha_pls_desc,
+        1);
+    void * blend_notouch_pls = T1_gpu_new_render_pls(
+        alpha_pls_desc, "alphablending (no touch)",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    void * downsample_compute_pls = T1_gpu_new_compute_pls(
+        downsample_func, "downsample_texture",
+        &ok, error_recip, error_recip_cap);
+    void * boxblur_compute_pls = T1_gpu_new_compute_pls(
+        boxblur_func, "boxblur_texture",
+        &ok, error_recip, error_recip_cap);
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     void * singlequad_pipeline_descriptor =
         T1_gpu_new_render_pipeline_descriptor(
@@ -1285,11 +1256,6 @@ void T1_apple_gpu_init(
         T1MTLMutabilityImmutable);
     
     #if 0
-    [0].
-        mutability = MTLMutabilityImmutable;
-    #endif
-    
-    #if 0
     // These settings may be slightly different than our
     // combined path, here are the original settings for
     // reference if something goes wrong
@@ -1305,20 +1271,58 @@ void T1_apple_gpu_init(
     singlequad_pipeline_descriptor.vertexBuffers[0].
         mutability = MTLMutabilityImmutable;
     #endif
-    ags->singlequad_pls = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_render_pls_with_descriptor_error,
-        (uintptr_t)singlequad_pipeline_descriptor,
-        (uintptr_t)NULL);
+    void * singlequad_pls = T1_gpu_new_render_pls(
+        singlequad_pipeline_descriptor, "singlequad",
+        &ok, error_recip, error_recip_cap);
     
-    ags->command_queue = (void *)T1_objc_msg(
-        ags->device,
-        ags->sel_new_command_queue);
+    if (!ok) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
     
-    ags->metal_active = true;
+    ags->lib = lib;
+    #if T1_Z_PREPASS_ACTIVE == T1_ACTIVE
+    ags->z_prepass_pls = z_prepass_pls;
+    #elif T1_Z_PREPASS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    ags->outlines_pls = outlines_pls;
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    ags->bb_touch_pls = bb_touch_pls;
+    ags->bb_notouch_pls = bb_notouch_pls;
+    ags->flat_texquad_touch_pls = flat_texquad_touch_pls;
+    ags->diamond_touch_pls = diamond_touch_pls;
+    ags->diamond_notouch_pls = diamond_notouch_pls;
+    ags->depth_only_pls = depth_only_pls;
+    #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
+    ags->blend_touch_pls = blend_touch_pls;
+    ags->blend_notouch_pls = blend_notouch_pls;
+    #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
+    ags->downsample_compute_pls = downsample_compute_pls;
+    ags->boxblur_compute_pls = boxblur_compute_pls;
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    ags->singlequad_pls = singlequad_pls;
+    ags->shaders_ready = true;
+    
+    *good = true;
     
     T1_objc_autorelease_pool_pop(pool);
-    return;
+}
+
+u8 T1_os_gpu_shaders_ready(void) {
+    return ags != NULL && ags->shaders_ready;
 }
 
 #if T1_BLOOM_ACTIVE == T1_ACTIVE
@@ -3019,7 +3023,7 @@ static void * get_tex_slice(
 
 void T1_gpu_draw_in_mtk_view(void * view)
 {
-    if (!ags || !ags->metal_active) {
+    if (!ags || !ags->metal_active || !ags->shaders_ready) {
         return;
     }
     

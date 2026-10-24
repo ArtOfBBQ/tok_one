@@ -297,8 +297,27 @@ void T1_os_create_main_window(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
 void T1_os_link_gpu_to_main_window(
-    const char * shader_source,
     char ** const fatal_error);
+
+/*
+Compiles shader_source (with T1's GPU struct headers
+prepended) and builds all render pipelines from it.
+If anything fails, *good is set to 0, a description is
+copied to error_recip (optional, may be NULL, else
+needs a cap of at least 512), and any
+shaders loaded by a previous successful call stay in
+place, so you can retry with a different source.
+You must succeed at least once before
+T1_appinit_after_gpu_init_step1(), else that's fatal.
+*/
+void T1_os_gpu_try_shader_source(
+    const char * shader_source,
+    u8 * good,
+    char * error_recip,
+    const u32 error_recip_cap,
+    char ** const fatal_error);
+
+u8 T1_os_gpu_shaders_ready(void);
 
 void T1_os_shutdown(void);
 
