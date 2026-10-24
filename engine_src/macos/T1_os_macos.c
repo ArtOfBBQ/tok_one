@@ -4,7 +4,6 @@
 #include "T1_objc.h"
 #include "T1_io.h"
 #include "T1_global.h"
-#include "T1_ui_widget.h"
 #include "T1_zsprite.h"
 #include "T1_os.h"
 #include "T1_gpu.h"
@@ -593,7 +592,6 @@ static void T1_os_macos_ns_window_delegate_window_will_enter_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_ui_widget_delete_all();
     T1_zsprite_delete_all();
     T1_global->fullscreen = true;
 }
@@ -605,7 +603,6 @@ static void T1_os_macos_ns_window_delegate_window_will_exit_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_ui_widget_delete_all();
     T1_zsprite_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_delete_all();

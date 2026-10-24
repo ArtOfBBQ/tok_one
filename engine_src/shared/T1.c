@@ -374,3 +374,13 @@ void T1_png_decode(
         out_good);
 }
 #endif
+
+/*
+3D models
+*/
+f32 T1_get_x_mul_for_width(s32 for_mesh_id, f32 for_width) {
+    return T1_global_get_x_mul_for_width(for_mesh_id, for_width); }
+f32 T1_get_y_mul_for_height(s32 for_mesh_id, f32 for_height) {
+    return T1_global_get_y_mul_for_height(for_mesh_id, for_height); }
+f32 T1_get_z_mul_for_depth(s32 for_mesh_id, f32 for_depth) {
+    return T1_global_get_z_mul_for_depth(for_mesh_id, for_depth); }

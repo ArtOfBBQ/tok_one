@@ -16,7 +16,6 @@
 #include "T1_zlight.h"
 #include "T1_particle.h"
 #include "T1_text.h"
-#include "T1_ui_widget.h"
 #include "T1_io.h"
 #include "T1_global.h"
 #include "T1_term.h"
@@ -437,8 +436,6 @@ void T1_init(
     T1_global_init();
     
     T1_io_init(T1_mem_malloc_unmanaged);
-    
-    T1_ui_widget_init();
     
     T1_texquad_init();
     

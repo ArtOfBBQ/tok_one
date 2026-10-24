@@ -232,7 +232,7 @@ uint16_t T1_tex_array_prereg_img(
 void T1_tex_array_update_rgba(
     int32_t array_i, int32_t slice_i,
     const uint8_t * rgba, uint32_t rgba_size);
-uint8_t T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
+uint8_t  T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
 uint32_t T1_tex_array_get_img_height(int32_t array_i);
 uint32_t T1_tex_array_get_img_width(int32_t array_i);
 
@@ -257,6 +257,10 @@ float T1_objmodel_get_y_multiplier_for_height(
     int32_t mesh_id,
     float screenspace_height,
     float given_z);
+float T1_get_x_mul_for_width(int32_t for_mesh_id, float for_width);
+float T1_get_y_mul_for_height(int32_t for_mesh_id, float for_height);
+float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
+
 
 /*
 TEXT LABELS
@@ -296,40 +300,6 @@ void T1_text_request_label_around(
     uint32_t with_T1_id, const char * text_to_draw,
     float screen_mid_x, float screen_mid_y, float z,
     float max_width);
-
-/*
-UI WIDGETS
-
-For now this just has sliders
-
-The *requester* setter functions are basically a list of
-arguments, but they persist over repeated calls to
-T1_ui_widget_request_slider(). So you can set your style
-once and keep using it if you want 
-*/
-void T1_ui_widget_requester_set_pin_rgba(uint8_t rgba_i, float val);
-void T1_ui_widget_requester_set_screenspace_height(uint32_t height);
-void T1_ui_widget_requester_set_screenspace_width(uint32_t width);
-void T1_ui_widget_requester_set_screenspace_pin_height(uint32_t height);
-void T1_ui_widget_requester_set_screenspace_pin_width(uint32_t width);
-void T1_ui_widget_requester_set_sfx_filename(char * sfx_fn);
-void T1_ui_widget_requester_set_font_height(uint32_t to_val);
-void T1_ui_widget_requester_set_screen_x(int32_t x);
-void T1_ui_widget_requester_set_screen_y(int32_t y);
-void T1_ui_widget_requester_set_z(float z);
-void T1_ui_widget_requester_set_custom_minmax_f32(uint8_t active, float min, float max);
-void T1_ui_widget_requester_set_linked_type(T1DataType type);
-void T1_ui_widget_request_slider(
-    uint32_t background_T1_id, uint32_t label_T1_id, uint32_t pin_T1_id,
-    void * linked_value_ptr);
-void T1_ui_widget_delete(uint32_t T1_id);
-
-/*
-3D models
-*/
-float T1_get_x_mul_for_width(int32_t for_mesh_id, float for_width);
-float T1_get_y_mul_for_height(int32_t for_mesh_id, float for_height);
-float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
 
 /*
 TexQuads (textured 2D quads)

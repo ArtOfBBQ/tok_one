@@ -9,7 +9,6 @@
 #include "T1_global.h"
 #include "T1_zsprite.h"
 #include "T1_texquad.h"
-#include "T1_ui_widget.h"
 
 #include <pthread.h>
 #include <errno.h> // for pthread consts like EBUSY, EPERM
@@ -488,7 +487,6 @@ void T1_os_layer_start_window_resize(
 {
     T1_global->last_resize_request_us = timestamp;
     
-    T1_ui_widget_delete_all();
     T1_zsprite_delete_all();
     T1_texquad_delete_all();
     

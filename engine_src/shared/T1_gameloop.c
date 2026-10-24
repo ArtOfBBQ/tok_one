@@ -10,7 +10,6 @@
 #include "T1_os.h"
 #include "T1_tex_array.h"
 #include "T1_text.h"
-#include "T1_ui_widget.h"
 #include "T1_render.h"
 #include "T1_zsprite.h"
 #include "T1_zlight.h"
@@ -65,7 +64,6 @@ static void show_dead_simple_text(
     const char * text_message,
     u64 elapsed)
 {
-    T1_ui_widget_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_delete_all();
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
