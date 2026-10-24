@@ -13,6 +13,7 @@
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
 #include "T1_os.h"
+#include "T1_io.h"
 
 #define T1MTLPrimitiveTypePoint 0
 #define T1MTLPrimitiveTypeLine 1
@@ -50,6 +51,7 @@
 #define T1MTLLoadActionDontCare 0
 #define T1MTLLoadActionLoad 1
 #define T1MTLLoadActionClear 2
+#define T1MTLCommandBufferStatusCompleted 4
 
 #define T1MTLStoreActionStore 1
 
@@ -161,6 +163,27 @@ typedef void (* setClearColorFuncType)(
     void *, void *,
     T1MTLClearColor);
 
+/*
+The CPU only ever asks for the touch id under the mouse, so instead of
+reading back the whole touch id texture every frame we copy a small square
+around the mouse. There's one sample per frame in flight, and the CPU only
+reads a sample after the GPU has finished its frame.
+*/
+#define T1_GPU_TOUCH_SAMPLE_DIM 32
+
+typedef struct {
+    void * buffer; // id<MTLBuffer>, shared storage
+    void * combuf; // id<MTLCommandBuffer>, retained until its frame is done
+    u64 frame_no;
+    u32 x; // region of the touch id texture, in its pixels
+    u32 y;
+    u32 w;
+    u32 h;
+    u32 tex_w; // touch id texture size when sampled
+    u32 tex_h;
+    b8 valid; // false if the mouse was outside or nothing wrote touch ids
+} T1GPUTouchSample;
+
 typedef struct {
     uintptr_t pixel_format_renderpass1;
     T1MTLViewport window_viewport;
@@ -237,8 +260,12 @@ typedef struct {
     #endif
     
     void * touch_id_texture;
-    void * touch_id_buffer;
-    void * touch_id_buffer_all_zeros;
+    T1GPUTouchSample touch_samples[T1_FRAMES_CAP];
+    // CPU copy of the newest finished sample (buffer & combuf unused)
+    T1GPUTouchSample touch_latest;
+    u8 touch_latest_bytes[
+        T1_GPU_TOUCH_SAMPLE_DIM * T1_GPU_TOUCH_SAMPLE_DIM * 4];
+    u64 frames_encoded;
     
     void * cur_rtt;
     void * cur_depth;
@@ -318,6 +345,9 @@ typedef struct {
     void * sel_present_drawable; // presentDrawable:
     void * sel_commit; // commit
     void * sel_wait_until_completed; // waitUntilCompleted
+    void * sel_status; // status
+    void * sel_retain; // retain
+    void * sel_release; // release
     void * sel_end_encoding; // endEncoding
     void * sel_current_drawable; // currentDrawable
     void * sel_texture; // texture
@@ -347,6 +377,7 @@ typedef struct {
     b8  shaders_ready;
     b8  zbuf_cleared;
     b8  rtt_cleared;
+    b8  touch_cleared;
     b8  objc_metal_framework_good;
 } AppleGPUState;
 
@@ -582,6 +613,12 @@ void T1_apple_gpu_init(
         "commit");
     ags->sel_wait_until_completed = T1_objc_reg_sel(
         "waitUntilCompleted");
+    ags->sel_status = T1_objc_reg_sel(
+        "status");
+    ags->sel_retain = T1_objc_reg_sel(
+        "retain");
+    ags->sel_release = T1_objc_reg_sel(
+        "release");
     ags->sel_end_encoding = T1_objc_reg_sel(
         "endEncoding");
     ags->sel_current_drawable = T1_objc_reg_sel(
@@ -1580,9 +1617,15 @@ s16 T1_os_gpu_make_depth_tex(
         height);
 }
 
-u32 T1_os_gpu_get_touch_id_at_screen_pos(
-    f32 screen_x,
-    f32 screen_y)
+/*
+Converts a window position (in points, origin bottom left, like mouse
+events) to a pixel of the touch id texture (origin top left).
+*/
+static b8 T1_gpu_screen_to_touch_tex_pos(
+    const f32 screen_x,
+    const f32 screen_y,
+    u32 * tex_x,
+    u32 * tex_y)
 {
     if (
         screen_x < 0 ||
@@ -1590,7 +1633,7 @@ u32 T1_os_gpu_get_touch_id_at_screen_pos(
         screen_x >= T1_global->window_wh[0] ||
         screen_y >= T1_global->window_wh[1])
     {
-        return T1_TOUCH_ID_NONE;
+        return false;
     }
     
     u32 rtt_width  = (u32)ags->render_viewports[0].width;
@@ -1598,32 +1641,63 @@ u32 T1_os_gpu_get_touch_id_at_screen_pos(
     u32 win_width  = (u32)T1_global->window_wh[0];
     u32 win_height = (u32)T1_global->window_wh[1];
     
-    u32 screen_x_adj = (u32)((screen_x * rtt_width) /
-        win_width);
-    u32 screen_y_adj = (u32)(
-        ((win_height - screen_y) * rtt_height) /
-        win_height);
-    
-    if (screen_x_adj >= rtt_width ) {
-        screen_x_adj = rtt_width;
-    }
-    if (screen_y_adj >= rtt_height)
+    if (
+        rtt_width < 1 || rtt_height < 1 ||
+        win_width < 1 || win_height < 1)
     {
-        screen_y_adj = rtt_height;
+        return false;
     }
     
-    u8 * data = (u8 *)T1_objc_msg(
-        ags->touch_id_buffer, ags->sel_contents);
-    u64 size = T1_objc_msg(
-        ags->touch_id_buffer,
-        ags->sel_allocated_size);
+    *tex_x = (u32)((screen_x * rtt_width) / win_width);
+    *tex_y = (u32)(((win_height - screen_y) * rtt_height) / win_height);
     
-    u32 pixel_i = (screen_y_adj * rtt_width) + screen_x_adj;
+    if (*tex_x >= rtt_width ) { *tex_x = rtt_width - 1; }
+    if (*tex_y >= rtt_height) { *tex_y = rtt_height - 1; }
     
-    if (((pixel_i * 4) + 3) >= size)
+    return true;
+}
+
+u32 T1_os_gpu_get_touch_id_at_screen_pos(
+    f32 screen_x,
+    f32 screen_y)
+{
+    if (!ags || !ags->touch_latest.valid) {
+        return T1_TOUCH_ID_NONE;
+    }
+    
+    u32 tex_x;
+    u32 tex_y;
+    if (!T1_gpu_screen_to_touch_tex_pos(
+        screen_x,
+        screen_y,
+        &tex_x,
+        &tex_y))
     {
         return T1_TOUCH_ID_NONE;
     }
+    
+    T1GPUTouchSample * sample = &ags->touch_latest;
+    
+    // Sampled before a resize, the pixels don't line up anymore
+    if (
+        sample->tex_w != (u32)ags->render_viewports[0].width ||
+        sample->tex_h != (u32)ags->render_viewports[0].height)
+    {
+        return T1_TOUCH_ID_NONE;
+    }
+    
+    if (
+        tex_x <  sample->x ||
+        tex_y <  sample->y ||
+        tex_x >= sample->x + sample->w ||
+        tex_y >= sample->y + sample->h)
+    {
+        return T1_TOUCH_ID_NONE;
+    }
+    
+    u32 pixel_i =
+        ((tex_y - sample->y) * sample->w) + (tex_x - sample->x);
+    u8 * data = ags->touch_latest_bytes;
     
     // See shaders for the packing logic
     u32 first_8bits  = data[(pixel_i*4)+0];
@@ -2078,7 +2152,8 @@ static void * T1_gpu_new_render_pass_descriptor(void) {
 
 static void set_defaults_for_render_descriptor(
     void * desc,
-    s32 cam_i)
+    s32 cam_i,
+    const b8 attach_touch_ids)
 {
     void * depth_attachm = (void *)T1_objc_msg(desc, ags->sel_depth_attachment);
     if (!ags->zbuf_cleared) {
@@ -2128,6 +2203,7 @@ static void set_defaults_for_render_descriptor(
     
     // ID Buffer for touchables
     if (
+        attach_touch_ids &&
         T1_render_views->cpu[cam_i].write_type ==
             T1RENDERVIEW_WRITE_RENDER_TARGET)
     {
@@ -2137,10 +2213,24 @@ static void set_defaults_for_render_descriptor(
             color_attachment_1,
             ags->sel_set_texture,
             (uintptr_t)ags->touch_id_texture);
-        T1_objc_msg_1arg(
-            color_attachment_1,
-            ags->sel_set_load_action,
-            (uintptr_t)T1MTLLoadActionLoad);
+        if (!ags->touch_cleared) {
+            T1_objc_msg_1arg(
+                color_attachment_1,
+                ags->sel_set_load_action,
+                (uintptr_t)T1MTLLoadActionClear);
+            // All bits set, which unpacks to T1_TOUCH_ID_NONE
+            ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
+                color_attachment_1,
+                ags->sel_set_clear_color,
+                T1_mtl_clearcolor_make(1.0, 1.0, 1.0, 1.0));
+            
+            ags->touch_cleared = true;
+        } else {
+            T1_objc_msg_1arg(
+                color_attachment_1,
+                ags->sel_set_load_action,
+                (uintptr_t)T1MTLLoadActionLoad);
+        }
         T1_objc_msg_1arg(
             color_attachment_1,
             ags->sel_set_store_action,
@@ -2346,22 +2436,11 @@ static void T1_gpu_draw_single_pass(
                 return;
             }
 
+            // The outlines pipeline has no touch id attachment
             set_defaults_for_render_descriptor(
                 outlines_desc,
-                cam_i);
-            {
-                // The outlines pipeline has no touch id attachment
-                void * color_attachments = (void *)T1_objc_msg(
-                    outlines_desc,
-                    ags->sel_color_attachments);
-                void * color_att_1 = (void *)T1_objc_msg_1arg(
-                    color_attachments, ags->sel_object_at_indexed_subscript,
-                    /* object_at_indexed_subscript: */ 1);
-                T1_objc_msg_1arg(
-                    color_att_1,
-                    ags->sel_set_texture,
-                    (uintptr_t)NULL);
-            }
+                cam_i,
+                /* attach_touch_ids: */ false);
 
             void * pass_1_outline_enc =
                 (void *)T1_objc_msg_1arg(
@@ -2431,7 +2510,8 @@ static void T1_gpu_draw_single_pass(
             
             set_defaults_for_render_descriptor(
                 diamond_desc,
-                cam_i);
+                cam_i,
+                /* attach_touch_ids: */ true);
             
             void * pass_2_opaque_tris_enc =
                 (void *)T1_objc_msg_1arg(
@@ -2476,7 +2556,8 @@ static void T1_gpu_draw_single_pass(
             
             set_defaults_for_render_descriptor(
                 alpha_desc,
-                cam_i);
+                cam_i,
+                /* attach_touch_ids: */ true);
             
             void * alpha_pass = (void *)T1_objc_msg_1arg(
                 combuf, ags->sel_render_cmd_enc_with_desc,
@@ -2522,7 +2603,8 @@ static void T1_gpu_draw_single_pass(
             
             set_defaults_for_render_descriptor(
                 bb_desc,
-                cam_i);
+                cam_i,
+                /* attach_touch_ids: */ true);
             
             void * bb_enc = (void *)T1_objc_msg_1arg(
                 combuf, ags->sel_render_cmd_enc_with_desc,
@@ -2584,7 +2666,8 @@ static void T1_gpu_draw_single_pass(
             void * bloom_desc = T1_gpu_new_render_pass_descriptor();
             set_defaults_for_render_descriptor(
                 bloom_desc,
-                cam_i);
+                cam_i,
+                /* attach_touch_ids: */ true);
             void * bloom_rtt = ags->downsampled_rtts[0];
             {
                 void * color_attachments = (void *)T1_objc_msg(
@@ -2723,7 +2806,8 @@ static void T1_gpu_draw_single_pass(
             
             set_defaults_for_render_descriptor(
                 flat_texq_desc,
-                cam_i);
+                cam_i,
+                /* attach_touch_ids: */ true);
             
             void * flat_texq_enc = (void *)T1_objc_msg_1arg(
                 combuf,
@@ -2912,32 +2996,6 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         ags->sel_new_tex_with_desc,
         (uintptr_t)touch_id_tex_desc);
     
-    u64 touch_buffer_size_bytes =
-        (uintptr_t)ags->render_viewports[at_i].width *
-        (uintptr_t)ags->render_viewports[at_i].height * 4;
-    
-    T1_log_assert(ags->device != NULL);
-    ags->touch_id_buffer = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_buf_with_len_options,
-        touch_buffer_size_bytes,
-        T1MTLResourceStorageModeShared);
-    T1_log_assert(ags->touch_id_buffer != NULL);
-    
-    ags->touch_id_buffer_all_zeros = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_buf_with_len_options,
-        touch_buffer_size_bytes,
-        T1MTLResourceStorageModeShared);
-    
-    s32 minus_one = -1;
-    T1_std_memset_s32(
-        (void *)T1_objc_msg(
-            ags->touch_id_buffer_all_zeros,
-            ags->sel_contents),
-        minus_one,
-        (u32)touch_buffer_size_bytes);
-    
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (
         u32 i = 0;
@@ -3032,6 +3090,151 @@ static void * get_tex_slice(
         ns_range_slice);
     
     return retval;
+}
+
+/*
+Once a sample's frame is done, copies it to touch_latest if it's the newest
+we've seen and lets go of its command buffer. With wait == false this does
+nothing for frames that are still in flight.
+*/
+static void T1_gpu_retire_touch_sample(
+    T1GPUTouchSample * sample,
+    const b8 wait)
+{
+    if (sample->combuf == NULL) {
+        return;
+    }
+    
+    if (wait) {
+        T1_objc_msg(sample->combuf, ags->sel_wait_until_completed);
+    }
+    
+    uintptr_t status = T1_objc_msg(sample->combuf, ags->sel_status);
+    if (status < T1MTLCommandBufferStatusCompleted) {
+        T1_log_assert(!wait);
+        return;
+    }
+    
+    // An invalid sample still replaces an older one, so we don't keep
+    // reporting touch ids that are no longer on screen
+    if (
+        status == T1MTLCommandBufferStatusCompleted &&
+        sample->frame_no > ags->touch_latest.frame_no)
+    {
+        if (sample->valid) {
+            T1_log_assert(sample->w * sample->h * 4 <=
+                sizeof(ags->touch_latest_bytes));
+            T1_std_memcpy(
+                /* void * dest: */
+                    ags->touch_latest_bytes,
+                /* const void * src: */
+                    (void *)T1_objc_msg(sample->buffer, ags->sel_contents),
+                /* u64 n_bytes: */
+                    sample->w * sample->h * 4);
+        }
+        ags->touch_latest = *sample;
+        ags->touch_latest.buffer = NULL;
+        ags->touch_latest.combuf = NULL;
+    }
+    
+    T1_objc_msg(sample->combuf, ags->sel_release);
+    sample->combuf = NULL;
+}
+
+/*
+Copies the touch ids in a small square around the mouse to the sample's
+buffer, to be read by the CPU after this frame is done.
+*/
+static void T1_gpu_encode_touch_sample(
+    void * combuf,
+    T1GPUTouchSample * sample)
+{
+    T1_log_assert(sample->combuf == NULL);
+    
+    if (sample->buffer == NULL) {
+        sample->buffer = (void *)T1_objc_msg_2arg(
+            ags->device,
+            ags->sel_new_buf_with_len_options,
+            T1_GPU_TOUCH_SAMPLE_DIM * T1_GPU_TOUCH_SAMPLE_DIM * 4,
+            T1MTLResourceStorageModeShared);
+        T1_log_assert(sample->buffer != NULL);
+    }
+    
+    // Retained so we can check on this frame later
+    sample->combuf = (void *)T1_objc_msg(combuf, ags->sel_retain);
+    sample->frame_no = ++ags->frames_encoded;
+    sample->valid = false;
+    
+    T1_log_assert(ags->touch_id_texture != NULL);
+    sample->tex_w = (u32)T1_objc_msg(
+        ags->touch_id_texture,
+        ags->sel_width);
+    sample->tex_h = (u32)T1_objc_msg(
+        ags->touch_id_texture,
+        ags->sel_height);
+    
+    u32 mouse_x;
+    u32 mouse_y;
+    if (
+        sample->buffer == NULL ||
+        !ags->touch_cleared ||
+        sample->tex_w < 1 ||
+        sample->tex_h < 1 ||
+        !T1_gpu_screen_to_touch_tex_pos(
+            T1_io_get_pos_x_this_frame(T1_IO_MOUSE),
+            T1_io_get_pos_y_this_frame(T1_IO_MOUSE),
+            &mouse_x,
+            &mouse_y))
+    {
+        return;
+    }
+    
+    // A square centered on the mouse, shifted to stay inside the texture
+    sample->w = sample->tex_w < T1_GPU_TOUCH_SAMPLE_DIM ?
+        sample->tex_w : T1_GPU_TOUCH_SAMPLE_DIM;
+    sample->h = sample->tex_h < T1_GPU_TOUCH_SAMPLE_DIM ?
+        sample->tex_h : T1_GPU_TOUCH_SAMPLE_DIM;
+    sample->x = mouse_x > sample->w / 2 ? mouse_x - sample->w / 2 : 0;
+    sample->y = mouse_y > sample->h / 2 ? mouse_y - sample->h / 2 : 0;
+    if (sample->x + sample->w > sample->tex_w) {
+        sample->x = sample->tex_w - sample->w;
+    }
+    if (sample->y + sample->h > sample->tex_h) {
+        sample->y = sample->tex_h - sample->h;
+    }
+    
+    void * blit_enc = (void *)T1_objc_msg(
+        combuf, ags->sel_blit_command_encoder);
+    
+    typedef void (* copy_from_tex_to_buf_type)(
+        void *, void *,
+        /* copyFromTexture:(id<MTLTexture>) */ void *,
+        /* sourceSlice:(NSUInteger)    : */ uintptr_t,
+        /* sourceLevel:(NSUInteger)    : */ uintptr_t,
+        /* sourceOrigin:(MTLOrigin)    : */ T1MTLOrigin,
+        /* sourceSize:(MTLSize)        : */ T1MTLSize,
+        /* toBuffer:(id<MTLBuffer>)    : */ void *,
+        /* destOffset:(NSUInteger)     : */ uintptr_t,
+        /* destBytesPerRow:(NSUInteger): */ uintptr_t,
+        /* destBytesPerImg:(NSUInteger): */ uintptr_t);
+    ((copy_from_tex_to_buf_type)T1_objc_unsafe_get_raw_msg_send())(
+        blit_enc,
+        ags->sel_copy_from_texture_to_buffer,
+        ags->touch_id_texture,
+        /* source_slice: */ 0,
+        /* source_level: */ 0,
+        /* source_origin: */
+            T1_mtlorigin_make(sample->x, sample->y, 0),
+        /* source_size: */
+            T1_mtlsize_make(sample->w, sample->h, 1),
+        /* to_buffer: */ sample->buffer,
+        /* destination_offset: */ 0,
+        /* destination_bytes_per_row: */ sample->w * 4,
+        /* destination_bytes_per_image: */ sample->w * sample->h * 4);
+    
+    T1_objc_msg(blit_enc, ags->sel_end_encoding);
+    
+    sample->valid = true;
 }
 
 /*
@@ -3220,6 +3423,19 @@ void T1_gpu_draw_in_mtk_view(void * view)
     
     T1_log_assert(f->verts_size % 3 == 0);
     
+    // Pick up any finished frames' touch samples without blocking, then
+    // wait for the frame that last used this slot: its buffers (and touch
+    // sample) are about to be overwritten. This also limits the number of
+    // frames in flight to T1_FRAMES_CAP.
+    for (u32 i = 0; i < T1_FRAMES_CAP; i++) {
+        T1_gpu_retire_touch_sample(
+            &ags->touch_samples[i],
+            /* wait: */ false);
+    }
+    T1_gpu_retire_touch_sample(
+        &ags->touch_samples[ags->frame_i],
+        /* wait: */ true);
+    
     funcptr_gameloop_before_render(
         T1_cpu_to_gpu_data->triple_buffers + 
             ags->frame_i);
@@ -3255,49 +3471,8 @@ void T1_gpu_draw_in_mtk_view(void * view)
         return;
     }
     
-    // Blit to clear the touch id buffer
-    T1_log_assert(ags->touch_id_texture != NULL);
-    u64 touch_id_w = T1_objc_msg(
-        ags->touch_id_texture,
-        ags->sel_width);
-    u64 touch_id_h = T1_objc_msg(
-        ags->touch_id_texture,
-        ags->sel_height);
-    u64 size_bytes = touch_id_w * touch_id_h * 8;
-    
-    T1MTLSize touch_buf_size = T1_mtlsize_make(touch_id_w, touch_id_h, 1);
-    T1MTLOrigin touch_buf_origin = T1_mtlorigin_make(0, 0, 0);
-    
-    {
-    void * clear_touch_tex_blit_enc = (void *)T1_objc_msg(
-        combuf, ags->sel_blit_command_encoder);
-    
-    typedef void (* copy_from_buf_src_offset_type)(
-        void *, void *,
-        /* copyFromBuffer:(id<MTLBuffer>): */ void *,
-        /* sourceOffset:(NSUInteger): */ uintptr_t,
-        /* sourceBytesPerRow:(NSUInteger): */ uintptr_t,
-        /* sourceBytesPerImage:(NSUInteger): */ uintptr_t,
-        /* sourceSize:(MTLSize): */ T1MTLSize,
-        /* toTexture:(id<MTLTexture>): */ void *,
-        /* destinationSlice:(NSUInteger): */ uintptr_t,
-        /* destinationLevel:(NSUInteger): */ uintptr_t,
-        /* destinationOrigin:(MTLOrigin): */ T1MTLOrigin);
-    ((copy_from_buf_src_offset_type)T1_objc_unsafe_get_raw_msg_send())(
-        clear_touch_tex_blit_enc,
-        ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
-        ags->touch_id_buffer_all_zeros,
-        0,
-        touch_id_w * 4,
-        size_bytes,
-        touch_buf_size,
-        ags->touch_id_texture,
-        0,
-        0,
-        touch_buf_origin);
-    
-    T1_objc_msg(clear_touch_tex_blit_enc, ags->sel_end_encoding);
-    }
+    // The first pass that writes touch ids clears them
+    ags->touch_cleared = false;
     
     for (
         s32 cam_i =
@@ -3407,39 +3582,9 @@ void T1_gpu_draw_in_mtk_view(void * view)
             write_tex) >= 0);
     }
     
-    // copy the touch id buffer for CPU use
-    {
-    void * blit_touch_tex_to_cpu_enc = (void *)T1_objc_msg(
-        combuf, ags->sel_blit_command_encoder);
-    
-    typedef void (* copy_from_tex_to_buf_type)(
-        void *, void *,
-        /* copyFromTexture:(id<MTLTexture>) */ void *,
-        /* sourceSlice:(NSUInteger)    : */ uintptr_t,
-        /* sourceLevel:(NSUInteger)    : */ uintptr_t,
-        /* sourceOrigin:(MTLOrigin)    : */ T1MTLOrigin,
-        /* sourceSize:(MTLSize)        : */ T1MTLSize,
-        /* toBuffer:(id<MTLBuffer>)    : */ void *,
-        /* destOffset:(NSUInteger)     : */ uintptr_t,
-        /* destBytesPerRow:(NSUInteger): */ uintptr_t,
-        /* destBytesPerImg:(NSUInteger): */ uintptr_t);
-    ((copy_from_tex_to_buf_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_touch_tex_to_cpu_enc,
-        ags->sel_copy_from_texture_to_buffer,
-        ags->touch_id_texture,
-        /* source_slice: */ 0,
-        /* source_level: */ 0,
-        /* source_origin: */ touch_buf_origin,
-        /* source_size: */ touch_buf_size,
-        /* to_buffer: */ ags->touch_id_buffer,
-        /* destination_offset: */ 0,
-        /* destination_bytes_per_row: */ touch_id_w * 4,
-        /* destination_bytes_per_image: */ touch_id_w * touch_id_h * 4);
-    
-    T1_objc_msg(
-        blit_touch_tex_to_cpu_enc,
-        ags->sel_end_encoding);
-    }
+    T1_gpu_encode_touch_sample(
+        combuf,
+        &ags->touch_samples[ags->frame_i]);
     
     // Only now grab the drawable, so we hold it as briefly as possible
     void * current_drawable = (void *)T1_objc_msg(
