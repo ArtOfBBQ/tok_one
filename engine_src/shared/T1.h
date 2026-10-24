@@ -47,15 +47,8 @@ uint8_t T1_running(void);
 
 void T1_os_create_main_window(
     char ** const fatal_error);
-void T1_os_run_app(void);
 
 void T1_appinit_before_gpu_init(
-    void (* callback_newthread_entry_fptr)(int32_t),
-    void (* callback_update_fptr)(uint64_t),
-    void (* callback_onwindowresize_fptr)(void),
-    void (* callback_onappclose_fptr)(void),
-    void (* callback_evaluate_terminal_command)(
-        char * command, char * response, uint32_t),
     char ** const fatal_error);
 void T1_appinit_after_gpu_init_step1(
     char ** const fatal_error);
@@ -82,6 +75,57 @@ void T1_os_gpu_try_shader_source(
     char * error_recip,
     const uint32_t error_recip_cap,
     char ** const fatal_error);
+
+/*
+MAIN LOOP
+T1 doesn't run a loop of its own, your app does, e.g.:
+
+while (!T1_window_close_requested()) {
+    T1_window_poll_events();
+    if (!T1_window_visible()) { continue; }
+    T1_frame_begin();
+    if (T1_frame_resized()) { rebuild what depends on the window size }
+    if (T1_frame_should_update()) { update(T1_frame_elapsed_us()); }
+    T1_frame_render();
+    T1_window_present();
+}
+T1_shutdown();
+
+T1_window_poll_events() must be called from the main thread. Presenting
+blocks at the display's refresh rate; when nothing was presented,
+T1_window_poll_events() waits briefly for input instead, so the loop never
+spins.
+*/
+void     T1_window_poll_events(void);
+// The window's close button, the OS's quit command, the terminal's QUIT
+uint8_t  T1_window_close_requested(void);
+// False while the window is minimized or fully covered
+uint8_t  T1_window_visible(void);
+// Copies the frame T1_frame_render() made to the window
+void     T1_window_present(void);
+
+// Waits until the GPU is done with the next frame's buffers and runs T1's
+// work that comes before your update (animations, the terminal, ...)
+void     T1_frame_begin(void);
+// The window settled on a new size this frame
+uint8_t  T1_frame_resized(void);
+// False e.g. while T1 shows a crash message or a resize is settling
+uint8_t  T1_frame_should_update(void);
+uint64_t T1_frame_elapsed_us(void);
+// Runs T1's work that comes after your update and renders the frame
+// (without showing it, that's T1_window_present())
+void     T1_frame_render(void);
+
+// Saves the engine's state (window position etc.) and writes the log
+void     T1_shutdown(void);
+
+/*
+TERMINAL
+Commands the T1 terminal doesn't know are passed to your handler, which
+writes its reply to response.
+*/
+void T1_term_set_command_handler(
+    void (* handler)(char * command, char * response, uint32_t response_cap));
 
 /*
 PROFILER

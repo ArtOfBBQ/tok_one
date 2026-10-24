@@ -9,16 +9,18 @@ extern u8 T1_gameloop_active;
 extern u8 T1_gameloop_loading_texs;
 
 void T1_gameloop_init(
-    void *(* arg_malloc_fptr)(size_t),
-    void (* client_update_fptr)(u64),
-    void (* client_callback_after_render_fptr)(void),
-    void (* client_callback_update_window_resize)(void));
+    void *(* arg_malloc_fptr)(size_t));
 
-void
-T1_gameloop_update_before_render_pass(
-    T1GPUFrame * frame_data);
+// The client's main loop, see T1.h
+void T1_window_poll_events(void);
+u8   T1_window_close_requested(void);
+u8   T1_window_visible(void);
+void T1_window_present(void);
 
-void
-T1_gameloop_update_after_render_pass(void);
+void T1_frame_begin(void);
+u8   T1_frame_should_update(void);
+u8   T1_frame_resized(void);
+u64  T1_frame_elapsed_us(void);
+void T1_frame_render(void);
 
 #endif // T1_GAMELOOP_H

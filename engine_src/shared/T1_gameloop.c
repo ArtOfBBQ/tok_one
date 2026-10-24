@@ -31,32 +31,34 @@ static void update_terminal(void) {
 #error "T1_TERM_ACTIVE undefined"
 #endif
 
+/*
+When the last frame wasn't presented, nothing paced the client's loop to the
+display, so T1_window_poll_events() waits up to this long for input instead
+of letting the loop spin.
+*/
+#define T1_GAMELOOP_IDLE_WAIT_US 16666
+
 typedef struct {
-    void (* client_callback_update_fptr)(u64);
-    void (* client_callback_after_render_fptr)(void);
-    void (* client_callback_update_window_resize)(void);
+    // the frame between T1_frame_begin() and T1_frame_render(), or NULL
+    T1GPUFrame * frame;
     u64 previous_time;
     u64 frame_no;
     u32 loading_text_T1_id;
+    b8 frame_should_update; // the client should run its update
+    b8 frame_resized; // the window settled on a new size
+    b8 frame_post_update; // T1 has work to do after the client's update
+    b8 frame_tail; // fps text, timestamp etc.
+    b8 frame_rendered; // since the last T1_window_poll_events()
+    b8 frame_presented; // since the last T1_window_poll_events()
 } T1GameloopState;
 static T1GameloopState * T1_gl_s = NULL;
 
 void T1_gameloop_init(
-    void *(* arg_malloc_fptr)(size_t),
-    void (* client_callback_on_update_fptr)(u64),
-    void (* client_callback_after_render_fptr)(void),
-    void (* client_callback_update_window_resize)(void))
+    void *(* arg_malloc_fptr)(size_t))
 {
-    // not implemented
-    T1_log_assert(client_callback_after_render_fptr == NULL);
-    
     T1_gl_s = arg_malloc_fptr(sizeof(T1GameloopState));
     T1_std_memset(T1_gl_s, 0, sizeof(T1GameloopState));
     T1_gl_s->loading_text_T1_id = T1_ID_NONE;
-    T1_gl_s->client_callback_update_fptr =
-        client_callback_on_update_fptr;
-    T1_gl_s->client_callback_update_window_resize =
-        client_callback_update_window_resize;
 }
 
 static void show_dead_simple_text(
@@ -126,15 +128,32 @@ static void show_dead_simple_text(
             elapsed);
 }
 
-void T1_gameloop_update_before_render_pass(
-    T1GPUFrame * f)
+void T1_frame_begin(void)
 {
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_gameloop_update_before_render_pass()");
+    T1_profiler_start("T1_frame_begin()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
+    
+    T1_gl_s->frame_should_update = false;
+    T1_gl_s->frame_resized = false;
+    T1_gl_s->frame_post_update = false;
+    T1_gl_s->frame_tail = false;
+    
+    // Waits until the GPU is done with this frame's buffers
+    T1GPUFrame * f = T1_os_gpu_begin_frame();
+    T1_gl_s->frame = f;
+    if (f == NULL) {
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_end("T1_frame_begin()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
+        return;
+    }
     
     T1_global->elapsed =
         T1_global->this_frame_timestamp_us -
@@ -183,7 +202,7 @@ void T1_gameloop_update_before_render_pass(
         show_dead_simple_text(f, loading_text, 1);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        T1_profiler_end("T1_frame_begin()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -193,8 +212,7 @@ void T1_gameloop_update_before_render_pass(
     
     if (!T1_gameloop_active) {
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end(
-            "T1_gameloop_update_before_render_pass()");
+        T1_profiler_end("T1_frame_begin()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -212,7 +230,7 @@ void T1_gameloop_update_before_render_pass(
         T1_gl_s->previous_time = T1_global->this_frame_timestamp_us;
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        T1_profiler_end("T1_frame_begin()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -227,7 +245,7 @@ void T1_gameloop_update_before_render_pass(
             T1_global->elapsed);
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_gameloop_update_before_render_pass()");
+        T1_profiler_end("T1_frame_begin()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         #else
         #error "T1_PROFILER_ACTIVE undefined"
@@ -253,7 +271,7 @@ void T1_gameloop_update_before_render_pass(
             T1_log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            T1_profiler_end("T1_gameloop_update_b4_render_pass()");
+            T1_profiler_end("T1_frame_begin()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
             #else
             #error "T1_PROFILER_ACTIVE undefined"
@@ -265,9 +283,8 @@ void T1_gameloop_update_before_render_pass(
             T1_global->last_resize_request_us = 0;
             T1_log_append("\nOK, resize window\n");
             
-            if (T1_gl_s->client_callback_update_window_resize) {
-                T1_gl_s->client_callback_update_window_resize();
-            }
+            // The client rebuilds its size dependent state now
+            T1_gl_s->frame_resized = true;
        }
     } else if (
         T1_log_app_running &&
@@ -301,24 +318,51 @@ void T1_gameloop_update_before_render_pass(
         #error "T1_TERM_ACTIVE undefined"
         #endif
         
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_start("T1_clientlogic_update()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
-        
-        if (T1_gl_s->client_callback_update_fptr) {
-            T1_gl_s->client_callback_update_fptr(T1_global->elapsed);
-        }
-        
-        #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        T1_profiler_end("T1_clientlogic_update()");
-        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_PROFILER_ACTIVE undefined"
-        #endif
-        
+        // The client runs its update between T1_frame_begin() and
+        // T1_frame_render()
+        T1_gl_s->frame_should_update = true;
+        T1_gl_s->frame_post_update = true;
+    }
+    
+    T1_gl_s->frame_tail = true;
+    
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end("T1_frame_begin()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+}
+
+u8 T1_frame_should_update(void) {
+    return T1_gl_s->frame_should_update;
+}
+
+u8 T1_frame_resized(void) {
+    return T1_gl_s->frame_resized;
+}
+
+u64 T1_frame_elapsed_us(void) {
+    return T1_global->elapsed;
+}
+
+void T1_frame_render(void) {
+    T1GPUFrame * f = T1_gl_s->frame;
+    T1_gl_s->frame = NULL;
+    T1_gl_s->frame_rendered = false;
+    
+    if (f == NULL) {
+        return;
+    }
+    
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("T1_frame_render()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
+    
+    if (T1_gl_s->frame_post_update) {
         T1_zlight_clean_all_deleted();
         
         T1_zlight_copy_all(
@@ -351,41 +395,65 @@ void T1_gameloop_update_before_render_pass(
         f->verts_size -= overflow_vertices;
     }
     
-    if (T1_global->draw_fps) {
-        T1_text_request_fps(T1_global->elapsed);
-    } else if (T1_global->draw_touch_id) {
-        T1_text_request_top_touch_id(
-            T1_io_get_mouse_touch_id_this_frame());
-    } else if (T1_global->draw_scene_id) {
-        T1_log_assert(0);
+    if (T1_gl_s->frame_tail) {
+        if (T1_global->draw_fps) {
+            T1_text_request_fps(T1_global->elapsed);
+        } else if (T1_global->draw_touch_id) {
+            T1_text_request_top_touch_id(
+                T1_io_get_mouse_touch_id_this_frame());
+        } else if (T1_global->draw_scene_id) {
+            T1_log_assert(0);
+        }
+        
+        f->postproc_consts->timestamp = (u32)T1_global->
+            this_frame_timestamp_us;
+        
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
+        T1_profiler_draw_labels();
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
+        #endif
     }
     
-    f->postproc_consts->timestamp = (u32)T1_global->
-        this_frame_timestamp_us;
+    T1_gl_s->frame_rendered = T1_os_gpu_render_frame();
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end(
-        "T1_gameloop_update_before_render_pass()");
-    T1_profiler_draw_labels();
+    T1_profiler_end("T1_frame_render()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
 }
 
-void T1_gameloop_update_after_render_pass(void) {
+void T1_window_present(void) {
+    if (!T1_gl_s->frame_rendered) {
+        return;
+    }
+    
+    T1_gl_s->frame_presented = T1_os_window_present();
+}
+
+u8 T1_window_close_requested(void) {
+    return T1_os_window_close_requested();
+}
+
+u8 T1_window_visible(void) {
+    return T1_os_window_visible();
+}
+
+/*
+What used to run after each rendered frame: clears the frame's one-shot
+input events (the client has seen them by now), polls gamepads, handles
+fullscreen requests and starts a new profiler frame.
+*/
+static void T1_gameloop_after_frame(void) {
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_start("T1_gameloop_update_after_render_pass()");
+    T1_profiler_start("T1_gameloop_after_frame()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
     #endif
-    
-    if (T1_log_app_running &&
-        T1_gl_s->client_callback_after_render_fptr)
-    {
-        T1_gl_s->client_callback_after_render_fptr();
-    }
     
     T1_io_update_and_clear_for_next_frame();
     
@@ -402,7 +470,7 @@ void T1_gameloop_update_after_render_pass(void) {
     }
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    T1_profiler_end("T1_gameloop_update_after_render_pass()");
+    T1_profiler_end("T1_gameloop_after_frame()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
@@ -414,4 +482,19 @@ void T1_gameloop_update_after_render_pass(void) {
     #else
     #error
     #endif
+}
+
+void T1_window_poll_events(void) {
+    // Like before, input events stay queued across frames that weren't
+    // rendered (e.g. while a resize settles)
+    if (T1_gl_s->frame_rendered) {
+        T1_gameloop_after_frame();
+        T1_gl_s->frame_rendered = false;
+    }
+    
+    // Presenting blocks at the display's refresh rate. Without it, wait
+    // a little for input instead, so the client's loop doesn't spin.
+    T1_os_window_pump_events(
+        T1_gl_s->frame_presented ? 0 : T1_GAMELOOP_IDLE_WAIT_US);
+    T1_gl_s->frame_presented = false;
 }

@@ -8,6 +8,7 @@ your platform
 #define T1_OS_H
 
 #include "T1_stdint.h"
+#include "T1_types_cpu_to_gpu.h"
 
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct {
@@ -36,8 +37,6 @@ void T1_os_macos_init(void);
 #endif
 
 void T1_os_init(
-    void (* newthread_main_fptr)(s32),
-    void (* appwillclose_fptr)(void),
     void ** unmanaged_memory_store,
     u32 aligned_to);
 
@@ -201,10 +200,7 @@ void T1_os_poll_gamepad_events(void);
 #endif
 
 /*
-Run a task in the background I only use this to pass clientlogic.c's
-client_logic_threadmain() passing the threadmain_id to it you have to
-implement client_logic_threadmain() to do what you want it to do when it gets
-that id
+Runs function_to_run(argument) on a new thread
 */
 void T1_os_start_thread(
     void *(*function_to_run)(void *),
@@ -321,6 +317,25 @@ u8 T1_os_gpu_shaders_ready(void);
 
 void T1_os_shutdown(void);
 
-void T1_os_run_app(void);
+/*
+The platform half of the client's main loop (see T1_window_* and T1_frame_*
+in T1.h).
+*/
+
+// Dispatches pending window/input events. If max_wait_us > 0, first waits up
+// to that long for one to arrive. Must be called from the main thread.
+void T1_os_window_pump_events(const u64 max_wait_us);
+u8 T1_os_window_close_requested(void);
+u8 T1_os_window_visible(void);
+// Copies the last rendered frame to the window. Returns false if nothing
+// was presented.
+u8 T1_os_window_present(void);
+
+// Waits until the GPU is done with the next frame's buffers, then returns
+// them, or NULL if the GPU isn't ready to render.
+T1GPUFrame * T1_os_gpu_begin_frame(void);
+// Renders the frame returned by T1_os_gpu_begin_frame() into the final
+// texture. Returns false if nothing was rendered.
+u8 T1_os_gpu_render_frame(void);
 
 #endif // T1_OS_H

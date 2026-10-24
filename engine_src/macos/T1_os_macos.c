@@ -28,12 +28,6 @@
 #define T1NSEventMaskAny 0xFFFFFFFFFFFFFFFFULL
 #define T1MTLPixelFormatBGRA8Unorm 80
 
-/*
-When the last loop iteration presented nothing (e.g. while loading or
-hidden), nextDrawable didn't pace us, so we wait for input up to this long
-instead of spinning.
-*/
-#define T1_OS_MACOS_IDLE_WAIT_S (1.0 / 60.0)
 
 typedef struct {
     double x;
@@ -147,8 +141,12 @@ typedef struct {
     void * sel_set_submenu; // setSubmenu:
     void * sel_set_main_menu; // setMainMenu:
     void * sel_init_with_title_action_key_equivalent; // initWithTitle:action:keyEquivalent:
+    // Spans one iteration of the client's main loop, see
+    // T1_os_window_pump_events()
+    void * loop_pool;
     b8 framework_good;
     b8 quit_requested;
+    b8 launched;
 } T1OSMacosState;
 
 static T1OSMacosState * T1_os_macos_s = NULL;
@@ -582,7 +580,7 @@ static void T1_os_macos_ns_window_delegate_window_will_close(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    // T1_os_run_app() shuts down once its loop stops
+    // The client's loop sees T1_window_close_requested() and shuts down
     T1_os_close_app();
 }
 
@@ -1248,7 +1246,7 @@ void * T1_os_malloc_unaligned_block(
 }
 
 void T1_os_close_app(void) {
-    // T1_os_run_app()'s loop notices this, then shuts down and returns
+    // The client's loop sees T1_window_close_requested() and shuts down
     T1_os_macos_s->quit_requested = true;
 }
 
@@ -1538,9 +1536,6 @@ void T1_os_link_gpu_to_main_window(
         (uintptr_t)metal_view);
     
     T1_apple_gpu_init(
-        /* void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
-            T1_gameloop_update_before_render_pass,
-            T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
             metal_device_for_window,
         /* bool32_t has_retina_screen: */
@@ -1657,17 +1652,10 @@ static void T1_os_macos_pump_events(
     T1_objc_msg(ns_app, T1_os_macos_s->sel_update_windows);
 }
 
-void T1_os_run_app(void) {
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    void * ns_app = (void *)T1_objc_msg(
-        T1_os_macos_s->class_ns_app,
-        T1_os_macos_s->sel_shared_application);
-    if (!ns_app) {
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
+/*
+What [NSApp run] would have done for us before entering its loop.
+*/
+static void T1_os_macos_finish_launching(void * ns_app) {
     T1_objc_msg_1arg(
         ns_app,
         T1_os_macos_s->sel_set_activation_policy,
@@ -1683,41 +1671,64 @@ void T1_os_run_app(void) {
     
     T1_os_macos_set_up_main_menu(ns_app);
     
-    // [NSApp run] would have done this for us
     T1_objc_msg(ns_app, T1_os_macos_s->sel_finish_launching);
     T1_objc_msg_1arg(
         ns_app,
         T1_os_macos_s->sel_activate_ignoring_other_apps,
         true);
+}
+
+void T1_os_window_pump_events(const u64 max_wait_us) {
+    /*
+    The client's loop has no autorelease pool of its own, so we keep one
+    open from here until the next call. Everything autoreleased during a
+    loop iteration (by T1 or by the client calling into T1) is freed here.
+    */
+    if (T1_os_macos_s->loop_pool != NULL) {
+        T1_objc_autorelease_pool_pop(T1_os_macos_s->loop_pool);
+    }
+    T1_os_macos_s->loop_pool = T1_objc_autorelease_pool_push();
+    
+    void * ns_app = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_app,
+        T1_os_macos_s->sel_shared_application);
+    if (!ns_app) {
+        return;
+    }
+    
+    if (!T1_os_macos_s->launched) {
+        T1_os_macos_finish_launching(ns_app);
+        T1_os_macos_s->launched = true;
+    }
+    
+    T1_os_macos_pump_events(
+        ns_app,
+        (f64)max_wait_us / 1000000.0);
+}
+
+u8 T1_os_window_close_requested(void) {
+    return T1_os_macos_s->quit_requested;
+}
+
+u8 T1_os_window_visible(void) {
+    if (window == NULL) {
+        return false;
+    }
+    
+    // False while minimized or fully covered
+    uintptr_t occlusion = T1_objc_msg(
+        window,
+        T1_os_macos_s->sel_occlusion_state);
+    
+    return (occlusion & T1NSWindowOcclusionStateVisible) != 0;
+}
+
+u8 T1_os_window_present(void) {
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    b8 presented = T1_gpu_present_final_texture(metal_layer);
     
     T1_objc_autorelease_pool_pop(pool);
     
-    b8 presented = true;
-    while (!T1_os_macos_s->quit_requested) {
-        pool = T1_objc_autorelease_pool_push();
-        
-        T1_os_macos_pump_events(
-            ns_app,
-            presented ? 0.0 : T1_OS_MACOS_IDLE_WAIT_S);
-        
-        presented = false;
-        
-        // Like MTKView did, we stop drawing (and so updating) while the
-        // window is minimized or fully covered
-        uintptr_t occlusion = window ?
-            T1_objc_msg(window, T1_os_macos_s->sel_occlusion_state) : 0;
-        if (
-            !T1_os_macos_s->quit_requested &&
-            (occlusion & T1NSWindowOcclusionStateVisible))
-        {
-            presented = T1_gpu_draw_frame(metal_layer);
-        }
-        
-        T1_objc_autorelease_pool_pop(pool);
-    }
-    
-    T1_os_shutdown();
-    
-    u8 write_succesful = false;
-    T1_log_dump(&write_succesful);
+    return presented;
 }

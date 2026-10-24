@@ -1162,7 +1162,18 @@ void T1_term_init(
     T1_trms->background_color[2] = 1.0f;
     T1_trms->background_color[3] = 0.5f;
 }
+
+void T1_term_set_command_handler(
+    void (* handler)(char * command, char * response, u32 response_cap))
+{
+    T1_trms->callback_eval_command_fptr = handler;
+}
 #elif T1_TERM_ACTIVE == T1_INACTIVE
+void T1_term_set_command_handler(
+    void (* handler)(char * command, char * response, u32 response_cap))
+{
+    (void)handler;
+}
 #else
 #error
 #endif // T1_TERM_ACTIVE

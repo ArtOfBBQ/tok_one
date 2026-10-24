@@ -8,9 +8,6 @@
 extern u64 last_resize_request_at;
 
 void T1_apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)
-        (T1GPUFrame *),
-    void (* arg_funcptr_gameloop_update_after_render)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
     char ** const sticky_error);
@@ -18,11 +15,11 @@ void T1_apple_gpu_init(
 void T1_gpu_update_render_view_size(s32 at_i);
 void T1_gpu_update_final_window_size(void);
 /*
-Runs the game loop callbacks, renders a frame and presents it on the given
-CAMetalLayer. Returns false if nothing was presented (and so nothing paced
-the caller to the display's refresh rate).
+Copies the last rendered frame to the next drawable of the given
+CAMetalLayer and presents it. Blocks while all of the layer's drawables are
+in use. Returns false if nothing was presented.
 */
-b8 T1_gpu_draw_frame(void * metal_layer);
+b8 T1_gpu_present_final_texture(void * metal_layer);
 
 // returns slice_i of new depth texture
 s16 T1_apple_gpu_make_depth_tex(

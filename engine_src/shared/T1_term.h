@@ -12,6 +12,10 @@ void T1_term_init(
 
 void T1_term_update(void);
 
+// Commands T1 doesn't know are passed to the handler
+void T1_term_set_command_handler(
+    void (* handler)(char * command, char * response, u32 response_cap));
+
 void T1_term_manually_deactivate(void);
 
 #endif // T1_TERM_H

@@ -200,12 +200,6 @@ static u32 pad_to_page_size(u32 base_allocation) {
 }
 
 void T1_appinit_before_gpu_init(
-    void (* callback_newthread_entry_fptr)(s32),
-    void (* callback_update_fptr)(u64),
-    void (* callback_onwindowresize_fptr)(void),
-    void (* callback_onappclose_fptr)(void),
-    void (* callback_on_terminal_cmd)(
-        char * command, char * response, u32),
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
@@ -223,8 +217,6 @@ void T1_appinit_before_gpu_init(
     }
     
     T1_os_init(
-        callback_newthread_entry_fptr,
-        callback_onappclose_fptr,
         &unmanaged_memory_store,
         32);
     
@@ -498,17 +490,13 @@ void T1_appinit_before_gpu_init(
     
     T1_gameloop_init(
         /* void *(*arg_malloc_fptr)(size_t): */
-            T1_mem_malloc_unmanaged,
-        /* void (*client_update_fptr)(u64): */
-            callback_update_fptr,
-        /* void (*client_callback_after_render_fptr)(void): */
-            NULL,
-        /* void (*client_callback_update_window_resize)(void): */
-            callback_onwindowresize_fptr);
+            T1_mem_malloc_unmanaged);
     
     #if T1_TERM_ACTIVE == T1_ACTIVE
+    // The client can set a command handler with
+    // T1_term_set_command_handler()
     T1_term_init(
-        callback_on_terminal_cmd,
+        NULL,
         T1_os_enter_fullscreen);
     #elif T1_TERM_ACTIVE == T1_INACTIVE
     // Pass
@@ -1101,4 +1089,11 @@ void T1_appinit_after_gpu_init_step2(
     #else
     #error "T1_AUDIO_ACTIVE undefined!"
     #endif
+}
+
+void T1_shutdown(void) {
+    T1_os_shutdown();
+    
+    b8 write_succesful = false;
+    T1_log_dump(&write_succesful);
 }

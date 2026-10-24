@@ -398,8 +398,6 @@ typedef struct {
 
 static AppleGPUState * ags = NULL;
 
-static void (* funcptr_gameloop_before_render)(T1GPUFrame *) = NULL;
-static void (* funcptr_gameloop_after_render)(void) = NULL;
 
 static void * T1_gpu_new_render_pipeline_descriptor(
     void * vertex_shader,
@@ -484,8 +482,6 @@ static void T1_gpu_render_pl_descriptor_remove_color_attachment_at(
 }
 
 void T1_apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
-    void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     void * with_metal_device,
     f32 backing_scale_factor,
     char ** const sticky_error)
@@ -681,10 +677,6 @@ void T1_apple_gpu_init(
         "newLibraryWithSource:options:error:");
     ags->sel_description = T1_objc_reg_sel(
         "description");
-    funcptr_gameloop_before_render =
-        arg_funcptr_shared_gameloop_update;
-    funcptr_gameloop_after_render =
-        arg_funcptr_shared_gameloop_update_after_render_pass;
     
     ags->pixel_format_renderpass1 = T1MTLPixelFormatRGBA8Unorm; // 70
     
@@ -3666,7 +3658,7 @@ nextDrawable blocks while all of the layer's drawables are in use, which is
 what paces the main loop to the display's refresh rate.
 Returns false if nothing was presented.
 */
-static b8 T1_gpu_present_final_texture(void * metal_layer) {
+b8 T1_gpu_present_final_texture(void * metal_layer) {
     if (metal_layer == NULL || ags->final_texture == NULL) {
         return false;
     }
@@ -3754,18 +3746,16 @@ static b8 T1_gpu_present_final_texture(void * metal_layer) {
     return true;
 }
 
-b8 T1_gpu_draw_frame(void * metal_layer)
-{
+T1GPUFrame * T1_os_gpu_begin_frame(void) {
     if (!ags || !ags->metal_active || !ags->shaders_ready) {
-        return false;
+        return NULL;
     }
     
     if (
-        funcptr_gameloop_before_render == NULL ||
         T1_render_views->size < 1 ||
         T1_render_views->cpu[0].deleted)
     {
-        return false;
+        return NULL;
     }
     
     void * pool = T1_objc_autorelease_pool_push();
@@ -3780,31 +3770,35 @@ b8 T1_gpu_draw_frame(void * metal_layer)
     
     T1_gpu_wait_for_frame_slot();
     
-    funcptr_gameloop_before_render(
-        T1_cpu_to_gpu_data->triple_buffers + 
-            ags->frame_i);
+    T1_objc_autorelease_pool_pop(pool);
+    
+    return f;
+}
+
+u8 T1_os_gpu_render_frame(void) {
+    if (!ags || !ags->metal_active || !ags->shaders_ready) {
+        return false;
+    }
+    
+    // The frame T1_os_gpu_begin_frame() returned, frame_i hasn't moved
+    T1GPUFrame * f = &T1_cpu_to_gpu_data->
+        triple_buffers[ags->frame_i];
     
     if (
         (f->postproc_consts->timestamp -
             T1_global->last_resize_request_us)
                 < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
-        T1_objc_autorelease_pool_pop(pool);
         return false;
     }
     
-    if (!T1_gpu_render_frame(f)) {
-        T1_objc_autorelease_pool_pop(pool);
-        return false;
-    }
+    void * pool = T1_objc_autorelease_pool_push();
     
-    b8 presented = T1_gpu_present_final_texture(metal_layer);
-    
-    funcptr_gameloop_after_render();
+    b8 rendered = T1_gpu_render_frame(f);
     
     T1_objc_autorelease_pool_pop(pool);
     
-    return presented;
+    return rendered;
 }
 
 void T1_os_gpu_update_internal_render_viewport(

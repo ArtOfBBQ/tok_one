@@ -25,16 +25,12 @@ typedef struct {
     u64 thread_id_map[T1_THREAD_IDS_CAP];
     u64 thread_id_map_size;
     OSMutexID mutexes[T1_MUTEXES_CAP];
-    void (* newthread_main_fptr)(s32);
-    void (* appwillclose_fptr)(void);
     u32 next_mutex_id;
 } T1OSState;
 
 static T1OSState * T1_os_s = NULL;
 
 void T1_os_init(
-    void (* newthread_main_fptr)(s32),
-    void (* appwillclose_fptr)(void),
     void ** unmanaged_memory_store,
     const u32 aligned_to)
 {
@@ -52,9 +48,6 @@ void T1_os_init(
     
     *unmanaged_memory_store = (void *)(
         ((char *)*unmanaged_memory_store) + size);
-    
-    T1_os_s->newthread_main_fptr = newthread_main_fptr;
-    T1_os_s->appwillclose_fptr = appwillclose_fptr;
 }
 
 u64 T1_os_raw_thread_id_to_T1_thread_id(
@@ -525,10 +518,6 @@ void T1_os_layer_start_window_resize(
 
 void T1_os_shutdown(void)
 {
-    if (T1_os_s->appwillclose_fptr) {
-        T1_os_s->appwillclose_fptr();
-    }
-    
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
