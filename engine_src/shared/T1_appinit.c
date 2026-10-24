@@ -32,6 +32,7 @@
 #include "T1_material.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
+#include "T1_fatal_error.h"
 
 #include "T1_os.h"
 
