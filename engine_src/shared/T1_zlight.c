@@ -13,13 +13,13 @@ static void T1_zlight_construct(T1zLight * to_construct)
     to_construct->f32s.xyz[0]        = 0.0f;
     to_construct->f32s.xyz[1]        = 0.0f;
     to_construct->f32s.xyz[2]        = 0.0f;
-    to_construct->f32s.xyz_offset[0] = 0.0f;
-    to_construct->f32s.xyz_offset[1] = 0.0f;
-    to_construct->f32s.xyz_offset[2] = 0.0f;
-    to_construct->f32s.RGBA[0]       = 1.0f;
-    to_construct->f32s.RGBA[1]       = 1.0f;
-    to_construct->f32s.RGBA[2]       = 1.0f;
-    to_construct->f32s.RGBA[3]       = 1.0f;
+    to_construct->f32s.offset_xyz[0] = 0.0f;
+    to_construct->f32s.offset_xyz[1] = 0.0f;
+    to_construct->f32s.offset_xyz[2] = 0.0f;
+    to_construct->f32s.rgba[0]       = 1.0f;
+    to_construct->f32s.rgba[1]       = 1.0f;
+    to_construct->f32s.rgba[2]       = 1.0f;
+    to_construct->f32s.rgba[3]       = 1.0f;
     to_construct->f32s.diffuse       = 1.00f;
     to_construct->f32s.specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted            = 0;
@@ -73,21 +73,21 @@ void T1_zlight_copy_all(
     for (u32 i = 0; i < T1_zlights_size; i++)
     {
         if (!T1_zlights[i].deleted) {
-            l[*l_size].xyz[0] = T1_zlights[i].f32s.xyz[0] + T1_zlights[i].f32s.xyz_offset[0];
-            l[*l_size].xyz[1] = T1_zlights[i].f32s.xyz[1] + T1_zlights[i].f32s.xyz_offset[1];
-            l[*l_size].xyz[2] = T1_zlights[i].f32s.xyz[2] + T1_zlights[i].f32s.xyz_offset[2];
+            l[*l_size].xyz[0] = T1_zlights[i].f32s.xyz[0] + T1_zlights[i].f32s.offset_xyz[0];
+            l[*l_size].xyz[1] = T1_zlights[i].f32s.xyz[1] + T1_zlights[i].f32s.offset_xyz[1];
+            l[*l_size].xyz[2] = T1_zlights[i].f32s.xyz[2] + T1_zlights[i].f32s.offset_xyz[2];
             
-            l[*l_size].angle_xyz[0] = T1_zlights[i].f32s.xyz_angle[0];
-            l[*l_size].angle_xyz[1] = T1_zlights[i].f32s.xyz_angle[1];
-            l[*l_size].angle_xyz[2] = T1_zlights[i].f32s.xyz_angle[2];
+            l[*l_size].angle_xyz[0] = T1_zlights[i].f32s.angle_xyz[0];
+            l[*l_size].angle_xyz[1] = T1_zlights[i].f32s.angle_xyz[1];
+            l[*l_size].angle_xyz[2] = T1_zlights[i].f32s.angle_xyz[2];
             
             l[*l_size].diffuse = T1_zlights[i].f32s.diffuse;
             l[*l_size].specular = T1_zlights[i].f32s.specular;
             l[*l_size].reach = T1_zlights[i].f32s.reach;
             
-            l[*l_size].rgb[0] = T1_zlights[i].f32s.RGBA[0];
-            l[*l_size].rgb[1] = T1_zlights[i].f32s.RGBA[1];
-            l[*l_size].rgb[2] = T1_zlights[i].f32s.RGBA[2];
+            l[*l_size].rgb[0] = T1_zlights[i].f32s.rgba[0];
+            l[*l_size].rgb[1] = T1_zlights[i].f32s.rgba[1];
+            l[*l_size].rgb[2] = T1_zlights[i].f32s.rgba[2];
             
             l[*l_size].shadow_map_depth_tex_i =
                 T1_zlights[i].shadow_map_depth_texture_i;
@@ -222,11 +222,11 @@ void T1_zlight_update_all_attached_render_views(void)
         T1_render_views->cpu[rv_i].xyz[2] =
             T1_zlights[zl_i].f32s.xyz[2];
         T1_render_views->cpu[rv_i].angle_xyz[0] =
-            T1_zlights[zl_i].f32s.xyz_angle[0];
+            T1_zlights[zl_i].f32s.angle_xyz[0];
         T1_render_views->cpu[rv_i].angle_xyz[1] =
-            T1_zlights[zl_i].f32s.xyz_angle[1];
+            T1_zlights[zl_i].f32s.angle_xyz[1];
         T1_render_views->cpu[rv_i].angle_xyz[2] =
-            T1_zlights[zl_i].f32s.xyz_angle[2];
+            T1_zlights[zl_i].f32s.angle_xyz[2];
     }
 }
 

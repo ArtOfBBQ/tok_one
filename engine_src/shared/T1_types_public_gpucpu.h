@@ -114,9 +114,9 @@ typedef struct {
 
 typedef struct {
     float xyz[3];
-    float xyz_angle[3];
-    float xyz_offset[3];
-    float RGBA[4];
+    float angle_xyz[3];
+    float offset_xyz[3];
+    float rgba[4];
     float reach; // light's reach
     float diffuse;     // how much diffuse light does this radiate?
     float specular;

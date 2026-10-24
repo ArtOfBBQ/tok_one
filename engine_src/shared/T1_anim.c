@@ -917,9 +917,9 @@ void T1_anim_fade_and_destroy(
     fade_destroy->tq_gpu_f32s->rgba[1] = 0.0f;
     fade_destroy->tq_gpu_f32s->rgba[2] = 0.0f;
     fade_destroy->tq_gpu_f32s->rgba[3] = 0.0f;
-    fade_destroy->zl_gpu_f32s->RGBA[0] = 0.0f;
-    fade_destroy->zl_gpu_f32s->RGBA[1] = 0.0f;
-    fade_destroy->zl_gpu_f32s->RGBA[2] = 0.0f;
+    fade_destroy->zl_gpu_f32s->rgba[0] = 0.0f;
+    fade_destroy->zl_gpu_f32s->rgba[1] = 0.0f;
+    fade_destroy->zl_gpu_f32s->rgba[2] = 0.0f;
     fade_destroy->zl_gpu_f32s->diffuse = 0.0f;
     fade_destroy->zl_gpu_f32s->specular = 0.0f;
     fade_destroy->pause_us = pause_first;
