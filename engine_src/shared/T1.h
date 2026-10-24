@@ -202,7 +202,7 @@ void T1_make_shadowmap_and_attach_to_light(
 
 void T1_cam_create_main_view(
     uint32_t new_w, uint32_t new_h, char ** const fatal_error);
-void T1_make_reflection_cam(
+void T1_cam_make_reflection_cam(
     uint32_t new_w, uint32_t new_h, float reflection_z);
 
 /*

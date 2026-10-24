@@ -6,7 +6,7 @@
 #include "T1_id.h"
 #include "T1_render_view.h"
 #include "T1_os.h"
-
+#include "T1_tex_array.h"
 
 #pragma pack(push, 1)
 typedef struct {

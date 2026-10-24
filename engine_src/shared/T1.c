@@ -199,7 +199,7 @@ void T1_cam_create_main_view(
 }
 
 #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-void T1_make_reflection_cam(
+void T1_cam_make_reflection_cam(
     u32 new_cam_w,
     u32 new_cam_h,
     f32 reflection_z)
@@ -245,7 +245,7 @@ void T1_make_reflection_cam(
     T1_render_view_validate();
 }
 #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-void T1_make_reflection_cam(
+void T1_cam_make_reflection_cam(
     u32 new_cam_w,
     u32 new_cam_h,
     f32 reflection_z) {}
