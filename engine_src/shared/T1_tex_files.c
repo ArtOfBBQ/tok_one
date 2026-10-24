@@ -108,7 +108,7 @@ static void malloc_img_from_resource_name(
             recipient,
             T1_embedded_data_font_png,
             T1_embedded_data_font_png_size,
-            /* b8 never_delete: */ true,
+            /* b8 never_delete: */ 1,
             fatal_error);
         return;
     }
@@ -118,7 +118,7 @@ static void malloc_img_from_resource_name(
             recipient,
             T1_embedded_data_perlin_noise_png,
             T1_embedded_data_perlin_noise_png_size,
-            /* b8 never_delete: */ true,
+            /* b8 never_delete: */ 1,
             fatal_error);
         T1_fatal_error_prepend_if_bad(
             fatal_error,
@@ -683,7 +683,7 @@ void T1_tex_files_prereg_dds_res(
         /* const u32 is_dds_image: */
             1,
         /* b8 never_delete: */
-            false,
+            0,
         /* fatal_error: */
             fatal_error);
     

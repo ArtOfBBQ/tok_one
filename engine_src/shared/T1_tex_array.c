@@ -354,7 +354,7 @@ s32 T1_tex_array_create_new_render_view(
         /* u32 use_bc1_compression: */
             0,
         /* b8 never_delete: */ 
-            false,
+            0,
         /* fatal_error: */
             fatal_error);
     
