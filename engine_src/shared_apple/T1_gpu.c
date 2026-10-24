@@ -260,6 +260,11 @@ typedef struct {
     #endif
     
     void * touch_id_texture;
+    // Render view 0 composited with post processing, at window pixel size.
+    // This is the finished frame; presenting copies it to the screen.
+    void * final_texture;
+    u32 final_texture_w;
+    u32 final_texture_h;
     T1GPUTouchSample touch_samples[T1_FRAMES_CAP];
     // CPU copy of the newest finished sample (buffer & combuf unused)
     T1GPUTouchSample touch_latest;
@@ -352,6 +357,7 @@ typedef struct {
     void * sel_current_drawable; // currentDrawable
     void * sel_texture; // texture
     void * sel_copy_from_texture_to_texture; // copyFromTexture:toTexture:
+    void * sel_copy_from_texture_region_to_texture; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:
     void * sel_copy_from_texture_to_buffer; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:
     void * sel_new_buffer_with_bytes_no_copy; // newBufferWithBytesNoCopy:length:options:deallocator:
     void * sel_new_command_queue; // newCommandQueue
@@ -627,6 +633,9 @@ void T1_apple_gpu_init(
         "texture");
     ags->sel_copy_from_texture_to_texture = T1_objc_reg_sel(
         "copyFromTexture:toTexture:");
+    ags->sel_copy_from_texture_region_to_texture = T1_objc_reg_sel(
+        "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:"
+        "toTexture:destinationSlice:destinationLevel:destinationOrigin:");
     ags->sel_copy_from_texture_to_buffer = T1_objc_reg_sel(
         "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:");
     ags->sel_new_buffer_with_bytes_no_copy = T1_objc_reg_sel(
@@ -3336,7 +3345,9 @@ static void T1_gpu_encode_composite_pass(
         ags->sel_set_fragment_texture_at_index,
         /* setFragmentTexture: */ (uintptr_t)sliced_tex,
         /* atIndex: */ 0);
-    
+    // new... returns an owned reference; the command buffer keeps its own
+    T1_objc_msg(sliced_tex, ags->sel_release);
+
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     T1_objc_msg_2arg(
         pass_5_comp,
@@ -3399,34 +3410,13 @@ static void T1_gpu_encode_composite_pass(
     T1_objc_msg(pass_5_comp, ags->sel_end_encoding);
 }
 
-void T1_gpu_draw_in_mtk_view(void * view)
-{
-    if (!ags || !ags->metal_active || !ags->shaders_ready) {
-        return;
-    }
-    
-    if (
-        funcptr_gameloop_before_render == NULL ||
-        T1_render_views->size < 1 ||
-        T1_render_views->cpu[0].deleted)
-    {
-        return;
-    }
-    
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    T1_log_assert(
-        T1_render_views->cpu[0].write_tex != T1_TEX_NONE);
-    
-    T1GPUFrame * f = &T1_cpu_to_gpu_data->
-        triple_buffers[ags->frame_i];
-    
-    T1_log_assert(f->verts_size % 3 == 0);
-    
-    // Pick up any finished frames' touch samples without blocking, then
-    // wait for the frame that last used this slot: its buffers (and touch
-    // sample) are about to be overwritten. This also limits the number of
-    // frames in flight to T1_FRAMES_CAP.
+/*
+Pick up any finished frames' touch samples without blocking, then wait for
+the frame that last used this slot: its buffers (and touch sample) are about
+to be overwritten. This also limits the number of frames in flight to
+T1_FRAMES_CAP.
+*/
+static void T1_gpu_wait_for_frame_slot(void) {
     for (u32 i = 0; i < T1_FRAMES_CAP; i++) {
         T1_gpu_retire_touch_sample(
             &ags->touch_samples[i],
@@ -3435,24 +3425,79 @@ void T1_gpu_draw_in_mtk_view(void * view)
     T1_gpu_retire_touch_sample(
         &ags->touch_samples[ags->frame_i],
         /* wait: */ true);
-    
-    funcptr_gameloop_before_render(
-        T1_cpu_to_gpu_data->triple_buffers + 
-            ags->frame_i);
+}
+
+/*
+(Re)creates the final texture if the window's pixel size changed.
+*/
+static b8 T1_gpu_ensure_final_texture(void) {
+    u32 w = (u32)ags->window_viewport.width;
+    u32 h = (u32)ags->window_viewport.height;
     
     if (
-        (f->postproc_consts->timestamp -
-            T1_global->last_resize_request_us)
-                < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
+        ags->final_texture != NULL &&
+        ags->final_texture_w == w &&
+        ags->final_texture_h == h)
     {
-        T1_objc_autorelease_pool_pop(pool);
-        return;
+        return true;
     }
     
-    if (!ags || !ags->metal_active || !ags->viewports_set[0])
-    {
-        T1_objc_autorelease_pool_pop(pool);
-        return;
+    if (ags->final_texture != NULL) {
+        // In-flight command buffers keep their own reference
+        T1_objc_msg(ags->final_texture, ags->sel_release);
+        ags->final_texture = NULL;
+    }
+    
+    void * desc = (void *)T1_objc_msg(
+        ags->class_mtl_texture_desc,
+        ags->sel_new);
+    if (desc == NULL) { return false; }
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_texture_type, T1MTLTextureType2D);
+    // Matches the singlequad pipeline and the drawable
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_pixel_format, T1MTLPixelFormatBGRA8Unorm);
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_width, w);
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_height, h);
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_mipmap_level_count, 1);
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_storage_mode, T1MTLStorageModePrivate);
+    T1_objc_msg_1arg(desc,
+        ags->sel_set_usage,
+        T1MTLTextureUsageRenderTarget |
+        T1MTLTextureUsageShaderRead);
+    
+    ags->final_texture = (void *)T1_objc_msg_1arg(
+        ags->device,
+        ags->sel_new_tex_with_desc,
+        (uintptr_t)desc);
+    T1_objc_msg(desc, ags->sel_release);
+    
+    if (ags->final_texture == NULL) {
+        return false;
+    }
+    
+    ags->final_texture_w = w;
+    ags->final_texture_h = h;
+    return true;
+}
+
+/*
+Encodes and commits all render views, plus the final composite into
+ags->final_texture. Doesn't touch the screen.
+Returns false if nothing was rendered.
+*/
+static b8 T1_gpu_render_frame(T1GPUFrame * f) {
+    if (!ags->viewports_set[0]) {
+        return false;
+    }
+    
+    if (!T1_gpu_ensure_final_texture()) {
+        T1_log_assert(0);
+        return false;
     }
     
     void * combuf = (void *)T1_objc_msg(
@@ -3467,8 +3512,7 @@ void T1_gpu_draw_in_mtk_view(void * view)
         #error
         #endif
         
-        T1_objc_autorelease_pool_pop(pool);
-        return;
+        return false;
     }
     
     // The first pass that writes touch ids clears them
@@ -3586,35 +3630,139 @@ void T1_gpu_draw_in_mtk_view(void * view)
         combuf,
         &ags->touch_samples[ags->frame_i]);
     
-    // Only now grab the drawable, so we hold it as briefly as possible
-    void * current_drawable = (void *)T1_objc_msg(
-        view,
-        ags->sel_current_drawable);
-    T1_log_assert(current_drawable != NULL);
-    
-    if (current_drawable != NULL) {
-        T1_gpu_encode_composite_pass(
-            /* void * combuf: */
-                combuf,
-            /* T1GPUFrame * f: */
-                f,
-            /* void * target_tex: */
-                (void *)T1_objc_msg(
-                    current_drawable,
-                    ags->sel_texture));
-        
-        T1_objc_msg_1arg(
-            combuf, ags->sel_present_drawable,
-            /* presentDrawable: */
-                (uintptr_t)current_drawable);
-    }
+    T1_gpu_encode_composite_pass(
+        /* void * combuf: */
+            combuf,
+        /* T1GPUFrame * f: */
+            f,
+        /* void * target_tex: */
+            ags->final_texture);
     
     ags->frame_i += 1;
     ags->frame_i %= T1_FRAMES_CAP;
     T1_log_assert(ags->frame_i < T1_FRAMES_CAP);
     
     T1_objc_msg(combuf, ags->sel_commit);
-    // T1_objc_msg(combuf, ags->sel_wait_until_completed);
+    
+    return true;
+}
+
+/*
+Copies the final texture to the view's drawable and presents it. Grabs the
+drawable only now, so we hold it as briefly as possible. The copy is queued
+after the frame's command buffer, so it sees the finished frame.
+*/
+static void T1_gpu_present_final_texture(void * view) {
+    void * drawable = (void *)T1_objc_msg(
+        view,
+        ags->sel_current_drawable);
+    T1_log_assert(drawable != NULL);
+    if (drawable == NULL || ags->final_texture == NULL) {
+        return;
+    }
+    
+    void * drawable_tex = (void *)T1_objc_msg(drawable, ags->sel_texture);
+    if (drawable_tex == NULL) {
+        return;
+    }
+    
+    void * combuf = (void *)T1_objc_msg(
+        ags->command_queue,
+        ags->sel_command_buffer);
+    if (combuf == NULL) {
+        return;
+    }
+    
+    // The drawable can briefly differ in size while the window resizes
+    u64 drawable_w = T1_objc_msg(drawable_tex, ags->sel_width);
+    u64 drawable_h = T1_objc_msg(drawable_tex, ags->sel_height);
+    u64 copy_w = drawable_w < ags->final_texture_w ?
+        drawable_w : ags->final_texture_w;
+    u64 copy_h = drawable_h < ags->final_texture_h ?
+        drawable_h : ags->final_texture_h;
+    
+    void * blit_enc = (void *)T1_objc_msg(
+        combuf, ags->sel_blit_command_encoder);
+    
+    typedef void (* copy_tex_region_to_tex_type)(
+        void *, void *,
+        /* copyFromTexture:(id<MTLTexture>)    : */ void *,
+        /* sourceSlice:(NSUInteger)            : */ uintptr_t,
+        /* sourceLevel:(NSUInteger)            : */ uintptr_t,
+        /* sourceOrigin:(MTLOrigin)            : */ T1MTLOrigin,
+        /* sourceSize:(MTLSize)                : */ T1MTLSize,
+        /* toTexture:(id<MTLTexture>)          : */ void *,
+        /* destinationSlice:(NSUInteger)       : */ uintptr_t,
+        /* destinationLevel:(NSUInteger)       : */ uintptr_t,
+        /* destinationOrigin:(MTLOrigin)       : */ T1MTLOrigin);
+    ((copy_tex_region_to_tex_type)T1_objc_unsafe_get_raw_msg_send())(
+        blit_enc,
+        ags->sel_copy_from_texture_region_to_texture,
+        ags->final_texture,
+        /* source_slice: */ 0,
+        /* source_level: */ 0,
+        /* source_origin: */ T1_mtlorigin_make(0, 0, 0),
+        /* source_size: */ T1_mtlsize_make(copy_w, copy_h, 1),
+        drawable_tex,
+        /* destination_slice: */ 0,
+        /* destination_level: */ 0,
+        /* destination_origin: */ T1_mtlorigin_make(0, 0, 0));
+    
+    T1_objc_msg(blit_enc, ags->sel_end_encoding);
+    
+    T1_objc_msg_1arg(
+        combuf, ags->sel_present_drawable,
+        /* presentDrawable: */
+            (uintptr_t)drawable);
+    
+    T1_objc_msg(combuf, ags->sel_commit);
+}
+
+void T1_gpu_draw_in_mtk_view(void * view)
+{
+    if (!ags || !ags->metal_active || !ags->shaders_ready) {
+        return;
+    }
+    
+    if (
+        funcptr_gameloop_before_render == NULL ||
+        T1_render_views->size < 1 ||
+        T1_render_views->cpu[0].deleted)
+    {
+        return;
+    }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    T1_log_assert(
+        T1_render_views->cpu[0].write_tex != T1_TEX_NONE);
+    
+    T1GPUFrame * f = &T1_cpu_to_gpu_data->
+        triple_buffers[ags->frame_i];
+    
+    T1_log_assert(f->verts_size % 3 == 0);
+    
+    T1_gpu_wait_for_frame_slot();
+    
+    funcptr_gameloop_before_render(
+        T1_cpu_to_gpu_data->triple_buffers + 
+            ags->frame_i);
+    
+    if (
+        (f->postproc_consts->timestamp -
+            T1_global->last_resize_request_us)
+                < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
+    {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    if (!T1_gpu_render_frame(f)) {
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    
+    T1_gpu_present_final_texture(view);
     
     funcptr_gameloop_after_render();
     

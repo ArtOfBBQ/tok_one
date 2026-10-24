@@ -110,6 +110,7 @@ typedef struct {
     void * sel_set_auto_resize_drawable; // setAutoResizeDrawable:
     void * sel_set_preferred_frames_per_second; // setPreferredFramesPerSecond:
     void * sel_set_enable_set_needs_display; // setEnableSetNeedsDisplay:
+    void * sel_set_framebuffer_only; // setFramebufferOnly:
     void * sel_set_paused;
     void * sel_set_needs_display; 
     b8 framework_good;
@@ -929,6 +930,8 @@ void T1_os_macos_init(void) {
         "setPreferredFramesPerSecond:");
     T1_os_macos_s->sel_set_enable_set_needs_display = T1_objc_reg_sel(
         "setEnableSetNeedsDisplay:");
+    T1_os_macos_s->sel_set_framebuffer_only = T1_objc_reg_sel(
+        "setFramebufferOnly:");
     T1_os_macos_s->sel_set_paused = T1_objc_reg_sel(
         "setPaused:");
     T1_os_macos_s->sel_set_needs_display = T1_objc_reg_sel(
@@ -1458,6 +1461,9 @@ void T1_os_link_gpu_to_main_window(
         T1_os_macos_s->sel_set_preferred_frames_per_second, 60);
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_enable_set_needs_display, false);
+    // We blit our finished frame into the drawable
+    T1_objc_msg_1arg(mtk_view,
+        T1_os_macos_s->sel_set_framebuffer_only, false);
     
     T1_objc_msg_1arg(mtk_view,
         T1_os_macos_s->sel_set_paused, false);
