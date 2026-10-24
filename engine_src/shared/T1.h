@@ -453,7 +453,7 @@ like in the NextStep code on Apple's objective-c libs.
   pass NULL, it's not optional. You must declare a string
   of your own and pass an address to it
 - My functions taking a 'fatal error' exit immediately
-  if *fatal_error is 0
+  if *fatal_error is already set (not 0)
 - That means you must initialize them to 0 (NULL)! Else
   all T1 functions will just return
 - My functions refuse to overwrite an existing 'fatal
@@ -465,25 +465,6 @@ like in the NextStep code on Apple's objective-c libs.
   be signaled by other variables
 - Fatal errors are owned by the library, never free them
 
-These 2 functions are helpers, both allocating memory
-for a new error string. You don't need to use them if
-you don't like this error system, it's optional
-
-T1_fatal_error_new(my_message) is equivalent to this
-*fatal_error = malloc(512);
-*fatal_error[0] = '\0';
-strcat(*fatal_error, my_message);
-
-T1_fatal_error_prepend_if_bad() is for when you want
-to add additional text to the start of an error if there,
-is one, usually because of a subprocess that may have
-gone wrong. For example, if you have a filename, pass
-data to a parser, and the parser sets the fatal error,
-it probably didn't have the filename where the error
-happened. You can then prepend that information so it
-gets passed up. It just copies the data to a new string,
-leaking the old one.
-
 ***
 Example code
 ***
@@ -494,10 +475,7 @@ do_dangerous_thing_2(&fatal_error);
     do_another_dangerous_thing(fatal_error);
 do_dangerous_thing_3(&fatal_error);
 
-if (*fatal_error != 0) {
-    T1_fatal_error_prepend_if_bad(
-        fatal_error,
-        "While handling foo: ");
+if (fatal_error != 0) {
     return; // early exit
 }
 
@@ -506,13 +484,6 @@ do_extra_things(); // happy path assured
 End of example code
 ***
 */
-void T1_fatal_error_new(
-    char ** const fatal_error,
-    const char * with_string);
-
-void T1_fatal_error_prepend_if_bad(
-    char ** const fatal_error,
-    const char * to_append);
 
 /*
 OPERATING SYSTEM
