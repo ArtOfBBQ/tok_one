@@ -145,38 +145,6 @@ void T1_profiler_start(const char * func_name);
 void T1_profiler_end(const char * func_name);
 
 /*
-T1_std
-standard or commonly needed functions
-*/
-#define  T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
-#define  T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
-int32_t  T1_std_mini(int32_t x, int32_t y);
-int32_t  T1_std_maxi(int32_t x, int32_t y);
-float    T1_std_minf(float x, float y);
-float    T1_std_maxf(float x, float y);
-float    T1_std_clampf(float x, float lo, float hi);
-void *   T1_std_memset(void * input, int32_t value, uint64_t size_bytes);
-void     T1_std_memset_i16(void * input, int16_t value, uint32_t size_bytes);
-void *   T1_std_memcpy(void * dest, const void * src, uint64_t n_bytes);
-void     T1_std_strcpy_cap(char * recipient, uint32_t cap, const char * origin);
-void     T1_std_strcat_cap(char * recip, uint32_t cap, const char * to_append);
-void     T1_std_strcat_u32_cap(char * recip, uint32_t recip_size, uint32_t to_append);
-void     T1_std_strcat_s32_cap(char * recip, uint32_t cap, int32_t to_append);
-void     T1_std_strcat_f32_cap(char * recipient, uint32_t cap, float to_append);
-void     T1_std_strcat_c8_cap(char * recipient, char to_append);
-uint64_t T1_std_strlen(const char * nullterm_str);
-uint8_t  T1_std_string_starts_with(const char * to_check, const char * start);
-uint8_t  T1_std_are_equal_strings(const char * str1, const char * str2);
-void     T1_std_strsub(char * in, const char * to_match, const char * repl);
-void     T1_std_s32_to_string(int32_t input, char * recip);
-void     T1_std_u32_to_string(uint32_t input, char * recipient);
-uint32_t T1_std_string_to_u32_validate(const char * input, uint8_t * good);
-int32_t  T1_std_string_to_s32(const char * input);
-int32_t  T1_std_string_to_s32_validate(const char * input, uint8_t * good);
-float    T1_std_string_to_f32_validate(const char * input, uint8_t * good);
-
-
-/*
 T1_mem - allocate memory
 */
 void * T1_mem_malloc_unmanaged(size_t size);
