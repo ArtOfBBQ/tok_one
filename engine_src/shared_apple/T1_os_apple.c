@@ -115,10 +115,6 @@ void T1_apple_os_init(void) {
         "copyItemAtPath:toPath:error:");
 }
 
-u32 T1_os_get_dir_separator_size(void) {
-    return 1;
-}
-
 void T1_os_get_dir_separator(char * recipient) {
     recipient[0] = '/';
     recipient[1] = '\0';
@@ -624,29 +620,6 @@ void T1_os_get_filenames_in(
     }
     T1_objc_autorelease_pool_pop(pool);
     #endif
-}
-
-void T1_os_get_app_dir(
-    char * recipient,
-    const u32 recipient_size)
-{
-    recipient[0] = '\0';
-    
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    void * main_bundle = (void *)T1_objc_msg(
-        T1_os_apple_s->class_ns_bundle,
-        T1_os_apple_s->sel_bundle_path);
-    
-    char * cstr_main_bundle = T1_objc_nsstring_to_cstring(
-        main_bundle);
-    
-    T1_std_strcpy_cap(
-        recipient,
-        recipient_size,
-        cstr_main_bundle);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_get_res_dir(

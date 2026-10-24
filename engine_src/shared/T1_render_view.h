@@ -96,9 +96,6 @@ void T1_render_view_delete(const s32 rv_i);
 
 void T1_render_view_validate(void);
 
-f32 T1_render_view_x_to_screen_x(
-    const f32 x,
-    const f32 given_z);
 f32 T1_render_view_x_to_screen_x_noz(
     const f32 x);
 
@@ -106,9 +103,6 @@ f32 T1_render_view_x_to_screen_x_noz(
 // the position of zpolygons
 f32 T1_render_view_screen_x_to_x(
     const f32 screenspace_x,
-    const f32 given_z);
-f32 T1_render_view_y_to_screen_y(
-    const f32 y,
     const f32 given_z);
 
 f32 T1_render_view_y_to_screen_y_noz(

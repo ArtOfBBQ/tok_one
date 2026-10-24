@@ -132,19 +132,6 @@ u8 T1_os_mutex_trylock(const u32 mutex_id)
     return return_val == 0;
 }
 
-void T1_os_assert_mutex_locked(
-    const u32 mutex_id) 
-{
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 return_val = pthread_mutex_trylock(&T1_os_s->mutexes[mutex_id].mutex);
-    T1_log_assert(return_val == EBUSY);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)mutex_id;
-    #else
-    #error
-    #endif
-}
-
 /*
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked

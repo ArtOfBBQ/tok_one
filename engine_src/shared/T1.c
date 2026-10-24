@@ -77,18 +77,10 @@ f32 T1_screen_x_to_x(f32 ss_x, f32 z) {
     return T1_render_view_screen_x_to_x(ss_x, z); }
 f32 T1_screen_y_to_y(f32 ss_y, f32 z) {
     return T1_render_view_screen_y_to_y(ss_y, z); }
-f32 T1_x_to_screen_x(f32 x, f32 z) {
-    return T1_render_view_x_to_screen_x(x, z); }
-f32 T1_y_to_screen_y(f32 y, f32 z) {
-    return T1_render_view_y_to_screen_y(y, z); }
 f32 T1_screen_x_to_x_noz(f32 ss_x) {
     return T1_render_view_screen_x_to_x_noz(ss_x); }
 f32 T1_screen_y_to_y_noz(f32 ss_y) {
     return T1_render_view_screen_y_to_y_noz(ss_y); }
-f32 T1_x_to_screen_x_noz(f32 y) {
-    return T1_render_view_x_to_screen_x_noz(y); }
-f32 T1_y_to_screen_y_noz(f32 y) {
-    return T1_render_view_y_to_screen_y_noz(y); }
 f32 T1_screen_width_to_width(f32 ss_w, f32 at_z) {
     return T1_render_view_screen_width_to_width(ss_w, at_z); }
 f32 T1_screen_height_to_height(f32 ss_h, f32 at_z) {

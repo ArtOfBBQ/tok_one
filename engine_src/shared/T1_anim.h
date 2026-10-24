@@ -57,9 +57,6 @@ void T1_anim_dud_dance(
     u32 T1_id,
     f32 magnitude);
 
-void T1_anim_bump(
-    u32 T1_id,
-    u32 wait);
 
 void T1_anim_delete_all(void);
 

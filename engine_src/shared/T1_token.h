@@ -102,14 +102,7 @@ big for a uint64, even if it's composed of all numbers
 */
 b8 T1_token_is_number(s32 at_i);
 b8 T1_token_fits_f64(s32 at_i);
-b8 T1_token_fits_f32(s32 at_i);
-b8 T1_token_fits_s64(s32 at_i);
-b8 T1_token_fits_s32(s32 at_i);
-b8 T1_token_fits_s16(s32 at_i);
 b8 T1_token_fits_s8(s32 at_i);
-b8 T1_token_fits_u64(s32 at_i);
-b8 T1_token_fits_u32(s32 at_i);
-b8 T1_token_fits_u16(s32 at_i);
 b8 T1_token_fits_u8(s32 at_i);
 
 u64 T1_token_as_number_unsigned(s32 at_i);
