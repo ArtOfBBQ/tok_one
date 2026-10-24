@@ -292,8 +292,11 @@ void T1_mem_free_managed(void * to_free) {
     log_assert(to_free != NULL);
     log_assert(managed_memory != NULL);
     
-    #ifndef T1_MEM_NO_ASSERTS
+    #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
     bool32_t found = false;
+    #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     for (u32 i = 0; i < managed_stack->size; i++) {
         if (managed_stack->used[i] &&
@@ -302,8 +305,11 @@ void T1_mem_free_managed(void * to_free) {
             managed_stack->used[i] = 0;
             managed_stack->sources[i][0] = '\0';
             log_assert(!found);
-            #ifndef T1_MEM_NO_ASSERTS
+            #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
             found = true;
+            #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         }
     }

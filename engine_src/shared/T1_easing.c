@@ -5,7 +5,7 @@
 #define T1_EASING_ASSERTS_ACTIVE T1_ACTIVE
 #if T1_EASING_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h>
-#elif T1_EASING_ASSERTS_ACTIVE == T1_INATIVE
+#elif T1_EASING_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -126,8 +126,11 @@ f32 T1_easing_t_to_eased_t(
             break;
         default:
             return_val = t;
-            #if T1_EASING_ASSERTS
+            #if T1_EASING_ASSERTS_ACTIVE == T1_ACTIVE
             assert(0);
+            #elif T1_EASING_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
     }
     

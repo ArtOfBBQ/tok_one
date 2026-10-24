@@ -545,25 +545,27 @@ static u8 T1_term_evaluate(
         T1_std_are_equal_strings(command, "DRAW AXIS") ||
         T1_std_are_equal_strings(command, "DRAW AXES"))
     {
-        #if RAW_SHADER_ACTIVE
-        engine_globals->draw_axes = !engine_globals->draw_axes;
+        #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
+        T1_global->draw_axes = !T1_global->draw_axes;
         
-        if (engine_globals->draw_axes) {
+        if (T1_global->draw_axes) {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Drawing axes...");
         } else {
             T1_std_strcpy_cap(
                 response,
-                SINGLE_LINE_MAX,
+                T1_TERM_SINGLE_LINE_MAX,
                 "Stopped drawing axes...");
         }
-        #else
+        #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Can't draw axes because raw shader (points & lines) is disabled");
+        #else
+        #error
         #endif
         return 1;
     }
@@ -936,15 +938,18 @@ static u8 T1_term_evaluate(
         return 1;
     }
     
-    #if T1_LOGGER_ASSERTS_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     if (T1_std_are_equal_strings(command, "CRASH")) {
         T1_std_strcpy_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Forcing the app to crash...");
-        log_dump_and_crash("Terminal-induced crash");
+        T1_log_dump_and_crash("Terminal-induced crash");
         return 1;
     }
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if (

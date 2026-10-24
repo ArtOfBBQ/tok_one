@@ -434,28 +434,46 @@ T1_wav_parse(
             format_data = *(T1WAVFormatChunkBody *)raw_file_at;
             raw_file_at += chunk_header.data_size;
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.type == 1); // supporting only PCM for now
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.channels == 2); // supporting only stereo for now
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.sample_rate == 44100); // supporting only 44.1khertz
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.bits_per_sample == 16); // supporting only 24bit
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.must_be_four == 4);
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
-            #ifndef T1_WAV_IGNORE_ASSERTS
+            #if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
             assert(format_data.idontgetit == 176400);
+            #elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         } else if (
             T1_wav_strings_are_equal(

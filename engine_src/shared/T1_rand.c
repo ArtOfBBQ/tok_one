@@ -800,20 +800,29 @@ s32 T1_rand(void) {
 }
 
 s32 T1_rand_at_i(const u64 index) {
-    #ifndef RANDOM_IGNORE_ASSERTS
+    #if T1_RAND_ASSERTS_ACTIVE == T1_ACTIVE
     assert(index < T1_RAND_SEQUENCE_SIZE);
+    #elif T1_RAND_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
-    #ifndef RANDOM_IGNORE_ASSERTS
+    #if T1_RAND_ASSERTS_ACTIVE == T1_ACTIVE
     assert(random_sequence[T1_rand_seed] >= 0);
+    #elif T1_RAND_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     return random_sequence[index];
 }
 
 SIMD_FLOAT T1_rand_simd_at_i(const u64 index)
 {
-    #ifndef RANDOM_IGNORE_ASSERTS
+    #if T1_RAND_ASSERTS_ACTIVE == T1_ACTIVE
     assert(index + SIMD_FLOAT_LANES < FLOAT_SEQUENCE_SIZE);
+    #elif T1_RAND_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return simd_load_f32s((f32 *)(

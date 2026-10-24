@@ -4,12 +4,18 @@
 #include "T1_stdint.h"
 #include <stddef.h>
 
-#ifndef T1_WAV_SILENCE
+#if T1_WAV_PRINTF_ACTIVE == T1_ACTIVE
 #include <stdio.h>
+#elif T1_WAV_PRINTF_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
-#ifndef T1_WAV_IGNORE_ASSERTS
+#if T1_WAV_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h>
+#elif T1_WAV_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 void

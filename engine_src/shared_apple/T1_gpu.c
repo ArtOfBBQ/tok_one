@@ -3069,8 +3069,11 @@ void T1_gpu_draw_in_mtk_view(void * view)
         ags->sel_command_buffer);
     
     if (combuf == NULL) {
-        #if T1_LOGGER_ASSERTS_ACTIVE
-        log_dump_and_crash("error - can't get metal command buffer\n");
+        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_log_dump_and_crash("error - can't get metal command buffer\n");
+        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         T1_objc_autorelease_pool_pop(pool);

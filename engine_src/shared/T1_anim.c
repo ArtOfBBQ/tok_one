@@ -805,9 +805,11 @@ void T1_anim_commit(T1Anim * c)
 void T1_anim_shatter_and_destroy(
     u32 T1_id,
     u64 duration_us) {
-    #if T1_LOGGER_ASSERTS_ACTIVE
-    #else
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)duration_us;
+    #else
+    #error
     #endif
     
     T1_log_assert(duration_us > 0);
@@ -847,9 +849,11 @@ void T1_anim_shatter_and_destroy(
 void T1_anim_evaporate_and_destroy(
     u32 T1_id,
     u64 duration_us) {
-    #if T1_LOGGER_ASSERTS_ACTIVE
-    #else
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)duration_us;
+    #else
+    #error
     #endif
     
     T1_log_assert(duration_us > 0);
@@ -1004,10 +1008,12 @@ void T1_anim_bump(
     u32 T1_id,
     u32 wait)
 {
-    #if T1_LOGGER_ASSERTS_ACTIVE
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_log_assert(wait == 0.0f);
-    #else
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     (void)wait;
+    #else
+    #error
     #endif
     
     T1Anim * bump_req = T1_anim_request_next(
