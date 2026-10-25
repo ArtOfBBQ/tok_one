@@ -66,6 +66,8 @@ void T1_texquad_construct(
     
     f32s->wh[0] = 0.25f;
     f32s->wh[1] = 0.25f;
+    f32s->mul_wh[0] = 1.0f;
+    f32s->mul_wh[1] = 1.0f;
     f32s->rgba[0] = 1.0f;
     f32s->rgba[1] = 1.0f;
     f32s->rgba[2] = 1.0f;

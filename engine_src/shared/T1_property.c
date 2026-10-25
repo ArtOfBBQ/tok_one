@@ -96,6 +96,8 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(TQ_GPU, xyz[2]),
     T1_PROP_F32(TQ_GPU, wh[0]),
     T1_PROP_F32(TQ_GPU, wh[1]),
+    T1_PROP_F32(TQ_GPU, mul_wh[0]),
+    T1_PROP_F32(TQ_GPU, mul_wh[1]),
     T1_PROP_F32(TQ_GPU, rgba[0]),
     T1_PROP_F32(TQ_GPU, rgba[1]),
     T1_PROP_F32(TQ_GPU, rgba[2]),

@@ -176,7 +176,8 @@ typedef struct {
     float offset_xy[2];
     float wh[2];
     float rgba[4];
-    float padding[5];
+    float mul_wh[2]; // scales wh when drawing, 1.0f by default
+    float padding[3];
 } T1GPUTexQuadf32;
 
 typedef struct {
