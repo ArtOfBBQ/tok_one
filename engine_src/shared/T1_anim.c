@@ -15,8 +15,11 @@
 #if T1_ANIM_ACTIVE == T1_ACTIVE
 
 /*
-The animation as it was requested. The client only sees anim handles
-(indices into T1_anims), this struct stays private
+The client only sees anim handles (indices into T1_anims)
+
+The stores hold the values to animate to (endpoints_not_deltas) or by.
+They're fetched when the first property for them is set, unused values
+in an endpoint store are T1_ANIM_NO_EFFECT, in a delta store 0
 */
 typedef struct {
     T1GPUzSpritef32 * zs_gpu_f32s;
@@ -27,29 +30,8 @@ typedef struct {
     T1zLightf32     * zl_gpu_f32s;
     
     void (* run_func_on_finish)(void);
-    uint64_t duration_us;
-    uint64_t pause_us;
-    
-    uint32_t runs;
-    uint32_t target_T1_id;
-    uint32_t target_touch_id;
-        
-    T1EasingType easing_type; // u8
-    uint8_t del_obj_on_finish;
-    uint8_t del_conflict_anims;
-} T1Anim;
-
-typedef struct {
-    T1Anim pub;
-    
-    /*
-    If this flag is set, the target values represent
-    endpoints, not deltas, until the animation is
-    committed. During anim_commit, the values will be
-    converted to normal delta values, and the
-    animation will be treated just like any other
-    animation
-    */
+    u64 duration_us;
+    u64 pause_us;
     u64 remaining_duration_us;
     u64 remaining_pause_us;
     f32 already_applied_t;
@@ -59,53 +41,48 @@ typedef struct {
     u16 tq_gpu_f32s_store_i;
     u16 tq_gpu_u32s_store_i;
     u16 zl_f32s_store_i;
+    u32 runs;
+    u32 target_T1_id;
+    T1EasingType easing_type; // u8
+    b8 del_obj_on_finish;
+    b8 del_conflict_anims;
     b8 endpoints_not_deltas;
     b8 deleted;
     b8 committed;
-} T1AnimPrivate;
+} T1Anim;
 
-T1AnimPrivate * T1_anims = NULL;
+T1Anim * T1_anims = NULL;
 u32 T1_anims_size = 0;
 
-static void T1_anim_assert_anim_valid_before_commit(T1Anim * to_check);
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-static void T1_anim_sanity_check(T1AnimPrivate * a) {
+static void T1_anim_sanity_check(T1Anim * a) {
     T1_log_assert(a->remaining_duration_us < 195000000);
-    for (u32 i = 0; i < T1_anims_size; i++) {
-        if (!a->endpoints_not_deltas) {
-            if (a->pub.zs_cpu_f32s) {
-                T1_log_assert(
-                    a->pub.zs_cpu_f32s->bloom_on != T1_ANIM_NO_EFFECT);
-            }
-            T1_log_assert(a->pub.zs_gpu_u32s == NULL);
-        } else {
-            if (a->pub.zs_gpu_u32s) {
-                f32 mix_rv_and_mix_tex_f32;
-                T1_std_memcpy(
-                    &mix_rv_and_mix_tex_f32,
-                    &a->pub.zs_gpu_u32s->mix_rv_and_mix_tex,
-                    4);
-                if (mix_rv_and_mix_tex_f32 != T1_ANIM_NO_EFFECT) {
-                    s32 mix_rv = a->pub.zs_gpu_u32s->mix_rv_and_mix_tex >> 16;
-                    T1_log_assert(mix_rv < T1_RENDER_VIEW_CAP);
-                    T1_log_assert(mix_rv >= -1);    
-                }
-                
-                T1Tex mix_tex = a->pub.zs_gpu_u32s->mix_rv_and_mix_tex & 0x0000FFFF;
-                s16 mix_tex_array_i = T1_tex_to_array_i(mix_tex);
-                s16 mix_tex_slice_i = T1_tex_to_slice_i(mix_tex);
-                if (mix_tex != T1_TEX_NONE) {
-                    T1_log_assert(mix_tex_array_i < T1_TEXARRAYS_CAP);
-                    T1_log_assert(mix_tex_slice_i < T1_TEX_SLICES_CAP);
-                }
-                
-                // T1_log_assert(a->public.zs_gpu_u32s->touch_id < 50000);
+    
+    if (!a->endpoints_not_deltas) {
+        if (a->zs_cpu_f32s) {
+            T1_log_assert(a->zs_cpu_f32s->bloom_on != T1_ANIM_NO_EFFECT);
+        }
+        T1_log_assert(a->zs_gpu_u32s == NULL);
+    } else if (a->zs_gpu_u32s) {
+        f32 mix_rv_and_mix_tex_f32;
+        T1_std_memcpy(
+            &mix_rv_and_mix_tex_f32,
+            &a->zs_gpu_u32s->mix_rv_and_mix_tex,
+            4);
+        if (mix_rv_and_mix_tex_f32 != T1_ANIM_NO_EFFECT) {
+            // like the shader: rv is the low 16 bits, tex the high 16
+            s16 mix_rv = (s16)(a->zs_gpu_u32s->mix_rv_and_mix_tex & 0xFFFF);
+            T1_log_assert(mix_rv < T1_RENDER_VIEW_CAP);
+            T1_log_assert(mix_rv >= -1);
+            
+            T1Tex mix_tex = (T1Tex)(a->zs_gpu_u32s->mix_rv_and_mix_tex >> 16);
+            if (mix_tex != T1_TEX_NONE) {
+                T1_log_assert(T1_tex_to_array_i(mix_tex) < T1_TEXARRAYS_CAP);
+                T1_log_assert(T1_tex_to_slice_i(mix_tex) < T1_TEX_SLICES_CAP);
             }
         }
     }
-    
-    
 }
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_anim_sanity_check(x)
@@ -120,9 +97,6 @@ typedef struct {
     T1CPUzSpritef32 zs_cpu_f32s_store[T1_ANIMS_CAP];
     T1GPUTexQuadf32 tq_gpu_f32s_store[T1_ANIMS_CAP];
     T1GPUTexQuadu32 tq_gpu_u32s_store[T1_ANIMS_CAP];
-    T1GPUzSprite final_vals;
-    T1GPUzSprite deltas[2];
-    T1CPUzSpritef32 zsprite_final_pos_cpu;
     u32 (* init_mutex_and_return_id)(void);
     void (* mutex_lock)(u32);
     void (* mutex_unlock)(u32);
@@ -137,13 +111,13 @@ void T1_anim_init(
     void (* funcptr_mutex_lock)(u32),
     void (* funcptr_mutex_unlock)(u32))
 {
-    T1_anims = (T1AnimPrivate *)
+    T1_anims = (T1Anim *)
         T1_mem_malloc_unmanaged(
-            sizeof(T1AnimPrivate) * T1_ANIMS_CAP);
+            sizeof(T1Anim) * T1_ANIMS_CAP);
     T1_std_memset(
         T1_anims,
         0,
-        sizeof(T1AnimPrivate) * T1_ANIMS_CAP);
+        sizeof(T1Anim) * T1_ANIMS_CAP);
     T1_anims[0].deleted = 1;
     
     as = (T1AnimState *)T1_mem_malloc_unmanaged(
@@ -162,41 +136,24 @@ void T1_anim_init(
         T1_std_memcpy(
             &T1_anims[i],
             &T1_anims[0],
-            sizeof(T1AnimPrivate));
+            sizeof(T1Anim));
         T1_log_assert(T1_anims[i].deleted);
     }
     
     as->mutex_id = as->init_mutex_and_return_id();
 }
 
-static
-T1AnimPrivate *
-T1_anim_get_container(
-    const T1Anim * public_ptr)
-{
-    assert(
-        offsetof(T1AnimPrivate, pub) == 0);
-    
-    T1AnimPrivate * retval = (T1AnimPrivate *)public_ptr;
-    
-    T1_log_assert(
-        &retval->pub == public_ptr);
-    
-    return retval;
-}
-
 static void T1_anim_construct(
-    T1AnimPrivate * to_construct)
+    T1Anim * to_construct)
 {
     T1_std_memset(
         to_construct,
         0,
-        sizeof(T1AnimPrivate));
+        sizeof(T1Anim));
     T1_log_assert(!to_construct->committed);
     
-    to_construct->pub.target_T1_id = T1_ID_NONE;
-    to_construct->pub.target_touch_id = T1_TOUCH_ID_NONE;
-    to_construct->pub.runs = 1;
+    to_construct->target_T1_id = T1_ID_NONE;
+    to_construct->runs = 1;
     
     T1_log_assert(!to_construct->deleted);
     T1_log_assert(!to_construct->committed);
@@ -316,19 +273,12 @@ T1_anim_fetch_next_store_tq_gpu_u32s(u16 * store_i) {
     return out;
 }
 
-static T1Anim * T1_anim_request_next(
-    b8 endpoints_not_deltas,
-    b8 zs_gpu_f32s,
-    b8 zs_cpu_f32s,
-    b8 zs_gpu_u32s,
-    b8 tq_gpu_f32s,
-    b8 tq_gpu_u32s,
-    b8 zl_gpu_f32s)
+static T1Anim * T1_anim_alloc(b8 endpoints_not_deltas)
 {
     as->mutex_lock(as->mutex_id);
     
     T1_log_assert(T1_anims_size < T1_ANIMS_CAP);
-    T1AnimPrivate * out = NULL;
+    T1Anim * out = NULL;
     
     for (
         u32 i = 0;
@@ -351,112 +301,33 @@ static T1Anim * T1_anim_request_next(
     
     T1_log_assert(out->deleted);
     T1_anim_construct(out);
+    out->endpoints_not_deltas = endpoints_not_deltas;
     
-    T1_log_assert(!out->committed);
-    T1_log_assert(!out->deleted);
-    
-    if (zs_gpu_f32s) {
-        out->pub.zs_gpu_f32s =
-            T1_anim_fetch_next_store_zs_gpu_f32s(
-                &out->zs_gpu_f32s_store_i);
-    }
-    
-    if (zs_cpu_f32s) {
-        out->pub.zs_cpu_f32s =
-            T1_anim_fetch_next_store_zs_cpu_f32s(
-                &out->zs_cpu_f32s_store_i);
-    }
-    
-    if (zs_gpu_u32s) {
-        out->pub.zs_gpu_u32s =
-            T1_anim_fetch_next_store_zs_gpu_u32s(
-                &out->zs_gpu_u32s_store_i);
-    }
-    
-    if (tq_gpu_f32s) {
-        out->pub.tq_gpu_f32s =
-            T1_anim_fetch_next_store_tq_gpu_f32s(
-                &out->tq_gpu_f32s_store_i);
-    }
-    
-    if (tq_gpu_u32s) {
-        out->pub.tq_gpu_u32s =
-            T1_anim_fetch_next_store_tq_gpu_u32s(
-                &out->tq_gpu_u32s_store_i);
-    }
-    
-    if (zl_gpu_f32s) {
-        out->pub.zl_gpu_f32s =
-            T1_anim_fetch_next_store_zl_gpu_f32s(
-                &out->zl_f32s_store_i);
-    }
-    
-    if (endpoints_not_deltas) {
-        if (out->pub.zs_gpu_f32s) {
-            T1_std_memset_f32(
-                out->pub.zs_gpu_f32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUzSpritef32));
-        }
-        if (out->pub.zs_gpu_u32s) {
-            T1_std_memset_f32(
-                out->pub.zs_gpu_u32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUzSpriteu32));
-        }
-        if (out->pub.zs_cpu_f32s) {
-            T1_std_memset_f32(
-                out->pub.zs_cpu_f32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1CPUzSpritef32));    
-        }
-        if (out->pub.tq_gpu_f32s) {
-            T1_std_memset_f32(
-                out->pub.tq_gpu_f32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUTexQuadf32));
-        }
-        if (out->pub.tq_gpu_u32s) {
-            T1_std_memset_f32(
-                out->pub.tq_gpu_u32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1GPUTexQuadu32));
-        }
-        if (out->pub.zl_gpu_f32s) {
-            T1_std_memset_f32(
-                out->pub.zl_gpu_f32s,
-                T1_ANIM_NO_EFFECT,
-                sizeof(T1zLightf32));
-        }
-        out->endpoints_not_deltas = endpoints_not_deltas;
-    }
-    
-    T1_log_assert(out != NULL);
     T1_log_assert(!out->committed);
     T1_log_assert(!out->deleted);
     
     as->mutex_unlock(as->mutex_id);
     
-    return &out->pub;
+    return out;
 }
 
-static void T1_anim_delete(T1AnimPrivate * a) {
-    if (a->pub.zl_gpu_f32s) {
+static void T1_anim_delete(T1Anim * a) {
+    if (a->zl_gpu_f32s) {
         as->store_taken[a->zl_f32s_store_i] &= ~(1 << 5);
     }
-    if (a->pub.zs_gpu_f32s) {
+    if (a->zs_gpu_f32s) {
         as->store_taken[a->zs_gpu_f32s_store_i] &= ~(1 << 4);
     }
-    if (a->pub.zs_cpu_f32s) {
+    if (a->zs_cpu_f32s) {
         as->store_taken[a->zs_cpu_f32s_store_i] &= ~(1 << 3);
     }
-    if (a->pub.zs_gpu_u32s) {
+    if (a->zs_gpu_u32s) {
         as->store_taken[a->zs_gpu_u32s_store_i] &= ~(1 << 2);
     }
-    if (a->pub.tq_gpu_f32s) {
+    if (a->tq_gpu_f32s) {
         as->store_taken[a->tq_gpu_f32s_store_i] &= ~(1 << 1);
     }
-    if (a->pub.tq_gpu_u32s) {
+    if (a->tq_gpu_u32s) {
         as->store_taken[a->tq_gpu_u32s_store_i] &= ~(1);
     }
     
@@ -467,7 +338,7 @@ static void T1_anim_delete(T1AnimPrivate * a) {
 }
 
 static void T1_anim_resolve_single(
-    T1AnimPrivate * a)
+    T1Anim * a)
 {
     if (a->deleted || !a->committed) {
         return;
@@ -481,38 +352,38 @@ static void T1_anim_resolve_single(
     #endif
     
     if (a->already_applied_t >= 1.0f) {
-        u8 delete = a->pub.runs == 1;
-        u8 reduce_runs = a->pub.runs > 0;
+        u8 delete = a->runs == 1;
+        u8 reduce_runs = a->runs > 0;
         
         if (delete) {
             T1_anim_delete(a);
             
-            if (a->pub.run_func_on_finish) {
-                a->pub.run_func_on_finish();
+            if (a->run_func_on_finish) {
+                a->run_func_on_finish();
             }
             
-            if (a->pub.del_obj_on_finish)
+            if (a->del_obj_on_finish)
             {
                 if (
-                    a->pub.target_T1_id ==
+                    a->target_T1_id ==
                         T1_ANIM_HIT_EVERYTHING)
                 {
                     T1_zsprite_delete_all();
                     T1_texquad_delete_all();
                     T1_zlight_delete_all();
                 } else {
-                    T1_zsprite_delete(a->pub.target_T1_id);
-                    T1_texquad_delete(a->pub.target_T1_id);
-                    T1_zlight_delete(a->pub.target_T1_id);
+                    T1_zsprite_delete(a->target_T1_id);
+                    T1_texquad_delete(a->target_T1_id);
+                    T1_zlight_delete(a->target_T1_id);
                 }
             }
         } else {
-            a->remaining_duration_us = a->pub.duration_us;
-            a->remaining_pause_us = a->pub.pause_us;
+            a->remaining_duration_us = a->duration_us;
+            a->remaining_pause_us = a->pause_us;
         }
         
         if (reduce_runs) {
-            a->pub.runs -= 1;
+            a->runs -= 1;
         }
         
         a->already_applied_t = 0.0f;
@@ -540,12 +411,12 @@ static void T1_anim_resolve_single(
         a->remaining_duration_us = 0;
     }
     
-    u64 elapsed_so_far = a->pub.duration_us -
+    u64 elapsed_so_far = a->duration_us -
         a->remaining_duration_us;
     T1_log_assert(elapsed_so_far <=
-        a->pub.duration_us);
+        a->duration_us);
     
-    f32 t_now = (f32)elapsed_so_far / (f32)a->pub.duration_us;
+    f32 t_now = (f32)elapsed_so_far / (f32)a->duration_us;
     T1_log_assert(t_now <= 1.0f);
     T1_log_assert(t_now >= 0.0f);
     T1_log_assert(t_now >= a->already_applied_t);
@@ -556,10 +427,10 @@ static void T1_anim_resolve_single(
     
     t_now = T1_easing_t_to_eased_t(
         t_now,
-        a->pub.easing_type);
+        a->easing_type);
     t_applied = T1_easing_t_to_eased_t(
         t_applied,
-        a->pub.easing_type);
+        a->easing_type);
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_anim_sanity_check(a);
@@ -570,97 +441,97 @@ static void T1_anim_resolve_single(
     
     if (a->endpoints_not_deltas) {
         if (
-            a->pub.zs_gpu_f32s ||
-            a->pub.zs_gpu_u32s ||
-            a->pub.zs_cpu_f32s)
+            a->zs_gpu_f32s ||
+            a->zs_gpu_u32s ||
+            a->zs_cpu_f32s)
         {
             T1_zsprite_apply_endpoint_anim(
                 /* u32 T1_id: */
-                    a->pub.target_T1_id,
+                    a->target_T1_id,
                 /* u32 touch_id: */
-                    a->pub.target_touch_id,
+                    T1_TOUCH_ID_NONE,
                 /* f32 t_applied: */
                     t_applied,
                 /* f32 t_now: */
                     t_now,
                 /* f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->pub.zs_gpu_f32s,
+                    (f32 *)a->zs_gpu_f32s,
                 /* const u32 * goal_gpu_vals_u32: */
-                    (u32 *)a->pub.zs_gpu_u32s,
+                    (u32 *)a->zs_gpu_u32s,
                 /* const f32 * goal_cpu_vals: */
-                    (f32 *)a->pub.zs_cpu_f32s);
+                    (f32 *)a->zs_cpu_f32s);
         }
         if (
-            a->pub.tq_gpu_f32s ||
-            a->pub.tq_gpu_u32s)
+            a->tq_gpu_f32s ||
+            a->tq_gpu_u32s)
         {
             T1_texquad_apply_endpoint_anim(
                 /* u32 T1_id: */
-                    a->pub.target_T1_id,
+                    a->target_T1_id,
                 /* u32 touch_id: */
-                    a->pub.target_touch_id,
+                    T1_TOUCH_ID_NONE,
                 /* f32 t_applied: */
                     t_applied,
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->pub.tq_gpu_f32s,
+                    (f32 *)a->tq_gpu_f32s,
                 /* const u32 * goal_gpu_vals_u32: */
-                    (u32 *)a->pub.tq_gpu_u32s);
+                    (u32 *)a->tq_gpu_u32s);
         }
-        if (a->pub.zl_gpu_f32s)
+        if (a->zl_gpu_f32s)
         {
             T1_zlight_apply_endpoint_anim(
                 /* u32 T1_id: */
-                    a->pub.target_T1_id,
+                    a->target_T1_id,
                 /* f32 t_applied: */
                     t_applied,
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->pub.zl_gpu_f32s);
+                    (f32 *)a->zl_gpu_f32s);
         }
     } else {
         if (
-            a->pub.zs_gpu_f32s ||
-            a->pub.zs_gpu_u32s ||
-            a->pub.zs_cpu_f32s)
+            a->zs_gpu_f32s ||
+            a->zs_gpu_u32s ||
+            a->zs_cpu_f32s)
         {
             T1_zsprite_apply_anim_effects_to_id(
                 /* u32 T1_id: */
-                    a->pub.target_T1_id,
+                    a->target_T1_id,
                 /* u32 touch_id: */
-                    a->pub.target_touch_id,
+                    T1_TOUCH_ID_NONE,
                 /* f32 t_applied: */
                     t_applied,
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * anim_gpu_f32s: */
-                    (f32 *)a->pub.zs_gpu_f32s,
+                    (f32 *)a->zs_gpu_f32s,
                 /* const u32 * anim_gpu_u32s: */
-                    (u32 *)a->pub.zs_gpu_u32s,
+                    (u32 *)a->zs_gpu_u32s,
                 /* const f32 * anim_cpu_f32s: */
-                    (f32 *)a->pub.zs_cpu_f32s);
+                    (f32 *)a->zs_cpu_f32s);
         }
         if (
-            a->pub.tq_gpu_f32s ||
-            a->pub.tq_gpu_u32s)
+            a->tq_gpu_f32s ||
+            a->tq_gpu_u32s)
         {
             T1_texquad_apply_anim_effects_to_id(
                 /* u32 T1_id: */
-                    a->pub.target_T1_id,
+                    a->target_T1_id,
                 /* u32 touch_id: */
-                    a->pub.target_touch_id,
+                    T1_TOUCH_ID_NONE,
                 /* f32 t_applied: */
                     t_applied,
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * anim_gpu_vals_f32: */
-                    (f32 *)a->pub.tq_gpu_f32s,
+                    (f32 *)a->tq_gpu_f32s,
                 /* const u32 * anim_gpu_vals_u32: */
-                    (u32 *)a->pub.tq_gpu_u32s);
+                    (u32 *)a->tq_gpu_u32s);
         }
-        if (a->pub.zl_gpu_f32s)
+        if (a->zl_gpu_f32s)
         {
             // TODO: apply anim (non-endpoint) for zLight
             T1_log_assert(0);
@@ -668,253 +539,123 @@ static void T1_anim_resolve_single(
     }
 }
 
-static void T1_anim_commit_and_instarun(T1Anim * to_commit)
+static void T1_anim_assert_anim_valid_before_commit(T1Anim * a)
+{
+    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_log_assert(!a->deleted);
+    T1_log_assert(!a->committed);
+    T1_log_assert(a->already_applied_t == 0.0f);
+    T1_log_assert(a->duration_us > 0);
+    T1_log_assert(a->target_T1_id != T1_ID_NONE);
+    
+    if (!a->endpoints_not_deltas) {
+        // u32s jump to their endpoint, they can't be deltas
+        T1_log_assert(!a->zs_gpu_u32s);
+        T1_log_assert(!a->tq_gpu_u32s);
+        
+        if (a->zs_gpu_f32s) {
+            // don't reduce alpha by 1 to fade out, use
+            // an endpoint anim
+            T1_log_assert(a->zs_gpu_f32s->alpha > -0.9f);
+        }
+    }
+    
+    T1_anim_sanity_check(a);
+    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    (void)a;
+    #else
+    #error
+    #endif
+}
+
+// applies the whole anim right now, a has to have a 1us duration
+static void T1_anim_commit_and_instarun(T1Anim * a)
 {
     as->mutex_lock(as->mutex_id);
     
-    T1_anim_assert_anim_valid_before_commit(to_commit);
+    T1_anim_assert_anim_valid_before_commit(a);
+    T1_log_assert(a->duration_us == 1);
     
-    T1AnimPrivate * parent =
-        T1_anim_get_container(to_commit);
-    T1_log_assert(&parent->pub == to_commit);
-    T1_log_assert(to_commit->duration_us == 1);
+    a->remaining_pause_us = a->pause_us;
+    a->remaining_duration_us = a->duration_us;
+    a->committed = 1;
     
-    parent->remaining_pause_us = to_commit->pause_us;
-    parent->remaining_duration_us = to_commit->duration_us;
-    parent->committed = 1;
-    
-    T1_anim_sanity_check(parent);
-    
-    T1_anim_resolve_single(parent);
-    T1_anim_delete(parent);
-    parent->committed = 0;
-    T1_log_assert(parent->remaining_duration_us == 0);
+    T1_anim_resolve_single(a);
+    T1_anim_delete(a);
+    a->committed = 0;
+    T1_log_assert(a->remaining_duration_us == 0);
     
     as->mutex_unlock(as->mutex_id);
 }
 
-static void T1_anim_assert_anim_valid_before_commit(
-    T1Anim * to_check) {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1AnimPrivate * parent = T1_anim_get_container(to_check);
-    
-    T1_log_assert(&parent->pub == to_check);
-    
-    if (!parent->endpoints_not_deltas) {
-        // not an endpoint anim, regular deltas
-        
-        // signed ints don't play nice without endpoints
-        T1_log_assert(!parent->pub.zs_gpu_u32s);
-        
-        if (parent->pub.zs_gpu_f32s) {
-            // don't reduce alpha by 1 to fade out, use
-            // an endpoint anim
-            T1_log_assert(parent->pub.zs_gpu_f32s->alpha > -0.9f);
-        }
-    }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1_log_assert(to_check->duration_us > 0);
-    
-    T1_anim_sanity_check(parent);
-}
-
-static void T1_anim_commit_private(T1Anim * c)
+static void T1_anim_commit_and_schedule(T1Anim * a)
 {
     as->mutex_lock(as->mutex_id);
     
-    T1_anim_assert_anim_valid_before_commit(c);
+    T1_anim_assert_anim_valid_before_commit(a);
     
-    T1AnimPrivate * parent = T1_anim_get_container(c);
-    T1_log_assert(&parent->pub == c);
-    
-    if (c->del_conflict_anims)
+    if (a->del_conflict_anims)
     {
         for (
             s32 anim_i = (s32)T1_anims_size - 1;
             anim_i >= 0;
             anim_i--)
         {
-            T1AnimPrivate * a = &T1_anims[anim_i];
+            T1Anim * other = &T1_anims[anim_i];
             
             if (
-                (void *)a != (void *)c &&
-                (a->pub.target_T1_id ==
-                    c->target_T1_id ||
-                a->pub.target_T1_id ==
-                    T1_ANIM_HIT_EVERYTHING) &&
-                a->pub.target_touch_id ==
-                    c->target_touch_id &&
-                a->committed &&
-                a->endpoints_not_deltas &&
-                !a->pub.del_obj_on_finish &&
-                !a->pub.run_func_on_finish)
+                other != a &&
+                (other->target_T1_id == a->target_T1_id ||
+                other->target_T1_id == T1_ANIM_HIT_EVERYTHING) &&
+                other->committed &&
+                other->endpoints_not_deltas &&
+                !other->del_obj_on_finish &&
+                !other->run_func_on_finish)
             {
-                T1_anim_delete(T1_anims + anim_i);
+                T1_anim_delete(other);
             }
         }
     }
     
-    if (!parent->endpoints_not_deltas) {
-        // don't use T1_ANIM_NO_EFFECT in non-endpoint anims
-        if (parent->pub.zs_cpu_f32s) {
-            for (u32 i = 0; i < (sizeof(T1CPUzSpritef32) / 4); i++) {
-                T1_log_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != T1_ANIM_NO_EFFECT);
-                T1_log_assert(((f32 *)parent->pub.zs_cpu_f32s)[i] != 65535.0f);
-            }
-        }
-        if (parent->pub.zs_gpu_f32s) {
-            for (u32 i = 0; i < (sizeof(T1GPUzSpritef32) / 4); i++) {
-                T1_log_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != T1_ANIM_NO_EFFECT);
-                T1_log_assert(((f32 *)parent->pub.zs_gpu_f32s)[i] != 65535.0f);
-            }
-        }
-        if (parent->pub.zs_gpu_u32s) {
-            for (u32 i = 0; i < (sizeof(T1GPUzSpriteu32) / 4); i++) {
-                f32 check;
-                T1_std_memcpy(&check, ((u32 *)parent->pub.zs_gpu_u32s) + i, 4);
-                T1_log_assert(check != T1_ANIM_NO_EFFECT);
-                T1_log_assert(check != 65535.0f);
-            }
-        }
-        if (parent->pub.zl_gpu_f32s) {
-            for (u32 i = 0; i < (sizeof(T1zLightf32) / 4); i++) {
-                f32 check;
-                T1_std_memcpy(&check, parent->pub.zl_gpu_f32s + i, 4);
-                T1_log_assert(check != T1_ANIM_NO_EFFECT);
-                T1_log_assert(check != 65535.0f);
-            }
-        }
-    }
-    
-    T1_log_assert(!parent->deleted);
-    T1_log_assert(!parent->committed);
-    
-    if (!c->run_func_on_finish) {
-        if (c->target_T1_id == T1_ID_NONE) {
-            T1_log_assert(c->target_touch_id != T1_TOUCH_ID_NONE);
-        } else {
-            T1_log_assert(c->target_touch_id == T1_TOUCH_ID_NONE);
-        }
-        
-        if (c->target_touch_id == T1_TOUCH_ID_NONE) {
-            T1_log_assert(c->target_T1_id >= 0);
-        } else {
-            T1_log_assert(c->target_T1_id == T1_ID_NONE);
-        }
-
-    }
-    
-    T1_log_assert(parent->already_applied_t == 0.0f);
-    
-    parent->remaining_pause_us = c->pause_us;
-    parent->remaining_duration_us = c->duration_us;
-    
-    T1_log_assert(parent->remaining_duration_us > 0);
-    parent->committed = 1;
-    
-    T1_log_assert(parent->committed);
-    T1_log_assert(!parent->deleted);
-    
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_anim_sanity_check(parent);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    a->remaining_pause_us = a->pause_us;
+    a->remaining_duration_us = a->duration_us;
+    a->committed = 1;
     
     as->mutex_unlock(as->mutex_id);
 }
 
+// shatter and evaporate are plain fades for now
+static void T1_anim_alpha_blend_fade_and_destroy(
+    u32 T1_id,
+    u64 duration_us)
+{
+    T1_log_assert(duration_us > 0);
+    T1_log_assert(T1_id != T1_ID_NONE);
+    
+    u32 set_alpha_on = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
+    T1_anim_set_f32(set_alpha_on, "alpha_on", 1.0f);
+    T1_anim_set_duration_us(set_alpha_on, 1);
+    T1_anim_commit(set_alpha_on);
+    
+    u32 fade = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
+    T1_anim_set_f32(fade, "alpha", 0.0f);
+    T1_anim_set_duration_us(fade, duration_us);
+    T1_anim_set_delete_target_on_finish(fade, 1);
+    T1_anim_commit(fade);
+}
+
 void T1_anim_shatter_and_destroy(
     u32 T1_id,
-    u64 duration_us) {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)duration_us;
-    #else
-    #error
-    #endif
-    
-    T1_log_assert(duration_us > 0);
-    T1_log_assert(T1_id >= 0);
-    
-    T1Anim * set_scatter_mesh =
-    T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 1,
-        /* b8 zs_gpu_f32s: */ 0,
-        /* b8 zs_cpu_f32s: */ 1,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    set_scatter_mesh->target_T1_id = T1_id;
-    set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
-    set_scatter_mesh->duration_us = 1;
-    T1_anim_commit_and_instarun(set_scatter_mesh);
-    
-    T1Anim * scatter = T1_anim_request_next(
-        1,
-        /* b8 zs_gpu_f32s: */ 1,
-        /* b8 zs_cpu_f32s: */ 0,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    scatter->zs_gpu_f32s->alpha = 0.0f;
-    scatter->target_T1_id = T1_id;
-    scatter->duration_us = duration_us;
-    scatter->easing_type = T1_EASINGTYPE_NONE;
-    scatter->runs = 1;
-    scatter->del_obj_on_finish = 1;
-    T1_anim_commit_private(scatter);
+    u64 duration_us)
+{
+    T1_anim_alpha_blend_fade_and_destroy(T1_id, duration_us);
 }
 
 void T1_anim_evaporate_and_destroy(
     u32 T1_id,
-    u64 duration_us) {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)duration_us;
-    #else
-    #error
-    #endif
-    
-    T1_log_assert(duration_us > 0);
-    T1_log_assert(T1_id >= 0);
-    
-    T1Anim * set_scatter_mesh =
-    T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 1,
-        /* b8 zs_gpu_f32s: */ 0,
-        /* b8 zs_cpu_f32s: */ 1,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    set_scatter_mesh->target_T1_id = T1_id;
-    set_scatter_mesh->zs_cpu_f32s->alpha_on = 1.0f;
-    set_scatter_mesh->duration_us = 1;
-    T1_anim_commit_and_instarun(set_scatter_mesh);
-    
-    T1Anim * evap = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 1,
-        /* b8 zs_gpu_f32s: */ 1,
-        /* b8 zs_cpu_f32s: */ 0,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    evap->zs_gpu_f32s->alpha = 0.0f;
-    evap->target_T1_id = T1_id;
-    evap->duration_us = duration_us;
-    evap->easing_type = T1_EASINGTYPE_NONE;
-    evap->runs = 1;
-    evap->del_obj_on_finish = 1;
-    T1_anim_commit_private(evap);
+    u64 duration_us)
+{
+    T1_anim_alpha_blend_fade_and_destroy(T1_id, duration_us);
 }
 
 void T1_anim_fade_and_destroy(
@@ -924,34 +665,26 @@ void T1_anim_fade_and_destroy(
 {
     T1_log_assert(duration_us > 0);
     
-    T1Anim * fade_destroy = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */  1,
-        /* b8 zs_gpu_f32s: */ 1,
-        /* b8 zs_cpu_f32s: */ 1,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 1,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 1);
-    fade_destroy->target_T1_id = T1_id;
-    fade_destroy->duration_us = duration_us;
-    fade_destroy->zs_gpu_f32s->alpha = 0.0f;
-    fade_destroy->zs_gpu_f32s->bonus_rgb[0] = 0.0f;
-    fade_destroy->zs_gpu_f32s->bonus_rgb[1] = 0.0f;
-    fade_destroy->zs_gpu_f32s->bonus_rgb[2] = 0.0f;
-    fade_destroy->zs_gpu_f32s->shadow_strength = 0.0f;
-    fade_destroy->zs_cpu_f32s->bloom_on = 0.0f;
-    fade_destroy->tq_gpu_f32s->rgba[0] = 0.0f;
-    fade_destroy->tq_gpu_f32s->rgba[1] = 0.0f;
-    fade_destroy->tq_gpu_f32s->rgba[2] = 0.0f;
-    fade_destroy->tq_gpu_f32s->rgba[3] = 0.0f;
-    fade_destroy->zl_gpu_f32s->rgba[0] = 0.0f;
-    fade_destroy->zl_gpu_f32s->rgba[1] = 0.0f;
-    fade_destroy->zl_gpu_f32s->rgba[2] = 0.0f;
-    fade_destroy->zl_gpu_f32s->diffuse = 0.0f;
-    fade_destroy->zl_gpu_f32s->specular = 0.0f;
-    fade_destroy->pause_us = pause_first;
-    fade_destroy->del_obj_on_finish = 1;
-    T1_anim_commit_private(fade_destroy);
+    u32 fade_destroy = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
+    T1_anim_set_duration_us(fade_destroy, duration_us);
+    T1_anim_set_pause_us(fade_destroy, pause_first);
+    // zsprites
+    T1_anim_set_f32(fade_destroy, "alpha", 0.0f);
+    T1_anim_set_f32(fade_destroy, "bonus_rgb[0]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "bonus_rgb[1]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "bonus_rgb[2]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "shadow_strength", 0.0f);
+    T1_anim_set_f32(fade_destroy, "bloom_on", 0.0f);
+    // texquads and zlights
+    T1_anim_set_f32(fade_destroy, "rgba[0]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "rgba[1]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "rgba[2]", 0.0f);
+    T1_anim_set_f32(fade_destroy, "rgba[3]", 0.0f);
+    // zlights
+    T1_anim_set_f32(fade_destroy, "diffuse", 0.0f);
+    T1_anim_set_f32(fade_destroy, "specular", 0.0f);
+    T1_anim_set_delete_target_on_finish(fade_destroy, 1);
+    T1_anim_commit(fade_destroy);
 }
 
 void T1_anim_fade_destroy_all(
@@ -970,27 +703,16 @@ void T1_anim_fade_destroy_all(
 void T1_anim_fade_to(
     u32 T1_id,
     u64 duration_us,
-    f32 target_alpha) {
-    T1_log_assert(T1_id >= 0);
+    f32 target_alpha)
+{
+    T1_log_assert(T1_id != T1_ID_NONE);
     
-    // register scheduled animation
-    T1Anim * modify_alpha = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 1,
-        /* b8 zs_gpu_f32s: */ 1,
-        /* b8 zs_cpu_f32s: */ 0,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    modify_alpha->target_T1_id = T1_id;
-    modify_alpha->duration_us = duration_us;
-    modify_alpha->zs_gpu_f32s->alpha = target_alpha;
-    modify_alpha->del_obj_on_finish = 1;
-    if (duration_us < 50) {
-        T1_anim_commit_and_instarun(modify_alpha);
-    } else {
-        T1_anim_commit_private(modify_alpha);
-    }
+    u32 modify_alpha = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
+    // very short fades are applied right away
+    T1_anim_set_duration_us(modify_alpha, duration_us < 50 ? 1 : duration_us);
+    T1_anim_set_f32(modify_alpha, "alpha", target_alpha);
+    T1_anim_set_delete_target_on_finish(modify_alpha, 1);
+    T1_anim_commit(modify_alpha);
 }
 
 void T1_anim_resolve(void) {
@@ -1001,7 +723,7 @@ void T1_anim_resolve(void) {
         anim_i >= 0;
         anim_i--)
     {
-        T1AnimPrivate * anim = &T1_anims[anim_i];
+        T1Anim * anim = &T1_anims[anim_i];
         
         T1_anim_resolve_single(anim);
     }
@@ -1013,22 +735,15 @@ void T1_anim_dud_dance(
     u32 T1_id,
     f32 magnitude)
 {
-    T1Anim * move_request =
-    T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ 0,
-        /* b8 zs_gpu_f32s: */ 0,
-        /* b8 zs_cpu_f32s: */ 1,
-        /* b8 zs_gpu_u32s: */ 0,
-        /* b8 tq_gpu_f32s: */ 0,
-        /* b8 tq_gpu_u32s: */ 0,
-        /* b8 zl_gpu_f32s: */ 0);
-    move_request->easing_type = T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->target_T1_id = T1_id;
-    move_request->zs_cpu_f32s->xyz[0] = magnitude * 0.05f;
-    move_request->zs_cpu_f32s->xyz[1] = magnitude * 0.035f;
-    move_request->zs_cpu_f32s->xyz[2] = magnitude * 0.005f;
-    move_request->duration_us = 300000;
-    T1_anim_commit_private(move_request);
+    u32 move_request = T1_anim_new(T1_id, T1_ANIM_MODE_BY);
+    T1_anim_set_easing(
+        move_request,
+        T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO);
+    T1_anim_set_f32(move_request, "xyz[0]", magnitude * 0.05f);
+    T1_anim_set_f32(move_request, "xyz[1]", magnitude * 0.035f);
+    T1_anim_set_f32(move_request, "xyz[2]", magnitude * 0.005f);
+    T1_anim_set_duration_us(move_request, 300000);
+    T1_anim_commit(move_request);
 }
 
 void T1_anim_delete_all(void) {
@@ -1039,31 +754,10 @@ void T1_anim_delete_all(void) {
     as->mutex_unlock(as->mutex_id);
 }
 
-#if 0
-void T1_anim_delete_endpoint_anims_targeting(
-    u32 T1_id) {
-    as->mutex_lock(as->mutex_id);
-    for (u32 i = 0; i < T1_anims_size; i++) {
-        if (
-            !T1_anims[i].deleted &&
-            T1_anims[i].endpoints_not_deltas &&
-            (T1_anims[i].public.
-                target_T1_id == T1_id ||
-            T1_anims[i].
-                public.target_T1_id ==
-                    T1_ZSPRITE_ID_HIT_EVERYTHING))
-        {
-            T1_anim_delete(T1_anims + i);
-        }
-    }
-    as->mutex_unlock(as->mutex_id);
-}
-#endif
-
-static T1AnimPrivate * T1_anim_from_handle(u32 anim)
+static T1Anim * T1_anim_from_handle(u32 anim)
 {
     T1_log_assert(anim < T1_anims_size);
-    T1AnimPrivate * a = &T1_anims[anim];
+    T1Anim * a = &T1_anims[anim];
     // handles are only valid until they're committed
     T1_log_assert(!a->deleted);
     T1_log_assert(!a->committed);
@@ -1075,17 +769,16 @@ u32 T1_anim_new(u32 T1_id, u8 mode)
     T1_log_assert(T1_id != T1_ID_NONE);
     T1_log_assert(mode == T1_ANIM_MODE_TO || mode == T1_ANIM_MODE_BY);
     
-    T1Anim * pub = T1_anim_request_next(
-        /* b8 endpoints_not_deltas: */ mode == T1_ANIM_MODE_TO,
-        0, 0, 0, 0, 0, 0);
-    pub->target_T1_id = T1_id;
+    T1Anim * a = T1_anim_alloc(
+        /* b8 endpoints_not_deltas: */ mode == T1_ANIM_MODE_TO);
+    a->target_T1_id = T1_id;
     
-    return (u32)(T1_anim_get_container(pub) - T1_anims);
+    return (u32)(a - T1_anims);
 }
 
 // fetches the anim's store for this kind of property on first use
 static void * T1_anim_get_store(
-    T1AnimPrivate * a,
+    T1Anim * a,
     const u8 store)
 {
     void * out = NULL;
@@ -1093,45 +786,45 @@ static void * T1_anim_get_store(
     
     switch (store) {
         case T1_PROP_STORE_ZS_CPU_F32:
-            if (a->pub.zs_cpu_f32s) { return a->pub.zs_cpu_f32s; }
-            a->pub.zs_cpu_f32s = T1_anim_fetch_next_store_zs_cpu_f32s(
+            if (a->zs_cpu_f32s) { return a->zs_cpu_f32s; }
+            a->zs_cpu_f32s = T1_anim_fetch_next_store_zs_cpu_f32s(
                 &a->zs_cpu_f32s_store_i);
-            out = a->pub.zs_cpu_f32s;
+            out = a->zs_cpu_f32s;
             size = sizeof(T1CPUzSpritef32);
             break;
         case T1_PROP_STORE_ZS_GPU_F32:
-            if (a->pub.zs_gpu_f32s) { return a->pub.zs_gpu_f32s; }
-            a->pub.zs_gpu_f32s = T1_anim_fetch_next_store_zs_gpu_f32s(
+            if (a->zs_gpu_f32s) { return a->zs_gpu_f32s; }
+            a->zs_gpu_f32s = T1_anim_fetch_next_store_zs_gpu_f32s(
                 &a->zs_gpu_f32s_store_i);
-            out = a->pub.zs_gpu_f32s;
+            out = a->zs_gpu_f32s;
             size = sizeof(T1GPUzSpritef32);
             break;
         case T1_PROP_STORE_ZS_GPU_U32:
-            if (a->pub.zs_gpu_u32s) { return a->pub.zs_gpu_u32s; }
-            a->pub.zs_gpu_u32s = T1_anim_fetch_next_store_zs_gpu_u32s(
+            if (a->zs_gpu_u32s) { return a->zs_gpu_u32s; }
+            a->zs_gpu_u32s = T1_anim_fetch_next_store_zs_gpu_u32s(
                 &a->zs_gpu_u32s_store_i);
-            out = a->pub.zs_gpu_u32s;
+            out = a->zs_gpu_u32s;
             size = sizeof(T1GPUzSpriteu32);
             break;
         case T1_PROP_STORE_TQ_GPU_F32:
-            if (a->pub.tq_gpu_f32s) { return a->pub.tq_gpu_f32s; }
-            a->pub.tq_gpu_f32s = T1_anim_fetch_next_store_tq_gpu_f32s(
+            if (a->tq_gpu_f32s) { return a->tq_gpu_f32s; }
+            a->tq_gpu_f32s = T1_anim_fetch_next_store_tq_gpu_f32s(
                 &a->tq_gpu_f32s_store_i);
-            out = a->pub.tq_gpu_f32s;
+            out = a->tq_gpu_f32s;
             size = sizeof(T1GPUTexQuadf32);
             break;
         case T1_PROP_STORE_TQ_GPU_U32:
-            if (a->pub.tq_gpu_u32s) { return a->pub.tq_gpu_u32s; }
-            a->pub.tq_gpu_u32s = T1_anim_fetch_next_store_tq_gpu_u32s(
+            if (a->tq_gpu_u32s) { return a->tq_gpu_u32s; }
+            a->tq_gpu_u32s = T1_anim_fetch_next_store_tq_gpu_u32s(
                 &a->tq_gpu_u32s_store_i);
-            out = a->pub.tq_gpu_u32s;
+            out = a->tq_gpu_u32s;
             size = sizeof(T1GPUTexQuadu32);
             break;
         case T1_PROP_STORE_ZL_F32:
-            if (a->pub.zl_gpu_f32s) { return a->pub.zl_gpu_f32s; }
-            a->pub.zl_gpu_f32s = T1_anim_fetch_next_store_zl_gpu_f32s(
+            if (a->zl_gpu_f32s) { return a->zl_gpu_f32s; }
+            a->zl_gpu_f32s = T1_anim_fetch_next_store_zl_gpu_f32s(
                 &a->zl_f32s_store_i);
-            out = a->pub.zl_gpu_f32s;
+            out = a->zl_gpu_f32s;
             size = sizeof(T1zLightf32);
             break;
         default:
@@ -1153,7 +846,7 @@ static void T1_anim_set_bits(
     const u8 is_u32,
     const u32 bits)
 {
-    T1AnimPrivate * a = T1_anim_from_handle(anim);
+    T1Anim * a = T1_anim_from_handle(anim);
     
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
@@ -1203,39 +896,39 @@ void T1_anim_set_u32(u32 anim, const c8 * property, u32 value)
 }
 
 void T1_anim_set_duration_us(u32 anim, u64 duration_us) {
-    T1_anim_from_handle(anim)->pub.duration_us = duration_us;
+    T1_anim_from_handle(anim)->duration_us = duration_us;
 }
 
 void T1_anim_set_pause_us(u32 anim, u64 pause_us) {
-    T1_anim_from_handle(anim)->pub.pause_us = pause_us;
+    T1_anim_from_handle(anim)->pause_us = pause_us;
 }
 
 void T1_anim_set_easing(u32 anim, T1EasingType easing_type) {
-    T1_anim_from_handle(anim)->pub.easing_type = easing_type;
+    T1_anim_from_handle(anim)->easing_type = easing_type;
 }
 
 void T1_anim_set_runs(u32 anim, u32 runs) {
-    T1_anim_from_handle(anim)->pub.runs = runs;
+    T1_anim_from_handle(anim)->runs = runs;
 }
 
 void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target) {
-    T1_anim_from_handle(anim)->pub.del_obj_on_finish = delete_target;
+    T1_anim_from_handle(anim)->del_obj_on_finish = delete_target;
 }
 
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting) {
-    T1_anim_from_handle(anim)->pub.del_conflict_anims = cancel_conflicting;
+    T1_anim_from_handle(anim)->del_conflict_anims = cancel_conflicting;
 }
 
 void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void)) {
-    T1_anim_from_handle(anim)->pub.run_func_on_finish = func;
+    T1_anim_from_handle(anim)->run_func_on_finish = func;
 }
 
 void T1_anim_commit(u32 anim) {
-    T1Anim * pub = &T1_anim_from_handle(anim)->pub;
-    if (pub->duration_us == 1) {
-        T1_anim_commit_and_instarun(pub);
+    T1Anim * a = T1_anim_from_handle(anim);
+    if (a->duration_us == 1) {
+        T1_anim_commit_and_instarun(a);
     } else {
-        T1_anim_commit_private(pub);
+        T1_anim_commit_and_schedule(a);
     }
 }
 
@@ -1244,9 +937,9 @@ void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id) {
     for (u32 i = 0; i < T1_anims_size; i++) {
         if (
             !T1_anims[i].deleted &&
-            T1_anims[i].pub.target_T1_id == from_T1_id)
+            T1_anims[i].target_T1_id == from_T1_id)
         {
-            T1_anims[i].pub.target_T1_id = to_T1_id;
+            T1_anims[i].target_T1_id = to_T1_id;
         }
     }
     as->mutex_unlock(as->mutex_id);
@@ -1255,7 +948,7 @@ void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id) {
 void T1_anim_delete_all_anims_targeting(u32 T1_id) {
     as->mutex_lock(as->mutex_id);
     for (u32 i = 0; i < T1_anims_size; i++) {
-        T1Anim * a = &T1_anims[i].pub;
+        T1Anim * a = &T1_anims[i];
         
         if (
             !T1_anims[i].deleted &&

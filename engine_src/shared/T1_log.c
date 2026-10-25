@@ -155,6 +155,9 @@ void T1_log_assert(u8 condition)
         "Assertion failed.");
     
     T1_log_dump_and_crash(assert_failed_msg);
+    
+    // stop right here, so the debugger shows where the assert failed
+    __builtin_trap();
 }
 
 void T1_log_warn_if_false(u8 condition, const char * msg)
