@@ -16,9 +16,6 @@ void T1_gpu_try_shader_source(
     const u32 error_recip_cap,
     char ** const fatal_error);
 
-void T1_assets_load_all(
-    char ** const fatal_error);
-
 void T1_shutdown(void);
 
 #endif // INIT_APPLICATION_H

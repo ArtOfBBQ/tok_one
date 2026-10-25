@@ -305,7 +305,7 @@ void T1_render_view_update_positions(
         T1_log_assert(elapsed_pct >= 0.0f);
         T1_log_assert(elapsed_pct <= 1.0f);
         T1_log_assert(!isnan(elapsed_pct));
-        rv->us_to_destination -= us_actual;
+        rv->us_to_destination -= (u32)us_actual;
         T1_log_assert(rv->us_to_destination < 5000000);
         
         if (rv->movement_enabled) {
@@ -417,12 +417,6 @@ void T1_render_view_validate(void) {
             T1RENDERVIEW_WRITE_RENDER_TARGET);
 }
 
-f32 T1_render_view_x_to_screen_x_noz(
-    const f32 x)
-{
-    return ((x * 2.0f) - 1.0f) * (f32)T1_render_views->cpu[0].width;
-}
-
 f32 T1_render_view_screen_x_to_x(
     const f32 screenspace_x,
     const f32 given_z)
@@ -455,12 +449,6 @@ f32 T1_render_view_screen_x_to_x(
         ndc_x * (full_frustum_width_at_z * 0.5f);
     
     return view_space_x;
-}
-
-f32 T1_render_view_y_to_screen_y_noz(
-    const f32 y)
-{
-    return ((y * 2.0f) - 1.0f) * (f32)T1_render_views->cpu[0].height;
 }
 
 f32 T1_render_view_screen_y_to_y(
@@ -507,38 +495,6 @@ f32 T1_render_view_screen_height_to_height(
         screenspace_height / viewport_height;
     
     return screen_fraction * full_frustum_height_at_z;
-}
-
-f32 T1_render_view_screen_x_to_x_noz(
-    const f32 screen_x)
-{
-    return -1.0f + (screen_x /
-        ((f32)T1_render_views->cpu[0].width) *
-            2.0f);
-}
-
-f32 T1_render_view_screen_y_to_y_noz(
-    const f32 screen_y)
-{
-    return -1.0f + (screen_y /
-        ((f32)T1_render_views->cpu[0].height)
-            * 2.0f);
-}
-
-f32 T1_render_view_screen_width_to_width_noz(
-    const f32 screenspace_width)
-{
-    return (screenspace_width /
-        (f32)T1_render_views->cpu[0].width) *
-            2.0f;
-}
-
-f32 T1_render_view_screen_height_to_height_noz(
-    const f32 screenspace_height)
-{
-    return (screenspace_height /
-        (f32)T1_render_views->cpu[0].height) *
-            2.0f;
 }
 
 f32 T1_render_view_screen_width_to_width(

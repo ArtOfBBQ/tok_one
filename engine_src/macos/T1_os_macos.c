@@ -26,6 +26,8 @@
 #define T1NSTerminateCancel 0
 #define T1NSEventMaskAny 0xFFFFFFFFFFFFFFFFULL
 #define T1MTLPixelFormatBGRA8Unorm 80
+#define T1kCGImageAlphaNoneSkipLast 5
+#define T1kCGRenderingIntentDefault 0
 
 
 typedef struct {
@@ -142,6 +144,23 @@ typedef struct {
     void * sel_set_submenu; // setSubmenu:
     void * sel_set_main_menu; // setMainMenu:
     void * sel_init_with_title_action_key_equivalent; // initWithTitle:action:keyEquivalent:
+    // Software blitting, see T1_os_window_blit_rgba()
+    void * class_ca_layer; // CALayer
+    void * class_ca_transaction; // CATransaction
+    void * sel_set_contents; // setContents:
+    void * sel_set_magnification_filter; // setMagnificationFilter:
+    void * sel_set_contents_gravity; // setContentsGravity:
+    void * sel_set_background_color; // setBackgroundColor:
+    void * sel_begin; // begin
+    void * sel_commit; // commit
+    void * sel_set_disable_actions; // setDisableActions:
+    void * func_cf_data_create; // CFDataCreate
+    void * func_cf_release; // CFRelease
+    void * func_cg_color_space_create_device_rgb; // CGColorSpaceCreateDeviceRGB
+    void * func_cg_data_provider_create_with_cf_data; // CGDataProviderCreateWithCFData
+    void * func_cg_image_create; // CGImageCreate
+    void * func_cg_color_create_generic_rgb; // CGColorCreateGenericRGB
+    void * cg_color_space_rgb; // CGColorSpaceRef, made once
     // Spans one iteration of the client's main loop, see
     // T1_os_window_pump_events()
     void * loop_pool;
@@ -291,7 +310,7 @@ static u32 T1_apple_keycode_to_tokone_keycode(
     }
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_dump_and_crash(err_msg);
+    T1_log_crash(err_msg);
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -571,8 +590,10 @@ static u8 T1_os_macos_ns_window_always_true(
 }
 
 static void * window = NULL; // id<T1NSWindow>
-static void * metal_view = NULL; // id<NSView>, the window's content view
-static void * metal_layer = NULL; // id<CAMetalLayer>, backs metal_view
+static void * content_view = NULL; // id<NSView>, the window's content view
+// Exactly one of these backs content_view
+static void * metal_layer = NULL; // id<CAMetalLayer>, with T1_gpu_init()
+static void * blit_layer = NULL; // id<CALayer>, without T1_gpu_init()
 static void * app_delegate = NULL; // id<T1NSAppDelegate>
 
 static void T1_os_macos_ns_window_delegate_window_will_close(
@@ -593,7 +614,6 @@ static void T1_os_macos_ns_window_delegate_window_will_enter_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_zsprite_delete_all();
     T1_global->fullscreen = true;
 }
 
@@ -604,13 +624,6 @@ static void T1_os_macos_ns_window_delegate_window_will_exit_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_zsprite_delete_all();
-    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    T1_particle_effects_delete_all();
-    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     T1_global->fullscreen = false;
 }
 
@@ -828,6 +841,38 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->class_ca_metal_layer = T1_objc_get_class(
         "CAMetalLayer");
     T1_log_assert(T1_os_macos_s->class_ca_metal_layer != NULL);
+    T1_os_macos_s->class_ca_layer = T1_objc_get_class(
+        "CALayer");
+    T1_log_assert(T1_os_macos_s->class_ca_layer != NULL);
+    T1_os_macos_s->class_ca_transaction = T1_objc_get_class(
+        "CATransaction");
+    T1_log_assert(T1_os_macos_s->class_ca_transaction != NULL);
+    T1_os_macos_s->sel_set_contents = T1_objc_reg_sel(
+        "setContents:");
+    T1_os_macos_s->sel_set_magnification_filter = T1_objc_reg_sel(
+        "setMagnificationFilter:");
+    T1_os_macos_s->sel_set_contents_gravity = T1_objc_reg_sel(
+        "setContentsGravity:");
+    T1_os_macos_s->sel_set_background_color = T1_objc_reg_sel(
+        "setBackgroundColor:");
+    T1_os_macos_s->sel_begin = T1_objc_reg_sel(
+        "begin");
+    T1_os_macos_s->sel_commit = T1_objc_reg_sel(
+        "commit");
+    T1_os_macos_s->sel_set_disable_actions = T1_objc_reg_sel(
+        "setDisableActions:");
+    T1_os_macos_s->func_cf_data_create = T1_objc_get_func(
+        "CFDataCreate");
+    T1_os_macos_s->func_cf_release = T1_objc_get_func(
+        "CFRelease");
+    T1_os_macos_s->func_cg_color_space_create_device_rgb = T1_objc_get_func(
+        "CGColorSpaceCreateDeviceRGB");
+    T1_os_macos_s->func_cg_data_provider_create_with_cf_data =
+        T1_objc_get_func("CGDataProviderCreateWithCFData");
+    T1_os_macos_s->func_cg_image_create = T1_objc_get_func(
+        "CGImageCreate");
+    T1_os_macos_s->func_cg_color_create_generic_rgb = T1_objc_get_func(
+        "CGColorCreateGenericRGB");
     T1_os_macos_s->class_ns_menu = T1_objc_get_class(
         "NSMenu");
     T1_os_macos_s->class_ns_menu_item = T1_objc_get_class(
@@ -1493,32 +1538,20 @@ void T1_os_destroy_main_window_if_possible(void) {
 }
 
 /*
-Makes the window's content view a CAMetalLayer-backed NSView that presents
-frames rendered with the device T1_gpu_init() created.
+Makes the window's content view an NSView hosting new_layer
 */
-static void T1_os_macos_attach_metal_layer(
+static void T1_os_macos_set_content_layer(
+    void * new_layer,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
-    void * metal_device_for_window = T1_gpu_get_device();
-    if (!metal_device_for_window) {
-        *fatal_error = "Tried to T1_window_open() before T1_gpu_init()";
-        return;
-    }
-    
     void * pool = T1_objc_autorelease_pool_push();
     
-    T1NSRect window_rect = T1_nsrect_make(
-        /* x: */ T1_global->window_left,
-        /* y: */ T1_global->window_bottom,
-        /* width: */ T1_global->window_wh[0],
-        /* height: */ T1_global->window_wh[1]);
-    
-    metal_view = (void *)T1_objc_msg(
+    content_view = (void *)T1_objc_msg(
         T1_os_macos_s->class_ns_view,
         T1_os_macos_s->sel_alloc);
-    if (!metal_view) {
+    if (!content_view) {
         *fatal_error = "Failed to alloc an NSView";
         T1_objc_autorelease_pool_pop(pool);
         return;
@@ -1528,20 +1561,47 @@ static void T1_os_macos_attach_metal_layer(
     T1NSRect view_rect = T1_nsrect_make(
         0.0,
         0.0,
-        window_rect.size.x,
-        window_rect.size.y);
+        T1_global->window_wh[0],
+        T1_global->window_wh[1]);
     typedef void * (* initWithFrameFuncType)(
         void *, void *,
         /* initWithFrame: NSRect: */ T1NSRect);
-    metal_view = ((initWithFrameFuncType)T1_objc_unsafe_get_raw_msg_send())(
-        metal_view,
+    content_view = ((initWithFrameFuncType)T1_objc_unsafe_get_raw_msg_send())(
+        content_view,
         T1_os_macos_s->sel_init_with_frame,
         view_rect);
-    if (!metal_view) {
+    if (!content_view) {
         *fatal_error = "Failed to init an NSView";
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
+    
+    // Setting the layer before wantsLayer makes this a layer-hosting view
+    T1_objc_msg_1arg(content_view,
+        T1_os_macos_s->sel_set_layer,
+        (uintptr_t)new_layer);
+    T1_objc_msg_1arg(content_view,
+        T1_os_macos_s->sel_set_wants_layer,
+        true);
+    
+    T1_objc_msg_1arg(
+        window,
+        T1_os_macos_s->sel_set_content_view,
+        (uintptr_t)content_view);
+    
+    T1_objc_autorelease_pool_pop(pool);
+}
+
+/*
+A CAMetalLayer that presents frames rendered with the device
+T1_gpu_init() created.
+*/
+static void T1_os_macos_attach_metal_layer(
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return; }
+    
+    void * pool = T1_objc_autorelease_pool_push();
     
     // [CAMetalLayer layer] is autoreleased, we keep it forever
     metal_layer = (void *)T1_objc_msg(
@@ -1556,7 +1616,7 @@ static void T1_os_macos_attach_metal_layer(
     
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_device,
-        (uintptr_t)metal_device_for_window);
+        (uintptr_t)T1_gpu_get_device());
     // Matches the final texture we copy into the drawables
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_pixel_format,
@@ -1576,18 +1636,79 @@ static void T1_os_macos_attach_metal_layer(
         T1_os_macos_s->sel_set_contents_scale,
         (f64)T1_os_get_screen_backing_scale_factor());
     
-    // Setting the layer before wantsLayer makes this a layer-hosting view
-    T1_objc_msg_1arg(metal_view,
-        T1_os_macos_s->sel_set_layer,
-        (uintptr_t)metal_layer);
-    T1_objc_msg_1arg(metal_view,
-        T1_os_macos_s->sel_set_wants_layer,
-        true);
+    T1_os_macos_set_content_layer(metal_layer, fatal_error);
     
-    T1_objc_msg_1arg(
-        window,
-        T1_os_macos_s->sel_set_content_view,
-        (uintptr_t)metal_view);
+    T1_objc_autorelease_pool_pop(pool);
+}
+
+/*
+A plain CALayer whose contents T1_os_window_blit_rgba() sets to the
+client's pixels. Core Animation scales them as large as they fit in the
+window, keeping their aspect ratio, with black bands on the sides or on
+the top and bottom.
+*/
+static void T1_os_macos_attach_blit_layer(
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return; }
+    
+    if (
+        !T1_os_macos_s->func_cf_data_create ||
+        !T1_os_macos_s->func_cf_release ||
+        !T1_os_macos_s->func_cg_color_space_create_device_rgb ||
+        !T1_os_macos_s->func_cg_data_provider_create_with_cf_data ||
+        !T1_os_macos_s->func_cg_image_create ||
+        !T1_os_macos_s->func_cg_color_create_generic_rgb)
+    {
+        *fatal_error = "Failed to find the CoreGraphics functions for blitting";
+        return;
+    }
+    
+    typedef void * (* color_space_fn)(void);
+    T1_os_macos_s->cg_color_space_rgb = ((color_space_fn)T1_os_macos_s->
+        func_cg_color_space_create_device_rgb)();
+    if (!T1_os_macos_s->cg_color_space_rgb) {
+        *fatal_error = "Failed to create an RGB color space";
+        return;
+    }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    // [CALayer layer] is autoreleased, we keep it forever
+    blit_layer = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ca_layer,
+        T1_os_macos_s->sel_layer);
+    if (!blit_layer) {
+        *fatal_error = "Failed to create a CALayer";
+        T1_objc_autorelease_pool_pop(pool);
+        return;
+    }
+    T1_objc_msg(blit_layer, T1_os_macos_s->sel_retain);
+    
+    // Scaled up pixels stay sharp (the value of kCAFilterNearest)
+    T1_objc_msg_1arg(blit_layer,
+        T1_os_macos_s->sel_set_magnification_filter,
+        (uintptr_t)T1_objc_nsstring_construct("nearest"));
+    
+    // Keeps the aspect ratio (the value of kCAGravityResizeAspect)
+    T1_objc_msg_1arg(blit_layer,
+        T1_os_macos_s->sel_set_contents_gravity,
+        (uintptr_t)T1_objc_nsstring_construct("resizeAspect"));
+    
+    // The bands around the image
+    typedef void * (* color_create_fn)(f64 r, f64 g, f64 b, f64 a);
+    typedef void (* cf_release_fn)(void * cf_object);
+    void * black = ((color_create_fn)T1_os_macos_s->
+        func_cg_color_create_generic_rgb)(0.0, 0.0, 0.0, 1.0);
+    if (black != NULL) {
+        T1_objc_msg_1arg(blit_layer,
+            T1_os_macos_s->sel_set_background_color,
+            (uintptr_t)black);
+        // The layer keeps its own reference
+        ((cf_release_fn)T1_os_macos_s->func_cf_release)(black);
+    }
+    
+    T1_os_macos_set_content_layer(blit_layer, fatal_error);
     
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -1596,7 +1717,75 @@ void T1_os_window_open(
     char ** const fatal_error)
 {
     T1_os_macos_create_window(fatal_error);
-    T1_os_macos_attach_metal_layer(fatal_error);
+    
+    if (T1_gpu_get_device() != NULL) {
+        T1_os_macos_attach_metal_layer(fatal_error);
+    } else {
+        T1_os_macos_attach_blit_layer(fatal_error);
+    }
+}
+
+void T1_os_window_blit_rgba(
+    const u8 * rgba,
+    const u32 width,
+    const u32 height)
+{
+    if (!blit_layer || !rgba || width < 1 || height < 1) { return; }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    
+    typedef void * (* cf_data_create_fn)(
+        void * allocator, const u8 * bytes, s64 length);
+    typedef void * (* provider_create_fn)(void * cf_data);
+    typedef void * (* image_create_fn)(
+        u64 width, u64 height,
+        u64 bits_per_component, u64 bits_per_pixel, u64 bytes_per_row,
+        void * color_space, u32 bitmap_info, void * provider,
+        const f64 * decode, u8 should_interpolate, s32 intent);
+    typedef void (* cf_release_fn)(void * cf_object);
+    cf_release_fn cf_release = (cf_release_fn)T1_os_macos_s->func_cf_release;
+    
+    // Copies the pixels, so the client may overwrite them right away
+    void * data = ((cf_data_create_fn)T1_os_macos_s->func_cf_data_create)(
+        NULL, rgba, (s64)width * (s64)height * 4);
+    void * provider = data == NULL ? NULL :
+        ((provider_create_fn)T1_os_macos_s->
+            func_cg_data_provider_create_with_cf_data)(data);
+    void * image = provider == NULL ? NULL :
+        ((image_create_fn)T1_os_macos_s->func_cg_image_create)(
+            width, height,
+            8, 32, width * 4,
+            T1_os_macos_s->cg_color_space_rgb,
+            T1kCGImageAlphaNoneSkipLast,
+            provider,
+            NULL, false,
+            T1kCGRenderingIntentDefault);
+    
+    if (image != NULL) {
+        // Without disabling actions, Core Animation would fade between
+        // the old and the new contents
+        T1_objc_msg(
+            T1_os_macos_s->class_ca_transaction,
+            T1_os_macos_s->sel_begin);
+        T1_objc_msg_1arg(
+            T1_os_macos_s->class_ca_transaction,
+            T1_os_macos_s->sel_set_disable_actions,
+            true);
+        T1_objc_msg_1arg(
+            blit_layer,
+            T1_os_macos_s->sel_set_contents,
+            (uintptr_t)image);
+        T1_objc_msg(
+            T1_os_macos_s->class_ca_transaction,
+            T1_os_macos_s->sel_commit);
+        
+        // The layer keeps its own reference
+        cf_release(image);
+    }
+    if (provider != NULL) { cf_release(provider); }
+    if (data != NULL) { cf_release(data); }
+    
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 static void T1_os_macos_set_up_main_menu(void * ns_app) {

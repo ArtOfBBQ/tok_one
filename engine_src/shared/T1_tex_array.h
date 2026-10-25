@@ -8,8 +8,6 @@
 typedef struct {
     T1Img image;
     b8 deleted;
-    b8 request_update;
-    b8 prioritize_asset_load;
 } T1TexArrayImg;
 
 typedef struct {
@@ -18,7 +16,6 @@ typedef struct {
     u32 single_img_width;
     u32 single_img_height;
     u32 gpu_capacity;
-    b8 request_init;
     b8 is_render_target;
     b8 deleted;
 } T1TexArray;

@@ -18,6 +18,12 @@ typedef struct {
 } T1AudioSettings;
 
 extern T1AudioSettings * T1_audio_s;
+typedef struct {
+    float volume;
+    float sfx_volume;
+    float music_volume;
+} T1AudioSettingsFullyPublic;
+
 extern T1AudioSettingsFullyPublic * T1_audio_state;
 
 void T1_audio_init(

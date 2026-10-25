@@ -7,7 +7,6 @@
 #include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_text.h"
-#include "T1_wav.h"
 #include "T1_audio.h"
 
 #include "T1_id.h"
@@ -203,7 +202,7 @@ static void T1_term_render(void) {
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
     if (T1_trms->history[char_offset] != '\0') {
-        T1_text_request_label_renderable(
+        T1_text_request_label_left_top(
             /* const s32 with_object_id: */
                 T1_trms->labels_T1_id,
             /* const char * text_to_draw: */
@@ -232,7 +231,7 @@ static void T1_term_render(void) {
     
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     // the terminal's current input as a label
-    T1_text_request_label_renderable(
+    T1_text_request_label_left_top(
         /* with_object_id: */
             T1_trms->labels_T1_id,
         /* const char * text_to_draw: */
@@ -521,65 +520,6 @@ static u8 T1_term_evaluate(
     }
     
     
-    if (
-        T1_std_are_equal_strings(command, "DUMP SOUND") ||
-        T1_std_are_equal_strings(command, "DUMP SOUND BUFFER"))
-    {
-        #if T1_AUDIO_ACTIVE == T1_ACTIVE
-        unsigned char * recipient =
-            T1_mem_malloc_managed(T1_audio_s->global_buffer_size_bytes + 100);
-        u32 recipient_size = 0;
-        
-        T1_wav_samples_to_wav(
-            /* unsigned char * recipient: */
-                recipient,
-            /* u32 * recipient_size: */
-                &recipient_size,
-            /* const u32 recipient_cap: */
-                T1_audio_s->global_buffer_size_bytes + 100,
-            /* i16 * samples: */
-                T1_audio_s->samples_buffer,
-            /* const u32 samples_size: */
-                T1_audio_s->global_samples_size);
-        
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "Dumping global sound buffer to disk...");
-        
-        b8 good = 0;
-        T1_os_write_file_to_writables(
-            /* const char * filepath_inside_writables: */
-                "global_sound_buffer.wav",
-            /* const char * output: */
-                (char *)recipient,
-            /* const u32 output_size: */
-                recipient_size,
-            /* u32 * good: */
-                &good);
-        
-        if (good) {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "\nSuccess!");
-        } else {
-            T1_std_strcpy_cap(
-                response,
-                T1_TERM_SINGLE_LINE_MAX,
-                "\nFailed to write to disk :(");
-        }
-        #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "Audio code is disabled! set AUDIO_CODE_ACTIVE to 1 in "
-            "client_macro_settings.h to enable it.");
-        #else
-        #error
-        #endif
-        return 1;
-    }
     
     
     if (
@@ -872,7 +812,7 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Forcing the app to crash...");
-        T1_log_dump_and_crash("Terminal-induced crash");
+        T1_log_crash("Terminal-induced crash");
         return 1;
     }
     #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -1010,12 +950,12 @@ static void T1_term_commit_or_activate(void) {
     T1_term_active = !T1_term_active;
     
     if (T1_term_active) {
-        T1_assert(!T1_term_active_b4);
+        T1_log_assert(!T1_term_active_b4);
         T1_io_set_captured_by_terminal(1);
         T1_term_redraw_backgrounds();
         requesting_label_update = 1;
     } else {
-        T1_assert(T1_term_active_b4);
+        T1_log_assert(T1_term_active_b4);
         T1_io_set_captured_by_terminal(0);
     }
 }

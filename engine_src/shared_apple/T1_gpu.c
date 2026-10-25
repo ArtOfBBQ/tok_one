@@ -1908,9 +1908,11 @@ void T1_os_gpu_fetch_rgba_at(
 void T1_os_gpu_generate_mipmaps_for_texture_array(
     s32 texture_array_i)
 {
+    if (!ags || !ags->metal_active) { return; }
+
     // no mipmaps for font
     T1_log_assert(texture_array_i != 0);
-    
+
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
@@ -2090,15 +2092,9 @@ void T1_os_gpu_copy_locked_vertices(void)
     T1_objc_msg(combuf, ags->sel_commit);
 }
 
-void T1_os_gpu_copy_locked_materials(
-    char ** const fatal_error)
+void T1_os_gpu_copy_locked_materials(void)
 {
-    if (*fatal_error != 0) { return; }
-    
-    if (ags->command_queue == 0) {
-        *fatal_error = "T1_os_gpu_copy_locked_materials() before T1_gpu_init()";
-        return;
-    }
+    if (!ags || !ags->metal_active) { return; }
     
     T1_cpu_to_gpu_data->const_mats_size =
         all_mesh_materials->size;
@@ -3487,7 +3483,7 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
     
     if (combuf == NULL) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_dump_and_crash("error - can't get metal command buffer\n");
+        T1_log_crash("error - can't get metal command buffer\n");
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -3872,6 +3868,10 @@ void T1_os_gpu_init(char ** const fatal_error) {
             fatal_error);
     
     T1_objc_autorelease_pool_pop(pool);
+}
+
+u8 T1_os_gpu_active(void) {
+    return ags != NULL && ags->metal_active;
 }
 
 void * T1_gpu_get_device(void) {

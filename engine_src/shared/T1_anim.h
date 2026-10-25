@@ -17,33 +17,6 @@ void T1_anim_init(
 
 void T1_anim_resolve(void);
 
-void T1_anim_shatter_and_destroy(
-    u32 T1_id,
-    u64 duration_us);
-
-void T1_anim_evaporate_and_destroy(
-    u32 T1_id,
-    u64 duration_us);
-
-void T1_anim_fade_and_destroy(
-    u32 T1_id,
-    u64 pause_first,
-    u64 duration_us);
-
-void T1_anim_fade_destroy_all(
-    u64 pause_first,
-    u64 duration_us);
-
-void T1_anim_fade_to(
-    u32 T1_id,
-    u64 duration_us,
-    f32 target_alpha);
-
-void T1_anim_dud_dance(
-    u32 T1_id,
-    f32 magnitude);
-
-
 void T1_anim_delete_all(void);
 
 void T1_anim_delete_all_anims_targeting(u32 T1_id);
@@ -69,7 +42,6 @@ void T1_anim_set_easing(u32 anim, T1EasingType easing_type);
 void T1_anim_set_runs(u32 anim, u32 runs);
 void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
-void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void));
 // A duration of 1 microsecond applies the anim immediately
 void T1_anim_commit(u32 anim);
 

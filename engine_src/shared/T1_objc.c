@@ -580,7 +580,7 @@ static void assert_arg_f64(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " can't take argument type as f64: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_dump_and_crash(errmsg);
+        T1_log_crash(errmsg);
         T1_log_assert(0);
         return;
     }
@@ -618,7 +618,7 @@ static void assert_arg_uintptr_t(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " can't take argument type as uintptr_t: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_dump_and_crash(errmsg);
+        T1_log_crash(errmsg);
         T1_log_assert(0);
         return;
     }
@@ -632,7 +632,7 @@ static void assert_arg_uintptr_t(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " argument 1's value is out of boudns for: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_dump_and_crash(errmsg);
+        T1_log_crash(errmsg);
         T1_log_assert(0);
     }
     return;
@@ -819,7 +819,7 @@ f64 T1_objc_msg_get_f64(
             T1_std_memset(errmsg, 0, 256);
             T1_std_strcat_cap(errmsg, 256, "T1_objc_msg_get_f64() but float not returned by selector: ");
             T1_std_strcat_cap(errmsg, 256, T1_objc_s->selector_get_name(selector));
-            T1_log_dump_and_crash(errmsg);
+            T1_log_crash(errmsg);
             T1_log_assert(0);
             return 0;
         }

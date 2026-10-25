@@ -62,4 +62,11 @@ void T1_objmodel_create_shattered_version_of_mesh(
     const s32 mesh_id,
     const u32 triangles_mulfiplier);
 
+/*
+Sends meshes and materials registered since the last call to the GPU (if
+there is one). T1_frame_render() calls this, so clients can register meshes
+at any time.
+*/
+void T1_objmodel_upload_new_meshes(void);
+
 #endif // OBJMODEL_H

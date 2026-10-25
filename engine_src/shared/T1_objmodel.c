@@ -16,6 +16,7 @@
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_os.h"
+#include "T1_types_cpu_to_gpu.h"
 
 static T1Tex (* T1_objmodel_tex_resolver)(const char * filename) = NULL;
 
@@ -2156,4 +2157,80 @@ void T1_objmodel_create_shattered_version_of_mesh(
     T1_log_assert(T1_mesh_summary_all_vertices->size < (u32)goal_new_tail_i);
     
     T1_mesh_summary_all_vertices->size = (u32)goal_new_tail_i + 1;
+}
+
+void T1_objmodel_upload_new_meshes(void) {
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
+    #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
+    for (
+        u32 i = 0;
+        i < T1_mesh_summary_list_size;
+        i++)
+    {
+        if (T1_mesh_summary_list[i].shattered_vertices_head_i < 0) {
+            if (
+                T1_mesh_summary_list[i].shattered_vertices_size <
+                    MIN_VERTICES_FOR_SHATTER_EFFECT)
+            {
+                // If you land here via debugger:
+                // print T1_mesh_summary_list[i].resource_name
+                T1_objmodel_create_shattered_version_of_mesh(
+                    /* const s32 mesh_id: */
+                        T1_mesh_summary_list[i].mesh_id,
+                    /* const u32 triangles_mulfiplier: */
+                        (MIN_VERTICES_FOR_SHATTER_EFFECT /
+                            (u32)T1_mesh_summary_list[i].vertices_size) + 1);
+                T1_log_assert(
+                    T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
+            } else {
+                T1_mesh_summary_list[i].shattered_vertices_head_i =
+                    T1_mesh_summary_list[i].vertices_head_i;
+                T1_mesh_summary_list[i].shattered_vertices_size =
+                    T1_mesh_summary_list[i].vertices_size;
+            }
+        }
+    }
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PARTICLES_ACTIVE undefined!"
+    #endif
+    
+    // Without a GPU there's nothing to upload to
+    if (!T1_os_gpu_shaders_ready()) { return; }
+    
+    if (
+        T1_cpu_to_gpu_data->locked_vertices_size !=
+            T1_mesh_summary_all_vertices->size)
+    {
+        T1_std_memcpy(
+            /* void * dst: */
+                T1_cpu_to_gpu_data->locked_vertices,
+            /* const void * src: */
+                T1_mesh_summary_all_vertices->gpu_data,
+            /* u64 n: */
+                sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
+        T1_os_gpu_copy_locked_vertices();
+    }
+    
+    if (
+        T1_cpu_to_gpu_data->const_mats_size !=
+            all_mesh_materials->size)
+    {
+        T1_std_memcpy(
+            /* void * dst: */
+                T1_cpu_to_gpu_data->const_mats_f32,
+            /* const void * src: */
+                all_mesh_materials->gpu_f32,
+            /* u64 n: */
+                sizeof(T1GPUMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+        T1_std_memcpy(
+            /* void * dst: */
+                T1_cpu_to_gpu_data->const_mats_s32,
+            /* const void * src: */
+                all_mesh_materials->gpu_s32,
+            /* u64 n: */
+                sizeof(T1GPUMatu32) * T1_ALL_LOCKED_MATERIALS_SIZE);
+        T1_os_gpu_copy_locked_materials();
+    }
 }

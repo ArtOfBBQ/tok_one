@@ -188,58 +188,48 @@ void T1_init(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-    
+
     T1_gameloop_active = 0;
-    T1_log_app_running = 1;
-    
+
     void * unmanaged_memory_store =
         T1_os_malloc_unaligned_block(
             T1_UNMANAGED_MEM_CAP + 7232);
-    
+
     if (!unmanaged_memory_store) {
         *fatal_error = "Failed to preallocate memory on startup";
         return;
     }
-    
+
     T1_os_init(
         &unmanaged_memory_store,
         32);
-    
+
     T1_mem_init(
         unmanaged_memory_store,
         T1_os_init_mutex_and_return_id,
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
-    
+
     T1_objc_init(
         T1_mem_malloc_unmanaged,
         fatal_error);
-    
-    if (!T1_objc_open_framework(
-        "/System/Library/Frameworks/AppKit.framework/AppKit"))
+    if (*fatal_error != 0) { return; }
+
+    if (
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/AppKit.framework/AppKit") ||
+        // CAMetalLayer
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/QuartzCore.framework/QuartzCore") ||
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/Metal.framework/Metal") ||
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/GameController.framework/GameController"))
     {
+        *fatal_error = "Failed to load a system framework";
         return;
     }
-    
-    // CAMetalLayer
-    if (!T1_objc_open_framework(
-        "/System/Library/Frameworks/QuartzCore.framework/QuartzCore"))
-    {
-        return;
-    }
-    
-    if (!T1_objc_open_framework(
-        "/System/Library/Frameworks/Metal.framework/Metal"))
-    {
-        return;
-    }
-    
-    if (!T1_objc_open_framework(
-        "/System/Library/Frameworks/GameController.framework/GameController"))
-    {
-        return;
-    }
-    
+
     void * pool = T1_objc_autorelease_pool_push();
     
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
@@ -270,7 +260,7 @@ void T1_init(
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
         sizeof(T1Globals));
-    if (!T1_global) { return; }
+    if (!T1_global) { *fatal_error = "Malloc fail"; return; }
     T1_std_memset(T1_global, 0, sizeof(T1Globals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -284,6 +274,9 @@ void T1_init(
     T1_log_warn_if_false(
         audio_good,
         "Audio initialization failed!\n");
+    if (audio_good) {
+        T1_os_audio_start_loop();
+    }
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -302,6 +295,7 @@ void T1_init(
     engine_save_file = (T1EngineSaveFile *)T1_mem_malloc_unmanaged(
         sizeof(T1EngineSaveFile));
     if (!engine_save_file) {
+        *fatal_error = "Malloc fail";
         return;
     }
     T1_std_memset(engine_save_file, 0, sizeof(T1EngineSaveFile));
@@ -401,6 +395,16 @@ void T1_init(
     
     T1_global_init();
     
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+    T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;
+    T1_global->postproc_consts.in_shadow_mults[1] = T1_SHADOW_MULT;
+    T1_global->postproc_consts.in_shadow_mults[2] = T1_SHADOW_MULT;
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_SHADOWS_ACTIVE undefined"
+    #endif
+    
     T1_io_init(T1_mem_malloc_unmanaged);
     
     T1_texquad_init();
@@ -412,7 +416,7 @@ void T1_init(
     T1_objmodel_init();
     T1_zlights = (T1zLight *)T1_mem_malloc_unmanaged(
         sizeof(T1zLight) * T1_ZLIGHTS_CAP);
-    if (!T1_zlights) { return; }
+    if (!T1_zlights) { *fatal_error = "Malloc fail"; return; }
     T1_std_memset(
         T1_zlights,
         0,
@@ -467,7 +471,7 @@ void T1_init(
     
     T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
         sizeof(T1CPUToGPUData));
-    if (!T1_cpu_to_gpu_data) { return; }
+    if (!T1_cpu_to_gpu_data) { *fatal_error = "Malloc fail"; return; }
     T1_std_memset(T1_cpu_to_gpu_data, 0, sizeof(T1CPUToGPUData));
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
@@ -645,31 +649,21 @@ void T1_init(
         0,
         sd->const_matss32_alloc_size);
     
-    b8 initial_log_dump_succesful = 0;
-    T1_log_dump(&initial_log_dump_succesful);
-    if (!initial_log_dump_succesful) {
-        *fatal_error =
-            "Error - couldn't write the log file to "
-            "disk at startup";
-        return;
-    }
     T1_objc_autorelease_pool_pop(pool);
+    
+    T1_gameloop_active = 1;
 }
+
 
 
 /*
 The GPU resources T1 itself needs: font images, render view 0's target,
-viewports. These come before the client preregisters its own assets.
+viewports. These come before the client creates its own textures.
 */
 static void T1_appinit_gpu_resources(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-    
-    if (!T1_log_app_running) {
-        *fatal_error = "T1_gpu_init() before T1_init()";
-        return;
-    }
     
     void * pool = T1_objc_autorelease_pool_push();
     
@@ -694,25 +688,8 @@ static void T1_appinit_gpu_resources(
     
     pool = T1_objc_autorelease_pool_push();
     
-    // This needs to happen as early as possible, because we can't show
-    // log_dump_and_crash or T1_log_assert() errors before this.
-    // It also allows us to draw "loading textures x%".
     T1_os_gpu_update_internal_render_viewport(0);
     T1_os_gpu_update_window_viewport();
-    
-    // We copy the basic quad vertices immediately, again to show debugging
-    // text (see above comment)
-    T1_std_memcpy(
-        /* void * dst: */
-            T1_cpu_to_gpu_data->locked_vertices,
-        /* const void * src: */
-            T1_mesh_summary_all_vertices->gpu_data,
-        /* u64 n: */
-            sizeof(T1GPULockedVertex) *
-                T1_LOCKED_VERTEX_CAP);
-    T1_os_gpu_copy_locked_vertices();
-    
-    T1_gameloop_active = 1;
     
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -720,6 +697,13 @@ static void T1_appinit_gpu_resources(
 void T1_gpu_init(
     char ** const fatal_error)
 {
+    if (*fatal_error != 0) { return; }
+    
+    if (!T1_gameloop_active) {
+        *fatal_error = "T1_gpu_init() before T1_init()";
+        return;
+    }
+    
     T1_os_gpu_init(fatal_error);
     T1_appinit_gpu_resources(fatal_error);
 }
@@ -739,144 +723,6 @@ void T1_gpu_try_shader_source(
         fatal_error);
 }
 
-void T1_assets_load_all(
-    char ** const fatal_error)
-{
-    if (!T1_log_app_running) {
-        return;
-    }
-    
-    if (*fatal_error != 0) { return; }
-    
-    // Nothing can be drawn without shaders, so fail loudly here, the last
-    // startup step before the client's loop
-    if (!T1_os_gpu_shaders_ready()) {
-        *fatal_error = "T1_assets_load_all() before T1_gpu_try_shader_source() succeeded";
-        return;
-    }
-    
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;
-    T1_global->postproc_consts.in_shadow_mults[1] = T1_SHADOW_MULT;
-    T1_global->postproc_consts.in_shadow_mults[2] = T1_SHADOW_MULT;
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_SHADOWS_ACTIVE undefined"
-    #endif
-    
-    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
-    for (
-        u32 i = 0;
-        i < T1_mesh_summary_list_size;
-        i++)
-    {
-        if (T1_mesh_summary_list[i].shattered_vertices_head_i < 0) {
-            if (
-                T1_mesh_summary_list[i].shattered_vertices_size <
-                    MIN_VERTICES_FOR_SHATTER_EFFECT)
-            {
-                // If you land here via debugger:
-                // print T1_mesh_summary_list[i].resource_name
-                T1_objmodel_create_shattered_version_of_mesh(
-                    /* const s32 mesh_id: */
-                        T1_mesh_summary_list[i].mesh_id,
-                    /* const u32 triangles_mulfiplier: */
-                        (MIN_VERTICES_FOR_SHATTER_EFFECT /
-                            (u32)T1_mesh_summary_list[i].vertices_size) + 1);
-                T1_log_assert(
-                    T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
-            } else {
-                T1_mesh_summary_list[i].shattered_vertices_head_i =
-                    T1_mesh_summary_list[i].vertices_head_i;
-                T1_mesh_summary_list[i].shattered_vertices_size =
-                    T1_mesh_summary_list[i].vertices_size;
-            }
-        }
-    }
-    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_PARTICLES_ACTIVE undefined!"
-    #endif
-    
-    if (!T1_log_app_running) {
-        T1_gameloop_active = 1;
-        return;
-    }
-    
-    if (!T1_cpu_to_gpu_data) { return; }
-    
-    T1_std_memcpy(
-        /* void * dst: */
-            T1_cpu_to_gpu_data->
-                locked_vertices,
-        /* const void * src: */
-            T1_mesh_summary_all_vertices->gpu_data,
-        /* u64 n: */
-            sizeof(T1GPULockedVertex) * T1_LOCKED_VERTEX_CAP);
-    T1_os_gpu_copy_locked_vertices();
-    
-    T1_std_memcpy(
-        /* void * dst: */
-            T1_cpu_to_gpu_data->
-                const_mats_f32,
-        /* const void * src: */
-            all_mesh_materials->gpu_f32,
-        /* u64 n: */
-            sizeof(T1GPUMatf32) * T1_ALL_LOCKED_MATERIALS_SIZE);
-    T1_std_memcpy(
-        /* void * dst: */
-            T1_cpu_to_gpu_data->
-                const_mats_s32,
-        /* const void * src: */
-            all_mesh_materials->gpu_s32,
-        /* u64 n: */
-            sizeof(T1GPUMatu32) * T1_ALL_LOCKED_MATERIALS_SIZE);
-    
-    T1_os_gpu_copy_locked_materials(fatal_error);
-    if (*fatal_error != 0) { return; }
-    
-    if (!T1_log_app_running) { return; }
-    
-    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-    for (
-        s32 i = 1;
-        i < (s32)T1_tex_arrays_size;
-        i++)
-    {
-        T1_os_gpu_generate_mipmaps_for_texture_array(i);
-    }
-    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_MIPMAPS_ACTIVE undefined!"
-    #endif
-    
-    if (!T1_log_app_running) {
-        return;
-    }
-    
-    T1_os_layer_start_window_resize(
-        T1_os_get_current_time_us());
-    
-    if (!T1_log_app_running) {
-        T1_gameloop_active = 1;
-        return;
-    }
-    
-    #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_os_audio_start_loop();
-    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_AUDIO_ACTIVE undefined!"
-    #endif
-}
-
 void T1_shutdown(void) {
     T1_os_shutdown();
-    
-    b8 write_succesful = 0;
-    T1_log_dump(&write_succesful);
 }

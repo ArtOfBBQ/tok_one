@@ -67,7 +67,6 @@ static const char * c_files[] = {
 "T1_linalg3d.c",
 "T1_easing.c",
 "T1_img.c",
-"T1_wav.c",
 "T1_token.c",
 "T1_objparser.c",
 "T1_mtlparser.c",

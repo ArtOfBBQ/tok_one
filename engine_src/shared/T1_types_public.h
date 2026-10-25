@@ -163,36 +163,16 @@ typedef enum : uint16_t {
     T1_IO_KEY_ABOVEBOUNDS, // must be last
 } T1IOKey;
 
-typedef struct {
-    T1GPUPostProcConsts postproc_consts;
-    
-    uint64_t elapsed;
-    uint64_t this_frame_timestamp_us;
-    uint64_t last_resize_request_us;
-    
-    
-    float timedelta_mult;
-    float window_wh[2];
-    float window_left;
-    float window_bottom;
-    
-    uint8_t draw_mouseptr;
-    uint8_t draw_imputed_normals;
-    uint8_t draw_triangles;
-    uint8_t draw_axes;
-    uint8_t draw_fps;
-    uint8_t draw_touch_id;
-    uint8_t block_mouse;
-    uint8_t block_render_view_pos_updates;
-    uint8_t fullscreen;
-    uint8_t upcoming_fullscreen_request;
-} T1Globals;
 
-typedef struct {
-    float volume;
-    float sfx_volume;
-    float music_volume;
-} T1AudioSettingsFullyPublic;
+// Where a label's screen_x and screen_y are, see T1_text_request_label()
+typedef enum : uint8_t {
+    // x: the left edge, y: the middle of the top line
+    T1_TEXT_ALIGN_LEFT_TOP = 0,
+    // x: the middle of every line, y: the middle of the top line
+    T1_TEXT_ALIGN_CENTER_TOP,
+    // x: the middle of every line, y: the middle of all lines together
+    T1_TEXT_ALIGN_CENTER,
+} T1TextAlign;
 
 typedef enum : uint8_t {
     T1_EASINGTYPE_NONE = 0,

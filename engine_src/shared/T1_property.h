@@ -21,6 +21,8 @@ typedef enum : u8 {
     T1_PROP_STORE_TQ_GPU_U32,
     T1_PROP_STORE_ZL_F32,
     T1_PROP_STORE_TEXT,       // the settings for the next text label
+    T1_PROP_STORE_POSTPROC,   // post-processing settings
+    T1_PROP_STORE_CAM,        // a camera (render view), by index
     T1_PROP_STORE_OUTOFBOUNDS
 } T1PropertyStore;
 
@@ -37,15 +39,21 @@ typedef struct {
 
 /*
 Finds every store that has a property with this name, either among the
-object stores or (if text) in the text settings. Crashes if the name is
+object stores (settings_store T1_PROP_STORE_OUTOFBOUNDS) or in one settings
+store (T1_PROP_STORE_TEXT, T1_PROP_STORE_POSTPROC or T1_PROP_STORE_CAM). Crashes if the name is
 unknown there, or if it exists but not with the requested type (f32 or u32).
 */
 u32 T1_property_find(
     const c8 * name,
     const u8 is_u32,
-    const b8 text,
+    const u8 settings_store,
     const T1Property ** recip,
     const u32 recip_cap);
+
+// read bits (an f32's bits or a u32) from a store struct
+u32 T1_property_read(
+    const void * store_struct,
+    const T1Property * property);
 
 // write bits (an f32's bits or a u32) into a store struct
 void T1_property_write(
@@ -80,10 +88,35 @@ void T1_text_set_u32(
     const c8 * property,
     u32 value);
 
+/*
+Post-processing settings, applied to the whole rendered image
+*/
+void T1_postproc_set_f32(
+    const c8 * property,
+    f32 value);
+f32 T1_postproc_get_f32(
+    const c8 * property);
+
+/*
+Camera (render view) settings, by camera index
+*/
+void T1_cam_set_f32(
+    s32 cam_i,
+    const c8 * property,
+    f32 value);
+void T1_cam_set_u32(
+    s32 cam_i,
+    const c8 * property,
+    u32 value);
+f32 T1_cam_get_f32(
+    s32 cam_i,
+    const c8 * property);
+
 void T1_merge_T1_ids(
     u32 T1_id_to_add,
     u32 T1_id_to_keep);
 
 void T1_delete(u32 T1_id);
+void T1_delete_all(void);
 
 #endif // T1_PROPERTY_H

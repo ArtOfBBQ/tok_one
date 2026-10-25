@@ -18,7 +18,6 @@
 
 extern u32 T1_id_retired;
 
-u32  T1_id_next_ui_element_id(void);
 u32  T1_id_next_nonui_id(void);
 u32  T1_id_next_ui_element_touch_id(void);
 void T1_id_clear_ui_element_touch_ids(void);

@@ -10,6 +10,8 @@
 #include "T1_zlight.h"
 #include "T1_anim.h"
 #include "T1_text.h"
+#include "T1_global.h"
+#include "T1_render_view.h"
 
 // the extra layer lets ZS_CPU etc. expand to 2 arguments
 #define T1_PROP_F32_(store, type, field) \
@@ -35,6 +37,8 @@
 #define TQ_U32 T1_PROP_STORE_TQ_GPU_U32, T1GPUTexQuadu32
 #define ZL     T1_PROP_STORE_ZL_F32,     T1zLightf32
 #define TEXT   T1_PROP_STORE_TEXT,       T1TextFontSettings
+#define POST   T1_PROP_STORE_POSTPROC,   T1GPUPostProcConsts
+#define CAM    T1_PROP_STORE_CAM,        T1CPURenderView
 
 static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_CPU, xyz[0]),
@@ -135,6 +139,59 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32("highlight_i", TEXT, highlight_i),
     T1_PROP_U32("highlight_size", TEXT, highlight_size),
     T1_PROP_U32("opaque_back_active", TEXT, opaque_back_active),
+    T1_PROP_F32(TEXT, tab_width),
+
+    T1_PROP_F32(POST, rgb_add[0]),
+    T1_PROP_F32(POST, rgb_add[1]),
+    T1_PROP_F32(POST, rgb_add[2]),
+    #if T1_FOG_ACTIVE == T1_ACTIVE
+    T1_PROP_F32(POST, fog_color[0]),
+    T1_PROP_F32(POST, fog_color[1]),
+    T1_PROP_F32(POST, fog_color[2]),
+    T1_PROP_F32(POST, fog_factor),
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+    T1_PROP_F32(POST, in_shadow_mults[0]),
+    T1_PROP_F32(POST, in_shadow_mults[1]),
+    T1_PROP_F32(POST, in_shadow_mults[2]),
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+
+    // The camera eases from xyz/angle_xyz to dest_xyz/dest_angle_xyz over
+    // us_to_destination, kept within min_xyz/max_xyz (and the angle limits)
+    T1_PROP_F32(CAM, xyz[0]),
+    T1_PROP_F32(CAM, xyz[1]),
+    T1_PROP_F32(CAM, xyz[2]),
+    T1_PROP_F32(CAM, angle_xyz[0]),
+    T1_PROP_F32(CAM, angle_xyz[1]),
+    T1_PROP_F32(CAM, angle_xyz[2]),
+    T1_PROP_F32(CAM, dest_xyz[0]),
+    T1_PROP_F32(CAM, dest_xyz[1]),
+    T1_PROP_F32(CAM, dest_xyz[2]),
+    T1_PROP_F32(CAM, dest_angle_xyz[0]),
+    T1_PROP_F32(CAM, dest_angle_xyz[1]),
+    T1_PROP_F32(CAM, dest_angle_xyz[2]),
+    T1_PROP_F32(CAM, min_xyz[0]),
+    T1_PROP_F32(CAM, min_xyz[1]),
+    T1_PROP_F32(CAM, min_xyz[2]),
+    T1_PROP_F32(CAM, max_xyz[0]),
+    T1_PROP_F32(CAM, max_xyz[1]),
+    T1_PROP_F32(CAM, max_xyz[2]),
+    T1_PROP_F32(CAM, min_angle_xyz[0]),
+    T1_PROP_F32(CAM, min_angle_xyz[1]),
+    T1_PROP_F32(CAM, min_angle_xyz[2]),
+    T1_PROP_F32(CAM, max_angle_xyz[0]),
+    T1_PROP_F32(CAM, max_angle_xyz[1]),
+    T1_PROP_F32(CAM, max_angle_xyz[2]),
+    T1_PROP_U32("us_to_destination", CAM, us_to_destination),
+    // follows the zsprite with this T1_id, T1_ID_NONE to stop
+    T1_PROP_U32("clamped_to_T1_id", CAM, clamped_to_T1_id),
+    T1_PROP_U32("movement_enabled", CAM, movement_enabled),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -149,13 +206,20 @@ static void T1_property_crash(
     T1_std_strcat_cap(msg, 256, ": \"");
     T1_std_strcat_cap(msg, 256, name);
     T1_std_strcat_cap(msg, 256, "\"");
-    T1_log_dump_and_crash(msg);
+    T1_log_crash(msg);
+}
+
+static b8 T1_property_store_is_settings(const u8 store) {
+    return
+        store == T1_PROP_STORE_TEXT ||
+        store == T1_PROP_STORE_POSTPROC ||
+        store == T1_PROP_STORE_CAM;
 }
 
 u32 T1_property_find(
     const c8 * name,
     const u8 is_u32,
-    const b8 text,
+    const u8 settings_store,
     const T1Property ** recip,
     const u32 recip_cap)
 {
@@ -163,7 +227,10 @@ u32 T1_property_find(
     b8 name_exists = 0;
 
     for (u32 i = 0; i < T1_PROPERTIES_SIZE; i++) {
-        if ((T1_properties[i].store == T1_PROP_STORE_TEXT) != text) {
+        if (settings_store == T1_PROP_STORE_OUTOFBOUNDS ?
+            T1_property_store_is_settings(T1_properties[i].store) :
+            T1_properties[i].store != settings_store)
+        {
             continue;
         }
 
@@ -185,7 +252,13 @@ u32 T1_property_find(
 
     if (!name_exists) {
         T1_property_crash(
-            text ? "Unknown T1 text property" : "Unknown T1 property",
+            settings_store == T1_PROP_STORE_TEXT ?
+                "Unknown T1 text property" :
+            settings_store == T1_PROP_STORE_POSTPROC ?
+                "Unknown T1 post-processing property" :
+            settings_store == T1_PROP_STORE_CAM ?
+                "Unknown T1 camera property" :
+                "Unknown T1 property",
             name);
     } else if (found == 0) {
         T1_property_crash(
@@ -205,6 +278,14 @@ void T1_property_write(
 {
     u32 * target = (u32 *)((u8 *)store_struct + p->offset);
     *target = (*target & ~p->mask) | ((bits << p->shift) & p->mask);
+}
+
+u32 T1_property_read(
+    const void * store_struct,
+    const T1Property * p)
+{
+    const u32 * source = (const u32 *)((const u8 *)store_struct + p->offset);
+    return (*source & p->mask) >> p->shift;
 }
 
 b8 T1_property_is_packed(const T1Property * p) {
@@ -253,7 +334,8 @@ static void T1_set_bits(
 
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
-        name, is_u32, 0, matches, T1_PROPERTY_MATCHES_CAP);
+        name, is_u32, T1_PROP_STORE_OUTOFBOUNDS,
+        matches, T1_PROPERTY_MATCHES_CAP);
 
     u32 objects_set = 0;
     for (u32 i = 0; i < matches_size; i++) {
@@ -289,10 +371,41 @@ static void T1_text_set_bits(
 {
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
-        name, is_u32, 1, matches, T1_PROPERTY_MATCHES_CAP);
+        name, is_u32, T1_PROP_STORE_TEXT,
+        matches, T1_PROPERTY_MATCHES_CAP);
     T1_log_assert(matches_size == 1);
 
     T1_property_write(T1_text_props, matches[0], bits);
+}
+
+void T1_postproc_set_f32(
+    const c8 * property,
+    f32 value)
+{
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        property, 0, T1_PROP_STORE_POSTPROC,
+        matches, T1_PROPERTY_MATCHES_CAP);
+    T1_log_assert(matches_size == 1);
+
+    u32 bits;
+    T1_std_memcpy(&bits, &value, 4);
+    T1_property_write(&T1_global->postproc_consts, matches[0], bits);
+}
+
+f32 T1_postproc_get_f32(
+    const c8 * property)
+{
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        property, 0, T1_PROP_STORE_POSTPROC,
+        matches, T1_PROPERTY_MATCHES_CAP);
+    T1_log_assert(matches_size == 1);
+
+    u32 bits = T1_property_read(&T1_global->postproc_consts, matches[0]);
+    f32 value;
+    T1_std_memcpy(&value, &bits, 4);
+    return value;
 }
 
 void T1_text_set_f32(
@@ -341,4 +454,64 @@ void T1_delete(u32 T1_id)
     T1_zsprite_delete(T1_id);
     T1_texquad_delete(T1_id);
     T1_zlight_delete(T1_id);
+}
+
+void T1_delete_all(void)
+{
+    T1_zsprite_delete_all();
+    T1_texquad_delete_all();
+    T1_zlight_delete_all();
+}
+
+static const T1Property * T1_cam_property(
+    s32 cam_i,
+    const c8 * name,
+    const u8 is_u32)
+{
+    T1_log_assert(cam_i >= 0);
+    T1_log_assert(cam_i < T1_RENDER_VIEW_CAP);
+    
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        name, is_u32, T1_PROP_STORE_CAM,
+        matches, T1_PROPERTY_MATCHES_CAP);
+    T1_log_assert(matches_size == 1);
+    
+    return matches[0];
+}
+
+void T1_cam_set_f32(
+    s32 cam_i,
+    const c8 * property,
+    f32 value)
+{
+    u32 bits;
+    T1_std_memcpy(&bits, &value, 4);
+    T1_property_write(
+        &T1_render_views->cpu[cam_i],
+        T1_cam_property(cam_i, property, 0),
+        bits);
+}
+
+void T1_cam_set_u32(
+    s32 cam_i,
+    const c8 * property,
+    u32 value)
+{
+    T1_property_write(
+        &T1_render_views->cpu[cam_i],
+        T1_cam_property(cam_i, property, 1),
+        value);
+}
+
+f32 T1_cam_get_f32(
+    s32 cam_i,
+    const c8 * property)
+{
+    u32 bits = T1_property_read(
+        &T1_render_views->cpu[cam_i],
+        T1_cam_property(cam_i, property, 0));
+    f32 value;
+    T1_std_memcpy(&value, &bits, 4);
+    return value;
 }

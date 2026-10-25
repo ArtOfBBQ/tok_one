@@ -440,7 +440,6 @@ void T1_tex_array_reg_new_by_splitting_img(
     if (new_image == NULL) { return; }
     
     s32 new_texture_array_i = (int)T1_tex_arrays_size;
-    T1_tex_arrays[new_texture_array_i].request_init = 1;
     T1_tex_arrays_size++;
     T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
     
@@ -607,6 +606,13 @@ void T1_tex_update(
             T1_tex_arrays[array_i].single_img_height * 4);
     
     T1_os_gpu_push_tex_slice(array_i, slice_i);
+
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    T1_os_gpu_generate_mipmaps_for_texture_array(array_i);
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_MIPMAPS_ACTIVE undefined!"
+    #endif
 }
 
 void T1_tex_delete(T1Tex tex) {

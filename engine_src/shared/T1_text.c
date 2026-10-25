@@ -47,6 +47,8 @@ typedef struct {
     s32 end_i;
 } PrefetchedLine;
 
+#define MAX_LINES 100
+
 T1TextFontSettings * T1_text_props = NULL;
 
 void T1_text_init(
@@ -68,6 +70,7 @@ void T1_text_init(
             &T1_text_props->u32s);
         
         T1_text_props->font_height = 30.0f;
+        T1_text_props->tab_width = 4.0f;
         
         T1_text_props->u32s.reserved_and_tex =
             0x00000000 | T1_TEX_NONE;
@@ -260,7 +263,54 @@ static void prefetch_label_lines(
     T1_log_assert(widest_line_width > 0.0f);
 }
 
-void T1_text_request_label_offset_around(
+/*
+Commits a letter of a label, after applying the label settings that work
+per letter: the highlight (if char_i is in it) and the opaque back
+*/
+static void T1_text_commit_letter(
+    T1TexQuadRequest * letter,
+    u32 char_i,
+    f32 z)
+{
+    if (
+        char_i >= T1_text_props->highlight_i &&
+        char_i < T1_text_props->highlight_i + T1_text_props->highlight_size)
+    {
+        letter->gpu->f32s.rgba[0] += 0.2f;
+        letter->gpu->f32s.rgba[1] += 0.2f;
+        letter->gpu->f32s.rgba[2] += 0.2f;
+        letter->gpu->f32s.wh[0] *= 1.12f;
+        letter->gpu->f32s.wh[1] *= 1.12f;
+    }
+    
+    if (T1_text_props->opaque_back_active) {
+        T1TexQuadRequest back;
+        T1_texquad_fetch_next(&back);
+        *back.cpu = *letter->cpu;
+        *back.gpu = *letter->gpu;
+        back.gpu->u32s.reserved_and_tex = T1_TEX_NONE;
+        back.gpu->f32s.rgba[0] = 0.15f;
+        back.gpu->f32s.rgba[1] = 0.15f;
+        back.gpu->f32s.rgba[2] = 0.60f;
+        back.gpu->f32s.rgba[3] = 1.00f;
+        
+        // One step further back. Positions and sizes are world units
+        // at the quad's depth, so scale them to stay on the same pixels.
+        f32 back_mult = (z + 0.01f) / z;
+        back.gpu->f32s.xyz[0] *= back_mult;
+        back.gpu->f32s.xyz[1] *= back_mult;
+        back.gpu->f32s.wh[0] *= back_mult;
+        back.gpu->f32s.wh[1] *= back_mult;
+        back.cpu->offset_xyz[0] *= back_mult;
+        back.cpu->offset_xyz[1] *= back_mult;
+        back.gpu->f32s.xyz[2] += 0.01f;
+        T1_texquad_commit(&back);
+    }
+    
+    T1_texquad_commit(letter);
+}
+
+static void T1_text_request_label_centered(
     u32 with_T1_id,
     const char * text_to_draw,
     f32 mid_x_pixelspace,
@@ -276,7 +326,6 @@ void T1_text_request_label_offset_around(
     T1_log_assert(text_to_draw != NULL);
     T1_log_assert(text_to_draw[0] != '\0');
     
-    #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
     u32 lines_size;
     prefetch_label_lines(
@@ -367,7 +416,7 @@ void T1_text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            T1_texquad_commit(&letter);
+            T1_text_commit_letter(&letter, (u32)j, z);
         }
         
         cur_y_offset_pixelspace -=
@@ -375,63 +424,7 @@ void T1_text_request_label_offset_around(
     }
 }
 
-void T1_text_request_label_around_x_at_top_y(
-    u32 with_T1_id,
-    const char * text_to_draw,
-    f32 mid_x_pixelspace,
-    f32 top_y_pixelspace,
-    f32 z,
-    f32 max_width)
-{
-    #define MAX_LINES 100
-    PrefetchedLine lines[MAX_LINES];
-    u32 lines_size;
-    prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
-    T1_log_assert(lines_size < MAX_LINES);
-    
-    T1_text_request_label_offset_around(
-        /* u32 with_id: */
-            with_T1_id,
-        /* const char * text_to_draw: */
-            text_to_draw,
-        /* f32 mid_x_pixelspace: */
-            mid_x_pixelspace,
-        /* const f32 mid_y_pixelspace: */
-            top_y_pixelspace -
-                ((((lines_size-1) * (get_newline_advance()))) / 2),
-        /* f32 z: */
-            z,
-        /* const f32 max_width: */
-            max_width);
-}
-
-void T1_text_request_label_around(
-    u32 with_T1_id,
-    const char * text_to_draw,
-    f32 mid_x_pixelspace,
-    f32 mid_y_pixelspace,
-    f32 z,
-    f32 max_width)
-{
-    T1_log_assert(text_to_draw != NULL);
-    T1_log_assert(text_to_draw[0] != '\0');
-    
-    T1_text_request_label_offset_around(
-        /* const s32 with_id: */
-            with_T1_id,
-        /* const char * text_to_draw: */
-            text_to_draw,
-        /* f32 mid_x_pixelspace: */
-            mid_x_pixelspace,
-        /* const f32 mid_y_pixelspace: */
-            mid_y_pixelspace,
-        /* f32 z: */
-            z,
-        /* const f32 max_width: */
-            max_width);
-}
-
-void T1_text_request_label_renderable(
+void T1_text_request_label_left_top(
     u32 with_T1_id,
     const char * text_to_draw,
     f32 left_x_pixelspace,
@@ -582,43 +575,61 @@ void T1_text_request_label_renderable(
             cur_y_offset -= get_newline_advance();
         }
         
-        if (
-            i >= T1_text_props->highlight_i &&
-            i < T1_text_props->highlight_i + T1_text_props->highlight_size)
-        {
-            letter.gpu->f32s.rgba[0] += 0.2f;
-            letter.gpu->f32s.rgba[1] += 0.2f;
-            letter.gpu->f32s.rgba[2] += 0.2f;
-            letter.gpu->f32s.wh[0] *= 1.12f;
-            letter.gpu->f32s.wh[1] *= 1.12f;
-        }
-        
-        if (T1_text_props->opaque_back_active) {
-            T1TexQuadRequest back;
-            T1_texquad_fetch_next(&back);
-            *back.cpu = *letter.cpu;
-            *back.gpu = *letter.gpu;
-            back.gpu->u32s.reserved_and_tex = T1_TEX_NONE;
-            back.gpu->f32s.rgba[0] = 0.15f;
-            back.gpu->f32s.rgba[1] = 0.15f;
-            back.gpu->f32s.rgba[2] = 0.60f;
-            back.gpu->f32s.rgba[3] = 1.00f;
-            
-            // One step further back. Positions and sizes are world units
-            // at the quad's depth, so scale them to stay on the same pixels.
-            f32 back_mult = (z + 0.01f) / z;
-            back.gpu->f32s.xyz[0] *= back_mult;
-            back.gpu->f32s.xyz[1] *= back_mult;
-            back.gpu->f32s.wh[0] *= back_mult;
-            back.gpu->f32s.wh[1] *= back_mult;
-            back.cpu->offset_xyz[0] *= back_mult;
-            back.cpu->offset_xyz[1] *= back_mult;
-            back.gpu->f32s.xyz[2] += 0.01f;
-            T1_texquad_commit(&back);
-        }
-        
+        T1_text_commit_letter(&letter, i, z);
         i++;
-        T1_texquad_commit(&letter);
+    }
+}
+
+void T1_text_request_label(
+    u32 with_T1_id,
+    const char * text_to_draw,
+    T1TextAlign align,
+    f32 screen_x,
+    f32 screen_y,
+    f32 z,
+    f32 max_width)
+{
+    T1_log_assert(text_to_draw != NULL);
+    T1_log_assert(text_to_draw[0] != '\0');
+    
+    switch (align) {
+        case T1_TEXT_ALIGN_LEFT_TOP:
+            T1_text_request_label_left_top(
+                with_T1_id,
+                text_to_draw,
+                screen_x,
+                screen_y,
+                z,
+                T1_text_props->tab_width,
+                max_width);
+            break;
+        case T1_TEXT_ALIGN_CENTER_TOP: {
+            // the middle of all lines is half the extra lines lower
+            PrefetchedLine lines[MAX_LINES];
+            u32 lines_size;
+            prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
+            T1_log_assert(lines_size < MAX_LINES);
+            
+            T1_text_request_label_centered(
+                with_T1_id,
+                text_to_draw,
+                screen_x,
+                screen_y - (((lines_size - 1) * get_newline_advance()) / 2),
+                z,
+                max_width);
+            break;
+        }
+        case T1_TEXT_ALIGN_CENTER:
+            T1_text_request_label_centered(
+                with_T1_id,
+                text_to_draw,
+                screen_x,
+                screen_y,
+                z,
+                max_width);
+            break;
+        default:
+            T1_log_assert(0);
     }
 }
 
@@ -655,7 +666,7 @@ static void T1_tex_draw_letter(
             const u8 * src_rgba =
                 T1_tex_array_get_const_rgba(
                     0, letter->charval);
-            T1_assert(src_rgba != NULL);
+            T1_log_assert(src_rgba != NULL);
             
             u32 src_x = (u32)(((f32)x / (f32)letter->wh[0]) * src_w);
             u32 src_y = (u32)(((f32)y / (f32)letter->wh[1]) * src_h);
@@ -690,7 +701,6 @@ void T1_text_draw_label_around(
     T1_log_assert(text_to_draw != NULL);
     T1_log_assert(text_to_draw[0] != '\0');
     
-    #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
     u32 lines_size;
     prefetch_label_lines(
@@ -776,24 +786,6 @@ void T1_text_draw_label_around(
     }
 }
 
-void T1_text_request_label_leftx_toplinemidy(
-    u32 with_T1_id,
-    const char * text_to_draw,
-    f32 left_pixelspace,
-    f32 topline_mid_y_pixelspace,
-    f32 z,
-    f32 max_width)
-{
-    T1_text_request_label_renderable(
-        with_T1_id,
-        text_to_draw,
-        left_pixelspace,
-        topline_mid_y_pixelspace,
-        z,
-        4.0f,
-        max_width);
-}
-
 void T1_text_request_debug_text(const char * text)
 {
     T1_texquad_delete(T1_ID_DEBUG_TEXT);
@@ -804,7 +796,7 @@ void T1_text_request_debug_text(const char * text)
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
-    T1_text_request_label_renderable(
+    T1_text_request_label_left_top(
         /* with_id               : */
             T1_ID_DEBUG_TEXT,
         /* char * text_to_draw   : */
@@ -875,7 +867,7 @@ void T1_text_request_fps(
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
-    T1_text_request_label_renderable(
+    T1_text_request_label_left_top(
         /* with_id               : */
             T1_ID_FPS_COUNTER,
         /* char * text_to_draw   : */
@@ -908,7 +900,7 @@ void T1_text_request_top_touch_id(
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
     
-    T1_text_request_label_renderable(
+    T1_text_request_label_left_top(
         /* with_id               : */
             T1_ID_FPS_COUNTER,
         /* char * text_to_draw   : */

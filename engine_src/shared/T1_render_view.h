@@ -41,7 +41,7 @@ typedef struct {
 typedef struct {
     T1GPUProjectConsts project;
     T1RenderPass passes[T1_RENDER_PASSES_MAX];
-    u64 us_to_destination;
+    u32 us_to_destination;
     f32 xyz[3];
     f32 angle_xyz[3];
     f32 dest_xyz[3];
@@ -58,6 +58,7 @@ typedef struct {
     #endif
     T1RenderViewWriteType write_type;
     u32 clamped_to_T1_id;
+    u32 movement_enabled;
     u32 width;
     u32 height;
     T1Tex write_tex;
@@ -68,7 +69,6 @@ typedef struct {
     #else
     #error
     #endif
-    u8  movement_enabled;
     u8  deleted;
 } T1CPURenderView;
 
@@ -96,32 +96,17 @@ void T1_render_view_delete(const s32 rv_i);
 
 void T1_render_view_validate(void);
 
-f32 T1_render_view_x_to_screen_x_noz(
-    const f32 x);
-
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
 f32 T1_render_view_screen_x_to_x(
     const f32 screenspace_x,
     const f32 given_z);
 
-f32 T1_render_view_y_to_screen_y_noz(
-    const f32 y);
-
 // To convert from our screenspace system to 'world y' that is used for
 // the position of zpolygons
 f32 T1_render_view_screen_y_to_y(
     const f32 screenspace_y,
     const f32 given_z);
-
-f32 T1_render_view_screen_x_to_x_noz(
-    const f32 screenspace_width);
-f32 T1_render_view_screen_y_to_y_noz(
-    const f32 screenspace_height);
-f32 T1_render_view_screen_width_to_width_noz(
-    const f32 screenspace_width);
-f32 T1_render_view_screen_height_to_height_noz(
-    const f32 screenspace_height);
 
 f32 T1_render_view_screen_height_to_height(
     const f32 screenspace_height, const f32 given_z);

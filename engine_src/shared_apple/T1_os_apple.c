@@ -10,6 +10,10 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_log.h"
+
+void T1_os_print_error(const char * message) {
+    fprintf(stderr, "%s\n", message);
+}
 #include "T1_fatal_error.h"
 #include "T1_os_apple_audio.h"
 #include "T1_objc.h"
@@ -177,7 +181,7 @@ static u64 T1_os_apple_get_filesize_unpooled(
     );
     
     if (file_manager == NULL) {
-        T1_log_dump_and_crash("ERROR - failed to get default NSFileManager\n");
+        T1_log_crash("ERROR - failed to get default NSFileManager\n");
         return 0;
     }
     

@@ -208,6 +208,9 @@ u64 T1_os_raw_thread_id_to_T1_thread_id(
 
 u64 T1_os_get_current_time_us(void);
 
+// Writes message and a newline to the error output (stderr)
+void T1_os_print_error(const char * message);
+
 u64 T1_os_get_clock_frequency(void);
 
 f32 T1_os_x_to_x(f32 x);
@@ -225,8 +228,7 @@ void T1_os_gpu_update_window_viewport(void);
 
 void T1_os_gpu_copy_locked_vertices(void);
 
-void T1_os_gpu_copy_locked_materials(
-    char ** const fatal_error);
+void T1_os_gpu_copy_locked_materials(void);
 
 u32 T1_os_gpu_get_touch_id_at_screen_pos(
     f32 screen_x,
@@ -286,8 +288,11 @@ void T1_os_layer_start_window_resize(u64 timestamp);
 
 // Creates the GPU device and T1's GPU resources, no window needed
 void T1_os_gpu_init(char ** const fatal_error);
+// T1_os_gpu_init() succeeded
+u8 T1_os_gpu_active(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
+// if there is one, else showing what T1_os_window_blit_rgba() gets
 void T1_os_window_open(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
@@ -300,7 +305,7 @@ needs a cap of at least 512), and any
 shaders loaded by a previous successful call stay in
 place, so you can retry with a different source.
 You must succeed at least once before
-T1_assets_load_all(), else that's fatal.
+T1_window_open(), else that's fatal.
 */
 void T1_os_gpu_try_shader_source(
     const char * shader_source,
@@ -326,6 +331,13 @@ u8 T1_os_window_visible(void);
 // Copies the last rendered frame to the window. Returns false if nothing
 // was presented.
 u8 T1_os_window_present(void);
+// Shows width * height rgba pixels (top row first, alpha ignored) as large
+// as they fit in the window, keeping their aspect ratio, with black bands
+// around them. Only for windows opened without T1_os_gpu_init().
+void T1_os_window_blit_rgba(
+    const u8 * rgba,
+    const u32 width,
+    const u32 height);
 
 // Waits until the GPU is done with the next frame's buffers, then returns
 // them, or NULL if the GPU isn't ready to render.

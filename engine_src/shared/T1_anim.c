@@ -30,7 +30,6 @@ typedef struct {
     T1GPUTexQuadu32 * tq_gpu_u32s;
     T1zLightf32     * zl_gpu_f32s;
     
-    void (* run_func_on_finish)(void);
     u64 duration_us;
     u64 pause_us;
     u64 remaining_duration_us;
@@ -359,10 +358,6 @@ static void T1_anim_resolve_single(
         if (delete) {
             T1_anim_delete(a);
             
-            if (a->run_func_on_finish) {
-                a->run_func_on_finish();
-            }
-            
             if (a->del_obj_on_finish)
             {
                 if (
@@ -610,8 +605,7 @@ static void T1_anim_commit_and_schedule(T1Anim * a)
                 other->target_T1_id == T1_ANIM_HIT_EVERYTHING) &&
                 other->committed &&
                 other->endpoints_not_deltas &&
-                !other->del_obj_on_finish &&
-                !other->run_func_on_finish)
+                !other->del_obj_on_finish)
             {
                 T1_anim_delete(other);
             }
@@ -626,96 +620,6 @@ static void T1_anim_commit_and_schedule(T1Anim * a)
 }
 
 // shatter and evaporate are plain fades for now
-static void T1_anim_alpha_blend_fade_and_destroy(
-    u32 T1_id,
-    u64 duration_us)
-{
-    T1_log_assert(duration_us > 0);
-    T1_log_assert(T1_id != T1_ID_NONE);
-    
-    u32 set_alpha_on = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
-    T1_anim_set_f32(set_alpha_on, "alpha_on", 1.0f);
-    T1_anim_set_duration_us(set_alpha_on, 1);
-    T1_anim_commit(set_alpha_on);
-    
-    u32 fade = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
-    T1_anim_set_f32(fade, "alpha", 0.0f);
-    T1_anim_set_duration_us(fade, duration_us);
-    T1_anim_set_delete_target_on_finish(fade, 1);
-    T1_anim_commit(fade);
-}
-
-void T1_anim_shatter_and_destroy(
-    u32 T1_id,
-    u64 duration_us)
-{
-    T1_anim_alpha_blend_fade_and_destroy(T1_id, duration_us);
-}
-
-void T1_anim_evaporate_and_destroy(
-    u32 T1_id,
-    u64 duration_us)
-{
-    T1_anim_alpha_blend_fade_and_destroy(T1_id, duration_us);
-}
-
-void T1_anim_fade_and_destroy(
-    u32 T1_id,
-    u64 pause_first,
-    u64 duration_us)
-{
-    T1_log_assert(duration_us > 0);
-    
-    u32 fade_destroy = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
-    T1_anim_set_duration_us(fade_destroy, duration_us);
-    T1_anim_set_pause_us(fade_destroy, pause_first);
-    // zsprites
-    T1_anim_set_f32(fade_destroy, "alpha", 0.0f);
-    T1_anim_set_f32(fade_destroy, "bonus_rgb[0]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "bonus_rgb[1]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "bonus_rgb[2]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "shadow_strength", 0.0f);
-    T1_anim_set_f32(fade_destroy, "bloom_on", 0.0f);
-    // texquads and zlights
-    T1_anim_set_f32(fade_destroy, "rgba[0]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "rgba[1]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "rgba[2]", 0.0f);
-    T1_anim_set_f32(fade_destroy, "rgba[3]", 0.0f);
-    // zlights
-    T1_anim_set_f32(fade_destroy, "diffuse", 0.0f);
-    T1_anim_set_f32(fade_destroy, "specular", 0.0f);
-    T1_anim_set_delete_target_on_finish(fade_destroy, 1);
-    T1_anim_commit(fade_destroy);
-}
-
-void T1_anim_fade_destroy_all(
-    u64 pause_first,
-    u64 duration_us)
-{
-    T1_anim_fade_and_destroy(
-        /* u32 T1_id: */
-            T1_ANIM_HIT_EVERYTHING,
-        /* u64 pause_first_us: */
-            pause_first,
-        /* u64 duration_us: */
-            duration_us);
-}
-
-void T1_anim_fade_to(
-    u32 T1_id,
-    u64 duration_us,
-    f32 target_alpha)
-{
-    T1_log_assert(T1_id != T1_ID_NONE);
-    
-    u32 modify_alpha = T1_anim_new(T1_id, T1_ANIM_MODE_TO);
-    // very short fades are applied right away
-    T1_anim_set_duration_us(modify_alpha, duration_us < 50 ? 1 : duration_us);
-    T1_anim_set_f32(modify_alpha, "alpha", target_alpha);
-    T1_anim_set_delete_target_on_finish(modify_alpha, 1);
-    T1_anim_commit(modify_alpha);
-}
-
 void T1_anim_resolve(void) {
     as->mutex_lock(as->mutex_id);
     
@@ -730,21 +634,6 @@ void T1_anim_resolve(void) {
     }
     
     as->mutex_unlock(as->mutex_id);
-}
-
-void T1_anim_dud_dance(
-    u32 T1_id,
-    f32 magnitude)
-{
-    u32 move_request = T1_anim_new(T1_id, T1_ANIM_MODE_BY);
-    T1_anim_set_easing(
-        move_request,
-        T1_EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO);
-    T1_anim_set_f32(move_request, "xyz[0]", magnitude * 0.05f);
-    T1_anim_set_f32(move_request, "xyz[1]", magnitude * 0.035f);
-    T1_anim_set_f32(move_request, "xyz[2]", magnitude * 0.005f);
-    T1_anim_set_duration_us(move_request, 300000);
-    T1_anim_commit(move_request);
 }
 
 void T1_anim_delete_all(void) {
@@ -851,7 +740,8 @@ static void T1_anim_set_bits(
     
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
-        name, is_u32, 0, matches, T1_PROPERTY_MATCHES_CAP);
+        name, is_u32, T1_PROP_STORE_OUTOFBOUNDS,
+        matches, T1_PROPERTY_MATCHES_CAP);
     
     as->mutex_lock(as->mutex_id);
     
@@ -918,10 +808,6 @@ void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target) {
 
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting) {
     T1_anim_from_handle(anim)->del_conflict_anims = cancel_conflicting;
-}
-
-void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void)) {
-    T1_anim_from_handle(anim)->run_func_on_finish = func;
 }
 
 void T1_anim_commit(u32 anim) {

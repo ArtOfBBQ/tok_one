@@ -14,7 +14,6 @@ that modify the behavior of the engine.
 
 #define T1_IMG_PRINTF_ACTIVE 2
 #define T1_LOG_PRINTF_ACTIVE 2
-#define T1_WAV_PRINTF_ACTIVE 2
 #define T1_COLLISION_PRINTF_ACTIVE 2
 
 #define T1_TOKEN_ASSERTS_ACTIVE 1
@@ -22,7 +21,6 @@ that modify the behavior of the engine.
 #define T1_OBJPARSER_ASSERTS_ACTIVE 1
 #define T1_MEM_ASSERTS_ACTIVE 1
 #define T1_STD_ASSERTS_ACTIVE 1
-#define T1_WAV_ASSERTS_ACTIVE 1
 #define T1_COLLISION_ASSERTS_ACTIVE 1
 
 #define T1_GAMEPAD_ACTIVE 1

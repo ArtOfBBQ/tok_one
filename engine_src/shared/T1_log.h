@@ -3,9 +3,6 @@
 
 #include "T1_stdint.h"
 
-extern u8 T1_log_app_running;
-extern char * T1_log_crash_msg;
-
 /*
 Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
 example with c standard library: setup_log(malloc(LOG_SIZE));
@@ -33,23 +30,13 @@ void T1_log_append_c8(c8 to_append);
 #endif
 
 /*
-dump the entire debug log to debuglog.txt
+Prints crash_message and crashes right away, so the debugger stops where
+things went wrong. Also works with asserts inactive.
 */
-void T1_log_dump(u8 * good);
-
-/*
-Dump the entire debug log to debuglog.txt,
-then crash the application. This can be used even in release mode.
-*/
-void
-T1_log_dump_and_crash(const char * crash_message);
-
+void T1_log_crash(const char * crash_message);
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-/*
-Assert something, but use the GUI to report on failure
-instead of crashing the app
-*/
+// Crashes if condition is false, see T1_log_crash()
 void T1_log_assert(u8 condition);
 void T1_log_warn_if_false(u8 condition, const char * msg);
 #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE

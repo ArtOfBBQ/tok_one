@@ -1,11 +1,8 @@
 #include "T1_log.h"
 #include "T1_std.h"
 #include "T1_conditional_includes.h"
+#include "T1_os.h"
 
-u8 T1_log_app_running = 0;
-c8 * T1_log_crash_msg = NULL;
-
-#define T1_LOG_CRASH_STRING_SIZE 256
 #define LOG_SIZE 500000
 typedef struct {
     void * (* malloc)(size_t);
@@ -27,10 +24,6 @@ void T1_log_init(
 {
     T1_log_s = arg_log_malloc_func(sizeof(T1LogState));
     T1_std_memset(T1_log_s, 0, sizeof(T1LogState));
-    
-    T1_log_crash_msg = arg_log_malloc_func(
-        T1_LOG_CRASH_STRING_SIZE);
-    T1_std_memset(T1_log_crash_msg, 0, T1_LOG_CRASH_STRING_SIZE);
     
     T1_log_s->malloc = arg_log_malloc_func;
     T1_log_s->create_mutex = arg_log_create_mutex_func;
@@ -107,57 +100,21 @@ void T1_log_append(
 #error
 #endif
 
-void T1_log_dump(u8 * good) {
-    *good = 1;
-}
-
-void T1_log_dump_and_crash(
+void T1_log_crash(
     const c8 * crash_message)
 {
-    u8 log_dump_succesful = 0;
-    T1_log_dump(&log_dump_succesful);
+    T1_os_print_error(crash_message);
     
-    if (T1_log_app_running) {
-        u32 i = 0;
-        while (
-            crash_message[i] != '\0' &&
-            i < (T1_LOG_CRASH_STRING_SIZE-1))
-        {
-            T1_log_crash_msg[i] = crash_message[i];
-            i++;
-        }
-        
-        T1_log_crash_msg[i] = '\0';
-    }
-    
-    #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
-    printf("DUMP & CRASHED: %s\n", crash_message);
-    #elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1_log_app_running = 0;
+    // stop right here, so the debugger shows where things went wrong
+    __builtin_trap();
 }
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 void T1_log_assert(u8 condition)
 {
-    if (condition || !T1_log_app_running) { return; }
+    if (condition) { return; }
     
-    //Assertion failed: (0), function main, file test.c, line 6.
-    c8 assert_failed_msg[512];
-    assert_failed_msg[0] = '\0';
-    
-    T1_std_strcpy_cap(
-        assert_failed_msg,
-        512,
-        "Assertion failed.");
-    
-    T1_log_dump_and_crash(assert_failed_msg);
-    
-    // stop right here, so the debugger shows where the assert failed
-    __builtin_trap();
+    T1_log_crash("T1 assertion failed, see the debugger's call stack");
 }
 
 void T1_log_warn_if_false(u8 condition, const char * msg)

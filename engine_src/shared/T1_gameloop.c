@@ -16,6 +16,7 @@
 #include "T1_anim.h"
 #include "T1_particle.h"
 #include "T1_render_view.h"
+#include "T1_objmodel.h"
 
 u8 T1_gameloop_active = 0;
 
@@ -30,10 +31,11 @@ static void update_terminal(void) {
 
 /*
 When the last frame wasn't presented, nothing paced the client's loop to the
-display, so T1_window_poll_events() waits up to this long for input instead
-of letting the loop spin.
+display, so T1_window_poll_events() handles input until the next multiple of
+frame_step_us microseconds, instead of letting the loop spin. 0 lets it
+spin, see T1_window_set_fps_cap().
 */
-#define T1_GAMELOOP_IDLE_WAIT_US 16666
+#define T1_GAMELOOP_DEFAULT_FPS_CAP 60
 
 typedef struct {
     // the frame between T1_frame_begin() and T1_frame_render(), or NULL
@@ -47,6 +49,8 @@ typedef struct {
     b8 frame_tail; // fps text, timestamp etc.
     b8 frame_rendered; // since the last T1_window_poll_events()
     b8 frame_presented; // since the last T1_window_poll_events()
+    u64 next_poll_us; // see T1_GAMELOOP_DEFAULT_FPS_CAP
+    u64 frame_step_us; // 0 for no cap
 } T1GameloopState;
 static T1GameloopState * T1_gl_s = NULL;
 
@@ -56,69 +60,11 @@ void T1_gameloop_init(
     T1_gl_s = arg_malloc_fptr(sizeof(T1GameloopState));
     T1_std_memset(T1_gl_s, 0, sizeof(T1GameloopState));
     T1_gl_s->loading_text_T1_id = T1_ID_NONE;
+    T1_window_set_fps_cap(T1_GAMELOOP_DEFAULT_FPS_CAP);
 }
 
-static void show_dead_simple_text(
-    T1GPUFrame * frame_data,
-    const char * text_message,
-    u64 elapsed)
-{
-    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    T1_particle_effects_delete_all();
-    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_PARTICLES_ACTIVE undefined"
-    #endif
-    T1_zlights_size = 0;
-    T1_texquad_delete_all();
-    T1_zsprite_delete_all();
-    
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.fog_factor = 0.0f;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_FOG_ACTIVE undefined"
-    #endif
-    
-    T1_render_view_reset(0);
-    
-    T1_text_props->font_height = 20.0f;
-    T1_text_props->f32s.rgba[0] = 1.0f;
-    T1_text_props->f32s.rgba[1] = 1.0f;
-    T1_text_props->f32s.rgba[2] = 1.0f;
-    T1_text_props->f32s.rgba[3] = 1.0f;
-    
-    T1_log_assert((T1_text_props->u32s.reserved_and_tex & 0x0000FFFF) == T1_TEX_NONE);
-    
-    T1_text_request_label_renderable(
-        /* const u32 with_object_id: */
-            0,
-        /* const char * text_to_draw: */
-            text_message,
-        /* const f32 left_pixelspace: */
-            30,
-        /* const f32 mid_y_pixelspace: */
-            T1_settings_get_render_height() - 30,
-        /* const f32 z: */
-            1.0f,
-        /* const f32 tab_width: */
-            4.0f,
-        /* const f32 max_width: */
-            T1_settings_get_render_width() - 30);
-    
-    T1_global->draw_fps = 0;
-    T1_global->draw_triangles = 1;
-    T1_global->draw_axes = 0;
-    T1_global->draw_fps = 0;
-    T1_global->postproc_consts.color_quantization = 1;
-    T1_global->postproc_consts.lights_size = 0;
-    
-    T1_render_update(
-            frame_data,
-        /* u64 elapsed_us: */
-            elapsed);
+void T1_window_set_fps_cap(u32 fps) {
+    T1_gl_s->frame_step_us = fps > 0 ? 1000000 / fps : 0;
 }
 
 void T1_frame_begin(void)
@@ -167,14 +113,6 @@ void T1_frame_begin(void)
         return;
     }
     
-    if (!T1_log_app_running) {
-        show_dead_simple_text(
-            f,
-            T1_log_crash_msg,
-            T1_global->elapsed);
-        return;
-    }
-    
     T1_gl_s->frame_no++;
     
     if (
@@ -201,7 +139,7 @@ void T1_frame_begin(void)
             // The client rebuilds its size dependent state now
             T1_gl_s->frame_resized = 1;
        }
-    } else if (T1_log_app_running) {
+    } else {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_render_view_validate();
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
@@ -287,6 +225,8 @@ void T1_frame_render(void) {
             this_frame_timestamp_us;
     }
     
+    T1_objmodel_upload_new_meshes();
+    
     T1_gl_s->frame_rendered = T1_os_gpu_render_frame();
 }
 
@@ -299,7 +239,28 @@ void T1_window_present(void) {
 }
 
 void T1_window_open(char ** const fatal_error) {
+    if (*fatal_error != 0) { return; }
+    
+    // Nothing can be drawn without shaders, so fail loudly here
+    if (T1_os_gpu_active() && !T1_os_gpu_shaders_ready()) {
+        *fatal_error = "T1_window_open() before T1_gpu_try_shader_source() succeeded";
+        return;
+    }
+    
     T1_os_window_open(fatal_error);
+    if (*fatal_error != 0) { return; }
+    
+    // The client's first frame reports a resize, so it can build its scene
+    // for the window's size there
+    T1_os_layer_start_window_resize(T1_os_get_current_time_us());
+}
+
+void T1_window_blit_rgba(const u8 * rgba, u32 width, u32 height) {
+    T1_os_window_blit_rgba(rgba, width, height);
+
+    // A finished frame like a rendered one, so this frame's input events
+    // are cleared, but it doesn't pace the loop like presenting does
+    T1_gl_s->frame_rendered = 1;
 }
 
 void T1_window_toggle_fullscreen(void) {
@@ -343,9 +304,29 @@ void T1_window_poll_events(void) {
         T1_gl_s->frame_rendered = 0;
     }
     
-    // Presenting blocks at the display's refresh rate. Without it, wait
-    // a little for input instead, so the client's loop doesn't spin.
-    T1_os_window_pump_events(
-        T1_gl_s->frame_presented ? 0 : T1_GAMELOOP_IDLE_WAIT_US);
+    // Presenting blocks at the display's refresh rate. Without it (nothing
+    // rendered, or a software blit), handle input until the rest of the
+    // frame step has passed, so the client's loop doesn't spin.
+    if (T1_gl_s->frame_presented) {
+        T1_os_window_pump_events(0);
+    } else {
+        while (1) {
+            u64 now = T1_os_get_current_time_us();
+            u64 wait_us = now < T1_gl_s->next_poll_us ?
+                T1_gl_s->next_poll_us - now : 0;
+            T1_os_window_pump_events(wait_us);
+            if (wait_us == 0 || T1_os_window_close_requested()) {
+                break;
+            }
+        }
+    }
     T1_gl_s->frame_presented = 0;
+    
+    // Deadlines a fixed step apart, so oversleeping one doesn't slow down
+    // the next. If we fell behind (a slow frame), restart from now.
+    u64 now = T1_os_get_current_time_us();
+    T1_gl_s->next_poll_us += T1_gl_s->frame_step_us;
+    if (T1_gl_s->next_poll_us < now) {
+        T1_gl_s->next_poll_us = now + T1_gl_s->frame_step_us;
+    }
 }

@@ -17,6 +17,8 @@ void T1_window_poll_events(void);
 u8   T1_window_close_requested(void);
 u8   T1_window_visible(void);
 void T1_window_present(void);
+void T1_window_blit_rgba(const u8 * rgba, u32 width, u32 height);
+void T1_window_set_fps_cap(u32 fps);
 
 void T1_frame_begin(void);
 u8   T1_frame_should_update(void);

@@ -11,44 +11,6 @@
 #include "T1_io.h"
 #include "T1_os.h"
 
-uint8_t T1_running(void) {
-    return T1_log_app_running > 0;
-}
-
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-void T1_assert(b8 condition) {
-    T1_log_assert(condition);
-}
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
-
-void T1_cam_set_us_to_dest(s32 cam_i, u64 us) {
-    T1_log_assert(cam_i == 0); // TODO: remove this debug check
-    T1_render_views->cpu[cam_i].us_to_destination = us; }
-f32  T1_cam_get_angle_xyz(s32 cam_i, s32 i) {
-    return T1_render_views->cpu[cam_i].angle_xyz[i]; }
-void T1_cam_set_dest_xyz(s32 cam_i, s32 i, f32 newval) {
-    T1_render_views->cpu[cam_i].dest_xyz[i] = newval; }
-void T1_cam_add_dest_xyz(s32 cam_i, s32 i, f32 newval) {
-    T1_render_views->cpu[cam_i].dest_xyz[i] += newval; }
-void T1_cam_set_dest_angle_xyz(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].dest_angle_xyz[i] = val; }
-void T1_cam_add_dest_angle_xyz(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].dest_angle_xyz[i] += val; }
-void T1_cam_set_min_xyz(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].min_xyz[i] = val; }
-void T1_cam_set_max_xyz(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].max_xyz[i] = val; }
-void T1_cam_set_angle_xyz_min(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].min_angle_xyz[i] = val; }
-void T1_cam_set_angle_xyz_max(s32 cam_i, s32 i, f32 val) {
-    T1_render_views->cpu[cam_i].max_angle_xyz[i] = val; }
-void T1_cam_set_clamped_to_T1_id(s32 i, u32 T1_id) {
-    T1_render_views->cpu[i].clamped_to_T1_id = T1_id; }
-void T1_cam_set_movement_enabled(s32 i, u8 newval) {
-    T1_render_views->cpu[i].movement_enabled = newval; }
 T1Tex T1_cam_get_write_tex(s32 i) {
     return T1_render_views->cpu[i].write_tex; }
 void T1_cam_reset(s32 at_i) {
@@ -76,18 +38,10 @@ f32 T1_screen_x_to_x(f32 ss_x, f32 z) {
     return T1_render_view_screen_x_to_x(ss_x, z); }
 f32 T1_screen_y_to_y(f32 ss_y, f32 z) {
     return T1_render_view_screen_y_to_y(ss_y, z); }
-f32 T1_screen_x_to_x_noz(f32 ss_x) {
-    return T1_render_view_screen_x_to_x_noz(ss_x); }
-f32 T1_screen_y_to_y_noz(f32 ss_y) {
-    return T1_render_view_screen_y_to_y_noz(ss_y); }
 f32 T1_screen_width_to_width(f32 ss_w, f32 at_z) {
     return T1_render_view_screen_width_to_width(ss_w, at_z); }
 f32 T1_screen_height_to_height(f32 ss_h, f32 at_z) {
     return T1_render_view_screen_height_to_height(ss_h, at_z); }
-f32 T1_screen_width_to_width_noz(f32 ss_w) {
-    return T1_render_view_screen_width_to_width_noz(ss_w); }
-f32 T1_screen_height_to_height_noz(f32 ss_h) {
-    return T1_render_view_screen_height_to_height_noz(ss_h); }
 
 void T1_make_shadowmap_and_attach_to_light(
     u32 light_T1_id,

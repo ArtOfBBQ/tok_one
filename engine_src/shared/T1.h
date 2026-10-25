@@ -21,39 +21,26 @@ needing to understand the entire engine, but still overcomplicated.
 */
 
 /*
-GLOBAL SETTINGS
-TODO: remove this from the public API
-*/
-extern T1Globals * T1_global;
-
-/*
-DEBUG MODE
-*/
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-void T1_assert(uint8_t condition);
-void T1_log_warn_if_false(uint8_t condition, const char * msg);
-void T1_log_dump_and_crash(const char * crash_message);
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-#define T1_assert(x)
-#define T1_log_dump_and_crash(x)
-#else
-#error
-#endif
-
-/*
 APPLICATION STARTUP
 Each step reports problems through fatal_error and does nothing if it's
 already set, so you can call them in a row and check once at the end:
 
-T1_init(&fatal_error);          // memory, subsystems: no window or GPU yet
+T1_init(&fatal_error);          // memory, subsystems, audio: no GPU
 T1_gpu_init(&fatal_error);      // GPU device, T1's own textures
 T1_gpu_try_shader_source(...);  // at least once successfully
-T1_window_open(&fatal_error);   // any time after T1_gpu_init()
-... upload your textures (T1_tex_new), register your meshes ...
-T1_assets_load_all(&fatal_error);
-*/
-uint8_t T1_running(void);
+T1_window_open(&fatal_error);
 
+The GPU steps are optional. Without them, you draw your own pixels and
+show them with T1_window_blit_rgba(), see examples/ for the smallest app.
+If you use the GPU, call T1_gpu_init() before you create textures or
+cameras. Textures (T1_tex_new) are uploaded as you create them, meshes and
+materials when the next frame is rendered, so you can register either at
+any time.
+
+T1 never shows errors in the window. Problems at startup come back through
+fatal_error; when T1 catches a bug (a failed check), it prints why and
+crashes right away, so your debugger stops there.
+*/
 void T1_init(
     char ** const fatal_error);
 void T1_gpu_init(
@@ -68,7 +55,7 @@ needs a cap of at least 512), and any
 shaders loaded by a previous successful call stay in
 place, so you can retry with a different source.
 Needs T1_gpu_init(). You must succeed at least once
-before T1_assets_load_all(), else that's fatal.
+before T1_window_open(), else that's fatal.
 */
 void T1_gpu_try_shader_source(
     const char * shader_source,
@@ -77,18 +64,25 @@ void T1_gpu_try_shader_source(
     const uint32_t error_recip_cap,
     char ** const fatal_error);
 
-// Opens the (one) window your frames are presented in
+// Opens the (one) window your frames are presented in. With the GPU, your
+// first frame after this reports T1_frame_resized(), so you can build your
+// scene there.
 void T1_window_open(
     char ** const fatal_error);
 void T1_window_toggle_fullscreen(void);
 
-// Uploads all registered meshes and materials. Blocks until done.
-void T1_assets_load_all(
-    char ** const fatal_error);
-
 /*
 MAIN LOOP
-T1 doesn't run a loop of its own, your app does, e.g.:
+T1 doesn't run a loop of its own, your app does. Without the GPU:
+
+while (!T1_window_close_requested()) {
+    T1_window_poll_events();
+    draw_your_pixels(rgba);
+    T1_window_blit_rgba(rgba, width, height);
+}
+T1_shutdown();
+
+With the GPU:
 
 while (!T1_window_close_requested()) {
     T1_window_poll_events();
@@ -102,9 +96,9 @@ while (!T1_window_close_requested()) {
 T1_shutdown();
 
 T1_window_poll_events() must be called from the main thread. Presenting
-blocks at the display's refresh rate; when nothing was presented,
-T1_window_poll_events() waits briefly for input instead, so the loop never
-spins.
+blocks at the display's refresh rate; when nothing was presented (also
+after a blit), T1_window_poll_events() handles input until the next frame
+is due, see T1_window_set_fps_cap(), so the loop doesn't spin.
 */
 void     T1_window_poll_events(void);
 // The window's close button, the OS's quit command, the terminal's QUIT
@@ -113,11 +107,25 @@ uint8_t  T1_window_close_requested(void);
 uint8_t  T1_window_visible(void);
 // Copies the frame T1_frame_render() made to the window
 void     T1_window_present(void);
+// Shows width * height * 4 bytes of rgba (row by row, top row first, alpha
+// ignored) as large as it fits in the window, keeping its aspect ratio, with
+// black bands on the sides or on the top and bottom. Copies the pixels, so
+// you can draw the next frame into the same buffer right away. Only for
+// windows opened without T1_gpu_init().
+void     T1_window_blit_rgba(
+    const uint8_t * rgba,
+    uint32_t width,
+    uint32_t height);
+// Caps loops that T1_window_present() doesn't pace (e.g. blitting ones) at
+// fps frames per second, 60 by default. 0 removes the cap: the loop then
+// runs as fast as your frames allow, using a whole CPU core.
+void     T1_window_set_fps_cap(uint32_t fps);
 
 // Waits until the GPU is done with the next frame's buffers and runs T1's
 // work that comes before your update (animations, the terminal, ...)
 void     T1_frame_begin(void);
-// The window settled on a new size this frame
+// The window settled on a new size this frame. T1 keeps all your objects,
+// move, rebuild or delete what depends on the size.
 uint8_t  T1_frame_resized(void);
 // False e.g. while T1 shows a crash message or a resize is settling
 uint8_t  T1_frame_should_update(void);
@@ -126,7 +134,7 @@ uint64_t T1_frame_elapsed_us(void);
 // (without showing it, that's T1_window_present())
 void     T1_frame_render(void);
 
-// Saves the engine's state (window position etc.) and writes the log
+// Saves the engine's state (window position etc.)
 void     T1_shutdown(void);
 
 /*
@@ -136,6 +144,12 @@ writes its reply to response.
 */
 void T1_term_set_command_handler(
     void (* handler)(char * command, char * response, uint32_t response_cap));
+#if T1_TERM_ACTIVE == T1_ACTIVE
+void T1_term_manually_deactivate(void);
+#elif T1_TERM_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 /*
 T1_mem - allocate memory
@@ -156,25 +170,22 @@ T1_id
 #define T1_ID_FPS_COUNTER 0
 #define T1_ID_MAX 8000
 #define T1_ID_FIRST_NONUI_TOUCH 1001
-uint32_t  T1_id_next_ui_element_id(void);
 uint32_t  T1_id_next_nonui_id(void);
 
 /*
 CAMERA MANIPULATION
 */
-void  T1_cam_set_us_to_dest(int32_t cam_i, uint64_t us);
-float T1_cam_get_angle_xyz(int32_t cam_i, int32_t i);
-void  T1_cam_set_dest_xyz(int32_t cam_i, int32_t i, float newval);
-void  T1_cam_add_dest_xyz(int32_t cam_i, int32_t i, float newval);
-void  T1_cam_set_dest_angle_xyz(int32_t cam_i, int32_t i, float newval);
-void  T1_cam_add_dest_angle_xyz(int32_t cam_i, int32_t i, float val);
-void  T1_cam_set_min_xyz(int32_t cam_i, int32_t i, float val);
-void  T1_cam_set_max_xyz(int32_t cam_i, int32_t i, float val);
-void  T1_cam_set_angle_xyz_min(int32_t cam_i, int32_t i, float val);
-void  T1_cam_set_angle_xyz_max(int32_t cam_i, int32_t i, float val);
-// to unclamp, clamp to T1_id = -1
-void  T1_cam_set_clamped_to_T1_id(int32_t cam_i, uint32_t T1_id);
-void  T1_cam_set_movement_enabled(int32_t cam_i, uint8_t newval);
+/*
+Camera settings by name, for camera cam_i (0 is the main one): "xyz[0]" and
+"angle_xyz[0]" (to [2]) are where the camera is now. It eases towards
+"dest_xyz[0]" and "dest_angle_xyz[0]" over "us_to_destination" (u32)
+microseconds, kept within "min_xyz[0]"/"max_xyz[0]" and
+"min_angle_xyz[0]"/"max_angle_xyz[0]". "clamped_to_T1_id" (u32) makes it
+follow a zsprite, "movement_enabled" (u32) lets it move at all.
+*/
+void  T1_cam_set_f32(int32_t cam_i, const char * property, float value);
+void  T1_cam_set_u32(int32_t cam_i, const char * property, uint32_t value);
+float T1_cam_get_f32(int32_t cam_i, const char * property);
 void  T1_cam_delete_all(void);
 T1Tex T1_cam_get_write_tex(int32_t cam_i);
 void  T1_cam_reset(int32_t at_i);
@@ -183,12 +194,8 @@ void  T1_cam_reset(int32_t at_i);
 // the position of zpolygons
 float T1_screen_x_to_x(float screen_x, float given_z);
 float T1_screen_y_to_y(float screen_y, float at_z);
-float T1_screen_x_to_x_noz(float screen_x);
-float T1_screen_y_to_y_noz(float screen_y);
 float T1_screen_height_to_height(float screen_h, float at_z);
 float T1_screen_width_to_width(float screen_w, float at_z);
-float T1_screen_width_to_width_noz(float screen_w);
-float T1_screen_height_to_height_noz(float screen_h);
 
 void T1_make_shadowmap_and_attach_to_light(
     uint32_t T1_id, uint32_t w, uint32_t h);
@@ -242,9 +249,11 @@ float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
 TEXT LABELS
 
 Set text properties before requesting a label to choose the font height,
-color etc. for your next labels: "font_height", "rgba[0]" to "rgba[3]"
-(f32s), "touch_id", "highlight_i", "highlight_size" and "opaque_back_active"
-(u32s)
+color etc. for your next labels: "font_height", "rgba[0]" to "rgba[3]",
+"tab_width" (in widths of the letter 'D', 4 by default) (f32s), "touch_id",
+"highlight_i", "highlight_size" and "opaque_back_active" (u32s).
+Tabs only work with T1_TEXT_ALIGN_LEFT_TOP. Settings stay until you change
+them, also for later labels.
 */
 void T1_text_set_f32(
     const char * property,
@@ -253,36 +262,37 @@ void T1_text_set_u32(
     const char * property,
     uint32_t value);
 
+/*
+A label of texquads with T1_id, wrapped to max_width. align says what
+screen_x and screen_y are, e.g. T1_TEXT_ALIGN_CENTER puts the middle of
+the text there.
+*/
+void T1_text_request_label(
+    uint32_t T1_id,
+    const char * text,
+    T1TextAlign align,
+    float screen_x,
+    float screen_y,
+    float z,
+    float max_width);
+
+// Draws text centered on (mid_x, mid_y) into an rgba image
 void T1_text_draw_label_around(
     uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
     const char * text_to_draw,
     float mid_x_pixelspace,
     float mid_y_pixelspace,
     float max_width);
-void T1_text_request_label_offset_around(
-    uint32_t with_T1_id, const char * text,
-    float mid_screen_x, float mid_screen_y, float z,
-    float max_width);
-void T1_text_request_label_leftx_toplinemidy(
-    uint32_t with_T1_id, const char * text,
-    float screen_left, float topline_mid_screen_y, float z,
-    float max_width);
-void T1_text_request_label_renderable(
-    uint32_t with_T1_id,
-    const char * text,
-    float left_x_pixelspace,
-    float top_y_pixelspace,
-    float z,
-    float tab_width,
-    float max_width);
-void T1_text_request_label_around_x_at_top_y(
-    uint32_t with_T1_id, const char * text_to_draw,
-    float screen_mid_x, float screen_top_y, float z,
-    float max_width);
-void T1_text_request_label_around(
-    uint32_t with_T1_id, const char * text_to_draw,
-    float screen_mid_x, float screen_mid_y, float z,
-    float max_width);
+
+/*
+POST-PROCESSING
+
+Settings applied to the whole rendered image, by name: "rgb_add[0]" to
+"rgb_add[2]", and if active "fog_color[0]" to "fog_color[2]", "fog_factor"
+and "in_shadow_mults[0]" to "in_shadow_mults[2]"
+*/
+void  T1_postproc_set_f32(const char * property, float value);
+float T1_postproc_get_f32(const char * property);
 
 /*
 Objects by T1_id, with properties set by name (e.g. "xyz[0]", "alpha").
@@ -309,24 +319,16 @@ void T1_set_u32(
 void T1_merge_T1_ids(
     uint32_t T1_id_to_add,
     uint32_t T1_id_to_keep);
+// Deletes every zsprite, texquad and zlight with this T1_id
 void T1_delete(uint32_t T1_id);
+// Deletes every zsprite, texquad and zlight
+void T1_delete_all(void);
 
-/*
-TexQuads (textured 2D quads)
-*/
-void T1_texquad_delete(uint32_t T1_id);
-void T1_texquad_delete_all(void);
-
-/*
-zSprites (a 3D object with a mesh, T1_id, pos/angle etc.)
-*/
-void T1_zsprite_delete_all(void);
-void T1_zsprite_delete(uint32_t with_T1_id);
 #if T1_OCCLUSION_ACTIVE == T1_ACTIVE
 void T1_zsprite_set_occlusion(
-    s32 T1_id,
-    s32 new_visible_stat,
-    u64 wait_before_invis_us);
+    int32_t T1_id,
+    int32_t new_visible_stat,
+    uint64_t wait_before_invis_us);
 #elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
 #define T1_zsprite_set_occlusion(a, b, c)
 #else
@@ -334,37 +336,12 @@ void T1_zsprite_set_occlusion(
 #endif
 
 /*
-z-Lights (3D lights)
-*/
-void T1_zlight_delete(uint32_t T1_id);
-void T1_zlight_delete_all(void);
-
-/*
 Animations affecting various T1 objects
 */
-void T1_anim_fade_destroy_all(
-    uint64_t pause_first,
-    uint64_t duration_us);
-void T1_anim_dud_dance(
-    uint32_t T1_id,
-    float magnitude);
+// Toggles a zsprite's "no_cam" (0 or 1) without moving it on screen
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     uint32_t T1_id,
     float new_ignore_camera);
-void T1_anim_shatter_and_destroy(
-    uint32_t T1_id,
-    uint64_t duration_us);
-void T1_anim_evaporate_and_destroy(
-    uint32_t T1_id,
-    uint64_t duration_us);
-void T1_anim_fade_and_destroy(
-    uint32_t T1_id,
-    uint64_t pause_first,
-    uint64_t duration_us);
-void T1_anim_fade_to(
-    uint32_t T1_id,
-    uint64_t duration_us,
-    float target_alpha);
 void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
 void T1_anim_delete_all(void);
 
@@ -392,9 +369,6 @@ void T1_anim_set_delete_target_on_finish(
 void T1_anim_set_cancel_conflicting(
     uint32_t anim,
     uint8_t cancel_conflicting);
-void T1_anim_set_run_func_on_finish(
-    uint32_t anim,
-    void (* func)(void));
 // A duration of 1 microsecond applies the anim immediately
 void T1_anim_commit(uint32_t anim);
 
@@ -511,26 +485,12 @@ void T1_os_write_file_to_writables(
     uint32_t output_size, uint8_t * good);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath);
-uint64_t T1_os_get_current_time_us(void);
-
-/*
-TERMINAL
-*/
-#if T1_TERM_ACTIVE == T1_ACTIVE
-void T1_term_manually_deactivate(void);
-#elif T1_TERM_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
 
 /*
 AUDIO
+T1 plays raw samples (16-bit stereo at 44.1kHz), decode your sound files
+with whatever parser you like
 */
-extern T1AudioSettingsFullyPublic * T1_audio_state;
-void T1_wav_parse(
-    int16_t * recipient, uint32_t * recipient_size,
-    uint32_t recip_cap, uint8_t * raw_file,
-    uint32_t data_size, uint8_t * good);
 void T1_audio_register_samples_to_permasound(
     int32_t permasound_id,
     int16_t * samples,

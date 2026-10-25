@@ -34,6 +34,31 @@ This is the same screenspace coordinate system as used on Mac OS, so the Mac
 platform layer doesn't need to do anything and can just record values directly
 */
 
+typedef struct {
+    T1GPUPostProcConsts postproc_consts;
+    
+    uint64_t elapsed;
+    uint64_t this_frame_timestamp_us;
+    uint64_t last_resize_request_us;
+    
+    
+    float timedelta_mult;
+    float window_wh[2];
+    float window_left;
+    float window_bottom;
+    
+    uint8_t draw_mouseptr;
+    uint8_t draw_imputed_normals;
+    uint8_t draw_triangles;
+    uint8_t draw_axes;
+    uint8_t draw_fps;
+    uint8_t draw_touch_id;
+    uint8_t block_mouse;
+    uint8_t block_render_view_pos_updates;
+    uint8_t fullscreen;
+    uint8_t upcoming_fullscreen_request;
+} T1Globals;
+
 #define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
 #define T1_GLOBAL_CLEARDEPTH 1.0f
 

@@ -514,20 +514,9 @@ void T1_os_del_writable(
 void T1_os_layer_start_window_resize(
     const u64 timestamp)
 {
+    // The client's objects stay, it decides what to do with them when
+    // T1_frame_resized() reports the new size
     T1_global->last_resize_request_us = timestamp;
-    
-    T1_zsprite_delete_all();
-    T1_texquad_delete_all();
-    
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.fog_factor = 0.0f;
-    T1_global->postproc_consts.fog_color[0] = 0.0f;
-    T1_global->postproc_consts.fog_color[1] = 0.0f;
-    T1_global->postproc_consts.fog_color[2] = 0.0f;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
 }
 
 void T1_os_shutdown(void)

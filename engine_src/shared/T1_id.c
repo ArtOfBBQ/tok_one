@@ -7,15 +7,9 @@
 u32 T1_id_retired = T1_ID_RETIRED_BUT_NOT_DELETED + 1;
 
 static u32 T1_id_latest_nonui = T1_ID_FIRST_NONUI;
-static u32 T1_id_latest_ui = 2;
 
 static u32 T1_touch_id_latest_nonui = T1_ID_FIRST_NONUI_TOUCH;
 static u32 T1_touch_id_latest_ui = 2;
-
-u32 T1_id_next_ui_element_id(void) {
-    T1_log_assert(T1_id_latest_ui + 1 < T1_ID_FIRST_NONUI);
-    return T1_id_latest_ui++;
-}
 
 u32 T1_id_next_nonui_id(void) {
     T1_log_assert(

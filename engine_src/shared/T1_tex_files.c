@@ -68,7 +68,7 @@ void T1_tex_files_load_font_images(
     if (*fatal_error != 0) { return; }
     
     if (T1_tex_arrays_size != 0) {
-        *fatal_error = "Font error - other textures already existed";
+        *fatal_error = "T1_gpu_init() after textures were created";
         return;
     }
     
@@ -84,6 +84,4 @@ void T1_tex_files_load_font_images(
         /* b8 never_delete: */ 1,
         fatal_error);
     T1_mem_free_managed(font_img.rgba_values_freeable);
-    if (*fatal_error != 0) { return; }
-    T1_tex_arrays[0].request_init = 0;
 }
