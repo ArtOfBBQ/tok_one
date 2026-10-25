@@ -1157,7 +1157,7 @@ static void T1_anim_set_bits(
     
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
-        name, is_u32, matches, T1_PROPERTY_MATCHES_CAP);
+        name, is_u32, 0, matches, T1_PROPERTY_MATCHES_CAP);
     
     as->mutex_lock(as->mutex_id);
     

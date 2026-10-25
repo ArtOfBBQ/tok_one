@@ -20,6 +20,7 @@ typedef enum : u8 {
     T1_PROP_STORE_TQ_GPU_F32,
     T1_PROP_STORE_TQ_GPU_U32,
     T1_PROP_STORE_ZL_F32,
+    T1_PROP_STORE_TEXT,       // the settings for the next text label
     T1_PROP_STORE_OUTOFBOUNDS
 } T1PropertyStore;
 
@@ -35,12 +36,14 @@ typedef struct {
 #define T1_PROPERTY_MATCHES_CAP 4
 
 /*
-Finds every store that has a property with this name. Crashes if the name
-is unknown, or if it exists but not with the requested type (f32 or u32).
+Finds every store that has a property with this name, either among the
+object stores or (if text) in the text settings. Crashes if the name is
+unknown there, or if it exists but not with the requested type (f32 or u32).
 */
 u32 T1_property_find(
     const c8 * name,
     const u8 is_u32,
+    const b8 text,
     const T1Property ** recip,
     const u32 recip_cap);
 
@@ -67,6 +70,16 @@ void T1_set_u32(
 Every object (and animation) with T1_id_to_add now has T1_id_to_keep, so it
 moves, fades and gets deleted together with the others
 */
+/*
+Text settings, used by every text label requested after setting them
+*/
+void T1_text_set_f32(
+    const c8 * property,
+    f32 value);
+void T1_text_set_u32(
+    const c8 * property,
+    u32 value);
+
 void T1_merge_T1_ids(
     u32 T1_id_to_add,
     u32 T1_id_to_keep);

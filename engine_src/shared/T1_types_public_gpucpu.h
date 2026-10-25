@@ -8,20 +8,6 @@
 
 #define T1_TEX_NONE 32109
 
-typedef struct {
-    uint32_t reserved_and_tex;
-    uint32_t touch_id;
-    uint32_t padding[2];
-} T1GPUTexQuadu32;
-
-typedef struct {
-    float xyz[3];
-    float offset_xy[2];
-    float wh[2];
-    float rgba[4];
-    float padding[5];
-} T1GPUTexQuadf32;
-
 typedef struct
 {
     uint32_t timestamp;

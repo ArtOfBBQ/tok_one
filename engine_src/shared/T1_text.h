@@ -4,6 +4,19 @@
 #include "T1_types_public.h"
 #include "T1_texquad.h"
 
+/*
+The settings for the next label, the client sets them through
+T1_text_set_f32() and T1_text_set_u32()
+*/
+typedef struct {
+    T1GPUTexQuadf32 f32s;
+    T1GPUTexQuadu32 u32s;
+    float           font_height;
+    uint32_t        highlight_i;
+    uint32_t        highlight_size;
+    uint32_t        opaque_back_active;
+} T1TextFontSettings;
+
 extern T1TextFontSettings * T1_text_props;
 
 void T1_text_init(

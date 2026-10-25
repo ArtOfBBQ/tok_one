@@ -166,6 +166,20 @@ typedef struct {
 } T1GPUzSpriteList;
 
 typedef struct {
+    uint32_t reserved_and_tex;
+    uint32_t touch_id;
+    uint32_t padding[2];
+} T1GPUTexQuadu32;
+
+typedef struct {
+    float xyz[3];
+    float offset_xy[2];
+    float wh[2];
+    float rgba[4];
+    float padding[5];
+} T1GPUTexQuadf32;
+
+typedef struct {
     T1GPUTexQuadf32 f32s;
     T1GPUTexQuadu32 u32s;
 } T1GPUTexQuad;

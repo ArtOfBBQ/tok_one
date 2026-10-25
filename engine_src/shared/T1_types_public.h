@@ -192,15 +192,6 @@ typedef struct {
 } T1Globals;
 
 typedef struct {
-    T1GPUTexQuadf32 f32s;
-    T1GPUTexQuadu32 u32s;
-    float           font_height;
-    uint32_t        highlight_i;
-    uint32_t        highlight_size;
-    uint32_t        opaque_back_active;
-} T1TextFontSettings;
-
-typedef struct {
     float volume;
     float sfx_volume;
     float music_volume;

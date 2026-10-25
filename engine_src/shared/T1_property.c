@@ -9,11 +9,15 @@
 #include "T1_texquad.h"
 #include "T1_zlight.h"
 #include "T1_anim.h"
+#include "T1_text.h"
 
 // the extra layer lets ZS_CPU etc. expand to 2 arguments
 #define T1_PROP_F32_(store, type, field) \
     {#field, 0xFFFFFFFF, offsetof(type, field), 0, store, 0}
 #define T1_PROP_F32(...) T1_PROP_F32_(__VA_ARGS__)
+#define T1_PROP_F32_NAMED_(name, store, type, field) \
+    {name, 0xFFFFFFFF, offsetof(type, field), 0, store, 0}
+#define T1_PROP_F32_NAMED(...) T1_PROP_F32_NAMED_(__VA_ARGS__)
 #define T1_PROP_U32_(name, store, type, field) \
     {name, 0xFFFFFFFF, offsetof(type, field), 0, store, 1}
 #define T1_PROP_U32(...) T1_PROP_U32_(__VA_ARGS__)
@@ -30,6 +34,7 @@
 #define TQ_GPU T1_PROP_STORE_TQ_GPU_F32, T1GPUTexQuadf32
 #define TQ_U32 T1_PROP_STORE_TQ_GPU_U32, T1GPUTexQuadu32
 #define ZL     T1_PROP_STORE_ZL_F32,     T1zLightf32
+#define TEXT   T1_PROP_STORE_TEXT,       T1TextFontSettings
 
 static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_CPU, xyz[0]),
@@ -117,6 +122,17 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZL, reach),
     T1_PROP_F32(ZL, diffuse),
     T1_PROP_F32(ZL, specular),
+
+    T1_PROP_F32(TEXT, font_height),
+    T1_PROP_F32_NAMED("rgba[0]", TEXT, f32s.rgba[0]),
+    T1_PROP_F32_NAMED("rgba[1]", TEXT, f32s.rgba[1]),
+    T1_PROP_F32_NAMED("rgba[2]", TEXT, f32s.rgba[2]),
+    T1_PROP_F32_NAMED("rgba[3]", TEXT, f32s.rgba[3]),
+    T1_PROP_U32("touch_id", TEXT, u32s.touch_id),
+    // highlights highlight_size letters, starting at letter highlight_i
+    T1_PROP_U32("highlight_i", TEXT, highlight_i),
+    T1_PROP_U32("highlight_size", TEXT, highlight_size),
+    T1_PROP_U32("opaque_back_active", TEXT, opaque_back_active),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -137,6 +153,7 @@ static void T1_property_crash(
 u32 T1_property_find(
     const c8 * name,
     const u8 is_u32,
+    const b8 text,
     const T1Property ** recip,
     const u32 recip_cap)
 {
@@ -144,6 +161,10 @@ u32 T1_property_find(
     b8 name_exists = 0;
 
     for (u32 i = 0; i < T1_PROPERTIES_SIZE; i++) {
+        if ((T1_properties[i].store == T1_PROP_STORE_TEXT) != text) {
+            continue;
+        }
+
         if (!T1_std_are_equal_strings(T1_properties[i].name, name)) {
             continue;
         }
@@ -161,7 +182,9 @@ u32 T1_property_find(
     }
 
     if (!name_exists) {
-        T1_property_crash("Unknown T1 property", name);
+        T1_property_crash(
+            text ? "Unknown T1 text property" : "Unknown T1 property",
+            name);
     } else if (found == 0) {
         T1_property_crash(
             is_u32 ?
@@ -228,7 +251,7 @@ static void T1_set_bits(
 
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
-        name, is_u32, matches, T1_PROPERTY_MATCHES_CAP);
+        name, is_u32, 0, matches, T1_PROPERTY_MATCHES_CAP);
 
     u32 objects_set = 0;
     for (u32 i = 0; i < matches_size; i++) {
@@ -255,6 +278,35 @@ void T1_set_u32(
     u32 value)
 {
     T1_set_bits(T1_id, property, 1, value);
+}
+
+static void T1_text_set_bits(
+    const c8 * name,
+    const u8 is_u32,
+    const u32 bits)
+{
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        name, is_u32, 1, matches, T1_PROPERTY_MATCHES_CAP);
+    T1_log_assert(matches_size == 1);
+
+    T1_property_write(T1_text_props, matches[0], bits);
+}
+
+void T1_text_set_f32(
+    const c8 * property,
+    f32 value)
+{
+    u32 bits;
+    T1_std_memcpy(&bits, &value, 4);
+    T1_text_set_bits(property, 0, bits);
+}
+
+void T1_text_set_u32(
+    const c8 * property,
+    u32 value)
+{
+    T1_text_set_bits(property, 1, value);
 }
 
 void T1_merge_T1_ids(

@@ -257,10 +257,17 @@ float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
 /*
 TEXT LABELS
 
-Set fields in T1_text_props before requesting a label to choose
-the font properties etc. for your next label
+Set text properties before requesting a label to choose the font height,
+color etc. for your next labels: "font_height", "rgba[0]" to "rgba[3]"
+(f32s), "touch_id", "highlight_i", "highlight_size" and "opaque_back_active"
+(u32s)
 */
-extern T1TextFontSettings * T1_text_props;
+void T1_text_set_f32(
+    const char * property,
+    float value);
+void T1_text_set_u32(
+    const char * property,
+    uint32_t value);
 
 void T1_text_draw_label_around(
     uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
