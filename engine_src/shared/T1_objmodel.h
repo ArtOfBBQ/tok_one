@@ -2,6 +2,7 @@
 #define OBJMODEL_H
 
 #include "T1_stdint.h"
+#include "T1_types_public.h"
 
 // ******************************************************
 // **                 Client functions                 **
@@ -9,6 +10,13 @@
 
 // This functions returns a mesh_id
 // Use it in clientlogic_early_startup()
+/*
+Materials name their textures (map_Kd etc.), resolve_tex is asked for the
+T1Tex of each such filename while a mesh is loaded
+*/
+void T1_objmodel_set_tex_resolver(
+    T1Tex (* resolve_tex)(const char * filename));
+
 s32 T1_objmodel_new_mesh_id_from_resources(
     const char * filename,
     const char * mtl_filename,

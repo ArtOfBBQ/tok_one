@@ -17,6 +17,26 @@
 #include "T1_mesh_summary.h"
 #include "T1_os.h"
 
+static T1Tex (* T1_objmodel_tex_resolver)(const char * filename) = NULL;
+
+void T1_objmodel_set_tex_resolver(
+    T1Tex (* resolve_tex)(const char * filename))
+{
+    T1_objmodel_tex_resolver = resolve_tex;
+}
+
+// materials name their textures, the client tells us which T1Tex that is
+static T1Tex T1_objmodel_resolve_tex(const char * filename) {
+    if (filename == NULL || filename[0] == '\0') { return T1_TEX_NONE; }
+    
+    if (T1_objmodel_tex_resolver != NULL) {
+        return T1_objmodel_tex_resolver(filename);
+    }
+    
+    // TODO: remove with the other filename lookups
+    return T1_tex_array_get_filename_loc(filename);
+}
+
 static void construct_mesh_summary(
     T1MeshSummary * to_construct,
     const s32 id)
@@ -719,7 +739,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 if (parsed_materials[matching_parsed_materials_i].
                     diffuse_map[0] != '\0')
                 {
-                    T1Tex lmat = T1_tex_array_get_filename_loc(
+                    T1Tex lmat = T1_objmodel_resolve_tex(
                         /* const char * for_filename: */
                             parsed_materials[matching_parsed_materials_i].
                                 diffuse_map);
@@ -754,7 +774,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
                 
                 #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-                T1Tex lmat = T1_tex_array_get_filename_loc(
+                T1Tex lmat = T1_objmodel_resolve_tex(
                     /* const char * for_filename: */
                         parsed_materials[matching_parsed_materials_i].
                             bump_or_normal_map);

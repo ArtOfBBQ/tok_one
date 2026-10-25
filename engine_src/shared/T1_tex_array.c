@@ -448,6 +448,14 @@ void T1_tex_array_delete_slice(
         T1_log_assert(
             array_i < (s32)T1_tex_arrays_size);
         
+        if (T1_tex_arrays[array_i].images[slice_i].image.
+            rgba_values_freeable != NULL)
+        {
+            T1_mem_free_managed(
+                T1_tex_arrays[array_i].images[slice_i].image.
+                    rgba_values_freeable);
+        }
+        
         T1_std_memset(
             T1_tex_arrays[array_i].images + slice_i,
             0,
@@ -581,10 +589,24 @@ T1Tex T1_tex_array_prereg_img(
             T1_tex_arrays[i].is_render_target == is_render_target &&
             T1_tex_arrays[i].bc1_compressed == use_bc1_compression)
         {
-            const s16 slice_i = (s16)T1_tex_arrays[i].images_size;
+            // reuse a deleted slice if there is one, else append
+            s16 slice_i = (s16)T1_tex_arrays[i].images_size;
+            for (s16 j = 1; j < (s16)T1_tex_arrays[i].images_size; j++) {
+                if (T1_tex_arrays[i].images[j].deleted) {
+                    slice_i = j;
+                    break;
+                }
+            }
+            if (slice_i >= T1_TEX_SLICES_CAP) {
+                // this array is full, look for (or make) another one
+                continue;
+            }
             T1_tex_set_array_i(&retval, i);
-            T1_tex_set_slice_i(&retval, slice_i); 
-            T1_tex_arrays[i].images_size++;
+            T1_tex_set_slice_i(&retval, slice_i);
+            if (slice_i == (s16)T1_tex_arrays[i].images_size) {
+                T1_tex_arrays[i].images_size++;
+            }
+            T1_tex_arrays[i].images[slice_i].deleted = 0;
             
             T1Img * img = &T1_tex_arrays[i].images[slice_i].image;
             img->width = width;
@@ -611,6 +633,11 @@ T1Tex T1_tex_array_prereg_img(
         
         if (array_i == (s32)T1_tex_arrays_size)
         {
+            if (T1_tex_arrays_size >= T1_TEXARRAYS_CAP) {
+                *fatal_error =
+                    "Out of texture arrays, too many different image sizes";
+                return T1_TEX_NONE;
+            }
             T1_tex_arrays_size++;
         }
         
@@ -643,6 +670,76 @@ T1Tex T1_tex_array_prereg_img(
         filename);
     
     return retval;
+}
+
+T1Tex T1_tex_new(
+    const u8 * rgba,
+    u32 width,
+    u32 height,
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return T1_TEX_NONE; }
+    
+    if (rgba == NULL || width < 1 || height < 1) {
+        *fatal_error = "T1_tex_new() needs rgba and a width and height";
+        return T1_TEX_NONE;
+    }
+    
+    T1Tex tex = T1_tex_array_prereg_img(
+        /* const c8 * filename: */ "",
+        width,
+        height,
+        /* b8 is_render_target: */ 0,
+        /* b8 use_bc1_compression: */ 0,
+        /* b8 never_delete: */ 0,
+        fatal_error);
+    if (*fatal_error != 0) { return T1_TEX_NONE; }
+    
+    T1_tex_update(tex, rgba);
+    
+    return tex;
+}
+
+void T1_tex_update(
+    T1Tex tex,
+    const u8 * rgba)
+{
+    s32 array_i = T1_tex_to_array_i(tex);
+    s32 slice_i = T1_tex_to_slice_i(tex);
+    T1_log_assert(array_i >= 0);
+    T1_log_assert(array_i < (s32)T1_tex_arrays_size);
+    T1_log_assert(slice_i >= 0);
+    T1_log_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
+    T1_log_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
+    T1_log_assert(!T1_tex_arrays[array_i].is_render_target);
+    
+    T1_tex_array_update_rgba(
+        array_i,
+        slice_i,
+        rgba,
+        T1_tex_arrays[array_i].single_img_width *
+            T1_tex_arrays[array_i].single_img_height * 4);
+    
+    T1_os_gpu_push_tex_slice(array_i, slice_i);
+}
+
+void T1_tex_delete(T1Tex tex) {
+    if (tex == T1_TEX_NONE) { return; }
+    
+    T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].is_render_target);
+    T1_tex_array_delete_slice(
+        T1_tex_to_array_i(tex),
+        T1_tex_to_slice_i(tex));
+}
+
+u32 T1_tex_get_width(T1Tex tex) {
+    T1_log_assert(tex != T1_TEX_NONE);
+    return T1_tex_arrays[T1_tex_to_array_i(tex)].single_img_width;
+}
+
+u32 T1_tex_get_height(T1Tex tex) {
+    T1_log_assert(tex != T1_TEX_NONE);
+    return T1_tex_arrays[T1_tex_to_array_i(tex)].single_img_height;
 }
 
 T1Tex T1_tex_array_get_filename_loc(

@@ -209,7 +209,23 @@ uint8_t * T1_png_malloc_managed_from_resource(
     char ** const fatal_error);
 
 /*
-MANAGE TEXTURES
+TEXTURES
+T1_tex_new() uploads an image: width * height * 4 bytes of rgba, row by row.
+The T1Tex can then be used as a "texture" property. You can delete it or
+overwrite its pixels (same size) later.
+*/
+T1Tex    T1_tex_new(
+    const uint8_t * rgba,
+    uint32_t width,
+    uint32_t height,
+    char ** const fatal_error);
+void     T1_tex_update(T1Tex tex, const uint8_t * rgba);
+void     T1_tex_delete(T1Tex tex);
+uint32_t T1_tex_get_width(T1Tex tex);
+uint32_t T1_tex_get_height(T1Tex tex);
+
+/*
+MANAGE TEXTURES (old, being replaced by the functions above)
 */
 int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
 int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
@@ -241,6 +257,12 @@ MANAGE 3-D MODELS (.OBJ FILES)
 
 Each "mesh" you register will return a mesh_id (i32)
 */
+/*
+Materials name their textures (map_Kd etc.), resolve_tex is asked for the
+T1Tex of each such filename while a mesh is loaded
+*/
+void T1_objmodel_set_tex_resolver(
+    T1Tex (* resolve_tex)(const char * filename));
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * filename,
     const char * mtl_filename,

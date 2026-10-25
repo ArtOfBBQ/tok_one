@@ -77,6 +77,21 @@ void T1_tex_array_reg_new_by_splitting_img(
 
 T1Tex T1_tex_array_create_new_in_array(s32 array_i);
 
+/*
+Public functions (exposed via T1.h)
+*/
+T1Tex T1_tex_new(
+    const u8 * rgba,
+    u32 width,
+    u32 height,
+    char ** const fatal_error);
+void T1_tex_update(
+    T1Tex tex,
+    const u8 * rgba);
+void T1_tex_delete(T1Tex tex);
+u32 T1_tex_get_width(T1Tex tex);
+u32 T1_tex_get_height(T1Tex tex);
+
 T1Tex T1_tex_array_get_filename_loc(
     const char * for_filename);
 
