@@ -4,6 +4,7 @@
 
 #include "T1_mem.h"
 #include "T1_log.h"
+#include "T1_tex.h"
 #include "T1_global.h"
 #include "T1_types_cpu_to_gpu.h"
 #include "T1_easing.h"
