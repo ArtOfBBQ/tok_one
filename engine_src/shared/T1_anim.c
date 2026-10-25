@@ -29,6 +29,7 @@ typedef struct {
     T1GPUTexQuadf32 * tq_gpu_f32s;
     T1GPUTexQuadu32 * tq_gpu_u32s;
     T1zLightf32     * zl_gpu_f32s;
+    T1zLightu32     * zl_u32s;
     T1CamF32s       * cam_f32s;
     
     u64 duration_us;
@@ -42,6 +43,7 @@ typedef struct {
     u16 tq_gpu_f32s_store_i;
     u16 tq_gpu_u32s_store_i;
     u16 zl_f32s_store_i;
+    u16 zl_u32s_store_i;
     u16 cam_f32s_store_i;
     u32 runs;
     u32 target_T1_id;
@@ -94,6 +96,7 @@ static void T1_anim_sanity_check(T1Anim * a) {
 
 typedef struct {
     T1zLightf32     zl_gpu_f32s_store[T1_ANIMS_CAP];
+    T1zLightu32     zl_u32s_store[T1_ANIMS_CAP];
     T1GPUzSpritef32 zs_gpu_f32s_store[T1_ANIMS_CAP];
     T1GPUzSpriteu32 zs_gpu_u32s_store[T1_ANIMS_CAP];
     T1CPUzSpritef32 zs_cpu_f32s_store[T1_ANIMS_CAP];
@@ -178,6 +181,25 @@ static T1zLightf32 * T1_anim_fetch_next_store_zl_gpu_f32s(
     as->store_taken[i] |= (1 << 5);
     T1zLightf32 * out = &as->zl_gpu_f32s_store[i];
     T1_std_memset(out, 0, sizeof(T1zLightf32));
+    return out;
+}
+
+static T1zLightu32 * T1_anim_fetch_next_store_zl_u32s(
+    u16 * store_i)
+{
+    u16 i = 0;
+    while (
+        ((as->store_taken[i] >> 7) & 1) &&
+        i < T1_ANIMS_CAP)
+    {
+        i++;
+    }
+    T1_log_assert(i < T1_ANIMS_CAP);
+    
+    *store_i = i;
+    as->store_taken[i] |= (1 << 7);
+    T1zLightu32 * out = &as->zl_u32s_store[i];
+    T1_std_memset(out, 0, sizeof(T1zLightu32));
     return out;
 }
 
@@ -335,6 +357,9 @@ static T1Anim * T1_anim_alloc(b8 endpoints_not_deltas)
 static void T1_anim_delete(T1Anim * a) {
     if (a->zl_gpu_f32s) {
         as->store_taken[a->zl_f32s_store_i] &= ~(1 << 5);
+    }
+    if (a->zl_u32s) {
+        as->store_taken[a->zl_u32s_store_i] &= ~(1 << 7);
     }
     if (a->zs_gpu_f32s) {
         as->store_taken[a->zs_gpu_f32s_store_i] &= ~(1 << 4);
@@ -499,7 +524,7 @@ static void T1_anim_resolve_single(
                 /* const u32 * goal_gpu_vals_u32: */
                     (u32 *)a->tq_gpu_u32s);
         }
-        if (a->zl_gpu_f32s)
+        if (a->zl_gpu_f32s || a->zl_u32s)
         {
             T1_zlight_apply_endpoint_anim(
                 /* u32 T1_id: */
@@ -509,7 +534,9 @@ static void T1_anim_resolve_single(
                 /* f32 t_now: */
                     t_now,
                 /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->zl_gpu_f32s);
+                    (f32 *)a->zl_gpu_f32s,
+                /* const u32 * goal_vals_u32: */
+                    (u32 *)a->zl_u32s);
         }
         if (a->cam_f32s) {
             T1_render_view_apply_endpoint_anim(
@@ -641,6 +668,7 @@ static b8 T1_anim_shares_a_property(const T1Anim * a, const T1Anim * b)
         T1_ANIM_OVERLAP(tq_gpu_f32s, T1GPUTexQuadf32) ||
         T1_ANIM_OVERLAP(tq_gpu_u32s, T1GPUTexQuadu32) ||
         T1_ANIM_OVERLAP(zl_gpu_f32s, T1zLightf32) ||
+        T1_ANIM_OVERLAP(zl_u32s, T1zLightu32) ||
         T1_ANIM_OVERLAP(cam_f32s, T1CamF32s);
     #undef T1_ANIM_OVERLAP
 }
@@ -808,6 +836,13 @@ static void * T1_anim_get_store(
                 &a->zl_f32s_store_i);
             out = a->zl_gpu_f32s;
             size = sizeof(T1zLightf32);
+            break;
+        case T1_PROP_STORE_ZL_U32:
+            if (a->zl_u32s) { return a->zl_u32s; }
+            a->zl_u32s = T1_anim_fetch_next_store_zl_u32s(
+                &a->zl_u32s_store_i);
+            out = a->zl_u32s;
+            size = sizeof(T1zLightu32);
             break;
         case T1_PROP_STORE_CAM_F32:
             if (a->cam_f32s) { return a->cam_f32s; }

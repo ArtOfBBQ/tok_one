@@ -796,6 +796,9 @@ void T1_text_request_debug_text(const char * text)
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
+    // T1's own labels show up in every camera
+    u32 previous_layers = T1_text_props->u32s.layers;
+    T1_text_props->u32s.layers = 0xFFFFFFFF;
     T1_text_request_label_left_top(
         /* with_id               : */
             T1_ID_DEBUG_TEXT,
@@ -811,6 +814,7 @@ void T1_text_request_debug_text(const char * text)
             4.0f,
         /* f32 max_width       : */
             T1_render_views->cpu[0].width);
+    T1_text_props->u32s.layers = previous_layers;
 }
 
 #define FPS_FRAMES_MAX 10
@@ -866,6 +870,9 @@ void T1_text_request_fps(
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
+    // T1's own labels show up in every camera
+    u32 previous_layers = T1_text_props->u32s.layers;
+    T1_text_props->u32s.layers = 0xFFFFFFFF;
     
     T1_text_request_label_left_top(
         /* with_id               : */
@@ -882,6 +889,7 @@ void T1_text_request_fps(
             4.0f,
         /* f32 max_width       : */
             T1_render_views->cpu[0].width);
+    T1_text_props->u32s.layers = previous_layers;
 }
 
 void T1_text_request_top_touch_id(
@@ -899,6 +907,9 @@ void T1_text_request_top_touch_id(
     T1_text_props->f32s.rgba[2] = 1.0f;
     T1_text_props->f32s.rgba[3] = 1.0f;
     T1_text_props->u32s.touch_id = T1_TOUCH_ID_NONE;
+    // T1's own labels show up in every camera
+    u32 previous_layers = T1_text_props->u32s.layers;
+    T1_text_props->u32s.layers = 0xFFFFFFFF;
     
     T1_text_request_label_left_top(
         /* with_id               : */
@@ -915,4 +926,5 @@ void T1_text_request_top_touch_id(
             4.0f,
         /* f32 max_width       : */
             T1_render_views->cpu[0].width);
+    T1_text_props->u32s.layers = previous_layers;
 }

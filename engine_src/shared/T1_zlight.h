@@ -21,6 +21,11 @@ typedef struct {
 } T1zLightf32;
 
 typedef struct {
+    // lights the render views whose visible_layers share a bit with it
+    uint32_t layers;
+} T1zLightu32;
+
+typedef struct {
     T1zLightf32 f32s;
     // you can make a group of lights and/or texquads by
     // giving them the same positive object_id, then make
@@ -31,7 +36,8 @@ typedef struct {
     uint32_t committed;
     int32_t shadow_map_depth_texture_i;
     int32_t shadow_map_render_view_i;
-    float simd_padding[3];
+    T1zLightu32 u32s;
+    float simd_padding[2];
 } T1zLight;
 
 
@@ -88,6 +94,7 @@ void T1_zlight_update_all_attached_render_views(void);
 
 void T1_zlight_apply_endpoint_anim(
     u32 T1_id, f32 t_applied, f32 t_now,
-    const f32 * goal_vals_f32);
+    const f32 * goal_vals_f32,
+    const u32 * goal_vals_u32);
 
 #endif // T1_ZLIGHT_H

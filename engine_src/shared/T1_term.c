@@ -97,6 +97,7 @@ static void T1_term_redraw_backgrounds(void) {
             T1_TERM_Z);
     input_req.gpu->u32s.reserved_and_tex =
         0x00000000 | T1_TEX_NONE;
+    input_req.gpu->u32s.layers = 0xFFFFFFFF;
     input_req.gpu->f32s.rgba[0] =
         T1_trms->background_color[0];
     input_req.gpu->f32s.rgba[1] =
@@ -155,6 +156,9 @@ static void T1_term_render(void) {
         T1_text_props->font_height;
     T1_text_props->font_height =
         T1_TERM_FONT_SIZE;
+    // the terminal shows up in every camera
+    u32 previous_layers = T1_text_props->u32s.layers;
+    T1_text_props->u32s.layers = 0xFFFFFFFF;
     
     // draw the terminal's history as a label
     f32 history_label_top =
@@ -226,6 +230,7 @@ static void T1_term_render(void) {
     if (T1_trms->cur_command[0] == '\0') {
         T1_text_props->font_height =
             previous_font_height;
+        T1_text_props->u32s.layers = previous_layers;
         requesting_label_update = 0;
         return;
     }
@@ -252,6 +257,7 @@ static void T1_term_render(void) {
     
     T1_text_props->font_height =
         previous_font_height;
+    T1_text_props->u32s.layers = previous_layers;
     
     requesting_label_update = 0;
 }

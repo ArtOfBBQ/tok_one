@@ -27,6 +27,7 @@ static void T1_zlight_construct(T1zLight * to_construct)
     to_construct->committed          = 0;
     
     to_construct->shadow_map_depth_texture_i = -1;
+    to_construct->u32s.layers = 1;
 }
 
 T1zLight * T1_zlight_next(void)
@@ -69,7 +70,9 @@ u32 T1_zlight_set_property(
     const T1Property * property,
     u32 bits)
 {
-    T1_log_assert(property->store == T1_PROP_STORE_ZL_F32);
+    T1_log_assert(
+        property->store == T1_PROP_STORE_ZL_F32 ||
+        property->store == T1_PROP_STORE_ZL_U32);
     
     u32 count = 0;
     for (u32 i = 0; i < T1_zlights_size; i++) {
@@ -77,7 +80,11 @@ u32 T1_zlight_set_property(
             continue;
         }
         
-        T1_property_write(&T1_zlights[i].f32s, property, bits);
+        if (property->store == T1_PROP_STORE_ZL_F32) {
+            T1_property_write(&T1_zlights[i].f32s, property, bits);
+        } else {
+            T1_property_write(&T1_zlights[i].u32s, property, bits);
+        }
         count += 1;
     }
     
@@ -131,6 +138,7 @@ void T1_zlight_copy_all(
                 T1_zlights[i].shadow_map_depth_texture_i;
             l[*l_size].shadow_map_render_view_i =
                 T1_zlights[i].shadow_map_render_view_i;
+            l[*l_size].layers = T1_zlights[i].u32s.layers;
             
             *l_size += 1;
         }
@@ -270,7 +278,8 @@ void T1_zlight_update_all_attached_render_views(void)
 
 void T1_zlight_apply_endpoint_anim(
     u32 T1_id, f32 t_applied, f32 t_now,
-    const f32 * end_vals_f32)
+    const f32 * end_vals_f32,
+    const u32 * end_vals_u32)
 {
     T1_log_assert((sizeof(T1zLightf32) / 4) %
         SIMD_FLOAT_LANES == 0);
@@ -333,6 +342,17 @@ void T1_zlight_apply_endpoint_anim(
                 
                 simd_store_f32s(
                     recip_vals_gpu + simd_step_i, simd_cur_vals);
+            }
+        }
+        
+        // u32s don't interpolate, they jump to their endpoint at the end
+        if (end_vals_u32 && t_now >= 1.0f) {
+            u32 * recip_vals_u32 = (u32 *)&T1_zlights[zl_i].u32s;
+            const f32 * end_flags = (const f32 *)end_vals_u32;
+            for (u32 v = 0; v < sizeof(T1zLightu32) / sizeof(u32); v++) {
+                if (end_flags[v] != T1_ANIM_NO_EFFECT) {
+                    recip_vals_u32[v] = end_vals_u32[v];
+                }
             }
         }
     }

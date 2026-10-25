@@ -101,6 +101,7 @@ typedef struct {
     f32 rgb[3];
     s32 shadow_map_depth_tex_i;
     s32 shadow_map_render_view_i;
+    u32 layers; // lights the render views whose visible_layers share a bit
 } T1GPULight;
 
 typedef struct

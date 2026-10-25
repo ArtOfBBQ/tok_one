@@ -605,6 +605,7 @@ void T1_particle_add_all_to_frame_data(
         if (T1_shatter_effects[i].cast_light) {
             T1GPULight * next = &frame_data->lights[frame_data->postproc_consts->lights_size];
             
+            next->layers = 0xFFFFFFFF;
             next->angle_xyz[0] = 0.0f;
             next->angle_xyz[1] = 0.0f;
             next->angle_xyz[2] = 0.0f;
@@ -683,6 +684,7 @@ void T1_particle_add_all_to_frame_data(
         if (T1_particle_effects[i].cast_light) {
             T1GPULight * next = &frame_data->lights[frame_data->postproc_consts->lights_size];
             
+            next->layers = 0xFFFFFFFF;
             next->angle_xyz[0] = 0.0f;
             next->angle_xyz[1] = 0.0f;
             next->angle_xyz[2] = 0.0f;

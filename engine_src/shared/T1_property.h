@@ -20,6 +20,7 @@ typedef enum : u8 {
     T1_PROP_STORE_TQ_GPU_F32,
     T1_PROP_STORE_TQ_GPU_U32,
     T1_PROP_STORE_ZL_F32,
+    T1_PROP_STORE_ZL_U32,
     T1_PROP_STORE_CAM_F32,
     T1_PROP_STORE_CAM_U32,    // not animatable
     T1_PROP_STORE_TEXT,       // the settings for the next text label

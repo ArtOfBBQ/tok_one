@@ -36,6 +36,7 @@
 #define TQ_GPU T1_PROP_STORE_TQ_GPU_F32, T1GPUTexQuadf32
 #define TQ_U32 T1_PROP_STORE_TQ_GPU_U32, T1GPUTexQuadu32
 #define ZL     T1_PROP_STORE_ZL_F32,     T1zLightf32
+#define ZLU    T1_PROP_STORE_ZL_U32,     T1zLightu32
 #define TEXT   T1_PROP_STORE_TEXT,       T1TextFontSettings
 #define POST   T1_PROP_STORE_POSTPROC,   T1GPUPostProcConsts
 #define CAM    T1_PROP_STORE_CAM_F32,    T1CamF32s
@@ -135,6 +136,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZL, reach),
     T1_PROP_F32(ZL, diffuse),
     T1_PROP_F32(ZL, specular),
+    T1_PROP_U32("layers", ZLU, layers),
 
     T1_PROP_F32(TEXT, font_height),
     T1_PROP_F32_NAMED("rgba[0]", TEXT, f32s.rgba[0]),
@@ -142,6 +144,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32_NAMED("rgba[2]", TEXT, f32s.rgba[2]),
     T1_PROP_F32_NAMED("rgba[3]", TEXT, f32s.rgba[3]),
     T1_PROP_U32("touch_id", TEXT, u32s.touch_id),
+    T1_PROP_U32("layers", TEXT, u32s.layers),
     // highlights highlight_size letters, starting at letter highlight_i
     T1_PROP_U32("highlight_i", TEXT, highlight_i),
     T1_PROP_U32("highlight_size", TEXT, highlight_size),
@@ -339,6 +342,7 @@ static u32 T1_property_set_bits(
         case T1_PROP_STORE_TQ_GPU_U32:
             return T1_texquad_set_property(T1_id, p, bits);
         case T1_PROP_STORE_ZL_F32:
+        case T1_PROP_STORE_ZL_U32:
             return T1_zlight_set_property(T1_id, p, bits);
         case T1_PROP_STORE_CAM_F32:
         case T1_PROP_STORE_CAM_U32:
