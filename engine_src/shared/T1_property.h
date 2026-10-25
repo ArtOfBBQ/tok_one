@@ -81,6 +81,27 @@ b8 T1_property_is_packed(const T1Property * property);
 
 b8 T1_property_is_animatable(const T1Property * property);
 
+/*
+One step of an anim on one object's store struct, which is a plain list of
+f32s or u32s. Endpoint anims move each value the share of the way that was
+left (values that are T1_ANIM_NO_EFFECT in the anim stay put), delta anims
+add their value times the t that passed. u32s don't interpolate, they jump
+to their endpoint once the anim is finished.
+*/
+typedef struct {
+    const void * vals;
+    u32 size_bytes;
+    f32 t_applied; // eased
+    f32 t_now;     // eased
+    b8  is_u32;
+    b8  endpoints_not_deltas;
+    b8  finished;
+} T1AnimStep;
+
+void T1_property_apply_anim_step(
+    void * recip,
+    const T1AnimStep * step);
+
 void T1_set_f32(
     u32 T1_id,
     const c8 * property,

@@ -4,6 +4,7 @@
 
 #include "T1_std.h"
 #include "T1_log.h"
+#include "T1_simd.h"
 #include "T1_types_public.h"
 #include "T1_zsprite.h"
 #include "T1_texquad.h"
@@ -377,6 +378,76 @@ static void T1_set_bits(
 
     // no object with this T1_id has this property
     T1_log_assert(objects_set > 0);
+}
+
+void T1_property_apply_anim_step(
+    void * recip,
+    const T1AnimStep * step)
+{
+    T1_log_assert(step->size_bytes % sizeof(f32) == 0);
+    const u32 vals_size = step->size_bytes / sizeof(f32);
+    
+    if (step->is_u32) {
+        // u32s can't be deltas
+        T1_log_assert(step->endpoints_not_deltas);
+        if (!step->finished) { return; }
+        
+        u32 * recip_u32s = (u32 *)recip;
+        const u32 * end_u32s = (const u32 *)step->vals;
+        // T1_ANIM_NO_EFFECT is an f32, even in a store of u32s
+        const f32 * end_flags = (const f32 *)step->vals;
+        for (u32 i = 0; i < vals_size; i++) {
+            if (end_flags[i] != T1_ANIM_NO_EFFECT) {
+                recip_u32s[i] = end_u32s[i];
+            }
+        }
+        return;
+    }
+    
+    f32 * recip_f32s = (f32 *)recip;
+    const f32 * anim_f32s = (const f32 *)step->vals;
+    u32 i = 0;
+    
+    if (step->endpoints_not_deltas) {
+        // the share of what was left to go that we go now, at t 1 every
+        // value is exactly its endpoint
+        const f32 t_mult =
+            (step->t_now - step->t_applied) / (1.0f - step->t_applied);
+        
+        SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
+        f32 no_effect = T1_ANIM_NO_EFFECT;
+        SIMD_FLOAT simd_noeffect = simd_set1_f32(no_effect);
+        for (; i + SIMD_FLOAT_LANES <= vals_size; i += SIMD_FLOAT_LANES) {
+            SIMD_FLOAT goal = simd_load_f32s(anim_f32s + i);
+            SIMD_FLOAT cur = simd_load_f32s(recip_f32s + i);
+            SIMD_FLOAT delta = simd_mul_f32s(
+                simd_sub_f32s(goal, cur), simd_t);
+            SIMD_FLOAT affected = simd_not_f32s(
+                simd_cmpeq_f32s(goal, simd_noeffect));
+            simd_store_f32s(
+                recip_f32s + i,
+                simd_add_f32s(cur, simd_and_f32s(delta, affected)));
+        }
+        for (; i < vals_size; i++) {
+            if (anim_f32s[i] == T1_ANIM_NO_EFFECT) { continue; }
+            recip_f32s[i] += (anim_f32s[i] - recip_f32s[i]) * t_mult;
+        }
+    } else {
+        // unused values in a delta store are 0, they add nothing
+        const f32 t_passed = step->t_now - step->t_applied;
+        
+        SIMD_FLOAT simd_t = simd_set1_f32(t_passed);
+        for (; i + SIMD_FLOAT_LANES <= vals_size; i += SIMD_FLOAT_LANES) {
+            SIMD_FLOAT delta = simd_mul_f32s(
+                simd_load_f32s(anim_f32s + i), simd_t);
+            simd_store_f32s(
+                recip_f32s + i,
+                simd_add_f32s(simd_load_f32s(recip_f32s + i), delta));
+        }
+        for (; i < vals_size; i++) {
+            recip_f32s[i] += anim_f32s[i] * t_passed;
+        }
+    }
 }
 
 void T1_set_f32(

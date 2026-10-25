@@ -54,27 +54,12 @@ void T1_texquad_fetch_next(
 void T1_texquad_commit(
     T1TexQuadRequest * request);
 
-void T1_texquad_apply_endpoint_anim(
-    u32 T1_id, u32 touch_id,
-    f32 t_applied, f32 t_now,
-    const f32 * goal_gpu_f32s,
-    const u32 * goal_gpu_u32s);
 
-void T1_texquad_apply_anim_effects_at_t(
-    f32 t_applied, f32 t_now,
-    const f32 * anim_gpu_f32s,
-    const u32 * anim_gpu_u32s,
-    const f32 * anim_cpu_f32s,
-    T1GPUTexQuadf32 * recip_f32s,
-    T1GPUTexQuadu32 * recip_u32s);
-
-void T1_texquad_apply_anim_effects_to_id(
-    u32 T1_id,
-    u32 touch_id,
-    f32 t_applied,
-    f32 t_now,
-    const f32 * anim_gpu_vals_f32,
-    const u32 * anim_gpu_vals_u32);
+// applies the step to the store of every texquad with T1_id
+void T1_texquad_apply_anim_step(
+    const u32 T1_id,
+    const u8 store,
+    const T1AnimStep * step);
 
 void T1_texquad_draw_test(
     f32 width,

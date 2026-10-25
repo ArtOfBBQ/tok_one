@@ -92,9 +92,10 @@ void T1_zlight_point_light_to_location(
 
 void T1_zlight_update_all_attached_render_views(void);
 
-void T1_zlight_apply_endpoint_anim(
-    u32 T1_id, f32 t_applied, f32 t_now,
-    const f32 * goal_vals_f32,
-    const u32 * goal_vals_u32);
+// applies the step to the store of every zlight with T1_id
+void T1_zlight_apply_anim_step(
+    const u32 T1_id,
+    const u8 store,
+    const T1AnimStep * step);
 
 #endif // T1_ZLIGHT_H

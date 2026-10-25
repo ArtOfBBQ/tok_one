@@ -387,6 +387,45 @@ static void T1_anim_delete(T1Anim * a) {
 }
 
 // moves a forward by elapsed microseconds
+// applies one of a's stores (if a has it) to every object a targets
+static void T1_anim_apply_store(
+    const T1Anim * a,
+    T1AnimStep * step,
+    const u8 store,
+    const void * vals,
+    const u32 size_bytes)
+{
+    if (vals == NULL) { return; }
+    
+    step->vals = vals;
+    step->size_bytes = size_bytes;
+    step->is_u32 =
+        store == T1_PROP_STORE_ZS_GPU_U32 ||
+        store == T1_PROP_STORE_TQ_GPU_U32 ||
+        store == T1_PROP_STORE_ZL_U32;
+    
+    switch (store) {
+        case T1_PROP_STORE_ZS_CPU_F32:
+        case T1_PROP_STORE_ZS_GPU_F32:
+        case T1_PROP_STORE_ZS_GPU_U32:
+            T1_zsprite_apply_anim_step(a->target_T1_id, store, step);
+            break;
+        case T1_PROP_STORE_TQ_GPU_F32:
+        case T1_PROP_STORE_TQ_GPU_U32:
+            T1_texquad_apply_anim_step(a->target_T1_id, store, step);
+            break;
+        case T1_PROP_STORE_ZL_F32:
+        case T1_PROP_STORE_ZL_U32:
+            T1_zlight_apply_anim_step(a->target_T1_id, store, step);
+            break;
+        case T1_PROP_STORE_CAM_F32:
+            T1_render_view_apply_anim_step(a->target_T1_id, store, step);
+            break;
+        default:
+            T1_log_assert(0);
+    }
+}
+
 static void T1_anim_resolve_single(
     T1Anim * a,
     u64 elapsed)
@@ -469,6 +508,8 @@ static void T1_anim_resolve_single(
     
     T1_log_assert(a->already_applied_t <= t_now);
     a->already_applied_t = t_now;
+    // decided before easing, an eased t can end anywhere
+    b8 finished = t_now >= 1.0f;
     
     t_now = T1_easing_t_to_eased_t(
         t_now,
@@ -484,120 +525,28 @@ static void T1_anim_resolve_single(
     #error
     #endif
     
-    if (a->endpoints_not_deltas) {
-        if (
-            a->zs_gpu_f32s ||
-            a->zs_gpu_u32s ||
-            a->zs_cpu_f32s)
-        {
-            T1_zsprite_apply_endpoint_anim(
-                /* u32 T1_id: */
-                    a->target_T1_id,
-                /* u32 touch_id: */
-                    T1_TOUCH_ID_NONE,
-                /* f32 t_applied: */
-                    t_applied,
-                /* f32 t_now: */
-                    t_now,
-                /* f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->zs_gpu_f32s,
-                /* const u32 * goal_gpu_vals_u32: */
-                    (u32 *)a->zs_gpu_u32s,
-                /* const f32 * goal_cpu_vals: */
-                    (f32 *)a->zs_cpu_f32s);
-        }
-        if (
-            a->tq_gpu_f32s ||
-            a->tq_gpu_u32s)
-        {
-            T1_texquad_apply_endpoint_anim(
-                /* u32 T1_id: */
-                    a->target_T1_id,
-                /* u32 touch_id: */
-                    T1_TOUCH_ID_NONE,
-                /* f32 t_applied: */
-                    t_applied,
-                /* f32 t_now: */
-                    t_now,
-                /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->tq_gpu_f32s,
-                /* const u32 * goal_gpu_vals_u32: */
-                    (u32 *)a->tq_gpu_u32s);
-        }
-        if (a->zl_gpu_f32s || a->zl_u32s)
-        {
-            T1_zlight_apply_endpoint_anim(
-                /* u32 T1_id: */
-                    a->target_T1_id,
-                /* f32 t_applied: */
-                    t_applied,
-                /* f32 t_now: */
-                    t_now,
-                /* const f32 * goal_gpu_vals_f32: */
-                    (f32 *)a->zl_gpu_f32s,
-                /* const u32 * goal_vals_u32: */
-                    (u32 *)a->zl_u32s);
-        }
-        if (a->cam_f32s) {
-            T1_render_view_apply_endpoint_anim(
-                a->target_T1_id,
-                t_applied,
-                t_now,
-                (f32 *)a->cam_f32s);
-        }
-    } else {
-        if (
-            a->zs_gpu_f32s ||
-            a->zs_gpu_u32s ||
-            a->zs_cpu_f32s)
-        {
-            T1_zsprite_apply_anim_effects_to_id(
-                /* u32 T1_id: */
-                    a->target_T1_id,
-                /* u32 touch_id: */
-                    T1_TOUCH_ID_NONE,
-                /* f32 t_applied: */
-                    t_applied,
-                /* f32 t_now: */
-                    t_now,
-                /* const f32 * anim_gpu_f32s: */
-                    (f32 *)a->zs_gpu_f32s,
-                /* const u32 * anim_gpu_u32s: */
-                    (u32 *)a->zs_gpu_u32s,
-                /* const f32 * anim_cpu_f32s: */
-                    (f32 *)a->zs_cpu_f32s);
-        }
-        if (
-            a->tq_gpu_f32s ||
-            a->tq_gpu_u32s)
-        {
-            T1_texquad_apply_anim_effects_to_id(
-                /* u32 T1_id: */
-                    a->target_T1_id,
-                /* u32 touch_id: */
-                    T1_TOUCH_ID_NONE,
-                /* f32 t_applied: */
-                    t_applied,
-                /* f32 t_now: */
-                    t_now,
-                /* const f32 * anim_gpu_vals_f32: */
-                    (f32 *)a->tq_gpu_f32s,
-                /* const u32 * anim_gpu_vals_u32: */
-                    (u32 *)a->tq_gpu_u32s);
-        }
-        if (a->zl_gpu_f32s)
-        {
-            // TODO: apply anim (non-endpoint) for zLight
-            T1_log_assert(0);
-        }
-        if (a->cam_f32s) {
-            T1_render_view_apply_delta_anim(
-                a->target_T1_id,
-                t_applied,
-                t_now,
-                (f32 *)a->cam_f32s);
-        }
-    }
+    T1AnimStep step;
+    step.t_applied = t_applied;
+    step.t_now = t_now;
+    step.endpoints_not_deltas = a->endpoints_not_deltas;
+    step.finished = finished;
+    
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_ZS_GPU_F32,
+        a->zs_gpu_f32s, sizeof(T1GPUzSpritef32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_ZS_CPU_F32,
+        a->zs_cpu_f32s, sizeof(T1CPUzSpritef32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_ZS_GPU_U32,
+        a->zs_gpu_u32s, sizeof(T1GPUzSpriteu32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_TQ_GPU_F32,
+        a->tq_gpu_f32s, sizeof(T1GPUTexQuadf32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_TQ_GPU_U32,
+        a->tq_gpu_u32s, sizeof(T1GPUTexQuadu32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_ZL_F32,
+        a->zl_gpu_f32s, sizeof(T1zLightf32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_ZL_U32,
+        a->zl_u32s, sizeof(T1zLightu32));
+    T1_anim_apply_store(a, &step, T1_PROP_STORE_CAM_F32,
+        a->cam_f32s, sizeof(T1CamF32s));
 }
 
 static void T1_anim_assert_anim_valid_before_commit(T1Anim * a)
@@ -885,13 +834,6 @@ static void T1_anim_set_bits(
         
         // e.g. texquad offsets and materials have no anim store
         if (!T1_property_is_animatable(p)) { continue; }
-        // TODO: deltas aren't implemented for zlights
-        if (
-            !a->endpoints_not_deltas &&
-            p->store == T1_PROP_STORE_ZL_F32)
-        {
-            continue;
-        }
         // TODO: animate values that share a u32
         T1_log_assert(!T1_property_is_packed(p));
         // u32s jump to their endpoint, they can't be deltas

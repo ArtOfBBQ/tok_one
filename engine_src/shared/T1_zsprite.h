@@ -107,27 +107,12 @@ void T1_zsprite_construct_cube_around(
     f32 width, f32 height, f32 depth,
     T1zSpriteRequest * stack_recipient);
 
-void T1_zsprite_apply_endpoint_anim(
-    u32 T1_id, u32 touch_id, f32 t_applied, f32 t_now,
-    const f32 * goal_gpu_vals_f32,
-    const u32 * goal_gpu_vals_u32,
-    const f32 * goal_cpu_vals);
 
-void T1_zsprite_anim_apply_effects_at_t(
-    f32 t_applied, f32 t_now,
-    const f32 * anim_gpu_vals,
-    const u32 * anim_gpu_u32s,
-    const f32 * anim_cpu_f32s,
-    T1GPUzSpritef32 * recip_gpu_f32s,
-    T1GPUzSpriteu32 * recip_gpu_u32s,
-    T1CPUzSpritef32 * recip_cpu_f32s);
-
-void T1_zsprite_apply_anim_effects_to_id(
-    u32 T1_id, u32 touch_id,
-    f32 t_applied, f32 t_now,
-    const f32 * anim_gpu_f32s,
-    const u32 * anim_gpu_u32s,
-    const f32 * anim_cpu_f32s);
+// applies the step to the store of every zsprite with T1_id
+void T1_zsprite_apply_anim_step(
+    const u32 T1_id,
+    const u8 store,
+    const T1AnimStep * step);
 
 // TODO: encapsulate collection instead of externing
 typedef struct {

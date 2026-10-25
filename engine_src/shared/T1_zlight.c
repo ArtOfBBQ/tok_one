@@ -276,84 +276,24 @@ void T1_zlight_update_all_attached_render_views(void)
     }
 }
 
-void T1_zlight_apply_endpoint_anim(
-    u32 T1_id, f32 t_applied, f32 t_now,
-    const f32 * end_vals_f32,
-    const u32 * end_vals_u32)
+void T1_zlight_apply_anim_step(
+    const u32 T1_id,
+    const u8 store,
+    const T1AnimStep * step)
 {
-    T1_log_assert((sizeof(T1zLightf32) / 4) %
-        SIMD_FLOAT_LANES == 0);
-    
-    // When t is 1.0f, all of our stats will
-    // be exactly equal to target_delta
-    const f32 was_left_t = 1.0f - t_applied;
-    const f32 did_now_t = t_now - t_applied;
-    const f32 t_mult = did_now_t / was_left_t;
-    SIMD_FLOAT simd_t = simd_set1_f32(t_mult);
-    
-    f32 no_effect = T1_ANIM_NO_EFFECT;
-    SIMD_FLOAT simd_noeffect = simd_set1_f32(no_effect);
-    
-    for (
-        s32 zl_i = 0;
-        zl_i < (s32)T1_zlights_size;
-        zl_i++)
-    {
+    for (u32 i = 0; i < T1_zlights_size; i++) {
         if (
-            T1_zlights[zl_i].deleted ||
-            (
-                T1_id != T1_ANIM_HIT_EVERYTHING &&
-                T1_zlights[zl_i].T1_id != T1_id
-            )
-        )
+            T1_zlights[i].deleted ||
+            (T1_id != T1_ANIM_HIT_EVERYTHING &&
+                T1_zlights[i].T1_id != T1_id))
         {
             continue;
         }
         
-        if (end_vals_f32) {
-            f32 * recip_vals_gpu = (f32 *)(&T1_zlights[zl_i].f32s);
-            
-            for (
-                u32 simd_step_i = 0;
-                (simd_step_i * sizeof(f32)) < sizeof(T1zLightf32);
-                simd_step_i += SIMD_FLOAT_LANES)
-            {
-                SIMD_FLOAT simd_goal_vals =
-                    simd_load_f32s(
-                        (end_vals_f32 + simd_step_i));
-                
-                SIMD_FLOAT simd_cur_vals =
-                    simd_load_f32s((recip_vals_gpu + simd_step_i));
-                
-                SIMD_FLOAT delta_to_goal =
-                    simd_sub_f32s(simd_goal_vals, simd_cur_vals);
-                
-                delta_to_goal = simd_mul_f32s(
-                    delta_to_goal, simd_t);
-                
-                SIMD_FLOAT flags = simd_not_f32s(
-                    simd_cmpeq_f32s(simd_goal_vals, simd_noeffect));
-                
-                delta_to_goal = simd_and_f32s(
-                    delta_to_goal, flags);
-                
-                simd_cur_vals = simd_add_f32s(
-                    simd_cur_vals, delta_to_goal);
-                
-                simd_store_f32s(
-                    recip_vals_gpu + simd_step_i, simd_cur_vals);
-            }
-        }
-        
-        // u32s don't interpolate, they jump to their endpoint at the end
-        if (end_vals_u32 && t_now >= 1.0f) {
-            u32 * recip_vals_u32 = (u32 *)&T1_zlights[zl_i].u32s;
-            const f32 * end_flags = (const f32 *)end_vals_u32;
-            for (u32 v = 0; v < sizeof(T1zLightu32) / sizeof(u32); v++) {
-                if (end_flags[v] != T1_ANIM_NO_EFFECT) {
-                    recip_vals_u32[v] = end_vals_u32[v];
-                }
-            }
-        }
+        T1_property_apply_anim_step(
+            store == T1_PROP_STORE_ZL_F32 ?
+                (void *)&T1_zlights[i].f32s :
+                (void *)&T1_zlights[i].u32s,
+            step);
     }
 }

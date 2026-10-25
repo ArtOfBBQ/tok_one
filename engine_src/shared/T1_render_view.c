@@ -612,39 +612,16 @@ static b8 T1_render_view_is_anim_target(const u32 i, const u32 T1_id)
             T1_render_views->cpu[i].T1_id == T1_id);
 }
 
-void T1_render_view_apply_endpoint_anim(
+void T1_render_view_apply_anim_step(
     const u32 T1_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * end_vals_f32)
-{
-    // the share of what was left to go that we go now, at t 1 every value
-    // is exactly its endpoint
-    const f32 t_mult = (t_now - t_applied) / (1.0f - t_applied);
-    
-    for (u32 i = 0; i < T1_render_views->size; i++) {
-        if (!T1_render_view_is_anim_target(i, T1_id)) { continue; }
-        
-        f32 * vals = (f32 *)&T1_render_views->cpu[i].f32s;
-        for (u32 v = 0; v < sizeof(T1CamF32s) / sizeof(f32); v++) {
-            if (end_vals_f32[v] == T1_ANIM_NO_EFFECT) { continue; }
-            vals[v] += (end_vals_f32[v] - vals[v]) * t_mult;
-        }
-    }
-}
-
-void T1_render_view_apply_delta_anim(
-    const u32 T1_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * delta_vals_f32)
+    const u8 store,
+    const T1AnimStep * step)
 {
     for (u32 i = 0; i < T1_render_views->size; i++) {
         if (!T1_render_view_is_anim_target(i, T1_id)) { continue; }
         
-        f32 * vals = (f32 *)&T1_render_views->cpu[i].f32s;
-        for (u32 v = 0; v < sizeof(T1CamF32s) / sizeof(f32); v++) {
-            vals[v] += delta_vals_f32[v] * (t_now - t_applied);
-        }
+        T1_property_apply_anim_step(
+            T1_render_view_store_struct((s32)i, store),
+            step);
     }
 }

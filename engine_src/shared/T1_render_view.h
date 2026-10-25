@@ -119,16 +119,11 @@ u32  T1_render_view_set_property(
     const T1Property * property,
     const u32 bits);
 void T1_render_view_rename_T1_id(const u32 from_T1_id, const u32 to_T1_id);
-void T1_render_view_apply_endpoint_anim(
+// applies the step to the store of the camera with T1_id
+void T1_render_view_apply_anim_step(
     const u32 T1_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * end_vals_f32);
-void T1_render_view_apply_delta_anim(
-    const u32 T1_id,
-    const f32 t_applied,
-    const f32 t_now,
-    const f32 * delta_vals_f32);
+    const u8 store,
+    const T1AnimStep * step);
 
 void T1_render_view_validate(void);
 
