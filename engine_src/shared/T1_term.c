@@ -3,6 +3,7 @@
 #include "T1_types_public.h"
 
 #include "T1_mem.h"
+#include "T1_log.h"
 #include "T1_global.h"
 #include "T1_io.h"
 #include "T1_zsprite.h"
