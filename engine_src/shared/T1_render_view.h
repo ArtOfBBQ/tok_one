@@ -117,10 +117,6 @@ u32  T1_render_view_set_property(
     const u32 T1_id,
     const T1Property * property,
     const u32 bits);
-b8   T1_render_view_get_property(
-    const u32 T1_id,
-    const T1Property * property,
-    u32 * bits);
 void T1_render_view_rename_T1_id(const u32 from_T1_id, const u32 to_T1_id);
 void T1_render_view_apply_endpoint_anim(
     const u32 T1_id,

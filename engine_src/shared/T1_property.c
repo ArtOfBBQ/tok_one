@@ -59,6 +59,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_CPU, angle_xyz[2]),
     T1_PROP_F32(ZS_CPU, bloom_on),
     T1_PROP_F32(ZS_CPU, alpha_on),
+    T1_PROP_F32(ZS_CPU, visible),
 
     T1_PROP_F32(ZS_GPU, bonus_rgb[0]),
     T1_PROP_F32(ZS_GPU, bonus_rgb[1]),
@@ -103,6 +104,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(TQ_CPU, offset_xyz[0]),
     T1_PROP_F32(TQ_CPU, offset_xyz[1]),
     T1_PROP_F32(TQ_CPU, offset_xyz[2]),
+    T1_PROP_F32(TQ_CPU, visible),
 
     T1_PROP_F32(TQ_GPU, xyz[0]),
     T1_PROP_F32(TQ_GPU, xyz[1]),
@@ -394,59 +396,6 @@ void T1_set_u32(
     u32 value)
 {
     T1_set_bits(T1_id, property, 1, value);
-}
-
-static b8 T1_property_get_bits(
-    const u32 T1_id,
-    const T1Property * p,
-    u32 * bits)
-{
-    switch (p->store) {
-        case T1_PROP_STORE_ZS_CPU_F32:
-        case T1_PROP_STORE_ZS_GPU_F32:
-        case T1_PROP_STORE_ZS_GPU_U32:
-        case T1_PROP_STORE_ZS_MAT_F32:
-        case T1_PROP_STORE_ZS_MAT_U32:
-            return T1_zsprite_get_property(T1_id, p, bits);
-        case T1_PROP_STORE_TQ_CPU_F32:
-        case T1_PROP_STORE_TQ_GPU_F32:
-        case T1_PROP_STORE_TQ_GPU_U32:
-            return T1_texquad_get_property(T1_id, p, bits);
-        case T1_PROP_STORE_ZL_F32:
-            return T1_zlight_get_property(T1_id, p, bits);
-        case T1_PROP_STORE_CAM_F32:
-        case T1_PROP_STORE_CAM_U32:
-            return T1_render_view_get_property(T1_id, p, bits);
-        default:
-            T1_log_assert(0);
-    }
-    
-    return 0;
-}
-
-f32 T1_get_f32(
-    u32 T1_id,
-    const c8 * property)
-{
-    T1_log_assert(T1_id != T1_ID_NONE);
-    
-    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
-    u32 matches_size = T1_property_find(
-        property, 0, T1_PROP_STORE_OUTOFBOUNDS,
-        matches, T1_PROPERTY_MATCHES_CAP);
-    
-    u32 bits = 0;
-    b8 found = 0;
-    for (u32 i = 0; i < matches_size && !found; i++) {
-        found = T1_property_get_bits(T1_id, matches[i], &bits);
-    }
-    
-    // no object with this T1_id has this property
-    T1_log_assert(found);
-    
-    f32 value;
-    T1_std_memcpy(&value, &bits, 4);
-    return value;
 }
 
 static void T1_text_set_bits(

@@ -602,13 +602,86 @@ static void T1_anim_assert_anim_valid_before_commit(T1Anim * a)
     #endif
 }
 
-// applies the whole anim right now, a has to have a 1us duration
+// unused values are T1_ANIM_NO_EFFECT in an endpoint store, 0 in a delta store
+static f32 T1_anim_unused_val(const T1Anim * a) {
+    return a->endpoints_not_deltas ? T1_ANIM_NO_EFFECT : 0.0f;
+}
+
+// whether both stores animate at least one of the same values
+static b8 T1_anim_stores_overlap(
+    const T1Anim * a,
+    const void * a_store,
+    const T1Anim * b,
+    const void * b_store,
+    const u32 size)
+{
+    if (a_store == NULL || b_store == NULL) { return 0; }
+    
+    const f32 * a_vals = (const f32 *)a_store;
+    const f32 * b_vals = (const f32 *)b_store;
+    f32 a_unused = T1_anim_unused_val(a);
+    f32 b_unused = T1_anim_unused_val(b);
+    for (u32 i = 0; i < size / sizeof(f32); i++) {
+        if (a_vals[i] != a_unused && b_vals[i] != b_unused) {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+static b8 T1_anim_shares_a_property(const T1Anim * a, const T1Anim * b)
+{
+    #define T1_ANIM_OVERLAP(store, type) \
+        T1_anim_stores_overlap(a, a->store, b, b->store, sizeof(type))
+    return
+        T1_ANIM_OVERLAP(zs_gpu_f32s, T1GPUzSpritef32) ||
+        T1_ANIM_OVERLAP(zs_cpu_f32s, T1CPUzSpritef32) ||
+        T1_ANIM_OVERLAP(zs_gpu_u32s, T1GPUzSpriteu32) ||
+        T1_ANIM_OVERLAP(tq_gpu_f32s, T1GPUTexQuadf32) ||
+        T1_ANIM_OVERLAP(tq_gpu_u32s, T1GPUTexQuadu32) ||
+        T1_ANIM_OVERLAP(zl_gpu_f32s, T1zLightf32) ||
+        T1_ANIM_OVERLAP(cam_f32s, T1CamF32s);
+    #undef T1_ANIM_OVERLAP
+}
+
+// deletes the other committed endpoint anims that animate a's properties
+// on a's T1_id
+static void T1_anim_delete_conflicting(const T1Anim * a)
+{
+    if (!a->del_conflict_anims) { return; }
+    
+    for (
+        s32 anim_i = (s32)T1_anims_size - 1;
+        anim_i >= 0;
+        anim_i--)
+    {
+        T1Anim * other = &T1_anims[anim_i];
+        
+        if (
+            other != a &&
+            (other->target_T1_id == a->target_T1_id ||
+            other->target_T1_id == T1_ANIM_HIT_EVERYTHING) &&
+            other->committed &&
+            other->endpoints_not_deltas &&
+            !other->del_obj_on_finish &&
+            T1_anim_shares_a_property(a, other))
+        {
+            T1_anim_delete(other);
+        }
+    }
+}
+
+// applies the whole anim right now, a has to have a 1us duration and no pause
 static void T1_anim_commit_and_instarun(T1Anim * a)
 {
     as->mutex_lock(as->mutex_id);
     
     T1_anim_assert_anim_valid_before_commit(a);
     T1_log_assert(a->duration_us == 1);
+    T1_log_assert(a->pause_us == 0);
+    
+    T1_anim_delete_conflicting(a);
     
     a->remaining_pause_us = a->pause_us;
     a->remaining_duration_us = a->duration_us;
@@ -629,27 +702,7 @@ static void T1_anim_commit_and_schedule(T1Anim * a)
     
     T1_anim_assert_anim_valid_before_commit(a);
     
-    if (a->del_conflict_anims)
-    {
-        for (
-            s32 anim_i = (s32)T1_anims_size - 1;
-            anim_i >= 0;
-            anim_i--)
-        {
-            T1Anim * other = &T1_anims[anim_i];
-            
-            if (
-                other != a &&
-                (other->target_T1_id == a->target_T1_id ||
-                other->target_T1_id == T1_ANIM_HIT_EVERYTHING) &&
-                other->committed &&
-                other->endpoints_not_deltas &&
-                !other->del_obj_on_finish)
-            {
-                T1_anim_delete(other);
-            }
-        }
-    }
+    T1_anim_delete_conflicting(a);
     
     a->remaining_pause_us = a->pause_us;
     a->remaining_duration_us = a->duration_us;
@@ -861,7 +914,7 @@ void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting) {
 
 void T1_anim_commit(u32 anim) {
     T1Anim * a = T1_anim_from_handle(anim);
-    if (a->duration_us == 1) {
+    if (a->duration_us == 1 && a->pause_us == 0) {
         T1_anim_commit_and_instarun(a);
     } else {
         T1_anim_commit_and_schedule(a);

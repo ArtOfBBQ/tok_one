@@ -48,11 +48,6 @@ void T1_zlight_commit(T1zLight * to_request);
 u32 T1_zlight_new(void);
 
 // returns how many zlights with this T1_id were written
-// reads the first object with T1_id, false if there's none
-b8 T1_zlight_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits);
 u32 T1_zlight_set_property(
     u32 T1_id,
     const T1Property * property,

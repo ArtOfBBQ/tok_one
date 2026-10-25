@@ -88,7 +88,7 @@ static void T1_texquad_construct_at_i(
         sizeof(T1CPUTexQuad));
     
     T1_texquads->cpu[i].T1_id = T1_ID_NONE;
-    T1_texquads->cpu[i].visible = 1;
+    T1_texquads->cpu[i].visible = 1.0f;
     
     T1_texquad_construct(
         &T1_texquads->gpu[i].f32s,
@@ -198,26 +198,6 @@ static void * T1_texquad_store_struct(
     }
 }
 
-b8 T1_texquad_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits)
-{
-    for (s32 i = 0; i < T1_texquads->size; i++) {
-        if (
-            T1_texquads->cpu[i].T1_id == T1_id &&
-            !T1_texquads->cpu[i].deleted)
-        {
-            *bits = T1_property_read(
-                T1_texquad_store_struct(i, property->store),
-                property);
-            return 1;
-        }
-    }
-    
-    return 0;
-}
-
 u32 T1_texquad_set_property(
     u32 T1_id,
     const T1Property * property,
@@ -324,7 +304,7 @@ void T1_texquad_commit(
     // xyz is in world units, projected by the distance xyz[2]
     T1_log_assert(request->gpu->f32s.xyz[2] > 0.0f);
     T1_log_assert(!request->cpu->deleted);
-    T1_log_assert(request->cpu->visible);
+    T1_log_assert(request->cpu->visible > 0.5f);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */
@@ -641,7 +621,7 @@ void T1_texquad_copy_to_frame_data(
         i++)
     {
         if (
-            T1_texquads->cpu[i].visible &&
+            T1_texquads->cpu[i].visible > 0.5f &&
             !T1_texquads->cpu[i].deleted &&
             T1_texquads->cpu[i].committed)
         {

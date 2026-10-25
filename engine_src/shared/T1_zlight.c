@@ -84,23 +84,6 @@ u32 T1_zlight_set_property(
     return count;
 }
 
-b8 T1_zlight_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits)
-{
-    T1_log_assert(property->store == T1_PROP_STORE_ZL_F32);
-    
-    for (u32 i = 0; i < T1_zlights_size; i++) {
-        if (T1_zlights[i].T1_id == T1_id && !T1_zlights[i].deleted) {
-            *bits = T1_property_read(&T1_zlights[i].f32s, property);
-            return 1;
-        }
-    }
-    
-    return 0;
-}
-
 void T1_zlight_rename_T1_id(u32 from_T1_id, u32 to_T1_id)
 {
     for (u32 i = 0; i < T1_zlights_size; i++) {

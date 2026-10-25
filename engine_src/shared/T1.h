@@ -322,10 +322,6 @@ void T1_set_u32(
     uint32_t T1_id,
     const char * property,
     uint32_t value);
-// The value of the first object with T1_id that has this property
-float T1_get_f32(
-    uint32_t T1_id,
-    const char * property);
 void T1_merge_T1_ids(
     uint32_t T1_id_to_add,
     uint32_t T1_id_to_keep);
@@ -333,17 +329,6 @@ void T1_merge_T1_ids(
 void T1_delete(uint32_t T1_id);
 // Deletes every zsprite, texquad and zlight, cameras stay
 void T1_delete_all(void);
-
-#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
-void T1_zsprite_set_occlusion(
-    int32_t T1_id,
-    int32_t new_visible_stat,
-    uint64_t wait_before_invis_us);
-#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
-#define T1_zsprite_set_occlusion(a, b, c)
-#else
-#error
-#endif
 
 /*
 Animations affecting various T1 objects
@@ -376,10 +361,12 @@ void T1_anim_set_runs(uint32_t anim, uint32_t runs); // 0 = forever
 void T1_anim_set_delete_target_on_finish(
     uint32_t anim,
     uint8_t delete_target);
+// On commit, deletes the TO anims on the same T1_id that animate any of
+// this anim's properties
 void T1_anim_set_cancel_conflicting(
     uint32_t anim,
     uint8_t cancel_conflicting);
-// A duration of 1 microsecond applies the anim immediately
+// A duration of 1 microsecond and no pause applies the anim immediately
 void T1_anim_commit(uint32_t anim);
 
 /*

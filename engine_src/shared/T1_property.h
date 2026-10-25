@@ -89,10 +89,6 @@ void T1_set_u32(
     u32 T1_id,
     const c8 * property,
     u32 value);
-// the value of the first object with T1_id that has this property
-f32 T1_get_f32(
-    u32 T1_id,
-    const c8 * property);
 
 /*
 Every object (and animation) with T1_id_to_add now has T1_id_to_keep, so it

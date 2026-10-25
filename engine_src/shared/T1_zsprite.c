@@ -299,26 +299,6 @@ static void * T1_zsprite_store_struct(
     }
 }
 
-b8 T1_zsprite_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits)
-{
-    for (u32 i = 0; i < T1_zsprite_list->size; i++) {
-        if (
-            T1_zsprite_list->cpu[i].T1_id == T1_id &&
-            !T1_zsprite_list->cpu[i].deleted)
-        {
-            *bits = T1_property_read(
-                T1_zsprite_store_struct(i, property->store),
-                property);
-            return 1;
-        }
-    }
-    
-    return 0;
-}
-
 u32 T1_zsprite_set_property(
     u32 T1_id,
     const T1Property * property,
@@ -482,7 +462,7 @@ void T1_zsprite_construct(
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->T1_id = T1_ID_NONE;
-    to_construct->cpu_data->visible = 1;
+    to_construct->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     to_construct->gpu_data->f32s.outline_alpha = -1.0f;
@@ -533,7 +513,7 @@ void T1_zsprite_construct_quad(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->visible = 1;
+    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     stack_recipient->gpu_data->f32s.no_cam = 0;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
@@ -573,7 +553,7 @@ void T1_zsprite_construct_quad_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->visible = 1;
+    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -630,7 +610,7 @@ T1_zsprite_construct_cube_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0]  = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1]  = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2]  = z;
-    stack_recipient->cpu_data->visible = 1;
+    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -1001,84 +981,6 @@ void T1_zsprite_apply_endpoint_anim(
     }
 }
 
-#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
-void T1_zsprite_set_occlusion(
-    const s32 T1_id,
-    const s32 new_visible_stat,
-    const u64 wait_before_invis_us)
-{
-    for (
-        s32 zp_i = 0;
-        zp_i < (s32)T1_zsprite_list->size;
-        zp_i++)
-    {
-        if (
-            T1_zsprite_list->cpu[zp_i].T1_id != T1_id)
-        {
-            continue;
-        }
-        
-        if (!new_visible_stat)
-        {
-            if (wait_before_invis_us > 0)
-            {
-                if (
-                    T1_zsprite_list->cpu[zp_i].
-                        visible)
-                {
-                    T1_zsprite_list->cpu[zp_i].
-                        next_occlusion_in_us =
-                            wait_before_invis_us;
-                } else {
-                    T1_zsprite_list->cpu[zp_i].
-                        next_occlusion_in_us = 0;
-                }
-            } else {
-                T1_zsprite_list->cpu[zp_i].
-                    next_occlusion_in_us = 0;
-                T1_zsprite_list->cpu[zp_i].
-                    visible = 0;
-            }
-        } else {
-            T1_zsprite_list->cpu[zp_i].
-                next_occlusion_in_us = 0;
-            T1_zsprite_list->cpu[zp_i].
-                visible = 1;
-        }
-    }
-}
-#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
-
-void T1_zsprite_handle_timed_occlusion(void)
-{
-    for (
-        u32 zs_i = 0;
-        zs_i < T1_zsprite_list->size;
-        zs_i++)
-    {
-        if (
-            T1_zsprite_list->cpu[zs_i].
-                next_occlusion_in_us >
-                    T1_global->elapsed)
-        {
-            T1_zsprite_list->cpu[zs_i].
-                next_occlusion_in_us -=
-                    T1_global->elapsed;
-        } else if (
-            T1_zsprite_list->cpu[zs_i].
-                next_occlusion_in_us > 0)
-        {
-            T1_zsprite_list->cpu[zs_i].
-                next_occlusion_in_us = 0;
-            T1_zsprite_list->cpu[zs_i].
-                visible = 0;
-        }
-    }
-}
-
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     u32 T1_id,
     f32 new_ignore_camera)
@@ -1199,8 +1101,8 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         if (
             T1_zsprite_list->cpu[cpu_zp_i].
                 deleted ||
-            !T1_zsprite_list->cpu[cpu_zp_i].
-                visible ||
+            T1_zsprite_list->cpu[cpu_zp_i].
+                zs_cpu_f32s.visible < 0.5f ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.alpha_on < 0.5f ||
@@ -1276,7 +1178,7 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
     {
         if (
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
-            !T1_zsprite_list->cpu[cpu_zp_i].visible ||
+            T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.visible < 0.5f ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.bloom_on < 0.5f)
@@ -1372,7 +1274,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
     {
         if (
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
-            !T1_zsprite_list->cpu[cpu_zp_i].visible ||
+            T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.visible < 0.5f ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.
                 alpha_on > 0.5f ||

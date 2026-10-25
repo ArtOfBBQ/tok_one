@@ -154,8 +154,6 @@ void T1_frame_begin(void)
         #error
         #endif
         
-        T1_zsprite_handle_timed_occlusion();
-        
         #if T1_TERM_ACTIVE == T1_ACTIVE
         update_terminal();
         #elif T1_TERM_ACTIVE == T1_INACTIVE

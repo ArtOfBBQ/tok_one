@@ -15,19 +15,18 @@ typedef struct {
     float angle_xyz[3];
     float bloom_on;
     float alpha_on;
-    float padding[2];
+    float visible; // drawn while > 0.5f
+    float padding[1];
 } T1CPUzSpritef32;
 
 typedef struct {
     T1CPUzSpritef32 zs_cpu_f32s;
     
-    uint64_t next_occlusion_in_us;
     int32_t  mesh_id; // data in all_mesh_summaries[mesh_id]
     uint32_t T1_id;
     
     uint8_t committed;
     uint8_t deleted;
-    uint8_t visible;
 } T1CPUzSprite;
 
 typedef struct {
@@ -74,11 +73,6 @@ u32 T1_zsprite_new_quad(
     f32 height);
 
 // returns how many zsprites with this T1_id were written
-// reads the first object with T1_id, false if there's none
-b8 T1_zsprite_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits);
 u32 T1_zsprite_set_property(
     u32 T1_id,
     const T1Property * property,
@@ -135,19 +129,6 @@ void T1_zsprite_apply_anim_effects_to_id(
     const f32 * anim_gpu_f32s,
     const u32 * anim_gpu_u32s,
     const f32 * anim_cpu_f32s);
-
-#if T1_OCCLUSION_ACTIVE == T1_ACTIVE
-void T1_zsprite_set_occlusion(
-    s32 T1_id,
-    s32 new_visible_stat,
-    u64 wait_before_invis_us);
-#elif T1_OCCLUSION_ACTIVE == T1_INACTIVE
-#define T1_zsprite_set_occlusion(a, b, c)
-#else
-#error
-#endif
-
-void T1_zsprite_handle_timed_occlusion(void);
 
 // TODO: encapsulate collection instead of externing
 typedef struct {

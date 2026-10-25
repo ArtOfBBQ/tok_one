@@ -594,20 +594,6 @@ u32 T1_render_view_set_property(
     return 1;
 }
 
-b8 T1_render_view_get_property(
-    const u32 T1_id,
-    const T1Property * property,
-    u32 * bits)
-{
-    s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
-    if (rv_i < 0) { return 0; }
-    
-    *bits = T1_property_read(
-        T1_render_view_store_struct(rv_i, property->store),
-        property);
-    return 1;
-}
-
 void T1_render_view_rename_T1_id(const u32 from_T1_id, const u32 to_T1_id)
 {
     for (u32 i = 0; i < T1_render_views->size; i++) {

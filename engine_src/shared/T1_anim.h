@@ -41,8 +41,10 @@ void T1_anim_set_easing(u32 anim, T1EasingType easing_type);
 // 0 = repeat forever
 void T1_anim_set_runs(u32 anim, u32 runs);
 void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
+// On commit, deletes the TO anims on the same T1_id that animate any of
+// this anim's properties
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
-// A duration of 1 microsecond applies the anim immediately
+// A duration of 1 microsecond and no pause applies the anim immediately
 void T1_anim_commit(u32 anim);
 
 void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id);

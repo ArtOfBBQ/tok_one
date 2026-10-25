@@ -9,10 +9,10 @@
 
 typedef struct {
     float offset_xyz[3];
+    float visible; // drawn while > 0.5f
     uint32_t T1_id;
     uint8_t one_frame_only;
     uint8_t committed;
-    uint8_t visible;
     uint8_t deleted;
 } T1CPUTexQuad;
 
@@ -42,11 +42,6 @@ void T1_texquad_delete_all(void);
 u32 T1_texquad_new(void);
 
 // returns how many texquads with this T1_id were written
-// reads the first object with T1_id, false if there's none
-b8 T1_texquad_get_property(
-    u32 T1_id,
-    const T1Property * property,
-    u32 * bits);
 u32 T1_texquad_set_property(
     u32 T1_id,
     const T1Property * property,
