@@ -101,9 +101,9 @@ static void construct_view_matrix(void) {
         
         T1_linal_f32x4x4_construct_xyz_rotation(
             &next,
-            -rv_cpu->angle_xyz[0],
-            -rv_cpu->angle_xyz[1],
-            -rv_cpu->angle_xyz[2]);
+            -rv_cpu->f32s.angle_xyz[0],
+            -rv_cpu->f32s.angle_xyz[1],
+            -rv_cpu->f32s.angle_xyz[2]);
         
         T1_linal_f32x4x4_mul_f32x4x4_inplace(
             &result,
@@ -111,9 +111,9 @@ static void construct_view_matrix(void) {
         
         T1_linal_f32x4x4_construct(
             &next,
-            1.0f, 0.0f, 0.0f, -rv_cpu->xyz[0],
-            0.0f, 1.0f, 0.0f, -rv_cpu->xyz[1],
-            0.0f, 0.0f, 1.0f, -rv_cpu->xyz[2],
+            1.0f, 0.0f, 0.0f, -rv_cpu->f32s.xyz[0],
+            0.0f, 1.0f, 0.0f, -rv_cpu->f32s.xyz[1],
+            0.0f, 0.0f, 1.0f, -rv_cpu->f32s.xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
         T1_linal_f32x4x4_mul_f32x4x4_inplace(&result, &next);
@@ -182,16 +182,16 @@ void T1_render_update(
             
             T1_zsprite_get_pos_xyz(
                 T1_id,
-                &rv->dest_xyz[0],
-                &rv->dest_xyz[1],
-                &rv->dest_xyz[2]);
-            rv->dest_xyz[2] -= 0.50f;
-            rv->min_xyz[0] = rv->dest_xyz[0];
-            rv->min_xyz[1] = rv->dest_xyz[1];
-            rv->min_xyz[2] = rv->dest_xyz[2];
-            rv->max_xyz[0] = rv->dest_xyz[0];
-            rv->max_xyz[1] = rv->dest_xyz[1];
-            rv->max_xyz[2] = rv->dest_xyz[2];
+                &rv->f32s.dest_xyz[0],
+                &rv->f32s.dest_xyz[1],
+                &rv->f32s.dest_xyz[2]);
+            rv->f32s.dest_xyz[2] -= 0.50f;
+            rv->f32s.min_xyz[0] = rv->f32s.dest_xyz[0];
+            rv->f32s.min_xyz[1] = rv->f32s.dest_xyz[1];
+            rv->f32s.min_xyz[2] = rv->f32s.dest_xyz[2];
+            rv->f32s.max_xyz[0] = rv->f32s.dest_xyz[0];
+            rv->f32s.max_xyz[1] = rv->f32s.dest_xyz[1];
+            rv->f32s.max_xyz[2] = rv->f32s.dest_xyz[2];
         }
     }
     

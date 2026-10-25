@@ -173,22 +173,26 @@ T1_id
 uint32_t  T1_id_next_nonui_id(void);
 
 /*
-CAMERA MANIPULATION
+CAMERAS
+
+Cameras are T1 objects like zsprites (see below): they have a T1_id, you set
+and animate them by property name, merge them into groups and T1_delete()
+them. Their properties: "xyz[0]" and "angle_xyz[0]" (to [2]) are where the
+camera is now. It eases towards "dest_xyz[0]" and "dest_angle_xyz[0]" over
+"us_to_destination" (u32) microseconds, kept within "min_xyz[0]"/"max_xyz[0]"
+and "min_angle_xyz[0]"/"max_angle_xyz[0]". "clamped_to_T1_id" (u32) makes
+it follow a zsprite, "movement_enabled" (u32) lets it move at all.
 */
-/*
-Camera settings by name, for camera cam_i (0 is the main one): "xyz[0]" and
-"angle_xyz[0]" (to [2]) are where the camera is now. It eases towards
-"dest_xyz[0]" and "dest_angle_xyz[0]" over "us_to_destination" (u32)
-microseconds, kept within "min_xyz[0]"/"max_xyz[0]" and
-"min_angle_xyz[0]"/"max_angle_xyz[0]". "clamped_to_T1_id" (u32) makes it
-follow a zsprite, "movement_enabled" (u32) lets it move at all.
-*/
-void  T1_cam_set_f32(int32_t cam_i, const char * property, float value);
-void  T1_cam_set_u32(int32_t cam_i, const char * property, uint32_t value);
-float T1_cam_get_f32(int32_t cam_i, const char * property);
-void  T1_cam_delete_all(void);
-T1Tex T1_cam_get_write_tex(int32_t cam_i);
-void  T1_cam_reset(int32_t at_i);
+// The camera whose image is shown in the window
+uint32_t T1_cam_create_main_view(
+    uint32_t new_w, uint32_t new_h, char ** const fatal_error);
+// A camera mirroring the main one around the plane at z = reflection_z
+uint32_t T1_cam_make_reflection_cam(
+    uint32_t new_w, uint32_t new_h, float reflection_z);
+void     T1_cam_reset(uint32_t T1_id);
+// T1_TEX_NONE for T1_ID_NONE
+T1Tex    T1_cam_get_write_tex(uint32_t T1_id);
+void     T1_cam_delete_all(void);
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
@@ -199,11 +203,6 @@ float T1_screen_width_to_width(float screen_w, float at_z);
 
 void T1_make_shadowmap_and_attach_to_light(
     uint32_t T1_id, uint32_t w, uint32_t h);
-
-void T1_cam_create_main_view(
-    uint32_t new_w, uint32_t new_h, char ** const fatal_error);
-void T1_cam_make_reflection_cam(
-    uint32_t new_w, uint32_t new_h, float reflection_z);
 
 /*
 TEXTURES
@@ -295,9 +294,16 @@ void  T1_postproc_set_f32(const char * property, float value);
 float T1_postproc_get_f32(const char * property);
 
 /*
-Objects by T1_id, with properties set by name (e.g. "xyz[0]", "alpha").
-Every new object gets a unique T1_id and is visible from the next frame on,
-no commit needed. Merging makes objects move, fade and get deleted together.
+Objects by T1_id (zsprites, texquads, zlights and cameras), with properties
+set by name (e.g. "xyz[0]", "alpha"). Every new object gets a unique T1_id
+and is visible from the next frame on, no commit needed. Merging makes
+objects share a T1_id, so they move, fade and get deleted together: the
+same concept has the same name on every kind of object.
+
+zsprites have two properties that take a camera's T1_id: "mix_cam" (mix in
+that camera's image, use its T1_cam_get_write_tex() as "mix_texture") and
+"hidden_from_cam" (that camera doesn't draw the zsprite). T1_ID_NONE
+undoes either.
 */
 uint32_t T1_zsprite_new(int32_t mesh_id);
 uint32_t T1_zsprite_new_quad(
@@ -316,12 +322,16 @@ void T1_set_u32(
     uint32_t T1_id,
     const char * property,
     uint32_t value);
+// The value of the first object with T1_id that has this property
+float T1_get_f32(
+    uint32_t T1_id,
+    const char * property);
 void T1_merge_T1_ids(
     uint32_t T1_id_to_add,
     uint32_t T1_id_to_keep);
-// Deletes every zsprite, texquad and zlight with this T1_id
+// Deletes every zsprite, texquad, zlight and camera with this T1_id
 void T1_delete(uint32_t T1_id);
-// Deletes every zsprite, texquad and zlight
+// Deletes every zsprite, texquad and zlight, cameras stay
 void T1_delete_all(void);
 
 #if T1_OCCLUSION_ACTIVE == T1_ACTIVE

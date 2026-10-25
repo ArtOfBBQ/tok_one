@@ -42,6 +42,11 @@ void T1_texquad_delete_all(void);
 u32 T1_texquad_new(void);
 
 // returns how many texquads with this T1_id were written
+// reads the first object with T1_id, false if there's none
+b8 T1_texquad_get_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 * bits);
 u32 T1_texquad_set_property(
     u32 T1_id,
     const T1Property * property,

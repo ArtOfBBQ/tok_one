@@ -38,7 +38,11 @@
 #define ZL     T1_PROP_STORE_ZL_F32,     T1zLightf32
 #define TEXT   T1_PROP_STORE_TEXT,       T1TextFontSettings
 #define POST   T1_PROP_STORE_POSTPROC,   T1GPUPostProcConsts
-#define CAM    T1_PROP_STORE_CAM,        T1CPURenderView
+#define CAM    T1_PROP_STORE_CAM_F32,    T1CamF32s
+#define CAMU   T1_PROP_STORE_CAM_U32,    T1CPURenderView
+#define T1_PROP_U32_CAM_REF_(name, store, type, field, mask, shift, ref) \
+    {name, mask, offsetof(type, field), shift, store, 1, ref}
+#define T1_PROP_U32_CAM_REF(...) T1_PROP_U32_CAM_REF_(__VA_ARGS__)
 
 static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_CPU, xyz[0]),
@@ -69,10 +73,15 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_GPU, vertex_noise_z),
 
     T1_PROP_U32("touch_id", ZS_U32, touch_id),
-    T1_PROP_U32("render_views", ZS_U32, active_render_view_flags),
-    // the shader reads rv from the low 16 bits (as s16), tex from the high 16
-    T1_PROP_U32_PACKED(
-        "mix_render_view", ZS_U32, mix_rv_and_mix_tex, 0x0000FFFF, 0),
+    // the camera (T1_id) that doesn't draw this zsprite, T1_ID_NONE for none
+    T1_PROP_U32_CAM_REF(
+        "hidden_from_cam", ZS_U32, active_render_view_flags,
+        0xFFFFFFFF, 0, T1_PROP_CAM_REF_HIDE_MASK),
+    // the camera (T1_id) whose image is mixed in, the shader reads it as an
+    // s16 index from the low 16 bits, the texture from the high 16
+    T1_PROP_U32_CAM_REF(
+        "mix_cam", ZS_U32, mix_rv_and_mix_tex,
+        0x0000FFFF, 0, T1_PROP_CAM_REF_INDEX),
     T1_PROP_U32_PACKED(
         "mix_texture", ZS_U32, mix_rv_and_mix_tex, 0xFFFF0000, 16),
 
@@ -162,8 +171,8 @@ static const T1Property T1_properties[] = {
     #error
     #endif
 
-    // The camera eases from xyz/angle_xyz to dest_xyz/dest_angle_xyz over
-    // us_to_destination, kept within min_xyz/max_xyz (and the angle limits)
+    // cameras, with the same names as the other objects where they mean the
+    // same, so a camera merged into a group moves and turns with it
     T1_PROP_F32(CAM, xyz[0]),
     T1_PROP_F32(CAM, xyz[1]),
     T1_PROP_F32(CAM, xyz[2]),
@@ -188,10 +197,10 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(CAM, max_angle_xyz[0]),
     T1_PROP_F32(CAM, max_angle_xyz[1]),
     T1_PROP_F32(CAM, max_angle_xyz[2]),
-    T1_PROP_U32("us_to_destination", CAM, us_to_destination),
+    T1_PROP_U32("us_to_destination", CAMU, us_to_destination),
     // follows the zsprite with this T1_id, T1_ID_NONE to stop
-    T1_PROP_U32("clamped_to_T1_id", CAM, clamped_to_T1_id),
-    T1_PROP_U32("movement_enabled", CAM, movement_enabled),
+    T1_PROP_U32("clamped_to_T1_id", CAMU, clamped_to_T1_id),
+    T1_PROP_U32("movement_enabled", CAMU, movement_enabled),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -210,10 +219,7 @@ static void T1_property_crash(
 }
 
 static b8 T1_property_store_is_settings(const u8 store) {
-    return
-        store == T1_PROP_STORE_TEXT ||
-        store == T1_PROP_STORE_POSTPROC ||
-        store == T1_PROP_STORE_CAM;
+    return store == T1_PROP_STORE_TEXT || store == T1_PROP_STORE_POSTPROC;
 }
 
 u32 T1_property_find(
@@ -256,8 +262,6 @@ u32 T1_property_find(
                 "Unknown T1 text property" :
             settings_store == T1_PROP_STORE_POSTPROC ?
                 "Unknown T1 post-processing property" :
-            settings_store == T1_PROP_STORE_CAM ?
-                "Unknown T1 camera property" :
                 "Unknown T1 property",
             name);
     } else if (found == 0) {
@@ -296,7 +300,29 @@ b8 T1_property_is_animatable(const T1Property * p) {
     return
         p->store != T1_PROP_STORE_ZS_MAT_F32 &&
         p->store != T1_PROP_STORE_ZS_MAT_U32 &&
-        p->store != T1_PROP_STORE_TQ_CPU_F32;
+        p->store != T1_PROP_STORE_TQ_CPU_F32 &&
+        p->store != T1_PROP_STORE_CAM_U32;
+}
+
+u32 T1_property_convert_bits(
+    const T1Property * p,
+    const u32 bits)
+{
+    if (p->cam_ref == T1_PROP_CAM_REF_NONE) { return bits; }
+    
+    s32 cam_i = T1_render_view_T1_id_to_i(bits);
+    // a T1_id that isn't T1_ID_NONE should be a camera
+    T1_log_assert(cam_i >= 0 || bits == T1_ID_NONE);
+    
+    switch (p->cam_ref) {
+        case T1_PROP_CAM_REF_INDEX:
+            return (u32)cam_i;
+        case T1_PROP_CAM_REF_HIDE_MASK:
+            return cam_i < 0 ? 0xFFFFFFFF : ~(1u << cam_i);
+        default:
+            T1_log_assert(0);
+            return bits;
+    }
 }
 
 static u32 T1_property_set_bits(
@@ -317,6 +343,9 @@ static u32 T1_property_set_bits(
             return T1_texquad_set_property(T1_id, p, bits);
         case T1_PROP_STORE_ZL_F32:
             return T1_zlight_set_property(T1_id, p, bits);
+        case T1_PROP_STORE_CAM_F32:
+        case T1_PROP_STORE_CAM_U32:
+            return T1_render_view_set_property(T1_id, p, bits);
         default:
             T1_log_assert(0);
     }
@@ -339,7 +368,10 @@ static void T1_set_bits(
 
     u32 objects_set = 0;
     for (u32 i = 0; i < matches_size; i++) {
-        objects_set += T1_property_set_bits(T1_id, matches[i], bits);
+        objects_set += T1_property_set_bits(
+            T1_id,
+            matches[i],
+            T1_property_convert_bits(matches[i], bits));
     }
 
     // no object with this T1_id has this property
@@ -362,6 +394,59 @@ void T1_set_u32(
     u32 value)
 {
     T1_set_bits(T1_id, property, 1, value);
+}
+
+static b8 T1_property_get_bits(
+    const u32 T1_id,
+    const T1Property * p,
+    u32 * bits)
+{
+    switch (p->store) {
+        case T1_PROP_STORE_ZS_CPU_F32:
+        case T1_PROP_STORE_ZS_GPU_F32:
+        case T1_PROP_STORE_ZS_GPU_U32:
+        case T1_PROP_STORE_ZS_MAT_F32:
+        case T1_PROP_STORE_ZS_MAT_U32:
+            return T1_zsprite_get_property(T1_id, p, bits);
+        case T1_PROP_STORE_TQ_CPU_F32:
+        case T1_PROP_STORE_TQ_GPU_F32:
+        case T1_PROP_STORE_TQ_GPU_U32:
+            return T1_texquad_get_property(T1_id, p, bits);
+        case T1_PROP_STORE_ZL_F32:
+            return T1_zlight_get_property(T1_id, p, bits);
+        case T1_PROP_STORE_CAM_F32:
+        case T1_PROP_STORE_CAM_U32:
+            return T1_render_view_get_property(T1_id, p, bits);
+        default:
+            T1_log_assert(0);
+    }
+    
+    return 0;
+}
+
+f32 T1_get_f32(
+    u32 T1_id,
+    const c8 * property)
+{
+    T1_log_assert(T1_id != T1_ID_NONE);
+    
+    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
+    u32 matches_size = T1_property_find(
+        property, 0, T1_PROP_STORE_OUTOFBOUNDS,
+        matches, T1_PROPERTY_MATCHES_CAP);
+    
+    u32 bits = 0;
+    b8 found = 0;
+    for (u32 i = 0; i < matches_size && !found; i++) {
+        found = T1_property_get_bits(T1_id, matches[i], &bits);
+    }
+    
+    // no object with this T1_id has this property
+    T1_log_assert(found);
+    
+    f32 value;
+    T1_std_memcpy(&value, &bits, 4);
+    return value;
 }
 
 static void T1_text_set_bits(
@@ -438,6 +523,7 @@ void T1_merge_T1_ids(
     T1_zsprite_rename_T1_id(T1_id_to_add, T1_id_to_keep);
     T1_texquad_rename_T1_id(T1_id_to_add, T1_id_to_keep);
     T1_zlight_rename_T1_id(T1_id_to_add, T1_id_to_keep);
+    T1_render_view_rename_T1_id(T1_id_to_add, T1_id_to_keep);
 
     #if T1_ANIM_ACTIVE == T1_ACTIVE
     T1_anim_rename_target_T1_id(T1_id_to_add, T1_id_to_keep);
@@ -454,6 +540,7 @@ void T1_delete(u32 T1_id)
     T1_zsprite_delete(T1_id);
     T1_texquad_delete(T1_id);
     T1_zlight_delete(T1_id);
+    T1_render_view_delete_T1_id(T1_id);
 }
 
 void T1_delete_all(void)
@@ -461,57 +548,4 @@ void T1_delete_all(void)
     T1_zsprite_delete_all();
     T1_texquad_delete_all();
     T1_zlight_delete_all();
-}
-
-static const T1Property * T1_cam_property(
-    s32 cam_i,
-    const c8 * name,
-    const u8 is_u32)
-{
-    T1_log_assert(cam_i >= 0);
-    T1_log_assert(cam_i < T1_RENDER_VIEW_CAP);
-    
-    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
-    u32 matches_size = T1_property_find(
-        name, is_u32, T1_PROP_STORE_CAM,
-        matches, T1_PROPERTY_MATCHES_CAP);
-    T1_log_assert(matches_size == 1);
-    
-    return matches[0];
-}
-
-void T1_cam_set_f32(
-    s32 cam_i,
-    const c8 * property,
-    f32 value)
-{
-    u32 bits;
-    T1_std_memcpy(&bits, &value, 4);
-    T1_property_write(
-        &T1_render_views->cpu[cam_i],
-        T1_cam_property(cam_i, property, 0),
-        bits);
-}
-
-void T1_cam_set_u32(
-    s32 cam_i,
-    const c8 * property,
-    u32 value)
-{
-    T1_property_write(
-        &T1_render_views->cpu[cam_i],
-        T1_cam_property(cam_i, property, 1),
-        value);
-}
-
-f32 T1_cam_get_f32(
-    s32 cam_i,
-    const c8 * property)
-{
-    u32 bits = T1_property_read(
-        &T1_render_views->cpu[cam_i],
-        T1_cam_property(cam_i, property, 0));
-    f32 value;
-    T1_std_memcpy(&value, &bits, 4);
-    return value;
 }

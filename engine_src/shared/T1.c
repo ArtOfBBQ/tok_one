@@ -11,27 +11,21 @@
 #include "T1_io.h"
 #include "T1_os.h"
 
-T1Tex T1_cam_get_write_tex(s32 i) {
-    return T1_render_views->cpu[i].write_tex; }
-void T1_cam_reset(s32 at_i) {
-    return T1_render_view_reset(at_i); }
-void T1_cam_delete(s32 rv_i) {
-    T1Tex tex = T1_render_views->cpu[rv_i].write_tex;
-    if (tex != T1_TEX_NONE) {
-        T1_tex_array_delete_slice(
-            T1_tex_to_array_i(tex),
-            T1_tex_to_slice_i(tex));
-        T1_render_views->cpu[rv_i].write_tex = T1_TEX_NONE;
-    }
-    
-    T1_render_view_delete(rv_i);
-}
+T1Tex T1_cam_get_write_tex(u32 T1_id) {
+    if (T1_id == T1_ID_NONE) { return T1_TEX_NONE; }
+    s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
+    T1_log_assert(rv_i >= 0);
+    return rv_i < 0 ? T1_TEX_NONE : T1_render_views->cpu[rv_i].write_tex; }
+void T1_cam_reset(u32 T1_id) {
+    s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
+    T1_log_assert(rv_i >= 0);
+    if (rv_i >= 0) { T1_render_view_reset(rv_i); } }
 void T1_cam_delete_all(void) {
     // We want to delete even above T1_render_views->size
     // to ensure that attached render target textures
     // are also deleted
     for (s32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
-        T1_cam_delete(i);
+        T1_render_view_delete_with_tex(i);
     }
 }
 f32 T1_screen_x_to_x(f32 ss_x, f32 z) {
@@ -109,7 +103,7 @@ void T1_make_shadowmap_and_attach_to_light(
     #endif
 }
 
-void T1_cam_create_main_view(
+u32 T1_cam_create_main_view(
     u32 new_cam_width,
     u32 new_cam_height,
     char ** const fatal_error)
@@ -120,9 +114,9 @@ void T1_cam_create_main_view(
         new_cam_width,
         new_cam_height,
         fatal_error);
-    if (*fatal_error != 0) { return; }
+    if (*fatal_error != 0) { return T1_ID_NONE; }
     
-    if (rv_i != 0) { return; }
+    if (rv_i != 0) { return T1_ID_NONE; }
     
     T1CPURenderView * rv = T1_render_views->cpu + rv_i;
     
@@ -137,11 +131,11 @@ void T1_cam_create_main_view(
     rv->passes[rv->passes_size++].type = T1RENDERPASS_OUTLINES;
     
     T1_log_assert(
-        !isnan(T1_render_views->cpu[rv_i].dest_xyz[0]));
+        !isnan(T1_render_views->cpu[rv_i].f32s.dest_xyz[0]));
     T1_log_assert(
-        !isnan(T1_render_views->cpu[rv_i].dest_xyz[1]));
+        !isnan(T1_render_views->cpu[rv_i].f32s.dest_xyz[1]));
     T1_log_assert(
-        !isnan(T1_render_views->cpu[rv_i].dest_xyz[2]));
+        !isnan(T1_render_views->cpu[rv_i].f32s.dest_xyz[2]));
     
     T1_log_assert(rv_i == 0);
     T1_log_assert(T1_render_views->size > 0);
@@ -149,10 +143,12 @@ void T1_cam_create_main_view(
     T1_os_gpu_update_internal_render_viewport(0);
     
     T1_os_gpu_update_window_viewport();
+    
+    return rv->T1_id;
 }
 
 #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-void T1_cam_make_reflection_cam(
+u32 T1_cam_make_reflection_cam(
     u32 new_cam_w,
     u32 new_cam_h,
     f32 reflection_z)
@@ -169,7 +165,7 @@ void T1_cam_make_reflection_cam(
     T1_log_assert(dud_error == 0);
     
     T1_log_assert(new_rv_i >= 0);
-    if (new_rv_i < 0) { return; }
+    if (new_rv_i < 0) { return T1_ID_NONE; }
     
     T1_log_assert(new_rv_i == 1);
     
@@ -196,12 +192,14 @@ void T1_cam_make_reflection_cam(
     T1_os_gpu_update_internal_render_viewport(new_rv_i);
     
     T1_render_view_validate();
+    
+    return refl_cpu->T1_id;
 }
 #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-void T1_cam_make_reflection_cam(
+u32 T1_cam_make_reflection_cam(
     u32 new_cam_w,
     u32 new_cam_h,
-    f32 reflection_z) {}
+    f32 reflection_z) { return T1_ID_NONE; }
 #else
 #error
 #endif

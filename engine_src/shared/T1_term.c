@@ -375,19 +375,19 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             jump_rv);
-        T1_cam->xyz[0] = T1_render_views->
-            cpu[jump_rv].xyz[0];
-        T1_cam->xyz[1] = T1_render_views->
-            cpu[jump_rv].xyz[1];
-        T1_cam->xyz[2] = T1_render_views->
-            cpu[jump_rv].xyz[2];
+        T1_cam->f32s.xyz[0] = T1_render_views->
+            cpu[jump_rv].f32s.xyz[0];
+        T1_cam->f32s.xyz[1] = T1_render_views->
+            cpu[jump_rv].f32s.xyz[1];
+        T1_cam->f32s.xyz[2] = T1_render_views->
+            cpu[jump_rv].f32s.xyz[2];
         
-        T1_cam->angle_xyz[0] = T1_render_views->
-            cpu[jump_rv].angle_xyz[0];
-        T1_cam->angle_xyz[1] = T1_render_views->
-            cpu[jump_rv].angle_xyz[1];
-        T1_cam->angle_xyz[2] = T1_render_views->
-            cpu[jump_rv].angle_xyz[2];
+        T1_cam->f32s.angle_xyz[0] = T1_render_views->
+            cpu[jump_rv].f32s.angle_xyz[0];
+        T1_cam->f32s.angle_xyz[1] = T1_render_views->
+            cpu[jump_rv].f32s.angle_xyz[1];
+        T1_cam->f32s.angle_xyz[2] = T1_render_views->
+            cpu[jump_rv].f32s.angle_xyz[2];
         
         return 1;
     }
@@ -418,7 +418,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->xyz[0]);
+            T1_cam->f32s.xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -426,7 +426,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->xyz[1]);
+            T1_cam->f32s.xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -434,7 +434,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->xyz[2]);
+            T1_cam->f32s.xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -442,7 +442,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->angle_xyz[0]);
+            T1_cam->f32s.angle_xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -450,7 +450,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->angle_xyz[1]);
+            T1_cam->f32s.angle_xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -458,7 +458,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->angle_xyz[2]);
+            T1_cam->f32s.angle_xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "T1_types_gpucpu.h"
+#include "T1_property.h"
 
 typedef struct {
     f32 aspect_ratio;
@@ -37,11 +38,11 @@ typedef struct {
     s32 verts_size;
 } T1RenderPass;
 
-#define T1_RENDER_PASSES_MAX 6
+/*
+A camera's values that can be animated. It eases from xyz/angle_xyz towards
+dest_xyz/dest_angle_xyz (see us_to_destination), kept within the min/max.
+*/
 typedef struct {
-    T1GPUProjectConsts project;
-    T1RenderPass passes[T1_RENDER_PASSES_MAX];
-    u32 us_to_destination;
     f32 xyz[3];
     f32 angle_xyz[3];
     f32 dest_xyz[3];
@@ -50,6 +51,15 @@ typedef struct {
     f32 max_xyz[3];
     f32 min_angle_xyz[3];
     f32 max_angle_xyz[3];
+} T1CamF32s;
+
+#define T1_RENDER_PASSES_MAX 6
+typedef struct {
+    T1GPUProjectConsts project;
+    T1RenderPass passes[T1_RENDER_PASSES_MAX];
+    T1CamF32s f32s;
+    u32 us_to_destination;
+    u32 T1_id;
     #if T1_REFLECTION_ACTIVE == T1_ACTIVE
     f32 refl_cam_around_plane_z;
     #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
@@ -93,6 +103,35 @@ void T1_render_view_update_positions(
     const u64 elapsed);
 
 void T1_render_view_delete(const s32 rv_i);
+
+/*
+Cameras are T1 objects: every render view has a unique T1_id, set and
+animated by property name like zsprites (see T1_property.h)
+*/
+// the index of the render view with this T1_id, or -1
+s32  T1_render_view_T1_id_to_i(const u32 T1_id);
+// also frees the render view's write texture
+void T1_render_view_delete_with_tex(const s32 rv_i);
+void T1_render_view_delete_T1_id(const u32 T1_id);
+u32  T1_render_view_set_property(
+    const u32 T1_id,
+    const T1Property * property,
+    const u32 bits);
+b8   T1_render_view_get_property(
+    const u32 T1_id,
+    const T1Property * property,
+    u32 * bits);
+void T1_render_view_rename_T1_id(const u32 from_T1_id, const u32 to_T1_id);
+void T1_render_view_apply_endpoint_anim(
+    const u32 T1_id,
+    const f32 t_applied,
+    const f32 t_now,
+    const f32 * end_vals_f32);
+void T1_render_view_apply_delta_anim(
+    const u32 T1_id,
+    const f32 t_applied,
+    const f32 t_now,
+    const f32 * delta_vals_f32);
 
 void T1_render_view_validate(void);
 

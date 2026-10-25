@@ -278,6 +278,47 @@ u32 T1_zsprite_new_quad(
     return T1_zsprite_commit_with_new_T1_id(&request);
 }
 
+static void * T1_zsprite_store_struct(
+    const u32 i,
+    const u8 store)
+{
+    switch (store) {
+        case T1_PROP_STORE_ZS_CPU_F32:
+            return &T1_zsprite_list->cpu[i].zs_cpu_f32s;
+        case T1_PROP_STORE_ZS_GPU_F32:
+            return &T1_zsprite_list->gpu[i].f32s;
+        case T1_PROP_STORE_ZS_GPU_U32:
+            return &T1_zsprite_list->gpu[i].u32s;
+        case T1_PROP_STORE_ZS_MAT_F32:
+            return &T1_zsprite_list->gpu[i].base_mat_f32;
+        case T1_PROP_STORE_ZS_MAT_U32:
+            return &T1_zsprite_list->gpu[i].base_mat_u32;
+        default:
+            T1_log_assert(0);
+            return NULL;
+    }
+}
+
+b8 T1_zsprite_get_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 * bits)
+{
+    for (u32 i = 0; i < T1_zsprite_list->size; i++) {
+        if (
+            T1_zsprite_list->cpu[i].T1_id == T1_id &&
+            !T1_zsprite_list->cpu[i].deleted)
+        {
+            *bits = T1_property_read(
+                T1_zsprite_store_struct(i, property->store),
+                property);
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
 u32 T1_zsprite_set_property(
     u32 T1_id,
     const T1Property * property,
@@ -293,29 +334,10 @@ u32 T1_zsprite_set_property(
             continue;
         }
         
-        void * store_struct = NULL;
-        switch (property->store) {
-            case T1_PROP_STORE_ZS_CPU_F32:
-                store_struct = &T1_zsprite_list->cpu[i].zs_cpu_f32s;
-                break;
-            case T1_PROP_STORE_ZS_GPU_F32:
-                store_struct = &T1_zsprite_list->gpu[i].f32s;
-                break;
-            case T1_PROP_STORE_ZS_GPU_U32:
-                store_struct = &T1_zsprite_list->gpu[i].u32s;
-                break;
-            case T1_PROP_STORE_ZS_MAT_F32:
-                store_struct = &T1_zsprite_list->gpu[i].base_mat_f32;
-                break;
-            case T1_PROP_STORE_ZS_MAT_U32:
-                store_struct = &T1_zsprite_list->gpu[i].base_mat_u32;
-                break;
-            default:
-                T1_log_assert(0);
-                return count;
-        }
-        
-        T1_property_write(store_struct, property, bits);
+        T1_property_write(
+            T1_zsprite_store_struct(i, property->store),
+            property,
+            bits);
         assert_sanity_check_zsprite_vals_by_id((s32)i);
         count += 1;
     }
@@ -1094,37 +1116,37 @@ void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         T1_log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->zs_cpu_f32s.xyz[0] -= T1_cam->xyz[0];
-        zs_cpu->zs_cpu_f32s.xyz[1] -= T1_cam->xyz[1];
-        zs_cpu->zs_cpu_f32s.xyz[2] -= T1_cam->xyz[2];
-        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[0]);
-        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[1]);
-        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->angle_xyz[2]);
+        zs_cpu->zs_cpu_f32s.xyz[0] -= T1_cam->f32s.xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] -= T1_cam->f32s.xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] -= T1_cam->f32s.xyz[2];
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->zs_cpu_f32s.angle_xyz[0] -= T1_cam->angle_xyz[0];
-        zs_cpu->zs_cpu_f32s.angle_xyz[1] -= T1_cam->angle_xyz[1];
-        zs_cpu->zs_cpu_f32s.angle_xyz[2] -= T1_cam->angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] -= T1_cam->f32s.angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] -= T1_cam->f32s.angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] -= T1_cam->f32s.angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 1.0f;
     } else {
         T1_log_assert(is_near_one);
         
-        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[2]);
-        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[1]);
-        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->angle_xyz[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[0]);
         
-        zs_cpu->zs_cpu_f32s.xyz[0] += T1_cam->xyz[0];
-        zs_cpu->zs_cpu_f32s.xyz[1] += T1_cam->xyz[1];
-        zs_cpu->zs_cpu_f32s.xyz[2] += T1_cam->xyz[2];
+        zs_cpu->zs_cpu_f32s.xyz[0] += T1_cam->f32s.xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] += T1_cam->f32s.xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] += T1_cam->f32s.xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->zs_cpu_f32s.angle_xyz[0] += T1_cam->angle_xyz[0];
-        zs_cpu->zs_cpu_f32s.angle_xyz[1] += T1_cam->angle_xyz[1];
-        zs_cpu->zs_cpu_f32s.angle_xyz[2] += T1_cam->angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] += T1_cam->f32s.angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] += T1_cam->f32s.angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] += T1_cam->f32s.angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 0.0f;

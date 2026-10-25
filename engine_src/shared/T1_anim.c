@@ -29,6 +29,7 @@ typedef struct {
     T1GPUTexQuadf32 * tq_gpu_f32s;
     T1GPUTexQuadu32 * tq_gpu_u32s;
     T1zLightf32     * zl_gpu_f32s;
+    T1CamF32s       * cam_f32s;
     
     u64 duration_us;
     u64 pause_us;
@@ -41,6 +42,7 @@ typedef struct {
     u16 tq_gpu_f32s_store_i;
     u16 tq_gpu_u32s_store_i;
     u16 zl_f32s_store_i;
+    u16 cam_f32s_store_i;
     u32 runs;
     u32 target_T1_id;
     T1EasingType easing_type; // u8
@@ -97,6 +99,7 @@ typedef struct {
     T1CPUzSpritef32 zs_cpu_f32s_store[T1_ANIMS_CAP];
     T1GPUTexQuadf32 tq_gpu_f32s_store[T1_ANIMS_CAP];
     T1GPUTexQuadu32 tq_gpu_u32s_store[T1_ANIMS_CAP];
+    T1CamF32s       cam_f32s_store[T1_ANIMS_CAP];
     u32 (* init_mutex_and_return_id)(void);
     void (* mutex_lock)(u32);
     void (* mutex_unlock)(u32);
@@ -273,6 +276,24 @@ T1_anim_fetch_next_store_tq_gpu_u32s(u16 * store_i) {
     return out;
 }
 
+static T1CamF32s *
+T1_anim_fetch_next_store_cam_f32s(u16 * store_i) {
+    u16 i = 0;
+    while (
+        ((as->store_taken[i] >> 6) & 1) &&
+        i < T1_ANIMS_CAP)
+    {
+        i++;
+    }
+    T1_log_assert(i < T1_ANIMS_CAP);
+    *store_i = i;
+    as->store_taken[i] |= (1 << 6);
+    
+    T1CamF32s * out = &as->cam_f32s_store[i];
+    T1_std_memset(out, 0, sizeof(T1CamF32s));
+    return out;
+}
+
 static T1Anim * T1_anim_alloc(b8 endpoints_not_deltas)
 {
     as->mutex_lock(as->mutex_id);
@@ -330,6 +351,9 @@ static void T1_anim_delete(T1Anim * a) {
     if (a->tq_gpu_u32s) {
         as->store_taken[a->tq_gpu_u32s_store_i] &= ~(1);
     }
+    if (a->cam_f32s) {
+        as->store_taken[a->cam_f32s_store_i] &= ~(1 << 6);
+    }
     
     a->deleted = 1;
     a->committed = 0;
@@ -337,8 +361,10 @@ static void T1_anim_delete(T1Anim * a) {
     if (a == (T1_anims + (s32)T1_anims_size-1)) { T1_anims_size -= 1; }
 }
 
+// moves a forward by elapsed microseconds
 static void T1_anim_resolve_single(
-    T1Anim * a)
+    T1Anim * a,
+    u64 elapsed)
 {
     if (a->deleted || !a->committed) {
         return;
@@ -386,8 +412,6 @@ static void T1_anim_resolve_single(
         
         return;
     }
-    
-    u64 elapsed = T1_global->elapsed;
     
     if (a->remaining_pause_us > 0) {
         if (elapsed <= a->remaining_pause_us) {
@@ -487,6 +511,13 @@ static void T1_anim_resolve_single(
                 /* const f32 * goal_gpu_vals_f32: */
                     (f32 *)a->zl_gpu_f32s);
         }
+        if (a->cam_f32s) {
+            T1_render_view_apply_endpoint_anim(
+                a->target_T1_id,
+                t_applied,
+                t_now,
+                (f32 *)a->cam_f32s);
+        }
     } else {
         if (
             a->zs_gpu_f32s ||
@@ -532,6 +563,13 @@ static void T1_anim_resolve_single(
             // TODO: apply anim (non-endpoint) for zLight
             T1_log_assert(0);
         }
+        if (a->cam_f32s) {
+            T1_render_view_apply_delta_anim(
+                a->target_T1_id,
+                t_applied,
+                t_now,
+                (f32 *)a->cam_f32s);
+        }
     }
 }
 
@@ -576,7 +614,8 @@ static void T1_anim_commit_and_instarun(T1Anim * a)
     a->remaining_duration_us = a->duration_us;
     a->committed = 1;
     
-    T1_anim_resolve_single(a);
+    // all of it, whether or not a frame has passed
+    T1_anim_resolve_single(a, a->pause_us + a->duration_us);
     T1_anim_delete(a);
     a->committed = 0;
     T1_log_assert(a->remaining_duration_us == 0);
@@ -630,7 +669,7 @@ void T1_anim_resolve(void) {
     {
         T1Anim * anim = &T1_anims[anim_i];
         
-        T1_anim_resolve_single(anim);
+        T1_anim_resolve_single(anim, T1_global->elapsed);
     }
     
     as->mutex_unlock(as->mutex_id);
@@ -717,6 +756,13 @@ static void * T1_anim_get_store(
             out = a->zl_gpu_f32s;
             size = sizeof(T1zLightf32);
             break;
+        case T1_PROP_STORE_CAM_F32:
+            if (a->cam_f32s) { return a->cam_f32s; }
+            a->cam_f32s = T1_anim_fetch_next_store_cam_f32s(
+                &a->cam_f32s_store_i);
+            out = a->cam_f32s;
+            size = sizeof(T1CamF32s);
+            break;
         default:
             T1_log_assert(0);
             return NULL;
@@ -764,7 +810,10 @@ static void T1_anim_set_bits(
         T1_log_assert(a->endpoints_not_deltas || !p->is_u32);
         
         void * store_struct = T1_anim_get_store(a, p->store);
-        T1_property_write(store_struct, p, bits);
+        T1_property_write(
+            store_struct,
+            p,
+            T1_property_convert_bits(p, bits));
         stores_set += 1;
     }
     

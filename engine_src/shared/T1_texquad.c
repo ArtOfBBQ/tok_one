@@ -181,6 +181,43 @@ u32 T1_texquad_new(void)
     return request.cpu->T1_id;
 }
 
+static void * T1_texquad_store_struct(
+    const s32 i,
+    const u8 store)
+{
+    switch (store) {
+        case T1_PROP_STORE_TQ_CPU_F32:
+            return &T1_texquads->cpu[i];
+        case T1_PROP_STORE_TQ_GPU_F32:
+            return &T1_texquads->gpu[i].f32s;
+        case T1_PROP_STORE_TQ_GPU_U32:
+            return &T1_texquads->gpu[i].u32s;
+        default:
+            T1_log_assert(0);
+            return NULL;
+    }
+}
+
+b8 T1_texquad_get_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 * bits)
+{
+    for (s32 i = 0; i < T1_texquads->size; i++) {
+        if (
+            T1_texquads->cpu[i].T1_id == T1_id &&
+            !T1_texquads->cpu[i].deleted)
+        {
+            *bits = T1_property_read(
+                T1_texquad_store_struct(i, property->store),
+                property);
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
 u32 T1_texquad_set_property(
     u32 T1_id,
     const T1Property * property,
@@ -196,23 +233,10 @@ u32 T1_texquad_set_property(
             continue;
         }
         
-        void * store_struct = NULL;
-        switch (property->store) {
-            case T1_PROP_STORE_TQ_CPU_F32:
-                store_struct = &T1_texquads->cpu[i];
-                break;
-            case T1_PROP_STORE_TQ_GPU_F32:
-                store_struct = &T1_texquads->gpu[i].f32s;
-                break;
-            case T1_PROP_STORE_TQ_GPU_U32:
-                store_struct = &T1_texquads->gpu[i].u32s;
-                break;
-            default:
-                T1_log_assert(0);
-                return count;
-        }
-        
-        T1_property_write(store_struct, property, bits);
+        T1_property_write(
+            T1_texquad_store_struct(i, property->store),
+            property,
+            bits);
         assert_sanity_check_texquad_vals(
             &T1_texquads->gpu[i].f32s,
             &T1_texquads->gpu[i].u32s);

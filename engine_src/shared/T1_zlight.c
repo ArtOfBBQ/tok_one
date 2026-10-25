@@ -84,6 +84,23 @@ u32 T1_zlight_set_property(
     return count;
 }
 
+b8 T1_zlight_get_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 * bits)
+{
+    T1_log_assert(property->store == T1_PROP_STORE_ZL_F32);
+    
+    for (u32 i = 0; i < T1_zlights_size; i++) {
+        if (T1_zlights[i].T1_id == T1_id && !T1_zlights[i].deleted) {
+            *bits = T1_property_read(&T1_zlights[i].f32s, property);
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
 void T1_zlight_rename_T1_id(u32 from_T1_id, u32 to_T1_id)
 {
     for (u32 i = 0; i < T1_zlights_size; i++) {
@@ -253,17 +270,17 @@ void T1_zlight_update_all_attached_render_views(void)
             (s32)T1_render_views->size);
         T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
         
-        T1_render_views->cpu[rv_i].xyz[0] =
+        T1_render_views->cpu[rv_i].f32s.xyz[0] =
             T1_zlights[zl_i].f32s.xyz[0];
-        T1_render_views->cpu[rv_i].xyz[1] =
+        T1_render_views->cpu[rv_i].f32s.xyz[1] =
             T1_zlights[zl_i].f32s.xyz[1];
-        T1_render_views->cpu[rv_i].xyz[2] =
+        T1_render_views->cpu[rv_i].f32s.xyz[2] =
             T1_zlights[zl_i].f32s.xyz[2];
-        T1_render_views->cpu[rv_i].angle_xyz[0] =
+        T1_render_views->cpu[rv_i].f32s.angle_xyz[0] =
             T1_zlights[zl_i].f32s.angle_xyz[0];
-        T1_render_views->cpu[rv_i].angle_xyz[1] =
+        T1_render_views->cpu[rv_i].f32s.angle_xyz[1] =
             T1_zlights[zl_i].f32s.angle_xyz[1];
-        T1_render_views->cpu[rv_i].angle_xyz[2] =
+        T1_render_views->cpu[rv_i].f32s.angle_xyz[2] =
             T1_zlights[zl_i].f32s.angle_xyz[2];
     }
 }

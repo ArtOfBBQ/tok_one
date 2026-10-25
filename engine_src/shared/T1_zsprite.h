@@ -74,6 +74,11 @@ u32 T1_zsprite_new_quad(
     f32 height);
 
 // returns how many zsprites with this T1_id were written
+// reads the first object with T1_id, false if there's none
+b8 T1_zsprite_get_property(
+    u32 T1_id,
+    const T1Property * property,
+    u32 * bits);
 u32 T1_zsprite_set_property(
     u32 T1_id,
     const T1Property * property,
