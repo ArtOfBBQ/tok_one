@@ -11,53 +11,27 @@
 #include "T1_os.h"
 #include "T1_fatal_error.h"
 
-static void malloc_img_from_embedded_png(
+/*
+T1's font is white, so concat.c embeds only its alpha channel: u32 width,
+u32 height, then (count, alpha) byte pairs covering the image row by row
+*/
+static void malloc_font_img_from_alpha_rle(
     T1Img * recip,
-    const unsigned char * embedded_data,
-    u64 embedded_data_size,
-    b8 never_delete,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
-    if (embedded_data_size < 1) {
-        *fatal_error = "Embedded data size was 0";
+    const u8 * rle = T1_embedded_data_font_alpha_rle;
+    const u32 rle_size = T1_embedded_data_font_alpha_rle_size;
+    
+    if (rle_size < 8) {
+        *fatal_error = "Embedded font is missing";
         return;
     }
     
-    char * contents = T1_mem_malloc_managed(embedded_data_size);
-    if (!contents) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memcpy(
-        contents,
-        embedded_data,
-        embedded_data_size);
-    
-    u8 is_png =
-        contents[1] == 'P' &&
-        contents[2] == 'N' &&
-        contents[3] == 'G';
-    if (!is_png) {
-        *fatal_error = "Error - malloc_img_from_embedded_png(), but embedded data is not a PNG";
-        return;
-    }
-    
-    decode_png_get_width_height(
-        /* const u8 * compressed_input: */
-            (u8 *)embedded_data,
-        /* const u64 compressed_input_size: */
-            embedded_data_size - 1,
-        /* u32 * out_width: */ &recip->width,
-        /* u32 * out_height: */ &recip->height,
-        /* u32 * out_good: */ fatal_error);
-    
-    if (*fatal_error != 0) {
-        T1_mem_free_managed((u8 *)contents);
-        return;
-    }
-    
+    T1_std_memset(recip, 0, sizeof(T1Img));
+    T1_std_memcpy(&recip->width, rle, 4);
+    T1_std_memcpy(&recip->height, rle + 4, 4);
     recip->pixel_count = recip->width * recip->height;
     recip->rgba_values_size = recip->pixel_count * 4;
     T1_mem_malloc_managed_page_aligned(
@@ -67,32 +41,30 @@ static void malloc_img_from_embedded_png(
             (void *)&recip->rgba_values_page_aligned,
         /* const u64 subptr_size: */
             recip->rgba_values_size);
-    
-    T1_std_memset(
-        recip->rgba_values_page_aligned,
-        0,
-        recip->rgba_values_size);
-    
-    decode_png(
-        /* const u8 * compressed_input: */
-            (u8 *)contents,
-        /* const u64 compressed_input_size: */
-            embedded_data_size-1,
-        /* out_rgba_values: */
-            recip->rgba_values_page_aligned,
-        /* rgba_values_size: */
-            recip->rgba_values_size,
-        /* const u32 thread_id: */
-            0,
-        /* fatal_error: */
-            fatal_error);
-    
-    recip->never_delete_me = never_delete;
-    if (recip->never_delete_me) {
-        recip->rgba_values_freeable = NULL;
+    if (recip->rgba_values_page_aligned == NULL) {
+        *fatal_error = "Malloc fail";
+        return;
     }
     
-    T1_mem_free_managed((u8 *)contents);
+    u8 * rgba = recip->rgba_values_page_aligned;
+    u32 px = 0;
+    for (u32 i = 8; i + 1 < rle_size; i += 2) {
+        u8 count = rle[i];
+        u8 alpha = rle[i + 1];
+        if (px + count > recip->pixel_count) { break; }
+        for (u8 c = 0; c < count; c++) {
+            rgba[(px * 4) + 0] = 255;
+            rgba[(px * 4) + 1] = 255;
+            rgba[(px * 4) + 2] = 255;
+            rgba[(px * 4) + 3] = alpha;
+            px++;
+        }
+    }
+    
+    if (px != recip->pixel_count) {
+        *fatal_error = "Embedded font is corrupt";
+        return;
+    }
 }
 
 static void malloc_img_from_resource_name(
@@ -102,29 +74,6 @@ static void malloc_img_from_resource_name(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-    
-    if (T1_std_are_equal_strings(filename, "font.png")) {
-        malloc_img_from_embedded_png(
-            recipient,
-            T1_embedded_data_font_png,
-            T1_embedded_data_font_png_size,
-            /* b8 never_delete: */ 1,
-            fatal_error);
-        return;
-    }
-    
-    if (T1_std_are_equal_strings(filename, "perlin_noise.png")) {
-        malloc_img_from_embedded_png(
-            recipient,
-            T1_embedded_data_perlin_noise_png,
-            T1_embedded_data_perlin_noise_png_size,
-            /* b8 never_delete: */ 1,
-            fatal_error);
-        T1_fatal_error_prepend_if_bad(
-            fatal_error,
-            "Embedded perlin_noise.png: ");
-        return;
-    }
     
     u64 size_without_terminator =
         T1_os_get_resource_size(filename);
@@ -341,13 +290,19 @@ void T1_tex_files_load_font_images(
         return;
     }
     
-    const char * fontfile = "font.png";
-    T1_tex_files_reg_new_by_splitting_file_error_handling(
-        /* filename : */ fontfile,
-        /* rows     : */ 10,
-        /* columns  : */ 10,
-        /* never_delete: */ 1,
+    T1Img font_img;
+    malloc_font_img_from_alpha_rle(&font_img, fatal_error);
+    if (*fatal_error != 0) { return; }
+    
+    // the glyphs stay forever, the whole image is only needed to split it
+    T1_tex_array_reg_new_by_splitting_img(
+        /* T1Img * new_image: */ &font_img,
+        /* const char * filename_prefix: */ "font",
+        /* u32 rows: */ 10,
+        /* u32 columns: */ 10,
+        /* b8 never_delete: */ 1,
         fatal_error);
+    T1_mem_free_managed(font_img.rgba_values_freeable);
     if (*fatal_error != 0) { return; }
     T1_tex_arrays[0].request_init = 0;
 }

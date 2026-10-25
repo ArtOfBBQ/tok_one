@@ -730,8 +730,7 @@ static void * T1_appinit_asset_loading_thread(
 
 /*
 The GPU resources T1 itself needs: font images, render view 0's target,
-viewports, perlin noise. These come before the client preregisters its own
-assets.
+viewports. These come before the client preregisters its own assets.
 */
 static void T1_appinit_gpu_resources(
     char ** const fatal_error)
@@ -783,34 +782,6 @@ static void T1_appinit_gpu_resources(
             sizeof(T1GPULockedVertex) *
                 T1_LOCKED_VERTEX_CAP);
     T1_os_gpu_copy_locked_vertices();
-    
-    const char * perlin_noise_fn = "perlin_noise.png";
-    T1_tex_files_prereg_and_decode_png_res(
-        perlin_noise_fn,
-        /* never_delete: */ 1,
-        fatal_error);
-    
-    if (*fatal_error != 0) {
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    
-    T1Tex perlin_tex = T1_tex_array_get_filename_loc(
-            perlin_noise_fn);
-    T1_global->postproc_consts.perlin_texturearray_i = 
-        T1_tex_to_array_i(perlin_tex);
-    T1_global->postproc_consts.perlin_texture_i =
-        T1_tex_to_slice_i(perlin_tex);
-    
-    if (
-        T1_global->postproc_consts.perlin_texturearray_i < 1 ||
-        T1_global->postproc_consts.perlin_texture_i != 0)
-    {
-        T1_gameloop_active = 1;
-        T1_log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
     
     T1_gameloop_active = 1;
     

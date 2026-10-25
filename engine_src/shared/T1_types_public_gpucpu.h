@@ -13,8 +13,6 @@ typedef struct
     uint32_t timestamp;
     uint32_t cam_rv_i;
     uint32_t lights_size;
-    int32_t perlin_texturearray_i;
-    int32_t perlin_texture_i;
     float rgb_add[3];
     #if T1_FOG_ACTIVE == T1_ACTIVE
     float fog_color[3];
@@ -32,7 +30,7 @@ typedef struct
     #else
     #error
     #endif
-    float padding[6];
+    float padding[8];
 } T1GPUPostProcConsts;
 
 #endif // T1_TYPES_PUBLIC_GPUCPU_H

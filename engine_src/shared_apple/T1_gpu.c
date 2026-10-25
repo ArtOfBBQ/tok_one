@@ -3405,25 +3405,6 @@ static void T1_gpu_encode_composite_pass(
     #error
     #endif
     
-    s32 perlin_ta_i =
-        f->postproc_consts->perlin_texturearray_i;
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 perlin_t_i =
-        f->postproc_consts->perlin_texture_i;
-    // log_assert(perlin_ta_i >= 1);
-    T1_log_assert(perlin_t_i == 0);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
-    
-    T1_objc_msg_2arg(
-        pass_5_comp,
-        ags->sel_set_fragment_texture_at_index,
-        /* setFragmentTexture: */ (uintptr_t)ags->metal_textures[perlin_ta_i],
-        /* atIndex: */ 6);
-    
     T1_objc_msg_2arg(
         pass_5_comp,
         ags->sel_set_fragment_texture_at_index,

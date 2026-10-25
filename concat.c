@@ -18,6 +18,14 @@ The library is in the /build folder
 #include <string.h>
 #include <assert.h>
 
+// to decode T1's own images at build time, T1 itself has no image decoders
+#define INFLATE_PRINTF_ACTIVE 2
+#define INFLATE_ASSERTS_ACTIVE 1
+#define DECODE_PNG_PRINTF_ACTIVE 2
+#define DECODE_PNG_ASSERTS_ACTIVE 1
+#include "engine_src/shared/debigulator/src/inflate.c"
+#include "engine_src/shared/debigulator/src/decode_png.c"
+
 static const char * encapsulation_h_file = "T1.h";
 
 static const char * search_paths[] = {
@@ -36,6 +44,10 @@ typedef struct {
     // NULL = embed the file called name, else inline these files (NULL
     // terminated) one after the other, name is then only the variable name
     const char ** inline_files;
+    // NULL = embed the file called name, else decode this white png and embed
+    // only its alpha channel, run length encoded (see T1_tex_files.c), name is
+    // then only the variable name
+    const char * alpha_rle_from_png;
 } Embeddable;
 
 // The T1 types that shaders need to know about. T1 prepends these to the
@@ -48,10 +60,9 @@ static const char * shader_include_files[] = {
 };
 
 static const Embeddable to_embed_files[] = {
-    {"shader_includes",  0, 1, shader_include_files},
-    {"fontmetrics.dat",  1, 0, NULL},
-    {"font.png",         1, 0, NULL},
-    {"perlin_noise.png", 1, 0, NULL},
+    {"shader_includes",  0, 1, shader_include_files, NULL},
+    {"fontmetrics.dat",  1, 0, NULL, NULL},
+    {"font_alpha_rle",   1, 0, NULL, "font.png"},
 };
 
 static const char * c_files[] = {
@@ -529,6 +540,88 @@ static void name_to_adjusted_name(
     adjusted_name[i+len] = '\0';
 }
 
+static void * concat_memset(void * str, int c, uint64_t n) {
+    return memset(str, c, n);
+}
+
+static void * concat_memcpy(void * dest, const void * src, uint64_t n) {
+    return memcpy(dest, src, n);
+}
+
+/*
+Decodes the png in recip and overwrites it with:
+u32 width, u32 height (little endian), then (count, alpha) byte pairs that
+cover the whole image row by row, count is 1 to 255
+*/
+static void png_to_alpha_rle_in_place(
+    char * recip,
+    uint32_t * recip_size,
+    const uint32_t recip_cap)
+{
+    static int decoder_ready = 0;
+    if (!decoder_ready) {
+        decode_png_init(
+            malloc,
+            free,
+            concat_memset,
+            concat_memcpy,
+            35000000,
+            0);
+        decoder_ready = 1;
+    }
+    
+    // try_get_file_at_path() counts a 0 terminator
+    uint64_t png_size = *recip_size - 1;
+    char * fatal_error = 0;
+    uint32_t width = 0;
+    uint32_t height = 0;
+    decode_png_get_width_height(
+        (uint8_t *)recip, png_size, &width, &height, &fatal_error);
+    assert(fatal_error == 0);
+    
+    uint64_t rgba_size = (uint64_t)width * height * 4;
+    uint8_t * rgba = malloc(rgba_size);
+    decode_png(
+        (uint8_t *)recip, png_size, rgba, rgba_size, 0, &fatal_error);
+    if (fatal_error != 0) {
+        printf("Failed to decode png to embed: %s\n", fatal_error);
+        assert(0);
+    }
+    
+    uint8_t * out = (uint8_t *)recip;
+    uint32_t out_i = 0;
+    memcpy(out + out_i, &width, 4);
+    out_i += 4;
+    memcpy(out + out_i, &height, 4);
+    out_i += 4;
+    
+    uint64_t pixels = (uint64_t)width * height;
+    uint64_t px = 0;
+    while (px < pixels) {
+        uint8_t alpha = rgba[(px * 4) + 3];
+        // the image has to be white, we only keep its alpha
+        assert(alpha == 0 || (
+            rgba[(px * 4) + 0] == 255 &&
+            rgba[(px * 4) + 1] == 255 &&
+            rgba[(px * 4) + 2] == 255));
+        uint8_t count = 0;
+        while (
+            px < pixels &&
+            count < 255 &&
+            rgba[(px * 4) + 3] == alpha)
+        {
+            count++;
+            px++;
+        }
+        assert(out_i + 2 < recip_cap);
+        out[out_i++] = count;
+        out[out_i++] = alpha;
+    }
+    
+    free(rgba);
+    *recip_size = out_i;
+}
+
 static void append_embedded_file_to_out(
     const uint32_t to_embed_i)
 {
@@ -588,13 +681,22 @@ static void append_embedded_file_to_out(
             /* uint32_t recip_cap: */
                 to_embed_cap,
             /* const char * filename: */
-                to_embed_files[to_embed_i].name);
+                to_embed_files[to_embed_i].alpha_rle_from_png ?
+                    to_embed_files[to_embed_i].alpha_rle_from_png :
+                    to_embed_files[to_embed_i].name);
         
         if (to_embed_size < 1) {
             printf(
                 "Couldn't find file to embed: %s\n",
                 to_embed_files[to_embed_i].name);
             assert(0);
+        }
+        
+        if (to_embed_files[to_embed_i].alpha_rle_from_png) {
+            png_to_alpha_rle_in_place(
+                asm_state->arena,
+                &to_embed_size,
+                to_embed_cap);
         }
     }
     
