@@ -425,19 +425,14 @@ Short taps and long taps get cleared every frame, but a key
 being down does not. If you don't consume a tap on the frame
 when it ends, you will lose it
 */
-int32_t   T1_io_create_scene_and_return_id(void);
-void      T1_io_scene_stack_push(int32_t T1_scene_id);
-void      T1_io_scene_stack_pop(void);
-int32_t   T1_io_scene_stack_get_active_scene_id(void);
-uint8_t   T1_io_key_is_down(T1IOKey key, int32_t T1_scene_id);
-uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key, int32_t T1_scene_id);
-uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
-uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key, int32_t T1_scene_id);
+uint8_t   T1_io_key_is_down(T1IOKey key);
+uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key);
+uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
+uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
 uint32_t  T1_io_get_mouse_touch_id_this_frame(void);
 float     T1_io_get_pos_x_this_frame(T1IOKey key); 
 float     T1_io_get_pos_y_this_frame(T1IOKey key);
-int32_t   T1_io_create_scene_and_return_id(void);
-uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y, int32_t T1_scene_id);
+uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y);
 
 /*
 FATAL ERRORS

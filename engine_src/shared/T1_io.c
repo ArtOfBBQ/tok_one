@@ -7,11 +7,10 @@
 #include "T1_log.h"
 
 #define T1_IO_SHORT_DURATION 300000
-#define T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US 80000
 
 typedef struct {
     u64 timestamp;
-    s32 scene_id;
+    b8  for_terminal; // happened while the terminal captured input
     b8  is_up_short;
     b8  is_up_long;
     b8  is_active;
@@ -30,26 +29,25 @@ typedef struct {
     // T1IOKey key; // not needed, it's the index
     T1IOFrameEvent list[T1_IO_MAX_EVENTS_PER_FRAME];
     u64 last_down_timestamp;
-    s32 is_down_for_scene_id;
+    b8  is_down;
+    b8  is_down_for_terminal;
     u8  debounces_up;
     u8  debounces_down;
 } T1IOFrameEventQueue;
 
 #define T1_IO_POS_EVENTS_CAP 50
-#define SCENE_IDS_STACK_CAP 20
 typedef struct {
     T1IOFrameEventPosition pos_events[T1_IO_POS_EVENTS_CAP];
     T1IOFrameEventQueue frame_map[T1_IO_KEY_ABOVEBOUNDS];
-    u64 last_scene_swap_us;
-    s32 scene_ids_stack[SCENE_IDS_STACK_CAP];
     f32 last_drag_start_x;
     f32 last_drag_start_y;
     u32 ondown_lclick_touch_id;
     u32 cur_mouse_touch_id;
-    s32 next_scene_id;
-    s32 dragging_at_scene_id;
-    u8 scene_ids_stack_i;
-    u8 pos_events_size;
+    b8  dragging;
+    b8  dragging_for_terminal;
+    // while set, inputs go to the terminal instead of the client
+    b8  captured_by_terminal;
+    u8  pos_events_size;
 } T1IOState;
 
 T1IOState * T1_io = NULL;
@@ -57,8 +55,6 @@ T1IOState * T1_io = NULL;
 void T1_io_init(void *(* arg_malloc_func)(size_t)) {
     T1_io = (T1IOState *)(arg_malloc_func(sizeof(T1IOState)));
     T1_std_memset(T1_io, 0, sizeof(T1IOState));
-    
-    T1_io->dragging_at_scene_id = -1;
     
     T1_io->pos_events[0].key = T1_IO_MOUSE;
     T1_io->pos_events[0].timestamp = T1_os_get_current_time_us();
@@ -76,14 +72,10 @@ void T1_io_init(void *(* arg_malloc_func)(size_t)) {
     T1_io->pos_events[2].y = 0;
     
     T1_io->pos_events_size = 3;
-    
-    for (uint32_t i = 0; i < SCENE_IDS_STACK_CAP; i++) {
-        T1_io->scene_ids_stack[i] = -1;    
-    }
-    
-    for (uint32_t i = 0; i < T1_IO_KEY_ABOVEBOUNDS; i++) {
-        T1_io->frame_map[i].is_down_for_scene_id = -1;
-    }
+}
+
+void T1_io_set_captured_by_terminal(b8 captured) {
+    T1_io->captured_by_terminal = captured;
 }
 
 static T1IOFrameEvent *
@@ -107,8 +99,8 @@ T1_io_get_open_event(
         return NULL;
     }
     
-    T1_io->frame_map[for_key_id].list[insert_i].scene_id =
-        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
+    T1_io->frame_map[for_key_id].list[insert_i].for_terminal =
+        T1_io->captured_by_terminal;
     
     return T1_io->frame_map[for_key_id].list + insert_i;
 }
@@ -116,21 +108,9 @@ T1_io_get_open_event(
 void
 T1_io_register_keyup(u32 key_id, u8 debounces)
 {
-    if (
-        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
-            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
-    {
-        return;
-    
-    }
-    // We shouldn't be registering stuff when no scene is active
-    if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
-        return;
-    }
-    
     T1_io->frame_map[key_id].debounces_down = 0;
     
-    if (T1_io->frame_map[key_id].is_down_for_scene_id < 0) {
+    if (!T1_io->frame_map[key_id].is_down) {
         // already up
         return;
     }
@@ -141,14 +121,11 @@ T1_io_register_keyup(u32 key_id, u8 debounces)
     }
     T1_io->frame_map[key_id].debounces_up = 0;
     
-    if (
-        key_id == T1_IO_MOUSE_LCLICK &&
-        T1_io->dragging_at_scene_id >= 0)
-    {
-        T1_io->dragging_at_scene_id = -1;
+    if (key_id == T1_IO_MOUSE_LCLICK) {
+        T1_io->dragging = 0;
     }
     
-    T1_io->frame_map[key_id].is_down_for_scene_id = -1;
+    T1_io->frame_map[key_id].is_down = 0;
     
     if (
         key_id == T1_IO_MOUSE_LCLICK &&
@@ -183,16 +160,9 @@ T1_io_register_keyup(u32 key_id, u8 debounces)
 void T1_io_register_keyup_force_up_short(
     u32 key_id)
 {
-    if (
-        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
-            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
-    {
-        return;
-    
-    }
-    
-    T1_io->frame_map[key_id].is_down_for_scene_id =
-        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
+    T1_io->frame_map[key_id].is_down = 1;
+    T1_io->frame_map[key_id].is_down_for_terminal =
+        T1_io->captured_by_terminal;
     
     T1IOFrameEvent * next = T1_io_get_open_event(key_id);
     
@@ -208,21 +178,9 @@ void T1_io_register_keyup_force_up_short(
 void
 T1_io_register_keydown(u32 key_id, u8 debounces)
 {
-    if (
-        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
-            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
-    {
-        return;
-    
-    }
-    
     T1_io->frame_map[key_id].debounces_up = 0;
     
-    if (T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] < 0) {
-        return;
-    }
-    
-    if (T1_io->frame_map[key_id].is_down_for_scene_id >= 0) {
+    if (T1_io->frame_map[key_id].is_down) {
         // already down
         return;
     }
@@ -235,13 +193,13 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
     
     if (
         key_id == T1_IO_MOUSE_LCLICK &&
-        T1_io->dragging_at_scene_id < 0)
+        !T1_io->dragging)
     {
         f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
         f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
         
-        T1_io->dragging_at_scene_id =
-            T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
+        T1_io->dragging = 1;
+        T1_io->dragging_for_terminal = T1_io->captured_by_terminal;
         T1_io->last_drag_start_x = mouse_x;
         T1_io->last_drag_start_y = mouse_y;
         
@@ -251,8 +209,9 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
                 mouse_y);
     }
     
-    T1_io->frame_map[key_id].is_down_for_scene_id =
-        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
+    T1_io->frame_map[key_id].is_down = 1;
+    T1_io->frame_map[key_id].is_down_for_terminal =
+        T1_io->captured_by_terminal;
     T1_io->frame_map[key_id].last_down_timestamp =
         T1_os_get_current_time_us();
     
@@ -270,14 +229,6 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
 void T1_io_register_key_move_to_pos(
     T1IOKey key_id, f32 x, f32 y)
 {
-    if (
-        (T1_os_get_current_time_us() - T1_io->last_scene_swap_us) <
-            T1_IO_DROP_INPUTS_AFTER_SCENESWAP_US)
-    {
-        return;
-    
-    }
-    
     T1IOFrameEventPosition * pos = NULL;
     
     for (u32 i = 0; i < T1_io->pos_events_size; i++) {
@@ -349,74 +300,40 @@ T1_io_update_and_clear_for_next_frame(void)
 }
 
 /*
-Public functions (exposed via T1.h)
+Inputs that happened while the terminal was open belong to the terminal,
+the client doesn't get to see them (and vice versa)
 */
-s32 T1_io_create_scene_and_return_id(void) {
-    T1_io->next_scene_id += 1;
-    return T1_io->next_scene_id;
-}
-
-void T1_io_scene_stack_push(s32 T1_scene_id) {
-    T1_log_assert(T1_io->scene_ids_stack[
-        T1_io->scene_ids_stack_i] != T1_scene_id);
-    T1_log_assert(
-        (T1_io->scene_ids_stack_i + 1) <
-            SCENE_IDS_STACK_CAP);
-    T1_io->scene_ids_stack_i++;
-    T1_io->scene_ids_stack[T1_io->scene_ids_stack_i] = T1_scene_id;
-    
-    T1_io->last_scene_swap_us = T1_os_get_current_time_us();
-}
-
-void T1_io_scene_stack_pop(void) {
-    T1_log_assert(T1_io->scene_ids_stack_i > 0);
-    T1_io->scene_ids_stack_i -= 1;
-    
-    T1_io->last_scene_swap_us = T1_os_get_current_time_us();
-    
-    return;
-}
-
-s32 T1_io_scene_stack_get_active_scene_id(void) {
-    return T1_io->scene_ids_stack_i < 0 ?
-        -1 :
-        T1_io->scene_ids_stack[T1_io->scene_ids_stack_i];
-}
-
-b8 T1_io_key_is_down(T1IOKey key, s32 scene_id)
+b8 T1_io_key_is_down_internal(T1IOKey key, b8 for_terminal)
 {
     T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
-    if (scene_id < 0) {
-        T1_log_assert(scene_id == -1);
-        return T1_io->frame_map[key].is_down_for_scene_id >= 0;
-    } else {    
-        return T1_io->frame_map[key].is_down_for_scene_id == scene_id;
-    }
+    return
+        T1_io->frame_map[key].is_down &&
+        T1_io->frame_map[key].is_down_for_terminal == for_terminal;
 }
 
-b8 T1_io_key_consume_tap_began_frame(
+static b8 T1_io_key_consume_event(
     T1IOKey key,
-    const s32 scene_id)
+    b8 for_terminal,
+    b8 is_up_short,
+    b8 is_up_long)
 {
-    T1_log_assert(scene_id >= -1);
+    T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
     for (
         s32 i = 0;
         i < T1_IO_MAX_EVENTS_PER_FRAME;
         i++)
     {
-        b8 scene_hit =
-            (scene_id == T1_io->frame_map[key].list[i].scene_id) ||
-            scene_id == -1;
+        T1IOFrameEvent * e = &T1_io->frame_map[key].list[i];
         
         if (
-            scene_hit &&
-            T1_io->frame_map[key].list[i].is_active &&
-            !T1_io->frame_map[key].list[i].is_up_short &&
-            !T1_io->frame_map[key].list[i].is_up_long)
+            e->is_active &&
+            e->for_terminal == for_terminal &&
+            e->is_up_short == is_up_short &&
+            e->is_up_long == is_up_long)
         {
-            T1_io->frame_map[key].list[i].is_active = 0;
+            e->is_active = 0;
             return 1;
         }
     }
@@ -424,54 +341,30 @@ b8 T1_io_key_consume_tap_began_frame(
     return 0;
 }
 
-b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key, const s32 scene_id) {        
-    // T1_log_assert(0);
-    for (
-        s32 i = 0;
-        i < T1_IO_MAX_EVENTS_PER_FRAME;
-        i++)
-    {
-        b8 scene_hit =
-            (scene_id == T1_io->frame_map[key].
-                list[i].scene_id) ||
-            scene_id == -1;
-        
-        if (
-            scene_hit &&
-            T1_io->frame_map[key].list[i].is_active &&
-            T1_io->frame_map[key].list[i].is_up_short &&
-            !T1_io->frame_map[key].list[i].is_up_long)
-        {
-            T1_io->frame_map[key].list[i].is_active = 0;
-            return 1;
-        }
-    }
-    
-    return 0;
+b8 T1_io_key_consume_tap_began_frame_internal(
+    T1IOKey key,
+    b8 for_terminal)
+{
+    return T1_io_key_consume_event(key, for_terminal, 0, 0);
 }
 
-b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id) {        
-    // T1_log_assert(0);
-    for (
-        s32 i = 0;
-        i < T1_IO_MAX_EVENTS_PER_FRAME;
-        i++)
-    {
-        b8 scene_hit =
-            (scene_id == T1_io->frame_map[key].list[i].scene_id) ||
-            scene_id == -1;
-        
-        if (
-            scene_hit &&
-            T1_io->frame_map[key].list[i].is_active &&
-            T1_io->frame_map[key].list[i].is_up_long)
-        {
-            T1_io->frame_map[key].list[i].is_active = 0;
-            return 1;
-        }
-    }
-    
-    return 0;
+/*
+Public functions (exposed via T1.h)
+*/
+b8 T1_io_key_is_down(T1IOKey key) {
+    return T1_io_key_is_down_internal(key, 0);
+}
+
+b8 T1_io_key_consume_tap_began_frame(T1IOKey key) {
+    return T1_io_key_consume_event(key, 0, 0, 0);
+}
+
+b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key) {
+    return T1_io_key_consume_event(key, 0, 1, 0);
+}
+
+b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key) {
+    return T1_io_key_consume_event(key, 0, 0, 1);
 }
 
 u32 T1_io_get_mouse_touch_id_this_frame(void) {
@@ -480,13 +373,12 @@ u32 T1_io_get_mouse_touch_id_this_frame(void) {
 
 b8 T1_io_consume_mouse_drag(
     f32 * delta_x,
-    f32 * delta_y,
-    const s32 scene_id)
+    f32 * delta_y)
 {
     f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
     f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
     
-    if (T1_io->dragging_at_scene_id == scene_id) {
+    if (T1_io->dragging && !T1_io->dragging_for_terminal) {
         *delta_x = T1_io->last_drag_start_x - mouse_x;
         *delta_y = T1_io->last_drag_start_y - mouse_y;
         T1_io->last_drag_start_x = mouse_x;

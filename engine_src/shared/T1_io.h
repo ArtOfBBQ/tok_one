@@ -25,19 +25,25 @@ void T1_io_register_key_move_to_pos(T1IOKey key_id, f32 x, f32 y);
 void T1_io_update_and_clear_for_next_frame(void);
 
 /*
+While the terminal is open, it captures all inputs. The client doesn't see
+them, the terminal reads them with the _internal functions
+*/
+void T1_io_set_captured_by_terminal(b8 captured);
+b8   T1_io_key_is_down_internal(T1IOKey key, b8 for_terminal);
+b8   T1_io_key_consume_tap_began_frame_internal(
+    T1IOKey key,
+    b8 for_terminal);
+
+/*
 Public functions (exposed via T1.h)
 */
-s32  T1_io_create_scene_and_return_id(void);
-void T1_io_scene_stack_push(s32 scene_id);
-void T1_io_scene_stack_pop(void);
-s32  T1_io_scene_stack_get_active_scene_id(void);
-b8   T1_io_key_is_down(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_tap_began_frame(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key, s32 scene_id);
-b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key, s32 scene_id);
+b8   T1_io_key_is_down(T1IOKey key);
+b8   T1_io_key_consume_tap_began_frame(T1IOKey key);
+b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
+b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
 f32  T1_io_get_pos_x_this_frame(T1IOKey key); 
 f32  T1_io_get_pos_y_this_frame(T1IOKey key); 
 u32  T1_io_get_mouse_touch_id_this_frame(void);
-b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y, s32 scene_id);
+b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y);
 
 #endif // T1_IO_H

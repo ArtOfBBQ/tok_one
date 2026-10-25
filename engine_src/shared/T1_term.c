@@ -31,7 +31,6 @@ typedef struct {
     f32 background_color[4];
     u32 back_T1_id;
     u32 labels_T1_id; // INT32_MAX - 1;
-    s32 scene_id;
     char cur_command[T1_TERM_SINGLE_LINE_MAX];
     char history[T1_TERM_HIST_CAP];
 } T1TermState;
@@ -1012,21 +1011,21 @@ static void T1_term_commit_or_activate(void) {
     
     if (T1_term_active) {
         T1_assert(!T1_term_active_b4);
-        T1_io_scene_stack_push(T1_trms->scene_id);
+        T1_io_set_captured_by_terminal(1);
         T1_term_redraw_backgrounds();
         requesting_label_update = 1;
     } else {
         T1_assert(T1_term_active_b4);
-        T1_io_scene_stack_pop();
+        T1_io_set_captured_by_terminal(0);
     }
 }
 
 void T1_term_update(void) {
     if (
-        T1_io_key_consume_tap_began_frame(
-            T1_IO_KEYBOARD_ENTER, -1) &&
-        !T1_io_key_is_down(
-            T1_IO_KEYBOARD_CONTROL, -1))
+        T1_io_key_consume_tap_began_frame_internal(
+            T1_IO_KEYBOARD_ENTER, T1_term_active) &&
+        !T1_io_key_is_down_internal(
+            T1_IO_KEYBOARD_CONTROL, T1_term_active))
     {
         T1_term_commit_or_activate();
     }
@@ -1034,8 +1033,8 @@ void T1_term_update(void) {
     if (T1_term_active) {
         for (T1IOKey i = 0; i < T1_IO_KEYBOARD_ABOVEBOUNDS; i++) {
             if (i == T1_IO_KEYBOARD_SHIFT) { continue; }
-            if (T1_io_key_consume_tap_began_frame(i, T1_trms->scene_id)) {
-                if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, T1_trms->scene_id)) {
+            if (T1_io_key_consume_tap_began_frame_internal(i, 1)) {
+                if (T1_io_key_is_down_internal(T1_IO_KEYBOARD_SHIFT, 1)) {
                     T1_term_sendchar('#');
                 } else {
                     T1_term_sendchar(i);
@@ -1052,7 +1051,7 @@ void T1_term_manually_deactivate(void) {
     
     T1_term_destroy_all();
     
-    T1_io_scene_stack_pop();
+    T1_io_set_captured_by_terminal(0);
 }
 
 void T1_term_init(
@@ -1068,7 +1067,6 @@ void T1_term_init(
         callback_eval_command_fptr;
     T1_trms->to_fullscreen_fncptr = enter_fullscreen_fncptr;
     
-    T1_trms->scene_id = T1_io_create_scene_and_return_id();
     
     T1_std_strcpy_cap(
         T1_trms->history,

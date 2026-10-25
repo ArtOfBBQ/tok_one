@@ -476,7 +476,8 @@ static void T1_os_macos_ns_window_flags_changed(
     
     if (modifiers & T1NSEventModifierFlagShift) {
         T1_io_register_keydown(T1_IO_KEYBOARD_SHIFT, 0);
-    } else if (T1_io_key_is_down(T1_IO_KEYBOARD_SHIFT, -1)) {
+    } else {
+        // does nothing if shift was already up
         T1_io_register_keyup(
             T1_IO_KEYBOARD_SHIFT,
             /* debounces: */ 0);

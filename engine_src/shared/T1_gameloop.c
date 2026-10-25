@@ -318,8 +318,6 @@ void T1_frame_render(void) {
         } else if (T1_global->draw_touch_id) {
             T1_text_request_top_touch_id(
                 T1_io_get_mouse_touch_id_this_frame());
-        } else if (T1_global->draw_scene_id) {
-            T1_log_assert(0);
         }
         
         f->postproc_consts->timestamp = (u32)T1_global->
