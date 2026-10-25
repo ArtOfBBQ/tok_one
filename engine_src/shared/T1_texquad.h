@@ -4,7 +4,23 @@
 #include "T1.h"
 #include "T1_std.h"
 #include "T1_types_public.h"
+#include "T1_types_gpucpu.h"
 #include "T1_property.h"
+
+typedef struct {
+    float offset_xyz[3];
+    uint32_t T1_id;
+    uint8_t one_frame_only;
+    uint8_t committed;
+    uint8_t visible;
+    uint8_t deleted;
+} T1CPUTexQuad;
+
+typedef struct {
+    T1CPUTexQuad * cpu;
+    T1GPUTexQuad * gpu;
+} T1TexQuadRequest;
+
 
 void T1_texquad_construct(
     T1GPUTexQuadf32 * f32,

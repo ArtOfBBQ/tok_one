@@ -3,6 +3,7 @@
 
 #include "T1_stdint.h"
 #include "T1_macro_settings.h"
+#include "T1_types_public_gpucpu.h"
 
 #define T1_CAM_DEPTH_FRAGARG_I 30
 #define T1_SHADOW_MAPS_1ST_FRAGARG_I 31
@@ -115,5 +116,58 @@ typedef struct
     f32 texcoord[2];
 } T1PostProcessingVertex;
 #pragma pack(pop)
+
+typedef struct {
+    float bonus_rgb[3];
+    float base_mat_uv_offsets[2];
+    float alpha;
+    float no_light;
+    float no_cam;
+    float outline_alpha;
+    float shadow_strength;
+    float vertex_noise_z;
+    float padding[1];
+} T1GPUzSpritef32;
+
+typedef struct {
+    uint32_t touch_id;
+    uint32_t mix_rv_and_mix_tex;
+    uint32_t active_render_view_flags; // rightmost bit 1 = render view 0 active
+    uint32_t padding[1];
+} T1GPUzSpriteu32;
+
+typedef struct {
+    float ambient_rgb[3];
+    float diffuse_rgb[3];
+    float specular_rgb[3];
+    float uv_scroll[2];
+    float specular_exponent;
+    float refraction;
+    float alpha;
+    float illum;
+    float padding[1];
+} T1GPUMatf32;
+
+typedef struct {
+    uint32_t normalmap_tex_and_tex;
+    uint32_t padding[3];
+} T1GPUMatu32;
+
+typedef struct {
+    T1GPUzSpritef32 f32s;
+    T1GPUzSpriteu32 u32s;
+    T1GPUMatf32     base_mat_f32; // start f32 here
+    T1GPUMatu32     base_mat_u32;
+} T1GPUzSprite;
+
+typedef struct {
+    T1GPUzSprite polygons[T1_ZSPRITES_CAP];
+    uint32_t size;
+} T1GPUzSpriteList;
+
+typedef struct {
+    T1GPUTexQuadf32 f32s;
+    T1GPUTexQuadu32 u32s;
+} T1GPUTexQuad;
 
 #endif // T1_TYPES_GPUCPU_H

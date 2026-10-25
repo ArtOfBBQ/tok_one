@@ -14,6 +14,31 @@
 
 #if T1_ANIM_ACTIVE == T1_ACTIVE
 
+/*
+The animation as it was requested. The client only sees anim handles
+(indices into T1_anims), this struct stays private
+*/
+typedef struct {
+    T1GPUzSpritef32 * zs_gpu_f32s;
+    T1CPUzSpritef32 * zs_cpu_f32s;
+    T1GPUzSpriteu32 * zs_gpu_u32s;
+    T1GPUTexQuadf32 * tq_gpu_f32s;
+    T1GPUTexQuadu32 * tq_gpu_u32s;
+    T1zLightf32     * zl_gpu_f32s;
+    
+    void (* run_func_on_finish)(void);
+    uint64_t duration_us;
+    uint64_t pause_us;
+    
+    uint32_t runs;
+    uint32_t target_T1_id;
+    uint32_t target_touch_id;
+        
+    T1EasingType easing_type; // u8
+    uint8_t del_obj_on_finish;
+    uint8_t del_conflict_anims;
+} T1Anim;
+
 typedef struct {
     T1Anim pub;
     
@@ -41,6 +66,8 @@ typedef struct {
 
 T1AnimPrivate * T1_anims = NULL;
 u32 T1_anims_size = 0;
+
+static void T1_anim_assert_anim_valid_before_commit(T1Anim * to_check);
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void T1_anim_sanity_check(T1AnimPrivate * a) {
@@ -289,7 +316,7 @@ T1_anim_fetch_next_store_tq_gpu_u32s(u16 * store_i) {
     return out;
 }
 
-T1Anim * T1_anim_request_next(
+static T1Anim * T1_anim_request_next(
     b8 endpoints_not_deltas,
     b8 zs_gpu_f32s,
     b8 zs_cpu_f32s,
@@ -641,7 +668,7 @@ static void T1_anim_resolve_single(
     }
 }
 
-void T1_anim_commit_and_instarun(T1Anim * to_commit)
+static void T1_anim_commit_and_instarun(T1Anim * to_commit)
 {
     as->mutex_lock(as->mutex_id);
     
@@ -666,7 +693,7 @@ void T1_anim_commit_and_instarun(T1Anim * to_commit)
     as->mutex_unlock(as->mutex_id);
 }
 
-void T1_anim_assert_anim_valid_before_commit(
+static void T1_anim_assert_anim_valid_before_commit(
     T1Anim * to_check) {
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1AnimPrivate * parent = T1_anim_get_container(to_check);
@@ -695,7 +722,7 @@ void T1_anim_assert_anim_valid_before_commit(
     T1_anim_sanity_check(parent);
 }
 
-void T1_anim_commit(T1Anim * c)
+static void T1_anim_commit_private(T1Anim * c)
 {
     as->mutex_lock(as->mutex_id);
     
@@ -843,7 +870,7 @@ void T1_anim_shatter_and_destroy(
     scatter->easing_type = T1_EASINGTYPE_NONE;
     scatter->runs = 1;
     scatter->del_obj_on_finish = 1;
-    T1_anim_commit(scatter);
+    T1_anim_commit_private(scatter);
 }
 
 void T1_anim_evaporate_and_destroy(
@@ -887,7 +914,7 @@ void T1_anim_evaporate_and_destroy(
     evap->easing_type = T1_EASINGTYPE_NONE;
     evap->runs = 1;
     evap->del_obj_on_finish = 1;
-    T1_anim_commit(evap);
+    T1_anim_commit_private(evap);
 }
 
 void T1_anim_fade_and_destroy(
@@ -924,7 +951,7 @@ void T1_anim_fade_and_destroy(
     fade_destroy->zl_gpu_f32s->specular = 0.0f;
     fade_destroy->pause_us = pause_first;
     fade_destroy->del_obj_on_finish = 1;
-    T1_anim_commit(fade_destroy);
+    T1_anim_commit_private(fade_destroy);
 }
 
 void T1_anim_fade_destroy_all(
@@ -962,7 +989,7 @@ void T1_anim_fade_to(
     if (duration_us < 50) {
         T1_anim_commit_and_instarun(modify_alpha);
     } else {
-        T1_anim_commit(modify_alpha);
+        T1_anim_commit_private(modify_alpha);
     }
 }
 
@@ -1001,7 +1028,7 @@ void T1_anim_dud_dance(
     move_request->zs_cpu_f32s->xyz[1] = magnitude * 0.035f;
     move_request->zs_cpu_f32s->xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
-    T1_anim_commit(move_request);
+    T1_anim_commit_private(move_request);
 }
 
 void T1_anim_delete_all(void) {
@@ -1203,12 +1230,12 @@ void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void)) {
     T1_anim_from_handle(anim)->pub.run_func_on_finish = func;
 }
 
-void T1_anim_commit_id(u32 anim) {
+void T1_anim_commit(u32 anim) {
     T1Anim * pub = &T1_anim_from_handle(anim)->pub;
     if (pub->duration_us == 1) {
         T1_anim_commit_and_instarun(pub);
     } else {
-        T1_anim_commit(pub);
+        T1_anim_commit_private(pub);
     }
 }
 

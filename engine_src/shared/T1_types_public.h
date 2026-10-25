@@ -201,38 +201,6 @@ typedef struct {
 } T1TextFontSettings;
 
 typedef struct {
-    float offset_xyz[3];
-    uint32_t T1_id;
-    uint8_t one_frame_only;
-    uint8_t committed;
-    uint8_t visible;
-    uint8_t deleted;
-} T1CPUTexQuad;
-
-typedef struct {
-    T1CPUTexQuad * cpu;
-    T1GPUTexQuad * gpu;
-} T1TexQuadRequest;
-
-typedef struct {
-    T1CPUzSpritef32 zs_cpu_f32s;
-    
-    uint64_t next_occlusion_in_us;
-    int32_t  mesh_id; // data in all_mesh_summaries[mesh_id]
-    uint32_t T1_id;
-    
-    uint8_t committed;
-    uint8_t deleted;
-    uint8_t visible;
-} T1CPUzSprite;
-
-typedef struct {
-    T1GPUzSprite * gpu_data;
-    T1CPUzSprite * cpu_data;
-    uint32_t       gpu_data_size;
-} T1zSpriteRequest;
-
-typedef struct {
     float volume;
     float sfx_volume;
     float music_volume;
@@ -252,26 +220,5 @@ typedef enum : uint8_t {
     T1_EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
     T1_EASINGTYPE_OUTOFBOUNDS
 } T1EasingType;
-
-typedef struct {
-    T1GPUzSpritef32 * zs_gpu_f32s;
-    T1CPUzSpritef32 * zs_cpu_f32s;
-    T1GPUzSpriteu32 * zs_gpu_u32s;
-    T1GPUTexQuadf32 * tq_gpu_f32s;
-    T1GPUTexQuadu32 * tq_gpu_u32s;
-    T1zLightf32     * zl_gpu_f32s;
-    
-    void (* run_func_on_finish)(void);
-    uint64_t duration_us;
-    uint64_t pause_us;
-    
-    uint32_t runs;
-    uint32_t target_T1_id;
-    uint32_t target_touch_id;
-        
-    T1EasingType easing_type; // u8
-    uint8_t del_obj_on_finish;
-    uint8_t del_conflict_anims;
-} T1Anim;
 
 #endif // T1_PUBLIC_TYPES_H

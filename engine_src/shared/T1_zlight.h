@@ -10,6 +10,31 @@
 #include "T1_triangle.h"
 #include "T1_property.h"
 
+typedef struct {
+    float xyz[3];
+    float angle_xyz[3];
+    float offset_xyz[3];
+    float rgba[4];
+    float reach; // light's reach
+    float diffuse;     // how much diffuse light does this radiate?
+    float specular;
+} T1zLightf32;
+
+typedef struct {
+    T1zLightf32 f32s;
+    // you can make a group of lights and/or texquads by
+    // giving them the same positive object_id, then make
+    // ScheduledAnimations that affect the entire group
+    // set to -1 to not be a party of any group
+    uint32_t T1_id;
+    uint32_t deleted;
+    uint32_t committed;
+    int32_t shadow_map_depth_texture_i;
+    int32_t shadow_map_render_view_i;
+    float simd_padding[3];
+} T1zLight;
+
+
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored

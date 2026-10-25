@@ -8,6 +8,35 @@
 #include "T1_types_public.h"
 #include "T1_property.h"
 
+typedef struct {
+    float xyz[3];
+    float offset_xyz[3];
+    float mul_xyz[3];
+    float angle_xyz[3];
+    float bloom_on;
+    float alpha_on;
+    float padding[2];
+} T1CPUzSpritef32;
+
+typedef struct {
+    T1CPUzSpritef32 zs_cpu_f32s;
+    
+    uint64_t next_occlusion_in_us;
+    int32_t  mesh_id; // data in all_mesh_summaries[mesh_id]
+    uint32_t T1_id;
+    
+    uint8_t committed;
+    uint8_t deleted;
+    uint8_t visible;
+} T1CPUzSprite;
+
+typedef struct {
+    T1GPUzSprite * gpu_data;
+    T1CPUzSprite * cpu_data;
+    uint32_t       gpu_data_size;
+} T1zSpriteRequest;
+
+
 void T1_zsprite_init(void);
 
 void T1_zsprite_defragment(void);

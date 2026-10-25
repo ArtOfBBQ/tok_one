@@ -17,21 +17,6 @@ void T1_anim_init(
 
 void T1_anim_resolve(void);
 
-T1Anim * T1_anim_request_next(
-    b8 endpoints_not_deltas,
-    b8 zs_gpu_f32s,
-    b8 zs_cpu_f32s,
-    b8 zs_gpu_s32s,
-    b8 tq_gpu_f32s,
-    b8 tq_gpu_s32s,
-    b8 zl_gpu_f32s);
-
-void T1_anim_commit_and_instarun(T1Anim * to_commit);
-
-void T1_anim_assert_anim_valid_before_commit(T1Anim * to_check);
-
-void T1_anim_commit(T1Anim * to_commit);
-
 void T1_anim_shatter_and_destroy(
     u32 T1_id,
     u64 duration_us);
@@ -68,7 +53,7 @@ Animations by property name, e.g.:
 u32 anim = T1_anim_new(my_T1_id, T1_ANIM_MODE_TO);
 T1_anim_set_f32(anim, "xyz[0]", 0.5f);
 T1_anim_set_duration_us(anim, 250000);
-T1_anim_commit_id(anim);
+T1_anim_commit(anim);
 
 The returned handle is only valid until it's committed. f32 properties
 interpolate, u32 properties jump to their value at the end (and only work
@@ -86,8 +71,7 @@ void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
 void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
 void T1_anim_set_run_func_on_finish(u32 anim, void (* func)(void));
 // A duration of 1 microsecond applies the anim immediately
-// TODO: rename to T1_anim_commit once the T1Anim * version is gone
-void T1_anim_commit_id(u32 anim);
+void T1_anim_commit(u32 anim);
 
 void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id);
 

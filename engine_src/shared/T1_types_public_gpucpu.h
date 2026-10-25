@@ -22,64 +22,6 @@ typedef struct {
     float padding[5];
 } T1GPUTexQuadf32;
 
-typedef struct {
-    float xyz[3];
-    float offset_xyz[3];
-    float mul_xyz[3];
-    float angle_xyz[3];
-    float bloom_on;
-    float alpha_on;
-    float padding[2];
-} T1CPUzSpritef32;
-
-typedef struct {
-    float bonus_rgb[3];
-    float base_mat_uv_offsets[2];
-    float alpha;
-    float no_light;
-    float no_cam;
-    float outline_alpha;
-    float shadow_strength;
-    float vertex_noise_z;
-    float padding[1];
-} T1GPUzSpritef32;
-
-typedef struct {
-    uint32_t touch_id;
-    uint32_t mix_rv_and_mix_tex;
-    uint32_t active_render_view_flags; // rightmost bit 1 = render view 0 active
-    uint32_t padding[1];
-} T1GPUzSpriteu32;
-
-typedef struct {
-    float ambient_rgb[3];
-    float diffuse_rgb[3];
-    float specular_rgb[3];
-    float uv_scroll[2];
-    float specular_exponent;
-    float refraction;
-    float alpha;
-    float illum;
-    float padding[1];
-} T1GPUMatf32;
-
-typedef struct {
-    uint32_t normalmap_tex_and_tex;
-    uint32_t padding[3];
-} T1GPUMatu32;
-
-typedef struct {
-    T1GPUzSpritef32 f32s;
-    T1GPUzSpriteu32 u32s;
-    T1GPUMatf32     base_mat_f32; // start f32 here
-    T1GPUMatu32     base_mat_u32;
-} T1GPUzSprite;
-
-typedef struct {
-    T1GPUzSprite polygons[T1_ZSPRITES_CAP];
-    uint32_t size;
-} T1GPUzSpriteList;
-
 typedef struct
 {
     uint32_t timestamp;
@@ -106,34 +48,5 @@ typedef struct
     #endif
     float padding[6];
 } T1GPUPostProcConsts;
-
-typedef struct {
-    T1GPUTexQuadf32 f32s;
-    T1GPUTexQuadu32 u32s;
-} T1GPUTexQuad;
-
-typedef struct {
-    float xyz[3];
-    float angle_xyz[3];
-    float offset_xyz[3];
-    float rgba[4];
-    float reach; // light's reach
-    float diffuse;     // how much diffuse light does this radiate?
-    float specular;
-} T1zLightf32;
-
-typedef struct {
-    T1zLightf32 f32s;
-    // you can make a group of lights and/or texquads by
-    // giving them the same positive object_id, then make
-    // ScheduledAnimations that affect the entire group
-    // set to -1 to not be a party of any group
-    uint32_t T1_id;
-    uint32_t deleted;
-    uint32_t committed;
-    int32_t shadow_map_depth_texture_i;
-    int32_t shadow_map_render_view_i;
-    float simd_padding[3];
-} T1zLight;
 
 #endif // T1_TYPES_PUBLIC_GPUCPU_H

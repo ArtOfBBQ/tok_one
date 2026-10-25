@@ -323,8 +323,6 @@ void T1_delete(uint32_t T1_id);
 /*
 TexQuads (textured 2D quads)
 */
-void T1_texquad_fetch_next(T1TexQuadRequest * stack_recip);
-void T1_texquad_commit(T1TexQuadRequest * to_commit);
 void T1_texquad_delete(uint32_t T1_id);
 void T1_texquad_delete_all(void);
 
@@ -332,19 +330,6 @@ void T1_texquad_delete_all(void);
 zSprites (a 3D object with a mesh, T1_id, pos/angle etc.)
 */
 void T1_zsprite_delete_all(void);
-void T1_zsprite_fetch_next_noconstruct(
-    T1zSpriteRequest * stack_recipient);
-void T1_zsprite_construct_with_mesh_id(
-    T1zSpriteRequest * to_construct,
-    int32_t mesh_id);
-void T1_zsprite_construct_quad_around(
-    float mid_x,
-    float mid_y,
-    float z,
-    float width,
-    float height,
-    T1zSpriteRequest * stack_recipient);
-void T1_zsprite_commit(T1zSpriteRequest * to_commit);
 void T1_zsprite_delete(uint32_t with_T1_id);
 #if T1_OCCLUSION_ACTIVE == T1_ACTIVE
 void T1_zsprite_set_occlusion(
@@ -360,26 +345,12 @@ void T1_zsprite_set_occlusion(
 /*
 z-Lights (3D lights)
 */
-T1zLight * T1_zlight_next(void);
-void T1_zlight_commit(T1zLight * to_request);
 void T1_zlight_delete(uint32_t T1_id);
 void T1_zlight_delete_all(void);
 
 /*
-T1Anim (animations affecting various T1 objects)
+Animations affecting various T1 objects
 */
-T1Anim * T1_anim_request_next(
-    uint8_t endpoints_not_deltas,
-    uint8_t zs_gpu_f32s,
-    uint8_t zs_cpu_f32s,
-    uint8_t zs_gpu_u32s,
-    uint8_t tq_gpu_f32s,
-    uint8_t tq_gpu_u32s,
-    uint8_t zl_gpu_f32s);
-void T1_anim_commit(
-    T1Anim * c);
-void T1_anim_commit_and_instarun(
-    T1Anim * to_commit);
 void T1_anim_fade_destroy_all(
     uint64_t pause_first,
     uint64_t duration_us);
@@ -434,7 +405,7 @@ void T1_anim_set_run_func_on_finish(
     uint32_t anim,
     void (* func)(void));
 // A duration of 1 microsecond applies the anim immediately
-void T1_anim_commit_id(uint32_t anim);
+void T1_anim_commit(uint32_t anim);
 
 /*
 INPUTS FROM MOUSE, KEYBOARD, GAMEPAD
