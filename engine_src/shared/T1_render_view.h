@@ -69,6 +69,7 @@ typedef struct {
     T1RenderViewWriteType write_type;
     u32 clamped_to_T1_id;
     u32 movement_enabled;
+    u32 visible_layers; // copied to the gpu every frame
     u32 width;
     u32 height;
     T1Tex write_tex;

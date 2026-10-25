@@ -2838,6 +2838,12 @@ static void T1_gpu_draw_single_pass(
                     /* offset: */ 0,
                     /* atIndex: */ 3);
             
+            T1_objc_msg_3arg(flat_texq_enc,
+                ags->sel_set_vertex_bytes_length_atindex,
+                    /* setVertexBytes: */ (uintptr_t)(void *)&cam_i,
+                    /* length: */ sizeof(u32),
+                    /* atIndex: */ 4);
+            
             #if T1_TEXTURES_ACTIVE == T1_ACTIVE
             for (
                 u32 i = 0;

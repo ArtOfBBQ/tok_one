@@ -77,7 +77,8 @@ typedef struct {
     f32    cull_above_z;
     s32    read_from_shadow_maps;
     s32    write_to_shadow_maps;
-    s32    padding[3];
+    u32    visible_layers; // draws the objects whose layers share a bit
+    s32    padding[2];
 } T1GPURenderView;
 
 typedef struct {
@@ -132,7 +133,8 @@ typedef struct {
 typedef struct {
     uint32_t touch_id;
     uint32_t mix_rv_and_mix_tex;
-    uint32_t active_render_view_flags; // rightmost bit 1 = render view 0 active
+    // drawn by the render views whose visible_layers share a bit with it
+    uint32_t layers;
     uint32_t padding[1];
 } T1GPUzSpriteu32;
 
@@ -168,7 +170,9 @@ typedef struct {
 typedef struct {
     uint32_t reserved_and_tex;
     uint32_t touch_id;
-    uint32_t padding[2];
+    // drawn by the render views whose visible_layers share a bit with it
+    uint32_t layers;
+    uint32_t padding[1];
 } T1GPUTexQuadu32;
 
 typedef struct {

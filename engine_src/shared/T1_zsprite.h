@@ -15,8 +15,7 @@ typedef struct {
     float angle_xyz[3];
     float bloom_on;
     float alpha_on;
-    float visible; // drawn while > 0.5f
-    float padding[1];
+    float padding[2];
 } T1CPUzSpritef32;
 
 typedef struct {

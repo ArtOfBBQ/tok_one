@@ -9,7 +9,6 @@
 
 typedef struct {
     float offset_xyz[3];
-    float visible; // drawn while > 0.5f
     uint32_t T1_id;
     uint8_t one_frame_only;
     uint8_t committed;

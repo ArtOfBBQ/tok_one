@@ -457,12 +457,10 @@ void T1_zsprite_construct(
     to_construct->cpu_data->zs_cpu_f32s.mul_xyz[2] = 1.0f;
     to_construct->gpu_data->f32s.alpha = 1.0f;
     to_construct->gpu_data->u32s.touch_id = T1_TOUCH_ID_NONE;
-    to_construct->gpu_data->u32s.
-        active_render_view_flags = 0xFFFFFFFF;
+    to_construct->gpu_data->u32s.layers = 1;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->T1_id = T1_ID_NONE;
-    to_construct->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     to_construct->gpu_data->f32s.outline_alpha = -1.0f;
@@ -513,7 +511,6 @@ void T1_zsprite_construct_quad(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     stack_recipient->gpu_data->f32s.no_cam = 0;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
@@ -553,7 +550,6 @@ void T1_zsprite_construct_quad_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0] = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1] = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2] = z;
-    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -610,7 +606,6 @@ T1_zsprite_construct_cube_around(
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[0]  = mid_x;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[1]  = mid_y;
     stack_recipient->cpu_data->zs_cpu_f32s.xyz[2]  = z;
-    stack_recipient->cpu_data->zs_cpu_f32s.visible = 1.0f;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -1101,8 +1096,7 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         if (
             T1_zsprite_list->cpu[cpu_zp_i].
                 deleted ||
-            T1_zsprite_list->cpu[cpu_zp_i].
-                zs_cpu_f32s.visible < 0.5f ||
+            T1_zsprite_list->gpu[cpu_zp_i].u32s.layers == 0 ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.alpha_on < 0.5f ||
@@ -1178,7 +1172,7 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
     {
         if (
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
-            T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.visible < 0.5f ||
+            T1_zsprite_list->gpu[cpu_zp_i].u32s.layers == 0 ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.bloom_on < 0.5f)
@@ -1274,7 +1268,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
     {
         if (
             T1_zsprite_list->cpu[cpu_zp_i].deleted ||
-            T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.visible < 0.5f ||
+            T1_zsprite_list->gpu[cpu_zp_i].u32s.layers == 0 ||
             !T1_zsprite_list->cpu[cpu_zp_i].committed ||
             T1_zsprite_list->cpu[cpu_zp_i].zs_cpu_f32s.
                 alpha_on > 0.5f ||

@@ -128,6 +128,7 @@ static void T1_render_view_construct(
     
     cpu->clamped_to_T1_id = T1_ID_NONE;
     cpu->write_tex = T1_TEX_NONE;
+    cpu->visible_layers = 0xFFFFFFFF;
     
     cpu->height = height;
     cpu->width  = width;

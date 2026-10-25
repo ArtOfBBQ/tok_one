@@ -43,7 +43,6 @@ Some zsprite values hold cameras by index, the client sets them by T1_id
 typedef enum : u8 {
     T1_PROP_CAM_REF_NONE = 0,
     T1_PROP_CAM_REF_INDEX,       // the camera's index, -1 for T1_ID_NONE
-    T1_PROP_CAM_REF_HIDE_MASK,   // every camera's bit but this one's
 } T1PropertyCamRef;
 
 #define T1_PROPERTY_MATCHES_CAP 8

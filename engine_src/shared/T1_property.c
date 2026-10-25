@@ -59,7 +59,6 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_CPU, angle_xyz[2]),
     T1_PROP_F32(ZS_CPU, bloom_on),
     T1_PROP_F32(ZS_CPU, alpha_on),
-    T1_PROP_F32(ZS_CPU, visible),
 
     T1_PROP_F32(ZS_GPU, bonus_rgb[0]),
     T1_PROP_F32(ZS_GPU, bonus_rgb[1]),
@@ -74,10 +73,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZS_GPU, vertex_noise_z),
 
     T1_PROP_U32("touch_id", ZS_U32, touch_id),
-    // the camera (T1_id) that doesn't draw this zsprite, T1_ID_NONE for none
-    T1_PROP_U32_CAM_REF(
-        "hidden_from_cam", ZS_U32, active_render_view_flags,
-        0xFFFFFFFF, 0, T1_PROP_CAM_REF_HIDE_MASK),
+    T1_PROP_U32("layers", ZS_U32, layers),
     // the camera (T1_id) whose image is mixed in, the shader reads it as an
     // s16 index from the low 16 bits, the texture from the high 16
     T1_PROP_U32_CAM_REF(
@@ -104,7 +100,6 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(TQ_CPU, offset_xyz[0]),
     T1_PROP_F32(TQ_CPU, offset_xyz[1]),
     T1_PROP_F32(TQ_CPU, offset_xyz[2]),
-    T1_PROP_F32(TQ_CPU, visible),
 
     T1_PROP_F32(TQ_GPU, xyz[0]),
     T1_PROP_F32(TQ_GPU, xyz[1]),
@@ -122,6 +117,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32_PACKED(
         "texture", TQ_U32, reserved_and_tex, 0x0000FFFF, 0),
     T1_PROP_U32("touch_id", TQ_U32, touch_id),
+    T1_PROP_U32("layers", TQ_U32, layers),
 
     T1_PROP_F32(ZL, xyz[0]),
     T1_PROP_F32(ZL, xyz[1]),
@@ -203,6 +199,7 @@ static const T1Property T1_properties[] = {
     // follows the zsprite with this T1_id, T1_ID_NONE to stop
     T1_PROP_U32("clamped_to_T1_id", CAMU, clamped_to_T1_id),
     T1_PROP_U32("movement_enabled", CAMU, movement_enabled),
+    T1_PROP_U32("visible_layers", CAMU, visible_layers),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -319,8 +316,6 @@ u32 T1_property_convert_bits(
     switch (p->cam_ref) {
         case T1_PROP_CAM_REF_INDEX:
             return (u32)cam_i;
-        case T1_PROP_CAM_REF_HIDE_MASK:
-            return cam_i < 0 ? 0xFFFFFFFF : ~(1u << cam_i);
         default:
             T1_log_assert(0);
             return bits;

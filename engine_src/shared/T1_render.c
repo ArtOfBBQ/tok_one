@@ -36,6 +36,8 @@ construct_projection_matrix(void)
             T1_render_views->cpu[i].write_type ==
                 T1RENDERVIEW_WRITE_DEPTH;
         
+        rv->visible_layers = T1_render_views->cpu[i].visible_layers;
+        
         rv->read_from_shadow_maps =
             T1_render_views->cpu[i].write_type ==
                 T1RENDERVIEW_WRITE_RENDER_TARGET ||

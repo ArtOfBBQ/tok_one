@@ -74,6 +74,7 @@ void T1_texquad_construct(
     f32s->rgba[3] = 1.0f;
     s32s->reserved_and_tex = T1_TEX_NONE;
     s32s->touch_id = T1_TOUCH_ID_NONE;
+    s32s->layers = 1;
 }
 
 static void T1_texquad_construct_at_i(
@@ -88,7 +89,6 @@ static void T1_texquad_construct_at_i(
         sizeof(T1CPUTexQuad));
     
     T1_texquads->cpu[i].T1_id = T1_ID_NONE;
-    T1_texquads->cpu[i].visible = 1.0f;
     
     T1_texquad_construct(
         &T1_texquads->gpu[i].f32s,
@@ -304,7 +304,6 @@ void T1_texquad_commit(
     // xyz is in world units, projected by the distance xyz[2]
     T1_log_assert(request->gpu->f32s.xyz[2] > 0.0f);
     T1_log_assert(!request->cpu->deleted);
-    T1_log_assert(request->cpu->visible > 0.5f);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */
@@ -621,7 +620,7 @@ void T1_texquad_copy_to_frame_data(
         i++)
     {
         if (
-            T1_texquads->cpu[i].visible > 0.5f &&
+            T1_texquads->gpu[i].u32s.layers != 0 &&
             !T1_texquads->cpu[i].deleted &&
             T1_texquads->cpu[i].committed)
         {

@@ -300,10 +300,13 @@ and is visible from the next frame on, no commit needed. Merging makes
 objects share a T1_id, so they move, fade and get deleted together: the
 same concept has the same name on every kind of object.
 
-zsprites have two properties that take a camera's T1_id: "mix_cam" (mix in
-that camera's image, use its T1_cam_get_write_tex() as "mix_texture") and
-"hidden_from_cam" (that camera doesn't draw the zsprite). T1_ID_NONE
-undoes either.
+"layers" (zsprites and texquads, default 1) and "visible_layers" (cameras,
+default every bit) are bitmasks whose meaning is up to you: a camera draws
+the objects whose layers share a bit with its visible_layers, and an object
+with layers 0 is drawn by no camera at all.
+
+zsprites' "mix_cam" takes a camera's T1_id: mix in that camera's image, use
+its T1_cam_get_write_tex() as "mix_texture". T1_ID_NONE undoes it.
 */
 uint32_t T1_zsprite_new(int32_t mesh_id);
 uint32_t T1_zsprite_new_quad(
