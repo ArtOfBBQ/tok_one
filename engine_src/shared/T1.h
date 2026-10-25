@@ -359,7 +359,9 @@ void T1_anim_set_u32(
     uint32_t value);
 void T1_anim_set_duration_us(uint32_t anim, uint64_t duration_us);
 void T1_anim_set_pause_us(uint32_t anim, uint64_t pause_us);
-void T1_anim_set_easing(uint32_t anim, T1EasingType easing_type);
+// easing maps the anim's t (0 to 1) to how far along its values are, NULL
+// (the default) is linear
+void T1_anim_set_easing(uint32_t anim, float (* easing)(float t));
 void T1_anim_set_runs(uint32_t anim, uint32_t runs); // 0 = forever
 void T1_anim_set_delete_target_on_finish(
     uint32_t anim,

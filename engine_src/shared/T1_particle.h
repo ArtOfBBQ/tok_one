@@ -2,7 +2,6 @@
 #define T1_PARTICLE_H
 
 #include "T1_types_cpu_to_gpu.h"
-#include "T1_easing.h"
 
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
@@ -19,7 +18,7 @@ typedef struct {
     T1GPUFlatQuad         gpu_stats;
     u64              start_delay;
     u64              duration;
-    T1EasingType          easing_type;
+    f32           (* easing)(f32 t); // NULL is linear
     u8               rand_pct_add;
     u8               rand_pct_sub;
 } T1ParticleMod;

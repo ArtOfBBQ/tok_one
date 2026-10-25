@@ -220,17 +220,17 @@ T1_particle_effects_delete_all(void)
     T1_particle_effects_size = 0;
 }
 
+static f32 T1_particle_ease(const T1ParticleMod * mod, const f32 t) {
+    return mod->easing ? mod->easing(t) : t;
+}
+
 static f32 T1_particle_get_height(
     T1ParticleEffect * pe)
 {
     f32 out = 0.0f;
     
     for (u32 mod_i = 0; mod_i < pe->modifiers_size; mod_i++) {
-        f32 t = T1_easing_t_to_eased_t(
-            /* const T1TPair t: */
-                1.0f,
-            /* const T1EasingType easing_type: */
-                pe->mods[mod_i].easing_type);
+        f32 t = T1_particle_ease(&pe->mods[mod_i], 1.0f);
         
         out += pe->mods[mod_i].gpu_stats.xyz[2] * t;
     }
@@ -310,11 +310,7 @@ static void T1_particle_add_single_to_frame_data(
         f32 * pertime_add_at = (f32 *)&pe->mods[mod_i].gpu_stats;
         f32 * recipient_at = (f32 *)tgt;
         
-        f32 t = T1_easing_t_to_eased_t(
-            /* const T1TPair t: */
-                spawn_t,
-            /* const T1EasingType easing_type: */
-                pe->mods[mod_i].easing_type);
+        f32 t = T1_particle_ease(&pe->mods[mod_i], spawn_t);
         
         f32 add_pct =
             (f32)pe->mods[mod_i].rand_pct_add;
@@ -459,11 +455,7 @@ T1_zsprite_add_single_shatter_to_frame_data(
             mods[mod_i].gpu_stats.f32;
         f32 * recipient_at = (f32 *)&tgt->f32;
         
-        f32 t = T1_easing_t_to_eased_t(
-            /* const T1TPair t: */
-                spawn_t,
-            /* const T1EasingType easing_type: */
-                se->mods[mod_i].easing_type);
+        f32 t = T1_particle_ease(&se->mods[mod_i], spawn_t);
         
         f32 add_pct =
             (f32)se->mods[mod_i].rand_pct_add;

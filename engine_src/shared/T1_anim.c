@@ -7,7 +7,6 @@
 #include "T1_tex.h"
 #include "T1_global.h"
 #include "T1_types_cpu_to_gpu.h"
-#include "T1_easing.h"
 #include "T1_render_view.h"
 #include "T1_zsprite.h"
 #include "T1_texquad.h"
@@ -34,7 +33,7 @@ typedef struct {
     u16 stores_i[T1_PROP_STORE_OUTOFBOUNDS]; // their slots in the pools
     u32 runs;
     u32 target_T1_id;
-    T1EasingType easing_type; // u8
+    f32 (* easing)(f32 t); // NULL is linear
     b8 del_obj_on_finish;
     b8 del_conflict_anims;
     b8 endpoints_not_deltas;
@@ -376,12 +375,10 @@ static void T1_anim_resolve_single(
     // decided before easing, an eased t can end anywhere
     b8 finished = t_now >= 1.0f;
     
-    t_now = T1_easing_t_to_eased_t(
-        t_now,
-        a->easing_type);
-    t_applied = T1_easing_t_to_eased_t(
-        t_applied,
-        a->easing_type);
+    if (a->easing) {
+        t_now = a->easing(t_now);
+        t_applied = a->easing(t_applied);
+    }
     
     #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
     T1_anim_sanity_check(a);
@@ -668,8 +665,8 @@ void T1_anim_set_pause_us(u32 anim, u64 pause_us) {
     T1_anim_from_handle(anim)->pause_us = pause_us;
 }
 
-void T1_anim_set_easing(u32 anim, T1EasingType easing_type) {
-    T1_anim_from_handle(anim)->easing_type = easing_type;
+void T1_anim_set_easing(u32 anim, f32 (* easing)(f32 t)) {
+    T1_anim_from_handle(anim)->easing = easing;
 }
 
 void T1_anim_set_runs(u32 anim, u32 runs) {

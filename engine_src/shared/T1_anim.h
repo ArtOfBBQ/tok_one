@@ -6,7 +6,6 @@
 #include "T1_std.h"
 #include "T1_simd.h"
 #include "T1_types_public.h"
-#include "T1_easing.h"
 #include "T1_property.h"
 
 
@@ -37,7 +36,9 @@ void T1_anim_set_f32(u32 anim, const c8 * property, f32 value);
 void T1_anim_set_u32(u32 anim, const c8 * property, u32 value);
 void T1_anim_set_duration_us(u32 anim, u64 duration_us);
 void T1_anim_set_pause_us(u32 anim, u64 pause_us);
-void T1_anim_set_easing(u32 anim, T1EasingType easing_type);
+// easing maps the anim's t (0 to 1) to how far along its values are, NULL
+// (the default) is linear
+void T1_anim_set_easing(u32 anim, f32 (* easing)(f32 t));
 // 0 = repeat forever
 void T1_anim_set_runs(u32 anim, u32 runs);
 void T1_anim_set_delete_target_on_finish(u32 anim, u8 delete_target);
