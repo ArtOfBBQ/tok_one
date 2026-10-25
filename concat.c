@@ -33,7 +33,6 @@ static const char * search_paths[] = {
 "engine_src/shared/",
 "engine_src/shared_apple/",
 "engine_src/macos/",
-"engine_src/shared/debigulator/src/",
 "resources/",
 };
 
@@ -67,9 +66,6 @@ static const Embeddable to_embed_files[] = {
 
 static const char * c_files[] = {
 "T1.c",
-"inflate.c",
-"decode_png.c",
-"decode_bmp.c",
 "T1_embedded_data.c",
 "T1_fatal_error.c",
 "T1_objc.c",

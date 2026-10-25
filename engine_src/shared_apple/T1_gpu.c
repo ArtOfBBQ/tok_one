@@ -32,7 +32,6 @@
 #define T1MTLPixelFormatInvalid 0
 #define T1MTLPixelFormatRGBA8Unorm 70
 #define T1MTLPixelFormatBGRA8Unorm 80
-#define T1MTLPixelFormatBC1_RGBA 130
 #define T1MTLPixelFormatDepth32Float 252
 #define T1MTLDepthClipModeClip 0
 #define T1MTLDepthClipModeClamp 1
@@ -1466,16 +1465,10 @@ void T1_os_gpu_update_capacity_if_needed(
         return;
     } else if (
         ags->metal_textures[tex_array_i] == NULL ||
-        (T1_tex_arrays[tex_array_i].bc1_compressed &&
-            T1_objc_msg(
-                ags->metal_textures[tex_array_i],
-                ags->sel_pixel_format) !=
-                    T1MTLPixelFormatBC1_RGBA) ||
-        ((!T1_tex_arrays[tex_array_i].bc1_compressed) &&
-            T1_objc_msg(
-                ags->metal_textures[tex_array_i],
-                ags->sel_pixel_format) !=
-                    T1MTLPixelFormatRGBA8Unorm) ||
+        T1_objc_msg(
+            ags->metal_textures[tex_array_i],
+            ags->sel_pixel_format) !=
+                T1MTLPixelFormatRGBA8Unorm ||
             T1_tex_arrays[tex_array_i].single_img_width !=
                 T1_objc_msg(
                     ags->metal_textures[tex_array_i],
@@ -1508,13 +1501,6 @@ void T1_os_gpu_update_capacity_if_needed(
                     ags->metal_textures[tex_array_i],
                     ags->sel_usage) &
                 T1MTLTextureUsageRenderTarget) > 0);
-        if (T1_tex_arrays[tex_array_i].bc1_compressed) {
-            T1_log_assert(
-                T1_objc_msg(
-                    ags->metal_textures[tex_array_i],
-                    ags->sel_pixel_format) ==
-                        T1MTLPixelFormatBC1_RGBA);
-        }
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -1550,9 +1536,7 @@ void T1_os_gpu_update_capacity_if_needed(
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_pixel_format,
-        T1_tex_arrays[tex_array_i].bc1_compressed ?
-            T1MTLPixelFormatBC1_RGBA :
-            T1MTLPixelFormatRGBA8Unorm);
+        T1MTLPixelFormatRGBA8Unorm);
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_storage_mode,
@@ -1584,7 +1568,7 @@ void T1_os_gpu_update_capacity_if_needed(
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_mipmap_level_count,
-        T1_tex_arrays[tex_array_i].bc1_compressed || tex_array_i == 0 ?
+        tex_array_i == 0 ?
         1 :
         (uintptr_t)floor(
             log2((double)MAX(
@@ -1926,8 +1910,6 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 {
     // no mipmaps for font
     T1_log_assert(texture_array_i != 0);
-    // no mipmaps for bc1 compressed arrays
-    T1_log_assert(!T1_tex_arrays[texture_array_i].bc1_compressed);
     
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
@@ -2002,19 +1984,11 @@ void T1_os_gpu_push_tex_slice(
     u8 * temp_src_buf_ptr = (u8 *)vm_ptr;
     
     T1_std_memset(temp_src_buf_ptr, 0, temp_buf_cap);
-    if (T1_tex_arrays[tex_array_i].bc1_compressed) {
-        T1_std_memcpy(
-            temp_src_buf_ptr ,
-            rgba_page_aligned + 128,
-            T1_tex_arrays[tex_array_i].images[tex_slice_i].
-                image.rgba_values_size);
-    } else {
-        T1_std_memcpy(
-            temp_src_buf_ptr,
-            rgba_page_aligned,
-            T1_tex_arrays[tex_array_i].images[tex_slice_i].
-                image.rgba_values_size);
-    }
+    T1_std_memcpy(
+        temp_src_buf_ptr,
+        rgba_page_aligned,
+        T1_tex_arrays[tex_array_i].images[tex_slice_i].
+            image.rgba_values_size);
     
     void * temp_source_buf = (void *)T1_objc_msg_4arg(
         ags->device,
@@ -2056,12 +2030,8 @@ void T1_os_gpu_push_tex_slice(
         ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
         temp_source_buf,
         0,
-        T1_tex_arrays[tex_array_i].bc1_compressed ?
-                ((img_width + 3) / 4) * 8 :
-                img_width * 4,
-        T1_tex_arrays[tex_array_i].bc1_compressed ?
-                ((img_width + 3) / 4) * ((img_height + 3) / 4) * 8 :
-                img_width * img_height * 4,
+        img_width * 4,
+        img_width * img_height * 4,
         size,
         ags->metal_textures[tex_array_i],
         (uintptr_t)tex_slice_i,

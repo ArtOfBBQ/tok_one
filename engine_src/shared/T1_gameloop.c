@@ -18,7 +18,6 @@
 #include "T1_render_view.h"
 
 u8 T1_gameloop_active = 0;
-u8 T1_gameloop_loading_texs = 0;
 
 #if T1_TERM_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
@@ -153,37 +152,6 @@ void T1_frame_begin(void)
     f->flat_tex_quads_size = 0;
     f->zsprite_list->size = 0;
     
-    if (
-        !T1_gameloop_active &&
-        T1_gameloop_loading_texs)
-    {
-        if (T1_gl_s->loading_text_T1_id < 0) {
-            T1_gl_s->loading_text_T1_id =
-                T1_id_next_ui_element_id();
-        }
-        
-        f32 pct_progress =
-            (f32)T1_global->startup_bytes_loaded /
-            (f32)T1_global->startup_bytes_to_load;
-        pct_progress *= 100.0f;
-        
-        char loading_text[256];
-        T1_std_strcpy_cap(
-            loading_text,
-            256,
-            "Loading textures - ");
-        T1_std_strcat_f32_cap(
-            loading_text,
-            256,
-            pct_progress);
-        T1_std_strcat_cap(
-            loading_text,
-            256,
-            "%");
-        show_dead_simple_text(f, loading_text, 1);
-        return;
-    }
-    
     if (!T1_gameloop_active) {
         return;
     }
@@ -233,10 +201,7 @@ void T1_frame_begin(void)
             // The client rebuilds its size dependent state now
             T1_gl_s->frame_resized = 1;
        }
-    } else if (
-        T1_log_app_running &&
-        !T1_gameloop_loading_texs)
-    {
+    } else if (T1_log_app_running) {
         #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
         T1_render_view_validate();
         #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE

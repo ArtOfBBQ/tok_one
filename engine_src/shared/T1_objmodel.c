@@ -29,12 +29,9 @@ void T1_objmodel_set_tex_resolver(
 static T1Tex T1_objmodel_resolve_tex(const char * filename) {
     if (filename == NULL || filename[0] == '\0') { return T1_TEX_NONE; }
     
-    if (T1_objmodel_tex_resolver != NULL) {
-        return T1_objmodel_tex_resolver(filename);
-    }
+    if (T1_objmodel_tex_resolver == NULL) { return T1_TEX_NONE; }
     
-    // TODO: remove with the other filename lookups
-    return T1_tex_array_get_filename_loc(filename);
+    return T1_objmodel_tex_resolver(filename);
 }
 
 static void construct_mesh_summary(

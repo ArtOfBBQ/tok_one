@@ -49,7 +49,7 @@ T1_init(&fatal_error);          // memory, subsystems: no window or GPU yet
 T1_gpu_init(&fatal_error);      // GPU device, T1's own textures
 T1_gpu_try_shader_source(...);  // at least once successfully
 T1_window_open(&fatal_error);   // any time after T1_gpu_init()
-... preregister your textures and meshes ...
+... upload your textures (T1_tex_new), register your meshes ...
 T1_assets_load_all(&fatal_error);
 */
 uint8_t T1_running(void);
@@ -82,8 +82,7 @@ void T1_window_open(
     char ** const fatal_error);
 void T1_window_toggle_fullscreen(void);
 
-// Decodes and uploads all preregistered textures, meshes and materials.
-// Blocks until done.
+// Uploads all registered meshes and materials. Blocks until done.
 void T1_assets_load_all(
     char ** const fatal_error);
 
@@ -200,15 +199,6 @@ void T1_cam_make_reflection_cam(
     uint32_t new_w, uint32_t new_h, float reflection_z);
 
 /*
-FILE PARSING
-*/
-uint8_t * T1_png_malloc_managed_from_resource(
-    const char * resource_name,
-    uint32_t * out_width,
-    uint32_t * out_height,
-    char ** const fatal_error);
-
-/*
 TEXTURES
 T1_tex_new() uploads an image: width * height * 4 bytes of rgba, row by row.
 The T1Tex can then be used as a "texture" property. You can delete it or
@@ -223,34 +213,6 @@ void     T1_tex_update(T1Tex tex, const uint8_t * rgba);
 void     T1_tex_delete(T1Tex tex);
 uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
-
-/*
-MANAGE TEXTURES (old, being replaced by the functions above)
-*/
-int16_t  T1_tex_to_array_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x >> 11)
-int16_t  T1_tex_to_slice_i(T1Tex in); // (x == T1_TEX_NONE ? -1 : x & 0x07FF)
-void T1_tex_files_prereg_png_res(const char * filename, uint8_t never_delete, char ** const fatal_error);
-void T1_tex_files_prereg_dds_res(const char * filename, char ** const fatal_error);
-void T1_tex_files_reg_new_by_splitting_file(
-    const char * filename,
-    uint32_t rows, uint32_t cols,
-    uint8_t free_rgba,
-    char ** const fatal_error);
-
-uint16_t T1_tex_array_get_filename_loc(const char * for_filename);
-uint16_t T1_tex_array_prereg_img(
-    const char * filename,
-    uint32_t w, uint32_t h,
-    uint8_t is_render_target,
-    uint8_t use_bc1_compression,
-    uint8_t never_delete,
-    char ** const fatal_error);
-void T1_tex_array_update_rgba(
-    int32_t array_i, int32_t slice_i,
-    const uint8_t * rgba, uint32_t rgba_size);
-uint8_t  T1_tex_array_tex_exists_and_is_not_deleted(T1Tex tex);
-uint32_t T1_tex_array_get_img_height(int32_t array_i);
-uint32_t T1_tex_array_get_img_width(int32_t array_i);
 
 /*
 MANAGE 3-D MODELS (.OBJ FILES)
@@ -547,9 +509,6 @@ void T1_os_get_writables_dir(char * recip, uint32_t recip_size);
 void T1_os_write_file_to_writables(
     const char * filepath_in_writables, const char * out,
     uint32_t output_size, uint8_t * good);
-void T1_os_gpu_push_tex_slice(
-    int32_t tex_array_i,
-    int32_t tex_slice_i);
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath);
 uint64_t T1_os_get_current_time_us(void);

@@ -1,6 +1,5 @@
 #include "T1_appinit.h"
 
-#include "decode_png.h"
 
 #include "T1_std.h"
 #include "T1_mem.h"
@@ -34,17 +33,6 @@
 #include "T1_fatal_error.h"
 
 #include "T1_os.h"
-
-#define T1_IMAGE_DECODING_THREADS_MAX 10
-typedef struct {
-    u32 image_decoding_threads;
-    u32 all_finished;
-    u32 thread_finished[T1_IMAGE_DECODING_THREADS_MAX];
-} T1InitApplicationState;
-
-static T1InitApplicationState * ias;
-
-#define DPNG_WORKING_MEMORY_SIZE 35000000
 
 #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 typedef struct {
@@ -255,28 +243,6 @@ void T1_init(
     void * pool = T1_objc_autorelease_pool_push();
     
     T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
-    
-    ias = T1_mem_malloc_unmanaged(
-        sizeof(T1InitApplicationState));
-    if (!ias) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memset(ias, 0, sizeof(T1InitApplicationState));
-    
-    decode_png_init(
-        /* void *(*malloc_funcptr)(u64): */
-            T1_mem_malloc_managed,
-        /* free_function: */
-            T1_mem_free_managed,
-        /* memset_function: */
-            T1_std_memset,
-        /* memcpy_function: */
-            T1_std_memcpy,
-        /* dpng_working_memory_size: */
-            DPNG_WORKING_MEMORY_SIZE,
-        /* const u32 thread_id: */
-            0);
     
     test_simd_functions_f32s(fatal_error);
     
@@ -690,43 +656,6 @@ void T1_init(
     T1_objc_autorelease_pool_pop(pool);
 }
 
-#if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void * T1_appinit_asset_loading_thread(
-    void * asset_thread_id_u32_me)
-{
-    char * fatal_error = 0;
-    
-    u32 asset_thread_id = (u32)(uintptr_t)asset_thread_id_u32_me;
-    if (asset_thread_id > 0) {
-        decode_png_init(
-            T1_mem_malloc_managed,
-            T1_mem_free_managed,
-            T1_std_memset,
-            T1_std_memcpy,
-            DPNG_WORKING_MEMORY_SIZE,
-            (u32)asset_thread_id);    
-    }
-    
-    T1_tex_files_decode_all_prereg(
-        (u32)asset_thread_id,
-        ias->image_decoding_threads,
-        &fatal_error);
-    
-    if (fatal_error != 0) { return 0; }
-    
-    if (asset_thread_id > 0) {
-        decode_png_deinit((u32)asset_thread_id);
-    }
-    
-    ias->thread_finished[asset_thread_id] = 1;
-    
-    return NULL;
-}
-#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-// Pass
-#else
-#error "T1_TEXTURES_ACTIVE undefined!"
-#endif
 
 /*
 The GPU resources T1 itself needs: font images, render view 0's target,
@@ -836,58 +765,6 @@ void T1_assets_load_all(
     #error "T1_SHADOWS_ACTIVE undefined"
     #endif
     
-    char errmsg[256];
-    T1_std_memset(errmsg, 0, 256);
-    
-    if (T1_log_app_running) {
-        u32 core_count = T1_os_get_cpu_logical_core_count();
-        T1_log_assert(core_count > 0);
-        ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
-        
-        T1_std_memset(
-            ias->thread_finished,
-            0,
-            sizeof(u32) * T1_IMAGE_DECODING_THREADS_MAX);
-        ias->thread_finished[0] = 1;
-        
-        T1_log_assert(T1_global->startup_bytes_to_load == 0);
-        T1_log_assert(T1_global->startup_bytes_loaded == 0);
-        
-        if (!T1_log_app_running) {
-            return;
-        }
-        
-        #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-        T1_gameloop_loading_texs = 1;
-        for (
-            s32 i = 1;
-            i < (s32)ias->
-                image_decoding_threads;
-            i++)
-        {
-            T1_os_start_thread(
-                /* void (*function_to_run)(s32): */
-                    T1_appinit_asset_loading_thread,
-                /* s32 argument: */
-                    (void *)(uintptr_t)i);
-        }
-        #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_TEXTURES_ACTIVE undefined"
-        #endif
-    } else {
-        return;
-    }
-    
-    /*
-    If this was a single-threaded sequence, the next logical step
-    would be to run:
-        > T1_texture_array_push_all_predecoded();
-    
-    We'll do a bunch of other work first, because that gives us something
-    to do while we wait the other threads to finish.
-    */
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
     for (
@@ -963,65 +840,13 @@ void T1_assets_load_all(
     
     if (!T1_log_app_running) { return; }
     
-    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    uintptr_t zero = 0;
-    T1_appinit_asset_loading_thread((void *)zero);
-    
-    if (!T1_log_app_running) { return; }
-    
-    // Wait until all worker threads are finished
-    while (!ias->all_finished) {
-        ias->all_finished = 1;
-        for (u32 i = 1; i < ias->image_decoding_threads; i++) {
-            if (!ias->thread_finished[i]) {
-                ias->all_finished = 0;
-            }
-        }
-    }
-    T1_gameloop_loading_texs = 0;
-    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    #else
-    #error "T1_TEXTURES_ACTIVE undefined!"
-    #endif
-    
-    u64 longest_taken = 0;
-    s32 longest_ta_i = -1;
-    for (s32 i = 0; i < (s32)T1_tex_arrays_size; i++) {
-        u64 taken =
-            T1_tex_arrays[i].ended_decoding -
-            T1_tex_arrays[i].started_decoding;
-        if (taken > longest_taken) {
-            longest_taken = taken;
-            longest_ta_i = i;
-        }
-    }
-    
-    if (longest_ta_i >= 0) {
-        T1_log_append("Slowest texture array: ");
-        T1_log_append_s32(longest_ta_i);
-        T1_log_append("\nIncludes images: ");
-        T1_log_append(T1_tex_arrays[longest_ta_i].images[0].name);
-        for (
-            s32 t_i = 1;
-            t_i < (s32)T1_tex_arrays[longest_ta_i].images_size;
-            t_i++)
-        {
-            T1_log_append(", ");
-            T1_log_append(T1_tex_arrays[longest_ta_i].images[t_i].name);
-        }
-    }
-    
-    T1_tex_array_push_all();
-    
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
         s32 i = 1;
         i < (s32)T1_tex_arrays_size;
         i++)
     {
-        if (!T1_tex_arrays[i].bc1_compressed) {
-            T1_os_gpu_generate_mipmaps_for_texture_array(i);
-        }
+        T1_os_gpu_generate_mipmaps_for_texture_array(i);
     }
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     #else

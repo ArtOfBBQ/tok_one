@@ -6,7 +6,6 @@
 #include "T1_types_cpu_to_gpu.h"
 
 extern u8 T1_gameloop_active;
-extern u8 T1_gameloop_loading_texs;
 
 void T1_gameloop_init(
     void *(* arg_malloc_fptr)(size_t));

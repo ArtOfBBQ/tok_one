@@ -1,8 +1,5 @@
 #include "T1_tex_array.h"
 
-#include "decode_png.h"
-#include "decode_bmp.h"
-
 #include "T1_log.h"
 #include "T1_mem.h"
 #include "T1_os.h"
@@ -13,36 +10,6 @@ static u32 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
 
 T1TexArray * T1_tex_arrays = NULL;
 u32 T1_tex_arrays_size = 0;
-
-void T1_tex_array_push_all(void)
-{
-    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    for (
-        s32 ta_i = 1;
-        ta_i < (s32)T1_tex_arrays_size;
-        ta_i++)
-    {
-        for (
-            s32 sl_i = (s32)T1_tex_arrays[ta_i].images_size - 1;
-            sl_i >= 0;
-            sl_i--)
-        {
-            if (
-                T1_tex_arrays[ta_i].images[sl_i].image.rgba_values_page_aligned != NULL)
-            {
-                T1_os_gpu_push_tex_slice(
-                    /* s32 texture_array_i: */
-                        ta_i,
-                    /* s32 texture_i: */
-                        sl_i);
-            }
-        }
-    }
-    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-}
 
 static T1Img * extract_image(
     const T1Img * original,
@@ -167,7 +134,6 @@ void T1_tex_array_init(void) {
 static void
 register_to_texturearray_by_splitting_image(
     T1Img * new_image,
-    const char * filename_prefix,
     s32 ta_i,
     u32 rows,
     u32 columns,
@@ -188,13 +154,6 @@ register_to_texturearray_by_splitting_image(
         return;
     }
         
-    char * filenames[256];
-    T1_std_memset(filenames, 0, 256 * sizeof(char *));
-    for (u32 i = 0; i < 256; i++) {
-        filenames[i] = T1_mem_malloc_managed(256);
-        T1_std_memset(filenames[i], 0, sizeof(rows * columns * 256));
-    }
-    
     // each image should have the exact same dimensions
     u32 expected_width = new_image->width / columns;
     u32 expected_height = new_image->height / rows;
@@ -203,7 +162,6 @@ register_to_texturearray_by_splitting_image(
     
     T1_tex_arrays[ta_i].images_size = rows * columns;
     T1_tex_arrays[ta_i].is_render_target = 0;
-    T1_tex_arrays[ta_i].bc1_compressed = 0;
     
     for (s32 row_i = (s32)rows-1; row_i >= 0; row_i--) {
         for (s32 col_i = (s32)columns-1; col_i >= 0; col_i--)
@@ -243,31 +201,6 @@ register_to_texturearray_by_splitting_image(
             T1_log_assert(split_img->width  == expected_width);
             T1_log_assert(split_img->height == expected_height);
             
-            T1_std_strcpy_cap(
-                filenames[(row_i*(s32)columns)+col_i],
-                256,
-                filename_prefix);
-            T1_std_strcat_cap(
-                filenames[(row_i*(s32)columns)+col_i],
-                256,
-                "_");
-            T1_std_strcat_s32_cap(
-                filenames[(row_i*(s32)columns)+col_i],
-                256,
-                col_i);
-            T1_std_strcat_cap(
-                filenames[(row_i*(s32)columns)+col_i],
-                256,
-                "_");
-            T1_std_strcat_s32_cap(
-                filenames[(row_i*(s32)columns)+col_i],
-                256,
-                row_i);
-            
-            T1_std_strcpy_cap(
-                T1_tex_arrays[ta_i].images[t_i].name,
-                256,
-                filenames[(row_i*(s32)columns)+col_i]);
             T1_tex_arrays[ta_i].images[t_i].image = *split_img;
             T1_tex_arrays[ta_i].images[t_i].image.width =
                 split_img->width;
@@ -288,10 +221,6 @@ register_to_texturearray_by_splitting_image(
                 /* s32 texture_i: */
                     t_i);
         }
-    }
-    
-    for (u32 i = 0; i < 256; i++) {
-        T1_mem_free_managed(filenames[i]);
     }
 }
 
@@ -327,32 +256,13 @@ s32 T1_tex_array_create_new_render_view(
     T1_render_views->cpu[rv_i].passes[2].type =
         T1RENDERPASS_FLAT_TEXQUADS;
     
-    char tex_name[64];
-    T1_std_memset(tex_name, 0, 64);
-    T1_std_strcpy_cap(
-        tex_name,
-        64,
-        "__%T1%__renderview_");
-    T1_std_strcat_s32_cap(
-        tex_name,
-        64,
-        rv_i);
-    
-    T1Tex existing = T1_tex_array_get_filename_loc(tex_name);
-    
-    T1_log_assert(existing == T1_TEX_NONE);
-    
-    T1Tex tex = T1_tex_array_prereg_img(
-        /* const char * filename: */
-            tex_name,
+    T1Tex tex = T1_tex_array_new_slice(
         /* u32 width: */
             T1_render_views->cpu[rv_i].width,
         /* u32 height: */
             T1_render_views->cpu[rv_i].height,
-        /* u32 is_render_target: */
+        /* b8 is_render_target: */
             1,
-        /* u32 use_bc1_compression: */
-            0,
         /* b8 never_delete: */ 
             0,
         /* fatal_error: */
@@ -385,17 +295,6 @@ s32 T1_tex_array_create_new_render_view(
     T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
     
     return rv_i;
-}
-
-b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in) {
-    return
-        in != T1_TEX_NONE &&
-        (
-        T1_tex_to_array_i(in) >= (s32)T1_tex_arrays_size ||
-        T1_tex_to_slice_i(in) >= 
-            (s32)T1_tex_arrays[T1_tex_to_array_i(in)].images_size ||
-        T1_tex_arrays[T1_tex_to_array_i(in)].images[T1_tex_to_slice_i(in)].deleted
-        );
 }
 
 u32 T1_tex_array_get_img_height(s32 array_i) {
@@ -431,53 +330,54 @@ void T1_tex_array_delete_slice(
 {
     T1_log_assert(array_i >= 0);
     T1_log_assert(slice_i >= 0);
-    if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
-        T1_log_assert(
-            slice_i < (s32)
-                T1_tex_arrays[array_i].images_size);
-        T1_log_assert(
-            !T1_tex_arrays[array_i].images[slice_i].
-                deleted);
+    
+    // depth textures don't live in T1_tex_arrays, the index is only a marker
+    if (array_i == T1_DEPTH_TEXTUREARRAYS_I) {
+        T1_os_gpu_delete_depth_tex(slice_i);
+        return;
     }
+    
+    T1_log_assert(
+        slice_i < (s32)
+            T1_tex_arrays[array_i].images_size);
+    T1_log_assert(
+        !T1_tex_arrays[array_i].images[slice_i].
+            deleted);
     
     if (T1_tex_arrays[array_i].images[slice_i].image.never_delete_me) {
         return;
     }
     
-    if (array_i != T1_DEPTH_TEXTUREARRAYS_I) {
-        T1_log_assert(
-            array_i < (s32)T1_tex_arrays_size);
-        
-        if (T1_tex_arrays[array_i].images[slice_i].image.
-            rgba_values_freeable != NULL)
-        {
-            T1_mem_free_managed(
-                T1_tex_arrays[array_i].images[slice_i].image.
-                    rgba_values_freeable);
-        }
-        
-        T1_std_memset(
-            T1_tex_arrays[array_i].images + slice_i,
-            0,
-            sizeof(T1TexArrayImg));
-        T1_tex_arrays[array_i].images[slice_i].deleted = 1;
-        
-        while (
-            T1_tex_arrays[array_i].images_size > 0 &&
-            T1_tex_arrays[array_i].images[
-                T1_tex_arrays[array_i].images_size - 1].
-                    deleted)
-        {
-            T1_tex_arrays[array_i].images_size -= 1;
-        }
-        
-        if (
-            T1_tex_arrays[array_i].images_size == 0)
-        {
-            T1_tex_array_delete_array(array_i);
-        }
-    } else {
-        T1_os_gpu_delete_depth_tex(slice_i);
+    T1_log_assert(
+        array_i < (s32)T1_tex_arrays_size);
+    
+    if (T1_tex_arrays[array_i].images[slice_i].image.
+        rgba_values_freeable != NULL)
+    {
+        T1_mem_free_managed(
+            T1_tex_arrays[array_i].images[slice_i].image.
+                rgba_values_freeable);
+    }
+    
+    T1_std_memset(
+        T1_tex_arrays[array_i].images + slice_i,
+        0,
+        sizeof(T1TexArrayImg));
+    T1_tex_arrays[array_i].images[slice_i].deleted = 1;
+    
+    while (
+        T1_tex_arrays[array_i].images_size > 0 &&
+        T1_tex_arrays[array_i].images[
+            T1_tex_arrays[array_i].images_size - 1].
+                deleted)
+    {
+        T1_tex_arrays[array_i].images_size -= 1;
+    }
+    
+    if (
+        T1_tex_arrays[array_i].images_size == 0)
+    {
+        T1_tex_array_delete_array(array_i);
     }
 }
 
@@ -529,7 +429,6 @@ void T1_tex_array_update_rgba(
 
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
-    const char * filename_prefix,
     u32 rows,
     u32 columns,
     b8 never_delete,
@@ -547,7 +446,6 @@ void T1_tex_array_reg_new_by_splitting_img(
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_img: */ new_image,
-        /* filename_prefix: */ filename_prefix,
         /* s32 texture_array_i: */ new_texture_array_i,
         /* u32 rows: */ rows,
         /* u32 columns: */ columns,
@@ -555,12 +453,10 @@ void T1_tex_array_reg_new_by_splitting_img(
         fatal_error);
 }
 
-T1Tex T1_tex_array_prereg_img(
-    const c8 * filename,
+T1Tex T1_tex_array_new_slice(
     u32 width,
     u32 height,
     b8 is_render_target,
-    b8 use_bc1_compression,
     b8 never_delete,
     char ** const fatal_error)
 {
@@ -586,8 +482,7 @@ T1Tex T1_tex_array_prereg_img(
             T1_tex_arrays[i].images_size > 0 &&
             T1_tex_arrays[i].single_img_width  == width &&
             T1_tex_arrays[i].single_img_height == height &&
-            T1_tex_arrays[i].is_render_target == is_render_target &&
-            T1_tex_arrays[i].bc1_compressed == use_bc1_compression)
+            T1_tex_arrays[i].is_render_target == is_render_target)
         {
             // reuse a deleted slice if there is one, else append
             s16 slice_i = (s16)T1_tex_arrays[i].images_size;
@@ -650,8 +545,6 @@ T1Tex T1_tex_array_prereg_img(
         T1_tex_arrays[array_i].single_img_width = width;
         T1_tex_arrays[array_i].single_img_height = height;
         T1_tex_arrays[array_i].is_render_target = is_render_target > 0;
-        T1_tex_arrays[array_i].bc1_compressed =
-            use_bc1_compression > 0;
         
         T1Img * img = &T1_tex_arrays[array_i].images[0].image;
         img->width = width;
@@ -663,11 +556,6 @@ T1Tex T1_tex_array_prereg_img(
     }
     
     T1_log_assert(retval != T1_TEX_NONE);
-    T1_std_strcpy_cap(
-        T1_tex_arrays[T1_tex_to_array_i(retval)].
-            images[T1_tex_to_slice_i(retval)].name,
-        T1_TEX_NAME_CAP,
-        filename);
     
     return retval;
 }
@@ -685,12 +573,10 @@ T1Tex T1_tex_new(
         return T1_TEX_NONE;
     }
     
-    T1Tex tex = T1_tex_array_prereg_img(
-        /* const c8 * filename: */ "",
+    T1Tex tex = T1_tex_array_new_slice(
         width,
         height,
         /* b8 is_render_target: */ 0,
-        /* b8 use_bc1_compression: */ 0,
         /* b8 never_delete: */ 0,
         fatal_error);
     if (*fatal_error != 0) { return T1_TEX_NONE; }
@@ -740,35 +626,6 @@ u32 T1_tex_get_width(T1Tex tex) {
 u32 T1_tex_get_height(T1Tex tex) {
     T1_log_assert(tex != T1_TEX_NONE);
     return T1_tex_arrays[T1_tex_to_array_i(tex)].single_img_height;
-}
-
-T1Tex T1_tex_array_get_filename_loc(
-    const char * for_filename)
-{
-    // T1_log_assert(for_filename != NULL);
-    // T1_log_assert(for_filename[0] != '\0');
-        
-    if (for_filename == NULL || for_filename[0] == '\0') {
-        return T1_TEX_NONE;
-    }
-    
-    for (s16 i = 0; i < (s16)T1_tex_arrays_size; i++) {
-        T1_log_assert(T1_tex_arrays[i].images_size < 2000);
-        for (s16 j = 0; j < (s16)T1_tex_arrays[i].images_size; j++) {
-            if (
-                T1_std_are_equal_strings(
-                    T1_tex_arrays[i].images[j].name,
-                    for_filename))
-            {
-                T1Tex return_value;
-                T1_tex_set_array_i(&return_value, i);
-                T1_tex_set_slice_i(&return_value, j);
-                return return_value;
-            }
-        }
-    }
-    
-    return T1_TEX_NONE;
 }
 
 void T1_tex_array_debug_dump_to_writables(

@@ -3,7 +3,6 @@
 #include "T1_stdint.h"
 #include "T1_conditional_includes.h"
 
-#include "decode_png.h"
 #include "T1_log.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
@@ -251,128 +250,6 @@ void T1_cam_make_reflection_cam(
     f32 reflection_z) {}
 #else
 #error
-#endif
-
-u8 * T1_png_malloc_managed_from_resource(
-    const c8 * resource_name,
-    u32 * out_width,
-    u32 * out_height,
-    char ** const fatal_error)
-{
-    if (*fatal_error != 0) { return NULL; }
-    *out_width = 0;
-    *out_height = 0;
-    
-    u64 png_cap = T1_os_get_resource_size(resource_name) + 1;
-    
-    if (png_cap < 30) {
-        return NULL;
-    }
-    
-    char * png = T1_mem_malloc_managed(png_cap+1);
-    if (!png) {
-        *fatal_error = "Malloc fail";
-        return NULL;
-    }
-    
-    T1_std_memset(png, 0, png_cap);
-    u32 png_size = 0;
-    
-    char png_pathfile[512];
-    T1_std_memset(png_pathfile, 0, 512);
-    T1_os_res_filename_to_pathfile(
-        resource_name,
-        png_pathfile,
-        512);
-    
-    if (png_pathfile[511] != '\0') {
-        return NULL;
-    }
-    
-    T1_os_read_file(
-        /* const c8 * filepath: */
-            png_pathfile,
-        /* c8 * recip: */
-            png,
-        /* u32 * recip_size: */
-            &png_size,
-        /* u64 recip_cap: */
-            png_cap,
-        /* char ** const fatal_error: */
-            fatal_error);
-    
-    if (*fatal_error != 0) {
-        T1_mem_free_managed(png);
-        return NULL;
-    }
-    
-    decode_png_get_width_height(
-        (uint8_t *)png,
-        png_size,
-        out_width,
-        out_height,
-        fatal_error);
-    
-    if (*fatal_error != 0) {
-        T1_mem_free_managed(png);
-        return NULL;
-    }
-    
-    u32 rgba_cap = (*out_width * *out_height * 4);
-    u8 * rgba = T1_mem_malloc_managed(rgba_cap);
-    T1_std_memset(rgba, 0, rgba_cap);
-    
-    decode_png(
-        /* const u8 * compressed_input: */
-            (u8 *)png,
-        /* u64 compressed_input_size: */
-            png_size,
-        /* u8 * out_rgba: */
-            rgba,
-        /* u64 out_rgba_cap: */
-            rgba_cap,
-        /* u32 thread_id: */
-            0,
-        /* u8 * good: */
-            fatal_error);
-    
-    T1_mem_free_managed(png);
-    return rgba;
-}
-
-// TODO: is this called in any of our projects?
-// - not called in deck assembler
-#if 0
-void T1_png_get_width_height(
-    const u8 * compressed_input,
-    u64 compressed_input_size,
-    u32 * out_width,
-    u32 * out_height,
-    u8 * out_good)
-{
-    decode_png_get_width_height(
-        compressed_input,
-        compressed_input_size,
-        out_width,
-        out_height,
-        out_good);
-}
-void T1_png_decode(
-    const u8 * compressed_input,
-    u64 compressed_input_size,
-    u8 * out_rgba_values,
-    u64 rgba_values_size,
-    u32 thread_id,
-    u8 * out_good)
-{
-    decode_png(
-        compressed_input,
-        compressed_input_size,
-        out_rgba_values,
-        rgba_values_size,
-        thread_id,
-        out_good);
-}
 #endif
 
 /*

@@ -170,8 +170,6 @@ typedef struct {
     uint64_t this_frame_timestamp_us;
     uint64_t last_resize_request_us;
     
-    uint32_t startup_bytes_to_load;
-    uint32_t startup_bytes_loaded;
     
     float timedelta_mult;
     float window_wh[2];

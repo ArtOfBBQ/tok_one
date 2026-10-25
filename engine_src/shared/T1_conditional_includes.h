@@ -3,7 +3,6 @@
 
 #if (T1_LOG_PRINTF_ACTIVE == 1) || \
     (T1_COLLISION_PRINTF_ACTIVE == 1) || \
-    (INFLATE_PRINTF_ACTIVE == 1)  || \
     (T1_IMG_PRINTF_ACTIVE == 1)
 #include <stdio.h>
 #endif

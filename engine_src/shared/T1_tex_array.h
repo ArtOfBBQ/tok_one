@@ -5,10 +5,8 @@
 #include "T1_tex.h"
 #include "T1_img.h"
 
-#define T1_TEX_NAME_CAP 128
 typedef struct {
     T1Img image;
-    char name[T1_TEX_NAME_CAP];
     b8 deleted;
     b8 request_update;
     b8 prioritize_asset_load;
@@ -16,15 +14,12 @@ typedef struct {
 
 typedef struct {
     T1TexArrayImg images[T1_TEX_SLICES_CAP];
-    u64 started_decoding;
-    u64 ended_decoding;
     u32 images_size;
     u32 single_img_width;
     u32 single_img_height;
     u32 gpu_capacity;
     b8 request_init;
     b8 is_render_target;
-    b8 bc1_compressed;
     b8 deleted;
 } T1TexArray;
 
@@ -33,14 +28,12 @@ extern u32 T1_tex_arrays_size;
 
 void T1_tex_array_init(void);
 
-void T1_tex_array_push_all(void);
 
-T1Tex T1_tex_array_prereg_img(
-    const c8 * filename,
+// a slice in an array of this size (made if needed), its pixels are unset
+T1Tex T1_tex_array_new_slice(
     u32 width,
     u32 height,
     b8 is_render_target,
-    b8 use_bc1_compression,
     b8 never_delete,
     char ** const fatal_error);
 
@@ -49,7 +42,6 @@ s32 T1_tex_array_create_new_render_view(
     const u32 height,
     char ** const fatal_error);
 
-b8 T1_tex_array_tex_exists_and_is_not_deleted(T1Tex in);
 u32 T1_tex_array_get_img_height(s32 array_i);
 u32 T1_tex_array_get_img_width(s32 array_i);
 
@@ -69,13 +61,11 @@ void T1_tex_array_update_rgba(
 
 void T1_tex_array_reg_new_by_splitting_img(
     T1Img * new_image,
-    const char * filename_prefix,
     u32 rows,
     u32 columns,
     b8 free_rgba,
     char ** const fatal_error);
 
-T1Tex T1_tex_array_create_new_in_array(s32 array_i);
 
 /*
 Public functions (exposed via T1.h)
@@ -92,8 +82,6 @@ void T1_tex_delete(T1Tex tex);
 u32 T1_tex_get_width(T1Tex tex);
 u32 T1_tex_get_height(T1Tex tex);
 
-T1Tex T1_tex_array_get_filename_loc(
-    const char * for_filename);
 
 void T1_tex_array_debug_dump_to_writables(
     s32 texture_array_i,

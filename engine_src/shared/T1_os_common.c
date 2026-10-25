@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-#include "decode_png.h"
-#include "decode_bmp.h"
 #include "T1_mem.h"
 #include "T1_log.h"
 #include "T1_global.h"
@@ -285,6 +283,48 @@ void T1_os_write_file_to_writables(
             good);
 }
 
+static void T1_os_put_u32_le(u8 * at, u32 value) {
+    at[0] = (u8)(value & 0xFF);
+    at[1] = (u8)((value >> 8) & 0xFF);
+    at[2] = (u8)((value >> 16) & 0xFF);
+    at[3] = (u8)((value >> 24) & 0xFF);
+}
+
+// a 32 bit, top-down .bmp: 14 + 40 bytes of headers, then bgra pixels
+static void T1_os_encode_bmp(
+    const u8 * rgba,
+    u32 width,
+    u32 height,
+    u8 * recip,
+    u32 * recip_size)
+{
+    u32 pixels_size = width * height * 4;
+    T1_std_memset(recip, 0, 54);
+    
+    recip[0] = 'B';
+    recip[1] = 'M';
+    T1_os_put_u32_le(recip + 2, 54 + pixels_size);
+    T1_os_put_u32_le(recip + 10, 54);
+    
+    T1_os_put_u32_le(recip + 14, 40);
+    T1_os_put_u32_le(recip + 18, width);
+    // a negative height means the rows go from the top down
+    T1_os_put_u32_le(recip + 22, (u32)(-(s32)height));
+    recip[26] = 1;  // planes
+    recip[28] = 32; // bits per pixel
+    T1_os_put_u32_le(recip + 34, pixels_size);
+    
+    u8 * px = recip + 54;
+    for (u32 i = 0; i < pixels_size; i += 4) {
+        *px++ = rgba[i + 2];
+        *px++ = rgba[i + 1];
+        *px++ = rgba[i + 0];
+        *px++ = rgba[i + 3];
+    }
+    
+    *recip_size = 54 + pixels_size;
+}
+
 void T1_os_write_rgba_to_writables(
     const char * local_filename,
     u8 * rgba, u32 rgba_size,
@@ -310,21 +350,8 @@ void T1_os_write_rgba_to_writables(
         }
     }
     
-    encode_BMP(
-        /* const u8 * rgba :*/
-            rgba,
-        /* const u64 rgba_size: */
-            rgba_size,
-        /* const u32 width: */
-            width,
-        /* const u32 height: */
-            height,
-        /* char * recipient: */
-            (char *)bmp,
-        /* u32 * recipient_size: */
-            &bmp_size,
-        /* const int64_t recipient_capacity: */
-            bmp_cap);
+    T1_log_assert(bmp_cap >= 54 + (width * height * 4));
+    T1_os_encode_bmp(rgba, width, height, bmp, &bmp_size);
     
     T1_os_write_file_to_writables(
         /* const char * filepath_inside_writables: */
@@ -335,6 +362,8 @@ void T1_os_write_rgba_to_writables(
             bmp_size,
         /* u32 * good: */
             good);
+    
+    T1_mem_free_managed(bmp);
 }
 
 uint8_t T1_os_writable_exists(const char * writable_name) {
