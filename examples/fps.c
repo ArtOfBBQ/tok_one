@@ -5,8 +5,10 @@ frames per second counter.
 
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
-    gcc -std=c11 -O2 -I build examples/fps.c build/T1.c -o build/fps
-    ./build/fps
+    ./build/examples/fps
+
+(concat builds every example, with
+    gcc -std=c11 -O2 -I build examples/fps.c build/T1.c -o build/examples/fps)
 */
 #include <stdio.h>
 

@@ -9,7 +9,8 @@ Q: It worked! how do I build T1?
 ./concat
 
 Q: It worked, where is the library?
-The library is in the /build folder
+The library is in the /build folder (T1.h and T1.c). The examples are built
+against it too, their binaries are in /build/examples
 */
 
 #include <stdlib.h>
@@ -17,9 +18,16 @@ The library is in the /build folder
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 
 static const char * encapsulation_h_file = "T1.h";
+
+// examples/<name>.c, built against the library into build/examples/<name>
+static const char * examples[] = {
+    "noise",
+    "fps",
+};
 
 static const char * search_paths[] = {
 "./",
@@ -1148,6 +1156,24 @@ int main(void) {
     
     deduplicate_includes_clean_comments(asm_state->output);
     write_output_to("T1.c", "build/");
+    
+    mkdir("build/examples", 0777);
+    uint32_t examples_size = sizeof(examples) / sizeof(examples[0]);
+    for (uint32_t e = 0; e < examples_size; e++) {
+        char cmd[512];
+        snprintf(
+            cmd,
+            sizeof(cmd),
+            "gcc -std=c11 -O2 -I build examples/%s.c build/T1.c "
+            "-o build/examples/%s",
+            examples[e],
+            examples[e]);
+        printf("building example: build/examples/%s\n", examples[e]);
+        if (system(cmd) != 0) {
+            printf("ERROR - failed to build example: %s\n", examples[e]);
+            return 1;
+        }
+    }
     
     printf("Success.\n");
     

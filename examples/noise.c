@@ -4,8 +4,10 @@ T1 gives us a window to show them in.
 
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
-    gcc -std=c11 -O2 -I build examples/noise.c build/T1.c -o build/noise
-    ./build/noise
+    ./build/examples/noise
+
+(concat builds every example, with
+    gcc -std=c11 -O2 -I build examples/noise.c build/T1.c -o build/examples/noise)
 */
 #include <math.h>
 #include <stdio.h>

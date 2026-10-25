@@ -15,7 +15,7 @@ Your files (T1.h & T1.c) are now in the build folder, copy them into your projec
 
 ## Examples
 
-`examples/noise.c` is the smallest T1 app: it draws its own pixels and T1 shows them in a window, no GPU setup or shaders needed. Build instructions are at the top of the file.
+`examples/noise.c` is the smallest T1 app: it draws its own pixels and T1 shows them in a window, no GPU setup or shaders needed. `./concat` builds every example along with the library, run them from the tok_one folder with e.g. `./build/examples/noise`.
 
 ## Terminology in this codebase
 
