@@ -10,7 +10,6 @@
 
 typedef struct {
     u64 timestamp;
-    b8  for_terminal; // happened while the terminal captured input
     b8  is_up_short;
     b8  is_up_long;
     b8  is_active;
@@ -30,7 +29,6 @@ typedef struct {
     T1IOFrameEvent list[T1_IO_MAX_EVENTS_PER_FRAME];
     u64 last_down_timestamp;
     b8  is_down;
-    b8  is_down_for_terminal;
     u8  debounces_up;
     u8  debounces_down;
 } T1IOFrameEventQueue;
@@ -44,9 +42,6 @@ typedef struct {
     u32 ondown_lclick_touch_id;
     u32 cur_mouse_touch_id;
     b8  dragging;
-    b8  dragging_for_terminal;
-    // while set, inputs go to the terminal instead of the client
-    b8  captured_by_terminal;
     u8  pos_events_size;
 } T1IOState;
 
@@ -74,10 +69,6 @@ void T1_io_init(void *(* arg_malloc_func)(size_t)) {
     T1_io->pos_events_size = 3;
 }
 
-void T1_io_set_captured_by_terminal(b8 captured) {
-    T1_io->captured_by_terminal = captured;
-}
-
 static T1IOFrameEvent *
 T1_io_get_open_event(
     const u32 for_key_id)
@@ -98,9 +89,6 @@ T1_io_get_open_event(
     {
         return NULL;
     }
-    
-    T1_io->frame_map[for_key_id].list[insert_i].for_terminal =
-        T1_io->captured_by_terminal;
     
     return T1_io->frame_map[for_key_id].list + insert_i;
 }
@@ -161,8 +149,6 @@ void T1_io_register_keyup_force_up_short(
     u32 key_id)
 {
     T1_io->frame_map[key_id].is_down = 1;
-    T1_io->frame_map[key_id].is_down_for_terminal =
-        T1_io->captured_by_terminal;
     
     T1IOFrameEvent * next = T1_io_get_open_event(key_id);
     
@@ -199,7 +185,6 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
         f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
         
         T1_io->dragging = 1;
-        T1_io->dragging_for_terminal = T1_io->captured_by_terminal;
         T1_io->last_drag_start_x = mouse_x;
         T1_io->last_drag_start_y = mouse_y;
         
@@ -210,8 +195,6 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
     }
     
     T1_io->frame_map[key_id].is_down = 1;
-    T1_io->frame_map[key_id].is_down_for_terminal =
-        T1_io->captured_by_terminal;
     T1_io->frame_map[key_id].last_down_timestamp =
         T1_os_get_current_time_us();
     
@@ -242,7 +225,7 @@ void T1_io_register_key_move_to_pos(
         if ((T1_io->pos_events_size + 1) >=
             T1_IO_POS_EVENTS_CAP)
         {
-            T1_assert(1); // not enough position events
+            T1_assert(0); // not enough position events
             return;
         }
         pos = T1_io->pos_events + T1_io->pos_events_size;
@@ -299,22 +282,8 @@ T1_io_update_and_clear_for_next_frame(void)
         mouse_y);
 }
 
-/*
-Inputs that happened while the terminal was open belong to the terminal,
-the client doesn't get to see them (and vice versa)
-*/
-b8 T1_io_key_is_down_internal(T1IOKey key, b8 for_terminal)
-{
-    T1_assert(key < T1_IO_KEY_ABOVEBOUNDS);
-    
-    return
-        T1_io->frame_map[key].is_down &&
-        T1_io->frame_map[key].is_down_for_terminal == for_terminal;
-}
-
 static b8 T1_io_key_consume_event(
     T1IOKey key,
-    b8 for_terminal,
     b8 is_up_short,
     b8 is_up_long)
 {
@@ -329,7 +298,6 @@ static b8 T1_io_key_consume_event(
         
         if (
             e->is_active &&
-            e->for_terminal == for_terminal &&
             e->is_up_short == is_up_short &&
             e->is_up_long == is_up_long)
         {
@@ -341,30 +309,24 @@ static b8 T1_io_key_consume_event(
     return 0;
 }
 
-b8 T1_io_key_consume_tap_began_frame_internal(
-    T1IOKey key,
-    b8 for_terminal)
-{
-    return T1_io_key_consume_event(key, for_terminal, 0, 0);
-}
-
 /*
 Public functions (exposed via T1.h)
 */
 b8 T1_io_key_is_down(T1IOKey key) {
-    return T1_io_key_is_down_internal(key, 0);
+    T1_assert(key < T1_IO_KEY_ABOVEBOUNDS);
+    return T1_io->frame_map[key].is_down;
 }
 
 b8 T1_io_key_consume_tap_began_frame(T1IOKey key) {
-    return T1_io_key_consume_event(key, 0, 0, 0);
+    return T1_io_key_consume_event(key, 0, 0);
 }
 
 b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key) {
-    return T1_io_key_consume_event(key, 0, 1, 0);
+    return T1_io_key_consume_event(key, 1, 0);
 }
 
 b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key) {
-    return T1_io_key_consume_event(key, 0, 0, 1);
+    return T1_io_key_consume_event(key, 0, 1);
 }
 
 u32 T1_io_get_mouse_touch_id_this_frame(void) {
@@ -378,7 +340,7 @@ b8 T1_io_consume_mouse_drag(
     f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
     f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
     
-    if (T1_io->dragging && !T1_io->dragging_for_terminal) {
+    if (T1_io->dragging) {
         *delta_x = T1_io->last_drag_start_x - mouse_x;
         *delta_y = T1_io->last_drag_start_y - mouse_y;
         T1_io->last_drag_start_x = mouse_x;

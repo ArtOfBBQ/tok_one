@@ -115,7 +115,6 @@ static const char * c_files[] = {
 "T1_property.c",
 "T1_text.c",
 "T1_render_view.c",
-"T1_term.c",
 "T1_render.c",
 "T1_gameloop.c",
 "T1_appinit.c",

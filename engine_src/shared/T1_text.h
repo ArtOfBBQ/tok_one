@@ -35,8 +35,8 @@ void T1_text_request_label(
     f32 max_width);
 
 /*
-T1_TEXT_ALIGN_LEFT_TOP with any tab width, for T1's own labels (terminal,
-fps counter)
+T1_TEXT_ALIGN_LEFT_TOP with any tab width, for T1's own labels (the fps
+counter)
 */
 void T1_text_request_label_left_top(
     u32 with_T1_id,

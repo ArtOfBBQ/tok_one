@@ -19,7 +19,6 @@
 #include "T1_text.h"
 #include "T1_io.h"
 #include "T1_global.h"
-#include "T1_term.h"
 #include "T1_texquad.h"
 #include "T1_anim.h"
 #include "T1_render.h"
@@ -406,7 +405,7 @@ void T1_init(
 
 /*
 Everything that only matters when T1 renders: zsprites, texquads, lights,
-cameras, passes, text, the terminal, animations and the buffers the GPU
+cameras, passes, text, animations and the buffers the GPU
 reads. Apps that blit their own pixels never pay for these.
 */
 static void T1_appinit_gpu_modules(
@@ -440,18 +439,6 @@ static void T1_appinit_gpu_modules(
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     #else
     #error
-    #endif
-    
-    #if T1_TERM_ACTIVE == T1_ACTIVE
-    // The client can set a command handler with
-    // T1_term_set_command_handler()
-    T1_term_init(
-        NULL,
-        T1_os_enter_fullscreen);
-    #elif T1_TERM_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_TERM_ACTIVE undefined!"
     #endif
     
     #if T1_ANIM_ACTIVE == T1_ACTIVE

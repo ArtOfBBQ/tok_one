@@ -127,7 +127,7 @@ void T1_objmodel_init(void) {
         sizeof(T1LockedVertexWithMaterialCollection));
     
     // Let's hardcode a basic quad since that will be used by
-    // even crticical engine features (terminal, text labels)
+    // even critical engine features (text labels)
     T1_std_strcpy_cap(
         T1_mesh_summary_list[0].resource_name,
         T1_OBJ_STRING_SIZE,

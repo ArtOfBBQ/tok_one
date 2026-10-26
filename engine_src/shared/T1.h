@@ -5,7 +5,7 @@
 Search for documentation by section:
   APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT,
   OBJECTS AND PROPERTIES, ANIMATIONS, CAMERAS, TEXT LABELS, TEXTURES,
-  RENDERING, BUFFERS, 3-D MODELS, FILES, OPERATING SYSTEM, AUDIO, TERMINAL
+  RENDERING, BUFFERS, 3-D MODELS, FILES, OPERATING SYSTEM, AUDIO
 
 The macro settings at the top are yours to edit.
 */
@@ -30,10 +30,9 @@ The GPU steps are optional. Without them, you draw your own pixels and
 show them with T1_window_blit_rgba(), see examples/ for the smallest app,
 and T1 doesn't allocate anything for rendering. If you use the GPU, call
 T1_gpu_init() before you use anything that renders: textures, buffers,
-cameras, zsprites, texquads, lights, text, passes, animations or the
-terminal. Textures (T1_tex_new) are uploaded as you create them, meshes and
-materials when the next frame is rendered, so you can register either at
-any time.
+cameras, zsprites, texquads, lights, text, passes or animations.
+Textures (T1_tex_new) are uploaded as you create them, meshes and materials
+when the next frame is rendered, so you can register either at any time.
 
 T1 never shows errors in the window. Problems at startup come back through
 fatal_error; when T1 catches a bug (a failed check, see T1_ASSERTS_ACTIVE),
@@ -115,7 +114,7 @@ after a blit), T1_window_poll_events() handles input until the next frame
 is due, see T1_window_set_fps_cap(), so the loop doesn't spin.
 */
 void     T1_window_poll_events(void);
-// The window's close button, the OS's quit command, the terminal's QUIT
+// The window's close button or the OS's quit command
 uint8_t  T1_window_close_requested(void);
 // False while the window is minimized or fully covered
 uint8_t  T1_window_visible(void);
@@ -139,7 +138,7 @@ void     T1_window_blit_rgba(
 void     T1_window_set_fps_cap(uint32_t fps);
 
 // Waits until the GPU is done with the next frame's buffers and runs T1's
-// work that comes before your update (animations, the terminal, ...)
+// work that comes before your update (animations, ...)
 void     T1_frame_begin(void);
 // The window settled on a new size this frame. T1 keeps all your objects,
 // move, rebuild or delete what depends on the size.
@@ -555,19 +554,5 @@ void     T1_audio_stream(
 // how many samples have played
 uint64_t T1_audio_play_cursor(void);
 void     T1_audio_stop_all(void);
-
-/*
-TERMINAL
-Commands the T1 terminal doesn't know are passed to your handler, which
-writes its reply to response. Needs T1_gpu_init().
-*/
-void T1_term_set_command_handler(
-    void (* handler)(char * command, char * response, uint32_t response_cap));
-#if T1_TERM_ACTIVE == T1_ACTIVE
-void T1_term_manually_deactivate(void);
-#elif T1_TERM_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
 
 #endif // T1_H

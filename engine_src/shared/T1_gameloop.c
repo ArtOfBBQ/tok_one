@@ -1,6 +1,5 @@
 #include "T1_gameloop.h"
 
-#include "T1_term.h"
 #include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_io.h"
@@ -18,15 +17,6 @@
 #include "T1_objmodel.h"
 
 u8 T1_gameloop_active = 0;
-
-#if T1_TERM_ACTIVE == T1_ACTIVE
-static void update_terminal(void) {
-    T1_term_update();
-}
-#elif T1_TERM_ACTIVE == T1_INACTIVE
-#else
-#error "T1_TERM_ACTIVE undefined"
-#endif
 
 /*
 When the last frame wasn't presented, nothing paced the client's loop to the
@@ -149,14 +139,6 @@ void T1_frame_begin(void)
         #elif T1_ANIM_ACTIVE == T1_INACTIVE
         #else
         #error
-        #endif
-        
-        #if T1_TERM_ACTIVE == T1_ACTIVE
-        update_terminal();
-        #elif T1_TERM_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_TERM_ACTIVE undefined"
         #endif
         
         // The client runs its update between T1_frame_begin() and
