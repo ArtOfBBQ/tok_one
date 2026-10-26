@@ -1,5 +1,4 @@
 #include "T1_term.h"
-#include "T1_settings.h"
 
 #include "T1_types_public.h"
 
@@ -71,12 +70,12 @@ static void T1_term_redraw_backgrounds(void) {
     T1_trms->back_T1_id = INT32_MAX;
     
     f32 command_history_height =
-        (f32)T1_settings_get_render_height() -
+        T1_global->window_wh[1] -
         T1_TERM_INPUT_BOX_HEIGHT -
         (T1_TERM_WHITESPACE * 3);
     
     f32 width =
-        (f32)T1_settings_get_render_width() - (T1_TERM_WHITESPACE
+        T1_global->window_wh[0] - (T1_TERM_WHITESPACE
                 * 2.0f);
     
     T1TexQuadRequest input_req;
@@ -85,14 +84,17 @@ static void T1_term_redraw_backgrounds(void) {
     input_req.gpu->f32s.xyz[0] = 0.0f;
     input_req.gpu->f32s.xyz[1] =
         T1_render_view_screen_y_to_y(
+            T1_global->window_wh,
             T1_TERM_INPUT_BOX_MID_Y,
             T1_TERM_Z);
     input_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     
     input_req.gpu->f32s.wh[0] =
-        T1_render_view_screen_width_to_width(width, T1_TERM_Z);
+        T1_render_view_screen_width_to_width(
+            T1_global->window_wh, width, T1_TERM_Z);
     input_req.gpu->f32s.wh[1] =
         T1_render_view_screen_height_to_height(
+            T1_global->window_wh,
             T1_TERM_INPUT_BOX_HEIGHT,
             T1_TERM_Z);
     input_req.gpu->u32s.reserved_and_tex =
@@ -114,6 +116,7 @@ static void T1_term_redraw_backgrounds(void) {
     history_req.gpu->f32s.xyz[0] = 0.0f;
     history_req.gpu->f32s.xyz[1] =
         T1_render_view_screen_y_to_y(
+           T1_global->window_wh,
            (command_history_height / 2) +
                T1_TERM_INPUT_BOX_HEIGHT +
                (T1_TERM_WHITESPACE * 2.0f),
@@ -121,11 +124,13 @@ static void T1_term_redraw_backgrounds(void) {
     history_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     history_req.gpu->f32s.wh[0] =
         T1_render_view_screen_width_to_width(
-                (f32)T1_settings_get_render_width() -
+                T1_global->window_wh,
+                T1_global->window_wh[0] -
                     (T1_TERM_WHITESPACE * 2),
                 T1_TERM_Z);
     history_req.gpu->f32s.wh[1] =
         T1_render_view_screen_height_to_height(
+            T1_global->window_wh,
             command_history_height,
             T1_TERM_Z);
     history_req.cpu->T1_id = INT32_MAX;
@@ -162,10 +167,10 @@ static void T1_term_render(void) {
     
     // draw the terminal's history as a label
     f32 history_label_top =
-        (f32)T1_settings_get_render_height() -
+        T1_global->window_wh[1] -
             (T1_TERM_WHITESPACE * 2);
     f32 history_label_height =
-        (f32)T1_settings_get_render_height() -
+        T1_global->window_wh[1] -
             T1_TERM_FONT_SIZE -
             (T1_TERM_WHITESPACE * 4.5f);
     
@@ -223,7 +228,7 @@ static void T1_term_render(void) {
             /* const f32 tab_width: */
                 4.0f,
             /* const f32 max_width: */
-                (f32)T1_settings_get_render_width() -
+                T1_global->window_wh[0] -
                     (T1_TERM_WHITESPACE * 2));
     }
     
@@ -252,7 +257,7 @@ static void T1_term_render(void) {
         /* const f32 tab_width: */
             4.0f,
         /* const f32 max_width: */
-            (f32)T1_settings_get_render_width() -
+            T1_global->window_wh[0] -
                 (T1_TERM_WHITESPACE * 2));
     
     T1_text_props->font_height =
@@ -576,7 +581,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_settings_get_render_height());
+            (u32)T1_global->window_wh[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -584,7 +589,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_settings_get_render_width());
+            (u32)T1_global->window_wh[0]);
         return 1;
     }
     

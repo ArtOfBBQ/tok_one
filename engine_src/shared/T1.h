@@ -105,6 +105,9 @@ void     T1_window_poll_events(void);
 uint8_t  T1_window_close_requested(void);
 // False while the window is minimized or fully covered
 uint8_t  T1_window_visible(void);
+// The window's size in points, the unit touches and the mouse use
+uint32_t T1_window_get_width(void);
+uint32_t T1_window_get_height(void);
 // Copies the frame T1_frame_render() made to the window
 void     T1_window_present(void);
 // Shows width * height * 4 bytes of rgba (row by row, top row first, alpha
@@ -159,12 +162,6 @@ void * T1_mem_malloc_managed(size_t size);
 void T1_mem_free_managed(void * to_free);
 
 /*
-User settings
-*/
-uint32_t T1_settings_get_render_width(void);
-uint32_t T1_settings_get_render_height(void);
-
-/*
 T1_id
 */
 #define T1_ID_FPS_COUNTER 0
@@ -193,12 +190,14 @@ uint32_t T1_cam_new(uint32_t width, uint32_t height);
 void     T1_cam_reset(uint32_t T1_id);
 void     T1_cam_delete_all(void);
 
-// To convert from our screenspace system to 'world x' that is used for
-// the position of zpolygons
-float T1_screen_x_to_x(float screen_x, float given_z);
-float T1_screen_y_to_y(float screen_y, float at_z);
-float T1_screen_height_to_height(float screen_h, float at_z);
-float T1_screen_width_to_width(float screen_w, float at_z);
+// From pixels on cam's screen (its width * height, top left is 0, 0) to
+// the world units at z that zsprites are positioned in
+float T1_screen_x_to_x(uint32_t cam_T1_id, float screen_x, float at_z);
+float T1_screen_y_to_y(uint32_t cam_T1_id, float screen_y, float at_z);
+float T1_screen_height_to_height(
+    uint32_t cam_T1_id, float screen_h, float at_z);
+float T1_screen_width_to_width(
+    uint32_t cam_T1_id, float screen_w, float at_z);
 
 /*
 TEXTURES

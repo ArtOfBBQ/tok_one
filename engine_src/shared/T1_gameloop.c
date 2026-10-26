@@ -2,7 +2,6 @@
 
 #include "T1_term.h"
 #include "T1_log.h"
-#include "T1_settings.h"
 #include "T1_global.h"
 #include "T1_io.h"
 #include "T1_id.h"
@@ -271,6 +270,14 @@ u8 T1_window_close_requested(void) {
 
 u8 T1_window_visible(void) {
     return T1_os_window_visible();
+}
+
+u32 T1_window_get_width(void) {
+    return (u32)T1_global->window_wh[0];
+}
+
+u32 T1_window_get_height(void) {
+    return (u32)T1_global->window_wh[1];
 }
 
 /*

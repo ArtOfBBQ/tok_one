@@ -35,14 +35,26 @@ void T1_cam_delete_all(void) {
         T1_render_view_delete(i);
     }
 }
-f32 T1_screen_x_to_x(f32 ss_x, f32 z) {
-    return T1_render_view_screen_x_to_x(ss_x, z); }
-f32 T1_screen_y_to_y(f32 ss_y, f32 z) {
-    return T1_render_view_screen_y_to_y(ss_y, z); }
-f32 T1_screen_width_to_width(f32 ss_w, f32 at_z) {
-    return T1_render_view_screen_width_to_width(ss_w, at_z); }
-f32 T1_screen_height_to_height(f32 ss_h, f32 at_z) {
-    return T1_render_view_screen_height_to_height(ss_h, at_z); }
+f32 T1_screen_x_to_x(u32 cam_T1_id, f32 ss_x, f32 z) {
+    f32 wh[2];
+    T1_render_view_get_wh(cam_T1_id, wh);
+    return T1_render_view_screen_x_to_x(wh, ss_x, z);
+}
+f32 T1_screen_y_to_y(u32 cam_T1_id, f32 ss_y, f32 z) {
+    f32 wh[2];
+    T1_render_view_get_wh(cam_T1_id, wh);
+    return T1_render_view_screen_y_to_y(wh, ss_y, z);
+}
+f32 T1_screen_width_to_width(u32 cam_T1_id, f32 ss_w, f32 at_z) {
+    f32 wh[2];
+    T1_render_view_get_wh(cam_T1_id, wh);
+    return T1_render_view_screen_width_to_width(wh, ss_w, at_z);
+}
+f32 T1_screen_height_to_height(u32 cam_T1_id, f32 ss_h, f32 at_z) {
+    f32 wh[2];
+    T1_render_view_get_wh(cam_T1_id, wh);
+    return T1_render_view_screen_height_to_height(wh, ss_h, at_z);
+}
 
 void T1_touch_set_tex(T1Tex tex) {
     T1_os_gpu_set_touch_tex(tex);

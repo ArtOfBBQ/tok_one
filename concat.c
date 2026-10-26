@@ -70,7 +70,6 @@ static const char * c_files[] = {
 "T1_embedded_data.c",
 "T1_fatal_error.c",
 "T1_objc.c",
-"T1_settings.c",
 "T1_texquad.c",
 "T1_linalg3d.c",
 "T1_img.c",

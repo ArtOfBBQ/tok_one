@@ -7,7 +7,11 @@
 #include "T1_render_view.h"
 #include "T1_os.h"
 #include "T1_id.h"
-#include "T1_settings.h"
+
+static f32 T1_render_view_tan_half_fov(void) {
+    return tanf(
+        (T1_CAM_FOV_DEGREES * 0.5f) * (3.14159265359f / 180.0f));
+}
 
 /*
 Cameras: a viewpoint with a size that draw passes draw from (see
@@ -129,12 +133,11 @@ static void T1_render_view_construct(
     pjc->znear = 0.1f;
     pjc->zfar  = T1_ZFAR;
     
-    f32 field_of_view = 75.0f;
-    pjc->field_of_view_rad = (
-        (field_of_view * 0.5f) / 180.0f) * 3.14159f;
+    pjc->field_of_view_rad =
+        (T1_CAM_FOV_DEGREES * 0.5f) * (3.14159265359f / 180.0f);
     
     pjc->field_of_view_modifier = 1.0f /
-        tanf(pjc->field_of_view_rad);
+        T1_render_view_tan_half_fov();
     
     pjc->aspect_ratio =
         (f32)cpu->width / (f32)cpu->height;
@@ -360,92 +363,72 @@ void T1_render_view_validate(void) {
 }
 
 f32 T1_render_view_screen_x_to_x(
+    const f32 viewport_wh[2],
     const f32 screenspace_x,
     const f32 given_z)
 {
-    f32 viewport_width  = (f32)T1_settings_get_render_width();
-    f32 viewport_height = (f32)T1_settings_get_render_height();
-    
-    f32 aspect_ratio =
-        viewport_width / viewport_height;
-    
-    const f32 vertical_fov_degrees = 75.0f;
-    f32 half_fov_y_rad =
-        (vertical_fov_degrees * 0.5f) *
-            (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
+    f32 aspect_ratio = viewport_wh[0] / viewport_wh[1];
     
     f32 full_frustum_width_at_z =
-        2.0f * given_z * tan_half_fov_y * aspect_ratio;
+        2.0f * given_z * T1_render_view_tan_half_fov() * aspect_ratio;
     
     f32 ndc_x =
-        (screenspace_x / viewport_width) * 2.0f - 1.0f;
+        (screenspace_x / viewport_wh[0]) * 2.0f - 1.0f;
     
-    f32 view_space_x =
-        ndc_x * (full_frustum_width_at_z * 0.5f);
-    
-    return view_space_x;
+    return ndc_x * (full_frustum_width_at_z * 0.5f);
 }
 
 f32 T1_render_view_screen_y_to_y(
+    const f32 viewport_wh[2],
     const f32 screenspace_y,
     const f32 given_z)
 {
-    f32 viewport_height = (f32)T1_settings_get_render_height();
-    
-    const f32 vertical_fov_degrees = 75.0f;
-    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
-    
-    f32 full_frustum_height_at_z = 2.0f * given_z * tan_half_fov_y;
+    f32 full_frustum_height_at_z =
+        2.0f * given_z * T1_render_view_tan_half_fov();
     
     f32 ndc_y = 1.0f -
-        (screenspace_y / viewport_height) * 2.0f;
+        (screenspace_y / viewport_wh[1]) * 2.0f;
     
-    f32 view_space_y = ndc_y *
-        (full_frustum_height_at_z * 0.5f);
-    
-    return -view_space_y;
+    return -ndc_y * (full_frustum_height_at_z * 0.5f);
 }
 
 f32 T1_render_view_screen_height_to_height(
+    const f32 viewport_wh[2],
     const f32 screenspace_height,
     const f32 given_z)
 {
-    f32 viewport_height = (f32)T1_settings_get_render_height();
-    
-    const f32 vertical_fov_degrees = 75.0f;
-    f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
-    
     f32 full_frustum_height_at_z =
-        2.0f * given_z * tan_half_fov_y;
+        2.0f * given_z * T1_render_view_tan_half_fov();
     
-    f32 screen_fraction =
-        screenspace_height / viewport_height;
-    
-    return screen_fraction * full_frustum_height_at_z;
+    return (screenspace_height / viewport_wh[1]) *
+        full_frustum_height_at_z;
 }
 
 f32 T1_render_view_screen_width_to_width(
+    const f32 viewport_wh[2],
     const f32 screenspace_width,
     const f32 given_z)
 {
-    f32 viewport_width = (f32)T1_settings_get_render_width();
-    f32 aspect_ratio =
-        viewport_width / (f32)T1_settings_get_render_height();
+    f32 aspect_ratio = viewport_wh[0] / viewport_wh[1];
     
-    const f32 vertical_fov_deg = 75.0f;
-    f32 half_fov_y_rad =
-        (vertical_fov_deg * 0.5f) *
-            (3.14159265359f / 180.0f);
-    f32 tan_half_fov_y = tanf(half_fov_y_rad);
+    f32 full_frustum_width_at_z =
+        2.0f * given_z * T1_render_view_tan_half_fov() * aspect_ratio;
     
-    f32 full_frustum_width_at_z = 2.0f * given_z * tan_half_fov_y * aspect_ratio;
+    return (screenspace_width / viewport_wh[0]) * full_frustum_width_at_z;
+}
+
+u8 T1_render_view_get_wh(const u32 T1_id, f32 viewport_wh[2]) {
+    s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
+    T1_log_assert(rv_i >= 0);
+    if (rv_i < 0) {
+        viewport_wh[0] = 1.0f;
+        viewport_wh[1] = 1.0f;
+        return 0;
+    }
     
-    f32 screen_fraction = screenspace_width / viewport_width;
-    
-    return screen_fraction * full_frustum_width_at_z;
+    viewport_wh[0] = (f32)T1_render_views->cpu[rv_i].width;
+    viewport_wh[1] = (f32)T1_render_views->cpu[rv_i].height;
+    return 1;
 }
 
 s32 T1_render_view_T1_id_to_i(const u32 T1_id)

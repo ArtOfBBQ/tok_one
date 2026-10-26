@@ -6,6 +6,8 @@
 #include "T1_types_gpucpu.h"
 #include "T1_property.h"
 
+#define T1_CAM_FOV_DEGREES 75.0f // vertical
+
 typedef struct {
     f32 aspect_ratio;
     f32 znear;
@@ -89,21 +91,19 @@ void T1_render_view_apply_anim_step(
 
 void T1_render_view_validate(void);
 
-// To convert from our screenspace system to 'world x' that is used for
-// the position of zpolygons
+/*
+To convert from pixels on a viewport_wh[0] * viewport_wh[1] screen to the
+world units at given_z that zsprites are positioned in
+*/
 f32 T1_render_view_screen_x_to_x(
-    const f32 screenspace_x,
-    const f32 given_z);
-
-// To convert from our screenspace system to 'world y' that is used for
-// the position of zpolygons
+    const f32 viewport_wh[2], const f32 screenspace_x, const f32 given_z);
 f32 T1_render_view_screen_y_to_y(
-    const f32 screenspace_y,
-    const f32 given_z);
-
+    const f32 viewport_wh[2], const f32 screenspace_y, const f32 given_z);
 f32 T1_render_view_screen_height_to_height(
-    const f32 screenspace_height, const f32 given_z);
+    const f32 viewport_wh[2], const f32 screenspace_height, const f32 given_z);
 f32 T1_render_view_screen_width_to_width(
-    const f32 screenspace_width, const f32 given_z);
+    const f32 viewport_wh[2], const f32 screenspace_width, const f32 given_z);
+// a camera's width and height (1, 1 if there's no such camera)
+u8 T1_render_view_get_wh(const u32 T1_id, f32 viewport_wh[2]);
 
 #endif // T1_RENDER_VIEW_H

@@ -45,20 +45,12 @@ construct_projection_matrix(void)
         
         rv->visible_layers = T1_render_views->cpu[i].visible_layers;
         
-        const f32 w = (f32)T1_render_views->cpu[i].width;
-        const f32 h = (f32)T1_render_views->cpu[i].height;
+        const T1GPUProjectConsts * pjc = &T1_render_views->cpu[i].project;
+        const f32 zn = pjc->znear;
+        const f32 zf = pjc->zfar;
         
-        const f32 vertical_fov_degrees = 75.0f;
-        const f32 zn = 0.1f;
-        const f32 zf = T1_ZFAR;
-        
-        f32 ar = w / h;
-        
-        f32 half_fov_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
-        f32 f = 1.0f / tanf(half_fov_rad);
-        
-        f32 x_scale = f / ar;
-        f32 y_scale = f;
+        f32 x_scale = pjc->field_of_view_modifier / pjc->aspect_ratio;
+        f32 y_scale = pjc->field_of_view_modifier;
         
         T1_linal_f32x4x4_construct(&proj,
             x_scale, 0.0f, 0.0f, 0.0f,

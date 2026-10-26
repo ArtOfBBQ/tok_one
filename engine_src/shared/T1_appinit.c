@@ -7,7 +7,6 @@
 #include "T1_mem.h"
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
-#include "T1_settings.h"
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_tex_files.h"
@@ -234,7 +233,6 @@ void T1_init(
 
     void * pool = T1_objc_autorelease_pool_push();
     
-    T1_settings_init(T1_mem_malloc_unmanaged, fatal_error);
     
     test_simd_functions_f32s(fatal_error);
     

@@ -9,7 +9,6 @@
 #include "T1_pass.h"
 #include "T1_embedded_data.h"
 #include "T1_objc.h"
-#include "T1_settings.h"
 #include "T1_material.h"
 #include "T1_mesh_summary.h"
 #include "T1_tex_array.h"

@@ -1,8 +1,8 @@
 #include "T1_types_public.h"
 
 #include "T1_text.h"
-#include "T1_settings.h"
 #include "T1_log.h"
+#include "T1_global.h"
 #include "T1_tex.h"
 #include "T1_id.h"
 #include "T1_render_view.h"
@@ -372,20 +372,24 @@ static void T1_text_request_label_centered(
             
             letter.gpu->f32s.xyz[0] =
                 T1_render_view_screen_x_to_x(
+                    T1_global->window_wh,
                     mid_x_pixelspace,
                     z);
             letter.gpu->f32s.xyz[1] =
                 T1_render_view_screen_y_to_y(
+                    T1_global->window_wh,
                     mid_y_pixelspace,
                     z);
             letter.gpu->f32s.xyz[2] = z;
             
             letter.gpu->f32s.wh[0] =
                 T1_render_view_screen_width_to_width(
+                    T1_global->window_wh,
                     T1_text_props->font_height,
                     z);
             letter.gpu->f32s.wh[1] =
                 T1_render_view_screen_height_to_height(
+                    T1_global->window_wh,
                     T1_text_props->font_height,
                     z);
             
@@ -399,11 +403,13 @@ static void T1_text_request_label_centered(
             
             letter.cpu->offset_xyz[0] =
                 T1_render_view_screen_width_to_width(
+                    T1_global->window_wh,
                     (cur_x_offset_pixelspace +
                         get_left_side_bearing(text_to_draw[j])),
                     z);
             letter.cpu->offset_xyz[1] =
                 T1_render_view_screen_height_to_height(
+                    T1_global->window_wh,
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (T1_text_props->font_height * 0.5f)),
@@ -454,10 +460,12 @@ void T1_text_request_label_left_top(
     
     f32 letter_width = 
         T1_render_view_screen_width_to_width(
+            T1_global->window_wh,
             T1_text_props->font_height,
             z);
     f32 letter_height = 
         T1_render_view_screen_height_to_height(
+            T1_global->window_wh,
             T1_text_props->font_height,
             z);
     
@@ -528,10 +536,12 @@ void T1_text_request_label_left_top(
         
         letter.gpu->f32s.xyz[0] =
             T1_render_view_screen_x_to_x(
+                T1_global->window_wh,
                 left_x_pixelspace + (T1_text_props->font_height / 2),
                 z);
         letter.gpu->f32s.xyz[1] =
             T1_render_view_screen_y_to_y(
+                T1_global->window_wh,
                 top_y_pixelspace,
                 z); // (get_newline_advance() / 2)
         letter.gpu->f32s.xyz[2] = z;
@@ -559,11 +569,13 @@ void T1_text_request_label_left_top(
         
         letter.cpu->offset_xyz[0] = 
             T1_render_view_screen_width_to_width(
+                T1_global->window_wh,
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]),
                 z);
         f32 y_offset =
             T1_render_view_screen_height_to_height(
+                T1_global->window_wh,
                 cur_y_offset - get_y_offset(text_to_draw[i]),
                 z);
         letter.cpu->offset_xyz[1] = y_offset;
@@ -814,7 +826,7 @@ void T1_text_request_debug_text(const char * text)
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            (f32)T1_settings_get_render_width());
+            T1_global->window_wh[0]);
     T1_text_props->u32s.layers = previous_layers;
 }
 
@@ -889,7 +901,7 @@ void T1_text_request_fps(
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            (f32)T1_settings_get_render_width());
+            T1_global->window_wh[0]);
     T1_text_props->u32s.layers = previous_layers;
 }
 
@@ -926,6 +938,6 @@ void T1_text_request_top_touch_id(
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            (f32)T1_settings_get_render_width());
+            T1_global->window_wh[0]);
     T1_text_props->u32s.layers = previous_layers;
 }
