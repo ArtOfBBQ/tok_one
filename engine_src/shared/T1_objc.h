@@ -2,24 +2,11 @@
 #define T1_OBJC_H
 
 /*
-These are convenience functions to interface with
-objective-c and apple frameworks without having to
-compile as objective-c or linking any frameworks at
-compile time.
-
-Your classes, class instances, and selectors will all
-be represented by void *, so you lose all type safety.
-
-When you pass any type of int or pointer as a message,
-it's passed as a typeless uintptr_t, so using this
-again strips you of all type safety.
-
-Most of the time, you don't need to do anything - all
-Apple enums I've encountered are 64-bit, so you can
-just assign to them from a uintptr_t return value
-directly. Any pointer can also be assigned directly.
-(Or you can use an implicit cast to silence compiler
-warnings.)
+Calls into Objective-C and Apple's frameworks from plain C, without
+compiling as Objective-C or linking frameworks at compile time. Classes,
+objects and selectors are void *, arguments are passed as uintptr_t: there's
+no type safety. Apple's enums are 64-bit, so the uintptr_t results can be
+assigned to them directly.
 */
 
 #include "T1_stdint.h"
@@ -29,30 +16,13 @@ void T1_objc_init(
     char ** const fatal_error);
 
 /*
-This fetches a raw objc_msgSend() function, which
-you can manually cast to a complex function signature.
-This is only necessary for complex objective-c
-functions that take structs by value or a huge
-number of arguments, for simpler functions I
-recommend using the helper functions like
-T1_objc_msg_2arg(). They will give you error
-checking in debug mode also.
-This is a huge source of bugs, so don't use it
-unless absolutely necessary
+The raw objc_msgSend(), to cast to a method's exact signature: only for
+methods taking structs by value or many arguments, prefer T1_objc_msg_2arg()
+etc., which check their arguments in debug builds. On x86-64, methods that
+return structs that don't fit in integer registers need objc_msgSend_stret.
 
-Example usage:
-typedef void (* my_function_type)(void *, void *, MyCustomStruct);
-((my_function_type)T1_objc_unsafe_get_raw_msg_send())(
-    my_class_arg,
-    my_selector_arg,
-    my_custom_struct_instance);
-
-Even if you use this correctly, there is an additional trap:
-on intel x86-64 architectures when returning a struct that
-doesn't fit neatly in int registers (size > 16 bytes or
-contains floats), you should not use raw_msg_send but use
-a special deprecated 'stret' (struct return) function
-instead.
+typedef void (* my_fn)(void *, void *, MyStruct);
+((my_fn)T1_objc_unsafe_get_raw_msg_send())(object, selector, my_struct);
 */
 typedef void (* T1ObjcRawFn)(void);
 T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void);

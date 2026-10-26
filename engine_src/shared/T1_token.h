@@ -89,23 +89,9 @@ u32 T1_token_get_string_value_size(u16 token_i);
 u32 T1_token_get_line_num(u16 token_i);
 
 /*
-THE API FOR QUERYING TOKEN DATA (below)
-
-After you've succesfully created tokens, you can fetch their data with these
-functions.
-
-The Token's "value" points to internal memory and will be erased when you
-reset(), so use the data immediately or copy it if you need it permanently.
-
-If you need to know if a token representing a string literal is a number, or
-if it could be cast to a u16 without losing data, use the castable flags
-directly or use these convenience macros. For example:
-if (T1_token_is_u16(token)) {
-    // your logic...
-}
-
-the T1_token_is_number(T1Token*) macro will return 0 if a number is too
-big for a uint64, even if it's composed of all numbers
+Querying tokens. A token's value points to internal memory that reset()
+erases, so copy what you keep. The T1_token_fits_* checks tell whether a
+number fits a type, T1_token_is_number() is 0 for numbers too big for a u64.
 */
 b8 T1_token_is_number(s32 at_i);
 b8 T1_token_fits_f64(s32 at_i);

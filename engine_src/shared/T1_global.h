@@ -6,32 +6,9 @@
 #include "T1_types_public.h"
 
 /*
-Window sizes are a source of confusion because there are so many coordinate
-systems.
-
-The coordinate system for window positions is generally referred to as
-'screen space' coordinates. However, even screen space coordinates are different
-depending on the operating system you're using. Here are some things we should
-keep separated:
-- Mac Os X screenspace coordinates
-- Windows screenspace coordinates
-- Linux screenspace coordinates
-- OpenGL coordinate systems (before and after projections & transformations)
-- Metal coordinate systems (before and after projections & transformations)
-
-Our approach will be to make our own screenspace coordinate system here and
-force the platform layers to adjust to it.
-TOP LEFT (x,y is 0, height)                    TOP RIGHT (x, y is width, height)
-
-
-
-                              [SCREEN]
-
-
-BOTTOM LEFT (x,y is 0, 0)                       BOTTOM RIGHT (x, y is width, 0)
-
-This is the same screenspace coordinate system as used on Mac OS, so the Mac
-platform layer doesn't need to do anything and can just record values directly
+Window positions and sizes are in T1's screen space, which is macOS's: (0, 0)
+is the bottom left and (width, height) the top right. Other platform layers
+convert to it.
 */
 
 typedef struct {

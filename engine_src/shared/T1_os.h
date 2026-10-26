@@ -118,15 +118,8 @@ void T1_os_get_filenames_in(
     char * filenames,
     const u32 filenames_cap);
 
-/*
-Get a file's size. Returns 0 if no such file
-
-A 'resource' is a file that's available in the typical folder
-for our platform, so you can pass "warrior.png" or whatever,
-the filename only without a path
-
-A 'filepath' is a full explicit path to and including the filename
-*/
+// Sizes in bytes, 0 if there's no such file. A resource or writable is a
+// filename in that dir, a filepath is a full path.
 u64 T1_os_get_resource_size(
     const c8 * filename);
 
@@ -145,19 +138,8 @@ void T1_os_audio_start_loop(void);
 #endif
 
 /*
-Read a file (without path, only filename) and fill its contents into a buffer
-of bytes
-
-out_allocatedbuffer should have memory allocated already and size set to its
-maximum capacity
-
-the file contents will stop copying when the filebuffer is full, so you can
-set the filbuffer's size to a small amount to quickly read the first (x-1)
-bytes of a large file it's x-1 and not x because a 0 will be appended at the
-end to make windows happy
-
-If there's an error reading the file, the buffer's 'good' field will be set to
-0, else to 1
+Reads up to recip_cap - 1 bytes of the file into recip and puts a 0 after
+them, *recip_size gets how many were read
 */
 void T1_os_read_file(
     const c8 * filepath,
@@ -289,17 +271,7 @@ u8 T1_os_gpu_active(void);
 void T1_os_window_open(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
-/*
-Compiles shader_source (with T1's GPU struct headers
-prepended) and builds all render pipelines from it.
-If anything fails, *good is set to 0, a description is
-copied to error_recip (optional, may be NULL, else
-needs a cap of at least 512), and any
-shaders loaded by a previous successful call stay in
-place, so you can retry with a different source.
-You must succeed at least once before
-T1_window_open(), else that's fatal.
-*/
+// see T1_gpu_try_shader_source() in T1.h
 void T1_os_gpu_try_shader_source(
     const char * shader_source,
     u8 * good,

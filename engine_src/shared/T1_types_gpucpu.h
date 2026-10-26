@@ -41,17 +41,8 @@ typedef struct {
 } T1GPUVertexIndices;
 
 /*
-A 'set and forget' description of a triangle vertex, intended to stay static
-for a long time or even the entire duration of the app.
-
-When our app loads, we parse .obj files to get the triangle vertices in our 3D
-models up-front, and keep these inplace. Ideally, we send them to the GPU once
-and never update them, which will easily work for the small apps/games I'm
-making.
- 
-To manipulate the location, direction, size etc. of our objects, we manipulate
-the parents that contain these (see zpolygons_to_render in zpolygon.h),
-not this.
+A triangle vertex of a loaded mesh, uploaded once. Objects are moved through
+their zsprite's values, not these.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct {

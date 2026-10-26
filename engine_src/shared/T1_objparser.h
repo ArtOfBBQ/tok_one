@@ -41,20 +41,7 @@ typedef struct {
     u32 quads_count;
 } T1ParsedObj;
 
-/*
-Pass your malloc() and free() functions. The parser doesn't work without
-a malloc function, but you can pass NULL as a free() function if you wish.
-
-If you pass NULL as your free function, you can still use the parser but 
-free_obj() will no longer work.
-
-Example:
-#include <stdlib.h>
-
-init_obj_parser(
-    malloc,
-    free);
-*/
+// malloc and free functions, free may be NULL (then nothing can be freed)
 void T1_objparser_init(
     void * (* malloc_function) (size_t),
     void   (* optional_free_function)(void *));

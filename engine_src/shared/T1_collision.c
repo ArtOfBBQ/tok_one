@@ -66,32 +66,13 @@ f32 T1_collision_ray_hits_AArect(
                 |
                -y
     
-    FOR EACH BOUNDING PLANE (so in 2D there are 4 - it's the
-    left/right/top/bottom of the box extended as planes)
-    1. Find the absolute distance along that axis from the ray
-      origin to rect (Just simple subtraction)
-    2. Next, we need to find the distance if we were traveling
-      along the ray
-        
-      If we're looking for the distance to a y-aligned plane, we
-      can just read off the X difference
-     
-      If we're looking for the distance to an x-aligned plane, we
-      can read off the Y difference
-      
-      Then we can deduce the total distance to plane collision
-      E.g. if direction is [2.0f,3.0f] and the distance on the Y
-      plane was 9.0f, then we took 9.0f/3.0f = 3.0 steps, and we
-      must take 3.0 steps in the X direction also
-      
-    3. I suppose we now have to move along the ray, and check if
-       that point is touching not only the plane but also the
-       bounding box itself?
-    4. Store that result (distance) and move on to the next
-    END FOR
-    
-    Next, if there are any candidates, we take the smallest
-    distance (that was >= 0.0f). That must be the closest collision
+    For each of the box's 4 edges, extended into a line (a plane in 3D):
+    1. the distance from the ray origin to it, along its axis
+    2. divided by the ray's direction along that axis: the steps along the
+       ray to reach it, e.g. direction [2, 3] reaches y + 9 in 3 steps
+    3. that point on the ray must also be on the box itself
+    4. keep that distance
+    The smallest distance >= 0 is the closest collision.
     */
     
     col_printf(
@@ -251,95 +232,14 @@ f32 T1_collision_normalized_ray_hits_sphere(
     #endif
     
     /*
-    points in the ray (rO means ray origin, rD means ray direction, t means
-    time or distance traversed):
-    rO + (rD * t)
-    
-    points on the outmost layer of the sphere
-    (R means radius of sphere, SO means Sphere Origin):
-    R^2 == (xyz - SO)^2
-    
-    We can save ourselves from learning any math by assuming the Origin is 0,
-    because we can start our algorithm by moving both the sphere and the ray
-    by an amount that sets the sphere at [0, 0, 0]
-    
-    rO -= SO
-    SO = 0
-    
-    now:
-    R^2 == (xyz - SO)^2
-    can be rewritten as:
-    R^2 == (xyz - 0)^2
-    or:
-    R^2 == xyz^2
-    
-    Next, we assume that the point on the outside of the sphere is also a
-    point on the ray. Then it must be true that xyz = rO + (t * rD)
-    
-    R^2 == (rO + t * rD)^2
-    
-    the only unknown in this equation is 't'
-    
-    Next we "simplify" the function with basic algebra rules that we supposedly
-    memorized in school. I can never remember any of these rules, so I write a
-    'School flashback' every time I need one to temporarily buff myself to the
-    level of a 10-year old.
-    
-    //
-    ** School flashback **
-    (rO + (rD*t))^2 is like (x + y)^2
-    
-    which is like (x + y)*(x + y)
-    which is like (x * x)+(x * y)+(y * x)+(y * y)
-    which is like x^2 + y^2 + 2xy
-    ... so (x + y)^2 = x^2 + y^2 + 2xy
-    //
-    
-    R^2 == (rO + t * rD)^2
-    
-    R^2 == rO^2 + (t * rD)^2 + 2*rO*t*rD
-    
-    //
-    ** School flashback **
-    next, note that (rD*t)^2 is like (x * y)^2
-    (x * y)^2 =
-    (x * y) * (x * y) =
-    x * x * y * y =
-    x^2 * y^2
-    
-    so (x * y)^2 = x^2 * y^2
-    //
-    
-    R^2 == rO^2 + (t * rD)^2 + 2*rO*t*rD
-    
-    R^2 == rO^2 + t^2*rD^2 + 2*rO*t*rD
-    
-    0 == rD^2*t^2 + 2*rO*rD*t + rO^2 - R^2
-         [ ax^2 ] + [   bx  ] + [    c   ]
-    
-    x = t
-    a = rD^2
-    b = 2 * rO * rD
-    c = rO^2 - R^2
-    
-    but we know that rD is a normalized normal, so rD^2 = 1
-    
-    x = t
-    a = 1
-    b = 2 * rO * rD
-    c = rO^2 - R^2
-    
-    the quadratic formula:
-    (-b +- sqrt(b^2 - 4ac)) / 4a
-    
-    the b^2 - 4ac part is the 'discriminant' that determines whether we're
-    supposed to add, subtract, or assume no solutions
-    -> discr > 0.0f = 2 solutions, a negative and a positive
-    -> discr is exactly 0 = there is only 1 solution (because +0 and -0 same)
-    -> discr is below 0 = there is no solution
-    
-    From the perspective of programming option 1) and 2) are the same and should
-    be treated as the same to avoid branching
+    Ray: rO + t * rD, sphere: |xyz - SO|^2 = R^2. Moving both so the sphere
+    is at the origin (rO -= SO) and putting the ray into the sphere:
+        (rO + t * rD)^2 = R^2
+        rD^2 * t^2 + 2 * (rO . rD) * t + rO^2 - R^2 = 0
+    a quadratic in t with a = rD^2 = 1 (rD is normalized), b = 2 * rO . rD
+    and c = rO^2 - R^2. A discriminant b^2 - 4ac below 0 is a miss, else
+    t = (-b +- sqrt(b^2 - 4ac)) / 2a. One solution (a discriminant of 0) is
+    handled like two, to avoid branching.
     */
     
     // This translation allows us to pretend the sphere is at [0, 0, 0]
@@ -396,11 +296,7 @@ s32 T1_collision_point_hits_triangle(
     const f32 B[2],
     const f32 C[2])
 {
-    /*
-    I copied this solution from this excellent video:
-    https://www.youtube.com/watch?v=HYAgJN3x4GA&t=44s
-    highly recommended if you want to learn why this works
-    */
+    // barycentric coordinates, see https://www.youtube.com/watch?v=HYAgJN3x4GA
     
     f32 w1 =
         (

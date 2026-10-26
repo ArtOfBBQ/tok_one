@@ -148,7 +148,7 @@ u64 T1_os_get_clock_frequency(void) {
     // log_trace("clockinfo.hz: %d\n", clockinfo.hz);
     // log_trace("clockinfo.tick: %d\n", clockinfo.tick);
     // return (u64)clockinfo.tick;
-    return 3600000000; // my pc's clock frequency
+    return 3600000000; // a guess: 3.6 GHz
 }
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE

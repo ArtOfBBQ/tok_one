@@ -2,16 +2,9 @@
 #define T1_SIMD_H
 
 /*
-A wrapper around Intel AVX instructions and Arm Neon instructions, for f32s
-only, so that you can write basic simd instructions and have them be
-interpreted as:
-- Arm Neon instructions where supported
-- Intel AVX2 instructions where supported
-- Bog-standard 32-bit f32ing point math failing the above
-
-I want function-like macros instead of function definitions to avoid the tiny
-overhead of calling a function, and I don't want to rely on compiler inlining
-because I don't know much about how that works or how reliable it is
+Basic f32 SIMD that maps to Arm Neon, Intel AVX2 or SSE where available,
+else plain f32 math. Macros rather than functions, so there's no call
+overhead.
 */
 
 // TODO: implement int8 lanes, also maybe think about ditching mmx
