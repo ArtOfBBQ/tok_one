@@ -23,6 +23,8 @@ a T1_id but can't be animated or merged.
 #define T1_DRAW_BILLBOARDS 0x10
 // 6 vertices for a quad that covers the targets, for post-processing
 #define T1_DRAW_FULLSCREEN 0x20
+// "vertex_count" vertices the client's vertex function makes up itself
+#define T1_DRAW_PROCEDURAL 0x40
 #define T1_DRAW_ZSPRITES (T1_DRAW_OPAQUE | T1_DRAW_BLENDED | T1_DRAW_BLOOMING)
 
 #define T1_PASSES_CAP 64
@@ -33,6 +35,9 @@ typedef struct {
     u32 color_tex[T1_PASS_COLOR_TEXS_CAP]; // [[color(i)]], T1Texs
     u32 read_tex[T1_READ_TEXS_CAP]; // T1Texs, see T1_READ_TEXS_BUFFER_I
     u32 write_tex; // a compute pass's T1Tex
+    u32 buf[T1_PASS_BUFS_CAP]; // T1Bufs, see T1_BUFS_I
+    u32 vertex_count; // a T1_DRAW_PROCEDURAL draw pass's
+    u32 threads[3]; // a compute pass's grid, 0 for write_tex's size
 } T1PassU32s;
 
 typedef struct {

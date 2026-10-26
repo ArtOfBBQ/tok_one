@@ -535,43 +535,6 @@ static u8 T1_term_evaluate(
     
     
     if (
-        T1_std_are_equal_strings(command, "BLUR BUFFER"))
-    {
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
-        T1_global->postproc_consts.nonblur_pct = 0.02f;
-        T1_global->postproc_consts.blur_pct = 1.0f;
-        return 1;
-    }
-    
-    if (
-        T1_std_are_equal_strings(command, "NONBLUR BUFFER"))
-    {
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
-        T1_global->postproc_consts.nonblur_pct = 1.0f;
-        T1_global->postproc_consts.blur_pct = 0.0f;
-        return 1;
-    }
-    
-    if (
-        T1_std_are_equal_strings(command, "STANDARD BUFFER") ||
-        T1_std_are_equal_strings(command, "STANDARD BUFFERS"))
-    {
-        T1_std_strcpy_cap(
-            response,
-            T1_TERM_SINGLE_LINE_MAX,
-            "Reverted to standard blur+non-blur composite...");
-        T1_global->postproc_consts.nonblur_pct = 1.0f;
-        T1_global->postproc_consts.blur_pct = 1.0f;
-        return 1;
-    }
-    
-    if (
         T1_std_are_equal_strings(command, "WINDOW"))
     {
         T1_std_strcpy_cap(

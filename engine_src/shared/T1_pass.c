@@ -39,6 +39,9 @@ static T1Pass * T1_pass_new(u8 kind, u32 pipeline_T1_id) {
         p->u32s.read_tex[i] = T1_TEX_NONE;
     }
     p->u32s.write_tex = T1_TEX_NONE;
+    for (u32 i = 0; i < T1_PASS_BUFS_CAP; i++) {
+        p->u32s.buf[i] = T1_BUF_NONE;
+    }
     p->kind = kind;
     p->pipeline = pipeline_T1_id;
     p->T1_id = T1_id_next_nonui_id();
@@ -68,7 +71,8 @@ u32 T1_pass_new_draw(u32 pipeline_T1_id, u32 sources) {
         (sources & ~T1_DRAW_ZSPRITES) == 0 ||
         sources == T1_DRAW_TEXQUADS ||
         sources == T1_DRAW_BILLBOARDS ||
-        sources == T1_DRAW_FULLSCREEN);
+        sources == T1_DRAW_FULLSCREEN ||
+        sources == T1_DRAW_PROCEDURAL);
 
     T1Pass * p = T1_pass_new(T1_PASS_DRAW, pipeline_T1_id);
     if (p == NULL) { return T1_ID_NONE; }

@@ -320,6 +320,21 @@ void T1_os_gpu_pipeline_deleted(s32 pipeline_i);
 // the texture touch ids are read from, T1_TEX_NONE for none
 void T1_os_gpu_set_touch_tex(u16 tex);
 
+// GPU memory of size zeroed bytes for T1Buf buf_i
+void T1_os_gpu_buf_new(u32 buf_i, u64 size, u8 * good);
+// Copies data now, the GPU applies it before the next rendered frame
+void T1_os_gpu_buf_write(
+    u32 buf_i,
+    u64 offset,
+    const void * data,
+    u64 size);
+void T1_os_gpu_buf_delete(u32 buf_i);
+// A read the next rendered frame encodes after its passes, its index or
+// T1_BUF_READ_NONE (see T1_buf_read_start())
+u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size);
+// 1 once the read's frame is done and its bytes are copied to recip
+u8 T1_os_gpu_buf_read_finish(u32 read_i, void * recip);
+
 void T1_os_shutdown(void);
 
 /*

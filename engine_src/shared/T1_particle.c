@@ -595,7 +595,7 @@ void T1_particle_add_all_to_frame_data(
         }
         
         if (T1_shatter_effects[i].cast_light) {
-            T1GPULight * next = &frame_data->lights[frame_data->postproc_consts->lights_size];
+            T1GPULight * next = &frame_data->lights[frame_data->frame_consts->lights_size];
             
             next->layers = 0xFFFFFFFF;
             next->angle_xyz[0] = 0.0f;
@@ -624,7 +624,7 @@ void T1_particle_add_all_to_frame_data(
             next->xyz[2] =
                 T1_shatter_effects[i].zsprite_cpu.
                     simd_stats.xyz[2];
-            frame_data->postproc_consts->lights_size += 1;
+            frame_data->frame_consts->lights_size += 1;
         }
     }
     #endif
@@ -674,7 +674,7 @@ void T1_particle_add_all_to_frame_data(
         }
         
         if (T1_particle_effects[i].cast_light) {
-            T1GPULight * next = &frame_data->lights[frame_data->postproc_consts->lights_size];
+            T1GPULight * next = &frame_data->lights[frame_data->frame_consts->lights_size];
             
             next->layers = 0xFFFFFFFF;
             next->angle_xyz[0] = 0.0f;
@@ -700,7 +700,7 @@ void T1_particle_add_all_to_frame_data(
                 T1_particle_effects[i].base.xyz[1] + 0.02f;
             next->xyz[2] =
                 T1_particle_effects[i].base.xyz[2];
-            frame_data->postproc_consts->lights_size += 1;
+            frame_data->frame_consts->lights_size += 1;
         }
     }
 }

@@ -209,7 +209,7 @@ void T1_render_update(
         f->flat_tex_quads,
         &f->flat_tex_quads_size);
     
-    *f->postproc_consts = T1_global->postproc_consts;
+    *f->frame_consts = T1_global->frame_consts;
     
     T1_zsprite_add_opaque_zpolygons_to_workload(f);
     T1_assert(f->zsprite_list->size < T1_ZSPRITES_CAP);

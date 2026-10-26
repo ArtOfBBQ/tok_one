@@ -32,7 +32,7 @@ typedef struct
     T1GPUzSpriteList *    zsprite_list;
     T1GPULight *          lights;
     T1GPURenderView *     render_views;
-    T1GPUPostProcConsts * postproc_consts;
+    T1GPUFrameConsts * frame_consts;
     T1GPUFlatQuad *       flat_bb_quads;
     T1GPUTexQuad *        flat_tex_quads;
     T1GPUzSpriteMatrices matrices[T1_ZSPRITES_CAP];
@@ -63,7 +63,7 @@ typedef struct
     u32 polygon_mats_alloc_size;
     u32 lights_alloc_size;
     u32 render_views_alloc_size;
-    u32 postprocessing_constants_alloc_size;
+    u32 frame_consts_alloc_size;
     u32 frame_i;
 } T1CPUToGPUData;
 

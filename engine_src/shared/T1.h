@@ -33,8 +33,9 @@ T1_window_open(&fatal_error);
 The GPU steps are optional. Without them, you draw your own pixels and
 show them with T1_window_blit_rgba(), see examples/ for the smallest app,
 and T1 doesn't allocate anything for rendering. If you use the GPU, call
-T1_gpu_init() before you use anything that renders: textures, cameras,
-zsprites, texquads, lights, text, passes, animations or the terminal. Textures (T1_tex_new) are uploaded as you create them, meshes and
+T1_gpu_init() before you use anything that renders: textures, buffers,
+cameras, zsprites, texquads, lights, text, passes, animations or the
+terminal. Textures (T1_tex_new) are uploaded as you create them, meshes and
 materials when the next frame is rendered, so you can register either at
 any time.
 
@@ -222,6 +223,40 @@ uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
 
 /*
+BUFFERS
+GPU memory of any size for your shaders, zeroed at first. A pass binds up to
+8 of them with its "buf[0]" to "buf[7]" properties, and its shaders read
+"buf[k]" at buffer(T1_BUFS_I + k) as whatever you stored there, e.g.
+    device MyParticle * particles [[ buffer(T1_BUFS_I) ]]
+Compute passes can write to them, and later passes see what they wrote.
+
+T1_buf_write() copies data right away, so it can live on your stack. The
+GPU sees your writes in order, from the next rendered frame on, and they
+stay until something overwrites them. Keep the C and shader versions of a
+struct identical: floats, uint32_ts and arrays of them are safe, while
+Metal's float3 takes 16 bytes.
+*/
+T1Buf T1_buf_new(uint64_t size, char ** const fatal_error);
+void  T1_buf_write(
+    T1Buf buf,
+    uint64_t offset,
+    const void * data,
+    uint64_t size);
+void  T1_buf_delete(T1Buf buf);
+
+/*
+Reading back what your shaders wrote. T1_buf_read_start() asks for size bytes
+at offset as they are after the next rendered frame's passes, and returns an
+id (T1_BUF_READ_NONE if T1_BUF_READS_CAP reads are already waiting). Call
+T1_buf_read_finish() with it once per frame or so: it returns 0 while the
+GPU isn't done, usually for a frame or two, then copies the bytes to recip
+and returns 1, after which the id is free again. Deleting the buffer before
+the frame renders gives zeros.
+*/
+uint32_t T1_buf_read_start(T1Buf buf, uint64_t offset, uint64_t size);
+uint8_t  T1_buf_read_finish(uint32_t read, void * recip);
+
+/*
 RENDERING
 
 A frame is your list of passes, run in the order you made them. Passes and
@@ -238,14 +273,22 @@ Passes:
 - A clear pass fills a texture (or T1_TEX_WINDOW) with a color.
 - A draw pass draws its sources (T1_DRAW_*) with a pipeline. Properties:
   "cam" (u32, the camera's T1_id: its view and depth buffer, T1_ID_NONE is
-  only for T1_DRAW_FULLSCREEN) and "color_tex[0]" to "color_tex[3]" (u32
-  T1Texs the fragment function's [[color(k)]] go to, the camera's size,
-  "color_tex[0]" may be T1_TEX_WINDOW).
+  only for T1_DRAW_FULLSCREEN and T1_DRAW_PROCEDURAL) and "color_tex[0]" to
+  "color_tex[3]" (u32 T1Texs the fragment function's [[color(k)]] go to,
+  the camera's size, "color_tex[0]" may be T1_TEX_WINDOW). A
+  T1_DRAW_PROCEDURAL pass draws "vertex_count" (u32) vertices as triangles;
+  with a camera, its shaders get the cameras at buffer(3) and the camera's
+  index at buffer(4), like zsprite shaders.
 - A compute pass runs a compute pipeline once per pixel of its "write_tex"
-  (u32 T1Tex), see T1_WRITE_TEX_I.
+  (u32 T1Tex, see T1_WRITE_TEX_I), or once per element of a "threads[0]" *
+  "threads[1]" * "threads[2]" grid (u32s, 0 counts as 1) if "threads[0]" is
+  set, e.g. once per particle in a buffer. Its kernel gets its position in
+  the grid as [[thread_position_in_grid]], threads past the end don't run.
 Draw and compute passes also have "read_tex[0]" to "read_tex[7]" (u32
-T1Texs) for your shaders, see T1_READ_TEXS_BUFFER_I. A pass that reads what
-an earlier pass drew waits for it.
+T1Texs) for your shaders, see T1_READ_TEXS_BUFFER_I, and "buf[0]" to
+"buf[7]" (u32 T1Bufs, see BUFFERS). Every pass's shaders also get a
+T1GPUFrameConsts at buffer(T1_FRAME_CONSTS_I). A pass that reads what an
+earlier pass drew or wrote waits for it.
 
 Touch ids are read from the texture you give T1_touch_set_tex(), your
 shaders pack them into its pixels (T1_TEX_NONE for no touch ids).
@@ -273,6 +316,9 @@ uint32_t T1_pipeline_new_compute(
 #define T1_DRAW_TEXQUADS   0x08
 #define T1_DRAW_BILLBOARDS 0x10
 #define T1_DRAW_FULLSCREEN 0x20 // 6 vertices, a quad covering the targets
+// "vertex_count" vertices, T1 binds no geometry: your vertex function
+// builds them from its vertex_id and your buffers
+#define T1_DRAW_PROCEDURAL 0x40
 uint32_t T1_pass_new_clear(
     T1Tex tex,
     float r,
@@ -347,16 +393,6 @@ void T1_text_draw_label_around(
     float mid_x_pixelspace,
     float mid_y_pixelspace,
     float max_width);
-
-/*
-POST-PROCESSING
-
-Settings applied to the whole rendered image, by name: "rgb_add[0]" to
-"rgb_add[2]", and if active "fog_color[0]" to "fog_color[2]", "fog_factor"
-and "in_shadow_mults[0]" to "in_shadow_mults[2]"
-*/
-void  T1_postproc_set_f32(const char * property, float value);
-float T1_postproc_get_f32(const char * property);
 
 /*
 Objects by T1_id (zsprites, texquads, zlights and cameras), with properties

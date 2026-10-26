@@ -1,6 +1,7 @@
 #include "T1_appinit.h"
 #include "T1_pipeline.h"
 #include "T1_pass.h"
+#include "T1_buf.h"
 
 
 #include "T1_std.h"
@@ -390,16 +391,6 @@ void T1_init(
     
     T1_global_init();
     
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.in_shadow_mults[0] = T1_SHADOW_MULT;
-    T1_global->postproc_consts.in_shadow_mults[1] = T1_SHADOW_MULT;
-    T1_global->postproc_consts.in_shadow_mults[2] = T1_SHADOW_MULT;
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_SHADOWS_ACTIVE undefined"
-    #endif
-    
     T1_io_init(T1_mem_malloc_unmanaged);
     
     T1_gameloop_init(
@@ -428,6 +419,8 @@ static void T1_appinit_gpu_modules(
     T1_pipeline_init();
     
     T1_pass_init();
+    
+    T1_buf_init();
     
     T1_zsprite_init();
     
@@ -541,8 +534,8 @@ static void T1_appinit_gpu_modules(
             sizeof(T1GPUMatu32) *
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
-    sd->postprocessing_constants_alloc_size =
-        pad_to_page_size(sizeof(T1GPUPostProcConsts));
+    sd->frame_consts_alloc_size =
+        pad_to_page_size(sizeof(T1GPUFrameConsts));
     
     for (
         u32 cur_frame_i = 0;
@@ -613,15 +606,15 @@ static void T1_appinit_gpu_modules(
             sizeof(T1GPURenderView) *
                 T1_RENDER_VIEW_CAP);
         
-        f->postproc_consts = (T1GPUPostProcConsts *)
+        f->frame_consts = (T1GPUFrameConsts *)
             T1_mem_malloc_unmanaged_aligned(
-                sd->postprocessing_constants_alloc_size,
+                sd->frame_consts_alloc_size,
                 T1_mem_page_size);
-        if (!f->postproc_consts) {
+        if (!f->frame_consts) {
             *fatal_error = "Malloc fail";
             return;
         }
-        T1_std_memset(f->postproc_consts, 0, sd->postprocessing_constants_alloc_size);
+        T1_std_memset(f->frame_consts, 0, sd->frame_consts_alloc_size);
     }
     
     sd->locked_vertices =

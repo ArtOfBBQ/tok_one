@@ -25,7 +25,6 @@ typedef enum : u8 {
     T1_PROP_STORE_CAM_U32,    // not animatable
     T1_PROP_STORE_PASS_U32,   // not animatable
     T1_PROP_STORE_TEXT,       // the settings for the next text label
-    T1_PROP_STORE_POSTPROC,   // post-processing settings
     T1_PROP_STORE_OUTOFBOUNDS
 } T1PropertyStore;
 
@@ -52,7 +51,7 @@ typedef enum : u8 {
 /*
 Finds every store that has a property with this name, either among the
 object stores (settings_store T1_PROP_STORE_OUTOFBOUNDS) or in one settings
-store (T1_PROP_STORE_TEXT or T1_PROP_STORE_POSTPROC). Crashes if the name is
+store (T1_PROP_STORE_TEXT). Crashes if the name is
 unknown there, or if it exists but not with the requested type (f32 or u32).
 */
 u32 T1_property_find(
@@ -126,14 +125,6 @@ void T1_text_set_u32(
     const c8 * property,
     u32 value);
 
-/*
-Post-processing settings, applied to the whole rendered image
-*/
-void T1_postproc_set_f32(
-    const c8 * property,
-    f32 value);
-f32 T1_postproc_get_f32(
-    const c8 * property);
 
 
 void T1_merge_T1_ids(

@@ -35,7 +35,7 @@ platform layer doesn't need to do anything and can just record values directly
 */
 
 typedef struct {
-    T1GPUPostProcConsts postproc_consts;
+    T1GPUFrameConsts frame_consts;
     
     uint64_t elapsed;
     uint64_t this_frame_timestamp_us;

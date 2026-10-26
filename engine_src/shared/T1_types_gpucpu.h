@@ -13,10 +13,26 @@ Where shaders find what T1 binds for every pass:
   constant array of T1_READ_TEXS_CAP uint32_t T1Texs
 - texture(T1_WRITE_TEX_I): a compute pass's "write_tex", one thread per
   pixel of it (uint2 [[thread_position_in_grid]])
+- buffer(T1_FRAME_CONSTS_I): a T1GPUFrameConsts
+- buffer(T1_BUFS_I + k): the pass's "buf[k]", a T1Buf the shader declares
+  as whatever type it holds, e.g. device MyParticle * [[buffer(T1_BUFS_I)]]
+Draw passes bind these for both their vertex and fragment functions.
 */
+#define T1_FRAME_CONSTS_I 7
 #define T1_READ_TEXS_BUFFER_I 9
 #define T1_READ_TEXS_CAP 8
+#define T1_BUFS_I 16
+#define T1_PASS_BUFS_CAP 8
 #define T1_WRITE_TEX_I 30
+
+// What T1 tells shaders about the frame, see T1_FRAME_CONSTS_I
+typedef struct
+{
+    uint32_t timestamp; // microseconds
+    uint32_t cam_rv_i;
+    uint32_t lights_size;
+    uint32_t padding;
+} T1GPUFrameConsts;
 
 #pragma pack(push, 1)
 typedef struct {

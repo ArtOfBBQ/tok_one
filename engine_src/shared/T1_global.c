@@ -20,23 +20,7 @@ void T1_global_init(void) {
         
     T1_global->timedelta_mult = 1.00f;
     
-    T1_global->postproc_consts.timestamp = 0;
-    T1_global->postproc_consts.blur_pct = 0.18f;
-    T1_global->postproc_consts.nonblur_pct = 1.0f;
-    T1_global->postproc_consts.color_quantization = 1.0f;
-    T1_global->postproc_consts.rgb_add[0] = 0.0f;
-    T1_global->postproc_consts.rgb_add[1] = 0.0f;
-    T1_global->postproc_consts.rgb_add[2] = 0.0f;
-    
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    T1_global->postproc_consts.fog_color[0] = 1.0f;
-    T1_global->postproc_consts.fog_color[1] = 1.0f;
-    T1_global->postproc_consts.fog_color[2] = 1.0f;
-    T1_global->postproc_consts.fog_factor = 0.0f;
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    T1_global->frame_consts.timestamp = 0;
 }
 
 void T1_global_update_window_pos(

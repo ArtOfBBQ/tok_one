@@ -91,7 +91,7 @@ void T1_frame_begin(void)
     T1_gl_s->previous_time =
         T1_global->this_frame_timestamp_us;
     
-    f->postproc_consts->lights_size = 0;
+    f->frame_consts->lights_size = 0;
     f->verts_size = 0;
     f->flat_bb_quads_size = 0;
     f->flat_tex_quads_size = 0;
@@ -194,7 +194,7 @@ void T1_frame_render(void) {
         
         T1_zlight_copy_all(
             f->lights,
-            &T1_global->postproc_consts.lights_size);
+            &T1_global->frame_consts.lights_size);
         
         T1_render_view_update_positions(
             T1_global->elapsed);
@@ -216,7 +216,7 @@ void T1_frame_render(void) {
                 T1_io_get_mouse_touch_id_this_frame());
         }
         
-        f->postproc_consts->timestamp = (u32)T1_global->
+        f->frame_consts->timestamp = (u32)T1_global->
             this_frame_timestamp_us;
     }
     

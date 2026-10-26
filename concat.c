@@ -27,6 +27,7 @@ static const char * encapsulation_h_file = "T1.h";
 static const char * examples[] = {
     "noise",
     "fps",
+    "particles",
 };
 
 static const char * search_paths[] = {
@@ -83,6 +84,7 @@ static const char * c_files[] = {
 "T1_id.c",
 "T1_pipeline.c",
 "T1_pass.c",
+"T1_buf.c",
 "T1_audio.c",
 "T1_global.c",
 "T1_triangle.c",

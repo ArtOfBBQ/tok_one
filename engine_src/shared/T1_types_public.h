@@ -27,6 +27,14 @@
 
 typedef uint16_t T1Tex;
 
+// GPU memory for your shaders, see T1_buf_new()
+typedef uint32_t T1Buf;
+#define T1_BUF_NONE 0xFFFFFFFF
+// never returned by T1_buf_read_start()
+#define T1_BUF_READ_NONE 0xFFFFFFFF
+// how many T1_buf_read_start()s can wait for T1_buf_read_finish()
+#define T1_BUF_READS_CAP 64
+
 typedef enum : uint16_t {
     T1_IO_KEYBOARD_LEFTARROW     =  0,
     T1_IO_KEYBOARD_RIGHTARROW    =  1,

@@ -42,7 +42,6 @@
 #define ZL     T1_PROP_STORE_ZL_F32,     T1zLightf32
 #define ZLU    T1_PROP_STORE_ZL_U32,     T1zLightu32
 #define TEXT   T1_PROP_STORE_TEXT,       T1TextFontSettings
-#define POST   T1_PROP_STORE_POSTPROC,   T1GPUPostProcConsts
 #define CAM    T1_PROP_STORE_CAM_F32,    T1CamF32s
 #define CAMU   T1_PROP_STORE_CAM_U32,    T1CPURenderView
 #define PASS   T1_PROP_STORE_PASS_U32,   T1PassU32s
@@ -160,27 +159,6 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32("opaque_back_active", TEXT, opaque_back_active),
     T1_PROP_F32(TEXT, tab_width),
 
-    T1_PROP_F32(POST, rgb_add[0]),
-    T1_PROP_F32(POST, rgb_add[1]),
-    T1_PROP_F32(POST, rgb_add[2]),
-    #if T1_FOG_ACTIVE == T1_ACTIVE
-    T1_PROP_F32(POST, fog_color[0]),
-    T1_PROP_F32(POST, fog_color[1]),
-    T1_PROP_F32(POST, fog_color[2]),
-    T1_PROP_F32(POST, fog_factor),
-    #elif T1_FOG_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    T1_PROP_F32(POST, in_shadow_mults[0]),
-    T1_PROP_F32(POST, in_shadow_mults[1]),
-    T1_PROP_F32(POST, in_shadow_mults[2]),
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-
     // cameras, with the same names as the other objects where they mean the
     // same, so a camera merged into a group moves and turns with it
     T1_PROP_F32(CAM, xyz[0]),
@@ -232,6 +210,18 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32("read_tex[6]", PASS, read_tex[6]),
     T1_PROP_U32("read_tex[7]", PASS, read_tex[7]),
     T1_PROP_U32("write_tex", PASS, write_tex),
+    T1_PROP_U32("buf[0]", PASS, buf[0]),
+    T1_PROP_U32("buf[1]", PASS, buf[1]),
+    T1_PROP_U32("buf[2]", PASS, buf[2]),
+    T1_PROP_U32("buf[3]", PASS, buf[3]),
+    T1_PROP_U32("buf[4]", PASS, buf[4]),
+    T1_PROP_U32("buf[5]", PASS, buf[5]),
+    T1_PROP_U32("buf[6]", PASS, buf[6]),
+    T1_PROP_U32("buf[7]", PASS, buf[7]),
+    T1_PROP_U32("vertex_count", PASS, vertex_count),
+    T1_PROP_U32("threads[0]", PASS, threads[0]),
+    T1_PROP_U32("threads[1]", PASS, threads[1]),
+    T1_PROP_U32("threads[2]", PASS, threads[2]),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -250,7 +240,7 @@ static void T1_property_crash(
 }
 
 static b8 T1_property_store_is_settings(const u8 store) {
-    return store == T1_PROP_STORE_TEXT || store == T1_PROP_STORE_POSTPROC;
+    return store == T1_PROP_STORE_TEXT;
 }
 
 u32 T1_property_find(
@@ -291,8 +281,6 @@ u32 T1_property_find(
         T1_property_crash(
             settings_store == T1_PROP_STORE_TEXT ?
                 "Unknown T1 text property" :
-            settings_store == T1_PROP_STORE_POSTPROC ?
-                "Unknown T1 post-processing property" :
                 "Unknown T1 property",
             name);
     } else if (found == 0) {
@@ -513,38 +501,6 @@ static void T1_text_set_bits(
     (void)matches_size; // only used by T1_assert()
 
     T1_property_write(T1_text_props, matches[0], bits);
-}
-
-void T1_postproc_set_f32(
-    const c8 * property,
-    f32 value)
-{
-    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
-    u32 matches_size = T1_property_find(
-        property, 0, T1_PROP_STORE_POSTPROC,
-        matches, T1_PROPERTY_MATCHES_CAP);
-    T1_assert(matches_size == 1);
-    (void)matches_size; // only used by T1_assert()
-
-    u32 bits;
-    T1_std_memcpy(&bits, &value, 4);
-    T1_property_write(&T1_global->postproc_consts, matches[0], bits);
-}
-
-f32 T1_postproc_get_f32(
-    const c8 * property)
-{
-    const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
-    u32 matches_size = T1_property_find(
-        property, 0, T1_PROP_STORE_POSTPROC,
-        matches, T1_PROPERTY_MATCHES_CAP);
-    T1_assert(matches_size == 1);
-    (void)matches_size; // only used by T1_assert()
-
-    u32 bits = T1_property_read(&T1_global->postproc_consts, matches[0]);
-    f32 value;
-    T1_std_memcpy(&value, &bits, 4);
-    return value;
 }
 
 void T1_text_set_f32(
