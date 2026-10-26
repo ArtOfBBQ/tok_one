@@ -845,6 +845,7 @@ static void append_shader_settings_to_out(void) {
 
 int main(void) {
     printf("Concatenating all source into T1.h/T1.c...\n");
+    mkdir("build", 0777);
     assert(ARENA_CAP > OUTPUT_CAP);
     
     delete_build_file("T1.h");
