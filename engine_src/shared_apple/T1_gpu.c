@@ -1173,12 +1173,20 @@ void T1_os_gpu_try_shader_source(
     
     void * pool = T1_objc_autorelease_pool_push();
     
-    // T1's embedded shader includes, then the client's shaders
+    /*
+    The macro settings T1 was compiled with, T1's embedded shader includes,
+    then the client's shaders
+    */
     u32 full_source_cap = (u32)(
+        T1_std_strlen(T1_embedded_data_shader_settings) +
         T1_std_strlen(T1_embedded_data_shader_includes) +
         T1_std_strlen(shader_source) + 1);
     char * full_source = T1_mem_malloc_managed(full_source_cap);
     T1_std_strcpy_cap(
+        full_source,
+        full_source_cap,
+        T1_embedded_data_shader_settings);
+    T1_std_strcat_cap(
         full_source,
         full_source_cap,
         T1_embedded_data_shader_includes);

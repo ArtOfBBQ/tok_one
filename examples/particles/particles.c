@@ -5,12 +5,16 @@ uploads the starting positions and, every frame, a few settings (the time
 and the mouse position, which pulls the particles towards it). Once a
 second it reads the first particle back from the GPU and prints it.
 
+This folder has its own copy of T1.h and T1.c, like your app would: change
+the settings at the top of T1.h (concat starts this copy over, naming the
+window "particles").
+
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
     ./build/examples/particles
 
 (concat builds every example, with
-    gcc -std=c11 -O2 -I build examples/particles.c build/T1.c
+    gcc -std=c11 -O2 examples/particles/particles.c examples/particles/T1.c
         -o build/examples/particles)
 */
 #include <math.h>

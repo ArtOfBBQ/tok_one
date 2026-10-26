@@ -2,12 +2,17 @@
 The smallest T1 app: no GPU setup and no shaders. We draw our own pixels,
 T1 gives us a window to show them in.
 
+This folder has its own copy of T1.h and T1.c, like your app would: change
+the settings at the top of T1.h (concat starts this copy over, naming the
+window "noise").
+
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
     ./build/examples/noise
 
 (concat builds every example, with
-    gcc -std=c11 -O2 -I build examples/noise.c build/T1.c -o build/examples/noise)
+    gcc -std=c11 -O2 examples/noise/noise.c examples/noise/T1.c
+        -o build/examples/noise)
 */
 #include <math.h>
 #include <stdio.h>

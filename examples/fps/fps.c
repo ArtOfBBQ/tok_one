@@ -3,12 +3,17 @@ How fast can a software renderer go? T1 caps blitting loops at 60 frames
 per second by default, this example removes the cap and draws its own
 frames per second counter.
 
+This folder has its own copy of T1.h and T1.c, like your app would: change
+the settings at the top of T1.h (concat starts this copy over, naming the
+window "fps").
+
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
     ./build/examples/fps
 
 (concat builds every example, with
-    gcc -std=c11 -O2 -I build examples/fps.c build/T1.c -o build/examples/fps)
+    gcc -std=c11 -O2 examples/fps/fps.c examples/fps/T1.c
+        -o build/examples/fps)
 */
 #include <stdio.h>
 #include <stdlib.h>

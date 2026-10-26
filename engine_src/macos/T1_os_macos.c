@@ -88,6 +88,7 @@ typedef struct {
     void * sel_new; // new
     void * sel_window; // window
     void * sel_make_key_and_order_front; // makeKeyAndOrderFront:
+    void * sel_order_front_regardless; // orderFrontRegardless
     void * sel_length; // length;
     void * sel_get_bytes_length; // getBytes:length:
     void * sel_object_at_index; // objectAtIndex:
@@ -901,6 +902,8 @@ void T1_os_macos_init(void) {
         "makeKeyAndOrderFront:");
     T1_assert(T1_os_macos_s->
         sel_make_key_and_order_front != NULL);
+    T1_os_macos_s->sel_order_front_regardless = T1_objc_reg_sel(
+        "orderFrontRegardless");
     T1_os_macos_s->sel_length = T1_objc_reg_sel(
         "length");
     T1_assert(T1_os_macos_s->sel_length != NULL);
@@ -1508,6 +1511,8 @@ static void T1_os_macos_create_window(
         window,
         T1_os_macos_s->sel_make_key_and_order_front,
         0);
+    // above other apps' windows, also if we couldn't take the focus
+    T1_objc_msg(window, T1_os_macos_s->sel_order_front_regardless);
     
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -1694,9 +1699,24 @@ static void T1_os_macos_attach_blit_layer(
     T1_objc_autorelease_pool_pop(pool);
 }
 
+static void T1_os_macos_finish_launching(void * ns_app);
+
 void T1_os_window_open(
     char ** const fatal_error)
 {
+    /*
+    Become a regular app before making the window: an executable started
+    outside a .app bundle (e.g. from a terminal) starts out as a background
+    process, and a window made then lands on a Space you can't see
+    */
+    void * ns_app = (void *)T1_objc_msg(
+        T1_os_macos_s->class_ns_app,
+        T1_os_macos_s->sel_shared_application);
+    if (ns_app != NULL && !T1_os_macos_s->launched) {
+        T1_os_macos_finish_launching(ns_app);
+        T1_os_macos_s->launched = true;
+    }
+    
     T1_os_macos_create_window(fatal_error);
     
     if (T1_gpu_get_device() != NULL) {

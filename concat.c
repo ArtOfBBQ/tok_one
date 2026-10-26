@@ -60,6 +60,13 @@ static const char * shader_include_files[] = {
     NULL,
 };
 
+/*
+Left out of the shader includes: T1 gives shaders the values its macro
+settings had when T1.c was compiled instead (T1_embedded_data_shader_settings),
+so they follow the client's edits to their copy of T1.h
+*/
+static const char * macro_settings_file = "T1_macro_settings.h";
+
 static const Embeddable to_embed_files[] = {
     {"shader_includes",  0, 1, shader_include_files, NULL},
     {"fontmetrics.dat",  1, 0, NULL, NULL},
@@ -552,6 +559,55 @@ static void strip_include_guards(char * in_out) {
     assert(depth == 0);
 
     asm_state->arena_i = arena_pop_i;
+}
+
+// the line copy_build_file_to() replaces with an example's own name
+#define T1_APP_NAME_LINE "#define T1_APP_NAME \"Deck Assembler\""
+
+/*
+Copies build/filename to dir/filename, replacing the first line that is
+exactly replace_line (if not NULL) with replacement. Returns 0 on failure.
+*/
+static uint8_t copy_build_file_to(
+    const char * filename,
+    const char * dir,
+    const char * replace_line,
+    const char * replacement)
+{
+    char src_path[512];
+    char dst_path[512];
+    snprintf(src_path, sizeof(src_path), "build/%s", filename);
+    snprintf(dst_path, sizeof(dst_path), "%s%s", dir, filename);
+    
+    FILE * src = fopen(src_path, "rb");
+    if (src == NULL) { return 0; }
+    fseek(src, 0, SEEK_END);
+    long size = ftell(src);
+    fseek(src, 0, SEEK_SET);
+    char * contents = malloc((size_t)size + 1);
+    if (contents == NULL) { fclose(src); return 0; }
+    size_t read = fread(contents, 1, (size_t)size, src);
+    fclose(src);
+    contents[read] = '\0';
+    
+    FILE * dst = fopen(dst_path, "wb");
+    if (dst == NULL) { free(contents); return 0; }
+    
+    char * at = replace_line == NULL ? NULL : strstr(contents, replace_line);
+    if (at != NULL) {
+        size_t before = (size_t)(at - contents);
+        size_t replaced = strlen(replace_line);
+        fwrite(contents, 1, before, dst);
+        fwrite(replacement, 1, strlen(replacement), dst);
+        fwrite(at + replaced, 1, read - before - replaced, dst);
+    } else {
+        assert(replace_line == NULL);
+        fwrite(contents, 1, read, dst);
+    }
+    
+    fclose(dst);
+    free(contents);
+    return 1;
 }
 
 static void delete_build_file(const char * fn) {
@@ -1065,6 +1121,7 @@ static void append_embedded_file_to_out(
         if (inline_files == NULL) {
             parse_file_recursively(to_embed_files[to_embed_i].name);
         } else {
+            find_observed_include_or_register_new(macro_settings_file);
             for (uint32_t i = 0; inline_files[i] != NULL; i++) {
                 // register first so later files don't include it again
                 if (
@@ -1166,6 +1223,64 @@ static void append_embedded_file_to_out(
     asm_state->arena_i = pop_arena_i;
 }
 
+/*
+Appends T1_embedded_data_shader_settings: for every #define in the macro
+settings, a line the C preprocessor fills with the value T1.c is compiled
+with, e.g. "#define T1_SHADOWS_ACTIVE " "1" "\n"
+*/
+static void append_shader_settings_to_out(void) {
+    char path[512];
+    FILE * file = NULL;
+    for (uint32_t i = 0; i < asm_state->search_paths_size && !file; i++) {
+        snprintf(path, sizeof(path), "%s%s", search_paths[i], macro_settings_file);
+        file = fopen(path, "rb");
+    }
+    assert(file != NULL);
+    
+    strcat(asm_state->output,
+        "#define T1_EMBEDDED_STR_(x) #x\n"
+        "#define T1_EMBEDDED_STR(x) T1_EMBEDDED_STR_(x)\n"
+        "const char * T1_embedded_data_shader_settings =\n");
+    
+    char line[1024];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        const char * at = line;
+        while (*at == ' ' || *at == '\t') { at++; }
+        if (strncmp(at, "#define ", 8) != 0) { continue; }
+        at += 8;
+        
+        char name[256];
+        uint32_t n = 0;
+        while (
+            at[n] != '\0' && at[n] != ' ' && at[n] != '\t' &&
+            at[n] != '\n' && at[n] != '(')
+        {
+            assert(n + 1 < sizeof(name));
+            name[n] = at[n];
+            n++;
+        }
+        name[n] = '\0';
+        
+        // skip the include guard and function-like macros
+        if (n == 0 || at[n] == '(') { continue; }
+        if (n > 2 && strcmp(name + n - 2, "_H") == 0) { continue; }
+        
+        char entry[1024];
+        snprintf(
+            entry,
+            sizeof(entry),
+            "#ifdef %s\n"
+            "    \"#define %s \" T1_EMBEDDED_STR(%s) \"\\n\"\n"
+            "#endif\n",
+            name, name, name);
+        assert(strlen(asm_state->output) + strlen(entry) + 1 < OUTPUT_CAP);
+        strcat(asm_state->output, entry);
+    }
+    fclose(file);
+    
+    strcat(asm_state->output, "    \"\";\n\n");
+}
+
 int main(void) {
     printf("Concatenating all source into T1.h/T1.c...\n");
     assert(ARENA_CAP > OUTPUT_CAP);
@@ -1192,7 +1307,9 @@ int main(void) {
     
     // Create the .c file for embedded data
     {
-        strcat(asm_state->output, "#include \"T1_embedded_data.h\"\n\n");
+        strcat(asm_state->output, "#include \"T1_embedded_data.h\"\n");
+        strcat(asm_state->output, "#include \"T1_macro_settings.h\"\n\n");
+        append_shader_settings_to_out();
         uint32_t i = 0;
         for (i = 0; i < asm_state->to_embed_files_size; i++) {
             uint32_t prev_out_size = (uint32_t)strlen(asm_state->output);
@@ -1212,6 +1329,10 @@ int main(void) {
         strcat(
             asm_state->output,
             "#ifndef T1_EMBEDDED_DATA_H\n#define T1_EMBEDDED_DATA_H\n\n");
+        strcat(
+            asm_state->output,
+            "// the macro settings T1.c was compiled with, for shaders\n"
+            "extern const char * T1_embedded_data_shader_settings;\n\n");
         
         uint32_t i = 0;
         for (i = 0; i < asm_state->to_embed_files_size; i++) {
@@ -1251,6 +1372,14 @@ int main(void) {
     parse_file_recursively(
         /* filename: */ encapsulation_h_file);
     
+    // what T1.h is made of, so T1.c can #include it instead of a 2nd copy
+    char * t1_h_includes[OBSERVED_INCLUDES_CAP];
+    uint16_t t1_h_includes_size = asm_state->observed_includes_size;
+    memcpy(
+        t1_h_includes,
+        asm_state->observed_includes,
+        sizeof(char *) * t1_h_includes_size);
+    
     deduplicate_includes_clean_comments(asm_state->output);
     strip_include_guards(asm_state->output);
 
@@ -1278,6 +1407,18 @@ int main(void) {
     
     memset(asm_state->output, 0, OUTPUT_CAP);
     
+    /*
+    T1.c includes T1.h rather than repeating it, so the macro settings at
+    the top of T1.h are the only ones: edit them there
+    */
+    memcpy(
+        asm_state->observed_includes,
+        t1_h_includes,
+        sizeof(char *) * t1_h_includes_size);
+    asm_state->observed_includes_size = t1_h_includes_size;
+    find_observed_include_or_register_new(encapsulation_h_file);
+    strcat(asm_state->output, "#include \"T1.h\"\n\n");
+    
     int32_t i;
     for (i = 0; i < asm_state->c_files_size; i++) {
         const char * filename = c_files[i];
@@ -1290,15 +1431,39 @@ int main(void) {
     strip_include_guards(asm_state->output);
     write_output_to("T1.c", "build/");
     
+    /*
+    Every example keeps its own T1.h and T1.c next to its source, like your
+    app would, with its own settings (e.g. its window title)
+    */
     mkdir("build/examples", 0777);
     uint32_t examples_size = sizeof(examples) / sizeof(examples[0]);
     for (uint32_t e = 0; e < examples_size; e++) {
+        char dir[256];
+        snprintf(dir, sizeof(dir), "examples/%s/", examples[e]);
+        
+        char app_name_line[256];
+        snprintf(
+            app_name_line,
+            sizeof(app_name_line),
+            "#define T1_APP_NAME \"%s\"",
+            examples[e]);
+        
+        if (
+            !copy_build_file_to("T1.h", dir, T1_APP_NAME_LINE, app_name_line) ||
+            !copy_build_file_to("T1.c", dir, NULL, NULL))
+        {
+            printf("ERROR - failed to copy T1.h/T1.c to %s\n", dir);
+            return 1;
+        }
+        
         char cmd[512];
         snprintf(
             cmd,
             sizeof(cmd),
-            "gcc -std=c11 -O2 -I build examples/%s.c build/T1.c "
+            "gcc -std=c11 -O2 examples/%s/%s.c examples/%s/T1.c "
             "-o build/examples/%s",
+            examples[e],
+            examples[e],
             examples[e],
             examples[e]);
         printf("building example: build/examples/%s\n", examples[e]);
