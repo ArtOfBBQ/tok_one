@@ -52,16 +52,6 @@ that modify the behavior of the engine.
 #endif
 #endif
 
-/*
-Your application's pre-allocated memory pool.
-*/
-// 425mb ->                   425...000
-#if defined(NDEBUG) || defined(NS_BLOCK_ASSERTIONS)
-#define T1_UNMANAGED_MEM_CAP 313000000 // production
-#else
-#define T1_UNMANAGED_MEM_CAP 333000000
-#endif
-
 // set to 3 for triple-buffering
 #define T1_FRAMES_CAP 3
 

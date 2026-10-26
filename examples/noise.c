@@ -11,6 +11,7 @@ Build and run, from the tok_one folder:
 */
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "T1.h"
 
@@ -74,7 +75,7 @@ static float fbm(float x, float y, float drift) {
 
 int main(void) {
     char * fatal_error = NULL;
-    T1_init(&fatal_error);
+    T1_init(malloc, malloc, free, &fatal_error);
     T1_window_open(&fatal_error);
     if (fatal_error != NULL) {
         printf("%s\n", fatal_error);

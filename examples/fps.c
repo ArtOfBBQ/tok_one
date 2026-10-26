@@ -11,6 +11,7 @@ Build and run, from the tok_one folder:
     gcc -std=c11 -O2 -I build examples/fps.c build/T1.c -o build/examples/fps)
 */
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "T1.h"
 
@@ -49,7 +50,7 @@ static void draw_number(uint32_t number, uint32_t left, uint32_t top) {
 
 int main(void) {
     char * fatal_error = NULL;
-    T1_init(&fatal_error);
+    T1_init(malloc, malloc, free, &fatal_error);
     T1_window_open(&fatal_error);
     if (fatal_error != NULL) {
         printf("%s\n", fatal_error);

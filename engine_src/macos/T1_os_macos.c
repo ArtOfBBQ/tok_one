@@ -9,7 +9,7 @@
 #include "T1_gpu.h"
 #include "T1_gameloop.h"
 
-#include <sys/mman.h>
+#include <unistd.h> // sysconf
 
 #define T1NSUserDomainMask 1
 #define T1NSUTF8StringEncoding 4
@@ -1283,28 +1283,12 @@ void T1_os_get_writables_dir(
     T1_objc_autorelease_pool_pop(pool);
 }
 
-void * T1_os_malloc_unaligned_block(
-    const u64 size)
-{
-    void * return_value = mmap(
-        /* void *: */
-            NULL,
-        /* size_t: */
-            size,
-        /* int prot: */
-            PROT_READ | PROT_WRITE,
-        /* int: */
-            MAP_SHARED | MAP_ANONYMOUS,
-        /* int: */
-            -1,
-        /* off_t: */
-            0);
-    
-    if (return_value == MAP_FAILED) {
-        return NULL;
+u32 T1_os_get_page_size(void) {
+    long query_result = sysconf(_SC_PAGESIZE);
+    if (query_result <= 0 || query_result > UINT32_MAX) {
+        return 4096;
     }
-    
-    return return_value;
+    return (u32)query_result;
 }
 
 void T1_os_close_app(void) {

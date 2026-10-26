@@ -27,24 +27,9 @@ typedef struct {
 
 static T1OSState * T1_os_s = NULL;
 
-void T1_os_init(
-    void ** unmanaged_memory_store,
-    const u32 aligned_to)
-{
-    T1_os_s = *unmanaged_memory_store;
-    
-    size_t size = sizeof(T1OSState);
-    while (size % aligned_to != 0) {
-        size += 1;
-    }
-    
-    T1_std_memset(
-        T1_os_s,
-        0,
-        size);
-    
-    *unmanaged_memory_store = (void *)(
-        ((char *)*unmanaged_memory_store) + size);
+void T1_os_init(void) {
+    T1_os_s = T1_mem_malloc_unmanaged(sizeof(T1OSState));
+    T1_std_memset(T1_os_s, 0, sizeof(T1OSState));
 }
 
 u64 T1_os_raw_thread_id_to_T1_thread_id(

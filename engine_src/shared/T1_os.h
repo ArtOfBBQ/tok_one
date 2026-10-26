@@ -36,16 +36,15 @@ void T1_apple_os_init(void);
 void T1_os_macos_init(void);
 #endif
 
-void T1_os_init(
-    void ** unmanaged_memory_store,
-    u32 aligned_to);
+// Needs T1_mem_init()
+void T1_os_init(void);
+
+// The OS's memory page size, before T1_os_init()
+u32 T1_os_get_page_size(void);
 
 f32 T1_os_get_screen_backing_scale_factor(void);
 
 void T1_os_close_app(void);
-
-void * T1_os_malloc_unaligned_block(
-    u64 size);
 
 
 void T1_os_get_dir_separator(c8 * recipient);

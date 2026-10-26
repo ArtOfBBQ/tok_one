@@ -186,27 +186,29 @@ static u32 pad_to_page_size(u32 base_allocation) {
 }
 
 void T1_init(
+    void * (* alloc_forever)(size_t size),
+    void * (* alloc_temp)(size_t size),
+    void   (* free_temp)(void * ptr),
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
-
-    T1_gameloop_active = 0;
-
-    void * unmanaged_memory_store =
-        T1_os_malloc_unaligned_block(
-            T1_UNMANAGED_MEM_CAP + 7232);
-
-    if (!unmanaged_memory_store) {
-        *fatal_error = "Failed to preallocate memory on startup";
+    
+    if (alloc_forever == NULL || alloc_temp == NULL || free_temp == NULL) {
+        *fatal_error = "T1_init() needs all 3 memory functions";
         return;
     }
-
-    T1_os_init(
-        &unmanaged_memory_store,
-        32);
-
+    
+    T1_gameloop_active = 0;
+    
     T1_mem_init(
-        unmanaged_memory_store,
+        alloc_forever,
+        alloc_temp,
+        free_temp,
+        T1_os_get_page_size());
+    
+    T1_os_init();
+    
+    T1_mem_init_mutex(
         T1_os_init_mutex_and_return_id,
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
@@ -407,6 +409,27 @@ void T1_init(
     
     T1_io_init(T1_mem_malloc_unmanaged);
     
+    T1_gameloop_init(
+        /* void *(*arg_malloc_fptr)(size_t): */
+            T1_mem_malloc_unmanaged);
+    
+    T1_objc_autorelease_pool_pop(pool);
+    
+    T1_gameloop_active = 1;
+}
+
+
+
+/*
+Everything that only matters when T1 renders: zsprites, texquads, lights,
+cameras, passes, text, the terminal, animations and the buffers the GPU
+reads. Apps that blit their own pixels never pay for these.
+*/
+static void T1_appinit_gpu_modules(
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return; }
+    
     T1_texquad_init();
     
     T1_pipeline_init();
@@ -432,10 +455,6 @@ void T1_init(
     #else
     #error
     #endif
-    
-    T1_gameloop_init(
-        /* void *(*arg_malloc_fptr)(size_t): */
-            T1_mem_malloc_unmanaged);
     
     #if T1_TERM_ACTIVE == T1_ACTIVE
     // The client can set a command handler with
@@ -530,9 +549,7 @@ void T1_init(
                 T1_ALL_LOCKED_MATERIALS_SIZE);
     
     sd->postprocessing_constants_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUVertexIndices) *
-                T1_MAX_VERTS_PER_BUFFER);
+        pad_to_page_size(sizeof(T1GPUPostProcConsts));
     
     for (
         u32 cur_frame_i = 0;
@@ -652,13 +669,7 @@ void T1_init(
         sd->const_mats_s32,
         0,
         sd->const_matss32_alloc_size);
-    
-    T1_objc_autorelease_pool_pop(pool);
-    
-    T1_gameloop_active = 1;
 }
-
-
 
 /*
 The GPU resources T1 itself needs: font images, the window's viewport. These come before the client creates its own textures.
@@ -692,6 +703,10 @@ void T1_gpu_init(
         *fatal_error = "T1_gpu_init() before T1_init()";
         return;
     }
+    
+    void * pool = T1_objc_autorelease_pool_push();
+    T1_appinit_gpu_modules(fatal_error);
+    T1_objc_autorelease_pool_pop(pool);
     
     T1_os_gpu_init(fatal_error);
     T1_appinit_gpu_resources(fatal_error);

@@ -25,15 +25,16 @@ APPLICATION STARTUP
 Each step reports problems through fatal_error and does nothing if it's
 already set, so you can call them in a row and check once at the end:
 
-T1_init(&fatal_error);          // memory, subsystems, audio: no GPU
-T1_gpu_init(&fatal_error);      // GPU device, T1's own textures
-T1_gpu_try_shader_source(...);  // at least once successfully
+T1_init(malloc, malloc, free, &fatal_error); // subsystems, audio: no GPU
+T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
+T1_gpu_try_shader_source(...); // at least once successfully
 T1_window_open(&fatal_error);
 
 The GPU steps are optional. Without them, you draw your own pixels and
-show them with T1_window_blit_rgba(), see examples/ for the smallest app.
-If you use the GPU, call T1_gpu_init() before you create textures or
-cameras. Textures (T1_tex_new) are uploaded as you create them, meshes and
+show them with T1_window_blit_rgba(), see examples/ for the smallest app,
+and T1 doesn't allocate anything for rendering. If you use the GPU, call
+T1_gpu_init() before you use anything that renders: textures, cameras,
+zsprites, texquads, lights, text, passes, animations or the terminal. Textures (T1_tex_new) are uploaded as you create them, meshes and
 materials when the next frame is rendered, so you can register either at
 any time.
 
@@ -41,7 +42,16 @@ T1 never shows errors in the window. Problems at startup come back through
 fatal_error; when T1 catches a bug (a failed check), it prints why and
 crashes right away, so your debugger stops there.
 */
+/*
+T1 allocates all its memory through your functions, they only need to align
+like malloc(). alloc_forever's memory is never freed, so it can be a bump
+allocator in a block of yours: then you know exactly what T1 took and the
+rest stays yours. alloc_temp's memory is given back with free_temp.
+*/
 void T1_init(
+    void * (* alloc_forever)(size_t size),
+    void * (* alloc_temp)(size_t size),
+    void   (* free_temp)(void * ptr),
     char ** const fatal_error);
 void T1_gpu_init(
     char ** const fatal_error);
@@ -143,7 +153,7 @@ void     T1_shutdown(void);
 /*
 TERMINAL
 Commands the T1 terminal doesn't know are passed to your handler, which
-writes its reply to response.
+writes its reply to response. Needs T1_gpu_init().
 */
 void T1_term_set_command_handler(
     void (* handler)(char * command, char * response, uint32_t response_cap));
@@ -153,13 +163,6 @@ void T1_term_manually_deactivate(void);
 #else
 #error
 #endif
-
-/*
-T1_mem - allocate memory
-*/
-void * T1_mem_malloc_unmanaged(size_t size);
-void * T1_mem_malloc_managed(size_t size);
-void T1_mem_free_managed(void * to_free);
 
 /*
 T1_id

@@ -1045,6 +1045,8 @@ void T1_term_init(
 void T1_term_set_command_handler(
     void (* handler)(char * command, char * response, u32 response_cap))
 {
+    T1_log_assert(T1_trms != NULL); // the terminal comes with T1_gpu_init()
+    if (T1_trms == NULL) { return; }
     T1_trms->callback_eval_command_fptr = handler;
 }
 #elif T1_TERM_ACTIVE == T1_INACTIVE
