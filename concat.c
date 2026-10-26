@@ -444,6 +444,114 @@ static void deduplicate_includes_clean_comments(char * in_out)
     asm_state->arena_i = arena_pop_i;
 }
 
+/*
+If line is prefix (e.g. "#ifndef ") and a name with nothing after it,
+copies the name and returns 1
+*/
+static uint8_t line_directive_name(
+    const char * line,
+    const char * prefix,
+    char * name,
+    uint32_t name_cap)
+{
+    uint32_t prefix_len = (uint32_t)strlen(prefix);
+    if (strncmp(line, prefix, prefix_len) != 0) { return 0; }
+
+    uint32_t i = 0;
+    const char * at = line + prefix_len;
+    while (
+        at[i] != '\0' && at[i] != '\n' && at[i] != ' ' && at[i] != '\t')
+    {
+        assert(i + 1 < name_cap);
+        name[i] = at[i];
+        i++;
+    }
+    name[i] = '\0';
+
+    // nothing else on the line, e.g. "#define X_H 1" isn't a guard
+    while (at[i] == ' ' || at[i] == '\t') { i++; }
+    if (at[i] != '\n' && at[i] != '\0') { return 0; }
+
+    return i > 0;
+}
+
+/*
+Deletes the include guards of the files T1.h/T1.c were made of: a
+"#ifndef X_H" line directly followed by "#define X_H", and the #endif that
+closes it. Other #ifndefs (e.g. NDEBUG) stay.
+*/
+#define GUARD_NESTING_CAP 256
+static void strip_include_guards(char * in_out) {
+    uint32_t arena_pop_i = asm_state->arena_i;
+
+    uint32_t in_size = (uint32_t)strlen(in_out);
+    char * src = asm_state->arena + asm_state->arena_i;
+    asm_state->arena_i += in_size + 1;
+    assert(asm_state->arena_i < ARENA_CAP);
+    memcpy(src, in_out, in_size + 1);
+
+    // whether each open #if... is a guard we deleted
+    uint8_t is_guard[GUARD_NESTING_CAP];
+    uint32_t depth = 0;
+
+    char * out = in_out;
+    const char * line = src;
+    while (*line != '\0') {
+        const char * next = line;
+        while (*next != '\n' && *next != '\0') { next++; }
+        if (*next == '\n') { next++; }
+
+        const char * t = line;
+        while (*t == ' ' || *t == '\t') { t++; }
+
+        uint8_t keep = 1;
+        char name[256];
+        char define_name[256];
+
+        if (line_directive_name(t, "#ifndef ", name, 256)) {
+            uint32_t len = (uint32_t)strlen(name);
+            const char * d = next;
+            while (*d == ' ' || *d == '\t') { d++; }
+            uint8_t guard =
+                len > 2 &&
+                strcmp(name + len - 2, "_H") == 0 &&
+                line_directive_name(d, "#define ", define_name, 256) &&
+                strcmp(name, define_name) == 0;
+
+            assert(depth < GUARD_NESTING_CAP);
+            is_guard[depth++] = guard;
+
+            if (guard) {
+                // skip the #define line too, and the empty line after it
+                keep = 0;
+                while (*next != '\n' && *next != '\0') { next++; }
+                if (*next == '\n') { next++; }
+                if (*next == '\n') { next++; }
+            }
+        } else if (
+            strncmp(t, "#if", 3) == 0)
+        {
+            // #if, #ifdef
+            assert(depth < GUARD_NESTING_CAP);
+            is_guard[depth++] = 0;
+        } else if (strncmp(t, "#endif", 6) == 0) {
+            assert(depth > 0);
+            depth--;
+            if (is_guard[depth]) { keep = 0; }
+        }
+
+        if (keep) {
+            memcpy(out, line, (size_t)(next - line));
+            out += next - line;
+        }
+        line = next;
+    }
+    *out = '\0';
+    assert(depth == 0);
+
+    asm_state->arena_i = arena_pop_i;
+}
+
 static void delete_build_file(const char * fn) {
     char filepath[512];
     memset(filepath, 0, 512);
@@ -1142,6 +1250,28 @@ int main(void) {
         /* filename: */ encapsulation_h_file);
     
     deduplicate_includes_clean_comments(asm_state->output);
+    strip_include_guards(asm_state->output);
+
+    // one guard around everything instead
+    {
+        uint32_t arena_pop_i = asm_state->arena_i;
+        uint32_t size = (uint32_t)strlen(asm_state->output);
+        char * body = asm_state->arena + asm_state->arena_i;
+        asm_state->arena_i += size + 1;
+        assert(asm_state->arena_i < ARENA_CAP);
+        memcpy(body, asm_state->output, size + 1);
+
+        const char * guard_start = "#ifndef T1_H\n#define T1_H\n\n";
+        const char * guard_end = "\n#endif // T1_H\n";
+        assert(
+            strlen(guard_start) + size + strlen(guard_end) + 1 < OUTPUT_CAP);
+        strcpy(asm_state->output, guard_start);
+        strcat(asm_state->output, body);
+        strcat(asm_state->output, guard_end);
+
+        asm_state->arena_i = arena_pop_i;
+    }
+
     write_output_to("T1.h", "build/");
     
     memset(asm_state->output, 0, OUTPUT_CAP);
@@ -1155,6 +1285,7 @@ int main(void) {
     }
     
     deduplicate_includes_clean_comments(asm_state->output);
+    strip_include_guards(asm_state->output);
     write_output_to("T1.c", "build/");
     
     mkdir("build/examples", 0777);

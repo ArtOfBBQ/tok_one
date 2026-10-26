@@ -1,10 +1,7 @@
 #ifndef T1_MACRO_SETTINGS_H
 #define T1_MACRO_SETTINGS_H
 
-/*
-This header should only contain macro definitions
-that modify the behavior of the engine.
-*/
+// These macro definitions change the behavior of your app when you compile.
 #define T1_APP_NAME "Deck Assembler"
 
 #define T1_RENDER_VIEW_CAP 5
@@ -15,7 +12,6 @@ that modify the behavior of the engine.
 #define T1_IMG_PRINTF_ACTIVE 2
 #define T1_COLLISION_PRINTF_ACTIVE 2
 
-// T1_assert() is libc's assert() when active, compiled out when inactive
 #define T1_ASSERTS_ACTIVE 1
 
 #define T1_GAMEPAD_ACTIVE 1
@@ -63,20 +59,14 @@ that modify the behavior of the engine.
 #define T1_TEXARRAYS_CAP 29
 #define T1_TEX_SLICES_CAP 250
 
-/*
-The maximum number of sprites in your app.
-*/
+// The maximum number of sprites in your app.
 #define T1_ZSPRITES_CAP 6500
 
-/*
-The max number of materials in all of your meshes/models combined
-*/
+// The max number of materials in all of your meshes/models combined
 #define T1_MATERIAL_NAME_CAP 256
 #define T1_ALL_LOCKED_MATERIALS_SIZE 500
 
-/*
-The maximum number of 'scheduled animations' simultaneously running
-*/
+// The maximum number of 'scheduled animations' simultaneously running
 #define T1_ANIMS_CAP 9000
 
 // the max # of 3d models in your app
@@ -89,18 +79,9 @@ The maximum number of 'scheduled animations' simultaneously running
 // 60million samples = 120MB     60...000
 #define T1_ALL_AUDIOSAMPLES_SIZE 45000000
 
-/*
-The max # of particle effects in your application. If you set this to 0 the
-code for particle effects will be stripped from your app. (Note that this can
-be confusing - if you refer to the functions in particle.h a bunch of times in
-your code and then set this to 0, you will suddenly have a bunch of broken
-references to functions that don't exist, and you might not know to look here)
-*/
 #define T1_PARTICLE_EFFECTS_SIZE   5
 #define T1_SHATTER_EFFECTS_SIZE    5
 
-// these will be ignored on platforms where window size/position
-// can't be selected
 #define T1_INITIAL_WINDOW_HEIGHT 1000.0f
 #define T1_INITIAL_WINDOW_WIDTH  1400.0f // 800.0f// 375.0f
 #define T1_INITIAL_WINDOW_LEFT    200.0f
