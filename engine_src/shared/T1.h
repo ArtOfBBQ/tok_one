@@ -348,8 +348,10 @@ AUDIO
 T1 plays raw samples (16-bit stereo at 44.1kHz), decode your sound files
 with whatever parser you like. A sound is known by a name (e.g. its
 filename): T1_audio_sound_id() returns its id, the same one every time,
-and T1_audio_set_samples() gives it its samples once.
+and T1_audio_set_samples() gives it its samples once. These only exist with
+T1_AUDIO_ACTIVE, so calls to them need the same #if.
 */
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
 int32_t  T1_audio_sound_id(const char * name, char ** const fatal_error);
 void     T1_audio_set_samples(
     int32_t sound_id,
@@ -369,5 +371,9 @@ void     T1_audio_stream(
 // how many samples have played
 uint64_t T1_audio_play_cursor(void);
 void     T1_audio_stop_all(void);
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 #endif // T1_H
