@@ -123,9 +123,6 @@ typedef struct {
     u32 size;
 } T1zSpriteCollection;
 
-void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
-    u32 T1_id, f32 new_ignore_camera, u32 cam_T1_id);
-
 void T1_zsprite_copy_to_frame_data(
     T1GPUzSprite * recip,
     IdPair * recip_ids,

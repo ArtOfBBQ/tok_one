@@ -49,11 +49,6 @@ void T1_anim_set_cancel_conflicting(u32 anim, u8 cancel_conflicting);
 void T1_anim_commit(u32 anim);
 
 void T1_anim_rename_target_T1_id(u32 from_T1_id, u32 to_T1_id);
-
-void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
-    u32 T1_id,
-    f32 new_ignore_camera,
-    u32 cam_T1_id);
 #elif T1_ANIM_ACTIVE == T1_INACTIVE
 #else
 #error

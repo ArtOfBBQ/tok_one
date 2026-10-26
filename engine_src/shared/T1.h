@@ -407,11 +407,6 @@ void T1_delete_all(void);
 /*
 Animations affecting various T1 objects
 */
-// Toggles a zsprite's "no_cam" (0 or 1) without moving it on cam's screen
-void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
-    uint32_t T1_id,
-    float new_ignore_camera,
-    uint32_t cam_T1_id);
 void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
 void T1_anim_delete_all(void);
 
