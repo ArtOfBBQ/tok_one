@@ -25,6 +25,7 @@
 #define T1MTLWindingCounterClockwise 1
 #define T1MTLBlendOperationAdd 0
 #define T1MTLBlendFactorOne 1
+#define T1MTLBlendFactorOneMinusSourceAlpha 5
 #define T1MTLMutabilityImmutable 2
 #define T1MTLTextureType2D 2
 #define T1MTLTextureType2DArray 3
@@ -53,6 +54,14 @@
 #define T1MTLCommandBufferStatusCompleted 4
 
 #define T1MTLStoreActionStore 1
+
+// how a pipeline's color output combines with what's already drawn
+#define T1_GPU_BLEND_NONE     0
+// adds the output to what's there, so black adds nothing
+#define T1_GPU_BLEND_ADDITIVE 1
+// the output covers what's there by its alpha, its rgb must be
+// premultiplied by that alpha
+#define T1_GPU_BLEND_PREMULTIPLIED_ALPHA 2
 
 typedef struct {
     uintptr_t location;
@@ -416,7 +425,7 @@ static void * T1_gpu_new_render_pipeline_descriptor(
     void * vertex_shader,
     void * fragment_shader,
     b8 has_touch_tex,
-    b8 blending_enabled)
+    u8 blend_mode)
 {
     void * pool = T1_objc_autorelease_pool_push();
     void * desc = (void *)T1_objc_msg(
@@ -442,7 +451,8 @@ static void * T1_gpu_new_render_pipeline_descriptor(
             color_attachment_0,
             ags->sel_set_pixel_format,
             ags->pixel_format_renderpass1);
-        if (blending_enabled) {
+        T1_log_assert(blend_mode <= T1_GPU_BLEND_PREMULTIPLIED_ALPHA);
+        if (blend_mode != T1_GPU_BLEND_NONE) {
         T1_objc_msg_1arg(
             color_attachment_0,
             ags->sel_set_blending_enabled,
@@ -454,7 +464,9 @@ static void * T1_gpu_new_render_pipeline_descriptor(
         T1_objc_msg_1arg(
             color_attachment_0,
             ags->sel_set_dest_rgb_blend_factor,
-            T1MTLBlendFactorOne);
+            blend_mode == T1_GPU_BLEND_ADDITIVE ?
+                T1MTLBlendFactorOne :
+                T1MTLBlendFactorOneMinusSourceAlpha);
         T1_objc_msg_1arg(
             color_attachment_0,
             ags->sel_set_rgb_blend_operation,
@@ -1163,7 +1175,7 @@ void T1_os_gpu_try_shader_source(
         vertex_shader,
         z_prepass_fragment_shader,
         /* has touch tex: */ false,
-        /* blending_enabled: */ false);
+        /* blend_mode: */ T1_GPU_BLEND_NONE);
     void * z_prepass_pls = T1_gpu_new_render_pls(
         z_prepass_pls_desc, "z_prepass",
         &ok, error_recip, error_recip_cap);
@@ -1214,7 +1226,7 @@ void T1_os_gpu_try_shader_source(
             flat_billboard_quad_vert_shader,
             flat_billboard_quad_frag_shader,
             /* has_touch_tex: */ true,
-            /* blending_enabled: */ false);
+            /* blend_mode: */ T1_GPU_BLEND_NONE);
     void * bb_touch_pls = T1_gpu_new_render_pls(
         flat_billboard_quad_pls_desc, "billboard (touch)",
         &ok, error_recip, error_recip_cap);
@@ -1230,7 +1242,7 @@ void T1_os_gpu_try_shader_source(
             flat_texquad_vert_shader,
             flat_texquad_frag_shader,
             /* has_touch_tex: */ true,
-            /* blending_enabled: */ true);
+            /* blend_mode: */ T1_GPU_BLEND_PREMULTIPLIED_ALPHA);
     void * flat_texquad_touch_pls = T1_gpu_new_render_pls(
         flat_texquad_pls_desc, "texquad",
         &ok, error_recip, error_recip_cap);
@@ -1241,7 +1253,7 @@ void T1_os_gpu_try_shader_source(
             vertex_shader,
             fragment_shader,
             /* u8 has_touch_tex: */ true,
-            /* blending_enabled: */ false);
+            /* blend_mode: */ T1_GPU_BLEND_NONE);
     void * diamond_touch_pls = T1_gpu_new_render_pls(
         diamond_pls_desc, "diamond (touch)",
         &ok, error_recip, error_recip_cap);
@@ -1264,7 +1276,7 @@ void T1_os_gpu_try_shader_source(
             vertex_shader,
             alphablending_fragment_shader,
             true,
-            /* blending_enabled: */ true);
+            /* blend_mode: */ T1_GPU_BLEND_ADDITIVE);
     void * blend_touch_pls = T1_gpu_new_render_pls(
         alpha_pls_desc, "alphablending (touch)",
         &ok, error_recip, error_recip_cap);
@@ -1296,7 +1308,7 @@ void T1_os_gpu_try_shader_source(
             singlequad_vertex_shader,
             singlequad_fragment_shader,
             /* touch texture: */ false,
-            /* blending_enabled: */ true);
+            /* blend_mode: */ T1_GPU_BLEND_ADDITIVE);
     {
         // Match the drawable's pixelformat with BGRA
         void * color_attachments = (void *)T1_objc_msg(
