@@ -6,7 +6,7 @@
 /*
 A pipeline is a shader function (or a vertex and fragment function pair)
 from the client's shader source, referenced by name, plus the state that
-can't change after creation. Pipelines have a T1_id but no properties, and
+can't change after creation. Pipelines have an id (their own, not a T1_id) and no properties, and
 can't be animated or merged.
 */
 
@@ -32,7 +32,7 @@ typedef struct {
     // the kernel function's name for a compute pipeline
     c8  vertex_fn[T1_PIPELINE_FUNC_NAME_CAP];
     c8  fragment_fn[T1_PIPELINE_FUNC_NAME_CAP];
-    u32 T1_id; // T1_ID_NONE for an unused slot
+    u32 id; // T1_ID_NONE for an unused slot
     u8  is_compute;
     u8  blend;
     u8  cull;
@@ -57,8 +57,8 @@ u32 T1_pipeline_new_compute(
     const c8 * kernel_fn,
     u8 * good);
 
-// the index of the pipeline with this T1_id, or -1
-s32  T1_pipeline_T1_id_to_i(u32 T1_id);
-void T1_pipeline_delete(u32 T1_id);
+// the index of the pipeline with this id, or -1
+s32  T1_pipeline_id_to_i(u32 id);
+void T1_pipeline_delete(u32 id);
 
 #endif // T1_PIPELINE_H

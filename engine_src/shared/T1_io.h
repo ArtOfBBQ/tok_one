@@ -33,7 +33,6 @@ b8   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
 b8   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
 f32  T1_io_get_pos_x_this_frame(T1IOKey key); 
 f32  T1_io_get_pos_y_this_frame(T1IOKey key); 
-u32  T1_io_get_mouse_touch_id_this_frame(void);
 b8   T1_io_consume_mouse_drag(f32 * delta_x, f32 * delta_y);
 
 #endif // T1_IO_H

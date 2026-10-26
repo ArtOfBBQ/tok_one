@@ -39,8 +39,6 @@ typedef struct {
     T1IOFrameEventQueue frame_map[T1_IO_KEY_ABOVEBOUNDS];
     f32 last_drag_start_x;
     f32 last_drag_start_y;
-    u32 ondown_lclick_touch_id;
-    u32 cur_mouse_touch_id;
     b8  dragging;
     u8  pos_events_size;
 } T1IOState;
@@ -115,14 +113,6 @@ T1_io_register_keyup(u32 key_id, u8 debounces)
     
     T1_io->frame_map[key_id].is_down = 0;
     
-    if (
-        key_id == T1_IO_MOUSE_LCLICK &&
-        (T1_io->ondown_lclick_touch_id !=
-            T1_io->cur_mouse_touch_id))
-    {
-        return;
-    }
-    
     u64 last_down = T1_io->frame_map[key_id].
         last_down_timestamp;
     
@@ -187,11 +177,7 @@ T1_io_register_keydown(u32 key_id, u8 debounces)
         T1_io->dragging = 1;
         T1_io->last_drag_start_x = mouse_x;
         T1_io->last_drag_start_y = mouse_y;
-        
-        T1_io->ondown_lclick_touch_id =
-            T1_os_gpu_get_touch_id_at_screen_pos(
-                mouse_x,
-                mouse_y);
+
     }
     
     T1_io->frame_map[key_id].is_down = 1;
@@ -274,12 +260,7 @@ T1_io_update_and_clear_for_next_frame(void)
             T1_io->frame_map[i].list[j].is_active = 0;
         }
     }
-    
-    f32 mouse_x = T1_io_get_pos_x_this_frame(T1_IO_MOUSE);
-    f32 mouse_y = T1_io_get_pos_y_this_frame(T1_IO_MOUSE);
-    T1_io->cur_mouse_touch_id = T1_os_gpu_get_touch_id_at_screen_pos(
-        mouse_x,
-        mouse_y);
+
 }
 
 static b8 T1_io_key_consume_event(
@@ -327,10 +308,6 @@ b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key) {
 
 b8 T1_io_key_consume_long_tap_this_frame(T1IOKey key) {
     return T1_io_key_consume_event(key, 0, 1);
-}
-
-u32 T1_io_get_mouse_touch_id_this_frame(void) {
-    return T1_io->cur_mouse_touch_id;
 }
 
 b8 T1_io_consume_mouse_drag(

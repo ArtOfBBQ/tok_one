@@ -4,7 +4,6 @@
 #include "T1_objc.h"
 #include "T1_io.h"
 #include "T1_global.h"
-#include "T1_zsprite.h"
 #include "T1_os.h"
 #include "T1_gpu.h"
 #include "T1_gameloop.h"

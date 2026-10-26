@@ -10,10 +10,7 @@
 #include "T1_buf.h"
 #include "T1_embedded_data.h"
 #include "T1_objc.h"
-#include "T1_material.h"
-#include "T1_mesh_summary.h"
 #include "T1_tex_array.h"
-#include "T1_render_view.h"
 #include "T1_os.h"
 #include "T1_io.h"
 
@@ -181,27 +178,6 @@ typedef struct {
 } T1CGSize;
 
 /*
-The CPU only ever asks for the touch id under the mouse, so instead of
-reading back the whole touch id texture every frame we copy a small square
-around the mouse. There's one sample per frame in flight, and the CPU only
-reads a sample after the GPU has finished its frame.
-*/
-#define T1_GPU_TOUCH_SAMPLE_DIM 32
-
-typedef struct {
-    void * buffer; // id<MTLBuffer>, shared storage
-    void * combuf; // id<MTLCommandBuffer>, retained until its frame is done
-    u64 frame_no;
-    u32 x; // region of the touch id texture, in its pixels
-    u32 y;
-    u32 w;
-    u32 h;
-    u32 tex_w; // touch id texture size when sampled
-    u32 tex_h;
-    b8 valid; // false if the mouse was outside or nothing wrote touch ids
-} T1GPUTouchSample;
-
-/*
 A T1_buf_write() waiting for the next frame: its bytes were copied into
 staging right away, the frame's first blit copies them to the T1Buf
 */
@@ -270,29 +246,10 @@ typedef struct {
 typedef struct {
     uintptr_t pixel_format_renderpass1;
     T1MTLViewport window_viewport;
-    T1MTLViewport render_viewports[T1_RENDER_VIEW_CAP];
     
     void * device;
     void * lib;
     void * command_queue;
-    
-    void * polygon_buffers[T1_FRAMES_CAP];
-    void * matrix_buffers[T1_FRAMES_CAP];
-    void * light_buffers [T1_FRAMES_CAP];
-    void * vertex_buffers[T1_FRAMES_CAP];
-    void * flat_quad_buffers[T1_FRAMES_CAP];
-    void * flat_texquad_buffers[T1_FRAMES_CAP];
-    void * cam_buffers[T1_FRAMES_CAP];
-    void * frame_consts_buffers[T1_FRAMES_CAP];
-    void * locked_vertex_populator_buffer;
-    void * locked_vertex_buffer;
-    void * locked_matf32_populator_buffer;
-    void * locked_mats32_populator_buffer;
-    void * locked_matf32_buffer;
-    void * locked_mats32_buffer;
-    void * projection_constants_buffer;
-    
-    void * depth_textures[T1_RENDER_VIEW_CAP];
     
     // per T1_pipelines entry: its functions from lib ([1] is NULL for
     // compute), and a state per T1_GPU_TARGET_* combination ([0] for
@@ -310,8 +267,6 @@ typedef struct {
     #error
     #endif
     
-    // the T1Tex touch ids are read from, T1_TEX_NONE for none
-    T1Tex touch_tex;
     // A pass's T1_TEX_WINDOW, at window pixel size. This is the finished
     // frame; presenting copies it to the screen.
     void * final_texture;
@@ -320,11 +275,9 @@ typedef struct {
     // The drawableSize we last gave the CAMetalLayer
     u32 layer_drawable_w;
     u32 layer_drawable_h;
-    T1GPUTouchSample touch_samples[T1_FRAMES_CAP];
-    // CPU copy of the newest finished sample (buffer & combuf unused)
-    T1GPUTouchSample touch_latest;
-    u8 touch_latest_bytes[
-        T1_GPU_TOUCH_SAMPLE_DIM * T1_GPU_TOUCH_SAMPLE_DIM * 4];
+    // each frame in flight's command buffer (retained), see
+    // T1_gpu_wait_for_frame_slot()
+    void * frame_combufs[T1_FRAMES_CAP];
     u64 frames_encoded;
     
     // the client's T1Bufs, in private GPU memory, NULL for unused
@@ -336,8 +289,6 @@ typedef struct {
     // T1_buf_read_start()s, by read id
     T1GPUBufRead buf_reads[T1_BUF_READS_CAP];
     
-    // a camera's first pass of the frame clears its depth buffer
-    b8 cam_depth_cleared[T1_RENDER_VIEW_CAP];
     // the depth buffers of passes' "depth_tex"s, by T1Tex
     T1GPUTexDepth tex_depths[T1_GPU_TEX_DEPTHS_CAP];
     
@@ -439,7 +390,8 @@ typedef struct {
     void * sel_dispatch_threads_threadsperthreadgroup; // dispatchThreads:threadsPerThreadsGroup:
     void * sel_new_lib_with_source_options_error; // newLibraryWithSource:options:error:
     void * sel_description; // description 
-    T1PostProcessingVertex quad_vertices[6];
+    // what shaders get at T1_FRAME_CONSTS_I this frame
+    T1GPUFrameConsts frame_consts;
     f32 retina_scaling_factor;
     u8  frame_i;
     b8  metal_active;
@@ -543,17 +495,11 @@ void T1_apple_gpu_init(
 {
     if (*sticky_error != 0) { return; }
     
-    if (T1_cpu_to_gpu_data == NULL) {
-        *sticky_error = "T1_apple_gpu_init() before T1_cpu_to_gpu_data was allocated";
-        return;
-    }
-    
     void * pool = T1_objc_autorelease_pool_push();
     
     ags = T1_mem_malloc_unmanaged(sizeof(AppleGPUState));
     T1_std_memset(ags, 0, sizeof(AppleGPUState));
     ags->retina_scaling_factor = backing_scale_factor;
-    ags->touch_tex = T1_TEX_NONE;
     ags->pixel_format_renderpass1 = 0;
     
     ags->class_mtl_texture_desc = T1_objc_get_class("MTLTextureDescriptor");
@@ -762,167 +708,6 @@ void T1_apple_gpu_init(
         T1_objc_autorelease_pool_pop(pool);
         return;
     }
-    
-    for (
-        u32 fram_i = 0;
-        fram_i < T1_FRAMES_CAP;
-        fram_i++)
-    {
-        T1GPUFrame * f = &T1_cpu_to_gpu_data->
-            triple_buffers[fram_i];
-        
-        T1_assert(
-            T1_cpu_to_gpu_data->
-                polygons_alloc_size >=
-            (sizeof(T1GPUzSprite) *
-                T1_ZSPRITES_CAP));
-        
-        T1_assert(f->zsprite_list != NULL);
-        ags->polygon_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->zsprite_list->polygons,
-            T1_cpu_to_gpu_data->polygons_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        T1_assert(ags->polygon_buffers[fram_i] != NULL);
-        
-        ags->matrix_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->matrices,
-            T1_cpu_to_gpu_data->matrices_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        
-        ags->vertex_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->verts,
-            T1_cpu_to_gpu_data->vertices_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        
-        ags->flat_quad_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->flat_bb_quads,
-            T1_cpu_to_gpu_data->flat_quads_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        
-        ags->flat_texquad_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->flat_tex_quads,
-            T1_cpu_to_gpu_data->flat_texquads_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        
-        ags->frame_consts_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->frame_consts,
-            T1_cpu_to_gpu_data->frame_consts_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-        
-        ags->light_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->lights,
-            T1_cpu_to_gpu_data->lights_alloc_size,
-            T1MTLResourceStorageModeShared | T1MTLResourceUsageRead,
-            (uintptr_t)NULL);
-        
-        T1_assert(
-            T1_cpu_to_gpu_data->
-                render_views_alloc_size >=
-                    (sizeof(T1GPURenderView) *
-                        T1_RENDER_VIEW_CAP));
-        ags->cam_buffers[fram_i] = (void *)T1_objc_msg_4arg(
-            ags->device,
-            ags->sel_new_buffer_with_bytes_no_copy,
-            (uintptr_t)f->render_views,
-            T1_cpu_to_gpu_data->render_views_alloc_size,
-            T1MTLResourceStorageModeShared,
-            (uintptr_t)NULL);
-    }
-    
-    ags->locked_vertex_populator_buffer = (void *)T1_objc_msg_4arg(
-        ags->device,
-        ags->sel_new_buffer_with_bytes_no_copy,
-        (uintptr_t)T1_cpu_to_gpu_data->locked_vertices,
-        T1_cpu_to_gpu_data->locked_vertices_alloc_size,
-        T1MTLResourceStorageModeShared,
-        (uintptr_t)NULL);
-    
-    ags->locked_vertex_buffer = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_buf_with_len_options,
-        T1_cpu_to_gpu_data->locked_vertices_alloc_size,
-        T1MTLResourceStorageModePrivate);
-    
-    ags->locked_matf32_populator_buffer = (void *)T1_objc_msg_4arg(
-        ags->device,
-        ags->sel_new_buffer_with_bytes_no_copy,
-        (uintptr_t)T1_cpu_to_gpu_data->const_mats_f32,
-        T1_cpu_to_gpu_data->const_matsf32_alloc_size,
-        T1MTLResourceStorageModeShared,
-        (uintptr_t)NULL);
-    
-    ags->locked_matf32_buffer = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_buf_with_len_options,
-        T1_cpu_to_gpu_data->const_matsf32_alloc_size,
-        T1MTLResourceStorageModePrivate);
-    
-    ags->locked_mats32_populator_buffer = (void *)T1_objc_msg_4arg(
-        ags->device,
-        ags->sel_new_buffer_with_bytes_no_copy,
-        (uintptr_t)T1_cpu_to_gpu_data->const_mats_s32,
-        T1_cpu_to_gpu_data->const_matss32_alloc_size,
-        T1MTLResourceStorageModeShared,
-        (uintptr_t)NULL);
-    
-    ags->locked_mats32_buffer = (void *)T1_objc_msg_2arg(
-        ags->device,
-        ags->sel_new_buf_with_len_options,
-        T1_cpu_to_gpu_data->const_matss32_alloc_size,
-        T1MTLResourceStorageModePrivate);
-    
-    #define FLVERT 1.0f
-    #define TEX_MAX 1.0f
-    #define TEX_MIN 0.0f
-    ags->quad_vertices[0].position[0] =   FLVERT;
-    ags->quad_vertices[0].position[1] =  -FLVERT;
-    ags->quad_vertices[0].texcoord[0] =  TEX_MAX;
-    ags->quad_vertices[0].texcoord[1] =  TEX_MAX;
-    
-    ags->quad_vertices[1].position[0] =  -FLVERT;
-    ags->quad_vertices[1].position[1] =  -FLVERT;
-    ags->quad_vertices[1].texcoord[0] =  TEX_MIN;
-    ags->quad_vertices[1].texcoord[1] =  TEX_MAX;
-    
-    ags->quad_vertices[2].position[0] =  -FLVERT;
-    ags->quad_vertices[2].position[1] =   FLVERT;
-    ags->quad_vertices[2].texcoord[0] =  TEX_MIN;
-    ags->quad_vertices[2].texcoord[1] =  TEX_MIN;
-    
-    ags->quad_vertices[3].position[0] =   FLVERT;
-    ags->quad_vertices[3].position[1] =  -FLVERT;
-    ags->quad_vertices[3].texcoord[0] =  TEX_MAX;
-    ags->quad_vertices[3].texcoord[1] =  TEX_MAX;
-    
-    ags->quad_vertices[4].position[0] =  -FLVERT;
-    ags->quad_vertices[4].position[1] =   FLVERT;
-    ags->quad_vertices[4].texcoord[0] =  TEX_MIN;
-    ags->quad_vertices[4].texcoord[1] =  TEX_MIN;
-    
-    ags->quad_vertices[5].position[0] =   FLVERT;
-    ags->quad_vertices[5].position[1] =   FLVERT;
-    ags->quad_vertices[5].texcoord[0] =  TEX_MAX;
-    ags->quad_vertices[5].texcoord[1] =  TEX_MIN;
     
     ags->command_queue = (void *)T1_objc_msg(
         ags->device,
@@ -1155,7 +940,7 @@ static void * T1_gpu_pipeline_state(
 {
     if (pipeline_T1_id == T1_ID_NONE) { return NULL; }
 
-    s32 i = T1_pipeline_T1_id_to_i(pipeline_T1_id);
+    s32 i = T1_pipeline_id_to_i(pipeline_T1_id);
     T1_assert(i >= 0);
     if (i < 0) { return NULL; }
 
@@ -1263,7 +1048,7 @@ void T1_os_gpu_try_shader_source(
         sizeof(void *) * T1_GPU_TARGETS_SIZE * T1_PIPELINES_CAP);
 
     for (s32 i = 0; i < (s32)T1_pipelines_size; i++) {
-        if (T1_pipelines[i].T1_id == T1_ID_NONE) { continue; }
+        if (T1_pipelines[i].id == T1_ID_NONE) { continue; }
 
         T1_gpu_get_pipeline_funcs(
             lib, i, new_funcs[i], &ok, error_recip, error_recip_cap);
@@ -1475,105 +1260,6 @@ void T1_os_gpu_update_capacity_if_needed(
         // We were its only owner once metal_textures moved on
         T1_gpu_release(&prev_copy);
     }
-}
-
-/*
-Converts a window position (in points, origin bottom left, like mouse
-events) to a pixel of the touch id texture (origin top left).
-*/
-static b8 T1_gpu_screen_to_touch_tex_pos(
-    const f32 screen_x,
-    const f32 screen_y,
-    u32 * tex_x,
-    u32 * tex_y)
-{
-    if (
-        screen_x < 0 ||
-        screen_y < 0 ||
-        screen_x >= T1_global->window_wh[0] ||
-        screen_y >= T1_global->window_wh[1])
-    {
-        return false;
-    }
-    
-    if (ags->touch_tex == T1_TEX_NONE) { return false; }
-    u32 rtt_width  = T1_tex_get_width(ags->touch_tex);
-    u32 rtt_height = T1_tex_get_height(ags->touch_tex);
-    u32 win_width  = (u32)T1_global->window_wh[0];
-    u32 win_height = (u32)T1_global->window_wh[1];
-    
-    if (
-        rtt_width < 1 || rtt_height < 1 ||
-        win_width < 1 || win_height < 1)
-    {
-        return false;
-    }
-    
-    *tex_x = (u32)((screen_x * rtt_width) / win_width);
-    *tex_y = (u32)(((win_height - screen_y) * rtt_height) / win_height);
-    
-    if (*tex_x >= rtt_width ) { *tex_x = rtt_width - 1; }
-    if (*tex_y >= rtt_height) { *tex_y = rtt_height - 1; }
-    
-    return true;
-}
-
-u32 T1_os_gpu_get_touch_id_at_screen_pos(
-    f32 screen_x,
-    f32 screen_y)
-{
-    if (!ags || !ags->touch_latest.valid) {
-        return T1_TOUCH_ID_NONE;
-    }
-    
-    u32 tex_x;
-    u32 tex_y;
-    if (!T1_gpu_screen_to_touch_tex_pos(
-        screen_x,
-        screen_y,
-        &tex_x,
-        &tex_y))
-    {
-        return T1_TOUCH_ID_NONE;
-    }
-    
-    T1GPUTouchSample * sample = &ags->touch_latest;
-    
-    // Sampled before a resize, the pixels don't line up anymore
-    if (
-        ags->touch_tex == T1_TEX_NONE ||
-        sample->tex_w != T1_tex_get_width(ags->touch_tex) ||
-        sample->tex_h != T1_tex_get_height(ags->touch_tex))
-    {
-        return T1_TOUCH_ID_NONE;
-    }
-    
-    if (
-        tex_x <  sample->x ||
-        tex_y <  sample->y ||
-        tex_x >= sample->x + sample->w ||
-        tex_y >= sample->y + sample->h)
-    {
-        return T1_TOUCH_ID_NONE;
-    }
-    
-    u32 pixel_i =
-        ((tex_y - sample->y) * sample->w) + (tex_x - sample->x);
-    u8 * data = ags->touch_latest_bytes;
-    
-    // See shaders for the packing logic
-    u32 first_8bits  = data[(pixel_i*4)+0];
-    u32 second_8bits = data[(pixel_i*4)+1];
-    u32 third_8bits  = data[(pixel_i*4)+2];
-    u32 fourth_8bits = data[(pixel_i*4)+3];
-    
-    u32 uid =
-        (fourth_8bits << 24) |
-        (third_8bits  << 16) |
-        (second_8bits << 8) |
-        first_8bits;
-    
-    return uid;
 }
 
 void T1_os_gpu_delete_texture_array(
@@ -1894,84 +1580,6 @@ void T1_os_gpu_push_tex_slice(
     }
 }
 
-void T1_os_gpu_copy_locked_vertices(void)
-{
-    if (!ags || !ags->metal_active) { return; }
-    
-    T1_cpu_to_gpu_data->locked_vertices_size = T1_mesh_summary_all_vertices->size;
-    
-    void * combuf = (void *)T1_objc_msg(
-        ags->command_queue,
-        ags->sel_command_buffer);
-    
-    void * blit_copy_encoder = (void *)T1_objc_msg(
-        combuf,
-        ags->sel_blit_command_encoder);
-    
-    /*
-    - (void) copyFromBuffer:(id<MTLBuffer>) sourceBuffer 
-           sourceOffset:(NSUInteger) sourceOffset 
-               toBuffer:(id<MTLBuffer>) destinationBuffer 
-      destinationOffset:(NSUInteger) destinationOffset 
-                   size:(NSUInteger) size;
-    */
-    typedef void (* copy_from_buf_type)(void *, void *, void *, uintptr_t, void *, uintptr_t, uintptr_t);
-    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_copy_encoder,
-        ags->sel_copy_from_buffer_source_offset_to_buffer,
-        ags->locked_vertex_populator_buffer,
-        0,
-        ags->locked_vertex_buffer,
-        0,
-        T1_cpu_to_gpu_data->locked_vertices_alloc_size);
-    
-    T1_objc_msg(blit_copy_encoder, ags->sel_end_encoding);
-    
-    T1_objc_msg(combuf, ags->sel_commit);
-}
-
-void T1_os_gpu_copy_locked_materials(void)
-{
-    if (!ags || !ags->metal_active) { return; }
-    
-    T1_cpu_to_gpu_data->const_mats_size =
-        all_mesh_materials->size;
-    
-    void * combuf = (void *)T1_objc_msg(
-        ags->command_queue,
-        ags->sel_command_buffer);
-    
-    void * blit_copy_encoder = (void *)T1_objc_msg(
-        combuf,
-        ags->sel_blit_command_encoder);
-    
-    typedef void (* copy_from_buf_type)(void *, void *, void *, uintptr_t, void *, uintptr_t, uintptr_t);
-    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_copy_encoder,
-        ags->sel_copy_from_buffer_source_offset_to_buffer,
-        ags->locked_matf32_populator_buffer,
-        0,
-        ags->locked_matf32_buffer,
-        0,
-        T1_cpu_to_gpu_data->const_matsf32_alloc_size);
-    
-    ((copy_from_buf_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_copy_encoder,
-        ags->sel_copy_from_buffer_source_offset_to_buffer,
-        ags->locked_mats32_populator_buffer,
-        0,
-        ags->locked_mats32_buffer,
-        0,
-        T1_cpu_to_gpu_data->const_matss32_alloc_size);
-    
-    T1_objc_msg(
-        blit_copy_encoder,
-        ags->sel_end_encoding);
-    
-    T1_objc_msg(
-        combuf,
-        ags->sel_commit);
-}
 
 /*
 Returns a fresh, autoreleased MTLRenderPassDescriptor with no attachments,
@@ -2077,39 +1685,6 @@ static void * T1_gpu_tex_depth(u32 tex, u32 width, u32 height, b8 * clear) {
     return found->depth;
 }
 
-void T1_gpu_update_render_view_size(s32 at_i) {
-    T1_assert(at_i >= 0);
-    T1_assert(at_i < T1_RENDER_VIEW_CAP);
-    
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    ags->render_viewports[at_i].originX = 0;
-    ags->render_viewports[at_i].originY = 0;
-    ags->render_viewports[at_i].width   =
-        T1_render_views->cpu[at_i].width;
-    ags->render_viewports[at_i].height  =
-        T1_render_views->cpu[at_i].height;
-    T1_assert(ags->render_viewports[at_i].width > 0.0f);
-    T1_assert(ags->render_viewports[at_i].height > 0.0f);
-    
-    /*
-    These near/far values are the final viewport coordinates (after
-    fragment shader), not to be confused with
-    window_globals->projection_constants.near that's in our world space
-    and much larger numbers
-    */
-    ags->render_viewports[at_i].znear = 0.001f;
-    ags->render_viewports[at_i].zfar = 1.0f;
-    
-    
-    T1_gpu_release(&ags->depth_textures[at_i]);
-    ags->depth_textures[at_i] = T1_gpu_new_depth_texture(
-        T1_render_views->cpu[at_i].width,
-        T1_render_views->cpu[at_i].height);
-    
-    T1_objc_autorelease_pool_pop(pool);
-}
-
 /*
 Returns a new texture view (that the caller owns and must release) of one
 slice of a texture array.
@@ -2169,110 +1744,6 @@ static void T1_gpu_bind_texture_arrays(
     #else
     #error
     #endif
-}
-
-static void set_defaults_for_encoder(
-    void * encoder,
-    const u32 cam_i)
-{
-    T1_assert(cam_i < T1_RENDER_VIEW_CAP);
-
-    T1_objc_msg_1arg(encoder,
-        ags->sel_set_depth_clip_mode, T1MTLDepthClipModeClip);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->vertex_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 0);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->polygon_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 1);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->matrix_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 2);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->cam_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 3);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_bytes_length_atindex,
-            /* setVertexBytes: */ (uintptr_t)(void *)&cam_i,
-            /* offset: */ sizeof(u32),
-            /* atIndex: */ 4);
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->locked_vertex_buffer,
-            /* offset: */ 0,
-            /* atIndex: */ 5);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->locked_vertex_buffer,
-            /* offset: */ 0,
-            /* atIndex: */ 0);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->polygon_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 1);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->light_buffers[ags->frame_i],
-            /* offset: */
-                0,
-            /* atIndex: */
-                2);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->cam_buffers[ags->frame_i],
-            /* offset: */
-                0,
-            /* atIndex: */
-                3);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_bytes_length_atindex,
-            /* setFragmentBytes: */
-                (uintptr_t)(void *)&cam_i,
-            /* length: */
-                sizeof(u32),
-            /* atIndex: */
-                4);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->locked_matf32_buffer,
-            /* offset: */
-                0,
-            /* atIndex: */
-                6);
-
-    T1_objc_msg_3arg(encoder,
-        ags->sel_set_fragment_buffer_offset_atindex,
-            /* setFragmentBuffer: */
-                (uintptr_t)ags->locked_mats32_buffer,
-            /* offset: */
-                0,
-            /* atIndex: */
-                8);
 }
 
 /*
@@ -2593,20 +2064,28 @@ void T1_os_gpu_buf_delete(u32 buf_i) {
 }
 
 /*
-Binds the frame's T1GPUFrameConsts and the pass's "buf[k]"s, set_buffer
-being the encoder's set...Buffer:offset:atIndex:
+Binds the frame's T1GPUFrameConsts, the pass's "params[k]" and its
+"buf[k]"s, set_buffer and set_bytes being the encoder's
+set...Buffer:offset:atIndex: and set...Bytes:length:atIndex:
 */
 static void T1_gpu_bind_pass_buffers(
     void * enc,
     void * set_buffer,
+    void * set_bytes,
     const T1Pass * pass)
 {
     T1_objc_msg_3arg(
         enc,
-        set_buffer,
-        (uintptr_t)ags->frame_consts_buffers[ags->frame_i],
-        0,
+        set_bytes,
+        (uintptr_t)(void *)&ags->frame_consts,
+        sizeof(T1GPUFrameConsts),
         T1_FRAME_CONSTS_I);
+    T1_objc_msg_3arg(
+        enc,
+        set_bytes,
+        (uintptr_t)(void *)pass->u32s.params,
+        sizeof(u32) * T1_PARAMS_CAP,
+        T1_PARAMS_I);
     
     for (u32 k = 0; k < T1_PASS_BUFS_CAP; k++) {
         u32 buf = pass->u32s.buf[k];
@@ -2669,85 +2148,47 @@ static void T1_gpu_encode_clear_pass(
 
 static void T1_gpu_encode_draw_pass(
     const T1Pass * pass,
-    const T1GPUFrame * f,
     void * combuf)
 {
-    s32 pipeline_i = T1_pipeline_T1_id_to_i(pass->pipeline);
+    s32 pipeline_i = T1_pipeline_id_to_i(pass->pipeline);
     T1_assert(pipeline_i >= 0);
     if (pipeline_i < 0) { return; }
-
-    s32 cam_i = T1_render_view_T1_id_to_i(pass->u32s.cam);
-    // a camera is optional for these, the rest is drawn from one
-    b8 cam_optional =
-        pass->sources == T1_DRAW_FULLSCREEN ||
-        pass->sources == T1_DRAW_PROCEDURAL;
-    T1_assert(cam_i >= 0 || cam_optional);
-    if (cam_i < 0 && !cam_optional) { return; }
-
-    u32 verts_size = 0;
-    if (pass->sources & T1_DRAW_ZSPRITES) {
-        if (!T1_global->draw_triangles) { return; }
-        if (pass->sources & T1_DRAW_OPAQUE) {
-            verts_size +=
-                f->vert_ranges[T1_VERT_RANGE_OPAQUE].verts_size;
-        }
-        if (pass->sources & T1_DRAW_BLENDED) {
-            verts_size +=
-                f->vert_ranges[T1_VERT_RANGE_BLENDED].verts_size;
-        }
-        if (pass->sources & T1_DRAW_BLOOMING) {
-            verts_size +=
-                f->vert_ranges[T1_VERT_RANGE_BLOOMING].verts_size;
-        }
-    } else if (pass->sources == T1_DRAW_TEXQUADS) {
-        verts_size = f->flat_tex_quads_size * 6;
-    } else if (pass->sources == T1_DRAW_BILLBOARDS) {
-        verts_size = f->flat_bb_quads_size * 6;
-    } else if (pass->sources == T1_DRAW_FULLSCREEN) {
-        verts_size = 6;
-    } else if (pass->sources == T1_DRAW_PROCEDURAL) {
-        verts_size = pass->u32s.vertex_count;
-    } else {
-        T1_assert(0);
-    }
-
-    if (verts_size < 1) { return; }
-
+    
+    if (pass->u32s.vertex_count < 1) { return; }
+    
     void * desc = T1_gpu_new_render_pass_descriptor();
     void * color_attachments = (void *)T1_objc_msg(
         desc, ags->sel_color_attachments);
-
+    
     void * targets[T1_PASS_COLOR_TEXS_CAP];
     b8 owned[T1_PASS_COLOR_TEXS_CAP];
     u8 target_bits = 0;
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
         targets[k] = NULL;
         owned[k] = false;
-
+        
         u32 tex = pass->u32s.color_tex[k];
         if (tex == T1_TEX_NONE) { continue; }
-
+        
         // the window can only be the first target
         T1_assert(tex != T1_TEX_WINDOW || k == 0);
-
+        
         targets[k] = T1_gpu_pass_target(tex, &owned[k]);
         if (targets[k] == NULL) { continue; }
-
-        // every target must be the camera's size
+        
+        // every target must be the first one's size
         T1_assert(
-            cam_i < 0 ||
-            T1_objc_msg(targets[k], ags->sel_width) ==
-                T1_render_views->cpu[cam_i].width);
-        T1_assert(
-            cam_i < 0 ||
-            T1_objc_msg(targets[k], ags->sel_height) ==
-                T1_render_views->cpu[cam_i].height);
-
+            targets[0] == NULL ||
+            (T1_objc_msg(targets[k], ags->sel_width) ==
+                T1_objc_msg(targets[0], ags->sel_width) &&
+             T1_objc_msg(targets[k], ags->sel_height) ==
+                T1_objc_msg(targets[0], ags->sel_height)));
+        
         target_bits |= (u8)(T1_GPU_TARGET_COLOR_0 << k);
         if (tex == T1_TEX_WINDOW) {
             target_bits |= T1_GPU_TARGET_WINDOW;
         }
-
+        
         void * color_attachment = (void *)T1_objc_msg_1arg(
             color_attachments, ags->sel_object_at_indexed_subscript, k);
         T1_objc_msg_1arg(
@@ -2763,11 +2204,8 @@ static void T1_gpu_encode_draw_pass(
             ags->sel_set_store_action,
             T1MTLStoreActionStore);
     }
-
-    /*
-    The pass's "depth_tex"'s depth buffer, else its camera's. Either is
-    cleared by its first pass of the frame.
-    */
+    
+    // the "depth_tex"'s depth buffer, cleared by its first pass of the frame
     void * depth = NULL;
     b8 clear_depth = false;
     if (pass->u32s.depth_tex != T1_TEX_NONE) {
@@ -2785,25 +2223,11 @@ static void T1_gpu_encode_draw_pass(
                 (T1_objc_msg(targets[k], ags->sel_width) == depth_w &&
                  T1_objc_msg(targets[k], ags->sel_height) == depth_h));
         }
-    } else if (cam_i >= 0) {
-        // made (again) for cameras that are new, or new since T1_gpu_init()
-        if (
-            ags->depth_textures[cam_i] == NULL ||
-            T1_objc_msg(ags->depth_textures[cam_i], ags->sel_width) !=
-                T1_render_views->cpu[cam_i].width ||
-            T1_objc_msg(ags->depth_textures[cam_i], ags->sel_height) !=
-                T1_render_views->cpu[cam_i].height)
-        {
-            T1_gpu_update_render_view_size(cam_i);
-        }
-        depth = ags->depth_textures[cam_i];
-        clear_depth = !ags->cam_depth_cleared[cam_i];
-        ags->cam_depth_cleared[cam_i] = true;
     }
     
     if (depth != NULL) {
         target_bits |= T1_GPU_TARGET_DEPTH;
-
+        
         void * depth_attachm = (void *)T1_objc_msg(
             desc, ags->sel_depth_attachment);
         if (clear_depth) {
@@ -2827,15 +2251,15 @@ static void T1_gpu_encode_draw_pass(
             ags->sel_set_texture,
             (uintptr_t)depth);
     }
-
+    
     // nothing to draw into
     if ((target_bits & ~T1_GPU_TARGET_WINDOW) == 0) { return; }
-
+    
     void * enc = (void *)T1_objc_msg_1arg(
         combuf,
         ags->sel_render_cmd_enc_with_desc,
         (uintptr_t)desc);
-
+    
     T1_objc_msg_1arg(
         enc,
         ags->sel_set_render_pls,
@@ -2857,155 +2281,28 @@ static void T1_gpu_encode_draw_pass(
         enc,
         ags->sel_set_front_facing_winding,
         T1MTLWindingCounterClockwise);
-
-    u32 rv_i = cam_i >= 0 ? (u32)cam_i : 0;
-
-    T1_objc_msg_3arg(enc,
-        ags->sel_set_vertex_bytes_length_atindex,
-        (uintptr_t)(void *)pass->u32s.read_tex,
-        sizeof(u32) * T1_READ_TEXS_CAP,
-        T1_READ_TEXS_BUFFER_I);
-    T1_objc_msg_3arg(enc,
-        ags->sel_set_fragment_bytes_length_atindex,
-        (uintptr_t)(void *)pass->u32s.read_tex,
-        sizeof(u32) * T1_READ_TEXS_CAP,
-        T1_READ_TEXS_BUFFER_I);
+    
     T1_gpu_bind_texture_arrays(enc, ags->sel_set_fragment_texture_at_index);
     T1_gpu_bind_pass_buffers(
-        enc, ags->sel_set_vertex_buffer_offset_atindex, pass);
+        enc,
+        ags->sel_set_vertex_buffer_offset_atindex,
+        ags->sel_set_vertex_bytes_length_atindex,
+        pass);
     T1_gpu_bind_pass_buffers(
-        enc, ags->sel_set_fragment_buffer_offset_atindex, pass);
-
-    if (pass->sources & T1_DRAW_ZSPRITES) {
-        set_defaults_for_encoder(enc, rv_i);
-
-        const u32 range_bits[T1_VERT_RANGES_SIZE] = {
-            T1_DRAW_OPAQUE,
-            T1_DRAW_BLENDED,
-            T1_DRAW_BLOOMING,
-        };
-        for (u32 r = 0; r < T1_VERT_RANGES_SIZE; r++) {
-            if (
-                !(pass->sources & range_bits[r]) ||
-                f->vert_ranges[r].verts_size < 1)
-            {
-                continue;
-            }
-            T1_assert(
-                f->vert_ranges[r].vert_i +
-                    f->vert_ranges[r].verts_size <
-                        T1_MAX_VERTS_PER_BUFFER);
-            T1_assert(f->vert_ranges[r].verts_size % 3 == 0);
-            T1_objc_msg_3arg(
-                enc,
-                ags->sel_draw_primitives_vertex_start_vertex_count,
-                /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-                /* vertexStart   : */ (uintptr_t)f->vert_ranges[r].vert_i,
-                /* vertexCount   : */
-                    (uintptr_t)f->vert_ranges[r].verts_size);
-        }
-    } else if (pass->sources == T1_DRAW_TEXQUADS) {
-        T1_objc_msg_3arg(enc,
-            ags->sel_set_vertex_buffer_offset_atindex,
-                /* setVertexBuffer: */
-                    (uintptr_t)ags->flat_texquad_buffers[ags->frame_i],
-                /* offset: */ 0,
-                /* atIndex: */ 0);
-        T1_objc_msg_3arg(enc,
-            ags->sel_set_vertex_buffer_offset_atindex,
-                /* setVertexBuffer: */
-                    (uintptr_t)ags->matrix_buffers[ags->frame_i],
-                /* offset: */ 0,
-                /* atIndex: */ 2);
-        T1_objc_msg_3arg(enc,
-            ags->sel_set_vertex_buffer_offset_atindex,
-                /* setVertexBuffer: */
-                    (uintptr_t)ags->cam_buffers[ags->frame_i],
-                /* offset: */ 0,
-                /* atIndex: */ 3);
-        T1_objc_msg_3arg(enc,
-            ags->sel_set_vertex_bytes_length_atindex,
-                /* setVertexBytes: */ (uintptr_t)(void *)&rv_i,
-                /* length: */ sizeof(u32),
-                /* atIndex: */ 4);
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_draw_primitives_vertex_start_vertex_count,
-            /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-            /* vertexStart: */ 0,
-            /* vertexCount: */ (uintptr_t)verts_size);
-    } else if (pass->sources == T1_DRAW_BILLBOARDS) {
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->flat_quad_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 2);
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_set_vertex_buffer_offset_atindex,
-            /* setVertexBuffer: */
-                (uintptr_t)ags->cam_buffers[ags->frame_i],
-            /* offset: */ 0,
-            /* atIndex: */ 3);
-        T1_objc_msg_3arg(enc,
-            ags->sel_set_vertex_bytes_length_atindex,
-                /* setVertexBytes: */ (uintptr_t)(void *)&rv_i,
-                /* length: */ sizeof(u32),
-                /* atIndex: */ 4);
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_draw_primitives_vertex_start_vertex_count,
-            /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-            /* vertexStart: */ 0,
-            /* vertexCount: */ (uintptr_t)verts_size);
-    } else if (pass->sources == T1_DRAW_FULLSCREEN) {
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_set_vertex_bytes_length_atindex,
-            (uintptr_t)ags->quad_vertices,
-            sizeof(T1PostProcessingVertex)*6,
-            0);
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_draw_primitives_vertex_start_vertex_count,
-            /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-            /* vertexStart: */ 0,
-            /* vertexCount: */ 6);
-    } else if (pass->sources == T1_DRAW_PROCEDURAL) {
-        if (cam_i >= 0) {
-            void * set_buffer[2] = {
-                ags->sel_set_vertex_buffer_offset_atindex,
-                ags->sel_set_fragment_buffer_offset_atindex,
-            };
-            void * set_bytes[2] = {
-                ags->sel_set_vertex_bytes_length_atindex,
-                ags->sel_set_fragment_bytes_length_atindex,
-            };
-            for (u32 stage = 0; stage < 2; stage++) {
-                T1_objc_msg_3arg(enc,
-                    set_buffer[stage],
-                    (uintptr_t)ags->cam_buffers[ags->frame_i],
-                    0,
-                    3);
-                T1_objc_msg_3arg(enc,
-                    set_bytes[stage],
-                    (uintptr_t)(void *)&rv_i,
-                    sizeof(u32),
-                    4);
-            }
-        }
-        T1_objc_msg_3arg(
-            enc,
-            ags->sel_draw_primitives_vertex_start_vertex_count,
-            /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-            /* vertexStart: */ 0,
-            /* vertexCount: */ (uintptr_t)verts_size);
-    }
-
+        enc,
+        ags->sel_set_fragment_buffer_offset_atindex,
+        ags->sel_set_fragment_bytes_length_atindex,
+        pass);
+    
+    T1_objc_msg_3arg(
+        enc,
+        ags->sel_draw_primitives_vertex_start_vertex_count,
+        /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
+        /* vertexStart: */ (uintptr_t)pass->u32s.vertex_start,
+        /* vertexCount: */ (uintptr_t)pass->u32s.vertex_count);
+    
     T1_objc_msg(enc, ags->sel_end_encoding);
-
+    
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
         if (owned[k]) { T1_gpu_release(&targets[k]); }
     }
@@ -3047,13 +2344,11 @@ static void T1_gpu_encode_compute_pass(
             (uintptr_t)out,
             T1_WRITE_TEX_I);
     }
-    T1_objc_msg_3arg(
+    T1_gpu_bind_pass_buffers(
         enc,
+        ags->sel_set_buffer_offset_atindex,
         ags->sel_set_bytes_length_atindex,
-        (uintptr_t)(void *)pass->u32s.read_tex,
-        sizeof(u32) * T1_READ_TEXS_CAP,
-        T1_READ_TEXS_BUFFER_I);
-    T1_gpu_bind_pass_buffers(enc, ags->sel_set_buffer_offset_atindex, pass);
+        pass);
 
     // "threads", else one thread per pixel of the texture written to
     T1MTLSize grid;
@@ -3087,165 +2382,15 @@ static void T1_gpu_encode_compute_pass(
 }
 
 /*
-Once a sample's frame is done, copies it to touch_latest if it's the newest
-we've seen and lets go of its command buffer. With wait == false this does
-nothing for frames that are still in flight.
-*/
-static void T1_gpu_retire_touch_sample(
-    T1GPUTouchSample * sample,
-    const b8 wait)
-{
-    if (sample->combuf == NULL) {
-        return;
-    }
-    
-    if (wait) {
-        T1_objc_msg(sample->combuf, ags->sel_wait_until_completed);
-    }
-    
-    uintptr_t status = T1_objc_msg(sample->combuf, ags->sel_status);
-    if (status < T1MTLCommandBufferStatusCompleted) {
-        T1_assert(!wait);
-        return;
-    }
-    
-    // An invalid sample still replaces an older one, so we don't keep
-    // reporting touch ids that are no longer on screen
-    if (
-        status == T1MTLCommandBufferStatusCompleted &&
-        sample->frame_no > ags->touch_latest.frame_no)
-    {
-        if (sample->valid) {
-            T1_assert(sample->w * sample->h * 4 <=
-                sizeof(ags->touch_latest_bytes));
-            T1_std_memcpy(
-                /* void * dest: */
-                    ags->touch_latest_bytes,
-                /* const void * src: */
-                    (void *)T1_objc_msg(sample->buffer, ags->sel_contents),
-                /* u64 n_bytes: */
-                    sample->w * sample->h * 4);
-        }
-        ags->touch_latest = *sample;
-        ags->touch_latest.buffer = NULL;
-        ags->touch_latest.combuf = NULL;
-    }
-    
-    T1_objc_msg(sample->combuf, ags->sel_release);
-    sample->combuf = NULL;
-}
-
-/*
-Copies the touch ids in a small square around the mouse to the sample's
-buffer, to be read by the CPU after this frame is done.
-*/
-static void T1_gpu_encode_touch_sample(
-    void * combuf,
-    T1GPUTouchSample * sample)
-{
-    T1_assert(sample->combuf == NULL);
-    
-    if (sample->buffer == NULL) {
-        sample->buffer = (void *)T1_objc_msg_2arg(
-            ags->device,
-            ags->sel_new_buf_with_len_options,
-            T1_GPU_TOUCH_SAMPLE_DIM * T1_GPU_TOUCH_SAMPLE_DIM * 4,
-            T1MTLResourceStorageModeShared);
-        T1_assert(sample->buffer != NULL);
-    }
-    
-    // Retained so we can check on this frame later
-    sample->combuf = (void *)T1_objc_msg(combuf, ags->sel_retain);
-    sample->frame_no = ++ags->frames_encoded;
-    sample->valid = false;
-    
-    if (
-        ags->touch_tex == T1_TEX_NONE ||
-        ags->metal_textures[T1_tex_to_array_i(ags->touch_tex)] == NULL)
-    {
-        return;
-    }
-    sample->tex_w = T1_tex_get_width(ags->touch_tex);
-    sample->tex_h = T1_tex_get_height(ags->touch_tex);
-    
-    u32 mouse_x;
-    u32 mouse_y;
-    if (
-        sample->buffer == NULL ||
-        sample->tex_w < 1 ||
-        sample->tex_h < 1 ||
-        !T1_gpu_screen_to_touch_tex_pos(
-            T1_io_get_pos_x_this_frame(T1_IO_MOUSE),
-            T1_io_get_pos_y_this_frame(T1_IO_MOUSE),
-            &mouse_x,
-            &mouse_y))
-    {
-        return;
-    }
-    
-    // A square centered on the mouse, shifted to stay inside the texture
-    sample->w = sample->tex_w < T1_GPU_TOUCH_SAMPLE_DIM ?
-        sample->tex_w : T1_GPU_TOUCH_SAMPLE_DIM;
-    sample->h = sample->tex_h < T1_GPU_TOUCH_SAMPLE_DIM ?
-        sample->tex_h : T1_GPU_TOUCH_SAMPLE_DIM;
-    sample->x = mouse_x > sample->w / 2 ? mouse_x - sample->w / 2 : 0;
-    sample->y = mouse_y > sample->h / 2 ? mouse_y - sample->h / 2 : 0;
-    if (sample->x + sample->w > sample->tex_w) {
-        sample->x = sample->tex_w - sample->w;
-    }
-    if (sample->y + sample->h > sample->tex_h) {
-        sample->y = sample->tex_h - sample->h;
-    }
-    
-    void * blit_enc = (void *)T1_objc_msg(
-        combuf, ags->sel_blit_command_encoder);
-    
-    typedef void (* copy_from_tex_to_buf_type)(
-        void *, void *,
-        /* copyFromTexture:(id<MTLTexture>) */ void *,
-        /* sourceSlice:(NSUInteger)    : */ uintptr_t,
-        /* sourceLevel:(NSUInteger)    : */ uintptr_t,
-        /* sourceOrigin:(MTLOrigin)    : */ T1MTLOrigin,
-        /* sourceSize:(MTLSize)        : */ T1MTLSize,
-        /* toBuffer:(id<MTLBuffer>)    : */ void *,
-        /* destOffset:(NSUInteger)     : */ uintptr_t,
-        /* destBytesPerRow:(NSUInteger): */ uintptr_t,
-        /* destBytesPerImg:(NSUInteger): */ uintptr_t);
-    ((copy_from_tex_to_buf_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_enc,
-        ags->sel_copy_from_texture_to_buffer,
-        ags->metal_textures[T1_tex_to_array_i(ags->touch_tex)],
-        /* source_slice: */ (uintptr_t)T1_tex_to_slice_i(ags->touch_tex),
-        /* source_level: */ 0,
-        /* source_origin: */
-            T1_mtlorigin_make(sample->x, sample->y, 0),
-        /* source_size: */
-            T1_mtlsize_make(sample->w, sample->h, 1),
-        /* to_buffer: */ sample->buffer,
-        /* destination_offset: */ 0,
-        /* destination_bytes_per_row: */ sample->w * 4,
-        /* destination_bytes_per_image: */ sample->w * sample->h * 4);
-    
-    T1_objc_msg(blit_enc, ags->sel_end_encoding);
-    
-    sample->valid = true;
-}
-
-/*
-Pick up any finished frames' touch samples without blocking, then wait for
-the frame that last used this slot: its buffers (and touch sample) are about
-to be overwritten. This also limits the number of frames in flight to
-T1_FRAMES_CAP.
+Waits for the frame that last used this slot, T1_FRAMES_CAP frames ago:
+this limits the number of frames in flight.
 */
 static void T1_gpu_wait_for_frame_slot(void) {
-    for (u32 i = 0; i < T1_FRAMES_CAP; i++) {
-        T1_gpu_retire_touch_sample(
-            &ags->touch_samples[i],
-            /* wait: */ false);
-    }
-    T1_gpu_retire_touch_sample(
-        &ags->touch_samples[ags->frame_i],
-        /* wait: */ true);
+    void ** combuf = &ags->frame_combufs[ags->frame_i];
+    if (*combuf == NULL) { return; }
+    
+    T1_objc_msg(*combuf, ags->sel_wait_until_completed);
+    T1_gpu_release(combuf);
 }
 
 /*
@@ -3311,7 +2456,7 @@ Encodes and commits the client's passes, the window being
 ags->final_texture. Doesn't touch the screen.
 Returns false if nothing was rendered.
 */
-static b8 T1_gpu_render_frame(T1GPUFrame * f) {
+static b8 T1_gpu_render_frame(void) {
     if (!T1_gpu_ensure_final_texture()) {
         T1_assert(0);
         return false;
@@ -3332,9 +2477,6 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
         return false;
     }
     
-    for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
-        ags->cam_depth_cleared[i] = false;
-    }
     for (u32 i = 0; i < T1_GPU_TEX_DEPTHS_CAP; i++) {
         ags->tex_depths[i].cleared = false;
     }
@@ -3349,7 +2491,7 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
                 T1_gpu_encode_clear_pass(pass, combuf);
                 break;
             case T1_PASS_DRAW:
-                T1_gpu_encode_draw_pass(pass, f, combuf);
+                T1_gpu_encode_draw_pass(pass, combuf);
                 break;
             case T1_PASS_COMPUTE:
                 T1_gpu_encode_compute_pass(pass, combuf);
@@ -3361,9 +2503,10 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
     
     T1_gpu_encode_buf_reads(combuf);
     
-    T1_gpu_encode_touch_sample(
-        combuf,
-        &ags->touch_samples[ags->frame_i]);
+    ags->frames_encoded += 1;
+    T1_assert(ags->frame_combufs[ags->frame_i] == NULL);
+    ags->frame_combufs[ags->frame_i] =
+        (void *)T1_objc_msg(combuf, ags->sel_retain);
     
     ags->frame_i += 1;
     ags->frame_i %= T1_FRAMES_CAP;
@@ -3470,23 +2613,16 @@ b8 T1_gpu_present_final_texture(void * metal_layer) {
     return true;
 }
 
-T1GPUFrame * T1_os_gpu_begin_frame(void) {
+u8 T1_os_gpu_begin_frame(void) {
     if (!ags || !ags->metal_active || !ags->shaders_ready) {
-        return NULL;
+        return false;
     }
     
     void * pool = T1_objc_autorelease_pool_push();
-    
-    T1GPUFrame * f = &T1_cpu_to_gpu_data->
-        triple_buffers[ags->frame_i];
-    
-    T1_assert(f->verts_size % 3 == 0);
-    
     T1_gpu_wait_for_frame_slot();
-    
     T1_objc_autorelease_pool_pop(pool);
     
-    return f;
+    return true;
 }
 
 u8 T1_os_gpu_render_frame(void) {
@@ -3494,12 +2630,10 @@ u8 T1_os_gpu_render_frame(void) {
         return false;
     }
     
-    // The frame T1_os_gpu_begin_frame() returned, frame_i hasn't moved
-    T1GPUFrame * f = &T1_cpu_to_gpu_data->
-        triple_buffers[ags->frame_i];
+    ags->frame_consts = T1_global->frame_consts;
     
     if (
-        (f->frame_consts->timestamp -
+        (ags->frame_consts.timestamp -
             T1_global->last_resize_request_us)
                 < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
     {
@@ -3508,27 +2642,11 @@ u8 T1_os_gpu_render_frame(void) {
     
     void * pool = T1_objc_autorelease_pool_push();
     
-    b8 rendered = T1_gpu_render_frame(f);
+    b8 rendered = T1_gpu_render_frame();
     
     T1_objc_autorelease_pool_pop(pool);
     
     return rendered;
-}
-
-void T1_os_gpu_set_touch_tex(u16 tex) {
-    if (!ags) { return; }
-    ags->touch_tex = tex;
-}
-
-void T1_os_gpu_update_internal_render_viewport(
-    const s32 at_i)
-{
-    if (!ags || !ags->metal_active) { return; }
-    
-    T1_assert(at_i >= 0);
-    T1_assert(at_i < T1_RENDER_VIEW_CAP);
-    
-    T1_gpu_update_render_view_size(at_i);
 }
 
 void T1_os_gpu_update_window_viewport(void)

@@ -8,7 +8,6 @@ your platform
 #define T1_OS_H
 
 #include "T1_stdint.h"
-#include "T1_types_cpu_to_gpu.h"
 
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct {
@@ -202,18 +201,11 @@ void T1_os_enter_fullscreen(void);
 
 void T1_os_toggle_fullscreen(void);
 
-void T1_os_gpu_update_internal_render_viewport(
-    const s32 at_i);
 
 void T1_os_gpu_update_window_viewport(void);
 
-void T1_os_gpu_copy_locked_vertices(void);
 
-void T1_os_gpu_copy_locked_materials(void);
 
-u32 T1_os_gpu_get_touch_id_at_screen_pos(
-    f32 screen_x,
-    f32 screen_y);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_os_gpu_generate_mipmaps_for_texture_array(
@@ -290,7 +282,6 @@ void T1_os_gpu_pipeline_added(s32 pipeline_i, u8 * good);
 void T1_os_gpu_pipeline_deleted(s32 pipeline_i);
 
 // the texture touch ids are read from, T1_TEX_NONE for none
-void T1_os_gpu_set_touch_tex(u16 tex);
 
 // GPU memory of size zeroed bytes for T1Buf buf_i
 void T1_os_gpu_buf_new(u32 buf_i, u64 size, u8 * good);
@@ -332,11 +323,11 @@ void T1_os_window_blit_rgba(
     const u32 width,
     const u32 height);
 
-// Waits until the GPU is done with the next frame's buffers, then returns
-// them, or NULL if the GPU isn't ready to render.
-T1GPUFrame * T1_os_gpu_begin_frame(void);
-// Renders the frame returned by T1_os_gpu_begin_frame() into the final
-// texture. Returns false if nothing was rendered.
+// Waits until fewer than T1_FRAMES_CAP frames are in flight. False if the
+// GPU isn't ready to render.
+u8 T1_os_gpu_begin_frame(void);
+// Encodes the passes, rendering into the final texture. Returns false if
+// nothing was rendered.
 u8 T1_os_gpu_render_frame(void);
 
 #endif // T1_OS_H

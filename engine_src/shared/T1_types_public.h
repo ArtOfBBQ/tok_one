@@ -5,25 +5,8 @@
 
 #include "T1_types_public_gpucpu.h"
 
+// never a pipeline's or pass's id
 #define T1_ID_NONE 0xFFFFFFFF
-// retired objects are unaffected by animations
-#define T1_ID_RETIRED_BUT_NOT_DELETED 20501
-
-#define T1_TOUCH_ID_NONE 0xFFFFFFFF
-
-#define T1_ANIM_NO_EFFECT 0x0FFFFFFF
-#define T1_ANIM_HIT_EVERYTHING 0x0AAAAAAA
-
-// T1_anim_new() modes: animate to a value, or by an amount
-#define T1_ANIM_MODE_TO 1
-#define T1_ANIM_MODE_BY 2
-// never returned by T1_anim_new()
-#define T1_ANIM_NONE 0xFFFFFFFF
-
-// Basic quads and cubes are predefined, they can be used without registering
-// an .obj file.
-#define T1_BASIC_QUAD_MESH_ID 0
-#define T1_BASIC_CUBE_MESH_ID 1
 
 typedef uint16_t T1Tex;
 
@@ -170,16 +153,5 @@ typedef enum : uint16_t {
     T1_IO_GAMEPAD_OPTIONS        = 182,
     T1_IO_KEY_ABOVEBOUNDS, // must be last
 } T1IOKey;
-
-
-// Where a label's screen_x and screen_y are, see T1_text_request_label()
-typedef enum : uint8_t {
-    // x: the left edge, y: the middle of the top line
-    T1_TEXT_ALIGN_LEFT_TOP = 0,
-    // x: the middle of every line, y: the middle of the top line
-    T1_TEXT_ALIGN_CENTER_TOP,
-    // x: the middle of every line, y: the middle of all lines together
-    T1_TEXT_ALIGN_CENTER,
-} T1TextAlign;
 
 #endif // T1_PUBLIC_TYPES_H

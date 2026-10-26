@@ -3,18 +3,7 @@
 #include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_io.h"
-#include "T1_id.h"
-#include "T1_texquad.h"
 #include "T1_os.h"
-#include "T1_tex_array.h"
-#include "T1_text.h"
-#include "T1_render.h"
-#include "T1_zsprite.h"
-#include "T1_zlight.h"
-#include "T1_anim.h"
-#include "T1_particle.h"
-#include "T1_render_view.h"
-#include "T1_objmodel.h"
 
 u8 T1_gameloop_active = 0;
 
@@ -27,15 +16,12 @@ spin, see T1_window_set_fps_cap().
 #define T1_GAMELOOP_DEFAULT_FPS_CAP 60
 
 typedef struct {
-    // the frame between T1_frame_begin() and T1_frame_render(), or NULL
-    T1GPUFrame * frame;
+    b8 frame_begun; // between T1_frame_begin() and T1_frame_render()
     u64 previous_time;
     u64 frame_no;
     u32 loading_text_T1_id;
     b8 frame_should_update; // the client should run its update
     b8 frame_resized; // the window settled on a new size
-    b8 frame_post_update; // T1 has work to do after the client's update
-    b8 frame_tail; // fps text, timestamp etc.
     b8 frame_rendered; // since the last T1_window_poll_events()
     b8 frame_presented; // since the last T1_window_poll_events()
     u64 next_poll_us; // see T1_GAMELOOP_DEFAULT_FPS_CAP
@@ -60,15 +46,13 @@ void T1_frame_begin(void)
 {
     T1_gl_s->frame_should_update = 0;
     T1_gl_s->frame_resized = 0;
-    T1_gl_s->frame_post_update = 0;
-    T1_gl_s->frame_tail = 0;
+    T1_gl_s->frame_begun = 0;
     
-    // Waits until the GPU is done with this frame's buffers
-    T1GPUFrame * f = T1_os_gpu_begin_frame();
-    T1_gl_s->frame = f;
-    if (f == NULL) {
+    // Waits until the GPU is done with the frame T1_FRAMES_CAP ago
+    if (!T1_os_gpu_begin_frame()) {
         return;
     }
+    T1_gl_s->frame_begun = 1;
     
     T1_global->elapsed =
         T1_global->this_frame_timestamp_us -
@@ -81,21 +65,14 @@ void T1_frame_begin(void)
     T1_gl_s->previous_time =
         T1_global->this_frame_timestamp_us;
     
-    f->frame_consts->lights_size = 0;
-    f->verts_size = 0;
-    f->flat_bb_quads_size = 0;
-    f->flat_tex_quads_size = 0;
-    f->zsprite_list->size = 0;
-    
     if (!T1_gameloop_active) {
         return;
     }
     
-    T1_assert(f->lights != NULL);
-    T1_assert(f->render_views != NULL);
-    
     T1_global->this_frame_timestamp_us =
         T1_os_get_current_time_us();
+    T1_global->frame_consts.timestamp =
+        (u32)T1_global->this_frame_timestamp_us;
     
     if (T1_gl_s->previous_time < 1) {
         T1_gl_s->previous_time = T1_global->this_frame_timestamp_us;
@@ -115,8 +92,6 @@ void T1_frame_begin(void)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
-            // we break, not return, because we do want to render an
-            // empty screen
             return;
         } else {
             T1_global_init();
@@ -127,27 +102,10 @@ void T1_frame_begin(void)
             T1_gl_s->frame_resized = 1;
        }
     } else {
-        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_render_view_validate();
-        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        #if T1_ANIM_ACTIVE == T1_ACTIVE
-        T1_anim_resolve();
-        #elif T1_ANIM_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
         // The client runs its update between T1_frame_begin() and
         // T1_frame_render()
         T1_gl_s->frame_should_update = 1;
-        T1_gl_s->frame_post_update = 1;
     }
-    
-    T1_gl_s->frame_tail = 1;
 }
 
 u8 T1_frame_should_update(void) {
@@ -163,46 +121,12 @@ u64 T1_frame_elapsed_us(void) {
 }
 
 void T1_frame_render(void) {
-    T1GPUFrame * f = T1_gl_s->frame;
-    T1_gl_s->frame = NULL;
     T1_gl_s->frame_rendered = 0;
     
-    if (f == NULL) {
+    if (!T1_gl_s->frame_begun) {
         return;
     }
-    
-    if (T1_gl_s->frame_post_update) {
-        T1_zlight_clean_all_deleted();
-        
-        T1_zlight_copy_all(
-            f->lights,
-            &T1_global->frame_consts.lights_size);
-        
-        T1_render_view_update_positions(
-            T1_global->elapsed);
-        
-        T1_render_update(f, T1_global->elapsed);
-        
-        T1_texquad_defragment();
-        T1_zsprite_defragment();
-        
-        u32 overflow_vertices = f->verts_size % 3;
-        f->verts_size -= overflow_vertices;
-    }
-    
-    if (T1_gl_s->frame_tail) {
-        if (T1_global->draw_fps) {
-            T1_text_request_fps(T1_global->elapsed);
-        } else if (T1_global->draw_touch_id) {
-            T1_text_request_top_touch_id(
-                T1_io_get_mouse_touch_id_this_frame());
-        }
-        
-        f->frame_consts->timestamp = (u32)T1_global->
-            this_frame_timestamp_us;
-    }
-    
-    T1_objmodel_upload_new_meshes();
+    T1_gl_s->frame_begun = 0;
     
     T1_gl_s->frame_rendered = T1_os_gpu_render_frame();
 }

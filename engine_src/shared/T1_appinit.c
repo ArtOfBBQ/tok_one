@@ -9,28 +9,11 @@
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
 #include "T1_assert.h"
-#include "T1_tex.h"
-#include "T1_tex_files.h"
-#include "T1_objmodel.h"
 #include "T1_audio.h"
-#include "T1_zsprite.h"
-#include "T1_zlight.h"
-#include "T1_particle.h"
-#include "T1_text.h"
 #include "T1_io.h"
 #include "T1_global.h"
-#include "T1_texquad.h"
-#include "T1_anim.h"
-#include "T1_render.h"
 #include "T1_gameloop.h"
-#include "T1_token.h"
-#include "T1_mtlparser.h"
-#include "T1_objparser.h"
-#include "T1_particle.h"
-#include "T1_mesh_summary.h"
-#include "T1_material.h"
 #include "T1_tex_array.h"
-#include "T1_render_view.h"
 #include "T1_fatal_error.h"
 
 #include "T1_os.h"
@@ -60,15 +43,6 @@ static void test_simd_struct(
 static void test_simd_functions_f32s(char ** const fatal_error) {
     if (*fatal_error != 0) { return; }
     
-    test_simd_struct_macro(fatal_error, T1zLight);
-    test_simd_struct_macro(fatal_error, T1GPURenderView);
-    test_simd_struct_macro(fatal_error, T1GPUzSpritef32);
-    test_simd_struct_macro(fatal_error, T1GPUzSpriteu32);
-    test_simd_struct_macro(fatal_error, T1CPUzSpritef32);
-    test_simd_struct_macro(fatal_error, T1GPUMatf32);
-    test_simd_struct_macro(fatal_error, T1GPUMatu32);
-    test_simd_struct_macro(fatal_error, T1GPUTexQuadf32);
-    test_simd_struct_macro(fatal_error, T1GPUTexQuadu32);
     test_simd_struct_macro(fatal_error, T1SimdTestStruct);
     
     T1SimdTestStruct * structs = T1_mem_malloc_managed(
@@ -178,13 +152,6 @@ static void test_simd_functions_f32s(char ** const fatal_error) {
 #error
 #endif
 
-static u32 pad_to_page_size(u32 base_allocation) {
-    u32 return_value = base_allocation +
-        (T1_mem_page_size - (base_allocation % T1_mem_page_size));
-    T1_assert(return_value % T1_mem_page_size == 0);
-    return return_value;
-}
-
 void T1_init(
     void * (* alloc_forever)(size_t size),
     void * (* alloc_temp)(size_t size),
@@ -242,18 +209,6 @@ void T1_init(
     #else
     #error
     #endif
-    
-    T1_token_init(
-        T1_std_memset,
-        T1_std_strlen,
-        T1_mem_malloc_managed,
-        fatal_error);
-    
-    T1_objparser_init(T1_mem_malloc_managed, T1_mem_free_managed);
-    T1_mtlparser_init(
-        T1_std_memset,
-        T1_mem_malloc_managed,
-        T1_std_strlcat);
     
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
@@ -404,267 +359,18 @@ void T1_init(
 
 
 /*
-Everything that only matters when T1 renders: zsprites, texquads, lights,
-cameras, passes, text, animations and the buffers the GPU
-reads. Apps that blit their own pixels never pay for these.
+What only matters when T1 renders: pipelines, passes, buffers and texture
+arrays. Apps that blit their own pixels never pay for these.
 */
 static void T1_appinit_gpu_modules(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return; }
     
-    T1_texquad_init();
-    
     T1_pipeline_init();
-    
     T1_pass_init();
-    
     T1_buf_init();
-    
-    T1_zsprite_init();
-    
-    T1_material_init(T1_mem_malloc_unmanaged);
-    
-    T1_objmodel_init();
-    T1_zlights = (T1zLight *)T1_mem_malloc_unmanaged(
-        sizeof(T1zLight) * T1_ZLIGHTS_CAP);
-    if (!T1_zlights) { *fatal_error = "Malloc fail"; return; }
-    T1_std_memset(
-        T1_zlights,
-        0,
-        sizeof(T1zLight) * T1_ZLIGHTS_CAP);
-    
-    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-    T1_particle_init();
-    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    #if T1_ANIM_ACTIVE == T1_ACTIVE
-    T1_anim_init(
-        T1_os_init_mutex_and_return_id,
-        T1_os_mutex_lock,
-        T1_os_mutex_unlock);
-    #elif T1_ANIM_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_ANIM_ACTIVE undefined!"
-    #endif
-    
     T1_tex_array_init();
-    
-    T1_assert(T1_embedded_data_fontmetrics_dat_size > 0);
-    
-    T1_text_init(
-        T1_mem_malloc_unmanaged,
-        (const char *)T1_embedded_data_fontmetrics_dat,
-        T1_embedded_data_fontmetrics_dat_size);
-    
-    T1_render_view_init();
-    
-    T1_render_init();
-    
-    T1_cpu_to_gpu_data = T1_mem_malloc_unmanaged(
-        sizeof(T1CPUToGPUData));
-    if (!T1_cpu_to_gpu_data) { *fatal_error = "Malloc fail"; return; }
-    T1_std_memset(T1_cpu_to_gpu_data, 0, sizeof(T1CPUToGPUData));
-    
-    T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
-    T1_assert(sd != NULL);
-    
-    // init the buffers that contain our vertices to send to the GPU
-    sd->vertices_alloc_size = pad_to_page_size(
-        sizeof(T1GPUVertexIndices) *
-            T1_MAX_VERTS_PER_BUFFER);
-    T1_assert(sd->vertices_alloc_size > 0);
-    
-    sd->flat_quads_alloc_size =
-        pad_to_page_size(sizeof(T1GPUFlatQuad) *
-            T1_MAX_FLATQUADS_PER_BUFFER);
-    
-    sd->flat_texquads_alloc_size =
-        pad_to_page_size(sizeof(T1GPUTexQuad) *
-            T1_MAX_TEXQUADS_PER_BUFFER);
-    
-    sd->polygons_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUzSprite) *
-                T1_ZSPRITES_CAP);
-    
-    sd->matrices_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUzSpriteMatrices) *
-                T1_ZSPRITES_CAP);
-    
-    sd->lights_alloc_size =
-        pad_to_page_size(sizeof(T1GPULight) *
-            T1_ZLIGHTS_CAP);
-    
-    sd->render_views_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPURenderView) *
-                T1_RENDER_VIEW_CAP);
-    
-    sd->locked_vertices_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPULockedVertex) *
-                T1_LOCKED_VERTEX_CAP);
-    
-    sd->const_matsf32_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUMatf32) *
-                T1_ALL_LOCKED_MATERIALS_SIZE);
-    
-    sd->const_matss32_alloc_size =
-        pad_to_page_size(
-            sizeof(T1GPUMatu32) *
-                T1_ALL_LOCKED_MATERIALS_SIZE);
-    
-    sd->frame_consts_alloc_size =
-        pad_to_page_size(sizeof(T1GPUFrameConsts));
-    
-    for (
-        u32 cur_frame_i = 0;
-        cur_frame_i < T1_FRAMES_CAP;
-        cur_frame_i++)
-    {
-        T1GPUFrame * f =
-            &sd->triple_buffers[cur_frame_i];
-        
-        f->verts = (T1GPUVertexIndices *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->vertices_alloc_size,
-                T1_mem_page_size);
-        if (!f->verts) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        f->flat_bb_quads = (T1GPUFlatQuad *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->flat_quads_alloc_size,
-                T1_mem_page_size);
-        if (!f->flat_bb_quads) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        f->flat_tex_quads = (T1GPUTexQuad *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->flat_texquads_alloc_size,
-                T1_mem_page_size);
-        if (!f->flat_tex_quads) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        f->zsprite_list = (T1GPUzSpriteList *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->polygons_alloc_size,
-                T1_mem_page_size);
-        if (!f->zsprite_list) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        T1_assert(sd->lights_alloc_size > 0);
-        f->lights = (T1GPULight *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->lights_alloc_size,
-                T1_mem_page_size);
-        if (!f->lights) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        f->render_views = (T1GPURenderView *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->render_views_alloc_size,
-                T1_mem_page_size);
-        if (!f->render_views) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        
-        T1_std_memset_f32(
-            f->render_views,
-            0.0f,
-            sizeof(T1GPURenderView) *
-                T1_RENDER_VIEW_CAP);
-        
-        f->frame_consts = (T1GPUFrameConsts *)
-            T1_mem_malloc_unmanaged_aligned(
-                sd->frame_consts_alloc_size,
-                T1_mem_page_size);
-        if (!f->frame_consts) {
-            *fatal_error = "Malloc fail";
-            return;
-        }
-        T1_std_memset(f->frame_consts, 0, sd->frame_consts_alloc_size);
-    }
-    
-    sd->locked_vertices =
-        (T1GPULockedVertex *)T1_mem_malloc_unmanaged_aligned(
-            sd->locked_vertices_alloc_size,
-            T1_mem_page_size);
-    if (!sd->locked_vertices) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memset(
-        sd->locked_vertices,
-        0,
-        sd->locked_vertices_alloc_size);
-    
-    sd->const_mats_f32 = (T1GPUMatf32 *)
-        T1_mem_malloc_unmanaged_aligned(
-            sd->const_matsf32_alloc_size,
-            T1_mem_page_size);
-    if (!sd->const_mats_f32) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memset(
-        sd->const_mats_f32,
-        0,
-        sd->const_matsf32_alloc_size);
-    
-    sd->const_mats_s32 = (T1GPUMatu32 *)
-        T1_mem_malloc_unmanaged_aligned(
-            sd->const_matss32_alloc_size,
-            T1_mem_page_size);
-    if (!sd->const_mats_s32) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memset(
-        sd->const_mats_s32,
-        0,
-        sd->const_matss32_alloc_size);
-}
-
-/*
-The GPU resources T1 itself needs: font images, the window's viewport. These come before the client creates its own textures.
-*/
-static void T1_appinit_gpu_resources(
-    char ** const fatal_error)
-{
-    if (*fatal_error != 0) { return; }
-    
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    T1_tex_files_load_font_images(fatal_error);
-    
-    T1_objc_autorelease_pool_pop(pool);
-    
-    if (*fatal_error != 0) { return; }
-    
-    pool = T1_objc_autorelease_pool_push();
-    
-    T1_os_gpu_update_window_viewport();
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_gpu_init(
@@ -682,7 +388,11 @@ void T1_gpu_init(
     T1_objc_autorelease_pool_pop(pool);
     
     T1_os_gpu_init(fatal_error);
-    T1_appinit_gpu_resources(fatal_error);
+    if (*fatal_error != 0) { return; }
+    
+    pool = T1_objc_autorelease_pool_push();
+    T1_os_gpu_update_window_viewport();
+    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_gpu_try_shader_source(

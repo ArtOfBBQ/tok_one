@@ -161,17 +161,17 @@ int main(void) {
 
     // The frame: move the particles, clear the window, draw them
     uint32_t step_pass = T1_pass_new_compute(step);
-    T1_set_u32(step_pass, "buf[0]", particles);
-    T1_set_u32(step_pass, "buf[1]", settings_buf);
-    T1_set_u32(step_pass, "threads[0]", PARTICLES);
+    T1_pass_set_u32(step_pass, "buf[0]", particles);
+    T1_pass_set_u32(step_pass, "buf[1]", settings_buf);
+    T1_pass_set_u32(step_pass, "threads[0]", PARTICLES);
 
     T1_pass_new_clear(T1_TEX_WINDOW, 0.0f, 0.0f, 0.02f, 1.0f);
 
-    uint32_t draw_pass = T1_pass_new_draw(draw, T1_DRAW_PROCEDURAL);
-    T1_set_u32(draw_pass, "color_tex[0]", T1_TEX_WINDOW);
-    T1_set_u32(draw_pass, "buf[0]", particles);
-    T1_set_u32(draw_pass, "buf[1]", settings_buf);
-    T1_set_u32(draw_pass, "vertex_count", PARTICLES * 6);
+    uint32_t draw_pass = T1_pass_new_draw(draw);
+    T1_pass_set_u32(draw_pass, "color_tex[0]", T1_TEX_WINDOW);
+    T1_pass_set_u32(draw_pass, "buf[0]", particles);
+    T1_pass_set_u32(draw_pass, "buf[1]", settings_buf);
+    T1_pass_set_u32(draw_pass, "vertex_count", PARTICLES * 6);
 
     uint32_t read = T1_BUF_READ_NONE;
     uint64_t next_read_us = 0;

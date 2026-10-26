@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "T1_types_cpu_to_gpu.h"
 
 extern u8 T1_gameloop_active;
 

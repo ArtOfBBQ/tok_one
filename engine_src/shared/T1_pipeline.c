@@ -4,15 +4,16 @@
 #include "T1_std.h"
 #include "T1_assert.h"
 #include "T1_mem.h"
-#include "T1_id.h"
 #include "T1_os.h"
 
 T1Pipeline * T1_pipelines = NULL;
 u32 T1_pipelines_size = 0;
+// ids are never reused
+static u32 T1_pipeline_next_id = 1;
 
 static s32 T1_pipeline_fetch_next(void) {
     for (u32 i = 0; i < T1_pipelines_size; i++) {
-        if (T1_pipelines[i].T1_id == T1_ID_NONE) { return (s32)i; }
+        if (T1_pipelines[i].id == T1_ID_NONE) { return (s32)i; }
     }
 
     T1_assert(T1_pipelines_size < T1_PIPELINES_CAP);
@@ -57,15 +58,15 @@ static u32 T1_pipeline_new(
     p->is_compute = is_compute;
     p->blend = blend;
     p->cull = cull;
-    p->T1_id = T1_id_next_nonui_id();
+    p->id = T1_pipeline_next_id++;
 
     T1_os_gpu_pipeline_added(i, good);
     if (!*good) {
-        p->T1_id = T1_ID_NONE;
+        p->id = T1_ID_NONE;
         return T1_ID_NONE;
     }
 
-    return p->T1_id;
+    return p->id;
 }
 
 u32 T1_pipeline_new_draw(
@@ -86,29 +87,29 @@ u32 T1_pipeline_new_compute(
         kernel_fn, NULL, 1, T1_BLEND_NONE, T1_CULL_NONE, good);
 }
 
-s32 T1_pipeline_T1_id_to_i(u32 T1_id) {
-    if (T1_id == T1_ID_NONE) { return -1; }
+s32 T1_pipeline_id_to_i(u32 id) {
+    if (id == T1_ID_NONE) { return -1; }
 
     for (u32 i = 0; i < T1_pipelines_size; i++) {
-        if (T1_pipelines[i].T1_id == T1_id) { return (s32)i; }
+        if (T1_pipelines[i].id == id) { return (s32)i; }
     }
 
     return -1;
 }
 
-void T1_pipeline_delete(u32 T1_id) {
-    s32 i = T1_pipeline_T1_id_to_i(T1_id);
+void T1_pipeline_delete(u32 id) {
+    s32 i = T1_pipeline_id_to_i(id);
     if (i < 0) { return; }
 
     T1_os_gpu_pipeline_deleted(i);
-    T1_pipelines[i].T1_id = T1_ID_NONE;
+    T1_pipelines[i].id = T1_ID_NONE;
 }
 
 void T1_pipeline_init(void) {
     T1_pipelines = T1_mem_malloc_unmanaged(
         sizeof(T1Pipeline) * T1_PIPELINES_CAP);
     for (u32 i = 0; i < T1_PIPELINES_CAP; i++) {
-        T1_pipelines[i].T1_id = T1_ID_NONE;
+        T1_pipelines[i].id = T1_ID_NONE;
     }
     T1_pipelines_size = 0;
 }

@@ -5,8 +5,6 @@
 #include "T1_mem.h"
 #include "T1_assert.h"
 #include "T1_global.h"
-#include "T1_zsprite.h"
-#include "T1_texquad.h"
 
 #include <pthread.h>
 #include <errno.h> // for pthread consts like EBUSY, EPERM

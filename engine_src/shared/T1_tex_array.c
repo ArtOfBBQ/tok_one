@@ -4,7 +4,6 @@
 #include "T1_mem.h"
 #include "T1_os.h"
 // #include "T1_cpu_gpu_shared_types.h"
-#include "T1_render_view.h"
 
 static u32 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
 

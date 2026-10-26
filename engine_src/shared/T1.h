@@ -3,9 +3,8 @@
 
 /*
 Search for documentation by section:
-  APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT,
-  OBJECTS AND PROPERTIES, ANIMATIONS, CAMERAS, TEXT LABELS, TEXTURES,
-  RENDERING, BUFFERS, 3-D MODELS, FILES, OPERATING SYSTEM, AUDIO
+  APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT, TEXTURES,
+  RENDERING, BUFFERS, FILES, OPERATING SYSTEM, AUDIO
 
 The macro settings at the top are yours to edit.
 */
@@ -30,9 +29,7 @@ The GPU steps are optional. Without them, you draw your own pixels and
 show them with T1_window_blit_rgba(), see examples/ for the smallest app,
 and T1 doesn't allocate anything for rendering. If you use the GPU, call
 T1_gpu_init() before you use anything that renders: textures, buffers,
-cameras, zsprites, texquads, lights, text, passes or animations.
-Textures (T1_tex_new) are uploaded as you create them, meshes and materials
-when the next frame is rendered, so you can register either at any time.
+pipelines or passes.
 
 T1 never shows errors in the window. Problems at startup come back through
 fatal_error; when T1 catches a bug (a failed check, see T1_ASSERTS_ACTIVE),
@@ -163,172 +160,9 @@ uint8_t   T1_io_key_is_down(T1IOKey key);
 uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key);
 uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
 uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
-uint32_t  T1_io_get_mouse_touch_id_this_frame(void);
 float     T1_io_get_pos_x_this_frame(T1IOKey key); 
 float     T1_io_get_pos_y_this_frame(T1IOKey key);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y);
-
-/*
-OBJECTS AND PROPERTIES
-These are all for GPU rendering
-Objects by T1_id (zsprites, texquads, zlights and cameras), with properties
-set by name (e.g. "xyz[0]", "alpha"). Every new object gets a unique T1_id
-and is visible from the next frame on. Merging makes objects share a T1_id,
-so they react to the same animations (e.g. move together) the same concept
-has the same name on every kind of object to facilitate that.
-
-"layers" (zsprites, texquads, zlights and text labels, default 1) and
-"visible_layers" (cameras, default every bit) are bitmasks whose meaning is
-up to you: a camera draws the objects and uses the lights whose layers share
-a bit with its visible_layers. layers 0 hides an object from every camera.
-
-zsprites' "mix_cam" takes a camera's T1_id: mix in the image (that you drew
-from) that camera, its T1Tex is "mix_texture". T1_ID_NONE undoes it.
-
-zlights' "shadow_cam" takes a camera's T1_id, which then follows the light;
-your shaders pack its depth into the light's "shadow_tex" (a T1Tex).
-T1_ID_NONE for no shadows.
-*/
-uint32_t T1_zsprite_new(int32_t mesh_id);
-uint32_t T1_zsprite_new_quad(
-    float mid_x,
-    float mid_y,
-    float z,
-    float width,
-    float height);
-uint32_t T1_texquad_new(void);
-uint32_t T1_zlight_new(void);
-void T1_set_f32(
-    uint32_t T1_id,
-    const char * property,
-    float value);
-void T1_set_u32(
-    uint32_t T1_id,
-    const char * property,
-    uint32_t value);
-/*
-Gives everything with T1_id_to_add the T1_id T1_id_to_keep. T1_id_to_add is
-recycled for later objects, so stop using it.
-*/
-void T1_merge_T1_ids(
-    uint32_t T1_id_to_add,
-    uint32_t T1_id_to_keep);
-// Deletes every zsprite, texquad, zlight and camera with this T1_id
-void T1_delete(uint32_t T1_id);
-// Deletes every zsprite, texquad and zlight, cameras and passes stay
-void T1_delete_all(void);
-
-// T1_ids
-#define T1_ID_FPS_COUNTER 0
-#define T1_ID_MAX 8000
-#define T1_ID_FIRST_NONUI_TOUCH 1001
-uint32_t  T1_id_next_nonui_id(void);
-
-/*
-ANIMATIONS
-*/
-void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
-void T1_anim_delete_all(void);
-
-/*
-Animations by property name. mode is T1_ANIM_MODE_TO or T1_ANIM_MODE_BY.
-The returned handle is only valid until it's committed. f32 properties
-interpolate, u32 properties jump to their value at the end (TO mode only).
-*/
-uint32_t T1_anim_new(uint32_t T1_id, uint8_t mode);
-void T1_anim_set_f32(
-    uint32_t anim,
-    const char * property,
-    float value);
-void T1_anim_set_u32(
-    uint32_t anim,
-    const char * property,
-    uint32_t value);
-void T1_anim_set_duration_us(uint32_t anim, uint64_t duration_us);
-void T1_anim_set_pause_us(uint32_t anim, uint64_t pause_us);
-// easing maps the anim's t (0 to 1) to how far along its values are, NULL
-// (the default) is linear
-void T1_anim_set_easing(uint32_t anim, float (* easing)(float t));
-void T1_anim_set_runs(uint32_t anim, uint32_t runs); // 0 = forever
-void T1_anim_set_delete_target_on_finish(
-    uint32_t anim,
-    uint8_t delete_target);
-// On commit, deletes the TO anims on the same T1_id that animate any of
-// this anim's properties
-void T1_anim_set_cancel_conflicting(
-    uint32_t anim,
-    uint8_t cancel_conflicting);
-// A duration of 1 microsecond and no pause applies the anim immediately
-void T1_anim_commit(uint32_t anim);
-
-/*
-CAMERAS
-
-A camera is a viewpoint of a size, which draw passes (see RENDERING) draw
-from. Every camera has its own depth buffer at its size, the camera's first
-draw pass of the frame clears it.
-
-Cameras are T1 objects like zsprites (see below): they have a T1_id, you set
-and animate them by property name, merge them into groups and T1_delete()
-them. Their properties: "xyz[0]" and "angle_xyz[0]" (to [2]) are where the
-camera is now. It eases towards "dest_xyz[0]" and "dest_angle_xyz[0]" over
-"us_to_destination" (u32) microseconds, kept within "min_xyz[0]"/"max_xyz[0]"
-and "min_angle_xyz[0]"/"max_angle_xyz[0]". "clamped_to_T1_id" (u32) makes
-it follow a zsprite, "movement_enabled" (u32) lets it move at all.
-"reflect_cam" (u32, a camera's T1_id) makes it mirror that camera around
-the plane at z = "reflect_plane_z", T1_ID_NONE stops that.
-*/
-uint32_t T1_cam_new(uint32_t width, uint32_t height);
-void     T1_cam_reset(uint32_t T1_id);
-void     T1_cam_delete_all(void);
-
-// From pixels on cam's screen (its width * height, top left is 0, 0) to
-// the world units at z that zsprites are positioned in
-float T1_screen_x_to_x(uint32_t cam_T1_id, float screen_x, float at_z);
-float T1_screen_y_to_y(uint32_t cam_T1_id, float screen_y, float at_z);
-float T1_screen_height_to_height(
-    uint32_t cam_T1_id, float screen_h, float at_z);
-float T1_screen_width_to_width(
-    uint32_t cam_T1_id, float screen_w, float at_z);
-
-/*
-TEXT LABELS
-
-Set text properties before requesting a label to choose the font height,
-color etc. for your next labels: "font_height", "rgba[0]" to "rgba[3]",
-"tab_width" (in widths of the letter 'D', 4 by default) (f32s), "touch_id",
-"highlight_i", "highlight_size" and "opaque_back_active" (u32s).
-Tabs only work with T1_TEXT_ALIGN_LEFT_TOP. Settings stay until you change
-them, also for later labels.
-*/
-void T1_text_set_f32(
-    const char * property,
-    float value);
-void T1_text_set_u32(
-    const char * property,
-    uint32_t value);
-
-/*
-A label of texquads with T1_id, wrapped to max_width. align says what
-screen_x and screen_y are, e.g. T1_TEXT_ALIGN_CENTER puts the middle of
-the text there.
-*/
-void T1_text_request_label(
-    uint32_t T1_id,
-    const char * text,
-    T1TextAlign align,
-    float screen_x,
-    float screen_y,
-    float z,
-    float max_width);
-
-// Draws text centered on (mid_x, mid_y) into an rgba image
-void T1_text_draw_label_around(
-    uint8_t * on_rgba, uint32_t rgba_w, uint32_t rgba_h,
-    const char * text_to_draw,
-    float mid_x_pixelspace,
-    float mid_y_pixelspace,
-    float max_width);
 
 /*
 TEXTURES
@@ -364,8 +198,8 @@ uint32_t T1_tex_read_start(
 RENDERING
 
 A frame is your list of passes, run in the order you made them. Passes and
-pipelines are T1 objects without animations: T1_delete() them, they can't
-be merged or animated.
+pipelines have ids: set a pass's properties with
+T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
 
 A pipeline is a function of your shaders (by name) plus the state that
 can't change afterwards: for drawing a vertex and a fragment function, how
@@ -375,31 +209,25 @@ when the first shaders load if there are none yet).
 
 Passes:
 - A clear pass fills a texture (or T1_TEX_WINDOW) with a color.
-- A draw pass draws its sources (T1_DRAW_*) with a pipeline. Properties:
-  "cam" (u32, the camera's T1_id: its view and depth buffer, T1_ID_NONE is
-  only for T1_DRAW_FULLSCREEN and T1_DRAW_PROCEDURAL) and "color_tex[0]" to
-  "color_tex[3]" (u32 T1Texs the fragment function's [[color(k)]] go to,
-  the camera's size, "color_tex[0]" may be T1_TEX_WINDOW). With
-  "depth_tex" (u32 T1Tex or T1_TEX_WINDOW), a pass depth-tests against a
-  depth buffer of that texture's size instead of its camera's: passes with
-  the same "depth_tex" share it, the first one of the frame clears it, and
-  the targets must be its size. A
-  T1_DRAW_PROCEDURAL pass draws "vertex_count" (u32) vertices as triangles;
-  with a camera, its shaders get the cameras at buffer(3) and the camera's
-  index at buffer(4), like zsprite shaders.
+- A draw pass draws "vertex_count" (u32) vertices as triangles, from
+  vertex_id "vertex_start" (u32) on, with a pipeline. T1 binds no geometry:
+  your vertex function builds them from its vertex_id and your buffers.
+  "color_tex[0]" to "color_tex[3]" (u32 T1Texs, all one size) are where the
+  fragment function's [[color(k)]] go, "color_tex[0]" may be T1_TEX_WINDOW.
+  With "depth_tex" (u32 T1Tex or T1_TEX_WINDOW) it depth-tests against a
+  depth buffer of that texture's size: passes with the same "depth_tex"
+  share it, the first one of the frame clears it, and the targets must be
+  its size.
 - A compute pass runs a compute pipeline once per pixel of its "write_tex"
   (u32 T1Tex, see T1_WRITE_TEX_I), or once per element of a "threads[0]" *
   "threads[1]" * "threads[2]" grid (u32s, 0 counts as 1) if "threads[0]" is
   set, e.g. once per particle in a buffer. Its kernel gets its position in
   the grid as [[thread_position_in_grid]], threads past the end don't run.
-Draw and compute passes also have "read_tex[0]" to "read_tex[7]" (u32
-T1Texs) for your shaders, see T1_READ_TEXS_BUFFER_I, and "buf[0]" to
-"buf[7]" (u32 T1Bufs, see BUFFERS). Every pass's shaders also get a
+Draw and compute passes also have "params[0]" to "params[7]" (u32s for
+your shaders, e.g. T1Texs to sample, see T1_PARAMS_I), and "buf[0]" to
+"buf[11]" (u32 T1Bufs, see BUFFERS). Every pass's shaders also get a
 T1GPUFrameConsts at buffer(T1_FRAME_CONSTS_I). A pass that reads what an
 earlier pass drew or wrote waits for it.
-
-Touch ids are read from the texture you give T1_touch_set_tex(), your
-shaders pack them into its pixels (T1_TEX_NONE for no touch ids).
 */
 #define T1_BLEND_NONE                0
 #define T1_BLEND_ADDITIVE            1 // black adds nothing
@@ -418,26 +246,19 @@ uint32_t T1_pipeline_new_compute(
     const char * kernel_fn,
     uint8_t * good);
 
-#define T1_DRAW_OPAQUE     0x01 // zsprites without alpha_on or bloom_on
-#define T1_DRAW_BLENDED    0x02 // zsprites with alpha_on
-#define T1_DRAW_BLOOMING   0x04 // zsprites with bloom_on
-#define T1_DRAW_TEXQUADS   0x08
-#define T1_DRAW_BILLBOARDS 0x10
-#define T1_DRAW_FULLSCREEN 0x20 // 6 vertices, a quad covering the targets
-// "vertex_count" vertices, T1 binds no geometry: your vertex function
-// builds them from its vertex_id and your buffers
-#define T1_DRAW_PROCEDURAL 0x40
 uint32_t T1_pass_new_clear(
     T1Tex tex,
     float r,
     float g,
     float b,
     float a);
-// sources is T1_DRAW_* bits, zsprite sources can be combined
-uint32_t T1_pass_new_draw(uint32_t pipeline_T1_id, uint32_t sources);
-uint32_t T1_pass_new_compute(uint32_t pipeline_T1_id);
-
-void T1_touch_set_tex(T1Tex tex);
+uint32_t T1_pass_new_draw(uint32_t pipeline);
+uint32_t T1_pass_new_compute(uint32_t pipeline);
+void     T1_pass_set_u32(uint32_t pass, const char * property, uint32_t value);
+// the passes after it move up, so the order stays the same
+void     T1_pass_delete(uint32_t pass);
+uint8_t  T1_pass_exists(uint32_t pass);
+void     T1_pipeline_delete(uint32_t pipeline);
 
 /*
 BUFFERS
@@ -472,29 +293,6 @@ the frame renders gives zeros.
 */
 uint32_t T1_buf_read_start(T1Buf buf, uint64_t offset, uint64_t size);
 uint8_t  T1_buf_read_finish(uint32_t read, void * recip);
-
-/*
-3-D MODELS (.OBJ FILES)
-
-Each "mesh" you register will return a mesh_id (i32)
-*/
-/*
-Materials name their textures (map_Kd etc.), resolve_tex is asked for the
-T1Tex of each such filename while a mesh is loaded
-*/
-void T1_objmodel_set_tex_resolver(
-    T1Tex (* resolve_tex)(const char * filename));
-int32_t T1_objmodel_new_mesh_id_from_resources(
-    const char * filename,
-    const char * mtl_filename,
-    uint8_t flip_uv_u,
-    uint8_t flip_uv_v,
-    char ** const fatal_error);
-int32_t T1_objmodel_resource_name_to_mesh_id(
-    const char * obj_filename);
-float T1_get_x_mul_for_width(int32_t for_mesh_id, float for_width);
-float T1_get_y_mul_for_height(int32_t for_mesh_id, float for_height);
-float T1_get_z_mul_for_depth(int32_t for_mesh_id, float for_depth);
 
 /*
 FILES
@@ -537,6 +335,8 @@ void     T1_os_dir_show(const char * path);
 OPERATING SYSTEM
 */
 uint64_t T1_os_get_current_time_us(void);
+// Prints to stderr (or the platform's equivalent)
+void     T1_os_print_error(const char * message);
 void     T1_os_start_thread(void *(*function_to_run)(void *), void * arg_on_heap);
 uint32_t T1_os_init_mutex_and_return_id(void);
 uint8_t  T1_os_mutex_trylock(uint32_t mutex_id);
