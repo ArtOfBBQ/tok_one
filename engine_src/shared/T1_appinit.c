@@ -1,4 +1,6 @@
 #include "T1_appinit.h"
+#include "T1_pipeline.h"
+#include "T1_pass.h"
 
 
 #include "T1_std.h"
@@ -409,6 +411,10 @@ void T1_init(
     
     T1_texquad_init();
     
+    T1_pipeline_init();
+    
+    T1_pass_init();
+    
     T1_zsprite_init();
     
     T1_material_init(T1_mem_malloc_unmanaged);
@@ -657,8 +663,7 @@ void T1_init(
 
 
 /*
-The GPU resources T1 itself needs: font images, render view 0's target,
-viewports. These come before the client creates its own textures.
+The GPU resources T1 itself needs: font images, the window's viewport. These come before the client creates its own textures.
 */
 static void T1_appinit_gpu_resources(
     char ** const fatal_error)
@@ -669,26 +674,12 @@ static void T1_appinit_gpu_resources(
     
     T1_tex_files_load_font_images(fatal_error);
     
-    u32 rv_width = T1_settings_get_render_width();
-    u32 rv_height = T1_settings_get_render_height();
-    
-    while (rv_width > 2048 || rv_height > 2048) {
-        rv_width  /= 2;
-        rv_height /= 2;
-    }
-    
-    T1_tex_array_create_new_render_view(
-        rv_width,
-        rv_height,
-        fatal_error);
-    
     T1_objc_autorelease_pool_pop(pool);
     
     if (*fatal_error != 0) { return; }
     
     pool = T1_objc_autorelease_pool_push();
     
-    T1_os_gpu_update_internal_render_viewport(0);
     T1_os_gpu_update_window_viewport();
     
     T1_objc_autorelease_pool_pop(pool);

@@ -13,6 +13,8 @@
 #include "T1_text.h"
 #include "T1_global.h"
 #include "T1_id.h"
+#include "T1_pipeline.h"
+#include "T1_pass.h"
 #include "T1_render_view.h"
 
 // the extra layer lets ZS_CPU etc. expand to 2 arguments
@@ -43,6 +45,7 @@
 #define POST   T1_PROP_STORE_POSTPROC,   T1GPUPostProcConsts
 #define CAM    T1_PROP_STORE_CAM_F32,    T1CamF32s
 #define CAMU   T1_PROP_STORE_CAM_U32,    T1CPURenderView
+#define PASS   T1_PROP_STORE_PASS_U32,   T1PassU32s
 #define T1_PROP_U32_CAM_REF_(name, store, type, field, mask, shift, ref) \
     {name, mask, offsetof(type, field), shift, store, 1, ref}
 #define T1_PROP_U32_CAM_REF(...) T1_PROP_U32_CAM_REF_(__VA_ARGS__)
@@ -139,6 +142,10 @@ static const T1Property T1_properties[] = {
     T1_PROP_F32(ZL, diffuse),
     T1_PROP_F32(ZL, specular),
     T1_PROP_U32("layers", ZLU, layers),
+    // the camera whose depth is packed into "shadow_tex" (a T1Tex), it
+    // follows the light. T1_ID_NONE for no shadows
+    T1_PROP_U32("shadow_cam", ZLU, shadow_cam),
+    T1_PROP_U32("shadow_tex", ZLU, shadow_tex),
 
     T1_PROP_F32(TEXT, font_height),
     T1_PROP_F32_NAMED("rgba[0]", TEXT, f32s.rgba[0]),
@@ -205,6 +212,26 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32("clamped_to_T1_id", CAMU, clamped_to_T1_id),
     T1_PROP_U32("movement_enabled", CAMU, movement_enabled),
     T1_PROP_U32("visible_layers", CAMU, visible_layers),
+    // mirrors this camera around the plane at z = "reflect_plane_z",
+    // T1_ID_NONE to stop
+    T1_PROP_U32("reflect_cam", CAMU, reflect_cam),
+    T1_PROP_F32(CAM, reflect_plane_z),
+
+    // passes
+    T1_PROP_U32("cam", PASS, cam),
+    T1_PROP_U32("color_tex[0]", PASS, color_tex[0]),
+    T1_PROP_U32("color_tex[1]", PASS, color_tex[1]),
+    T1_PROP_U32("color_tex[2]", PASS, color_tex[2]),
+    T1_PROP_U32("color_tex[3]", PASS, color_tex[3]),
+    T1_PROP_U32("read_tex[0]", PASS, read_tex[0]),
+    T1_PROP_U32("read_tex[1]", PASS, read_tex[1]),
+    T1_PROP_U32("read_tex[2]", PASS, read_tex[2]),
+    T1_PROP_U32("read_tex[3]", PASS, read_tex[3]),
+    T1_PROP_U32("read_tex[4]", PASS, read_tex[4]),
+    T1_PROP_U32("read_tex[5]", PASS, read_tex[5]),
+    T1_PROP_U32("read_tex[6]", PASS, read_tex[6]),
+    T1_PROP_U32("read_tex[7]", PASS, read_tex[7]),
+    T1_PROP_U32("write_tex", PASS, write_tex),
 };
 
 #define T1_PROPERTIES_SIZE (sizeof(T1_properties) / sizeof(T1Property))
@@ -305,7 +332,8 @@ b8 T1_property_is_animatable(const T1Property * p) {
         p->store != T1_PROP_STORE_ZS_MAT_F32 &&
         p->store != T1_PROP_STORE_ZS_MAT_U32 &&
         p->store != T1_PROP_STORE_TQ_CPU_F32 &&
-        p->store != T1_PROP_STORE_CAM_U32;
+        p->store != T1_PROP_STORE_CAM_U32 &&
+        p->store != T1_PROP_STORE_PASS_U32;
 }
 
 u32 T1_property_convert_bits(
@@ -349,6 +377,8 @@ static u32 T1_property_set_bits(
         case T1_PROP_STORE_CAM_F32:
         case T1_PROP_STORE_CAM_U32:
             return T1_render_view_set_property(T1_id, p, bits);
+        case T1_PROP_STORE_PASS_U32:
+            return T1_pass_set_property(T1_id, p, bits);
         default:
             T1_log_assert(0);
     }
@@ -535,6 +565,11 @@ void T1_merge_T1_ids(
 {
     T1_log_assert(T1_id_to_add  != T1_ID_NONE);
     T1_log_assert(T1_id_to_keep != T1_ID_NONE);
+    // pipelines and passes can't be grouped
+    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id_to_add) < 0);
+    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id_to_keep) < 0);
+    T1_log_assert(T1_pass_T1_id_to_i(T1_id_to_add) < 0);
+    T1_log_assert(T1_pass_T1_id_to_i(T1_id_to_keep) < 0);
 
     if (T1_id_to_add == T1_id_to_keep) {
         return;
@@ -566,6 +601,8 @@ void T1_delete(u32 T1_id)
     T1_texquad_delete(T1_id);
     T1_zlight_delete(T1_id);
     T1_render_view_delete_T1_id(T1_id);
+    T1_pipeline_delete(T1_id);
+    T1_pass_delete(T1_id);
 }
 
 void T1_delete_all(void)

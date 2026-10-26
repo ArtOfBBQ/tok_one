@@ -7,30 +7,18 @@
 #include "T1_render_view.h"
 #include "T1_os.h"
 #include "T1_id.h"
-#include "T1_tex_array.h"
+#include "T1_settings.h"
 
 /*
-render_views[0] is the global camera
-
-In a 2D game, move the x to the left to move all of
-your zsprites to the right
-
-render_views[1] and up are alternative camera texture
-outputs that you can render to, for example to make
-a shadow map (set write_type to
-T1RENDERVIEW_WRITE_DEPTH) or to make a reflection or
-security camera (set write_type
-T1RENDERVIEW_WRITE_RGBA)
+Cameras: a viewpoint with a size that draw passes draw from (see
+T1_pass.h). Every camera has its own depth buffer, at its size.
 */
 T1RenderViewCollection * T1_render_views = NULL;
-T1CPURenderView * T1_cam = NULL;
 
 void T1_render_view_init(void) {
     T1_log_assert(T1_RENDER_VIEW_CAP > 0);
     T1_render_views = T1_mem_malloc_unmanaged(
         sizeof(T1RenderViewCollection));
-    
-    T1_cam = T1_render_views->cpu; // convenience
     
     T1_std_memset(
         T1_render_views,
@@ -40,8 +28,8 @@ void T1_render_view_init(void) {
     T1_render_view_reset(0);
     
     for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
-        T1_render_views->cpu[i].write_tex = T1_TEX_NONE;
         T1_render_views->cpu[i].clamped_to_T1_id = T1_ID_NONE;
+        T1_render_views->cpu[i].reflect_cam = T1_ID_NONE;
     }
 }
 
@@ -127,17 +115,11 @@ static void T1_render_view_construct(
     cpu->f32s.max_xyz[2] = T1_F32_MAX;
     
     cpu->clamped_to_T1_id = T1_ID_NONE;
-    cpu->write_tex = T1_TEX_NONE;
+    cpu->reflect_cam = T1_ID_NONE;
     cpu->visible_layers = 0xFFFFFFFF;
     
     cpu->height = height;
     cpu->width  = width;
-    
-    cpu->passes_size = 2;
-    cpu->passes[0].type =
-        T1RENDERPASS_DIAMOND_ALPHA;
-    cpu->passes[1].type =
-        T1RENDERPASS_ALPHA_BLEND;
     
     gpu->cull_below_z = T1_F32_MIN;
     gpu->cull_above_z = T1_F32_MAX;
@@ -224,31 +206,29 @@ void T1_render_view_update_positions(
         T1CPURenderView * rv = T1_render_views->cpu + rv_i;
         
         #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-        if (rv->reflect_around_plane_z)
+        s32 mirrored_i = T1_render_view_T1_id_to_i(rv->reflect_cam);
+        if (mirrored_i >= 0)
         {
-            // Assuming the main camera is always at 0
-            // Assuming the main camera can't be a
-            // reflection view
-            T1_log_assert(rv_i != 0);
-            T1_log_assert(!T1_render_views->cpu[0].reflect_around_plane_z);
+            T1_log_assert(mirrored_i != (s32)rv_i);
+            const T1CPURenderView * mirrored =
+                T1_render_views->cpu + mirrored_i;
             
             // Supporting only z-planes for now:
-            f32 plane_z = rv->refl_cam_around_plane_z;
+            f32 plane_z = rv->f32s.reflect_plane_z;
             
             rv->us_to_destination = 0;
             
             // Reflect position (flip Z over the plane)
-            rv->f32s.xyz[0] = T1_cam->f32s.xyz[0];
-            rv->f32s.xyz[1] = T1_cam->f32s.xyz[1];
-            rv->f32s.xyz[2] = 2.0f * plane_z - T1_cam->f32s.xyz[2];
-                        
-            rv->f32s.angle_xyz[0] = -(3.14159f +
-                T1_cam->f32s.angle_xyz[0]);
-            rv->f32s.angle_xyz[1] = T1_cam->f32s.angle_xyz[1];
-            rv->f32s.angle_xyz[2] = T1_cam->f32s.angle_xyz[2];
+            rv->f32s.xyz[0] = mirrored->f32s.xyz[0];
+            rv->f32s.xyz[1] = mirrored->f32s.xyz[1];
+            rv->f32s.xyz[2] = 2.0f * plane_z - mirrored->f32s.xyz[2];
             
-            T1_render_views->gpu[rv_i].cull_above_z =
-                rv->refl_cam_around_plane_z;
+            rv->f32s.angle_xyz[0] = -(3.14159f +
+                mirrored->f32s.angle_xyz[0]);
+            rv->f32s.angle_xyz[1] = mirrored->f32s.angle_xyz[1];
+            rv->f32s.angle_xyz[2] = mirrored->f32s.angle_xyz[2];
+            
+            T1_render_views->gpu[rv_i].cull_above_z = plane_z;
         }
         #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
         #else
@@ -259,13 +239,6 @@ void T1_render_view_update_positions(
         {
             continue;
         }
-        
-        #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-        T1_log_assert(!rv->reflect_around_plane_z);
-        #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
         
         T1_log_assert(!isnan(rv->f32s.dest_xyz[0]));
         T1_log_assert(!isnan(rv->f32s.dest_xyz[1]));
@@ -283,15 +256,9 @@ void T1_render_view_update_positions(
                 elapsed) / 7);
         }
         
-        T1_log_assert(
-            T1_render_views->cpu[0].f32s.max_xyz[0] >=
-                T1_render_views->cpu[0].f32s.min_xyz[0]);
-        T1_log_assert(
-            T1_render_views->cpu[0].f32s.max_xyz[1] >=
-                T1_render_views->cpu[0].f32s.min_xyz[1]);
-        T1_log_assert(
-            T1_render_views->cpu[0].f32s.max_xyz[2] >=
-                T1_render_views->cpu[0].f32s.min_xyz[2]);
+        T1_log_assert(rv->f32s.max_xyz[0] >= rv->f32s.min_xyz[0]);
+        T1_log_assert(rv->f32s.max_xyz[1] >= rv->f32s.min_xyz[1]);
+        T1_log_assert(rv->f32s.max_xyz[2] >= rv->f32s.min_xyz[2]);
         
         if (rv->f32s.dest_angle_xyz[0] < rv->f32s.min_angle_xyz[0]) { rv->f32s.dest_angle_xyz[0] = rv->f32s.min_angle_xyz[0]; } 
         if (rv->f32s.dest_angle_xyz[0] > rv->f32s.max_angle_xyz[0]) { rv->f32s.dest_angle_xyz[0] = rv->f32s.max_angle_xyz[0]; }
@@ -374,67 +341,30 @@ void T1_render_view_delete(
 void T1_render_view_validate(void) {
     T1_log_assert(T1_render_views != NULL);
     T1_log_assert(
-        T1_render_views->size > 0);
-    T1_log_assert(
         T1_render_views->size <= T1_RENDER_VIEW_CAP);
     
-    for (
-        u32 i = 1;
-        i < T1_render_views->size;
-        i++)
-    {
+    for (u32 i = 0; i < T1_render_views->size; i++) {
         if (T1_render_views->cpu[i].deleted) {
             continue;
         }
         
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[i].
-                passes_size;
-            pass_i++)
-        {
-            T1_log_assert(T1_render_views->cpu[i].
-                passes[pass_i].type >
-                    T1RENDERPASS_BELOWBOUNDS);
-            T1_log_assert(T1_render_views->cpu[i].
-                passes[pass_i].type <
-                    T1RENDERPASS_ABOVEBOUNDS);
-        }
-        
+        T1_log_assert(T1_render_views->cpu[i].width > 0);
+        T1_log_assert(T1_render_views->cpu[i].height > 0);
         T1_log_assert(
-            T1_render_views->cpu[i].write_type >
-                T1RENDERVIEW_WRITE_BELOWBOUNDS);
-        T1_log_assert(
-            T1_render_views->cpu[i].write_type <
-                T1RENDERVIEW_WRITE_ABOVEBOUNDS);
-        T1_log_assert(
-            T1_render_views->cpu[i].write_type !=
-                T1RENDERVIEW_WRITE_RENDER_TARGET);
-        
-        T1_log_assert(
-            T1_render_views->cpu[i].project.aspect_ratio > 0.1f);
+            T1_render_views->cpu[i].project.aspect_ratio > 0.01f);
     }
     
-    T1_log_assert(!T1_render_views->
-        cpu[T1_render_views->size-1].deleted);
-    
     T1_log_assert(
-        T1_render_views->cpu[0].write_type ==
-            T1RENDERVIEW_WRITE_RENDER_TARGET);
+        T1_render_views->size == 0 ||
+        !T1_render_views->cpu[T1_render_views->size-1].deleted);
 }
 
 f32 T1_render_view_screen_x_to_x(
     const f32 screenspace_x,
     const f32 given_z)
 {
-    T1_log_assert(T1_render_views->cpu[0].width > 0);
-    T1_log_assert(T1_render_views->cpu[0].height > 0);
-    
-    const T1CPURenderView * cpu =
-        &T1_render_views->cpu[0];
-    
-    f32 viewport_width  = (f32)cpu->width;
-    f32 viewport_height = (f32)cpu->height;
+    f32 viewport_width  = (f32)T1_settings_get_render_width();
+    f32 viewport_height = (f32)T1_settings_get_render_height();
     
     f32 aspect_ratio =
         viewport_width / viewport_height;
@@ -461,10 +391,7 @@ f32 T1_render_view_screen_y_to_y(
     const f32 screenspace_y,
     const f32 given_z)
 {
-    const T1CPURenderView * cpu =
-        &T1_render_views->cpu[0];
-    
-    f32 viewport_height = (f32)cpu->height;
+    f32 viewport_height = (f32)T1_settings_get_render_height();
     
     const f32 vertical_fov_degrees = 75.0f;
     f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
@@ -485,10 +412,7 @@ f32 T1_render_view_screen_height_to_height(
     const f32 screenspace_height,
     const f32 given_z)
 {
-    const T1CPURenderView * cpu =
-        &T1_render_views->cpu[0];
-    
-    f32 viewport_height = (f32)cpu->height;
+    f32 viewport_height = (f32)T1_settings_get_render_height();
     
     const f32 vertical_fov_degrees = 75.0f;
     f32 half_fov_y_rad = (vertical_fov_degrees * 0.5f) * (3.14159265359f / 180.0f);
@@ -507,13 +431,9 @@ f32 T1_render_view_screen_width_to_width(
     const f32 screenspace_width,
     const f32 given_z)
 {
-    const T1CPURenderView * cpu =
-        &T1_render_views->cpu[0];
-    
-    f32 viewport_width =
-        (f32)cpu->width;
+    f32 viewport_width = (f32)T1_settings_get_render_width();
     f32 aspect_ratio =
-        viewport_width / (f32)cpu->height;
+        viewport_width / (f32)T1_settings_get_render_height();
     
     const f32 vertical_fov_deg = 75.0f;
     f32 half_fov_y_rad =
@@ -544,24 +464,11 @@ s32 T1_render_view_T1_id_to_i(const u32 T1_id)
     return -1;
 }
 
-void T1_render_view_delete_with_tex(const s32 rv_i)
-{
-    T1Tex tex = T1_render_views->cpu[rv_i].write_tex;
-    if (tex != T1_TEX_NONE) {
-        T1_tex_array_delete_slice(
-            T1_tex_to_array_i(tex),
-            T1_tex_to_slice_i(tex));
-        T1_render_views->cpu[rv_i].write_tex = T1_TEX_NONE;
-    }
-    
-    T1_render_view_delete(rv_i);
-}
-
 void T1_render_view_delete_T1_id(const u32 T1_id)
 {
     s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
     if (rv_i >= 0) {
-        T1_render_view_delete_with_tex(rv_i);
+        T1_render_view_delete(rv_i);
     }
 }
 

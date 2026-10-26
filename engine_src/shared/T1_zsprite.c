@@ -648,8 +648,14 @@ void T1_zsprite_apply_anim_step(
 
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     u32 T1_id,
-    f32 new_ignore_camera)
+    f32 new_ignore_camera,
+    u32 cam_T1_id)
 {
+    s32 cam_i = T1_render_view_T1_id_to_i(cam_T1_id);
+    T1_log_assert(cam_i >= 0);
+    if (cam_i < 0) { return; }
+    const T1CamF32s * cam = &T1_render_views->cpu[cam_i].f32s;
+    
     T1GPUzSprite * zs = NULL;
     T1CPUzSprite * zs_cpu = NULL;
     
@@ -683,37 +689,37 @@ void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         T1_log_assert(new_ignore_camera == 1.0f);
         
-        zs_cpu->zs_cpu_f32s.xyz[0] -= T1_cam->f32s.xyz[0];
-        zs_cpu->zs_cpu_f32s.xyz[1] -= T1_cam->f32s.xyz[1];
-        zs_cpu->zs_cpu_f32s.xyz[2] -= T1_cam->f32s.xyz[2];
-        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[0]);
-        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[1]);
-        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -T1_cam->f32s.angle_xyz[2]);
+        zs_cpu->zs_cpu_f32s.xyz[0] -= cam->xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] -= cam->xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] -= cam->xyz[2];
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -cam->angle_xyz[0]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -cam->angle_xyz[1]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, -cam->angle_xyz[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->zs_cpu_f32s.angle_xyz[0] -= T1_cam->f32s.angle_xyz[0];
-        zs_cpu->zs_cpu_f32s.angle_xyz[1] -= T1_cam->f32s.angle_xyz[1];
-        zs_cpu->zs_cpu_f32s.angle_xyz[2] -= T1_cam->f32s.angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] -= cam->angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] -= cam->angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] -= cam->angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 1.0f;
     } else {
         T1_log_assert(is_near_one);
         
-        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[2]);
-        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[1]);
-        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, T1_cam->f32s.angle_xyz[0]);
+        T1_triangle_z_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, cam->angle_xyz[2]);
+        T1_triangle_y_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, cam->angle_xyz[1]);
+        T1_triangle_x_rotate_f3(zs_cpu->zs_cpu_f32s.xyz, cam->angle_xyz[0]);
         
-        zs_cpu->zs_cpu_f32s.xyz[0] += T1_cam->f32s.xyz[0];
-        zs_cpu->zs_cpu_f32s.xyz[1] += T1_cam->f32s.xyz[1];
-        zs_cpu->zs_cpu_f32s.xyz[2] += T1_cam->f32s.xyz[2];
+        zs_cpu->zs_cpu_f32s.xyz[0] += cam->xyz[0];
+        zs_cpu->zs_cpu_f32s.xyz[1] += cam->xyz[1];
+        zs_cpu->zs_cpu_f32s.xyz[2] += cam->xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->zs_cpu_f32s.angle_xyz[0] += T1_cam->f32s.angle_xyz[0];
-        zs_cpu->zs_cpu_f32s.angle_xyz[1] += T1_cam->f32s.angle_xyz[1];
-        zs_cpu->zs_cpu_f32s.angle_xyz[2] += T1_cam->f32s.angle_xyz[2];
+        zs_cpu->zs_cpu_f32s.angle_xyz[0] += cam->angle_xyz[0];
+        zs_cpu->zs_cpu_f32s.angle_xyz[1] += cam->angle_xyz[1];
+        zs_cpu->zs_cpu_f32s.angle_xyz[2] += cam->angle_xyz[2];
         #endif
         
         zs->f32s.no_cam = 0.0f;
@@ -801,31 +807,10 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         }
     }
     
-    for (
-        u32 cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                        T1RENDERPASS_ALPHA_BLEND)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i =
-                        first_alpha_i;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (s32)frame_data->
-                            verts_size - first_alpha_i;
-            }
-        }
-    }
+    frame_data->vert_ranges[T1_VERT_RANGE_BLENDED].vert_i =
+        (u32)first_alpha_i;
+    frame_data->vert_ranges[T1_VERT_RANGE_BLENDED].verts_size =
+        frame_data->verts_size - (u32)first_alpha_i;
 }
 
 void T1_zsprite_add_bloom_zpolygons_to_workload(
@@ -882,35 +867,9 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
         }
     }
     
-    for (
-        u32 cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].type ==
-                        T1RENDERPASS_BLOOM)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i =
-                        first_bloom_i;
-                T1_log_assert(f->
-                    verts_size < INT32_MAX);
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (s32)f->
-                            verts_size -
-                                first_bloom_i;
-            }
-        }
-    }
+    f->vert_ranges[T1_VERT_RANGE_BLOOMING].vert_i = (u32)first_bloom_i;
+    f->vert_ranges[T1_VERT_RANGE_BLOOMING].verts_size =
+        f->verts_size - (u32)first_bloom_i;
 }
 
 
@@ -989,28 +948,10 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         }
     }
     
-    for (
-        u32 cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                    T1RENDERPASS_DIAMOND_ALPHA)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i = first_opaq_i;
-                T1_render_views->cpu[cam_i].passes[pass_i].
-                    verts_size = (s32)frame_data->verts_size;
-            }
-        }
-    }
+    frame_data->vert_ranges[T1_VERT_RANGE_OPAQUE].vert_i =
+        (u32)first_opaq_i;
+    frame_data->vert_ranges[T1_VERT_RANGE_OPAQUE].verts_size =
+        frame_data->verts_size;
 }
 
 void

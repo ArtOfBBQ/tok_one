@@ -1,4 +1,5 @@
 #include "T1_term.h"
+#include "T1_settings.h"
 
 #include "T1_types_public.h"
 
@@ -70,13 +71,12 @@ static void T1_term_redraw_backgrounds(void) {
     T1_trms->back_T1_id = INT32_MAX;
     
     f32 command_history_height =
-        T1_render_views->cpu[0].height -
+        (f32)T1_settings_get_render_height() -
         T1_TERM_INPUT_BOX_HEIGHT -
         (T1_TERM_WHITESPACE * 3);
     
     f32 width =
-        (f32)T1_render_views->cpu[0].
-            width - (T1_TERM_WHITESPACE
+        (f32)T1_settings_get_render_width() - (T1_TERM_WHITESPACE
                 * 2.0f);
     
     T1TexQuadRequest input_req;
@@ -121,7 +121,7 @@ static void T1_term_redraw_backgrounds(void) {
     history_req.gpu->f32s.xyz[2] = T1_TERM_Z;
     history_req.gpu->f32s.wh[0] =
         T1_render_view_screen_width_to_width(
-                T1_render_views->cpu[0].width -
+                (f32)T1_settings_get_render_width() -
                     (T1_TERM_WHITESPACE * 2),
                 T1_TERM_Z);
     history_req.gpu->f32s.wh[1] =
@@ -162,10 +162,10 @@ static void T1_term_render(void) {
     
     // draw the terminal's history as a label
     f32 history_label_top =
-        T1_render_views->cpu[0].height -
+        (f32)T1_settings_get_render_height() -
             (T1_TERM_WHITESPACE * 2);
     f32 history_label_height =
-        T1_render_views->cpu[0].height -
+        (f32)T1_settings_get_render_height() -
             T1_TERM_FONT_SIZE -
             (T1_TERM_WHITESPACE * 4.5f);
     
@@ -223,7 +223,7 @@ static void T1_term_render(void) {
             /* const f32 tab_width: */
                 4.0f,
             /* const f32 max_width: */
-                T1_render_views->cpu[0].width -
+                (f32)T1_settings_get_render_width() -
                     (T1_TERM_WHITESPACE * 2));
     }
     
@@ -252,7 +252,7 @@ static void T1_term_render(void) {
         /* const f32 tab_width: */
             4.0f,
         /* const f32 max_width: */
-            T1_render_views->cpu[0].width -
+            (f32)T1_settings_get_render_width() -
                 (T1_TERM_WHITESPACE * 2));
     
     T1_text_props->font_height =
@@ -382,18 +382,18 @@ static u8 T1_term_evaluate(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             jump_rv);
-        T1_cam->f32s.xyz[0] = T1_render_views->
+        T1_render_views->cpu[0].f32s.xyz[0] = T1_render_views->
             cpu[jump_rv].f32s.xyz[0];
-        T1_cam->f32s.xyz[1] = T1_render_views->
+        T1_render_views->cpu[0].f32s.xyz[1] = T1_render_views->
             cpu[jump_rv].f32s.xyz[1];
-        T1_cam->f32s.xyz[2] = T1_render_views->
+        T1_render_views->cpu[0].f32s.xyz[2] = T1_render_views->
             cpu[jump_rv].f32s.xyz[2];
         
-        T1_cam->f32s.angle_xyz[0] = T1_render_views->
+        T1_render_views->cpu[0].f32s.angle_xyz[0] = T1_render_views->
             cpu[jump_rv].f32s.angle_xyz[0];
-        T1_cam->f32s.angle_xyz[1] = T1_render_views->
+        T1_render_views->cpu[0].f32s.angle_xyz[1] = T1_render_views->
             cpu[jump_rv].f32s.angle_xyz[1];
-        T1_cam->f32s.angle_xyz[2] = T1_render_views->
+        T1_render_views->cpu[0].f32s.angle_xyz[2] = T1_render_views->
             cpu[jump_rv].f32s.angle_xyz[2];
         
         return 1;
@@ -425,7 +425,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.xyz[0]);
+            T1_render_views->cpu[0].f32s.xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -433,7 +433,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.xyz[1]);
+            T1_render_views->cpu[0].f32s.xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -441,7 +441,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.xyz[2]);
+            T1_render_views->cpu[0].f32s.xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -449,7 +449,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.angle_xyz[0]);
+            T1_render_views->cpu[0].f32s.angle_xyz[0]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -457,7 +457,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.angle_xyz[1]);
+            T1_render_views->cpu[0].f32s.angle_xyz[1]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -465,7 +465,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_f32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            T1_cam->f32s.angle_xyz[2]);
+            T1_render_views->cpu[0].f32s.angle_xyz[2]);
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -576,7 +576,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            (u32)T1_render_views->cpu[0].height);
+            T1_settings_get_render_height());
         T1_std_strcat_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
@@ -584,7 +584,7 @@ static u8 T1_term_evaluate(
         T1_std_strcat_u32_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
-            (u32)T1_render_views->cpu[0].width);
+            T1_settings_get_render_width());
         return 1;
     }
     

@@ -16,28 +16,6 @@ typedef struct {
     f32 y_multiplier;
 } T1GPUProjectConsts;
 
-typedef enum : u8 {
-    T1RENDERPASS_BELOWBOUNDS = 0,
-    T1RENDERPASS_DEPTH_PREPASS = 1,
-    T1RENDERPASS_OUTLINES = 2,
-    T1RENDERPASS_DIAMOND_ALPHA = 3,
-    T1RENDERPASS_ALPHA_BLEND = 4,
-    T1RENDERPASS_BLOOM = 5,
-    T1RENDERPASS_BILLBOARDS = 6,
-    T1RENDERPASS_FLAT_TEXQUADS = 7,
-    T1RENDERPASS_ABOVEBOUNDS = 8,
-} T1RenderPassType;
-
-// TODO: discover what architecture we need/want
-typedef struct {
-    // Stays the same over render view lifetime
-    T1RenderPassType type;
-    
-    // Set every frame
-    s32 vert_i;
-    s32 verts_size;
-} T1RenderPass;
-
 /*
 A camera's values that can be animated. It eases from xyz/angle_xyz towards
 dest_xyz/dest_angle_xyz (see us_to_destination), kept within the min/max.
@@ -51,35 +29,22 @@ typedef struct {
     f32 max_xyz[3];
     f32 min_angle_xyz[3];
     f32 max_angle_xyz[3];
+    f32 reflect_plane_z;
 } T1CamF32s;
 
-#define T1_RENDER_PASSES_MAX 6
 typedef struct {
     T1GPUProjectConsts project;
-    T1RenderPass passes[T1_RENDER_PASSES_MAX];
     T1CamF32s f32s;
     u32 us_to_destination;
     u32 T1_id;
-    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    f32 refl_cam_around_plane_z;
-    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    T1RenderViewWriteType write_type;
+    // the camera this one mirrors around f32s.reflect_plane_z, T1_ID_NONE
+    // for none
+    u32 reflect_cam;
     u32 clamped_to_T1_id;
     u32 movement_enabled;
     u32 visible_layers; // copied to the gpu every frame
     u32 width;
     u32 height;
-    T1Tex write_tex;
-    u8  passes_size;
-    #if T1_REFLECTION_ACTIVE == T1_ACTIVE
-    u8  reflect_around_plane_z;
-    #elif T1_REFLECTION_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     u8  deleted;
 } T1CPURenderView;
 
@@ -90,7 +55,6 @@ typedef struct {
 } T1RenderViewCollection;
 
 extern T1RenderViewCollection * T1_render_views;
-extern T1CPURenderView * T1_cam; // convenience
 
 void T1_render_view_init(void);
 
@@ -111,8 +75,6 @@ animated by property name like zsprites (see T1_property.h)
 */
 // the index of the render view with this T1_id, or -1
 s32  T1_render_view_T1_id_to_i(const u32 T1_id);
-// also frees the render view's write texture
-void T1_render_view_delete_with_tex(const s32 rv_i);
 void T1_render_view_delete_T1_id(const u32 T1_id);
 u32  T1_render_view_set_property(
     const u32 T1_id,

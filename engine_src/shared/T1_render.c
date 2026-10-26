@@ -32,16 +32,18 @@ construct_projection_matrix(void)
     {
         T1GPURenderView * rv = &T1_render_views->gpu[i];
         
-        rv->write_to_shadow_maps =
-            T1_render_views->cpu[i].write_type ==
-                T1RENDERVIEW_WRITE_DEPTH;
+        rv->write_to_shadow_maps = 0;
+        for (u32 zl_i = 0; zl_i < T1_zlights_size; zl_i++) {
+            if (
+                !T1_zlights[zl_i].deleted &&
+                T1_zlights[zl_i].u32s.shadow_cam ==
+                    T1_render_views->cpu[i].T1_id)
+            {
+                rv->write_to_shadow_maps = 1;
+            }
+        }
         
         rv->visible_layers = T1_render_views->cpu[i].visible_layers;
-        
-        rv->read_from_shadow_maps =
-            T1_render_views->cpu[i].write_type ==
-                T1RENDERVIEW_WRITE_RENDER_TARGET ||
-                T1RENDERVIEW_WRITE_RGBA;
         
         const f32 w = (f32)T1_render_views->cpu[i].width;
         const f32 h = (f32)T1_render_views->cpu[i].height;
@@ -198,6 +200,10 @@ void T1_render_update(
     }
     
     f->zsprite_list->size = 0;
+    for (u32 i = 0; i < T1_VERT_RANGES_SIZE; i++) {
+        f->vert_ranges[i].vert_i = 0;
+        f->vert_ranges[i].verts_size = 0;
+    }
     
     T1_zlight_update_all_attached_render_views();
     
@@ -230,30 +236,6 @@ void T1_render_update(
     #error
     #endif
     
-    for (
-        u32 cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                    T1RENDERPASS_OUTLINES)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i = 0;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (s32)f->verts_size;
-            }
-        }
-    }
-    
     T1_zsprite_add_bloom_zpolygons_to_workload(f);
     T1_log_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
@@ -273,42 +255,6 @@ void T1_render_update(
     #else
     #error
     #endif
-    
-    for (
-        u32 cam_i = 0;
-        cam_i < T1_render_views->size;
-        cam_i++)
-    {
-        for (
-            s32 pass_i = 0;
-            pass_i < T1_render_views->cpu[cam_i].
-                passes_size;
-            pass_i++)
-        {
-            if (
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].type ==
-                        T1RENDERPASS_BILLBOARDS)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i = 0;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (s32)f->flat_bb_quads_size;
-            }
-            
-            if (
-                T1_render_views->cpu[cam_i].passes[pass_i].type ==
-                    T1RENDERPASS_FLAT_TEXQUADS)
-            {
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].vert_i = 0;
-                T1_render_views->cpu[cam_i].
-                    passes[pass_i].verts_size =
-                        (s32)f->flat_tex_quads_size;
-            }
-        }
-    }
     
     f->render_views_size = T1_render_views->size;
     

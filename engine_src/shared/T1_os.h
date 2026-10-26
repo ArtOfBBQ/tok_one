@@ -260,16 +260,10 @@ void T1_os_gpu_fetch_rgba_at(
 void T1_os_gpu_delete_texture_array(
     s32 array_i);
 
-void T1_os_gpu_delete_depth_tex(
-    s32 slice_i);
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
-
-s16 T1_os_gpu_make_depth_tex(
-    u32 width,
-    u32 height);
 
 /*
 creates a mutex and return the ID of said mutex for you to store
@@ -315,6 +309,17 @@ void T1_os_gpu_try_shader_source(
     char ** const fatal_error);
 
 u8 T1_os_gpu_shaders_ready(void);
+
+/*
+Called for a new entry in T1_pipelines. If shaders are loaded, *good is 0
+when its functions don't exist in them, else they're checked on load.
+*/
+void T1_os_gpu_pipeline_added(s32 pipeline_i, u8 * good);
+// releases what the gpu built for the pipeline
+void T1_os_gpu_pipeline_deleted(s32 pipeline_i);
+
+// the texture touch ids are read from, T1_TEX_NONE for none
+void T1_os_gpu_set_touch_tex(u16 tex);
 
 void T1_os_shutdown(void);
 

@@ -11,6 +11,17 @@ typedef struct {
     u32 touch_id;
 } IdPair;
 
+// where a kind of zsprite (see T1_DRAW_OPAQUE etc.) is in a frame's verts
+typedef struct {
+    u32 vert_i;
+    u32 verts_size;
+} T1GPUVertRange;
+
+#define T1_VERT_RANGE_OPAQUE   0
+#define T1_VERT_RANGE_BLENDED  1
+#define T1_VERT_RANGE_BLOOMING 2
+#define T1_VERT_RANGES_SIZE    3
+
 /*
 This is a bunch of pointers because apple's metal
 (both ios and macosx) requires shared data to be aligned to page size :(
@@ -30,6 +41,7 @@ typedef struct
     u32              render_views_size;
     u32              flat_bb_quads_size;
     u32              flat_tex_quads_size;
+    T1GPUVertRange   vert_ranges[T1_VERT_RANGES_SIZE];
 } T1GPUFrame;
 
 typedef struct

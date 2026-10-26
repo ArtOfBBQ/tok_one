@@ -16,7 +16,6 @@ typedef struct {
     u32 single_img_width;
     u32 single_img_height;
     u32 gpu_capacity;
-    b8 is_render_target;
     b8 deleted;
 } T1TexArray;
 
@@ -30,13 +29,7 @@ void T1_tex_array_init(void);
 T1Tex T1_tex_array_new_slice(
     u32 width,
     u32 height,
-    b8 is_render_target,
     b8 never_delete,
-    char ** const fatal_error);
-
-s32 T1_tex_array_create_new_render_view(
-    const u32 width,
-    const u32 height,
     char ** const fatal_error);
 
 u32 T1_tex_array_get_img_height(s32 array_i);

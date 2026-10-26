@@ -175,6 +175,10 @@ uint32_t  T1_id_next_nonui_id(void);
 /*
 CAMERAS
 
+A camera is a viewpoint of a size, which draw passes (see RENDERING) draw
+from. Every camera has its own depth buffer at its size, the camera's first
+draw pass of the frame clears it.
+
 Cameras are T1 objects like zsprites (see below): they have a T1_id, you set
 and animate them by property name, merge them into groups and T1_delete()
 them. Their properties: "xyz[0]" and "angle_xyz[0]" (to [2]) are where the
@@ -182,16 +186,11 @@ camera is now. It eases towards "dest_xyz[0]" and "dest_angle_xyz[0]" over
 "us_to_destination" (u32) microseconds, kept within "min_xyz[0]"/"max_xyz[0]"
 and "min_angle_xyz[0]"/"max_angle_xyz[0]". "clamped_to_T1_id" (u32) makes
 it follow a zsprite, "movement_enabled" (u32) lets it move at all.
+"reflect_cam" (u32, a camera's T1_id) makes it mirror that camera around
+the plane at z = "reflect_plane_z", T1_ID_NONE stops that.
 */
-// The camera whose image is shown in the window
-uint32_t T1_cam_create_main_view(
-    uint32_t new_w, uint32_t new_h, char ** const fatal_error);
-// A camera mirroring the main one around the plane at z = reflection_z
-uint32_t T1_cam_make_reflection_cam(
-    uint32_t new_w, uint32_t new_h, float reflection_z);
+uint32_t T1_cam_new(uint32_t width, uint32_t height);
 void     T1_cam_reset(uint32_t T1_id);
-// T1_TEX_NONE for T1_ID_NONE
-T1Tex    T1_cam_get_write_tex(uint32_t T1_id);
 void     T1_cam_delete_all(void);
 
 // To convert from our screenspace system to 'world x' that is used for
@@ -201,14 +200,14 @@ float T1_screen_y_to_y(float screen_y, float at_z);
 float T1_screen_height_to_height(float screen_h, float at_z);
 float T1_screen_width_to_width(float screen_w, float at_z);
 
-void T1_make_shadowmap_and_attach_to_light(
-    uint32_t T1_id, uint32_t w, uint32_t h);
-
 /*
 TEXTURES
 T1_tex_new() uploads an image: width * height * 4 bytes of rgba, row by row.
-The T1Tex can then be used as a "texture" property. You can delete it or
-overwrite its pixels (same size) later.
+With rgba NULL the texture starts out blank, e.g. for passes to draw into.
+The T1Tex can then be used as a "texture" property and by passes. You can
+delete it or overwrite its pixels (same size) later. Every texture can be
+sampled, drawn into and written by compute passes. Data that isn't a color
+(depth, touch ids) is packed into the 4 bytes of a pixel by your shaders.
 */
 T1Tex    T1_tex_new(
     const uint8_t * rgba,
@@ -219,6 +218,70 @@ void     T1_tex_update(T1Tex tex, const uint8_t * rgba);
 void     T1_tex_delete(T1Tex tex);
 uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
+
+/*
+RENDERING
+
+A frame is your list of passes, run in the order you made them. Passes and
+pipelines are T1 objects without animations: T1_delete() them, they can't
+be merged or animated.
+
+A pipeline is a function of your shaders (by name) plus the state that
+can't change afterwards: for drawing a vertex and a fragment function, how
+color(0) blends (T1_BLEND_*) and which triangles to skip (T1_CULL_*). *good
+is 0 if a function doesn't exist in the loaded shaders (names are checked
+when the first shaders load if there are none yet).
+
+Passes:
+- A clear pass fills a texture (or T1_TEX_WINDOW) with a color.
+- A draw pass draws its sources (T1_DRAW_*) with a pipeline. Properties:
+  "cam" (u32, the camera's T1_id: its view and depth buffer, T1_ID_NONE is
+  only for T1_DRAW_FULLSCREEN) and "color_tex[0]" to "color_tex[3]" (u32
+  T1Texs the fragment function's [[color(k)]] go to, the camera's size,
+  "color_tex[0]" may be T1_TEX_WINDOW).
+- A compute pass runs a compute pipeline once per pixel of its "write_tex"
+  (u32 T1Tex), see T1_WRITE_TEX_I.
+Draw and compute passes also have "read_tex[0]" to "read_tex[7]" (u32
+T1Texs) for your shaders, see T1_READ_TEXS_BUFFER_I. A pass that reads what
+an earlier pass drew waits for it.
+
+Touch ids are read from the texture you give T1_touch_set_tex(), your
+shaders pack them into its pixels (T1_TEX_NONE for no touch ids).
+*/
+#define T1_BLEND_NONE                0
+#define T1_BLEND_ADDITIVE            1 // black adds nothing
+#define T1_BLEND_PREMULTIPLIED_ALPHA 2 // rgb already multiplied by alpha
+#define T1_BLEND_STRAIGHT_ALPHA      3
+#define T1_CULL_NONE  0
+#define T1_CULL_BACK  1
+#define T1_CULL_FRONT 2
+uint32_t T1_pipeline_new_draw(
+    const char * vertex_fn,
+    const char * fragment_fn,
+    uint8_t blend,
+    uint8_t cull,
+    uint8_t * good);
+uint32_t T1_pipeline_new_compute(
+    const char * kernel_fn,
+    uint8_t * good);
+
+#define T1_DRAW_OPAQUE     0x01 // zsprites without alpha_on or bloom_on
+#define T1_DRAW_BLENDED    0x02 // zsprites with alpha_on
+#define T1_DRAW_BLOOMING   0x04 // zsprites with bloom_on
+#define T1_DRAW_TEXQUADS   0x08
+#define T1_DRAW_BILLBOARDS 0x10
+#define T1_DRAW_FULLSCREEN 0x20 // 6 vertices, a quad covering the targets
+uint32_t T1_pass_new_clear(
+    T1Tex tex,
+    float r,
+    float g,
+    float b,
+    float a);
+// sources is T1_DRAW_* bits, zsprite sources can be combined
+uint32_t T1_pass_new_draw(uint32_t pipeline_T1_id, uint32_t sources);
+uint32_t T1_pass_new_compute(uint32_t pipeline_T1_id);
+
+void T1_touch_set_tex(T1Tex tex);
 
 /*
 MANAGE 3-D MODELS (.OBJ FILES)
@@ -305,8 +368,12 @@ same concept has the same name on every kind of object.
 up to you: a camera draws the objects and uses the lights whose layers share
 a bit with its visible_layers. layers 0 hides an object from every camera.
 
-zsprites' "mix_cam" takes a camera's T1_id: mix in that camera's image, use
-its T1_cam_get_write_tex() as "mix_texture". T1_ID_NONE undoes it.
+zsprites' "mix_cam" takes a camera's T1_id: mix in the image (that you drew
+from) that camera, its T1Tex is "mix_texture". T1_ID_NONE undoes it.
+
+zlights' "shadow_cam" takes a camera's T1_id, which then follows the light;
+your shaders pack its depth into the light's "shadow_tex" (a T1Tex).
+T1_ID_NONE for no shadows.
 */
 uint32_t T1_zsprite_new(int32_t mesh_id);
 uint32_t T1_zsprite_new_quad(
@@ -334,16 +401,17 @@ void T1_merge_T1_ids(
     uint32_t T1_id_to_keep);
 // Deletes every zsprite, texquad, zlight and camera with this T1_id
 void T1_delete(uint32_t T1_id);
-// Deletes every zsprite, texquad and zlight, cameras stay
+// Deletes every zsprite, texquad and zlight, cameras and passes stay
 void T1_delete_all(void);
 
 /*
 Animations affecting various T1 objects
 */
-// Toggles a zsprite's "no_cam" (0 or 1) without moving it on screen
+// Toggles a zsprite's "no_cam" (0 or 1) without moving it on cam's screen
 void T1_anim_set_ignore_camera_but_retain_screenspace_pos(
     uint32_t T1_id,
-    float new_ignore_camera);
+    float new_ignore_camera,
+    uint32_t cam_T1_id);
 void T1_anim_delete_all_anims_targeting(uint32_t T1_id);
 void T1_anim_delete_all(void);
 

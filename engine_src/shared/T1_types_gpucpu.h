@@ -5,19 +5,18 @@
 #include "T1_macro_settings.h"
 #include "T1_types_public_gpucpu.h"
 
-#define T1_CAM_DEPTH_FRAGARG_I 30
-#define T1_SHADOW_MAPS_1ST_FRAGARG_I 31
-
 /*
-This isn't a real texture array!
-it's used as the write_array_i of a render view that
-doesn't have an RGBA output but does output a depth
-texture, such as a shadow map
+Where shaders find what T1 binds for every pass:
+- texture(0) to texture(T1_TEXARRAYS_CAP - 1): every texture array, so a
+  shader can sample any T1Tex (see T1_TEX_ARRAY_I and T1_TEX_SLICE_I)
+- buffer(T1_READ_TEXS_BUFFER_I): the pass's "read_tex[0]" and up, a
+  constant array of T1_READ_TEXS_CAP uint32_t T1Texs
+- texture(T1_WRITE_TEX_I): a compute pass's "write_tex", one thread per
+  pixel of it (uint2 [[thread_position_in_grid]])
 */
-#define T1_DEPTH_TEXTUREARRAYS_I 31 
-
-#define T1_DOWNSAMPLES_SIZE 5
-#define T1_DOWNSAMPLES_CUTOFF 4
+#define T1_READ_TEXS_BUFFER_I 9
+#define T1_READ_TEXS_CAP 8
+#define T1_WRITE_TEX_I 30
 
 #pragma pack(push, 1)
 typedef struct {
@@ -60,14 +59,6 @@ typedef struct {
     u32 parent_material_i;
 } T1GPULockedVertex;
 
-typedef enum : u32 {
-    T1RENDERVIEW_WRITE_BELOWBOUNDS = 0,
-    T1RENDERVIEW_WRITE_RENDER_TARGET = 1,
-    T1RENDERVIEW_WRITE_DEPTH = 2,
-    T1RENDERVIEW_WRITE_RGBA = 3,
-    T1RENDERVIEW_WRITE_ABOVEBOUNDS = 4,
-} T1RenderViewWriteType;
-
 typedef struct {
     // v = view, p = projection
     f32    v_4x4[16];
@@ -75,10 +66,10 @@ typedef struct {
     f32    normv_3x3[9]; // 16 + 16 + 9 = 41
     f32    cull_below_z;
     f32    cull_above_z;
-    s32    read_from_shadow_maps;
+    // a light's "shadow_cam"
     s32    write_to_shadow_maps;
     u32    visible_layers; // draws the objects whose layers share a bit
-    s32    padding[2];
+    s32    padding[3];
 } T1GPURenderView;
 
 typedef struct {
@@ -99,8 +90,8 @@ typedef struct {
     f32 specular;
     f32 reach;
     f32 rgb[3];
-    s32 shadow_map_depth_tex_i;
-    s32 shadow_map_render_view_i;
+    s32 shadow_cam_i; // -1 for no shadows
+    u32 shadow_tex; // the T1Tex its shadow cam's depth is packed into
     u32 layers; // lights the render views whose visible_layers share a bit
 } T1GPULight;
 

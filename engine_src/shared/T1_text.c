@@ -1,6 +1,7 @@
 #include "T1_types_public.h"
 
 #include "T1_text.h"
+#include "T1_settings.h"
 #include "T1_log.h"
 #include "T1_tex.h"
 #include "T1_id.h"
@@ -813,7 +814,7 @@ void T1_text_request_debug_text(const char * text)
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            T1_render_views->cpu[0].width);
+            (f32)T1_settings_get_render_width());
     T1_text_props->u32s.layers = previous_layers;
 }
 
@@ -884,11 +885,11 @@ void T1_text_request_fps(
         /* f32 mid_y_pixelspace  : */
             30.0f,
         /* z                     : */
-            T1_render_views->cpu[0].project.znear + 0.0001f,
+            0.1f + 0.0001f,
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            T1_render_views->cpu[0].width);
+            (f32)T1_settings_get_render_width());
     T1_text_props->u32s.layers = previous_layers;
 }
 
@@ -921,10 +922,10 @@ void T1_text_request_top_touch_id(
         /* f32 mid_y_pixelspace : */
             30.0f,
         /* z                     : */
-            T1_render_views->cpu[0].project.znear + 0.0001f,
+            0.1f + 0.0001f,
         /* const f32 tab_width : */
             4.0f,
         /* f32 max_width       : */
-            T1_render_views->cpu[0].width);
+            (f32)T1_settings_get_render_width());
     T1_text_props->u32s.layers = previous_layers;
 }

@@ -24,10 +24,6 @@ in use. Returns false if nothing was presented.
 */
 b8 T1_gpu_present_final_texture(void * metal_layer);
 
-// returns slice_i of new depth texture
-s16 T1_apple_gpu_make_depth_tex(
-    u32 width,
-    u32 height);
 
 #if 0
 

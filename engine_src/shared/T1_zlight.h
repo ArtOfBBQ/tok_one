@@ -23,6 +23,8 @@ typedef struct {
 typedef struct {
     // lights the render views whose visible_layers share a bit with it
     uint32_t layers;
+    uint32_t shadow_cam; // T1_id
+    uint32_t shadow_tex; // T1Tex
 } T1zLightu32;
 
 typedef struct {
@@ -34,8 +36,6 @@ typedef struct {
     uint32_t T1_id;
     uint32_t deleted;
     uint32_t committed;
-    int32_t shadow_map_depth_texture_i;
-    int32_t shadow_map_render_view_i;
     T1zLightu32 u32s;
     float simd_padding[2];
 } T1zLight;

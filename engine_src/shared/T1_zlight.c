@@ -26,8 +26,9 @@ static void T1_zlight_construct(T1zLight * to_construct)
     to_construct->deleted            = 0;
     to_construct->committed          = 0;
     
-    to_construct->shadow_map_depth_texture_i = -1;
     to_construct->u32s.layers = 1;
+    to_construct->u32s.shadow_cam = T1_ID_NONE;
+    to_construct->u32s.shadow_tex = T1_TEX_NONE;
 }
 
 T1zLight * T1_zlight_next(void)
@@ -134,10 +135,12 @@ void T1_zlight_copy_all(
             l[*l_size].rgb[1] = T1_zlights[i].f32s.rgba[1];
             l[*l_size].rgb[2] = T1_zlights[i].f32s.rgba[2];
             
-            l[*l_size].shadow_map_depth_tex_i =
-                T1_zlights[i].shadow_map_depth_texture_i;
-            l[*l_size].shadow_map_render_view_i =
-                T1_zlights[i].shadow_map_render_view_i;
+            l[*l_size].shadow_cam_i = T1_render_view_T1_id_to_i(
+                T1_zlights[i].u32s.shadow_cam);
+            l[*l_size].shadow_tex = T1_zlights[i].u32s.shadow_tex;
+            if (l[*l_size].shadow_tex == T1_TEX_NONE) {
+                l[*l_size].shadow_cam_i = -1;
+            }
             l[*l_size].layers = T1_zlights[i].u32s.layers;
             
             *l_size += 1;
@@ -227,35 +230,11 @@ void T1_zlight_update_all_attached_render_views(void)
         zl_i < T1_zlights_size;
         zl_i++)
     {
-        s32 depth_i = T1_zlights[zl_i].
-            shadow_map_depth_texture_i;
+        if (T1_zlights[zl_i].deleted) { continue; }
         
-        if (depth_i < 0) { continue; }
-        
-        T1_log_assert(depth_i < T1_RENDER_VIEW_CAP);
-        
-        s32 rv_i = -1;
-        
-        for (
-            s32 i = 0;
-            i < (s32)T1_render_views->size;
-            i++)
-        {
-            if (
-                T1_tex_to_array_i(
-                    T1_render_views->cpu[i].write_tex) ==
-                        T1_DEPTH_TEXTUREARRAYS_I &&
-                T1_tex_to_slice_i(
-                    T1_render_views->cpu[i].write_tex) ==
-                    depth_i)
-            {
-                rv_i = i;
-            }
-        }
-        
-        if (rv_i < 0) {
-            continue;
-        }
+        s32 rv_i = T1_render_view_T1_id_to_i(
+            T1_zlights[zl_i].u32s.shadow_cam);
+        if (rv_i < 0) { continue; }
         
         T1_log_assert(rv_i <
             (s32)T1_render_views->size);

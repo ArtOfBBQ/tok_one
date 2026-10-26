@@ -1,4 +1,6 @@
 #include "T1_anim.h"
+#include "T1_pipeline.h"
+#include "T1_pass.h"
 
 #include <stddef.h>
 
@@ -579,6 +581,9 @@ u32 T1_anim_new(u32 T1_id, u8 mode)
 {
     T1_log_assert(T1_id != T1_ID_NONE);
     T1_log_assert(mode == T1_ANIM_MODE_TO || mode == T1_ANIM_MODE_BY);
+    // pipelines and passes have nothing to animate
+    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id) < 0);
+    T1_log_assert(T1_pass_T1_id_to_i(T1_id) < 0);
     
     T1Anim * a = T1_anim_alloc(
         /* b8 endpoints_not_deltas: */ mode == T1_ANIM_MODE_TO);

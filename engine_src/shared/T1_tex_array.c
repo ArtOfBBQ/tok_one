@@ -161,7 +161,6 @@ register_to_texturearray_by_splitting_image(
     T1_tex_arrays[ta_i].single_img_height = expected_height;
     
     T1_tex_arrays[ta_i].images_size = rows * columns;
-    T1_tex_arrays[ta_i].is_render_target = 0;
     
     for (s32 row_i = (s32)rows-1; row_i >= 0; row_i--) {
         for (s32 col_i = (s32)columns-1; col_i >= 0; col_i--)
@@ -224,79 +223,6 @@ register_to_texturearray_by_splitting_image(
     }
 }
 
-s32 T1_tex_array_create_new_render_view(
-    u32 width,
-    u32 height,
-    char ** const fatal_error)
-{
-    if (*fatal_error != 0) { return -1; }
-    
-    T1_log_assert(T1_render_views != NULL);
-    
-    if (width < 10 || height < 10) {
-        return -1;
-    }
-    
-    s32 rv_i = T1_render_view_fetch_next(
-        width,
-        height);
-    if (rv_i < 0) { return rv_i; }
-    
-    T1_render_views->cpu[rv_i].write_type =
-        T1RENDERVIEW_WRITE_RENDER_TARGET;
-    T1_log_assert(T1_render_views->cpu[rv_i].width ==
-        width);
-    T1_log_assert(T1_render_views->cpu[rv_i].height ==
-        height);
-    T1_render_views->cpu[rv_i].passes_size = 3;
-    T1_render_views->cpu[rv_i].passes[0].type =
-        T1RENDERPASS_DIAMOND_ALPHA;
-    T1_render_views->cpu[rv_i].passes[1].type =
-        T1RENDERPASS_ALPHA_BLEND;
-    T1_render_views->cpu[rv_i].passes[2].type =
-        T1RENDERPASS_FLAT_TEXQUADS;
-    
-    T1Tex tex = T1_tex_array_new_slice(
-        /* u32 width: */
-            T1_render_views->cpu[rv_i].width,
-        /* u32 height: */
-            T1_render_views->cpu[rv_i].height,
-        /* b8 is_render_target: */
-            1,
-        /* b8 never_delete: */ 
-            0,
-        /* fatal_error: */
-            fatal_error);
-    
-    #if T1_LOG_PRINTF_ACTIVE == T1_ACTIVE
-    s32 tex_array_i = T1_tex_to_array_i(tex);
-    s32 tex_slice_i = T1_tex_to_slice_i(tex);
-    T1_log_append("Attaching texture array's ");
-    T1_log_append_s32(tex_array_i);
-    T1_log_append(" slice ");
-    T1_log_append_s32(tex_slice_i);
-    T1_log_append(" to render view ");
-    T1_log_append_s32(rv_i);
-    T1_log_append("\n");
-    #elif T1_LOG_PRINTF_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    T1_render_views->cpu[rv_i].write_tex = tex;
-    T1_log_assert(T1_render_views->cpu[rv_i].write_tex != T1_TEX_NONE);
-    
-    T1_log_assert((s32)T1_tex_arrays[T1_tex_to_array_i(tex)].images_size > T1_tex_to_slice_i(tex));
-    T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].deleted);
-    T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].deleted);
-    T1_log_assert(T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].image.width == width);
-    T1_log_assert(T1_tex_arrays[T1_tex_to_array_i(tex)].images[T1_tex_to_slice_i(tex)].image.height == height);
-    
-    T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
-    
-    return rv_i;
-}
-
 u32 T1_tex_array_get_img_height(s32 array_i) {
     T1_log_assert((u32)array_i < T1_tex_arrays_size);
     return T1_tex_arrays[array_i].single_img_height;
@@ -330,12 +256,6 @@ void T1_tex_array_delete_slice(
 {
     T1_log_assert(array_i >= 0);
     T1_log_assert(slice_i >= 0);
-    
-    // depth textures don't live in T1_tex_arrays, the index is only a marker
-    if (array_i == T1_DEPTH_TEXTUREARRAYS_I) {
-        T1_os_gpu_delete_depth_tex(slice_i);
-        return;
-    }
     
     T1_log_assert(
         slice_i < (s32)
@@ -455,7 +375,6 @@ void T1_tex_array_reg_new_by_splitting_img(
 T1Tex T1_tex_array_new_slice(
     u32 width,
     u32 height,
-    b8 is_render_target,
     b8 never_delete,
     char ** const fatal_error)
 {
@@ -480,8 +399,7 @@ T1Tex T1_tex_array_new_slice(
             !T1_tex_arrays[i].deleted &&
             T1_tex_arrays[i].images_size > 0 &&
             T1_tex_arrays[i].single_img_width  == width &&
-            T1_tex_arrays[i].single_img_height == height &&
-            T1_tex_arrays[i].is_render_target == is_render_target)
+            T1_tex_arrays[i].single_img_height == height)
         {
             // reuse a deleted slice if there is one, else append
             s16 slice_i = (s16)T1_tex_arrays[i].images_size;
@@ -543,7 +461,6 @@ T1Tex T1_tex_array_new_slice(
         T1_tex_arrays[array_i].images_size = 1;
         T1_tex_arrays[array_i].single_img_width = width;
         T1_tex_arrays[array_i].single_img_height = height;
-        T1_tex_arrays[array_i].is_render_target = is_render_target > 0;
         
         T1Img * img = &T1_tex_arrays[array_i].images[0].image;
         img->width = width;
@@ -567,20 +484,24 @@ T1Tex T1_tex_new(
 {
     if (*fatal_error != 0) { return T1_TEX_NONE; }
     
-    if (rgba == NULL || width < 1 || height < 1) {
-        *fatal_error = "T1_tex_new() needs rgba and a width and height";
+    if (width < 1 || height < 1) {
+        *fatal_error = "T1_tex_new() needs a width and height";
         return T1_TEX_NONE;
     }
     
     T1Tex tex = T1_tex_array_new_slice(
         width,
         height,
-        /* b8 is_render_target: */ 0,
         /* b8 never_delete: */ 0,
         fatal_error);
     if (*fatal_error != 0) { return T1_TEX_NONE; }
     
-    T1_tex_update(tex, rgba);
+    if (rgba != NULL) {
+        T1_tex_update(tex, rgba);
+    } else {
+        // blank until a pass draws to it
+        T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
+    }
     
     return tex;
 }
@@ -596,8 +517,6 @@ void T1_tex_update(
     T1_log_assert(slice_i >= 0);
     T1_log_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
     T1_log_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
-    T1_log_assert(!T1_tex_arrays[array_i].is_render_target);
-    
     T1_tex_array_update_rgba(
         array_i,
         slice_i,
@@ -618,7 +537,6 @@ void T1_tex_update(
 void T1_tex_delete(T1Tex tex) {
     if (tex == T1_TEX_NONE) { return; }
     
-    T1_log_assert(!T1_tex_arrays[T1_tex_to_array_i(tex)].is_render_target);
     T1_tex_array_delete_slice(
         T1_tex_to_array_i(tex),
         T1_tex_to_slice_i(tex));
