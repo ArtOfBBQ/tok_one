@@ -8,19 +8,6 @@
 #include "T1_types_public.h"
 
 /*
-This is an encapsulation header - it exposes the functions you
-need to make your application or game, and should be the only T1
-file you #include.
-
-Migrating here is a work in progress - it's less chaotic than
-needing to understand the entire engine, but still overcomplicated.
-
-- 'Width' and 'Height' are generally abbreviated to 'w' and 'h'
-- "x", "y", or "z" positions indicate positions in world space
-- "screen_x", "screen_y" are screenspace positions
-*/
-
-/*
 APPLICATION STARTUP
 Each step reports problems through fatal_error and does nothing if it's
 already set, so you can call them in a row and check once at the end:
