@@ -66,7 +66,7 @@ void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
     const u64 play_cursor_offset,
     const f32 volume_mult);
 
-void T1_audio_add_permasound_to_global_buffer(
+void T1_audio_play(
     s32 permasound_id,
     f32 volume_f32);
 
@@ -75,7 +75,7 @@ void T1_audio_copy_permasound_to_global_buffer_at_offset(
     u64 play_cursor_offset,
     b8 is_music);
 
-void T1_audio_copy_offset_permasound_to_global_buffer_at_offset(
+void T1_audio_stream(
     s32 permasound_id,
     u64 permasound_offset,
     u64 play_cursor_offset,
@@ -86,15 +86,15 @@ void T1_audio_copy_permasound_to_global_buffer(
     const s32 permasound_id,
     const f32 volume_mult);
 
-u64 T1_audio_get_play_cursor(void);
+u64 T1_audio_play_cursor(void);
 
-void T1_audio_clear_global_buffer(void);
+void T1_audio_stop_all(void);
 
-s32 T1_audio_get_permasound_id_or_register_new(
+s32 T1_audio_sound_id(
     const char * for_resource_name,
     char ** const fatal_error);
 
-void T1_audio_register_samples_to_permasound(
+void T1_audio_set_samples(
     s32 permasound_id,
     s16 * samples,
     s32 samples_size);

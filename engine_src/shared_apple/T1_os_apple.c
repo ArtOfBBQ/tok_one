@@ -537,7 +537,7 @@ void T1_os_get_filenames_in(
         
         u32 new_len = (u32)T1_std_strlen(entry->d_name);
         if (i + new_len + 1 >= filenames_cap) {
-            return;
+            break;
         }
         
         T1_std_strcpy_cap(
