@@ -12,6 +12,7 @@
 #include "T1_anim.h"
 #include "T1_text.h"
 #include "T1_global.h"
+#include "T1_id.h"
 #include "T1_render_view.h"
 
 // the extra layer lets ZS_CPU etc. expand to 2 arguments
@@ -550,6 +551,11 @@ void T1_merge_T1_ids(
     #else
     #error
     #endif
+    
+    // nothing has T1_id_to_add anymore
+    if (T1_id_to_add >= T1_ID_FIRST_NONUI) {
+        T1_id_release(T1_id_to_add);
+    }
 }
 
 void T1_delete(u32 T1_id)

@@ -8,14 +8,31 @@ u32 T1_id_retired = T1_ID_RETIRED_BUT_NOT_DELETED + 1;
 
 static u32 T1_id_latest_nonui = T1_ID_FIRST_NONUI;
 
+// ids given back by T1_id_release(), handed out again before new ones
+static u32 T1_id_released[T1_ID_MAX];
+static u32 T1_id_released_size = 0;
+
 static u32 T1_touch_id_latest_nonui = T1_ID_FIRST_NONUI_TOUCH;
 static u32 T1_touch_id_latest_ui = 2;
 
 u32 T1_id_next_nonui_id(void) {
+    if (T1_id_released_size > 0) {
+        T1_id_released_size -= 1;
+        return T1_id_released[T1_id_released_size];
+    }
+    
     T1_log_assert(
         T1_id_latest_nonui + 1 >= T1_ID_FIRST_NONUI);
     T1_log_assert(T1_id_latest_nonui + 1 < T1_ID_MAX);
     return T1_id_latest_nonui++;
+}
+
+void T1_id_release(u32 T1_id) {
+    T1_log_assert(T1_id >= T1_ID_FIRST_NONUI);
+    T1_log_assert(T1_id < T1_id_latest_nonui);
+    T1_log_assert(T1_id_released_size < T1_ID_MAX);
+    T1_id_released[T1_id_released_size] = T1_id;
+    T1_id_released_size += 1;
 }
 
 u32 T1_id_next_ui_element_touch_id(void)

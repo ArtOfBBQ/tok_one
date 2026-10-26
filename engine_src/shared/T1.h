@@ -325,6 +325,10 @@ void T1_set_u32(
     uint32_t T1_id,
     const char * property,
     uint32_t value);
+/*
+Gives everything with T1_id_to_add the T1_id T1_id_to_keep. T1_id_to_add is
+recycled for later objects, so stop using it.
+*/
 void T1_merge_T1_ids(
     uint32_t T1_id_to_add,
     uint32_t T1_id_to_keep);
