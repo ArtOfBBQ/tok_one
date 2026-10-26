@@ -3,7 +3,7 @@
 #include "T1_types_public.h"
 
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_io.h"
 #include "T1_zsprite.h"
@@ -55,9 +55,9 @@ static void T1_term_describe_zpolygon(
     u32 cap,
     u32 zp_i)
 {
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     (void)cap;
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -818,16 +818,16 @@ static u8 T1_term_evaluate(
         return 1;
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     if (T1_std_are_equal_strings(command, "CRASH")) {
         T1_std_strcpy_cap(
             response,
             T1_TERM_SINGLE_LINE_MAX,
             "Forcing the app to crash...");
-        T1_log_crash("Terminal-induced crash");
+        T1_crash("Terminal-induced crash");
         return 1;
     }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -959,15 +959,16 @@ static void T1_term_commit_or_activate(void) {
     }
     
     b8 T1_term_active_b4 = T1_term_active;
+    (void)T1_term_active_b4; // only used by T1_assert()
     T1_term_active = !T1_term_active;
     
     if (T1_term_active) {
-        T1_log_assert(!T1_term_active_b4);
+        T1_assert(!T1_term_active_b4);
         T1_io_set_captured_by_terminal(1);
         T1_term_redraw_backgrounds();
         requesting_label_update = 1;
     } else {
-        T1_log_assert(T1_term_active_b4);
+        T1_assert(T1_term_active_b4);
         T1_io_set_captured_by_terminal(0);
     }
 }
@@ -1045,7 +1046,7 @@ void T1_term_init(
 void T1_term_set_command_handler(
     void (* handler)(char * command, char * response, u32 response_cap))
 {
-    T1_log_assert(T1_trms != NULL); // the terminal comes with T1_gpu_init()
+    T1_assert(T1_trms != NULL); // the terminal comes with T1_gpu_init()
     if (T1_trms == NULL) { return; }
     T1_trms->callback_eval_command_fptr = handler;
 }

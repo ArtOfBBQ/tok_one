@@ -1,6 +1,6 @@
 #include "T1_std.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_objc.h"
 #include "T1_io.h"
 #include "T1_global.h"
@@ -192,9 +192,9 @@ static uintptr_t T1_os_macos_app_delegate_should_terminate(
 static u32 T1_apple_keycode_to_tokone_keycode(
     u32 apple_key)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -298,20 +298,20 @@ static u32 T1_apple_keycode_to_tokone_keycode(
         case 125: return T1_IO_KEYBOARD_DOWNARROW;
         case 126: return T1_IO_KEYBOARD_UPARROW;
         default:
-            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+            #if T1_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
             T1_std_strcat_u32_cap(err_msg, 128, apple_key);
             T1_std_strcat_cap(err_msg, 128, "\n");
-            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+            #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
             break;
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_crash(err_msg);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_crash(err_msg);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -443,7 +443,7 @@ static void T1_os_macos_ns_window_other_mouse_down(
         event,
         T1_os_macos_s->sel_button_number);
     
-    T1_log_assert(button_num >= 2);
+    T1_assert(button_num >= 2);
     
     if (button_num < 2) { return; }
     button_num -= 2;
@@ -467,7 +467,7 @@ static void T1_os_macos_ns_window_other_mouse_up(
         event,
         T1_os_macos_s->sel_button_number);
     
-    T1_log_assert(button_num >= 2);
+    T1_assert(button_num >= 2);
     
     if (button_num < 2) { return; }
     button_num -= 2;
@@ -685,15 +685,15 @@ void T1_os_macos_init(void) {
     T1_std_memset(T1_os_macos_s, 0, sizeof(T1OSMacosState));
     
     T1_os_macos_s->sel_alloc = T1_objc_reg_sel("alloc");
-    T1_log_assert(T1_os_macos_s->sel_alloc != NULL);
+    T1_assert(T1_os_macos_s->sel_alloc != NULL);
     
     T1_os_macos_s->sel_init_with_content_rect_style_mask =
         T1_objc_reg_sel("initWithContentRect:styleMask:backing:defer:");
-    T1_log_assert(T1_os_macos_s->
+    T1_assert(T1_os_macos_s->
         sel_init_with_content_rect_style_mask != NULL);
     T1_os_macos_s->sel_set_animation_behavior = T1_objc_reg_sel(
         "setAnimationBehavior:");
-    T1_log_assert(T1_os_macos_s->sel_set_animation_behavior != NULL);
+    T1_assert(T1_os_macos_s->sel_set_animation_behavior != NULL);
     
     // classes
     T1_os_macos_s->class_T1_ns_window =
@@ -832,21 +832,21 @@ void T1_os_macos_init(void) {
         "NSApplication");
     T1_os_macos_s->class_ns_url = T1_objc_get_class(
         "NSURL"); // NSURL;
-    T1_log_assert(T1_os_macos_s->class_ns_app != NULL);
+    T1_assert(T1_os_macos_s->class_ns_app != NULL);
     T1_os_macos_s->class_ns_workspace = T1_objc_get_class(
         "NSWorkspace");
     T1_os_macos_s->class_ns_view = T1_objc_get_class(
         "NSView");
-    T1_log_assert(T1_os_macos_s->class_ns_view != NULL);
+    T1_assert(T1_os_macos_s->class_ns_view != NULL);
     T1_os_macos_s->class_ca_metal_layer = T1_objc_get_class(
         "CAMetalLayer");
-    T1_log_assert(T1_os_macos_s->class_ca_metal_layer != NULL);
+    T1_assert(T1_os_macos_s->class_ca_metal_layer != NULL);
     T1_os_macos_s->class_ca_layer = T1_objc_get_class(
         "CALayer");
-    T1_log_assert(T1_os_macos_s->class_ca_layer != NULL);
+    T1_assert(T1_os_macos_s->class_ca_layer != NULL);
     T1_os_macos_s->class_ca_transaction = T1_objc_get_class(
         "CATransaction");
-    T1_log_assert(T1_os_macos_s->class_ca_transaction != NULL);
+    T1_assert(T1_os_macos_s->class_ca_transaction != NULL);
     T1_os_macos_s->sel_set_contents = T1_objc_reg_sel(
         "setContents:");
     T1_os_macos_s->sel_set_magnification_filter = T1_objc_reg_sel(
@@ -881,43 +881,43 @@ void T1_os_macos_init(void) {
         "NSDate");
     T1_os_macos_s->class_ns_screen = T1_objc_get_class(
         "NSScreen");
-    T1_log_assert(T1_os_macos_s->class_ns_date != NULL);
+    T1_assert(T1_os_macos_s->class_ns_date != NULL);
     
     // A global variable, so dlsym gives us its address
     void ** default_mode = (void **)T1_objc_get_func(
         "NSDefaultRunLoopMode");
-    T1_log_assert(default_mode != NULL);
+    T1_assert(default_mode != NULL);
     T1_os_macos_s->ns_default_run_loop_mode =
         default_mode ? *default_mode : NULL;
     
     // selectors
     T1_os_macos_s->sel_new = T1_objc_reg_sel(
         "new");
-    T1_log_assert(T1_os_macos_s->sel_new != NULL);
+    T1_assert(T1_os_macos_s->sel_new != NULL);
     T1_os_macos_s->sel_window = T1_objc_reg_sel(
         "window");
-    T1_log_assert(T1_os_macos_s->sel_window != NULL);
+    T1_assert(T1_os_macos_s->sel_window != NULL);
     T1_os_macos_s->sel_make_key_and_order_front = T1_objc_reg_sel(
         "makeKeyAndOrderFront:");
-    T1_log_assert(T1_os_macos_s->
+    T1_assert(T1_os_macos_s->
         sel_make_key_and_order_front != NULL);
     T1_os_macos_s->sel_length = T1_objc_reg_sel(
         "length");
-    T1_log_assert(T1_os_macos_s->sel_length != NULL);
+    T1_assert(T1_os_macos_s->sel_length != NULL);
     T1_os_macos_s->sel_get_bytes_length = T1_objc_reg_sel(
         "getBytes:length:");
-    T1_log_assert(T1_os_macos_s->sel_get_bytes_length != NULL);
+    T1_assert(T1_os_macos_s->sel_get_bytes_length != NULL);
     T1_os_macos_s->sel_object_at_index = T1_objc_reg_sel(
         "objectAtIndex:");
     T1_os_macos_s->sel_shared_application = T1_objc_reg_sel(
         "sharedApplication");
-    T1_log_assert(T1_os_macos_s->sel_object_at_index != NULL);
+    T1_assert(T1_os_macos_s->sel_object_at_index != NULL);
     T1_os_macos_s->sel_terminate = T1_objc_reg_sel(
         "terminate:");
-    T1_log_assert(T1_os_macos_s->sel_terminate != NULL);
+    T1_assert(T1_os_macos_s->sel_terminate != NULL);
     T1_os_macos_s->sel_default_manager =
         T1_objc_reg_sel("defaultManager");
-    T1_log_assert(T1_os_macos_s->
+    T1_assert(T1_os_macos_s->
         sel_default_manager != NULL);
     T1_os_macos_s->sel_current_dir_path = T1_objc_reg_sel(
         "currentDirPath");
@@ -931,7 +931,7 @@ void T1_os_macos_init(void) {
         "fileURLWithPath:");
     T1_os_macos_s->sel_shared_workspace = T1_objc_reg_sel(
         "sharedWorkspace");
-    T1_log_assert(T1_os_macos_s->
+    T1_assert(T1_os_macos_s->
         sel_current_dir_path != NULL);
     
     T1_os_macos_s->func_ns_search_path_dirs_in_domains =
@@ -1021,7 +1021,7 @@ void T1_os_macos_init(void) {
     T1_os_macos_s->sel_init_with_title_action_key_equivalent =
         T1_objc_reg_sel("initWithTitle:action:keyEquivalent:");
     
-    T1_log_assert(T1_os_macos_s->
+    T1_assert(T1_os_macos_s->
         func_ns_search_path_dirs_in_domains != NULL);
 }
 
@@ -1076,7 +1076,7 @@ static ObjCFrameworkGCC * T1_mpl_objc = NULL;
 
 static void T1_os_setup_obj_frameworks(void) {
     // we're assuming no one calls this a 2nd time
-    T1_log_assert(!T1_mpl_objc);
+    T1_assert(!T1_mpl_objc);
     
     T1_mpl_objc = T1_mem_malloc_unmanaged(
         sizeof(ObjCFrameworkGCC));
@@ -1361,9 +1361,6 @@ float T1_os_y_to_y(const float y) {
 void T1_os_open_dir_in_file_explorer_window_if_possible(
     const char * folderpath)
 {
-    T1_log_append("Trying to open folder: ");
-    T1_log_append(folderpath);
-    T1_log_append_c8('\n');
     
     if (folderpath == NULL || folderpath[0] == '\0') {
         return;

@@ -7,7 +7,7 @@
 #include "T1_mem.h"
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_tex.h"
 #include "T1_tex_files.h"
 #include "T1_objmodel.h"
@@ -35,7 +35,7 @@
 
 #include "T1_os.h"
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 typedef struct {
     f32 imanf32[16];
 } T1SimdTestStruct;
@@ -159,7 +159,7 @@ static void test_simd_functions_f32s(char ** const fatal_error) {
     
     for (u32 i = 0; i < 10; i++) {
         for (u32 j = 0; j < 16; j++) {
-            T1_log_assert(
+            T1_assert(
                 (structs[i].imanf32[j] - check_values[i].imanf32[j]) <  0.01f &&
                 (structs[i].imanf32[j] - check_values[i].imanf32[j]) > -0.01f);
         }
@@ -173,7 +173,7 @@ static void test_simd_functions_f32s(char ** const fatal_error) {
     T1_mem_free_managed(sets);
     T1_mem_free_managed(structs);
 }
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -181,7 +181,7 @@ static void test_simd_functions_f32s(char ** const fatal_error) {
 static u32 pad_to_page_size(u32 base_allocation) {
     u32 return_value = base_allocation +
         (T1_mem_page_size - (base_allocation % T1_mem_page_size));
-    T1_log_assert(return_value % T1_mem_page_size == 0);
+    T1_assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
@@ -236,7 +236,12 @@ void T1_init(
     void * pool = T1_objc_autorelease_pool_push();
     
     
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     test_simd_functions_f32s(fatal_error);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     T1_token_init(
         T1_std_memset,
@@ -250,15 +255,6 @@ void T1_init(
         T1_mem_malloc_managed,
         T1_std_strlcat);
     
-    T1_log_init(
-        /* void * arg_malloc_function(u64 size): */
-            T1_mem_malloc_unmanaged,
-        /* u32 (* arg_create_mutex_function)(void): */
-            T1_os_init_mutex_and_return_id,
-        /* void arg_mutex_lock_function(const u32 mutex_id): */
-            T1_os_mutex_lock,
-        /* s32 arg_mutex_unlock_function(const u32 mutex_id): */
-            T1_os_mutex_unlock);
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
         sizeof(T1Globals));
@@ -273,9 +269,6 @@ void T1_init(
     u8 audio_good;
     T1_os_audio_init(&audio_good);
     
-    T1_log_warn_if_false(
-        audio_good,
-        "Audio initialization failed!\n");
     if (audio_good) {
         T1_os_audio_start_loop();
     }
@@ -481,7 +474,7 @@ static void T1_appinit_gpu_modules(
     
     T1_tex_array_init();
     
-    T1_log_assert(T1_embedded_data_fontmetrics_dat_size > 0);
+    T1_assert(T1_embedded_data_fontmetrics_dat_size > 0);
     
     T1_text_init(
         T1_mem_malloc_unmanaged,
@@ -498,13 +491,13 @@ static void T1_appinit_gpu_modules(
     T1_std_memset(T1_cpu_to_gpu_data, 0, sizeof(T1CPUToGPUData));
     
     T1CPUToGPUData * sd = T1_cpu_to_gpu_data;
-    T1_log_assert(sd != NULL);
+    T1_assert(sd != NULL);
     
     // init the buffers that contain our vertices to send to the GPU
     sd->vertices_alloc_size = pad_to_page_size(
         sizeof(T1GPUVertexIndices) *
             T1_MAX_VERTS_PER_BUFFER);
-    T1_log_assert(sd->vertices_alloc_size > 0);
+    T1_assert(sd->vertices_alloc_size > 0);
     
     sd->flat_quads_alloc_size =
         pad_to_page_size(sizeof(T1GPUFlatQuad) *
@@ -595,7 +588,7 @@ static void T1_appinit_gpu_modules(
             return;
         }
         
-        T1_log_assert(sd->lights_alloc_size > 0);
+        T1_assert(sd->lights_alloc_size > 0);
         f->lights = (T1GPULight *)
             T1_mem_malloc_unmanaged_aligned(
                 sd->lights_alloc_size,

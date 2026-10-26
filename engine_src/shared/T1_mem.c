@@ -1,7 +1,7 @@
 #include "T1_mem.h"
 
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 
 #define MEM_ALIGNMENT_BYTES 64
 
@@ -25,7 +25,7 @@ void T1_mem_init(
     T1_mem_alloc_temp = alloc_temp;
     T1_mem_free_temp = free_temp;
 
-    T1_log_assert(page_size > 0 && (page_size & (page_size - 1)) == 0);
+    T1_assert(page_size > 0 && (page_size & (page_size - 1)) == 0);
     T1_mem_page_size = page_size;
 }
 
@@ -55,9 +55,9 @@ void * T1_mem_malloc_unmanaged_aligned(
     u64 size,
     u32 aligned_to)
 {
-    T1_log_assert(T1_mem_alloc_forever != NULL);
-    T1_log_assert(size > 0); // don't malloc for 0
-    T1_log_assert(
+    T1_assert(T1_mem_alloc_forever != NULL);
+    T1_assert(size > 0); // don't malloc for 0
+    T1_assert(
         aligned_to >= sizeof(void*) &&
         (aligned_to & (aligned_to - 1)) == 0);
 
@@ -68,10 +68,7 @@ void * T1_mem_malloc_unmanaged_aligned(
     T1_mem_unlock();
 
     if (base == NULL) {
-        T1_log_append("Tried to malloc_unmanaged for: ");
-        T1_log_append_u32((u32)(size / 1000000));
-        T1_log_append("MB, but the client's function returned NULL\n");
-        T1_log_assert(0);
+        T1_assert(0);
         return NULL;
     }
 
@@ -79,7 +76,7 @@ void * T1_mem_malloc_unmanaged_aligned(
     if (padding == aligned_to) { padding = 0; }
 
     void * return_value = (char *)base + padding;
-    T1_log_assert((uintptr_t)return_value % aligned_to == 0);
+    T1_assert((uintptr_t)return_value % aligned_to == 0);
 
     T1_std_memset(return_value, 0xCD, size);
 
@@ -107,9 +104,9 @@ void T1_mem_malloc_managed_page_aligned(
 
     *aligned_subptr = ((char *)*base_pointer_for_freeing) + padding;
 
-    T1_log_assert(*base_pointer_for_freeing != NULL);
-    T1_log_assert(*aligned_subptr != NULL);
-    T1_log_assert((uintptr_t)(*aligned_subptr) % aligned_to == 0);
+    T1_assert(*base_pointer_for_freeing != NULL);
+    T1_assert(*aligned_subptr != NULL);
+    T1_assert((uintptr_t)(*aligned_subptr) % aligned_to == 0);
 }
 
 b8 T1_mem_is_page_aligned(void * to_check)
@@ -118,14 +115,14 @@ b8 T1_mem_is_page_aligned(void * to_check)
 }
 
 void * T1_mem_malloc_managed(size_t size) {
-    T1_log_assert(T1_mem_alloc_temp != NULL);
-    T1_log_assert(size > 0);
+    T1_assert(T1_mem_alloc_temp != NULL);
+    T1_assert(size > 0);
 
     T1_mem_lock();
     void * out = T1_mem_alloc_temp(size);
     T1_mem_unlock();
 
-    T1_log_assert(out != NULL);
+    T1_assert(out != NULL);
     if (out != NULL) {
         T1_std_memset(out, 0xCD, size);
     }
@@ -133,7 +130,7 @@ void * T1_mem_malloc_managed(size_t size) {
 }
 
 void T1_mem_free_managed(void * to_free) {
-    T1_log_assert(T1_mem_free_temp != NULL);
+    T1_assert(T1_mem_free_temp != NULL);
 
     T1_mem_lock();
     T1_mem_free_temp(to_free);

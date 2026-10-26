@@ -1,7 +1,7 @@
 #include "T1_zlight.h"
 
 #include "T1_simd.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_tex.h"
 #include "T1_render_view.h"
 #include "T1_id.h"
@@ -42,7 +42,7 @@ T1zLight * T1_zlight_next(void)
         }
     }
     
-    T1_log_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
+    T1_assert(T1_zlights_size + 1 < T1_ZLIGHTS_CAP);
     return_value = &T1_zlights[T1_zlights_size];
     return_value->committed = 0;
     T1_zlights_size += 1;
@@ -54,7 +54,7 @@ T1zLight * T1_zlight_next(void)
 
 void T1_zlight_commit(T1zLight * to_request)
 {
-    T1_log_assert(!to_request->deleted);
+    T1_assert(!to_request->deleted);
     to_request->committed = 1;
 }
 
@@ -71,7 +71,7 @@ u32 T1_zlight_set_property(
     const T1Property * property,
     u32 bits)
 {
-    T1_log_assert(
+    T1_assert(
         property->store == T1_PROP_STORE_ZL_F32 ||
         property->store == T1_PROP_STORE_ZL_U32);
     
@@ -236,9 +236,9 @@ void T1_zlight_update_all_attached_render_views(void)
             T1_zlights[zl_i].u32s.shadow_cam);
         if (rv_i < 0) { continue; }
         
-        T1_log_assert(rv_i <
+        T1_assert(rv_i <
             (s32)T1_render_views->size);
-        T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
+        T1_assert(rv_i < T1_RENDER_VIEW_CAP);
         
         T1_render_views->cpu[rv_i].f32s.xyz[0] =
             T1_zlights[zl_i].f32s.xyz[0];

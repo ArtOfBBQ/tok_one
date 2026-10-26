@@ -25,7 +25,7 @@ APPLICATION STARTUP
 Each step reports problems through fatal_error and does nothing if it's
 already set, so you can call them in a row and check once at the end:
 
-T1_init(malloc, malloc, free, &fatal_error); // subsystems, audio: no GPU
+T1_init(malloc, malloc, free, &fatal_error); // no GPU yet
 T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
 T1_gpu_try_shader_source(...); // at least once successfully
 T1_window_open(&fatal_error);
@@ -39,8 +39,8 @@ materials when the next frame is rendered, so you can register either at
 any time.
 
 T1 never shows errors in the window. Problems at startup come back through
-fatal_error; when T1 catches a bug (a failed check), it prints why and
-crashes right away, so your debugger stops there.
+fatal_error; when T1 catches a bug (a failed check, see T1_ASSERTS_ACTIVE),
+it crashes right away, so your debugger stops there.
 */
 /*
 T1 allocates all its memory through your functions, they only need to align

@@ -4,7 +4,7 @@
 
 #include "T1_global.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_pipeline.h"
 #include "T1_pass.h"
 #include "T1_embedded_data.h"
@@ -76,7 +76,7 @@ static T1NSRange T1_nsrange_make(
     uintptr_t length)
 {
     // 0 length NSRange is legal, but why do it in T1?
-    T1_log_assert(length != 0);
+    T1_assert(length != 0);
     
     T1NSRange out;
     out.length = length;
@@ -93,9 +93,9 @@ static T1MTLSize T1_mtlsize_make(
     uintptr_t height,
     uintptr_t depth)
 {
-    T1_log_assert(width > 0);
-    T1_log_assert(height > 0);
-    T1_log_assert(depth > 0);
+    T1_assert(width > 0);
+    T1_assert(height > 0);
+    T1_assert(depth > 0);
     
     T1MTLSize sz;
     sz.width  = width;
@@ -114,9 +114,9 @@ static T1MTLOrigin T1_mtlorigin_make(
     uintptr_t y,
     uintptr_t z)
 {
-    T1_log_assert(x < UINT16_MAX); // TODO: delete me
-    T1_log_assert(y < UINT16_MAX); // TODO: delete me
-    T1_log_assert(z < UINT16_MAX); // TODO: delete me
+    T1_assert(x < UINT16_MAX); // TODO: delete me
+    T1_assert(y < UINT16_MAX); // TODO: delete me
+    T1_assert(z < UINT16_MAX); // TODO: delete me
     
     T1MTLOrigin out;
     out.x = x;
@@ -391,8 +391,8 @@ static void * T1_gpu_new_render_pipeline_descriptor(
     u8 targets,
     u8 blend)
 {
-    T1_log_assert(targets < T1_GPU_TARGETS_SIZE);
-    T1_log_assert(blend <= T1_BLEND_STRAIGHT_ALPHA);
+    T1_assert(targets < T1_GPU_TARGETS_SIZE);
+    T1_assert(blend <= T1_BLEND_STRAIGHT_ALPHA);
     
     void * pool = T1_objc_autorelease_pool_push();
     void * desc = (void *)T1_objc_msg(
@@ -538,10 +538,10 @@ void T1_apple_gpu_init(
     ags->sel_height = T1_objc_reg_sel("height");
     ags->sel_new_compute_pls_with_func = T1_objc_reg_sel(
         "newComputePipelineStateWithFunction:error:");
-    T1_log_assert(ags->sel_new_compute_pls_with_func != NULL);
+    T1_assert(ags->sel_new_compute_pls_with_func != NULL);
     ags->sel_new_tex_with_desc =
         T1_objc_reg_sel("newTextureWithDescriptor:");
-    T1_log_assert(ags->sel_new_tex_with_desc != NULL);
+    T1_assert(ags->sel_new_tex_with_desc != NULL);
     ags->sel_new_buf_with_len_options =
         T1_objc_reg_sel("newBufferWithLength:options:");
     ags->sel_new_render_pls_with_descriptor_error =
@@ -583,12 +583,12 @@ void T1_apple_gpu_init(
     ags->sel_set_mipmap_level_count = T1_objc_reg_sel(
         "setMipmapLevelCount:");
     ags->sel_usage = T1_objc_reg_sel("usage");
-    T1_log_assert(ags->sel_usage != NULL);
+    T1_assert(ags->sel_usage != NULL);
     ags->sel_mipmap_level_count = T1_objc_reg_sel(
         "mipmapLevelCount");
     ags->sel_new_depth_stencil_state_with_desc = T1_objc_reg_sel(
         "newDepthStencilStateWithDescriptor:");
-    T1_log_assert(ags->sel_new_depth_stencil_state_with_desc != NULL);
+    T1_assert(ags->sel_new_depth_stencil_state_with_desc != NULL);
     ags->sel_blit_command_encoder = T1_objc_reg_sel(
         "blitCommandEncoder");
     ags->sel_copy_from_buffer_source_offset_to_buffer = T1_objc_reg_sel(
@@ -690,13 +690,13 @@ void T1_apple_gpu_init(
         T1GPUFrame * f = &T1_cpu_to_gpu_data->
             triple_buffers[fram_i];
         
-        T1_log_assert(
+        T1_assert(
             T1_cpu_to_gpu_data->
                 polygons_alloc_size >=
             (sizeof(T1GPUzSprite) *
                 T1_ZSPRITES_CAP));
         
-        T1_log_assert(f->zsprite_list != NULL);
+        T1_assert(f->zsprite_list != NULL);
         ags->polygon_buffers[fram_i] = (void *)T1_objc_msg_4arg(
             ags->device,
             ags->sel_new_buffer_with_bytes_no_copy,
@@ -704,7 +704,7 @@ void T1_apple_gpu_init(
             T1_cpu_to_gpu_data->polygons_alloc_size,
             T1MTLResourceStorageModeShared,
             (uintptr_t)NULL);
-        T1_log_assert(ags->polygon_buffers[fram_i] != NULL);
+        T1_assert(ags->polygon_buffers[fram_i] != NULL);
         
         ags->matrix_buffers[fram_i] = (void *)T1_objc_msg_4arg(
             ags->device,
@@ -754,7 +754,7 @@ void T1_apple_gpu_init(
             T1MTLResourceStorageModeShared | T1MTLResourceUsageRead,
             (uintptr_t)NULL);
         
-        T1_log_assert(
+        T1_assert(
             T1_cpu_to_gpu_data->
                 render_views_alloc_size >=
                     (sizeof(T1GPURenderView) *
@@ -1029,13 +1029,13 @@ static void T1_gpu_release_pipeline(
 void T1_os_gpu_pipeline_added(s32 pipeline_i, u8 * good) {
     *good = true;
 
-    T1_log_assert(pipeline_i >= 0);
-    T1_log_assert(pipeline_i < T1_PIPELINES_CAP);
+    T1_assert(pipeline_i >= 0);
+    T1_assert(pipeline_i < T1_PIPELINES_CAP);
 
     // checked when the shaders load
     if (ags == NULL || !ags->shaders_ready) { return; }
 
-    T1_log_assert(ags->pipeline_funcs[pipeline_i][0] == NULL);
+    T1_assert(ags->pipeline_funcs[pipeline_i][0] == NULL);
 
     void * pool = T1_objc_autorelease_pool_push();
     T1_gpu_get_pipeline_funcs(
@@ -1056,8 +1056,8 @@ void T1_os_gpu_pipeline_added(s32 pipeline_i, u8 * good) {
 void T1_os_gpu_pipeline_deleted(s32 pipeline_i) {
     if (ags == NULL) { return; }
 
-    T1_log_assert(pipeline_i >= 0);
-    T1_log_assert(pipeline_i < T1_PIPELINES_CAP);
+    T1_assert(pipeline_i >= 0);
+    T1_assert(pipeline_i < T1_PIPELINES_CAP);
 
     T1_gpu_release_pipeline(
         ags->pipeline_funcs[pipeline_i],
@@ -1075,7 +1075,7 @@ static void * T1_gpu_pipeline_state(
     if (pipeline_T1_id == T1_ID_NONE) { return NULL; }
 
     s32 i = T1_pipeline_T1_id_to_i(pipeline_T1_id);
-    T1_log_assert(i >= 0);
+    T1_assert(i >= 0);
     if (i < 0) { return NULL; }
 
     if (T1_pipelines[i].is_compute) { targets = 0; }
@@ -1084,7 +1084,7 @@ static void * T1_gpu_pipeline_state(
         u8 ok = true;
         ags->pipeline_states[i][targets] = T1_gpu_build_pipeline_state(
             i, targets, ags->pipeline_funcs[i], &ok, NULL, 0);
-        T1_log_assert(ok);
+        T1_assert(ok);
     }
 
     return ags->pipeline_states[i][targets];
@@ -1240,7 +1240,7 @@ void T1_os_gpu_get_device_name(
     (void)recipient;
     (void)recipient_cap;
     
-    T1_log_assert(0); // TODO: reimplement me!
+    T1_assert(0); // TODO: reimplement me!
     #if 0
     const char * device_name_cstr =
         [[ags->device name]
@@ -1259,8 +1259,8 @@ void T1_os_gpu_update_capacity_if_needed(
 {
     if (!ags || !ags->metal_active) { return; }
     
-    T1_log_assert(tex_array_i >=  0);
-    T1_log_assert(tex_array_i <  31);
+    T1_assert(tex_array_i >=  0);
+    T1_assert(tex_array_i <  31);
     u8 copy_prev = false;
     void * prev_copy = NULL;
     
@@ -1354,12 +1354,12 @@ void T1_os_gpu_update_capacity_if_needed(
     #error
     #endif
     
-    T1_log_assert(ags->metal_textures[tex_array_i] == NULL);
+    T1_assert(ags->metal_textures[tex_array_i] == NULL);
     ags->metal_textures[tex_array_i] = (void *)T1_objc_msg_1arg(
         ags->device,
         ags->sel_new_tex_with_desc,
         (uintptr_t)texture_descriptor);
-    T1_log_assert(ags->metal_textures[tex_array_i] != NULL);
+    T1_assert(ags->metal_textures[tex_array_i] != NULL);
     T1_gpu_release(&texture_descriptor);
     
     T1_tex_arrays[tex_array_i].gpu_capacity =
@@ -1505,12 +1505,12 @@ void T1_os_gpu_fetch_rgba_at(
     u32 * good)
 {
     // Validate inputs
-    T1_log_assert(texture_i >= 0);
-    T1_log_assert(texture_array_i >= 0);
-    T1_log_assert(texture_array_i < T1_TEXARRAYS_CAP);
-    T1_log_assert(rgba_recipient != NULL);
-    T1_log_assert(recipient_size != NULL);
-    T1_log_assert(good != NULL);
+    T1_assert(texture_i >= 0);
+    T1_assert(texture_array_i >= 0);
+    T1_assert(texture_array_i < T1_TEXARRAYS_CAP);
+    T1_assert(rgba_recipient != NULL);
+    T1_assert(recipient_size != NULL);
+    T1_assert(good != NULL);
     
     *good = false;
     
@@ -1561,7 +1561,7 @@ void T1_os_gpu_fetch_rgba_at(
     if (temp_buffer == NULL) {
         return;
     }
-    T1_log_assert(temp_buffer != NULL);
+    T1_assert(temp_buffer != NULL);
     
     if (
         texture_i >= (s32)T1_objc_msg(
@@ -1660,7 +1660,7 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
     if (!ags || !ags->metal_active) { return; }
 
     // no mipmaps for font
-    T1_log_assert(texture_array_i != 0);
+    T1_assert(texture_array_i != 0);
 
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
@@ -1701,15 +1701,15 @@ void T1_os_gpu_push_tex_slice(
         T1_tex_arrays[tex_array_i].images[tex_slice_i].image.rgba_values_page_aligned;
     
     if (!T1_tex_arrays[tex_array_i].images[tex_slice_i].image.never_delete_me) {
-        T1_log_assert(rgba_freeable != NULL);
+        T1_assert(rgba_freeable != NULL);
     } else {
-        T1_log_assert(rgba_freeable == NULL);
+        T1_assert(rgba_freeable == NULL);
     }
-    T1_log_assert(rgba_page_aligned != NULL);
+    T1_assert(rgba_page_aligned != NULL);
     
-    T1_log_assert(tex_slice_i >= 0);
-    T1_log_assert(tex_array_i >= 0);
-    T1_log_assert(tex_array_i < T1_TEXARRAYS_CAP);
+    T1_assert(tex_slice_i >= 0);
+    T1_assert(tex_array_i >= 0);
+    T1_assert(tex_array_i < T1_TEXARRAYS_CAP);
     
     T1_os_gpu_update_capacity_if_needed(tex_array_i);
     
@@ -1717,18 +1717,18 @@ void T1_os_gpu_push_tex_slice(
     u32 img_height = T1_tex_arrays[tex_array_i].single_img_height;
     
     u32 temp_buf_cap = img_width * img_height * 4;
-    T1_log_assert(temp_buf_cap > 0);
+    T1_assert(temp_buf_cap > 0);
     while (temp_buf_cap % T1_mem_page_size != 0) {
         temp_buf_cap++;
     }
     
-    T1_log_assert(T1_mem_is_page_aligned(rgba_page_aligned));
+    T1_assert(T1_mem_is_page_aligned(rgba_page_aligned));
     
     vm_address_t vm_ptr;
     vm_size_t vm_size = temp_buf_cap;  // Already a page multiple
     kern_return_t err = vm_allocate(mach_task_self(), &vm_ptr, vm_size, VM_FLAGS_ANYWHERE);
     if (err != KERN_SUCCESS) {
-        T1_log_assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -1750,7 +1750,7 @@ void T1_os_gpu_push_tex_slice(
         (uintptr_t)NULL);
     
     if (temp_source_buf == NULL) {
-        T1_log_assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -1923,8 +1923,8 @@ void T1_gpu_update_final_window_size(void) {
 }
 
 void T1_gpu_update_render_view_size(s32 at_i) {
-    T1_log_assert(at_i >= 0);
-    T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
+    T1_assert(at_i >= 0);
+    T1_assert(at_i < T1_RENDER_VIEW_CAP);
     
     void * pool = T1_objc_autorelease_pool_push();
     
@@ -1934,8 +1934,8 @@ void T1_gpu_update_render_view_size(s32 at_i) {
         T1_render_views->cpu[at_i].width;
     ags->render_viewports[at_i].height  =
         T1_render_views->cpu[at_i].height;
-    T1_log_assert(ags->render_viewports[at_i].width > 0.0f);
-    T1_log_assert(ags->render_viewports[at_i].height > 0.0f);
+    T1_assert(ags->render_viewports[at_i].width > 0.0f);
+    T1_assert(ags->render_viewports[at_i].height > 0.0f);
     
     /*
     These near/far values are the final viewport coordinates (after
@@ -1989,9 +1989,9 @@ static void * get_tex_slice(
     s32 at_array_i,
     s32 at_slice_i)
 {
-    T1_log_assert(at_array_i >= 0);
-    T1_log_assert(at_array_i < T1_TEXARRAYS_CAP);
-    T1_log_assert(at_slice_i >= 0);
+    T1_assert(at_array_i >= 0);
+    T1_assert(at_array_i < T1_TEXARRAYS_CAP);
+    T1_assert(at_slice_i >= 0);
     
     void * parent = ags->metal_textures[at_array_i];
     
@@ -2046,7 +2046,7 @@ static void set_defaults_for_encoder(
     void * encoder,
     const u32 cam_i)
 {
-    T1_log_assert(cam_i < T1_RENDER_VIEW_CAP);
+    T1_assert(cam_i < T1_RENDER_VIEW_CAP);
 
     T1_objc_msg_1arg(encoder,
         ags->sel_set_depth_clip_mode, T1MTLDepthClipModeClip);
@@ -2173,8 +2173,8 @@ static void * T1_gpu_pass_target(
 
     s32 array_i = T1_TEX_ARRAY_I(tex);
     s32 slice_i = T1_TEX_SLICE_I(tex);
-    T1_log_assert(array_i >= 0);
-    T1_log_assert(array_i < T1_TEXARRAYS_CAP);
+    T1_assert(array_i >= 0);
+    T1_assert(array_i < T1_TEXARRAYS_CAP);
     if (
         array_i >= T1_TEXARRAYS_CAP ||
         ags->metal_textures[array_i] == NULL)
@@ -2235,12 +2235,12 @@ static void T1_gpu_encode_draw_pass(
     void * combuf)
 {
     s32 pipeline_i = T1_pipeline_T1_id_to_i(pass->pipeline);
-    T1_log_assert(pipeline_i >= 0);
+    T1_assert(pipeline_i >= 0);
     if (pipeline_i < 0) { return; }
 
     s32 cam_i = T1_render_view_T1_id_to_i(pass->u32s.cam);
     // anything but a fullscreen quad is drawn from a camera
-    T1_log_assert(cam_i >= 0 || pass->sources == T1_DRAW_FULLSCREEN);
+    T1_assert(cam_i >= 0 || pass->sources == T1_DRAW_FULLSCREEN);
     if (cam_i < 0 && pass->sources != T1_DRAW_FULLSCREEN) { return; }
 
     u32 verts_size = 0;
@@ -2265,7 +2265,7 @@ static void T1_gpu_encode_draw_pass(
     } else if (pass->sources == T1_DRAW_FULLSCREEN) {
         verts_size = 6;
     } else {
-        T1_log_assert(0);
+        T1_assert(0);
     }
 
     if (verts_size < 1) { return; }
@@ -2285,17 +2285,17 @@ static void T1_gpu_encode_draw_pass(
         if (tex == T1_TEX_NONE) { continue; }
 
         // the window can only be the first target
-        T1_log_assert(tex != T1_TEX_WINDOW || k == 0);
+        T1_assert(tex != T1_TEX_WINDOW || k == 0);
 
         targets[k] = T1_gpu_pass_target(tex, &owned[k]);
         if (targets[k] == NULL) { continue; }
 
         // every target must be the camera's size
-        T1_log_assert(
+        T1_assert(
             cam_i < 0 ||
             T1_objc_msg(targets[k], ags->sel_width) ==
                 T1_render_views->cpu[cam_i].width);
-        T1_log_assert(
+        T1_assert(
             cam_i < 0 ||
             T1_objc_msg(targets[k], ags->sel_height) ==
                 T1_render_views->cpu[cam_i].height);
@@ -2333,7 +2333,7 @@ static void T1_gpu_encode_draw_pass(
         {
             T1_gpu_update_render_view_size(cam_i);
         }
-        T1_log_assert(ags->depth_textures[cam_i] != NULL);
+        T1_assert(ags->depth_textures[cam_i] != NULL);
         target_bits |= T1_GPU_TARGET_DEPTH;
 
         void * depth_attachm = (void *)T1_objc_msg(
@@ -2420,11 +2420,11 @@ static void T1_gpu_encode_draw_pass(
             {
                 continue;
             }
-            T1_log_assert(
+            T1_assert(
                 f->vert_ranges[r].vert_i +
                     f->vert_ranges[r].verts_size <
                         T1_MAX_VERTS_PER_BUFFER);
-            T1_log_assert(f->vert_ranges[r].verts_size % 3 == 0);
+            T1_assert(f->vert_ranges[r].verts_size % 3 == 0);
             T1_objc_msg_3arg(
                 enc,
                 ags->sel_draw_primitives_vertex_start_vertex_count,
@@ -2526,8 +2526,8 @@ static void T1_gpu_encode_compute_pass(
     void * combuf)
 {
     // the window can't be written by compute shaders
-    T1_log_assert(pass->u32s.write_tex != T1_TEX_WINDOW);
-    T1_log_assert(pass->u32s.write_tex != T1_TEX_NONE);
+    T1_assert(pass->u32s.write_tex != T1_TEX_WINDOW);
+    T1_assert(pass->u32s.write_tex != T1_TEX_NONE);
     if (
         pass->u32s.write_tex == T1_TEX_WINDOW ||
         pass->u32s.write_tex == T1_TEX_NONE)
@@ -2595,7 +2595,7 @@ static void T1_gpu_retire_touch_sample(
     
     uintptr_t status = T1_objc_msg(sample->combuf, ags->sel_status);
     if (status < T1MTLCommandBufferStatusCompleted) {
-        T1_log_assert(!wait);
+        T1_assert(!wait);
         return;
     }
     
@@ -2606,7 +2606,7 @@ static void T1_gpu_retire_touch_sample(
         sample->frame_no > ags->touch_latest.frame_no)
     {
         if (sample->valid) {
-            T1_log_assert(sample->w * sample->h * 4 <=
+            T1_assert(sample->w * sample->h * 4 <=
                 sizeof(ags->touch_latest_bytes));
             T1_std_memcpy(
                 /* void * dest: */
@@ -2633,7 +2633,7 @@ static void T1_gpu_encode_touch_sample(
     void * combuf,
     T1GPUTouchSample * sample)
 {
-    T1_log_assert(sample->combuf == NULL);
+    T1_assert(sample->combuf == NULL);
     
     if (sample->buffer == NULL) {
         sample->buffer = (void *)T1_objc_msg_2arg(
@@ -2641,7 +2641,7 @@ static void T1_gpu_encode_touch_sample(
             ags->sel_new_buf_with_len_options,
             T1_GPU_TOUCH_SAMPLE_DIM * T1_GPU_TOUCH_SAMPLE_DIM * 4,
             T1MTLResourceStorageModeShared);
-        T1_log_assert(sample->buffer != NULL);
+        T1_assert(sample->buffer != NULL);
     }
     
     // Retained so we can check on this frame later
@@ -2803,7 +2803,7 @@ Returns false if nothing was rendered.
 */
 static b8 T1_gpu_render_frame(T1GPUFrame * f) {
     if (!T1_gpu_ensure_final_texture()) {
-        T1_log_assert(0);
+        T1_assert(0);
         return false;
     }
     
@@ -2812,9 +2812,9 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
         ags->sel_command_buffer);
     
     if (combuf == NULL) {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_crash("error - can't get metal command buffer\n");
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_crash("error - can't get metal command buffer\n");
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2840,7 +2840,7 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
                 T1_gpu_encode_compute_pass(pass, combuf);
                 break;
             default:
-                T1_log_assert(0);
+                T1_assert(0);
         }
     }
     
@@ -2850,7 +2850,7 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
     
     ags->frame_i += 1;
     ags->frame_i %= T1_FRAMES_CAP;
-    T1_log_assert(ags->frame_i < T1_FRAMES_CAP);
+    T1_assert(ags->frame_i < T1_FRAMES_CAP);
     
     T1_objc_msg(combuf, ags->sel_commit);
     
@@ -2963,7 +2963,7 @@ T1GPUFrame * T1_os_gpu_begin_frame(void) {
     T1GPUFrame * f = &T1_cpu_to_gpu_data->
         triple_buffers[ags->frame_i];
     
-    T1_log_assert(f->verts_size % 3 == 0);
+    T1_assert(f->verts_size % 3 == 0);
     
     T1_gpu_wait_for_frame_slot();
     
@@ -3008,8 +3008,8 @@ void T1_os_gpu_update_internal_render_viewport(
 {
     if (!ags || !ags->metal_active) { return; }
     
-    T1_log_assert(at_i >= 0);
-    T1_log_assert(at_i < T1_RENDER_VIEW_CAP);
+    T1_assert(at_i >= 0);
+    T1_assert(at_i < T1_RENDER_VIEW_CAP);
     
     T1_gpu_update_render_view_size(at_i);
 }

@@ -1,6 +1,6 @@
 #include "T1_linalg3d.h"
+#include "T1_assert.h"
 
-#include <assert.h>
 #include <math.h>
 
 f32 T1_linal_f32x4_dot(
@@ -36,8 +36,8 @@ T1_linal_f32x4 T1_linal_f32x4_cross(
     const T1_linal_f32x4 a,
     const T1_linal_f32x4 b)
 {
-    assert(a.data[3] == 0.0f);
-    assert(b.data[3] == 0.0f);
+    T1_assert(a.data[3] == 0.0f);
+    T1_assert(b.data[3] == 0.0f);
     
     f32 cross[3];
     cross[0] = (a.data[1] * b.data[2]) - (a.data[2] * b.data[1]);
@@ -337,9 +337,9 @@ void T1_linal_f32x4x4_extract_f32x3x3(
 {
     // TODO: implement vector versions!
     #if 0 && defined(__ARM_NEON)
-    assert(0);
+    T1_assert(0);
     #elif 0 && defined(__SSE2__)
-    assert(0);
+    T1_assert(0);
     #else
     
     u32 write_row_i = 0;
@@ -348,7 +348,7 @@ void T1_linal_f32x4x4_extract_f32x3x3(
             continue;
         }
         
-        assert(write_row_i < 3);
+        T1_assert(write_row_i < 3);
         out->rows[write_row_i].data[0] =
             in->rows[row_i].data[0 + (omit_col_i < 1)];
         out->rows[write_row_i].data[1] =
@@ -407,9 +407,9 @@ void T1_linal_f32x3x3_inverse_transpose_inplace(
 {
     // TODO: implement vector versions!
     #if 0 && defined(__ARM_NEON)
-    assert(0);
+    T1_assert(0);
     #elif 0 && defined(__SSE2__)
-    assert(0);
+    T1_assert(0);
     #else
     
     f32 det = T1_linal_f32x3x3_get_determinant(m);
@@ -430,7 +430,7 @@ void T1_linal_f32x3x3_inverse_transpose_inplace(
                 r1 = r2;
                 r2 = swap;
             }
-            assert(r1 < r2);
+            T1_assert(r1 < r2);
             
             // the 2 other columns
             s32 c1 = (c + 1) % 3;
@@ -440,21 +440,21 @@ void T1_linal_f32x3x3_inverse_transpose_inplace(
                 c1 = c2;
                 c2 = swap;
             }
-            assert(c1 < c2);
+            T1_assert(c1 < c2);
             
             f32 cofactor = 
                 m->rows[r1].data[c1] * m->rows[r2].data[c2] -
                 m->rows[r1].data[c2] * m->rows[r2].data[c1];
             
             f32 sign = ((r + c) % 2 == 0) ? 1.0f : -1.0f;
-            assert((r*3 + c) < 9);
+            T1_assert((r*3 + c) < 9);
             minors[r*3 + c] = sign * cofactor;
         }
     }
     
     for (int row_i = 0; row_i < 3; row_i++) {
         for (int col_i = 0; col_i < 3; col_i++) {
-            assert((row_i*3 + col_i) < 9);
+            T1_assert((row_i*3 + col_i) < 9);
             m->rows[row_i].data[col_i] =
                 minors[row_i*3 + col_i] * det_recip;
         }
@@ -474,7 +474,7 @@ void T1_linal_f32x4x4_inverse_inplace(
 void T1_linal_f32x4x4_inverse_transpose_inplace(
     T1_linal_f32x4x4 * m)
 {
-    assert(T1_linal_f32x4x4_get_determinant(m) != 0.0f);
+    T1_assert(T1_linal_f32x4x4_get_determinant(m) != 0.0f);
     
     f32 det_recip = 1.0f / T1_linal_f32x4x4_get_determinant(m);
     
@@ -621,8 +621,8 @@ static T1_linal_f32x4 T1_linal_f32x3x3_get_column(
     const T1_linal_f32x3x3 * m,
     s32 col_i)
 {
-    assert(col_i >= 0);
-    assert(col_i < 3);
+    T1_assert(col_i >= 0);
+    T1_assert(col_i < 3);
     
     T1_linal_f32x4 out;
     
@@ -711,12 +711,12 @@ void T1_linal_f32x3x3_mul_f32x3x3(
     const T1_linal_f32x3x3 * b,
     T1_linal_f32x3x3 * out)
 {
-    assert(a->rows[0].data[3] == 0.0f);
-    assert(a->rows[1].data[3] == 0.0f);
-    assert(a->rows[2].data[3] == 0.0f);
-    assert(b->rows[0].data[3] == 0.0f);
-    assert(b->rows[1].data[3] == 0.0f);
-    assert(b->rows[2].data[3] == 0.0f);
+    T1_assert(a->rows[0].data[3] == 0.0f);
+    T1_assert(a->rows[1].data[3] == 0.0f);
+    T1_assert(a->rows[2].data[3] == 0.0f);
+    T1_assert(b->rows[0].data[3] == 0.0f);
+    T1_assert(b->rows[1].data[3] == 0.0f);
+    T1_assert(b->rows[2].data[3] == 0.0f);
     
     u32 row_i;
     for (row_i = 0; row_i < 3; row_i++) {

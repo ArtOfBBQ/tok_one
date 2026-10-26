@@ -1,14 +1,13 @@
 #include "T1_objc.h"
 
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 
 #ifdef NDEBUG
 #else
 #include "T1_os.h"
 #endif
 
-#include <assert.h>
 #include <dlfcn.h>
 
 #define T1NSASCIIStringEncoding 1
@@ -242,8 +241,8 @@ T1ObjcRawFn T1_objc_unsafe_get_raw_msg_send(void) {
 b8 T1_objc_open_framework(
     const char * framework_name)
 {
-    T1_log_assert(T1_objc_s != NULL);
-    T1_log_assert(framework_name != NULL);
+    T1_assert(T1_objc_s != NULL);
+    T1_assert(framework_name != NULL);
     
     if (T1_objc_s == NULL) {
         return 0;
@@ -262,8 +261,8 @@ b8 T1_objc_open_framework(
 static u64 T1_objc_func_name_to_u64(
     const char * func_name)
 {
-    T1_log_assert(func_name != NULL);
-    T1_log_assert(func_name[0] != '\0');
+    T1_assert(func_name != NULL);
+    T1_assert(func_name[0] != '\0');
     
     u64 len = T1_std_strlen(func_name);
     
@@ -304,8 +303,8 @@ void * T1_objc_autorelease_pool_push_internal_with_func(
     u64 val = T1_objc_func_name_to_u64(func);
     char * dud_error = 0;
     u64 thread_id = T1_os_get_T1_thread_id(&dud_error);
-    assert(dud_error == 0);
-    assert(thread_id < T1_OBJC_THREAD_CAP);
+    T1_assert(dud_error == 0);
+    T1_assert(thread_id < T1_OBJC_THREAD_CAP);
     
     T1_objc_s->pushpop_stack[thread_id][
         T1_objc_s->pushpop_stack_size[thread_id]] = val;
@@ -322,7 +321,7 @@ void T1_objc_autorelease_pool_pop_internal(void * pool) {
             "objc_autoreleasePoolPop");
     }
     
-    T1_log_assert(pool != 0);
+    T1_assert(pool != 0);
     objc_ar_pop_fn(pool);
 }
 
@@ -335,16 +334,17 @@ void T1_objc_autorelease_pool_pop_internal_with_func(
     u64 val = T1_objc_func_name_to_u64(func);
     char * dud_error = 0;
     u64 thread_id = T1_os_get_T1_thread_id(&dud_error);
-    assert(dud_error == 0);
-    assert(thread_id < T1_OBJC_THREAD_CAP);
+    T1_assert(dud_error == 0);
+    T1_assert(thread_id < T1_OBJC_THREAD_CAP);
     
     u64 sz = T1_objc_s->pushpop_stack_size[thread_id];
-    assert(sz > 0);
+    T1_assert(sz > 0);
     T1_objc_s->pushpop_stack_size[thread_id] -= 1;
     
     u64 prev_val = T1_objc_s->pushpop_stack[thread_id][sz-1];
     
-    assert(val == prev_val);
+    T1_assert(val == prev_val);
+    (void)val; (void)prev_val; // only used by T1_assert()
     
     T1_objc_autorelease_pool_pop_internal(pool);
 }
@@ -449,8 +449,8 @@ uintptr_t T1_objc_msg(
     void * recip,
     void * selector)
 {
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    T1_assert(recip != NULL);
+    T1_assert(selector != NULL);
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
@@ -461,6 +461,7 @@ uintptr_t T1_objc_msg(
     return out;
 }
 
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 static u8 T1_objc_value_fits_encoding_in_register(
     uintptr_t value,
     const char * t)
@@ -550,7 +551,6 @@ static u8 T1_objc_encoding_is_representable_by_uintptr_t_in_register(
     }
 }
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_arg_f64(
     void * recip,
     void * selector,
@@ -561,7 +561,7 @@ static void assert_arg_f64(
     void * m = T1_objc_s->class_get_instance_method(
         T1_objc_s->object_get_class(recip), selector);
     s32 n = T1_objc_s->method_get_number_of_arguments(m);
-    T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
+    T1_assert(n == (args_count + 2)); // n includes self and _cmd
     char ret[16];
     T1_objc_s->method_get_return_type(
         m, ret, sizeof(ret));
@@ -580,8 +580,8 @@ static void assert_arg_f64(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " can't take argument type as f64: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_crash(errmsg);
-        T1_log_assert(0);
+        T1_crash(errmsg);
+        T1_assert(0);
         return;
     }
     
@@ -598,7 +598,7 @@ static void assert_arg_uintptr_t(
     void * m = T1_objc_s->class_get_instance_method(
         T1_objc_s->object_get_class(recip), selector);
     s32 n = T1_objc_s->method_get_number_of_arguments(m);
-    T1_log_assert(n == (args_count + 2)); // n includes self and _cmd
+    T1_assert(n == (args_count + 2)); // n includes self and _cmd
     char ret[16];
     T1_std_memset(ret, 0, 16);
     T1_objc_s->method_get_return_type(
@@ -618,8 +618,8 @@ static void assert_arg_uintptr_t(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " can't take argument type as uintptr_t: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_crash(errmsg);
-        T1_log_assert(0);
+        T1_crash(errmsg);
+        T1_assert(0);
         return;
     }
     
@@ -632,12 +632,12 @@ static void assert_arg_uintptr_t(
         T1_std_strcat_cap(errmsg, 128, T1_objc_s->selector_get_name(selector));
         T1_std_strcat_cap(errmsg, 128, " argument 1's value is out of boudns for: ");
         T1_std_strcat_cap(errmsg, 128, t);
-        T1_log_crash(errmsg);
-        T1_log_assert(0);
+        T1_crash(errmsg);
+        T1_assert(0);
     }
     return;
 }
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -647,18 +647,18 @@ uintptr_t T1_objc_msg_1arg(
     void * selector,
     uintptr_t arg1)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     assert_arg_uintptr_t(
         recip, selector,
         /* args_count: */ 1, /* arg_i: */ 0,
         arg1);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    T1_assert(recip != NULL);
+    T1_assert(selector != NULL);
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
         return 0;
@@ -673,7 +673,7 @@ uintptr_t T1_objc_msg_2arg(
     uintptr_t arg1,
     uintptr_t arg2)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     assert_arg_uintptr_t(
         recip, selector,
         /* args_count: */ 2, /* arg_i: */ 0,
@@ -682,7 +682,7 @@ uintptr_t T1_objc_msg_2arg(
         recip, selector,
         /* args_count: */ 2, /* arg_i: */ 1,
         arg2);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -701,7 +701,7 @@ uintptr_t T1_objc_msg_3arg(
     uintptr_t arg2,
     uintptr_t arg3)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     assert_arg_uintptr_t(
         recip, selector,
         /* args_count: */ 3, /* arg_i: */ 0,
@@ -714,7 +714,7 @@ uintptr_t T1_objc_msg_3arg(
         recip, selector,
         /* args_count: */ 3, /* arg_i: */ 2,
         arg3);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -734,7 +734,7 @@ uintptr_t T1_objc_msg_4arg(
     uintptr_t arg3,
     uintptr_t arg4)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     assert_arg_uintptr_t(
         recip, selector,
         /* args_count: */ 4, /* arg_i: */ 0,
@@ -751,7 +751,7 @@ uintptr_t T1_objc_msg_4arg(
         recip, selector,
         /* args_count: */ 4, /* arg_i: */ 3,
         arg4);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -768,20 +768,21 @@ uintptr_t T1_objc_msg_1f64(
     void * selector,
     f64 arg1)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(recip != NULL);
-    T1_log_assert(selector != NULL);
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(recip != NULL);
+    T1_assert(selector != NULL);
     
     assert_arg_f64(
         recip, selector,
         /* args_count: */ 1, /* arg_i: */ 0,
         arg1);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     if (!T1_objc_s || !T1_objc_s->good || !recip || !selector) {
-        T1_log_assert(0);
+        T1_assert(0);
         return 0;
     }
     
@@ -796,18 +797,18 @@ f64 T1_objc_msg_get_f64(
         return 0;
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     {
-        T1_log_assert(recip != NULL);
-        T1_log_assert(selector != NULL);
+        T1_assert(recip != NULL);
+        T1_assert(selector != NULL);
         
         void * m = T1_objc_s->class_get_instance_method(
             T1_objc_s->object_get_class(recip), selector);
         // use the class-method lookup if recip is a Class
-        T1_log_assert(m != NULL);
+        T1_assert(m != NULL);
         
         s32 n = T1_objc_s->method_get_number_of_arguments(m);
-        T1_log_assert(n == 2); // self and _cmd only
+        T1_assert(n == 2); // self and _cmd only
         
         char ret[16];
         T1_std_memset(ret, 0, 16);
@@ -819,8 +820,8 @@ f64 T1_objc_msg_get_f64(
             T1_std_memset(errmsg, 0, 256);
             T1_std_strcat_cap(errmsg, 256, "T1_objc_msg_get_f64() but float not returned by selector: ");
             T1_std_strcat_cap(errmsg, 256, T1_objc_s->selector_get_name(selector));
-            T1_log_crash(errmsg);
-            T1_log_assert(0);
+            T1_crash(errmsg);
+            T1_assert(0);
             return 0;
         }
     }
@@ -834,10 +835,10 @@ f64 T1_objc_msg_get_f64(
 void * T1_objc_nsstring_construct(
     const char * from)
 {
-    T1_log_assert(T1_objc_s->class_nsstring != 0);
-    T1_log_assert(T1_objc_s->sel_string_with_utf8_string != 0);
-    T1_log_assert(from != 0);
-    T1_log_assert(from[0] != '\0');
+    T1_assert(T1_objc_s->class_nsstring != 0);
+    T1_assert(T1_objc_s->sel_string_with_utf8_string != 0);
+    T1_assert(from != 0);
+    T1_assert(from[0] != '\0');
     
     void * out = (void *)T1_objc_msg_1arg(
         T1_objc_s->class_nsstring,

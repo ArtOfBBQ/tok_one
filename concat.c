@@ -77,7 +77,7 @@ static const char * c_files[] = {
 "T1_objparser.c",
 "T1_mtlparser.c",
 "T1_std.c",
-"T1_log.c",
+"T1_assert.c",
 "T1_mesh_summary.c",
 "T1_collision.c",
 "T1_id.c",

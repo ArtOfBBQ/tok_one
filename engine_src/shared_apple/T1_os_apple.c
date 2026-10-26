@@ -9,7 +9,7 @@
 
 #include "T1_std.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 
 void T1_os_print_error(const char * message) {
     fprintf(stderr, "%s\n", message);
@@ -144,7 +144,7 @@ u64 T1_os_get_clock_frequency(void) {
     //    struct clockinfo clockinfo;
     //    len = sizeof(clockinfo);
     //    int result = sysctl(mib, 2, &clockinfo, &len, NULL, 0);
-    //    assert(result != -1);
+    //    T1_assert(result != -1);
     // log_trace("clockinfo.hz: %d\n", clockinfo.hz);
     // log_trace("clockinfo.tick: %d\n", clockinfo.tick);
     // return (u64)clockinfo.tick;
@@ -181,7 +181,7 @@ static u64 T1_os_apple_get_filesize_unpooled(
     );
     
     if (file_manager == NULL) {
-        T1_log_crash("ERROR - failed to get default NSFileManager\n");
+        T1_crash("ERROR - failed to get default NSFileManager\n");
         return 0;
     }
     
@@ -193,9 +193,6 @@ static u64 T1_os_apple_get_filesize_unpooled(
         (uintptr_t)&error_value);
     
     if (attrib_dict == NULL || error_value != NULL) {
-        T1_log_append("WARNING - failed to get size of file - ");
-        T1_log_append(filepath);
-        T1_log_append("\n");
         return 0;
     }
     
@@ -319,9 +316,6 @@ u8 T1_os_file_exists(
         (uintptr_t)&is_directory))
     {
         if (is_directory) {
-            T1_log_append("warning filepath: ");
-            T1_log_append(filepath);
-            T1_log_append(" is a directory, returnin FALSE for existence\n");
             T1_objc_autorelease_pool_pop(pool);
             return 0;
         }
@@ -330,9 +324,6 @@ u8 T1_os_file_exists(
         return 1;
     }
     
-    T1_log_append("filepath: ");
-    T1_log_append(filepath);
-    T1_log_append(" does not exist, returning FALSE...\n");
     T1_objc_autorelease_pool_pop(pool);
     return 0;
 }
@@ -350,7 +341,7 @@ static b8 T1_os_apple_mkdir_if_not_exist_unpooled(
         return 0;
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     void * directory_url = (void *)T1_objc_msg_2arg(
         T1_os_apple_s->class_ns_url,
         T1_os_apple_s->sel_file_url_with_path_is_directory,
@@ -359,7 +350,7 @@ static b8 T1_os_apple_mkdir_if_not_exist_unpooled(
     if (directory_url == NULL) {
         return 0;
     }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -439,16 +430,11 @@ void T1_os_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
-    T1_log_assert(filepath_source != NULL);
-    T1_log_assert(filepath_source[0] != '\0');   
-    T1_log_assert(filepath_destination != NULL);
-    T1_log_assert(filepath_destination[0] != '\0');
+    T1_assert(filepath_source != NULL);
+    T1_assert(filepath_source[0] != '\0');   
+    T1_assert(filepath_destination != NULL);
+    T1_assert(filepath_destination[0] != '\0');
     
-    T1_log_append("trying to copy from: ");
-    T1_log_append(filepath_source);
-    T1_log_append(", to: ");
-    T1_log_append(filepath_destination);
-    T1_log_append_c8('\n');
     
     void * pool = T1_objc_autorelease_pool_push();
     
@@ -534,8 +520,6 @@ void T1_os_get_filenames_in(
     #if 1
     DIR * dir = opendir(directory);
     if (!dir) {
-        T1_log_append(
-            "ERROR - failed to open directory\n");
         return;
     }
     
@@ -572,7 +556,7 @@ void T1_os_get_filenames_in(
         directory);
     // NSURL * url = [NSURL URLWithString: path];
     
-    // T1_log_assert(url != NULL);
+    // T1_assert(url != NULL);
     
     void * manager = (void *)T1_objc_msg(
         T1_apple_os_s->class_ns_filemanager,
@@ -658,7 +642,7 @@ static void * T1_os_apple_start_thread_with_autorelease(
 {
     char * dud_error = 0;
     u64 T1_thread_id = T1_os_get_T1_thread_id(&dud_error);
-    assert(dud_error == 0);
+    T1_assert(dud_error == 0);
     
     printf("starting apple thread with T1_thread_id: %llu\n",
         T1_thread_id);
@@ -687,7 +671,8 @@ void T1_os_start_thread(
         NULL,
         T1_os_apple_start_thread_with_autorelease,
         argument);
-    T1_log_assert(result == 0);
+    T1_assert(result == 0);
+    (void)result; // only used by T1_assert()
     
     T1_os_mutex_unlock(T1_os_apple_s->mutex_id);
 }

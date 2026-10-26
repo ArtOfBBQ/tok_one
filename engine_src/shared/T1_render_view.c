@@ -2,7 +2,7 @@
 #include "T1_mem.h"
 #include "T1_linalg3d.h"
 #include "T1_global.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_zlight.h"
 #include "T1_render_view.h"
 #include "T1_os.h"
@@ -20,7 +20,7 @@ T1_pass.h). Every camera has its own depth buffer, at its size.
 T1RenderViewCollection * T1_render_views = NULL;
 
 void T1_render_view_init(void) {
-    T1_log_assert(T1_RENDER_VIEW_CAP > 0);
+    T1_assert(T1_RENDER_VIEW_CAP > 0);
     T1_render_views = T1_mem_malloc_unmanaged(
         sizeof(T1RenderViewCollection));
     
@@ -50,12 +50,12 @@ void T1_render_view_reset(s32 i)
 {
     T1CPURenderView * rv = T1_render_views->cpu + i;
     
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[0]));
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[1]));
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[2]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[0]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[1]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[2]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
     
     rv->us_to_destination = 0;
     rv->f32s.xyz[0] = 0.0f;
@@ -84,12 +84,12 @@ void T1_render_view_reset(s32 i)
     rv->f32s.max_angle_xyz[1] = T1_F32_MAX;
     rv->f32s.max_angle_xyz[2] = T1_F32_MAX;
     
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[0]));
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[1]));
-    T1_log_assert(!isnan(rv->f32s.dest_xyz[2]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
-    T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[0]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[1]));
+    T1_assert(!isnan(rv->f32s.dest_xyz[2]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
+    T1_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
 }
 
 static void T1_render_view_construct(
@@ -98,13 +98,13 @@ static void T1_render_view_construct(
     const u32 height,
     const u32 width)
 {
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[0]));
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[1]));
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[2]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[0]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[1]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[2]));
     
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[0]));
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[1]));
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[2]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[0]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[1]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[2]));
     
     T1_std_memset(cpu, 0, sizeof(T1CPURenderView));
     T1_std_memset(gpu, 0, sizeof(T1GPURenderView));
@@ -148,13 +148,13 @@ static void T1_render_view_construct(
     
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[0]));
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[1]));
-    T1_log_assert(!isnan(cpu->f32s.dest_xyz[2]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[0]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[1]));
+    T1_assert(!isnan(cpu->f32s.dest_xyz[2]));
     
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[0]));
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[1]));
-    T1_log_assert(!isnan(cpu->f32s.dest_angle_xyz[2]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[0]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[1]));
+    T1_assert(!isnan(cpu->f32s.dest_angle_xyz[2]));
 }
 
 s32 T1_render_view_fetch_next(
@@ -181,8 +181,8 @@ s32 T1_render_view_fetch_next(
         T1_render_views->size += 1;
     }
     
-    T1_log_assert(ret >= 0);
-    T1_log_assert(ret < T1_RENDER_VIEW_CAP);
+    T1_assert(ret >= 0);
+    T1_assert(ret < T1_RENDER_VIEW_CAP);
     
     T1_render_view_construct(
         T1_render_views->cpu + ret,
@@ -212,7 +212,7 @@ void T1_render_view_update_positions(
         s32 mirrored_i = T1_render_view_T1_id_to_i(rv->reflect_cam);
         if (mirrored_i >= 0)
         {
-            T1_log_assert(mirrored_i != (s32)rv_i);
+            T1_assert(mirrored_i != (s32)rv_i);
             const T1CPURenderView * mirrored =
                 T1_render_views->cpu + mirrored_i;
             
@@ -243,13 +243,13 @@ void T1_render_view_update_positions(
             continue;
         }
         
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[0]));
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[1]));
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[2]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[0]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[1]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[2]));
         
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
         
         u64 us_actual;
         if (elapsed > rv->us_to_destination) {
@@ -259,9 +259,9 @@ void T1_render_view_update_positions(
                 elapsed) / 7);
         }
         
-        T1_log_assert(rv->f32s.max_xyz[0] >= rv->f32s.min_xyz[0]);
-        T1_log_assert(rv->f32s.max_xyz[1] >= rv->f32s.min_xyz[1]);
-        T1_log_assert(rv->f32s.max_xyz[2] >= rv->f32s.min_xyz[2]);
+        T1_assert(rv->f32s.max_xyz[0] >= rv->f32s.min_xyz[0]);
+        T1_assert(rv->f32s.max_xyz[1] >= rv->f32s.min_xyz[1]);
+        T1_assert(rv->f32s.max_xyz[2] >= rv->f32s.min_xyz[2]);
         
         if (rv->f32s.dest_angle_xyz[0] < rv->f32s.min_angle_xyz[0]) { rv->f32s.dest_angle_xyz[0] = rv->f32s.min_angle_xyz[0]; } 
         if (rv->f32s.dest_angle_xyz[0] > rv->f32s.max_angle_xyz[0]) { rv->f32s.dest_angle_xyz[0] = rv->f32s.max_angle_xyz[0]; }
@@ -278,11 +278,11 @@ void T1_render_view_update_positions(
         if (rv->f32s.dest_xyz[2] > rv->f32s.max_xyz[2]) { rv->f32s.dest_xyz[2] = rv->f32s.max_xyz[2]; }
         
         f32 elapsed_pct = (f32)us_actual / (f32)rv->us_to_destination;
-        T1_log_assert(elapsed_pct >= 0.0f);
-        T1_log_assert(elapsed_pct <= 1.0f);
-        T1_log_assert(!isnan(elapsed_pct));
+        T1_assert(elapsed_pct >= 0.0f);
+        T1_assert(elapsed_pct <= 1.0f);
+        T1_assert(!isnan(elapsed_pct));
         rv->us_to_destination -= (u32)us_actual;
-        T1_log_assert(rv->us_to_destination < 5000000);
+        T1_assert(rv->us_to_destination < 5000000);
         
         if (rv->movement_enabled) {
             rv->f32s.xyz[0] =
@@ -294,9 +294,9 @@ void T1_render_view_update_positions(
             rv->f32s.xyz[2] =
                 (rv->f32s.xyz[2]      * (1.0f - elapsed_pct)) +
                 (rv->f32s.dest_xyz[2] * elapsed_pct);
-            T1_log_assert(!isnan(rv->f32s.xyz[0]));
-            T1_log_assert(!isnan(rv->f32s.xyz[1]));
-            T1_log_assert(!isnan(rv->f32s.xyz[2]));
+            T1_assert(!isnan(rv->f32s.xyz[0]));
+            T1_assert(!isnan(rv->f32s.xyz[1]));
+            T1_assert(!isnan(rv->f32s.xyz[2]));
             
             rv->f32s.angle_xyz[0] =
                 ((f32)rv->f32s.angle_xyz[0] * (1.0f - elapsed_pct)) +
@@ -309,21 +309,21 @@ void T1_render_view_update_positions(
                 ((f32)rv->f32s.dest_angle_xyz[2] * elapsed_pct);
         }
         
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[0]));
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[1]));
-        T1_log_assert(!isnan(rv->f32s.dest_xyz[2]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[0]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[1]));
+        T1_assert(!isnan(rv->f32s.dest_xyz[2]));
         
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
-        T1_log_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[0]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[1]));
+        T1_assert(!isnan(rv->f32s.dest_angle_xyz[2]));
     }
 }
 
 void T1_render_view_delete(
     const s32 rv_i)
 {
-    T1_log_assert(rv_i >= 0);
-    T1_log_assert(rv_i < T1_RENDER_VIEW_CAP);
+    T1_assert(rv_i >= 0);
+    T1_assert(rv_i < T1_RENDER_VIEW_CAP);
     
     T1_render_view_construct(
         T1_render_views->cpu + rv_i,
@@ -342,8 +342,8 @@ void T1_render_view_delete(
 }
 
 void T1_render_view_validate(void) {
-    T1_log_assert(T1_render_views != NULL);
-    T1_log_assert(
+    T1_assert(T1_render_views != NULL);
+    T1_assert(
         T1_render_views->size <= T1_RENDER_VIEW_CAP);
     
     for (u32 i = 0; i < T1_render_views->size; i++) {
@@ -351,13 +351,13 @@ void T1_render_view_validate(void) {
             continue;
         }
         
-        T1_log_assert(T1_render_views->cpu[i].width > 0);
-        T1_log_assert(T1_render_views->cpu[i].height > 0);
-        T1_log_assert(
+        T1_assert(T1_render_views->cpu[i].width > 0);
+        T1_assert(T1_render_views->cpu[i].height > 0);
+        T1_assert(
             T1_render_views->cpu[i].project.aspect_ratio > 0.01f);
     }
     
-    T1_log_assert(
+    T1_assert(
         T1_render_views->size == 0 ||
         !T1_render_views->cpu[T1_render_views->size-1].deleted);
 }
@@ -419,7 +419,7 @@ f32 T1_render_view_screen_width_to_width(
 
 u8 T1_render_view_get_wh(const u32 T1_id, f32 viewport_wh[2]) {
     s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
-    T1_log_assert(rv_i >= 0);
+    T1_assert(rv_i >= 0);
     if (rv_i < 0) {
         viewport_wh[0] = 1.0f;
         viewport_wh[1] = 1.0f;
@@ -465,7 +465,7 @@ static void * T1_render_view_store_struct(
         case T1_PROP_STORE_CAM_U32:
             return &T1_render_views->cpu[rv_i];
         default:
-            T1_log_assert(0);
+            T1_assert(0);
             return NULL;
     }
 }

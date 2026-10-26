@@ -1,6 +1,6 @@
 #include "T1_tex_array.h"
 
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_mem.h"
 #include "T1_os.h"
 // #include "T1_cpu_gpu_shared_types.h"
@@ -21,20 +21,20 @@ static T1Img * extract_image(
 {
     if (*fatal_error != 0) { return NULL; }
     
-    T1_log_assert(x > 0);
-    T1_log_assert(y > 0);
-    T1_log_assert(original != NULL);
+    T1_assert(x > 0);
+    T1_assert(y > 0);
+    T1_assert(original != NULL);
     if (!original->never_delete_me) {
-        T1_log_assert(original->rgba_values_freeable != NULL);
+        T1_assert(original->rgba_values_freeable != NULL);
     } else {
-        T1_log_assert(original->rgba_values_freeable == NULL);
+        T1_assert(original->rgba_values_freeable == NULL);
     }
-    T1_log_assert(original->rgba_values_page_aligned != NULL);
+    T1_assert(original->rgba_values_page_aligned != NULL);
     
-    T1_log_assert(sprite_columns > 0);
-    T1_log_assert(sprite_rows > 0);
-    T1_log_assert(x <= sprite_columns);
-    T1_log_assert(y <= sprite_rows);
+    T1_assert(sprite_columns > 0);
+    T1_assert(sprite_rows > 0);
+    T1_assert(x <= sprite_columns);
+    T1_assert(y <= sprite_rows);
     
     T1Img * new_image = T1_mem_malloc_unmanaged(sizeof(T1Img));
     if (!new_image) {
@@ -49,12 +49,12 @@ static T1Img * extract_image(
     u32 slice_width_pixels =
         original->width / sprite_columns;
     u32 slice_height_pixels = original->height / sprite_rows;
-    T1_log_assert(slice_size_bytes > 0);
-    T1_log_assert(slice_width_pixels > 0);
-    T1_log_assert(slice_height_pixels > 0);
-    T1_log_assert(
+    T1_assert(slice_size_bytes > 0);
+    T1_assert(slice_width_pixels > 0);
+    T1_assert(slice_height_pixels > 0);
+    T1_assert(
         slice_size_bytes == slice_width_pixels * slice_height_pixels * 4);
-    T1_log_assert(
+    T1_assert(
         slice_size_bytes *
             sprite_columns *
             sprite_rows ==
@@ -101,8 +101,8 @@ static T1Img * extract_image(
             _ < (slice_width_pixels * 4);
             _++)
         {
-            T1_log_assert((rgba_value_i + _) < original->rgba_values_size);
-            T1_log_assert(i < new_image->rgba_values_size);
+            T1_assert((rgba_value_i + _) < original->rgba_values_size);
+            T1_assert(i < new_image->rgba_values_size);
             new_image->rgba_values_page_aligned[i] =
                 original->rgba_values_page_aligned[rgba_value_i + _];
             i++;
@@ -142,12 +142,12 @@ register_to_texturearray_by_splitting_image(
 {
     if (*fatal_error != 0) { return; }
     
-    T1_log_assert(new_image != NULL);
+    T1_assert(new_image != NULL);
     if (new_image == NULL) { return; }
-    T1_log_assert(new_image->rgba_values_page_aligned != NULL);
-    T1_log_assert(new_image->rgba_values_size > 0);
-    T1_log_assert(rows >= 1);
-    T1_log_assert(columns >= 1);
+    T1_assert(new_image->rgba_values_page_aligned != NULL);
+    T1_assert(new_image->rgba_values_size > 0);
+    T1_assert(rows >= 1);
+    T1_assert(columns >= 1);
     
     if (new_image->rgba_values_size < 1) {
         *fatal_error = "register_to_texturearray_by_splitting_image() but rgba_values_size was 0";
@@ -197,8 +197,8 @@ register_to_texturearray_by_splitting_image(
                 split_img->rgba_values_freeable = NULL;
             }
             
-            T1_log_assert(split_img->width  == expected_width);
-            T1_log_assert(split_img->height == expected_height);
+            T1_assert(split_img->width  == expected_width);
+            T1_assert(split_img->height == expected_height);
             
             T1_tex_arrays[ta_i].images[t_i].image = *split_img;
             T1_tex_arrays[ta_i].images[t_i].image.width =
@@ -224,21 +224,21 @@ register_to_texturearray_by_splitting_image(
 }
 
 u32 T1_tex_array_get_img_height(s32 array_i) {
-    T1_log_assert((u32)array_i < T1_tex_arrays_size);
+    T1_assert((u32)array_i < T1_tex_arrays_size);
     return T1_tex_arrays[array_i].single_img_height;
 }
 
 u32 T1_tex_array_get_img_width(s32 array_i) {
-    T1_log_assert((u32)array_i < T1_tex_arrays_size);
+    T1_assert((u32)array_i < T1_tex_arrays_size);
     return T1_tex_arrays[array_i].single_img_width;
 }
 
 void T1_tex_array_delete_array(
     s32 array_i)
 {
-    T1_log_assert(array_i != 0);
+    T1_assert(array_i != 0);
     for (u32 slice_i = 0; slice_i < T1_tex_arrays[array_i].images_size; slice_i++) {
-        T1_log_assert(!T1_tex_arrays[array_i].images[slice_i].image.never_delete_me);
+        T1_assert(!T1_tex_arrays[array_i].images[slice_i].image.never_delete_me);
     }
     
     T1_os_gpu_delete_texture_array(array_i);
@@ -254,13 +254,13 @@ void T1_tex_array_delete_slice(
     s32 array_i,
     s32 slice_i)
 {
-    T1_log_assert(array_i >= 0);
-    T1_log_assert(slice_i >= 0);
+    T1_assert(array_i >= 0);
+    T1_assert(slice_i >= 0);
     
-    T1_log_assert(
+    T1_assert(
         slice_i < (s32)
             T1_tex_arrays[array_i].images_size);
-    T1_log_assert(
+    T1_assert(
         !T1_tex_arrays[array_i].images[slice_i].
             deleted);
     
@@ -268,7 +268,7 @@ void T1_tex_array_delete_slice(
         return;
     }
     
-    T1_log_assert(
+    T1_assert(
         array_i < (s32)T1_tex_arrays_size);
     
     if (T1_tex_arrays[array_i].images[slice_i].image.
@@ -305,9 +305,9 @@ const u8 * T1_tex_array_get_const_rgba(
     s32 array_i,
     s32 slice_i)
 {
-    T1_log_assert(array_i < (s32)T1_tex_arrays_size);
-    T1_log_assert(array_i < T1_TEXARRAYS_CAP);
-    T1_log_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
+    T1_assert(array_i < (s32)T1_tex_arrays_size);
+    T1_assert(array_i < T1_TEXARRAYS_CAP);
+    T1_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
     
     return T1_tex_arrays[array_i].
         images[slice_i].image.rgba_values_page_aligned;
@@ -319,7 +319,7 @@ void T1_tex_array_update_rgba(
     const u8 * rgba,
     u32 rgba_size)
 {
-    T1_log_assert(T1_tex_arrays[array_i].single_img_width * T1_tex_arrays[array_i].single_img_height * 4 == rgba_size);
+    T1_assert(T1_tex_arrays[array_i].single_img_width * T1_tex_arrays[array_i].single_img_height * 4 == rgba_size);
     
     T1_tex_arrays[array_i].images[slice_i].image.
         rgba_values_size = rgba_size;
@@ -356,12 +356,12 @@ void T1_tex_array_reg_new_by_splitting_img(
 {
     if (*fatal_error != 0) { return; }
     
-    T1_log_assert(new_image != NULL);
+    T1_assert(new_image != NULL);
     if (new_image == NULL) { return; }
     
     s32 new_texture_array_i = (int)T1_tex_arrays_size;
     T1_tex_arrays_size++;
-    T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
+    T1_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_img: */ new_image,
@@ -381,8 +381,8 @@ T1Tex T1_tex_array_new_slice(
     T1Tex retval = T1_TEX_NONE;
     if (*fatal_error != 0) { return retval; }
     
-    T1_log_assert(width > 0);
-    T1_log_assert(height > 0);
+    T1_assert(width > 0);
+    T1_assert(height > 0);
     
     // *****************
     // find out if same width/height was already used
@@ -394,7 +394,7 @@ T1Tex T1_tex_array_new_slice(
     {
         if (*fatal_error != 0) { return retval; }
         
-        T1_log_assert(i < T1_TEXARRAYS_CAP);
+        T1_assert(i < T1_TEXARRAYS_CAP);
         if (
             !T1_tex_arrays[i].deleted &&
             T1_tex_arrays[i].images_size > 0 &&
@@ -426,8 +426,8 @@ T1Tex T1_tex_array_new_slice(
             img->rgba_values_size = width * height * 4;
             img->never_delete_me = never_delete;
             
-            T1_log_assert(slice_i >= 1);
-            T1_log_assert(slice_i < T1_TEX_SLICES_CAP);
+            T1_assert(slice_i >= 1);
+            T1_assert(slice_i < T1_TEX_SLICES_CAP);
             break;
         }
     }
@@ -453,7 +453,7 @@ T1Tex T1_tex_array_new_slice(
             T1_tex_arrays_size++;
         }
         
-        T1_log_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
+        T1_assert(T1_tex_arrays_size <= T1_TEXARRAYS_CAP);
         T1_tex_set_array_i(&retval, array_i);
         T1_tex_set_slice_i(&retval, 0);
         
@@ -468,10 +468,10 @@ T1Tex T1_tex_array_new_slice(
         img->rgba_values_size = width * height * 4;
         img->never_delete_me = never_delete;
     } else {
-        T1_log_assert(T1_tex_to_slice_i(retval) > 0);
+        T1_assert(T1_tex_to_slice_i(retval) > 0);
     }
     
-    T1_log_assert(retval != T1_TEX_NONE);
+    T1_assert(retval != T1_TEX_NONE);
     
     return retval;
 }
@@ -512,11 +512,11 @@ void T1_tex_update(
 {
     s32 array_i = T1_tex_to_array_i(tex);
     s32 slice_i = T1_tex_to_slice_i(tex);
-    T1_log_assert(array_i >= 0);
-    T1_log_assert(array_i < (s32)T1_tex_arrays_size);
-    T1_log_assert(slice_i >= 0);
-    T1_log_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
-    T1_log_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
+    T1_assert(array_i >= 0);
+    T1_assert(array_i < (s32)T1_tex_arrays_size);
+    T1_assert(slice_i >= 0);
+    T1_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
+    T1_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
     T1_tex_array_update_rgba(
         array_i,
         slice_i,
@@ -543,12 +543,12 @@ void T1_tex_delete(T1Tex tex) {
 }
 
 u32 T1_tex_get_width(T1Tex tex) {
-    T1_log_assert(tex != T1_TEX_NONE);
+    T1_assert(tex != T1_TEX_NONE);
     return T1_tex_arrays[T1_tex_to_array_i(tex)].single_img_width;
 }
 
 u32 T1_tex_get_height(T1Tex tex) {
-    T1_log_assert(tex != T1_TEX_NONE);
+    T1_assert(tex != T1_TEX_NONE);
     return T1_tex_arrays[T1_tex_to_array_i(tex)].single_img_height;
 }
 

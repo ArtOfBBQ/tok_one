@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_simd.h"
 #include "T1_types_public.h"
 #include "T1_zsprite.h"
@@ -246,7 +246,7 @@ static void T1_property_crash(
     T1_std_strcat_cap(msg, 256, ": \"");
     T1_std_strcat_cap(msg, 256, name);
     T1_std_strcat_cap(msg, 256, "\"");
-    T1_log_crash(msg);
+    T1_crash(msg);
 }
 
 static b8 T1_property_store_is_settings(const u8 store) {
@@ -280,7 +280,7 @@ u32 T1_property_find(
             continue;
         }
 
-        T1_log_assert(found < recip_cap);
+        T1_assert(found < recip_cap);
         if (found < recip_cap) {
             recip[found] = &T1_properties[i];
             found += 1;
@@ -344,13 +344,13 @@ u32 T1_property_convert_bits(
     
     s32 cam_i = T1_render_view_T1_id_to_i(bits);
     // a T1_id that isn't T1_ID_NONE should be a camera
-    T1_log_assert(cam_i >= 0 || bits == T1_ID_NONE);
+    T1_assert(cam_i >= 0 || bits == T1_ID_NONE);
     
     switch (p->cam_ref) {
         case T1_PROP_CAM_REF_INDEX:
             return (u32)cam_i;
         default:
-            T1_log_assert(0);
+            T1_assert(0);
             return bits;
     }
 }
@@ -380,7 +380,7 @@ static u32 T1_property_set_bits(
         case T1_PROP_STORE_PASS_U32:
             return T1_pass_set_property(T1_id, p, bits);
         default:
-            T1_log_assert(0);
+            T1_assert(0);
     }
 
     return 0;
@@ -392,7 +392,7 @@ static void T1_set_bits(
     const u8 is_u32,
     const u32 bits)
 {
-    T1_log_assert(T1_id != T1_ID_NONE);
+    T1_assert(T1_id != T1_ID_NONE);
 
     const T1Property * matches[T1_PROPERTY_MATCHES_CAP];
     u32 matches_size = T1_property_find(
@@ -408,19 +408,20 @@ static void T1_set_bits(
     }
 
     // no object with this T1_id has this property
-    T1_log_assert(objects_set > 0);
+    T1_assert(objects_set > 0);
+    (void)objects_set; // only used by T1_assert()
 }
 
 void T1_property_apply_anim_step(
     void * recip,
     const T1AnimStep * step)
 {
-    T1_log_assert(step->size_bytes % sizeof(f32) == 0);
+    T1_assert(step->size_bytes % sizeof(f32) == 0);
     const u32 vals_size = step->size_bytes / sizeof(f32);
     
     if (step->is_u32) {
         // u32s can't be deltas
-        T1_log_assert(step->endpoints_not_deltas);
+        T1_assert(step->endpoints_not_deltas);
         if (!step->finished) { return; }
         
         u32 * recip_u32s = (u32 *)recip;
@@ -508,7 +509,8 @@ static void T1_text_set_bits(
     u32 matches_size = T1_property_find(
         name, is_u32, T1_PROP_STORE_TEXT,
         matches, T1_PROPERTY_MATCHES_CAP);
-    T1_log_assert(matches_size == 1);
+    T1_assert(matches_size == 1);
+    (void)matches_size; // only used by T1_assert()
 
     T1_property_write(T1_text_props, matches[0], bits);
 }
@@ -521,7 +523,8 @@ void T1_postproc_set_f32(
     u32 matches_size = T1_property_find(
         property, 0, T1_PROP_STORE_POSTPROC,
         matches, T1_PROPERTY_MATCHES_CAP);
-    T1_log_assert(matches_size == 1);
+    T1_assert(matches_size == 1);
+    (void)matches_size; // only used by T1_assert()
 
     u32 bits;
     T1_std_memcpy(&bits, &value, 4);
@@ -535,7 +538,8 @@ f32 T1_postproc_get_f32(
     u32 matches_size = T1_property_find(
         property, 0, T1_PROP_STORE_POSTPROC,
         matches, T1_PROPERTY_MATCHES_CAP);
-    T1_log_assert(matches_size == 1);
+    T1_assert(matches_size == 1);
+    (void)matches_size; // only used by T1_assert()
 
     u32 bits = T1_property_read(&T1_global->postproc_consts, matches[0]);
     f32 value;
@@ -563,13 +567,13 @@ void T1_merge_T1_ids(
     u32 T1_id_to_add,
     u32 T1_id_to_keep)
 {
-    T1_log_assert(T1_id_to_add  != T1_ID_NONE);
-    T1_log_assert(T1_id_to_keep != T1_ID_NONE);
+    T1_assert(T1_id_to_add  != T1_ID_NONE);
+    T1_assert(T1_id_to_keep != T1_ID_NONE);
     // pipelines and passes can't be grouped
-    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id_to_add) < 0);
-    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id_to_keep) < 0);
-    T1_log_assert(T1_pass_T1_id_to_i(T1_id_to_add) < 0);
-    T1_log_assert(T1_pass_T1_id_to_i(T1_id_to_keep) < 0);
+    T1_assert(T1_pipeline_T1_id_to_i(T1_id_to_add) < 0);
+    T1_assert(T1_pipeline_T1_id_to_i(T1_id_to_keep) < 0);
+    T1_assert(T1_pass_T1_id_to_i(T1_id_to_add) < 0);
+    T1_assert(T1_pass_T1_id_to_i(T1_id_to_keep) < 0);
 
     if (T1_id_to_add == T1_id_to_keep) {
         return;
@@ -595,7 +599,7 @@ void T1_merge_T1_ids(
 
 void T1_delete(u32 T1_id)
 {
-    T1_log_assert(T1_id != T1_ID_NONE);
+    T1_assert(T1_id != T1_ID_NONE);
 
     T1_zsprite_delete(T1_id);
     T1_texquad_delete(T1_id);

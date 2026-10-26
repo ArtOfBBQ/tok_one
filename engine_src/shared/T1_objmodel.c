@@ -8,7 +8,7 @@
 #include "T1_mem.h"
 #include "T1_fatal_error.h"
 #include "T1_tex.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_triangle.h"
 #include "T1_tex_array.h"
 #include "T1_objparser.h"
@@ -118,7 +118,7 @@ void T1_objmodel_init(void) {
         construct_mesh_summary(&T1_mesh_summary_list[i], (s32)i);
     }
     
-    assert(T1_LOCKED_VERTEX_CAP > 0);
+    T1_assert(T1_LOCKED_VERTEX_CAP > 0);
     T1_mesh_summary_all_vertices = (T1LockedVertexWithMaterialCollection *)
         T1_mem_malloc_unmanaged(sizeof(T1LockedVertexWithMaterialCollection));
     T1_std_memset(
@@ -611,19 +611,19 @@ void T1_objmodel_init(void) {
     T1_mesh_summary_all_vertices->size = 42;
 }
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_objmodel_validity(s32 mesh_id) {
-    T1_log_assert(mesh_id >= 0);
-    T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
-    T1_log_assert(T1_mesh_summary_list[mesh_id].vertices_head_i >= 0);
-    T1_log_assert(
+    T1_assert(mesh_id >= 0);
+    T1_assert(mesh_id < (s32)T1_mesh_summary_list_size);
+    T1_assert(T1_mesh_summary_list[mesh_id].vertices_head_i >= 0);
+    T1_assert(
         T1_mesh_summary_list[mesh_id].vertices_size < T1_LOCKED_VERTEX_CAP);
     s32 all_vertices_tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
         T1_mesh_summary_list[mesh_id].vertices_size;
-    T1_log_assert(all_vertices_tail_i <= (s32)T1_mesh_summary_all_vertices->size);
+    T1_assert(all_vertices_tail_i <= (s32)T1_mesh_summary_all_vertices->size);
 }
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -644,7 +644,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i =
         new_mesh_head_id;
     
-    T1_log_assert(T1_mesh_summary_all_vertices->size <
+    T1_assert(T1_mesh_summary_all_vertices->size <
         T1_LOCKED_VERTEX_CAP);
     
     T1_mesh_summary_list[T1_mesh_summary_list_size].materials_size =
@@ -667,7 +667,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 original_obj_filename,
                 parsed_obj->material_names[i].name);
             
-            T1_log_assert(first_material_head_i + i == _);
+            T1_assert(first_material_head_i + i == _);
             (void)_;
         }
         
@@ -684,7 +684,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
             }
             
-            T1_log_assert(
+            T1_assert(
                 matching_parsed_materials_i  < (s32)parsed_materials_size);
             
             T1GPUMatf32 * locked_mat_f32 = NULL;
@@ -760,12 +760,12 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                         return -1;
                     }
                 } else {
-                    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+                    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
                     T1Tex tex = (locked_mat_s32->
                         normalmap_tex_and_tex & 0x0000FFFF);
-                    T1_log_assert(T1_tex_to_array_i(tex) < 0);
-                    T1_log_assert(T1_tex_to_slice_i(tex) < 0);
-                    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+                    T1_assert(T1_tex_to_array_i(tex) < 0);
+                    T1_assert(T1_tex_to_slice_i(tex) < 0);
+                    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
                     #else
                     #error
                     #endif
@@ -828,9 +828,9 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
         for (u32 _ = 0; _ < 3; _++) {
             u32 vert_i = arg_parsed_obj->triangles[triangle_i][_];
             
-            T1_log_assert(vert_i >= 1);
-            T1_log_assert(vert_i <= arg_parsed_obj->vertices_count);
-            T1_log_assert(
+            T1_assert(vert_i >= 1);
+            T1_assert(vert_i <= arg_parsed_obj->vertices_count);
+            T1_assert(
                 locked_vert_i < T1_LOCKED_VERTEX_CAP);
             
             T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].xyz[0] =
@@ -856,8 +856,8 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             {
                 u32 norm_i = arg_parsed_obj->triangle_normals[triangle_i][_];
                 
-                T1_log_assert(norm_i >= 1);
-                T1_log_assert(norm_i <= arg_parsed_obj->normals_count);
+                T1_assert(norm_i >= 1);
+                T1_assert(norm_i <= arg_parsed_obj->normals_count);
                 
                 T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].
                     norm_xyz[0] = arg_parsed_obj->normals_vn[norm_i - 1][0];
@@ -868,7 +868,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                         arg_parsed_obj->normals_vn[norm_i - 1][2] *
                         invert_z_axis_modifier;
             } else if (_ == 0) {
-                T1_log_assert(0); // check if deduced normals need to invert z
+                T1_assert(0); // check if deduced normals need to invert z
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &T1_mesh_summary_all_vertices->gpu_data[locked_vert_i]);
@@ -893,8 +893,8 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             if (arg_parsed_obj->textures_count > 0) {
                 u32 text_i = arg_parsed_obj->triangle_textures[triangle_i][_];
                 
-                T1_log_assert(text_i >= 1);
-                T1_log_assert(text_i <= arg_parsed_obj->textures_count);
+                T1_assert(text_i >= 1);
+                T1_assert(text_i <= arg_parsed_obj->textures_count);
                 
                 T1_mesh_summary_all_vertices->gpu_data[locked_vert_i + _].uv[0] =
                     arg_parsed_obj->textures_vt_uv[text_i - 1][0];
@@ -935,7 +935,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
         */
         
         u32 cur_material_i = arg_parsed_obj->quads[quad_i][5];
-        T1_log_assert(cur_material_i < arg_parsed_obj->materials_count);
+        T1_assert(cur_material_i < arg_parsed_obj->materials_count);
         
         for (u32 quad_tri_i = 0; quad_tri_i < 2; quad_tri_i++) {
             
@@ -968,7 +968,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
             } else {
                 // Second subtriangle of our quad
-                T1_log_assert(quad_tri_i == 1);
+                T1_assert(quad_tri_i == 1);
                 vert_1_i = arg_parsed_obj->quads[quad_i][0];
                 vert_2_i = arg_parsed_obj->quads[quad_i][2];
                 vert_3_i = arg_parsed_obj->quads[quad_i][3];
@@ -982,12 +982,12 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
             }
             
-            T1_log_assert(vert_1_i >= 1);
-            T1_log_assert(vert_1_i <= arg_parsed_obj->vertices_count);
-            T1_log_assert(vert_2_i >= 1);
-            T1_log_assert(vert_2_i <= arg_parsed_obj->vertices_count);
-            T1_log_assert(vert_3_i >= 1);
-            T1_log_assert(vert_3_i <= arg_parsed_obj->vertices_count);
+            T1_assert(vert_1_i >= 1);
+            T1_assert(vert_1_i <= arg_parsed_obj->vertices_count);
+            T1_assert(vert_2_i >= 1);
+            T1_assert(vert_2_i <= arg_parsed_obj->vertices_count);
+            T1_assert(vert_3_i >= 1);
+            T1_assert(vert_3_i <= arg_parsed_obj->vertices_count);
             
             vert_1_i  -= 1;
             vert_2_i  -= 1;
@@ -999,7 +999,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             textr_2_i -= 1;
             textr_3_i -= 1;
             
-            T1_log_assert(
+            T1_assert(
                 T1_mesh_summary_all_vertices->
                     size < T1_LOCKED_VERTEX_CAP);
             
@@ -1046,13 +1046,13 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             
             if (arg_parsed_obj->normals_count > 0)
             {
-                #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+                #if T1_ASSERTS_ACTIVE == T1_ACTIVE
                 u32 norm_i = arg_parsed_obj->
                     quad_normals[quad_i][quad_tri_i];
                 
-                T1_log_assert(norm_i >= 1);
-                T1_log_assert(norm_i <= arg_parsed_obj->normals_count);
-                #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+                T1_assert(norm_i >= 1);
+                T1_assert(norm_i <= arg_parsed_obj->normals_count);
+                #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
                 #else
                 #error
                 #endif
@@ -1080,7 +1080,7 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
             }
             
             if (arg_parsed_obj->textures_count > 0) {
-                T1_log_assert(arg_parsed_obj->textures_vt_uv != NULL);
+                T1_assert(arg_parsed_obj->textures_vt_uv != NULL);
                 V1->uv[0] = arg_parsed_obj->textures_vt_uv[textr_1_i][0];
                 V1->uv[1] = arg_parsed_obj->textures_vt_uv[textr_1_i][1];
                 V2->uv[0] = arg_parsed_obj->textures_vt_uv[textr_2_i][0];
@@ -1109,15 +1109,15 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
     T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size =
         (s32)T1_mesh_summary_all_vertices->size -
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i;
-    T1_log_assert(T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size > 0);
+    T1_assert(T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size > 0);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     u32 new_tail_i = (u32)(
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_head_i +
         T1_mesh_summary_list[T1_mesh_summary_list_size].vertices_size -
         1);
-    T1_log_assert(new_tail_i < T1_mesh_summary_all_vertices->size);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    T1_assert(new_tail_i < T1_mesh_summary_all_vertices->size);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1157,9 +1157,9 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
         }
     }
     
-    T1_log_assert(max_x >= min_x);
-    T1_log_assert(max_y >= min_z);
-    T1_log_assert(max_z >= min_z);
+    T1_assert(max_x >= min_x);
+    T1_assert(max_y >= min_z);
+    T1_assert(max_z >= min_z);
     T1_mesh_summary_list[T1_mesh_summary_list_size].base_width =
         max_x - min_x;
     T1_mesh_summary_list[T1_mesh_summary_list_size].base_height =
@@ -1168,11 +1168,11 @@ static s32 new_mesh_id_from_parsed_obj_and_parsed_materials(
         max_z - min_z;
     
     T1_mesh_summary_list_size += 1;
-    T1_log_assert(T1_mesh_summary_list_size <= T1_MESH_CAP);
+    T1_assert(T1_mesh_summary_list_size <= T1_MESH_CAP);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     assert_objmodel_validity((s32)T1_mesh_summary_list_size - 1);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1188,7 +1188,7 @@ s32 T1_objmodel_new_mesh_id_from_obj_mtl_text(
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return -1; }
-    T1_log_assert(parsed_obj != NULL);
+    T1_assert(parsed_obj != NULL);
    
     T1_objparser_parse(
         /* ParsedObj * recipient: */
@@ -1471,7 +1471,7 @@ s32 T1_objmodel_new_mesh_id_from_resources(
 {
     if (*fatal_error != 0) { return -1; }
     
-    T1_log_assert(
+    T1_assert(
         T1_mesh_summary_list_size <
             T1_MESH_CAP);
     
@@ -1564,8 +1564,8 @@ s32 T1_objmodel_new_mesh_id_from_resources(
             fatal_error);
     
     if (return_value < 0 || *fatal_error != 0) {
-        T1_log_assert(*fatal_error != 0);
-        T1_log_assert(return_value < 0);
+        T1_assert(*fatal_error != 0);
+        T1_assert(return_value < 0);
         return return_value;
     }
     
@@ -1625,7 +1625,7 @@ s32 T1_objmodel_resource_name_to_mesh_id(
 void T1_objmodel_center_mesh_offsets(
     const s32 mesh_id)
 {
-    T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
+    T1_assert(mesh_id < (s32)T1_mesh_summary_list_size);
     
     f32 smallest_y = T1_F32_MAX;
     f32 largest_y = T1_F32_MIN;
@@ -1674,11 +1674,11 @@ void T1_objmodel_center_mesh_offsets(
     f32 y_delta = (smallest_y + largest_y) / 2.0f;
     f32 z_delta = (smallest_z + largest_z) / 2.0f;
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     f32 new_smallest_x = smallest_x - x_delta;
     f32 new_largest_x = largest_x - x_delta;
-    T1_log_assert(new_smallest_x + new_largest_x == 0.0f);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    T1_assert(new_smallest_x + new_largest_x == 0.0f);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1705,10 +1705,10 @@ void T1_objmodel_flip_mesh_uvs(const s32 mesh_id)
         vert_i < tail_i;
         vert_i++)
     {
-        T1_log_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0] >= -0.01f);
-        T1_log_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0] <= 1.01f);
-        T1_log_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[1] >= -0.01f);
-        T1_log_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[1] <= 1.01f);
+        T1_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0] >= -0.01f);
+        T1_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0] <= 1.01f);
+        T1_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[1] >= -0.01f);
+        T1_assert(T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[1] <= 1.01f);
         T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0] = 1.0f -
             T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[0];
         T1_mesh_summary_all_vertices->gpu_data[vert_i].uv[1] = 1.0f -
@@ -1763,10 +1763,10 @@ static f32 get_squared_triangle_length_from_locked_vertices(
     const T1GPULockedVertex * vertices)
 {
     f32 largest_squared_dist = T1_F32_MIN;
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     s32 largest_start_vertex_i = -1;
     s32 largest_end_vertex_i = -1;
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1774,9 +1774,9 @@ static f32 get_squared_triangle_length_from_locked_vertices(
     for (s32 start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
         
         s32 end_vertex_i = (start_vertex_i + 1) % 3;
-        T1_log_assert(start_vertex_i != end_vertex_i);
-        T1_log_assert(start_vertex_i <= 3);
-        T1_log_assert(end_vertex_i <= 3);
+        T1_assert(start_vertex_i != end_vertex_i);
+        T1_assert(start_vertex_i <= 3);
+        T1_assert(end_vertex_i <= 3);
         
         f32 squared_x =
             ((vertices[start_vertex_i].xyz[0] -
@@ -1799,24 +1799,24 @@ static f32 get_squared_triangle_length_from_locked_vertices(
             squared_y +
             squared_z;
         
-        T1_log_assert(new_squared_dist > 0.0001f);
+        T1_assert(new_squared_dist > 0.0001f);
         
         if (new_squared_dist > largest_squared_dist) {
             largest_squared_dist = new_squared_dist;
-            #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+            #if T1_ASSERTS_ACTIVE == T1_ACTIVE
             largest_start_vertex_i = start_vertex_i;
             largest_end_vertex_i = end_vertex_i;
-            #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+            #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
             #else
             #error
             #endif
             
-            T1_log_assert(largest_start_vertex_i !=
+            T1_assert(largest_start_vertex_i !=
                 largest_end_vertex_i);
         }
     }
     
-    T1_log_assert(largest_start_vertex_i != largest_end_vertex_i);
+    T1_assert(largest_start_vertex_i != largest_end_vertex_i);
     
     return largest_squared_dist;
 }
@@ -1825,8 +1825,8 @@ static s32 find_biggest_area_triangle_head_in(
     s32 head_vertex_i,
     s32 tail_vertex_i)
 {
-    T1_log_assert(tail_vertex_i > head_vertex_i);
-    T1_log_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
+    T1_assert(tail_vertex_i > head_vertex_i);
+    T1_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
     
     f32 biggest_area = T1_F32_MIN;
     s32 biggest_area_i = -1;
@@ -1834,14 +1834,14 @@ static s32 find_biggest_area_triangle_head_in(
     for (s32 i = head_vertex_i; i < (tail_vertex_i - 1); i += 3) {
         f32 area = get_squared_triangle_length_from_locked_vertices(
             T1_mesh_summary_all_vertices->gpu_data + i);
-        T1_log_assert(area > 0.0f);
+        T1_assert(area > 0.0f);
         if (area > biggest_area) {
             biggest_area = area;
             biggest_area_i = i;
         }
     }
     
-    T1_log_assert(biggest_area_i >= 0);
+    T1_assert(biggest_area_i >= 0);
     return biggest_area_i;
 }
 
@@ -1849,7 +1849,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
     const s32 mesh_id,
     const u32 triangles_multiplier)
 {
-    T1_log_assert(triangles_multiplier >= 1);
+    T1_assert(triangles_multiplier >= 1);
     if (triangles_multiplier == 1) {
         T1_mesh_summary_list[mesh_id].shattered_vertices_size =
             T1_mesh_summary_list[mesh_id].vertices_size;
@@ -1859,11 +1859,11 @@ void T1_objmodel_create_shattered_version_of_mesh(
     }
     
     s32 orig_head_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     s32 orig_tail_i =
         T1_mesh_summary_list[mesh_id].vertices_head_i +
         T1_mesh_summary_list[mesh_id].vertices_size;
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1892,7 +1892,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
     s32 temp_new_tail_i = new_head_i - 1;
     for (s32 i = 0; i < orig_vertices_size; i += 3) {
         
-        T1_log_assert(orig_head_i + i <= orig_tail_i);
+        T1_assert(orig_head_i + i <= orig_tail_i);
         T1_mesh_summary_all_vertices->gpu_data[new_head_i + i + 0] =
             T1_mesh_summary_all_vertices->gpu_data[orig_head_i + i + 0];
         T1_mesh_summary_all_vertices->gpu_data[new_head_i + i + 1] =
@@ -1901,19 +1901,19 @@ void T1_objmodel_create_shattered_version_of_mesh(
             T1_mesh_summary_all_vertices->gpu_data[orig_head_i + i + 2];
         
         temp_new_tail_i += 3;
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-        T1_log_assert(new_head_i + i <= temp_new_tail_i);
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(new_head_i + i <= temp_new_tail_i);
         
         f32 tri_length = get_squared_triangle_length_from_locked_vertices(
             &T1_mesh_summary_all_vertices->gpu_data[new_head_i + i]);
-        T1_log_assert(tri_length > 0);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        T1_assert(tri_length > 0);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
     }
-    T1_log_assert(temp_new_tail_i > new_head_i);
-    T1_log_assert((temp_new_tail_i - new_head_i) % 3 == 2);
+    T1_assert(temp_new_tail_i > new_head_i);
+    T1_assert((temp_new_tail_i - new_head_i) % 3 == 2);
     
     while (temp_new_tail_i < goal_new_tail_i) {
         
@@ -1921,8 +1921,8 @@ void T1_objmodel_create_shattered_version_of_mesh(
         s32 biggest_area_head_i = find_biggest_area_triangle_head_in(
             new_head_i,
             temp_new_tail_i);
-        T1_log_assert(biggest_area_head_i >= new_head_i);
-        T1_log_assert((biggest_area_head_i - new_head_i) % 3 == 0);
+        T1_assert(biggest_area_head_i >= new_head_i);
+        T1_assert((biggest_area_head_i - new_head_i) % 3 == 0);
         
         // find a 'middle line' that splits this triangle in 2
         s32 midline_start_vert_i = 0;
@@ -1945,9 +1945,9 @@ void T1_objmodel_create_shattered_version_of_mesh(
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2],
                 T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 0]);
         
-        T1_log_assert(distance_0_to_1 > 0.0f);
-        T1_log_assert(distance_1_to_2 > 0.0f);
-        T1_log_assert(distance_2_to_0 > 0.0f);
+        T1_assert(distance_0_to_1 > 0.0f);
+        T1_assert(distance_1_to_2 > 0.0f);
+        T1_assert(distance_2_to_0 > 0.0f);
         
         if (
             distance_0_to_1 >= distance_1_to_2 &&
@@ -2011,8 +2011,8 @@ void T1_objmodel_create_shattered_version_of_mesh(
             2
             */
             
-            T1_log_assert(distance_2_to_0 >= distance_1_to_2);
-            T1_log_assert(distance_2_to_0 >= distance_0_to_1);
+            T1_assert(distance_2_to_0 >= distance_1_to_2);
+            T1_assert(distance_2_to_0 >= distance_0_to_1);
             
             midline_start_vert_i = 0;
             midline_end_vert_i = 2;
@@ -2088,8 +2088,8 @@ void T1_objmodel_create_shattered_version_of_mesh(
             if (first_new_triangle_vertices[m] == USE_MIDLINE) {
                 first_tri[m] = mid_of_line;
             } else {
-                T1_log_assert(first_new_triangle_vertices[m] >= 0);
-                T1_log_assert(first_new_triangle_vertices[m] < 3);
+                T1_assert(first_new_triangle_vertices[m] >= 0);
+                T1_assert(first_new_triangle_vertices[m] < 3);
                 first_tri[m] =
                     T1_mesh_summary_all_vertices->gpu_data[
                         biggest_area_head_i + first_new_triangle_vertices[m]];
@@ -2098,15 +2098,15 @@ void T1_objmodel_create_shattered_version_of_mesh(
             if (second_new_triangle_vertices[m] == USE_MIDLINE) {
                 second_tri[m] = mid_of_line;
             } else {
-                T1_log_assert(second_new_triangle_vertices[m] >= 0);
-                T1_log_assert(second_new_triangle_vertices[m]  < 3);
+                T1_assert(second_new_triangle_vertices[m] >= 0);
+                T1_assert(second_new_triangle_vertices[m]  < 3);
                 second_tri[m] =
                     T1_mesh_summary_all_vertices->gpu_data[
                         biggest_area_head_i + second_new_triangle_vertices[m]];
             }
         }
         
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
         f32 orig_area =
             get_squared_triangle_length_from_locked_vertices(
                 &T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i]);
@@ -2114,10 +2114,10 @@ void T1_objmodel_create_shattered_version_of_mesh(
             get_squared_triangle_length_from_locked_vertices(first_tri);
         f32 second_tri_area =
             get_squared_triangle_length_from_locked_vertices(second_tri);
-        T1_log_assert(orig_area > 0.0f);
-        T1_log_assert(first_tri_area > 0.0f);
-        T1_log_assert(second_tri_area > 0.0f);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        T1_assert(orig_area > 0.0f);
+        T1_assert(first_tri_area > 0.0f);
+        T1_assert(second_tri_area > 0.0f);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2125,13 +2125,13 @@ void T1_objmodel_create_shattered_version_of_mesh(
         T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 0] = first_tri[0];
         T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 1] = first_tri[1];
         T1_mesh_summary_all_vertices->gpu_data[biggest_area_head_i + 2] = first_tri[2];
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
         f32 overwritten_area =
             get_squared_triangle_length_from_locked_vertices(
                 /* const GPULockedVertex * vertices: */
                     T1_mesh_summary_all_vertices->gpu_data + biggest_area_head_i);
-        T1_log_assert(overwritten_area > 0.0f);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        T1_assert(overwritten_area > 0.0f);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -2139,22 +2139,22 @@ void T1_objmodel_create_shattered_version_of_mesh(
         T1_mesh_summary_all_vertices->gpu_data[temp_new_tail_i + 1] = second_tri[0];
         T1_mesh_summary_all_vertices->gpu_data[temp_new_tail_i + 2] = second_tri[1];
         T1_mesh_summary_all_vertices->gpu_data[temp_new_tail_i + 3] = second_tri[2];
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
         f32 new_area =
             get_squared_triangle_length_from_locked_vertices(
                 /* const GPULockedVertex * vertices: */
                     T1_mesh_summary_all_vertices->gpu_data + temp_new_tail_i + 1);
-        T1_log_assert(new_area > 0.0f);
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        T1_assert(new_area > 0.0f);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
         
         temp_new_tail_i += 3;
-        T1_log_assert(temp_new_tail_i <= goal_new_tail_i);
+        T1_assert(temp_new_tail_i <= goal_new_tail_i);
     }
     
-    T1_log_assert(T1_mesh_summary_all_vertices->size < (u32)goal_new_tail_i);
+    T1_assert(T1_mesh_summary_all_vertices->size < (u32)goal_new_tail_i);
     
     T1_mesh_summary_all_vertices->size = (u32)goal_new_tail_i + 1;
 }
@@ -2180,7 +2180,7 @@ void T1_objmodel_upload_new_meshes(void) {
                     /* const u32 triangles_mulfiplier: */
                         (MIN_VERTICES_FOR_SHATTER_EFFECT /
                             (u32)T1_mesh_summary_list[i].vertices_size) + 1);
-                T1_log_assert(
+                T1_assert(
                     T1_mesh_summary_list[i].shattered_vertices_head_i >= 0);
             } else {
                 T1_mesh_summary_list[i].shattered_vertices_head_i =

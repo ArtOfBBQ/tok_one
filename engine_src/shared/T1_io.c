@@ -4,7 +4,7 @@
 #include "T1_os.h"
 #include "T1_global.h"
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 
 #define T1_IO_SHORT_DURATION 300000
 
@@ -82,7 +82,7 @@ static T1IOFrameEvent *
 T1_io_get_open_event(
     const u32 for_key_id)
 {
-    T1_log_assert(for_key_id < T1_IO_KEY_ABOVEBOUNDS);
+    T1_assert(for_key_id < T1_IO_KEY_ABOVEBOUNDS);
     
     s32 insert_i = 0;
     while (
@@ -242,7 +242,7 @@ void T1_io_register_key_move_to_pos(
         if ((T1_io->pos_events_size + 1) >=
             T1_IO_POS_EVENTS_CAP)
         {
-            T1_log_assert(1); // not enough position events
+            T1_assert(1); // not enough position events
             return;
         }
         pos = T1_io->pos_events + T1_io->pos_events_size;
@@ -270,14 +270,14 @@ static T1IOFrameEventPosition * get_pos(
 
 f32 T1_io_get_pos_x_this_frame(T1IOKey key) {
     T1IOFrameEventPosition * pos = get_pos(key);
-    T1_log_assert(pos != NULL);
+    T1_assert(pos != NULL);
     
     return pos->x;
 }
 
 f32 T1_io_get_pos_y_this_frame(T1IOKey key) {
     T1IOFrameEventPosition * pos = get_pos(key);
-    T1_log_assert(pos != NULL);
+    T1_assert(pos != NULL);
     
     return pos->y;
 }
@@ -305,7 +305,7 @@ the client doesn't get to see them (and vice versa)
 */
 b8 T1_io_key_is_down_internal(T1IOKey key, b8 for_terminal)
 {
-    T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
+    T1_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
     return
         T1_io->frame_map[key].is_down &&
@@ -318,7 +318,7 @@ static b8 T1_io_key_consume_event(
     b8 is_up_short,
     b8 is_up_long)
 {
-    T1_log_assert(key < T1_IO_KEY_ABOVEBOUNDS);
+    T1_assert(key < T1_IO_KEY_ABOVEBOUNDS);
     
     for (
         s32 i = 0;

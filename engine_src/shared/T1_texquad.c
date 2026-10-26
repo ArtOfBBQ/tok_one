@@ -2,9 +2,9 @@
 
 #include <stdlib.h> // TODO: stop using qsort
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 #include <math.h> // isnan check
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -12,11 +12,11 @@
 #include "T1_mem.h"
 #include "T1_simd.h"
 #include "T1_tex.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_id.h"
 
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 static void assert_sanity_check_texquad_vals(
     T1GPUTexQuadf32 * gpu_f32,
     T1GPUTexQuadu32 * gpu_s32)
@@ -24,19 +24,19 @@ static void assert_sanity_check_texquad_vals(
     (void)gpu_s32;
     
     if (gpu_f32) {
-        T1_log_assert(!isnan(gpu_f32->xyz[0]));
-        T1_log_assert(!isnan(gpu_f32->xyz[1]));
-        T1_log_assert(!isnan(gpu_f32->xyz[2]));
-        T1_log_assert(!isnan(gpu_f32->rgba[0]));
-        T1_log_assert(!isnan(gpu_f32->rgba[1]));
-        T1_log_assert(!isnan(gpu_f32->rgba[2]));
-        T1_log_assert(!isnan(gpu_f32->rgba[3]));
-        T1_log_assert(!isnan(gpu_f32->wh[0]));
-        T1_log_assert(!isnan(gpu_f32->wh[1]));
+        T1_assert(!isnan(gpu_f32->xyz[0]));
+        T1_assert(!isnan(gpu_f32->xyz[1]));
+        T1_assert(!isnan(gpu_f32->xyz[2]));
+        T1_assert(!isnan(gpu_f32->rgba[0]));
+        T1_assert(!isnan(gpu_f32->rgba[1]));
+        T1_assert(!isnan(gpu_f32->rgba[2]));
+        T1_assert(!isnan(gpu_f32->rgba[3]));
+        T1_assert(!isnan(gpu_f32->wh[0]));
+        T1_assert(!isnan(gpu_f32->wh[1]));
     }
 }
 
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_texquad_vals(x, y)
 #define assert_sanity_check_texquad_vals_by_id(id)
 #else
@@ -80,8 +80,8 @@ void T1_texquad_construct(
 static void T1_texquad_construct_at_i(
     const s32 i)
 {
-    T1_log_assert(i >= 0);
-    T1_log_assert(i  < T1_MAX_FLATQUADS_PER_BUFFER);
+    T1_assert(i >= 0);
+    T1_assert(i  < T1_MAX_FLATQUADS_PER_BUFFER);
     
     T1_std_memset(
         &T1_texquads->cpu[i],
@@ -193,7 +193,7 @@ static void * T1_texquad_store_struct(
         case T1_PROP_STORE_TQ_GPU_U32:
             return &T1_texquads->gpu[i].u32s;
         default:
-            T1_log_assert(0);
+            T1_assert(0);
             return NULL;
     }
 }
@@ -256,12 +256,12 @@ void T1_texquad_fetch_next(
         ret_i = T1_texquads->size;
         T1_texquads->size += 1;
         
-        T1_log_assert(T1_texquads->size > 0);
-        T1_log_assert(T1_texquads->size <
+        T1_assert(T1_texquads->size > 0);
+        T1_assert(T1_texquads->size <
             T1_MAX_FLATQUADS_PER_BUFFER);
     }
     
-    T1_log_assert(ret_i >= 0);
+    T1_assert(ret_i >= 0);
     
     T1_texquad_construct_at_i(ret_i);
     
@@ -298,12 +298,12 @@ void T1_texquad_defragment(void) {
 void T1_texquad_commit(
     T1TexQuadRequest * request)
 {
-    T1_log_assert(!request->cpu->deleted);
-    T1_log_assert(request->gpu->f32s.wh[0] > 0.0f);
-    T1_log_assert(request->gpu->f32s.wh[1] > 0.0f);
+    T1_assert(!request->cpu->deleted);
+    T1_assert(request->gpu->f32s.wh[0] > 0.0f);
+    T1_assert(request->gpu->f32s.wh[1] > 0.0f);
     // xyz is in world units, projected by the distance xyz[2]
-    T1_log_assert(request->gpu->f32s.xyz[2] > 0.0f);
-    T1_log_assert(!request->cpu->deleted);
+    T1_assert(request->gpu->f32s.xyz[2] > 0.0f);
+    T1_assert(!request->cpu->deleted);
     
     assert_sanity_check_texquad_vals(
         /* T1GPUTexQuadf32 * gpu_f32: */
@@ -395,16 +395,16 @@ void T1_texquad_copy_to_frame_data(
         /* s32 (* _Nonnull compar)(const void *, const void *): */
             cmp_highest_z_texquad);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     for (
         u32 i = 0;
         i + 1 < *recip_fd_size;
         i++)
     {
-        T1_log_assert(
+        T1_assert(
             recip_fd[i].f32s.xyz[2] >= recip_fd[i+1].f32s.xyz[2]);
     }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

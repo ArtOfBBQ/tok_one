@@ -2,7 +2,7 @@
 
 #include "T1_simd.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_tex.h"
 #include "T1_material.h"
@@ -14,7 +14,7 @@
 
 T1zSpriteCollection * T1_zsprite_list = NULL;
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 static void
 assert_sanity_check_zsprite_vals(
     T1GPUzSpritef32 * recip_gpu_f32s,
@@ -22,46 +22,46 @@ assert_sanity_check_zsprite_vals(
     T1CPUzSpritef32 * recip_cpu_f32s)
 {
     if (recip_gpu_f32s) {
-        T1_log_assert(recip_gpu_f32s->no_cam >= -0.05f);
-        T1_log_assert(recip_gpu_f32s->no_cam <= 1.05f);
-        T1_log_assert(recip_gpu_f32s->no_light >= -0.05f);
-        T1_log_assert(recip_gpu_f32s->no_light <= 1.05f);
-        T1_log_assert(recip_gpu_f32s->shadow_strength >= -0.1f);
-        T1_log_assert(recip_gpu_f32s->shadow_strength <= 1.1f);
-        T1_log_assert(recip_gpu_f32s->alpha >= -0.1f);
-        T1_log_assert(recip_gpu_f32s->alpha <=  1.1f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] > -3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] > -3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] > -3.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[0] < 10.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[1] < 10.0f);
-        T1_log_assert(recip_gpu_f32s->bonus_rgb[2] < 10.0f);
+        T1_assert(recip_gpu_f32s->no_cam >= -0.05f);
+        T1_assert(recip_gpu_f32s->no_cam <= 1.05f);
+        T1_assert(recip_gpu_f32s->no_light >= -0.05f);
+        T1_assert(recip_gpu_f32s->no_light <= 1.05f);
+        T1_assert(recip_gpu_f32s->shadow_strength >= -0.1f);
+        T1_assert(recip_gpu_f32s->shadow_strength <= 1.1f);
+        T1_assert(recip_gpu_f32s->alpha >= -0.1f);
+        T1_assert(recip_gpu_f32s->alpha <=  1.1f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[0] > -3.0f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[1] > -3.0f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[2] > -3.0f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[0] < 10.0f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[1] < 10.0f);
+        T1_assert(recip_gpu_f32s->bonus_rgb[2] < 10.0f);
     }
     
     if (recip_gpu_u32s) {
         s16 mix_rv_i;
         T1_std_memcpy(&mix_rv_i, (u8*)&recip_gpu_u32s->mix_rv_and_mix_tex, 2);
-        T1_log_assert(mix_rv_i >= -1);
-        T1_log_assert(mix_rv_i < T1_RENDER_VIEW_CAP);
+        T1_assert(mix_rv_i >= -1);
+        T1_assert(mix_rv_i < T1_RENDER_VIEW_CAP);
         T1Tex mix_tex;
         T1_std_memcpy(&mix_tex, ((u8 *)&recip_gpu_u32s->mix_rv_and_mix_tex)+2, 2);
         s32 mix_tex_array_i = T1_tex_to_array_i(mix_tex);
         s32 mix_tex_slice_i = T1_tex_to_slice_i(mix_tex);
         if (mix_tex == T1_TEX_NONE) {
-            T1_log_assert(mix_tex_array_i == -1);
-            T1_log_assert(mix_tex_slice_i == -1);
+            T1_assert(mix_tex_array_i == -1);
+            T1_assert(mix_tex_slice_i == -1);
         } else {
-            T1_log_assert(mix_tex_array_i >= 0);
-            T1_log_assert(mix_tex_array_i < T1_TEXARRAYS_CAP);
-            T1_log_assert(mix_tex_slice_i >= 0);
-            T1_log_assert(mix_tex_slice_i < T1_TEX_SLICES_CAP);
+            T1_assert(mix_tex_array_i >= 0);
+            T1_assert(mix_tex_array_i < T1_TEXARRAYS_CAP);
+            T1_assert(mix_tex_slice_i >= 0);
+            T1_assert(mix_tex_slice_i < T1_TEX_SLICES_CAP);
         }
     }
     
     if (recip_cpu_f32s) {
-        T1_log_assert(recip_cpu_f32s->mul_xyz[0] > 0.0f);
-        T1_log_assert(recip_cpu_f32s->mul_xyz[1] > 0.0f);
-        T1_log_assert(recip_cpu_f32s->mul_xyz[2] > 0.0f);
+        T1_assert(recip_cpu_f32s->mul_xyz[0] > 0.0f);
+        T1_assert(recip_cpu_f32s->mul_xyz[1] > 0.0f);
+        T1_assert(recip_cpu_f32s->mul_xyz[2] > 0.0f);
     }
 }
 
@@ -72,7 +72,7 @@ assert_sanity_check_zsprite_vals_by_id(s32 zp_i) {
         &T1_zsprite_list->gpu[zp_i].u32s,
         &T1_zsprite_list->cpu[zp_i].zs_cpu_f32s);
 }
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #define assert_sanity_check_zsprite_vals(x, y, z)
 #define assert_sanity_check_zsprite_vals_by_id(id)
 #else
@@ -129,7 +129,7 @@ T1_zsprite_fetch_next_noconstruct(
     stack_recipient->cpu_data->committed = 0;
     
     T1_zsprite_list->size += 1;
-    T1_log_assert(T1_zsprite_list->size + 1 <
+    T1_assert(T1_zsprite_list->size + 1 <
         T1_ZSPRITES_CAP);
 }
 
@@ -137,23 +137,18 @@ void
 T1_zsprite_commit(
     T1zSpriteRequest * to_commit)
 {
-    T1_log_assert(to_commit->cpu_data->mesh_id >= 0);
-    T1_log_assert(to_commit->cpu_data->mesh_id <
+    T1_assert(to_commit->cpu_data->mesh_id >= 0);
+    T1_assert(to_commit->cpu_data->mesh_id <
         (s32)T1_mesh_summary_list_size);
-    T1_log_assert(to_commit->cpu_data->mesh_id < T1_MESH_CAP);
-    T1_log_assert(
+    T1_assert(to_commit->cpu_data->mesh_id < T1_MESH_CAP);
+    T1_assert(
         T1_mesh_summary_list[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     {
         // probably shouldn't be requesting sprites in africa
         T1Tex tex = to_commit->gpu_data->base_mat_u32.normalmap_tex_and_tex & 0x0000FFFF;
-        T1_log_warn_if_false(tex != UINT16_MAX, "Bad sprite request"); // use T1_TEX_NONE instead!
-        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[0] > -100.0f, "Bad sprite request");
-        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[1] > -100.0f, "Bad sprite request");
-        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[0] <  100.0f, "Bad sprite request");
-        T1_log_warn_if_false(to_commit->cpu_data->zs_cpu_f32s.xyz[1] <  100.0f, "Bad sprite request");
     }
     
     u32 all_mesh_vertices_tail_i =
@@ -163,8 +158,8 @@ T1_zsprite_commit(
             T1_mesh_summary_list
                 [to_commit->cpu_data->mesh_id].vertices_size -
             1);
-    T1_log_assert(all_mesh_vertices_tail_i < T1_mesh_summary_all_vertices->size);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    T1_assert(all_mesh_vertices_tail_i < T1_mesh_summary_all_vertices->size);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -294,7 +289,7 @@ static void * T1_zsprite_store_struct(
         case T1_PROP_STORE_ZS_MAT_U32:
             return &T1_zsprite_list->gpu[i].base_mat_u32;
         default:
-            T1_log_assert(0);
+            T1_assert(0);
             return NULL;
     }
 }
@@ -339,21 +334,21 @@ T1_zsprite_get_x_multiplier_for_width(
     T1CPUzSprite * for_poly,
     const f32 for_width)
 {
-    T1_log_assert(for_poly != NULL);
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(for_poly != NULL);
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     if (for_poly == NULL) {
         return 0.0f;
     }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
-    T1_log_assert(for_poly->mesh_id >= 0);
-    T1_log_assert(for_poly->mesh_id < (s32)T1_mesh_summary_list_size);
+    T1_assert(for_poly->mesh_id >= 0);
+    T1_assert(for_poly->mesh_id < (s32)T1_mesh_summary_list_size);
     
-    T1_log_assert(for_poly->mesh_id >= 0);
-    T1_log_assert(for_poly->mesh_id < (s32)T1_mesh_summary_list_size);
+    T1_assert(for_poly->mesh_id >= 0);
+    T1_assert(for_poly->mesh_id < (s32)T1_mesh_summary_list_size);
     
     f32 return_value =
         for_width / T1_mesh_summary_list[for_poly->mesh_id].base_width;
@@ -440,8 +435,8 @@ T1_zsprite_construct_with_mesh_id(
 void T1_zsprite_construct(
     T1zSpriteRequest * to_construct)
 {
-    assert(to_construct->cpu_data != NULL);
-    assert(to_construct->gpu_data != NULL);
+    T1_assert(to_construct->cpu_data != NULL);
+    T1_assert(to_construct->gpu_data != NULL);
     
     T1_std_memset(
         to_construct->cpu_data,
@@ -501,7 +496,7 @@ void T1_zsprite_construct_quad(
     f32 height,
     T1zSpriteRequest * stack_recipient)
 {
-    T1_log_assert(z > 0.0f);
+    T1_assert(z > 0.0f);
     
     T1_zsprite_construct(stack_recipient);
     
@@ -543,7 +538,7 @@ void T1_zsprite_construct_quad_around(
     f32 height,
     T1zSpriteRequest * stack_recipient)
 {
-    // T1_log_assert(z > 0.0f);
+    // T1_assert(z > 0.0f);
     
     T1_zsprite_construct(stack_recipient);
     
@@ -599,7 +594,7 @@ T1_zsprite_construct_cube_around(
     const f32 depth,
     T1zSpriteRequest * stack_recipient)
 {
-    T1_log_assert(z > 0.0f);
+    T1_assert(z > 0.0f);
     
     T1_zsprite_construct(stack_recipient);
     
@@ -651,9 +646,9 @@ void T1_zsprite_copy_to_frame_data(
     IdPair * recip_ids,
     u32 * recip_size)
 {
-    T1_log_assert(*recip_size == 0);
+    T1_assert(*recip_size == 0);
     
-    T1_log_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
+    T1_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
     
     T1_std_memcpy(
         /* void * dest: */
@@ -703,13 +698,13 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
         }
         
         s32 mesh_id = T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
-        T1_log_assert(mesh_id >= 0);
-        T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
+        T1_assert(mesh_id >= 0);
+        T1_assert(mesh_id < (s32)T1_mesh_summary_list_size);
         
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i +
                 T1_mesh_summary_list[mesh_id].vertices_size;
-        assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
+        T1_assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i = T1_mesh_summary_list[mesh_id].vertices_head_i;
@@ -721,7 +716,7 @@ void T1_zsprite_add_alphablending_zpolygons_to_workload(
             frame_data->verts[frame_data->verts_size].
                 polygon_i = cpu_zp_i;
             frame_data->verts_size += 1;
-            T1_log_assert(
+            T1_assert(
                 frame_data->verts_size <
                     T1_MAX_VERTS_PER_BUFFER);
         }
@@ -755,20 +750,20 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             continue;
         }
         
-        T1_log_assert(
+        T1_assert(
             T1_zsprite_list->cpu[cpu_zp_i].
                 zs_cpu_f32s.alpha_on < 1.5f);
         
         s32 mesh_id =
             T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
-        T1_log_assert(mesh_id >= 0);
-        T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
+        T1_assert(mesh_id >= 0);
+        T1_assert(mesh_id < (s32)T1_mesh_summary_list_size);
         
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i +
                 T1_mesh_summary_list[mesh_id].
                     vertices_size;
-        T1_log_assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
+        T1_assert(vert_tail_i < T1_MAX_VERTS_PER_BUFFER);
         
         for (
             s32 vert_i =
@@ -782,7 +777,7 @@ void T1_zsprite_add_bloom_zpolygons_to_workload(
             f->verts[f->verts_size].
                 polygon_i = cpu_zp_i;
             f->verts_size += 1;
-            T1_log_assert(f->verts_size <
+            T1_assert(f->verts_size <
                 T1_MAX_VERTS_PER_BUFFER);
         }
     }
@@ -797,7 +792,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
     // for now we assume this always comes 1st
-    T1_log_assert(frame_data->verts_size == 0);
+    T1_assert(frame_data->verts_size == 0);
     
     s32 first_opaq_i = (s32)frame_data->verts_size;
     
@@ -809,7 +804,7 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
     incr_vals[3] = 0;
     SIMD_VEC4I incr = simd_load_vec4i(incr_vals);
     
-    T1_log_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
+    T1_assert(T1_zsprite_list->size < T1_ZSPRITES_CAP);
     for (
         s32 cpu_zp_i = 0;
         cpu_zp_i < (s32)T1_zsprite_list->size;
@@ -828,13 +823,13 @@ void T1_zsprite_add_opaque_zpolygons_to_workload(
         }
         
         s32 mesh_id = T1_zsprite_list->cpu[cpu_zp_i].mesh_id;
-        T1_log_assert(mesh_id >= 0);
-        T1_log_assert(mesh_id < (s32)T1_mesh_summary_list_size);
+        T1_assert(mesh_id >= 0);
+        T1_assert(mesh_id < (s32)T1_mesh_summary_list_size);
         
         s32 vert_tail_i =
             T1_mesh_summary_list[mesh_id].vertices_head_i + 
             T1_mesh_summary_list[mesh_id].vertices_size;
-        T1_log_assert(vert_tail_i <
+        T1_assert(vert_tail_i <
             T1_MAX_VERTS_PER_BUFFER);
         
         /*

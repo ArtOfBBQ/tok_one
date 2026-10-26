@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_zsprite.h"
 #include "T1_texquad.h"
@@ -57,18 +57,18 @@ u64 T1_os_raw_thread_id_to_T1_thread_id(
 
 u32 T1_os_init_mutex_and_return_id(void)
 {
-    T1_log_assert(
+    T1_assert(
         T1_os_s->next_mutex_id + 1 < T1_MUTEXES_CAP);
-    T1_log_assert(
+    T1_assert(
         !T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized);
     
     s32 mutex_init_error_value = pthread_mutex_init(
         &(T1_os_s->mutexes[T1_os_s->next_mutex_id].mutex),
         NULL);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(mutex_init_error_value == 0);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(mutex_init_error_value == 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     (void)mutex_init_error_value;
     #else
     #error
@@ -91,22 +91,22 @@ u8 T1_os_mutex_trylock(const u32 mutex_id)
     If successful, pthread_mutex_trylock() will return zero.
     Otherwise, an error number will be returned to indicate the error.
     */
-    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
+    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
     
     s32 return_val = pthread_mutex_trylock(&T1_os_s->mutexes[mutex_id].mutex);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     if (return_val != 0) {
         // EINVAL = The value specified by mutex is invalid
-        T1_log_assert(return_val != EINVAL);
+        T1_assert(return_val != EINVAL);
         
         // EPERM = Operation not permitted
-        T1_log_assert(return_val != EPERM);
+        T1_assert(return_val != EPERM);
         
         // EBUSY = Mutex is already locked
-        T1_log_assert(return_val == EBUSY);
+        T1_assert(return_val == EBUSY);
     }
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -120,14 +120,14 @@ was unlocked
 */
 void T1_os_mutex_lock(u32 mutex_id)
 {
-    T1_log_assert(mutex_id < T1_MUTEXES_CAP);
-    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
+    T1_assert(mutex_id < T1_MUTEXES_CAP);
+    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
     s32 return_value = 
         pthread_mutex_lock(&(T1_os_s->mutexes[mutex_id].mutex));
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(return_value == 0);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(return_value == 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     (void)return_value;
     #else
     #error
@@ -137,18 +137,18 @@ void T1_os_mutex_lock(u32 mutex_id)
 }
 
 void T1_os_mutex_unlock(u32 mutex_id) {
-    T1_log_assert(mutex_id < T1_MUTEXES_CAP);
-    T1_log_assert(T1_os_s->mutexes[mutex_id].initialized);
+    T1_assert(mutex_id < T1_MUTEXES_CAP);
+    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     s32 out = pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
     #else
     #error
     #endif
     
-    T1_log_assert(out == 0);
+    T1_assert(out == 0);
 }
 
 #define MAX_FILENAME_SIZE  512
@@ -335,7 +335,7 @@ void T1_os_write_rgba_to_writables(
         }
     }
     
-    T1_log_assert(bmp_cap >= 54 + (width * height * 4));
+    T1_assert(bmp_cap >= 54 + (width * height * 4));
     T1_os_encode_bmp(rgba, width, height, bmp, &bmp_size);
     
     T1_os_write_file_to_writables(
@@ -438,8 +438,8 @@ void T1_os_res_filename_to_pathfile(
     char * recipient,
     u32 recip_cap)
 {
-    assert(filename != NULL);
-    assert(recipient != NULL);
+    T1_assert(filename != NULL);
+    T1_assert(recipient != NULL);
     T1_std_memset(recipient, 0, recip_cap);
     
     T1_os_get_res_dir(recipient, recip_cap);
@@ -452,7 +452,7 @@ void T1_os_res_filename_to_pathfile(
         recip_cap,
         filename);
     
-    T1_log_assert(recipient[0] != '\0');
+    T1_assert(recipient[0] != '\0');
 }
 
 void T1_os_writable_filename_to_pathfile(
@@ -460,14 +460,14 @@ void T1_os_writable_filename_to_pathfile(
     char * recipient,
     u32 recip_cap)
 {
-    assert(filename != NULL);
-    assert(recipient != NULL);
+    T1_assert(filename != NULL);
+    T1_assert(recipient != NULL);
         
     T1_os_get_writables_dir(recipient, recip_cap);
     if (recipient[0] == '\0') {
         return;
     }
-    T1_log_assert(recipient[0] != '\0');
+    T1_assert(recipient[0] != '\0');
     T1_os_get_dir_separator(
         recipient + T1_std_strlen(recipient));
     T1_std_strcat_cap(
@@ -475,7 +475,7 @@ void T1_os_writable_filename_to_pathfile(
         recip_cap,
         filename);
     
-    T1_log_assert(T1_std_strlen(recipient) < recip_cap);
+    T1_assert(T1_std_strlen(recipient) < recip_cap);
 }
 
 void T1_os_del_writable(
@@ -522,7 +522,7 @@ void T1_os_shutdown(void)
     #endif
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    T1_log_assert(engine_save_file != NULL);
+    T1_assert(engine_save_file != NULL);
     engine_save_file->window_bottom =
         T1_global->window_bottom;
     engine_save_file->window_height =

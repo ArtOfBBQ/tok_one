@@ -4,7 +4,7 @@
 
 #include "T1_std.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_stdint.h"
 #include "T1_objc.h"
 
@@ -139,7 +139,7 @@ static void T1_apple_audio_callback(
 {
     (void)in_user_data;
     
-    T1_log_assert(buffer->mAudioDataByteSize ==
+    T1_assert(buffer->mAudioDataByteSize ==
         buffer->mAudioDataBytesCapacity);
     
     u32 audio_data_cap = buffer->mAudioDataBytesCapacity;
@@ -158,7 +158,7 @@ static void T1_apple_audio_callback(
     s32 err = T1_aa_s->audio_queue_enqueue_buffer(
         queue, buffer, 0, NULL);
     if (err != 0) {
-        T1_log_assert(0);
+        T1_assert(0);
         return;
     }
 }
@@ -202,7 +202,7 @@ void T1_apple_audio_start_loop(void) {
             &audio_queue_ref);
     
     if (err != 0) {
-        assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -215,7 +215,7 @@ void T1_apple_audio_start_loop(void) {
             &audio_queue_buffer_refs[0]);
     
     if (err != 0) {
-        assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -232,7 +232,7 @@ void T1_apple_audio_start_loop(void) {
             &audio_queue_buffer_refs[1]);
     
     if (err != 0) {
-        assert(0);
+        T1_assert(0);
         return;
     }
     

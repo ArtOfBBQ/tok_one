@@ -1,7 +1,7 @@
 #include "T1_particle.h"
 
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_simd.h"
 #include "T1_zsprite.h"
@@ -113,7 +113,7 @@ T1ParticleEffect * T1_particle_get_next(void)
     }
     
     if (return_value == NULL) {
-        T1_log_assert(T1_particle_effects_size + 1 <
+        T1_assert(T1_particle_effects_size + 1 <
             T1_PARTICLE_EFFECTS_SIZE);
         return_value = &T1_particle_effects[T1_particle_effects_size];
         T1_particle_effects_size += 1;
@@ -126,19 +126,19 @@ T1ParticleEffect * T1_particle_get_next(void)
 void T1_particle_commit(T1ParticleEffect * to_request)
 {
     if (!T1_global->clientlogic_early_startup_finished) {
-        T1_log_crash(
+        T1_crash(
             "You can't commit particle effects during early startup.");
         return;
     }
     
-    T1_log_assert(!to_request->deleted);
+    T1_assert(!to_request->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
-    T1_log_assert(!to_request->committed);
+    T1_assert(!to_request->committed);
     
-    T1_log_assert(to_request->spawn_lifespan > 0);
-    T1_log_assert(to_request->elapsed == 0);
-    T1_log_assert(to_request->spawns_per_loop > 0);
+    T1_assert(to_request->spawn_lifespan > 0);
+    T1_assert(to_request->elapsed == 0);
+    T1_assert(to_request->spawns_per_loop > 0);
     
     to_request->committed = true;
 }
@@ -156,15 +156,15 @@ void T1_particle_shatter_commit(
         return;
     }
     
-    T1_log_assert(!to_commit->deleted);
+    T1_assert(!to_commit->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
-    T1_log_assert(!to_commit->committed);
+    T1_assert(!to_commit->committed);
     
-    T1_log_assert(to_commit->spawn_lifespan > 0);
-    T1_log_assert(to_commit->loop_duration > 0);
-    T1_log_assert(to_commit->elapsed == 0);
-    T1_log_assert(to_commit->spawns_per_loop > 0);
+    T1_assert(to_commit->spawn_lifespan > 0);
+    T1_assert(to_commit->loop_duration > 0);
+    T1_assert(to_commit->elapsed == 0);
+    T1_assert(to_commit->spawns_per_loop > 0);
     
     to_commit->committed = true;
 }
@@ -185,7 +185,7 @@ T1ShatterEffect * T1_particle_shatter_get_next(void)
     }
     
     if (return_value == NULL) {
-        T1_log_assert(T1_shatter_effects_size + 1 <
+        T1_assert(T1_shatter_effects_size + 1 <
             T1_SHATTER_EFFECTS_SIZE);
         return_value =
             &T1_shatter_effects[
@@ -244,7 +244,7 @@ void T1_particle_resize_to_effect_height(
 {
     const f32 current_height = T1_particle_get_height(to_resize);
     
-    T1_log_assert(current_height > 0.0f);
+    T1_assert(current_height > 0.0f);
     
     const f32 multiplier = new_height / current_height;
     
@@ -272,7 +272,7 @@ static void T1_particle_add_single_to_frame_data(
         frame_data->flat_bb_quads_size + 1 >=
             MAX_FLATQUADS_PER_BUFFER)
     {
-        T1_log_assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -411,7 +411,7 @@ T1_zsprite_add_single_shatter_to_frame_data(
         frame_data->zsprite_list->size + 1 >=
             MAX_ZSPRITES_PER_BUFFER)
     {
-        T1_log_assert(0);
+        T1_assert(0);
         return;
     }
     
@@ -541,10 +541,10 @@ void T1_particle_add_all_to_frame_data(
     u64 elapsed_us)
 {
     // We expect padding to prevent out of bounds
-    T1_log_assert(
+    T1_assert(
         sizeof(T1GPUFlatQuad) % sizeof(f32) ==
             0);
-    T1_log_assert(
+    T1_assert(
         (sizeof(T1GPUFlatQuad) %
             (SIMD_FLOAT_LANES * 4)) == 0);
     

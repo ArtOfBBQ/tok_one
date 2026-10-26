@@ -3,7 +3,7 @@
 #include "T1_stdint.h"
 #include "T1_conditional_includes.h"
 
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_tex_array.h"
 #include "T1_render_view.h"
 #include "T1_texquad.h"
@@ -12,11 +12,11 @@
 #include "T1_os.h"
 
 u32 T1_cam_new(u32 width, u32 height) {
-    T1_log_assert(width > 0);
-    T1_log_assert(height > 0);
+    T1_assert(width > 0);
+    T1_assert(height > 0);
     
     s32 rv_i = T1_render_view_fetch_next(width, height);
-    T1_log_assert(rv_i >= 0);
+    T1_assert(rv_i >= 0);
     if (rv_i < 0) { return T1_ID_NONE; }
     
     // its depth buffer
@@ -28,7 +28,7 @@ u32 T1_cam_new(u32 width, u32 height) {
 }
 void T1_cam_reset(u32 T1_id) {
     s32 rv_i = T1_render_view_T1_id_to_i(T1_id);
-    T1_log_assert(rv_i >= 0);
+    T1_assert(rv_i >= 0);
     if (rv_i >= 0) { T1_render_view_reset(rv_i); } }
 void T1_cam_delete_all(void) {
     for (s32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {

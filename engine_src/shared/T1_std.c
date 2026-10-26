@@ -1,8 +1,8 @@
 #include "T1_std.h"
+#include "T1_assert.h"
 
-#if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-#include <assert.h>
-#elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
@@ -16,7 +16,7 @@ void * T1_std_memset(
     s32 value,
     u64 size_bytes)
 {
-    assert(in != NULL);
+    T1_assert(in != NULL);
     
     s8 * input = (s8 *)in;
     
@@ -263,9 +263,9 @@ T1_std_strcat_cap(
 {
     u32 i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_size);
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(i < recipient_size);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -274,9 +274,9 @@ T1_std_strcat_cap(
     
     u32 j = 0;
     while (to_append[j] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_size - 1);
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(i < recipient_size - 1);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -304,19 +304,14 @@ T1_std_strcat_c8_cap(
 void
 T1_std_strcat_s32_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_size,
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     const s32 to_append)
 {
     u32 i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_size);
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(i < recipient_size);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -334,9 +329,9 @@ T1_std_strcat_u32_cap(
 {
     u32 i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_size);
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(i < recipient_size);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -354,10 +349,10 @@ T1_std_strcat_f32_cap(
 {
     u32 precision = 4;
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(recipient != NULL);
-    assert(recipient_size > 0);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(recipient != NULL);
+    T1_assert(recipient_size > 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -391,9 +386,9 @@ T1_std_strcat_f32_cap(
         adj_recip + rlen);
     rlen = T1_std_strlen(adj_recip);
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(rlen < recipient_size);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(rlen < recipient_size);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -412,12 +407,7 @@ T1_std_strcat_f32_cap(
         }
     }
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE == T1_ACTIVE
-    assert(adj_recip[0] != '.');
-    #elif T1_STD_ASSERTS_ACTIVE == T1_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    T1_assert(adj_recip[0] != '.');
 }
 
 u64
@@ -432,18 +422,13 @@ T1_std_strlcat(
 void
 T1_std_strcpy_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const u32 recipient_cap,
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     const char * origin)
 {
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(recipient != NULL);
-    assert(origin != NULL);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(recipient != NULL);
+    T1_assert(origin != NULL);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -451,9 +436,9 @@ T1_std_strcpy_cap(
     u32 i = 0;
     while (origin[i] != '\0')
     {
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(i < recipient_cap);
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(i < recipient_cap);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
@@ -461,9 +446,9 @@ T1_std_strcpy_cap(
         i += 1;
     }
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(i <= recipient_cap);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(i <= recipient_cap);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -586,9 +571,9 @@ void T1_std_strsub(
     const char * to_match,
     const char * replacement)
 {
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(T1_std_strlen(to_match) >= T1_std_strlen(replacement));
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(T1_std_strlen(to_match) >= T1_std_strlen(replacement));
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -837,9 +822,9 @@ s32 T1_std_string_to_s32(const char * input)
     s32 result = T1_std_string_to_s32_validate(
         input,
         &result_good);
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(result_good);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(result_good);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -897,9 +882,9 @@ u32 T1_std_string_to_u32(
     u32 result = T1_std_string_to_u32_validate(
         input,
         &result_good);
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(result_good);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(result_good);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -1049,9 +1034,9 @@ f32 T1_std_string_to_f32(
         input,
         &result_good);
     
-    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(result_good);
-    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(result_good);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif

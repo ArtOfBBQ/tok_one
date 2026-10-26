@@ -1,6 +1,6 @@
 #include "T1_tex.h"
 
-#include "T1_log.h"
+#include "T1_assert.h"
 
 s16 T1_tex_to_array_i(T1Tex tex) {
     return tex == T1_TEX_NONE ? -1 : tex >> 11;
@@ -15,7 +15,7 @@ void T1_tex_set_array_i(
 {
     // 31 itself is possible but reserved for
     // "write to depth array"
-    T1_log_assert(newval <= 31);
+    T1_assert(newval <= 31);
     *recip &= 0x07FF;
     *recip |= (newval << 11);
 }
@@ -24,7 +24,7 @@ void T1_tex_set_slice_i(
     T1Tex * recip,
     s16 newval)
 {
-    T1_log_assert(newval <= 2047);
+    T1_assert(newval <= 2047);
     *recip &= 0xF800;
     *recip |= newval;
 }

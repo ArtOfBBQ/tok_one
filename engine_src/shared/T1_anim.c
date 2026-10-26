@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_tex.h"
 #include "T1_global.h"
 #include "T1_types_cpu_to_gpu.h"
@@ -68,9 +68,9 @@ static b8 T1_anim_store_is_u32(const u8 store) {
 #define T1_ANIM_STORE(a, store, type) ((type *)(a)->stores[store])
 
 
-#if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+#if T1_ASSERTS_ACTIVE == T1_ACTIVE
 static void T1_anim_sanity_check(T1Anim * a) {
-    T1_log_assert(a->remaining_duration_us < 195000000);
+    T1_assert(a->remaining_duration_us < 195000000);
     
     T1CPUzSpritef32 * zs_cpu =
         T1_ANIM_STORE(a, T1_PROP_STORE_ZS_CPU_F32, T1CPUzSpritef32);
@@ -79,9 +79,9 @@ static void T1_anim_sanity_check(T1Anim * a) {
     
     if (!a->endpoints_not_deltas) {
         if (zs_cpu) {
-            T1_log_assert(zs_cpu->bloom_on != T1_ANIM_NO_EFFECT);
+            T1_assert(zs_cpu->bloom_on != T1_ANIM_NO_EFFECT);
         }
-        T1_log_assert(zs_u32 == NULL);
+        T1_assert(zs_u32 == NULL);
     } else if (zs_u32) {
         f32 mix_rv_and_mix_tex_f32;
         T1_std_memcpy(
@@ -91,18 +91,18 @@ static void T1_anim_sanity_check(T1Anim * a) {
         if (mix_rv_and_mix_tex_f32 != T1_ANIM_NO_EFFECT) {
             // like the shader: rv is the low 16 bits, tex the high 16
             s16 mix_rv = (s16)(zs_u32->mix_rv_and_mix_tex & 0xFFFF);
-            T1_log_assert(mix_rv < T1_RENDER_VIEW_CAP);
-            T1_log_assert(mix_rv >= -1);
+            T1_assert(mix_rv < T1_RENDER_VIEW_CAP);
+            T1_assert(mix_rv >= -1);
             
             T1Tex mix_tex = (T1Tex)(zs_u32->mix_rv_and_mix_tex >> 16);
             if (mix_tex != T1_TEX_NONE) {
-                T1_log_assert(T1_tex_to_array_i(mix_tex) < T1_TEXARRAYS_CAP);
-                T1_log_assert(T1_tex_to_slice_i(mix_tex) < T1_TEX_SLICES_CAP);
+                T1_assert(T1_tex_to_array_i(mix_tex) < T1_TEXARRAYS_CAP);
+                T1_assert(T1_tex_to_slice_i(mix_tex) < T1_TEX_SLICES_CAP);
             }
         }
     }
 }
-#elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+#elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_anim_sanity_check(x)
 #else
 #error
@@ -164,7 +164,7 @@ void T1_anim_init(
             &T1_anims[i],
             &T1_anims[0],
             sizeof(T1Anim));
-        T1_log_assert(T1_anims[i].deleted);
+        T1_assert(T1_anims[i].deleted);
     }
     
     as->mutex_id = as->init_mutex_and_return_id();
@@ -177,13 +177,13 @@ static void T1_anim_construct(
         to_construct,
         0,
         sizeof(T1Anim));
-    T1_log_assert(!to_construct->committed);
+    T1_assert(!to_construct->committed);
     
     to_construct->target_T1_id = T1_ID_NONE;
     to_construct->runs = 1;
     
-    T1_log_assert(!to_construct->deleted);
-    T1_log_assert(!to_construct->committed);
+    T1_assert(!to_construct->deleted);
+    T1_assert(!to_construct->committed);
 }
 
 // a zeroed slot in the store's pool
@@ -191,13 +191,13 @@ static void * T1_anim_fetch_next_store(
     const u8 store,
     u16 * store_i)
 {
-    T1_log_assert(T1_anim_store_sizes[store] > 0);
+    T1_assert(T1_anim_store_sizes[store] > 0);
     
     u16 i = 0;
     while (i < T1_ANIMS_CAP && as->pools_taken[store][i]) {
         i++;
     }
-    T1_log_assert(i < T1_ANIMS_CAP);
+    T1_assert(i < T1_ANIMS_CAP);
     
     *store_i = i;
     as->pools_taken[store][i] = 1;
@@ -210,7 +210,7 @@ static T1Anim * T1_anim_alloc(b8 endpoints_not_deltas)
 {
     as->mutex_lock(as->mutex_id);
     
-    T1_log_assert(T1_anims_size < T1_ANIMS_CAP);
+    T1_assert(T1_anims_size < T1_ANIMS_CAP);
     T1Anim * out = NULL;
     
     for (
@@ -229,15 +229,15 @@ static T1Anim * T1_anim_alloc(b8 endpoints_not_deltas)
         out =
             &T1_anims[T1_anims_size];
         T1_anims_size += 1;
-        T1_log_assert(T1_anims_size < T1_ANIMS_CAP);
+        T1_assert(T1_anims_size < T1_ANIMS_CAP);
     }
     
-    T1_log_assert(out->deleted);
+    T1_assert(out->deleted);
     T1_anim_construct(out);
     out->endpoints_not_deltas = endpoints_not_deltas;
     
-    T1_log_assert(!out->committed);
-    T1_log_assert(!out->deleted);
+    T1_assert(!out->committed);
+    T1_assert(!out->deleted);
     
     as->mutex_unlock(as->mutex_id);
     
@@ -288,7 +288,7 @@ static void T1_anim_apply_store(
             T1_render_view_apply_anim_step(a->target_T1_id, store, step);
             break;
         default:
-            T1_log_assert(0);
+            T1_assert(0);
     }
 }
 
@@ -300,9 +300,9 @@ static void T1_anim_resolve_single(
         return;
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     T1_anim_sanity_check(a);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -353,7 +353,7 @@ static void T1_anim_resolve_single(
         }
     }
     
-    T1_log_assert(a->remaining_duration_us > 0);
+    T1_assert(a->remaining_duration_us > 0);
     
     if (elapsed < a->remaining_duration_us) {
         a->remaining_duration_us -= elapsed;
@@ -363,16 +363,16 @@ static void T1_anim_resolve_single(
     
     u64 elapsed_so_far = a->duration_us -
         a->remaining_duration_us;
-    T1_log_assert(elapsed_so_far <=
+    T1_assert(elapsed_so_far <=
         a->duration_us);
     
     f32 t_now = (f32)elapsed_so_far / (f32)a->duration_us;
-    T1_log_assert(t_now <= 1.0f);
-    T1_log_assert(t_now >= 0.0f);
-    T1_log_assert(t_now >= a->already_applied_t);
+    T1_assert(t_now <= 1.0f);
+    T1_assert(t_now >= 0.0f);
+    T1_assert(t_now >= a->already_applied_t);
     f32 t_applied = a->already_applied_t;
     
-    T1_log_assert(a->already_applied_t <= t_now);
+    T1_assert(a->already_applied_t <= t_now);
     a->already_applied_t = t_now;
     // decided before easing, an eased t can end anywhere
     b8 finished = t_now >= 1.0f;
@@ -382,9 +382,9 @@ static void T1_anim_resolve_single(
         t_applied = a->easing(t_applied);
     }
     
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
     T1_anim_sanity_check(a);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -402,17 +402,17 @@ static void T1_anim_resolve_single(
 
 static void T1_anim_assert_anim_valid_before_commit(T1Anim * a)
 {
-    #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_log_assert(!a->deleted);
-    T1_log_assert(!a->committed);
-    T1_log_assert(a->already_applied_t == 0.0f);
-    T1_log_assert(a->duration_us > 0);
-    T1_log_assert(a->target_T1_id != T1_ID_NONE);
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(!a->deleted);
+    T1_assert(!a->committed);
+    T1_assert(a->already_applied_t == 0.0f);
+    T1_assert(a->duration_us > 0);
+    T1_assert(a->target_T1_id != T1_ID_NONE);
     
     if (!a->endpoints_not_deltas) {
         // u32s jump to their endpoint, they can't be deltas
         for (u8 store = 0; store < T1_PROP_STORE_OUTOFBOUNDS; store++) {
-            T1_log_assert(!a->stores[store] || !T1_anim_store_is_u32(store));
+            T1_assert(!a->stores[store] || !T1_anim_store_is_u32(store));
         }
         
         T1GPUzSpritef32 * zs_f32 =
@@ -420,12 +420,12 @@ static void T1_anim_assert_anim_valid_before_commit(T1Anim * a)
         if (zs_f32) {
             // don't reduce alpha by 1 to fade out, use
             // an endpoint anim
-            T1_log_assert(zs_f32->alpha > -0.9f);
+            T1_assert(zs_f32->alpha > -0.9f);
         }
     }
     
     T1_anim_sanity_check(a);
-    #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     (void)a;
     #else
     #error
@@ -509,8 +509,8 @@ static void T1_anim_commit_and_instarun(T1Anim * a)
     as->mutex_lock(as->mutex_id);
     
     T1_anim_assert_anim_valid_before_commit(a);
-    T1_log_assert(a->duration_us == 1);
-    T1_log_assert(a->pause_us == 0);
+    T1_assert(a->duration_us == 1);
+    T1_assert(a->pause_us == 0);
     
     T1_anim_delete_conflicting(a);
     
@@ -522,7 +522,7 @@ static void T1_anim_commit_and_instarun(T1Anim * a)
     T1_anim_resolve_single(a, a->pause_us + a->duration_us);
     T1_anim_delete(a);
     a->committed = 0;
-    T1_log_assert(a->remaining_duration_us == 0);
+    T1_assert(a->remaining_duration_us == 0);
     
     as->mutex_unlock(as->mutex_id);
 }
@@ -569,21 +569,21 @@ void T1_anim_delete_all(void) {
 
 static T1Anim * T1_anim_from_handle(u32 anim)
 {
-    T1_log_assert(anim < T1_anims_size);
+    T1_assert(anim < T1_anims_size);
     T1Anim * a = &T1_anims[anim];
     // handles are only valid until they're committed
-    T1_log_assert(!a->deleted);
-    T1_log_assert(!a->committed);
+    T1_assert(!a->deleted);
+    T1_assert(!a->committed);
     return a;
 }
 
 u32 T1_anim_new(u32 T1_id, u8 mode)
 {
-    T1_log_assert(T1_id != T1_ID_NONE);
-    T1_log_assert(mode == T1_ANIM_MODE_TO || mode == T1_ANIM_MODE_BY);
+    T1_assert(T1_id != T1_ID_NONE);
+    T1_assert(mode == T1_ANIM_MODE_TO || mode == T1_ANIM_MODE_BY);
     // pipelines and passes have nothing to animate
-    T1_log_assert(T1_pipeline_T1_id_to_i(T1_id) < 0);
-    T1_log_assert(T1_pass_T1_id_to_i(T1_id) < 0);
+    T1_assert(T1_pipeline_T1_id_to_i(T1_id) < 0);
+    T1_assert(T1_pass_T1_id_to_i(T1_id) < 0);
     
     T1Anim * a = T1_anim_alloc(
         /* b8 endpoints_not_deltas: */ mode == T1_ANIM_MODE_TO);
@@ -632,9 +632,9 @@ static void T1_anim_set_bits(
         // e.g. texquad offsets and materials have no anim store
         if (!T1_property_is_animatable(p)) { continue; }
         // TODO: animate values that share a u32
-        T1_log_assert(!T1_property_is_packed(p));
+        T1_assert(!T1_property_is_packed(p));
         // u32s jump to their endpoint, they can't be deltas
-        T1_log_assert(a->endpoints_not_deltas || !p->is_u32);
+        T1_assert(a->endpoints_not_deltas || !p->is_u32);
         
         void * store_struct = T1_anim_get_store(a, p->store);
         T1_property_write(
@@ -647,7 +647,8 @@ static void T1_anim_set_bits(
     as->mutex_unlock(as->mutex_id);
     
     // this property can't be animated (in this mode)
-    T1_log_assert(stores_set > 0);
+    T1_assert(stores_set > 0);
+    (void)stores_set; // only used by T1_assert()
 }
 
 void T1_anim_set_f32(u32 anim, const c8 * property, f32 value)

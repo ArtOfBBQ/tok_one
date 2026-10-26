@@ -1,7 +1,7 @@
 #include "T1_gameloop.h"
 
 #include "T1_term.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_global.h"
 #include "T1_io.h"
 #include "T1_id.h"
@@ -101,8 +101,8 @@ void T1_frame_begin(void)
         return;
     }
     
-    T1_log_assert(f->lights != NULL);
-    T1_log_assert(f->render_views != NULL);
+    T1_assert(f->lights != NULL);
+    T1_assert(f->render_views != NULL);
     
     T1_global->this_frame_timestamp_us =
         T1_os_get_current_time_us();
@@ -127,21 +127,19 @@ void T1_frame_begin(void)
             // request, wait...
             // we break, not return, because we do want to render an
             // empty screen
-            T1_log_append("w82RZ - ");
             return;
         } else {
             T1_global_init();
             
             T1_global->last_resize_request_us = 0;
-            T1_log_append("\nOK, resize window\n");
             
             // The client rebuilds its size dependent state now
             T1_gl_s->frame_resized = 1;
        }
     } else {
-        #if T1_LOG_ASSERTS_ACTIVE == T1_ACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
         T1_render_view_validate();
-        #elif T1_LOG_ASSERTS_ACTIVE == T1_INACTIVE
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

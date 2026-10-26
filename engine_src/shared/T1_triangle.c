@@ -1,7 +1,7 @@
 #include "T1_triangle.h"
 
 #include <math.h>
-#include "T1_log.h"
+#include "T1_assert.h"
 
 static f32 get_magnitude_vec4f(
     const SIMD_VEC4F input_xyz)

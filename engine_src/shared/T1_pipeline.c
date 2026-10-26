@@ -2,7 +2,7 @@
 
 #include "T1_types_public.h"
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_mem.h"
 #include "T1_id.h"
 #include "T1_os.h"
@@ -15,7 +15,7 @@ static s32 T1_pipeline_fetch_next(void) {
         if (T1_pipelines[i].T1_id == T1_ID_NONE) { return (s32)i; }
     }
 
-    T1_log_assert(T1_pipelines_size < T1_PIPELINES_CAP);
+    T1_assert(T1_pipelines_size < T1_PIPELINES_CAP);
     if (T1_pipelines_size >= T1_PIPELINES_CAP) { return -1; }
 
     T1_pipelines_size += 1;
@@ -32,15 +32,15 @@ static u32 T1_pipeline_new(
 {
     *good = 0;
 
-    T1_log_assert(vertex_fn != NULL);
-    T1_log_assert(vertex_fn[0] != '\0');
-    T1_log_assert(
+    T1_assert(vertex_fn != NULL);
+    T1_assert(vertex_fn[0] != '\0');
+    T1_assert(
         T1_std_strlen(vertex_fn) < T1_PIPELINE_FUNC_NAME_CAP);
-    T1_log_assert(
+    T1_assert(
         is_compute ||
         T1_std_strlen(fragment_fn) < T1_PIPELINE_FUNC_NAME_CAP);
-    T1_log_assert(blend <= T1_BLEND_STRAIGHT_ALPHA);
-    T1_log_assert(cull <= T1_CULL_FRONT);
+    T1_assert(blend <= T1_BLEND_STRAIGHT_ALPHA);
+    T1_assert(cull <= T1_CULL_FRONT);
 
     s32 i = T1_pipeline_fetch_next();
     if (i < 0) { return T1_ID_NONE; }
@@ -49,8 +49,8 @@ static u32 T1_pipeline_new(
     T1_std_memset(p, 0, sizeof(T1Pipeline));
     T1_std_strcpy_cap(p->vertex_fn, T1_PIPELINE_FUNC_NAME_CAP, vertex_fn);
     if (!is_compute) {
-        T1_log_assert(fragment_fn != NULL);
-        T1_log_assert(fragment_fn[0] != '\0');
+        T1_assert(fragment_fn != NULL);
+        T1_assert(fragment_fn[0] != '\0');
         T1_std_strcpy_cap(
             p->fragment_fn, T1_PIPELINE_FUNC_NAME_CAP, fragment_fn);
     }

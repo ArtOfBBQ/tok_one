@@ -1,7 +1,7 @@
 #include "T1_render.h"
 
 #include "T1_std.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_linalg3d.h"
 #include "T1_global.h"
 #include "T1_simd.h"
@@ -158,16 +158,11 @@ void T1_render_update(
     (void)elapsed_us;
     
     if (T1_render_active != 1) {
-        T1_log_append(
-            "renderer not initialized, aborting...\n");
         return;
     }
     
     if (f == NULL || f->verts == NULL)
     {
-        T1_log_append(
-            "ERROR: platform layer didnt "
-            "pass recipients\n");
         return;
     }
     
@@ -217,11 +212,11 @@ void T1_render_update(
     *f->postproc_consts = T1_global->postproc_consts;
     
     T1_zsprite_add_opaque_zpolygons_to_workload(f);
-    T1_log_assert(f->zsprite_list->size < T1_ZSPRITES_CAP);
+    T1_assert(f->zsprite_list->size < T1_ZSPRITES_CAP);
     
     #if T1_BLENDING_SHADER_ACTIVE == T1_ACTIVE
     T1_zsprite_add_alphablending_zpolygons_to_workload(f);
-    T1_log_assert(f->zsprite_list->size <
+    T1_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     #elif T1_BLENDING_SHADER_ACTIVE == T1_INACTIVE
     #else
@@ -229,7 +224,7 @@ void T1_render_update(
     #endif
     
     T1_zsprite_add_bloom_zpolygons_to_workload(f);
-    T1_log_assert(f->zsprite_list->size <
+    T1_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -239,7 +234,7 @@ void T1_render_update(
             f,
         /* u64 elapsed_us: */
             elapsed_us);
-    T1_log_assert(f->zsprite_list->size <
+    T1_assert(f->zsprite_list->size <
         T1_ZSPRITES_CAP);
     
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
@@ -250,10 +245,10 @@ void T1_render_update(
     
     f->render_views_size = T1_render_views->size;
     
-    T1_log_assert(f->render_views != NULL);
+    T1_assert(f->render_views != NULL);
     T1_std_memcpy(
         f->render_views,
         T1_render_views->gpu,
         sizeof(T1GPURenderView) * T1_RENDER_VIEW_CAP);
-    T1_log_assert(f->render_views != NULL);
+    T1_assert(f->render_views != NULL);
 }

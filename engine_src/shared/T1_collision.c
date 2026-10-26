@@ -1,4 +1,5 @@
 #include "T1_collision.h"
+#include "T1_assert.h"
 #include "T1_conditional_includes.h"
 
 #ifndef T1_COL_FLT_MAX
@@ -241,10 +242,10 @@ f32 T1_collision_normalized_ray_hits_sphere(
     const f32 sphere_radius,
     f32 * collision_recipient)
 {
-    #if T1_COLLISION_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(dot(normalized_ray_direction, normalized_ray_direction) < 1.02f);
-    assert(dot(normalized_ray_direction, normalized_ray_direction) > 0.98f);
-    #elif T1_COLLISION_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(dot(normalized_ray_direction, normalized_ray_direction) < 1.02f);
+    T1_assert(dot(normalized_ray_direction, normalized_ray_direction) > 0.98f);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -474,12 +475,12 @@ f32 T1_collision_ray_hits_plane(
     f32 * collision_recipient)
 {
     // Assuming vectors are all normalized
-    #if T1_COLLISION_ASSERTS_ACTIVE == T1_ACTIVE
-    assert(dot(plane_normal, plane_normal) < 1.05f);
-    assert(dot(plane_normal, plane_normal) > -0.01f);
-    assert(dot(ray_direction, ray_direction) < 1.05f);
-    assert(dot(ray_direction, ray_direction) > -0.01f);
-    #elif T1_COLLISION_ASSERTS_ACTIVE == T1_INACTIVE
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(dot(plane_normal, plane_normal) < 1.05f);
+    T1_assert(dot(plane_normal, plane_normal) > -0.01f);
+    T1_assert(dot(ray_direction, ray_direction) < 1.05f);
+    T1_assert(dot(ray_direction, ray_direction) > -0.01f);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
@@ -557,9 +558,9 @@ f32 T1_collision_ray_hits_triangle(
              /* const f32 C[2]: */
                  triangle_vertex_3))
     {
-        #if T1_COLLISION_ASSERTS_ACTIVE == T1_ACTIVE
-        assert(nearest_dist_found > 0.0f);
-        #elif T1_COLLISION_ASSERTS_ACTIVE == T1_INACTIVE
+        #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+        T1_assert(nearest_dist_found > 0.0f);
+        #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif

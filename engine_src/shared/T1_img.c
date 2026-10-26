@@ -1,10 +1,11 @@
 #include "T1_img.h"
+#include "T1_assert.h"
 
 #include "T1_conditional_includes.h"
 
 u64 T1_img_get_sum_rgba(const T1Img * input)
 {
-    assert(input->rgba_values_size > 0);
+    T1_assert(input->rgba_values_size > 0);
     
     u64 return_value = 0;
     for (u32 i = 0; i < input->rgba_values_size; i++) {
@@ -16,7 +17,7 @@ u64 T1_img_get_sum_rgba(const T1Img * input)
 
 u32 T1_img_get_avg_rgba(const T1Img * input)
 {
-    assert(input->rgba_values_size > 0);
+    T1_assert(input->rgba_values_size > 0);
     
     return (u32)(T1_img_get_sum_rgba(input) / input->rgba_values_size);
 }
@@ -29,8 +30,8 @@ void T1_img_overwrite_subregion(
     const u32 at_column,
     const u32 at_row)
 {
-    assert(at_column > 0);
-    assert(at_row > 0);
+    T1_assert(at_column > 0);
+    T1_assert(at_row > 0);
     
     if (at_column > column_count) {
         #if T1_IMG_PRINTF_ACTIVE == 1
@@ -60,11 +61,11 @@ void T1_img_overwrite_subregion(
         return;
     }
     
-    assert(at_row <= row_count);
+    T1_assert(at_row <= row_count);
     u32 expected_width = whole_image->width / column_count;
     u32 expected_height = whole_image->height / row_count;
-    assert(expected_width * column_count == whole_image->width);
-    assert(expected_height * row_count == whole_image->height);
+    T1_assert(expected_width * column_count == whole_image->width);
+    T1_assert(expected_height * row_count == whole_image->height);
     if (
         (new_image->width != expected_width)
         ||
@@ -103,8 +104,9 @@ void T1_img_overwrite_subregion(
     u32 end_x = start_x + slice_width - 1;
     #endif
     
-    assert(end_x <= whole_image->width);
-    assert(end_y <= whole_image->height);
+    T1_assert(end_x <= whole_image->width);
+    (void)end_x; // only used by T1_assert()
+    T1_assert(end_y <= whole_image->height);
     
     u32 i = 0;
     for (
@@ -115,7 +117,7 @@ void T1_img_overwrite_subregion(
         u32 pixel_i =
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * whole_image->width * 4);
-        assert(pixel_i < whole_image->rgba_values_size);
+        T1_assert(pixel_i < whole_image->rgba_values_size);
         for (u32 _ = 0; _ < (slice_width * 4); _++)
         {
             if (i >= whole_image->rgba_values_size) {

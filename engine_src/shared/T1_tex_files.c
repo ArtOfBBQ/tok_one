@@ -2,7 +2,7 @@
 
 #include "T1_embedded_data.h"
 #include "T1_mem.h"
-#include "T1_log.h"
+#include "T1_assert.h"
 #include "T1_img.h"
 #include "T1_tex_array.h"
 
