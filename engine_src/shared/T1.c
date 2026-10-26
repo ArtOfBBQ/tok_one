@@ -56,6 +56,26 @@ f32 T1_screen_height_to_height(u32 cam_T1_id, f32 ss_h, f32 at_z) {
     return T1_render_view_screen_height_to_height(wh, ss_h, at_z);
 }
 
+u32 T1_tex_read_start(T1Tex tex, u32 x, u32 y, u32 w, u32 h) {
+    T1_assert(tex != T1_TEX_NONE && tex != T1_TEX_WINDOW);
+    T1_assert(T1_TEX_ARRAY_I(tex) < T1_TEXARRAYS_CAP);
+    T1_assert(w > 0 && h > 0);
+    T1_assert(x + w <= T1_tex_get_width(tex));
+    T1_assert(y + h <= T1_tex_get_height(tex));
+    if (
+        tex == T1_TEX_NONE ||
+        tex == T1_TEX_WINDOW ||
+        T1_TEX_ARRAY_I(tex) >= T1_TEXARRAYS_CAP ||
+        w == 0 || h == 0 ||
+        x + w > T1_tex_get_width(tex) ||
+        y + h > T1_tex_get_height(tex))
+    {
+        return T1_BUF_READ_NONE;
+    }
+    
+    return T1_os_gpu_tex_read_start(tex, x, y, w, h);
+}
+
 void T1_touch_set_tex(T1Tex tex) {
     T1_os_gpu_set_touch_tex(tex);
 }

@@ -218,6 +218,7 @@ static const T1Property T1_properties[] = {
     T1_PROP_U32("buf[5]", PASS, buf[5]),
     T1_PROP_U32("buf[6]", PASS, buf[6]),
     T1_PROP_U32("buf[7]", PASS, buf[7]),
+    T1_PROP_U32("depth_tex", PASS, depth_tex),
     T1_PROP_U32("vertex_count", PASS, vertex_count),
     T1_PROP_U32("threads[0]", PASS, threads[0]),
     T1_PROP_U32("threads[1]", PASS, threads[1]),

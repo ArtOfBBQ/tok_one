@@ -39,6 +39,7 @@ static T1Pass * T1_pass_new(u8 kind, u32 pipeline_T1_id) {
         p->u32s.read_tex[i] = T1_TEX_NONE;
     }
     p->u32s.write_tex = T1_TEX_NONE;
+    p->u32s.depth_tex = T1_TEX_NONE;
     for (u32 i = 0; i < T1_PASS_BUFS_CAP; i++) {
         p->u32s.buf[i] = T1_BUF_NONE;
     }

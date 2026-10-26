@@ -304,6 +304,8 @@ void T1_os_gpu_buf_delete(u32 buf_i);
 // A read the next rendered frame encodes after its passes, its index or
 // T1_BUF_READ_NONE (see T1_buf_read_start())
 u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size);
+// A read of w * h rgba pixels of a texture, from (x, y)
+u32 T1_os_gpu_tex_read_start(u32 tex, u32 x, u32 y, u32 w, u32 h);
 // 1 once the read's frame is done and its bytes are copied to recip
 u8 T1_os_gpu_buf_read_finish(u32 read_i, void * recip);
 

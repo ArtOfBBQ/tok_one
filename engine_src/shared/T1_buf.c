@@ -48,6 +48,8 @@ void T1_buf_write(T1Buf buf, u64 offset, const void * data, u64 size) {
     T1_assert(data != NULL);
     T1_assert(size > 0);
     T1_assert(offset + size <= T1_bufs[buf].size);
+    // GPU copies between buffers need multiples of 4
+    T1_assert(offset % 4 == 0 && size % 4 == 0);
     if (size == 0 || offset + size > T1_bufs[buf].size) { return; }
     
     T1_os_gpu_buf_write(buf, offset, data, size);

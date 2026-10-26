@@ -36,6 +36,7 @@ typedef struct {
     u32 read_tex[T1_READ_TEXS_CAP]; // T1Texs, see T1_READ_TEXS_BUFFER_I
     u32 write_tex; // a compute pass's T1Tex
     u32 buf[T1_PASS_BUFS_CAP]; // T1Bufs, see T1_BUFS_I
+    u32 depth_tex; // the T1Tex whose depth buffer a draw pass uses
     u32 vertex_count; // a T1_DRAW_PROCEDURAL draw pass's
     u32 threads[3]; // a compute pass's grid, 0 for write_tex's size
 } T1PassU32s;

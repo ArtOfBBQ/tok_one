@@ -348,6 +348,17 @@ void     T1_tex_update(T1Tex tex, const uint8_t * rgba);
 void     T1_tex_delete(T1Tex tex);
 uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
+/*
+Like T1_buf_read_start(), and finished with T1_buf_read_finish(): w * h
+pixels (4 bytes each, row by row) from (x, y), the top left being (0, 0),
+as they are after the next rendered frame's passes
+*/
+uint32_t T1_tex_read_start(
+    T1Tex tex,
+    uint32_t x,
+    uint32_t y,
+    uint32_t w,
+    uint32_t h);
 
 /*
 RENDERING
@@ -368,7 +379,11 @@ Passes:
   "cam" (u32, the camera's T1_id: its view and depth buffer, T1_ID_NONE is
   only for T1_DRAW_FULLSCREEN and T1_DRAW_PROCEDURAL) and "color_tex[0]" to
   "color_tex[3]" (u32 T1Texs the fragment function's [[color(k)]] go to,
-  the camera's size, "color_tex[0]" may be T1_TEX_WINDOW). A
+  the camera's size, "color_tex[0]" may be T1_TEX_WINDOW). With
+  "depth_tex" (u32 T1Tex or T1_TEX_WINDOW), a pass depth-tests against a
+  depth buffer of that texture's size instead of its camera's: passes with
+  the same "depth_tex" share it, the first one of the frame clears it, and
+  the targets must be its size. A
   T1_DRAW_PROCEDURAL pass draws "vertex_count" (u32) vertices as triangles;
   with a camera, its shaders get the cameras at buffer(3) and the camera's
   index at buffer(4), like zsprite shaders.
@@ -434,7 +449,7 @@ Compute passes can write to them, and later passes see what they wrote.
 
 T1_buf_write() copies data right away, so it can live on your stack. The
 GPU sees your writes in order, from the next rendered frame on, and they
-stay until something overwrites them. Keep the C and shader versions of a
+stay until something overwrites them. Offsets and sizes are multiples of 4. Keep the C and shader versions of a
 struct identical: floats, uint32_ts and arrays of them are safe, while
 Metal's float3 takes 16 bytes.
 */

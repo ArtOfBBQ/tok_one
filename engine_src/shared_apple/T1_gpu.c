@@ -203,16 +203,29 @@ typedef struct {
 
 /*
 A T1_buf_write() waiting for the next frame: its bytes were copied into
-staging (shared memory) right away, the frame's first blit copies them to
-the T1Buf
+staging right away, the frame's first blit copies them to the T1Buf
 */
-#define T1_GPU_BUF_WRITES_CAP 256
+#define T1_GPU_BUF_WRITES_CAP 1024
 typedef struct {
-    void * staging;
+    void * staging; // retained
+    u64 staging_offset;
     u64 offset;
     u64 size;
     u32 buf_i;
 } T1GPUBufWrite;
+
+/*
+Shared memory T1_buf_write() copies into, one per frame in flight: a
+frame's writes all go to its own, which is only reused once the GPU is done
+with that frame. It grows to fit the largest frame's writes.
+*/
+#define T1_GPU_STAGING_MIN_SIZE 65536
+typedef struct {
+    void * buffer;
+    void * combuf; // retained, the last frame that copied from it
+    u64 capacity;
+    u64 used;
+} T1GPUStaging;
 
 /*
 A T1_buf_read_start(): the next frame copies the bytes to staging (shared
@@ -230,9 +243,29 @@ typedef struct {
     void * combuf; // retained
     u64 offset;
     u64 size;
-    u32 buf_i;
+    u32 buf_i; // T1_BUFS_CAP for a texture read
+    // a texture read's T1Tex and region
+    u32 tex;
+    u32 tex_x;
+    u32 tex_y;
+    u32 tex_w;
+    u32 tex_h;
     T1GPUBufReadState state;
 } T1GPUBufRead;
+
+/*
+A depth buffer that belongs to a T1Tex (or T1_TEX_WINDOW): passes with that
+"depth_tex" share it, the first one of the frame clears it
+*/
+#define T1_GPU_TEX_DEPTHS_CAP 16
+typedef struct {
+    void * depth;
+    u64 last_used_frame;
+    u32 tex;
+    u32 width;
+    u32 height;
+    b8 cleared;
+} T1GPUTexDepth;
 
 typedef struct {
     uintptr_t pixel_format_renderpass1;
@@ -299,11 +332,14 @@ typedef struct {
     // T1_buf_write()s the next frame applies first, in order
     T1GPUBufWrite buf_writes[T1_GPU_BUF_WRITES_CAP];
     u32 buf_writes_size;
+    T1GPUStaging staging[T1_FRAMES_CAP];
     // T1_buf_read_start()s, by read id
     T1GPUBufRead buf_reads[T1_BUF_READS_CAP];
     
     // a camera's first pass of the frame clears its depth buffer
     b8 cam_depth_cleared[T1_RENDER_VIEW_CAP];
+    // the depth buffers of passes' "depth_tex"s, by T1Tex
+    T1GPUTexDepth tex_depths[T1_GPU_TEX_DEPTHS_CAP];
     
     // objective-c classes
     void * class_mtl_texture_desc; // MTLTextureDescriptor
@@ -387,7 +423,6 @@ typedef struct {
     void * sel_copy_from_texture_region_to_texture; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toTexture:destinationSlice:destinationLevel:destinationOrigin:
     void * sel_copy_from_texture_to_buffer; // copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:
     void * sel_new_buffer_with_bytes_no_copy; // newBufferWithBytesNoCopy:length:options:deallocator:
-    void * sel_new_buffer_with_bytes_length_options; // newBufferWithBytes:length:options:
     void * sel_set_buffer_offset_atindex; // setBuffer:offset:atIndex:
     void * sel_new_command_queue; // newCommandQueue
     void * sel_vertex_buffers; // vertexBuffers
@@ -670,8 +705,6 @@ void T1_apple_gpu_init(
         "copyFromTexture:sourceSlice:sourceLevel:sourceOrigin:sourceSize:toBuffer:destinationOffset:destinationBytesPerRow:destinationBytesPerImage:");
     ags->sel_new_buffer_with_bytes_no_copy = T1_objc_reg_sel(
         "newBufferWithBytesNoCopy:length:options:deallocator:");
-    ags->sel_new_buffer_with_bytes_length_options = T1_objc_reg_sel(
-        "newBufferWithBytes:length:options:");
     ags->sel_set_buffer_offset_atindex = T1_objc_reg_sel(
         "setBuffer:offset:atIndex:");
     ags->sel_new_command_queue = T1_objc_reg_sel(
@@ -1978,6 +2011,72 @@ void T1_gpu_update_final_window_size(void) {
     ags->window_viewport.zfar = 1.0f;
 }
 
+// A new depth buffer of width * height, NULL if Metal refused
+static void * T1_gpu_new_depth_texture(u32 width, u32 height) {
+    void * desc = (void *)T1_objc_msg(
+        ags->class_mtl_texture_desc,
+        ags->sel_new);
+    if (!desc) { return NULL; }
+    
+    T1_objc_msg_1arg(desc, ags->sel_set_texture_type, T1MTLTextureType2D);
+    T1_objc_msg_1arg(
+        desc, ags->sel_set_pixel_format, T1MTLPixelFormatDepth32Float);
+    T1_objc_msg_1arg(desc, ags->sel_set_width, width);
+    T1_objc_msg_1arg(desc, ags->sel_set_height, height);
+    T1_objc_msg_1arg(
+        desc, ags->sel_set_storage_mode, T1MTLStorageModePrivate);
+    T1_objc_msg_1arg(
+        desc,
+        ags->sel_set_usage,
+        T1MTLTextureUsageRenderTarget |
+        T1MTLTextureUsageShaderRead);
+    
+    void * depth = (void *)T1_objc_msg_1arg(
+        ags->device,
+        ags->sel_new_tex_with_desc,
+        (uintptr_t)desc);
+    T1_gpu_release(&desc);
+    return depth;
+}
+
+/*
+The depth buffer of a pass's "depth_tex", made (again) when it's new or its
+size changed. *clear is set for the first pass of the frame using it.
+When all slots are taken, the one used longest ago is reused.
+*/
+static void * T1_gpu_tex_depth(u32 tex, u32 width, u32 height, b8 * clear) {
+    T1GPUTexDepth * found = NULL;
+    T1GPUTexDepth * oldest = &ags->tex_depths[0];
+    for (u32 i = 0; i < T1_GPU_TEX_DEPTHS_CAP; i++) {
+        T1GPUTexDepth * d = &ags->tex_depths[i];
+        if (d->depth != NULL && d->tex == tex) { found = d; break; }
+        if (d->last_used_frame < oldest->last_used_frame) { oldest = d; }
+    }
+    
+    if (found == NULL) {
+        found = oldest;
+        T1_gpu_release(&found->depth);
+        found->tex = tex;
+    }
+    
+    if (
+        found->depth == NULL ||
+        found->width != width ||
+        found->height != height)
+    {
+        T1_gpu_release(&found->depth);
+        found->depth = T1_gpu_new_depth_texture(width, height);
+        found->width = width;
+        found->height = height;
+        found->cleared = false;
+    }
+    
+    found->last_used_frame = ags->frames_encoded + 1;
+    *clear = !found->cleared;
+    found->cleared = true;
+    return found->depth;
+}
+
 void T1_gpu_update_render_view_size(s32 at_i) {
     T1_assert(at_i >= 0);
     T1_assert(at_i < T1_RENDER_VIEW_CAP);
@@ -2003,36 +2102,10 @@ void T1_gpu_update_render_view_size(s32 at_i) {
     ags->render_viewports[at_i].zfar = 1.0f;
     
     
-    void * zbuffer_desc = (void *)T1_objc_msg(
-        ags->class_mtl_texture_desc,
-        ags->sel_new);
-    if (!zbuffer_desc) {
-        T1_objc_autorelease_pool_pop(pool);
-        return;
-    }
-    T1_objc_msg_1arg(zbuffer_desc,
-        ags->sel_set_texture_type, T1MTLTextureType2D);
-    T1_objc_msg_1arg(zbuffer_desc,
-        ags->sel_set_pixel_format, T1MTLPixelFormatDepth32Float);
-    T1_objc_msg_1arg(zbuffer_desc,
-        ags->sel_set_width, T1_render_views->cpu[at_i].width);
-    T1_objc_msg_1arg(zbuffer_desc,
-        ags->sel_set_height, T1_render_views->cpu[at_i].height);
-    T1_objc_msg_1arg(zbuffer_desc,
-        ags->sel_set_storage_mode,
-        T1MTLStorageModePrivate);
-    T1_objc_msg_1arg(
-        zbuffer_desc,
-        ags->sel_set_usage,
-        T1MTLTextureUsageRenderTarget |
-        T1MTLTextureUsageShaderRead);
-    
     T1_gpu_release(&ags->depth_textures[at_i]);
-    ags->depth_textures[at_i] = (void *)T1_objc_msg_1arg(
-        ags->device,
-        ags->sel_new_tex_with_desc,
-        (uintptr_t)zbuffer_desc);
-    T1_gpu_release(&zbuffer_desc);
+    ags->depth_textures[at_i] = T1_gpu_new_depth_texture(
+        T1_render_views->cpu[at_i].width,
+        T1_render_views->cpu[at_i].height);
     
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -2247,7 +2320,7 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
             blit,
             ags->sel_copy_from_buffer_source_offset_to_buffer,
             /* copyFromBuffer: */ w->staging,
-            /* sourceOffset: */ 0,
+            /* sourceOffset: */ (uintptr_t)w->staging_offset,
             /* toBuffer: */ ags->bufs[w->buf_i],
             /* destinationOffset: */ (uintptr_t)w->offset,
             /* size: */ (uintptr_t)w->size);
@@ -2257,6 +2330,58 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
     T1_objc_msg(blit, ags->sel_end_encoding);
     
     ags->buf_writes_size = 0;
+    
+    // its staging can be reused once this combuf is done
+    T1GPUStaging * st = &ags->staging[ags->frame_i];
+    T1_gpu_release(&st->combuf);
+    st->combuf = (void *)T1_objc_msg(combuf, ags->sel_retain);
+    st->used = 0;
+}
+
+/*
+Room for size bytes in this frame's staging, waiting for the GPU if it
+still copies from it (from T1_FRAMES_CAP frames ago). Returns the buffer
+(retained for the caller) and the offset.
+*/
+static void * T1_gpu_staging_alloc(u64 size, u64 * offset) {
+    T1GPUStaging * st = &ags->staging[ags->frame_i];
+    
+    if (st->combuf != NULL) {
+        if (
+            T1_objc_msg(st->combuf, ags->sel_status) <
+                T1MTLCommandBufferStatusCompleted)
+        {
+            T1_objc_msg(st->combuf, ags->sel_wait_until_completed);
+        }
+        T1_gpu_release(&st->combuf);
+        st->used = 0;
+    }
+    
+    // 16 byte aligned, blits need multiples of 4
+    u64 at = (st->used + 15) & ~(u64)15;
+    if (st->buffer == NULL || at + size > st->capacity) {
+        // Earlier writes keep the old buffer alive until they're copied
+        u64 capacity = st->capacity * 2;
+        if (capacity < T1_GPU_STAGING_MIN_SIZE) {
+            capacity = T1_GPU_STAGING_MIN_SIZE;
+        }
+        while (capacity < size) { capacity *= 2; }
+        
+        T1_gpu_release(&st->buffer);
+        st->buffer = (void *)T1_objc_msg_2arg(
+            ags->device,
+            ags->sel_new_buf_with_len_options,
+            (uintptr_t)capacity,
+            T1MTLResourceStorageModeShared);
+        T1_assert(st->buffer != NULL);
+        if (st->buffer == NULL) { st->capacity = 0; return NULL; }
+        st->capacity = capacity;
+        at = 0;
+    }
+    
+    st->used = at + size;
+    *offset = at;
+    return (void *)T1_objc_msg(st->buffer, ags->sel_retain);
 }
 
 void T1_os_gpu_buf_new(u32 buf_i, u64 size, u8 * good) {
@@ -2293,27 +2418,25 @@ void T1_os_gpu_buf_write(
         T1_objc_msg(combuf, ags->sel_commit);
     }
     
-    void * staging = (void *)T1_objc_msg_3arg(
-        ags->device,
-        ags->sel_new_buffer_with_bytes_length_options,
-        (uintptr_t)data,
-        (uintptr_t)size,
-        T1MTLResourceStorageModeShared);
-    T1_assert(staging != NULL);
+    u64 staging_offset = 0;
+    void * staging = T1_gpu_staging_alloc(size, &staging_offset);
     if (staging == NULL) { return; }
+    T1_std_memcpy(
+        (u8 *)T1_objc_msg(staging, ags->sel_contents) + staging_offset,
+        data,
+        size);
     
     T1GPUBufWrite * w = ags->buf_writes + ags->buf_writes_size;
     ags->buf_writes_size += 1;
     w->staging = staging;
+    w->staging_offset = staging_offset;
     w->offset = offset;
     w->size = size;
     w->buf_i = buf_i;
 }
 
-u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size) {
-    if (!ags || !ags->metal_active) { return T1_BUF_READ_NONE; }
-    T1_assert(buf_i < T1_BUFS_CAP && ags->bufs[buf_i] != NULL);
-    
+// A free read slot with a staging buffer of size, or T1_BUF_READ_NONE
+static u32 T1_gpu_new_read(u64 size) {
     u32 read_i = 0;
     while (
         read_i < T1_BUF_READS_CAP &&
@@ -2332,13 +2455,39 @@ u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size) {
     if (staging == NULL) { return T1_BUF_READ_NONE; }
     
     T1GPUBufRead * r = ags->buf_reads + read_i;
+    T1_std_memset(r, 0, sizeof(T1GPUBufRead));
     r->staging = staging;
-    r->combuf = NULL;
-    r->offset = offset;
     r->size = size;
-    r->buf_i = buf_i;
     r->state = T1_GPU_BUF_READ_QUEUED;
     
+    return read_i;
+}
+
+u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size) {
+    if (!ags || !ags->metal_active) { return T1_BUF_READ_NONE; }
+    T1_assert(buf_i < T1_BUFS_CAP && ags->bufs[buf_i] != NULL);
+    
+    u32 read_i = T1_gpu_new_read(size);
+    if (read_i == T1_BUF_READ_NONE) { return T1_BUF_READ_NONE; }
+    
+    ags->buf_reads[read_i].offset = offset;
+    ags->buf_reads[read_i].buf_i = buf_i;
+    return read_i;
+}
+
+u32 T1_os_gpu_tex_read_start(u32 tex, u32 x, u32 y, u32 w, u32 h) {
+    if (!ags || !ags->metal_active) { return T1_BUF_READ_NONE; }
+    
+    u32 read_i = T1_gpu_new_read((u64)w * h * 4);
+    if (read_i == T1_BUF_READ_NONE) { return T1_BUF_READ_NONE; }
+    
+    T1GPUBufRead * r = ags->buf_reads + read_i;
+    r->buf_i = T1_BUFS_CAP;
+    r->tex = tex;
+    r->tex_x = x;
+    r->tex_y = y;
+    r->tex_w = w;
+    r->tex_h = h;
     return read_i;
 }
 
@@ -2350,12 +2499,34 @@ static void T1_gpu_encode_buf_reads(void * combuf) {
         T1GPUBufRead * r = ags->buf_reads + i;
         if (r->state != T1_GPU_BUF_READ_QUEUED) { continue; }
         
-        // its buffer was deleted: staging stays zeroed
-        if (ags->bufs[r->buf_i] != NULL) {
-            if (blit == NULL) {
-                blit = (void *)T1_objc_msg(
-                    combuf, ags->sel_blit_command_encoder);
+        if (blit == NULL) {
+            blit = (void *)T1_objc_msg(
+                combuf, ags->sel_blit_command_encoder);
+        }
+        
+        // a deleted buffer or texture: staging stays zeroed
+        if (r->buf_i == T1_BUFS_CAP) {
+            void * array = ags->metal_textures[T1_TEX_ARRAY_I(r->tex)];
+            if (array != NULL) {
+                typedef void (* copy_tex_to_buf_fn)(
+                    void *, void *, void *, uintptr_t, uintptr_t,
+                    T1MTLOrigin, T1MTLSize, void *,
+                    uintptr_t, uintptr_t, uintptr_t);
+                ((copy_tex_to_buf_fn)T1_objc_unsafe_get_raw_msg_send())(
+                    blit,
+                    ags->sel_copy_from_texture_to_buffer,
+                    array,
+                    /* sourceSlice: */ T1_TEX_SLICE_I(r->tex),
+                    /* sourceLevel: */ 0,
+                    T1_mtlorigin_make(r->tex_x, r->tex_y, 0),
+                    T1_mtlsize_make(r->tex_w, r->tex_h, 1),
+                    r->staging,
+                    /* destinationOffset: */ 0,
+                    /* destinationBytesPerRow: */ r->tex_w * 4,
+                    /* destinationBytesPerImage: */
+                        r->tex_w * r->tex_h * 4);
             }
+        } else if (ags->bufs[r->buf_i] != NULL) {
             ((T1GPUCopyBufFn)T1_objc_unsafe_get_raw_msg_send())(
                 blit,
                 ags->sel_copy_from_buffer_source_offset_to_buffer,
@@ -2593,8 +2764,28 @@ static void T1_gpu_encode_draw_pass(
             T1MTLStoreActionStore);
     }
 
-    // A camera's depth buffer is cleared by its first pass of the frame
-    if (cam_i >= 0) {
+    /*
+    The pass's "depth_tex"'s depth buffer, else its camera's. Either is
+    cleared by its first pass of the frame.
+    */
+    void * depth = NULL;
+    b8 clear_depth = false;
+    if (pass->u32s.depth_tex != T1_TEX_NONE) {
+        u32 dt = pass->u32s.depth_tex;
+        u32 depth_w = dt == T1_TEX_WINDOW ?
+            ags->final_texture_w : T1_tex_get_width((T1Tex)dt);
+        u32 depth_h = dt == T1_TEX_WINDOW ?
+            ags->final_texture_h : T1_tex_get_height((T1Tex)dt);
+        depth = T1_gpu_tex_depth(dt, depth_w, depth_h, &clear_depth);
+        
+        // the targets must be its size
+        for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+            T1_assert(
+                targets[k] == NULL ||
+                (T1_objc_msg(targets[k], ags->sel_width) == depth_w &&
+                 T1_objc_msg(targets[k], ags->sel_height) == depth_h));
+        }
+    } else if (cam_i >= 0) {
         // made (again) for cameras that are new, or new since T1_gpu_init()
         if (
             ags->depth_textures[cam_i] == NULL ||
@@ -2605,18 +2796,22 @@ static void T1_gpu_encode_draw_pass(
         {
             T1_gpu_update_render_view_size(cam_i);
         }
-        T1_assert(ags->depth_textures[cam_i] != NULL);
+        depth = ags->depth_textures[cam_i];
+        clear_depth = !ags->cam_depth_cleared[cam_i];
+        ags->cam_depth_cleared[cam_i] = true;
+    }
+    
+    if (depth != NULL) {
         target_bits |= T1_GPU_TARGET_DEPTH;
 
         void * depth_attachm = (void *)T1_objc_msg(
             desc, ags->sel_depth_attachment);
-        if (!ags->cam_depth_cleared[cam_i]) {
+        if (clear_depth) {
             T1_objc_msg_1arg(
                 depth_attachm,
                 ags->sel_set_load_action,
                 T1MTLLoadActionClear);
             T1_objc_msg_1f64(depth_attachm, ags->sel_set_clear_depth, 1.0);
-            ags->cam_depth_cleared[cam_i] = true;
         } else {
             T1_objc_msg_1arg(
                 depth_attachm,
@@ -2630,7 +2825,7 @@ static void T1_gpu_encode_draw_pass(
         T1_objc_msg_1arg(
             depth_attachm,
             ags->sel_set_texture,
-            (uintptr_t)ags->depth_textures[cam_i]);
+            (uintptr_t)depth);
     }
 
     // nothing to draw into
@@ -2645,7 +2840,7 @@ static void T1_gpu_encode_draw_pass(
         enc,
         ags->sel_set_render_pls,
         (uintptr_t)T1_gpu_pipeline_state(pass->pipeline, target_bits));
-    if (cam_i >= 0) {
+    if (depth != NULL) {
         T1_objc_msg_1arg(enc,
             ags->sel_set_depth_stencil_state,
             (uintptr_t)ags->opaque_depth_stencil_state);
@@ -3139,6 +3334,9 @@ static b8 T1_gpu_render_frame(T1GPUFrame * f) {
     
     for (u32 i = 0; i < T1_RENDER_VIEW_CAP; i++) {
         ags->cam_depth_cleared[i] = false;
+    }
+    for (u32 i = 0; i < T1_GPU_TEX_DEPTHS_CAP; i++) {
+        ags->tex_depths[i].cleared = false;
     }
     
     T1_gpu_encode_buf_writes(combuf);
