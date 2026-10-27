@@ -166,19 +166,25 @@ uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y);
 
 /*
 TEXTURES
-T1_tex_new() uploads an image: width * height * 4 bytes of rgba, row by row.
-With rgba NULL the texture starts out blank, e.g. for passes to draw into.
-The T1Tex can then be used as a "texture" property and by passes. You can
-delete it or overwrite its pixels (same size) later. Every texture can be
-sampled, drawn into and written by compute passes. Data that isn't a color
-(depth, touch ids) is packed into the 4 bytes of a pixel by your shaders.
+T1_tex_new() uploads an image to gpu:
+width * height * 4 bytes of rgba, row by row.
+With rgba NULL the texture starts out blank, e.g.
+for passes to draw into. The T1Tex can then be used
+as a "texture" property and by passes. You can delete
+it or overwrite its pixels (same size) later. Every
+texture can be sampled, drawn into and written by
+compute passes. Data that isn't a color (depth,
+touch ids) is packed into the 4 bytes of a pixel by
+your shaders.
 */
-T1Tex    T1_tex_new(
+T1Tex T1_tex_new(
     const uint8_t * rgba,
     uint32_t width,
     uint32_t height,
     char ** const fatal_error);
-void     T1_tex_update(T1Tex tex, const uint8_t * rgba);
+void T1_tex_update(
+    T1Tex tex,
+    const uint8_t * rgba);
 void     T1_tex_delete(T1Tex tex);
 uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
@@ -316,30 +322,31 @@ files (saves, settings) in the writables dir. T1_os_res_path() and
 T1_os_writable_path() give the full path of a file in either (of the dir
 itself for ""), every other function takes full paths.
 */
-void     T1_os_res_path(const char * filename, char * recip, uint32_t recip_cap);
-void     T1_os_writable_path(
+void T1_os_res_path(const char * filename, char * recip, uint32_t recip_cap);
+void T1_os_writable_path(
     const char * filename,
     char * recip,
     uint32_t recip_cap);
-uint8_t  T1_os_file_exists(const char * path);
+uint8_t T1_os_file_exists(const char * path);
 // 0 if there's no such file
 uint64_t T1_os_file_size(const char * path);
 // Fills recip with the file and a 0 after it, so recip_cap must be larger
 // than the file
-void     T1_os_file_read(
+void T1_os_file_read(
     const char * path,
     char * recip,
     uint64_t recip_cap,
     char ** const fatal_error);
-void     T1_os_file_write(
+void T1_os_file_write(
     const char * path,
     const char * data,
     uint32_t size,
     uint8_t * good);
-void     T1_os_file_delete(const char * path);
-void     T1_os_file_copy(const char * src_path, const char * dst_path);
+void T1_os_file_delete(const char * path);
+void T1_os_file_copy(
+    const char * src_path, const char * dst_path);
 // The names of the files in a dir, each followed by a 0
-void     T1_os_dir_filenames(
+void T1_os_dir_filenames(
     const char * path,
     char * filenames,
     uint32_t filenames_cap);
@@ -348,13 +355,13 @@ void     T1_os_dir_filenames(
 OPERATING SYSTEM
 */
 uint64_t T1_os_get_current_time_us(void);
-// Prints to stderr (or the platform's equivalent)
-void     T1_os_print_error(const char * message);
-void     T1_os_start_thread(void *(*function_to_run)(void *), void * arg_on_heap);
+
+void T1_os_start_thread(
+    void *(*function_to_run)(void *), void * arg_on_heap);
 uint32_t T1_os_init_mutex_and_return_id(void);
-uint8_t  T1_os_mutex_trylock(uint32_t mutex_id);
-void     T1_os_mutex_lock(uint32_t mutex_id);
-void     T1_os_mutex_unlock(uint32_t mutex_id);
+uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
+void T1_os_mutex_lock(uint32_t mutex_id);
+void T1_os_mutex_unlock(uint32_t mutex_id);
 
 /*
 AUDIO
@@ -365,17 +372,18 @@ and T1_audio_set_samples() gives it its samples once. These only exist with
 T1_AUDIO_ACTIVE, so calls to them need the same #if.
 */
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-int32_t  T1_audio_sound_id(const char * name, char ** const fatal_error);
-void     T1_audio_set_samples(
+int32_t T1_audio_sound_id(
+    const char * name, char ** const fatal_error);
+void T1_audio_set_samples(
     int32_t sound_id,
     int16_t * samples,
     int32_t samples_size);
-void     T1_audio_play(int32_t sound_id, float volume);
+void T1_audio_play(int32_t sound_id, float volume);
 /*
 For music: copies samples_size samples of the sound, from sound_offset on,
 into what plays play_cursor_offset samples from now
 */
-void     T1_audio_stream(
+void T1_audio_stream(
     int32_t  sound_id,
     uint64_t sound_offset,
     uint64_t play_cursor_offset,
@@ -383,7 +391,7 @@ void     T1_audio_stream(
     uint8_t  is_music);
 // how many samples have played
 uint64_t T1_audio_play_cursor(void);
-void     T1_audio_stop_all(void);
+void T1_audio_stop_all(void);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else
 #error

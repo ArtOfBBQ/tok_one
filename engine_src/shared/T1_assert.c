@@ -3,8 +3,6 @@
 #include "T1_os.h"
 
 void T1_crash(const char * crash_message) {
-    T1_os_print_error(crash_message);
-    
     // stop right here, so the debugger shows where things went wrong
     __builtin_trap();
 }

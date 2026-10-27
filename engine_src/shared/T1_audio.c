@@ -10,7 +10,7 @@
 #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
 #else
 #error
-#endif 
+#endif
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
 

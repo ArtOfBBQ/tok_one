@@ -1,6 +1,5 @@
 #include "T1_os.h"
 
-#include <stdio.h> // TODO: delete me
 #include <pthread.h>
 #include <dirent.h>
 #include <errno.h> // for pthreads error codes
@@ -11,9 +10,6 @@
 #include "T1_mem.h"
 #include "T1_assert.h"
 
-void T1_os_print_error(const char * message) {
-    fprintf(stderr, "%s\n", message);
-}
 #include "T1_fatal_error.h"
 #include "T1_os_apple_audio.h"
 #include "T1_objc.h"
@@ -644,8 +640,6 @@ static void * T1_os_apple_start_thread_with_autorelease(
     u64 T1_thread_id = T1_os_get_T1_thread_id(&dud_error);
     T1_assert(dud_error == 0);
     
-    printf("starting apple thread with T1_thread_id: %llu\n",
-        T1_thread_id);
     void * pool = T1_objc_autorelease_pool_push();
     
     void * out = T1_os_next_thread_function_to_run(argument);

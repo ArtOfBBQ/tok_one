@@ -183,11 +183,21 @@ u64 T1_os_get_T1_thread_id(char ** const fatal_error);
 u64 T1_os_raw_thread_id_to_T1_thread_id(
     u64 raw_in,
     char ** const fatal_error);
+/*
+creates a mutex and return the ID of said mutex for you to store
+*/
+u32 T1_os_init_mutex_and_return_id(void);
+
+/* returns true if mutex succesfully locked */
+u8 T1_os_mutex_trylock(u32 mutex_id);
+
+
+void T1_os_mutex_lock(u32 mutex_id);
+
+void T1_os_mutex_unlock(u32 mutex_id);
+
 
 u64 T1_os_get_current_time_us(void);
-
-// Writes message and a newline to the error output (stderr)
-void T1_os_print_error(const char * message);
 
 u64 T1_os_get_clock_frequency(void);
 
@@ -235,19 +245,6 @@ void T1_os_gpu_delete_texture_array(
 #else
 #error
 #endif
-
-/*
-creates a mutex and return the ID of said mutex for you to store
-*/
-u32 T1_os_init_mutex_and_return_id(void);
-
-/* returns true if mutex succesfully locked */
-u8 T1_os_mutex_trylock(u32 mutex_id);
-
-
-void T1_os_mutex_lock(u32 mutex_id);
-
-void T1_os_mutex_unlock(u32 mutex_id);
 
 void T1_os_layer_start_window_resize(u64 timestamp);
 
