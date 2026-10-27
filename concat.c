@@ -1,9 +1,6 @@
 /*
-This "build" program concatenates all of the T1 source code into a single
-package.
-
 Q: How to make the build program?
-gcc concat.c -o conat
+gcc concat.c -o concat
 
 Q: It worked! how do I build T1?
 ./concat
