@@ -124,7 +124,13 @@ int main(void) {
         return 1;
     }
 
-    T1_window_open(&fatal_error);
+    // drawn into by our passes, at the window's pixel size
+    T1Tex window_tex = T1_tex_new(
+        NULL,
+        T1_window_get_pixel_width(),
+        T1_window_get_pixel_height(),
+        &fatal_error);
+    T1_window_open(window_tex, &fatal_error);
 
     T1Buf particles = T1_buf_new(sizeof(Particle) * PARTICLES, &fatal_error);
     T1Buf settings_buf = T1_buf_new(sizeof(Settings), &fatal_error);
@@ -164,10 +170,11 @@ int main(void) {
     T1_pass_set_u32(step_pass, "buf[1]", settings_buf);
     T1_pass_set_u32(step_pass, "threads[0]", PARTICLES);
 
-    T1_pass_new_clear(T1_TEX_WINDOW, 0.0f, 0.0f, 0.02f, 1.0f);
+    uint32_t clear_pass = T1_pass_new_clear(
+        window_tex, 0.0f, 0.0f, 0.02f, 1.0f);
 
     uint32_t draw_pass = T1_pass_new_draw(draw);
-    T1_pass_set_u32(draw_pass, "color_tex[0]", T1_TEX_WINDOW);
+    T1_pass_set_u32(draw_pass, "color_tex[0]", window_tex);
     T1_pass_set_u32(draw_pass, "buf[0]", particles);
     T1_pass_set_u32(draw_pass, "buf[1]", settings_buf);
     T1_pass_set_u32(draw_pass, "vertex_count", PARTICLES * 6);
@@ -175,12 +182,29 @@ int main(void) {
     uint32_t read = T1_BUF_READ_NONE;
     uint64_t next_read_us = 0;
     
-    while (!T1_window_close_requested()) {
-        T1_window_poll_events();
-        if (!T1_window_visible()) { continue; }
-        T1_frame_begin();
+    while (T1_frame_update()) {
+        // a new window texture at the new pixel size
+        if (
+            T1_frame_resized() &&
+            (T1_tex_get_width(window_tex) != T1_window_get_pixel_width() ||
+             T1_tex_get_height(window_tex) != T1_window_get_pixel_height()))
+        {
+            T1_tex_delete(window_tex);
+            window_tex = T1_tex_new(
+                NULL,
+                T1_window_get_pixel_width(),
+                T1_window_get_pixel_height(),
+                &fatal_error);
+            if (fatal_error != NULL) {
+                printf("%s\n", fatal_error);
+                return 1;
+            }
+            T1_window_set_tex(window_tex);
+            T1_pass_set_u32(clear_pass, "color_tex[0]", window_tex);
+            T1_pass_set_u32(draw_pass, "color_tex[0]", window_tex);
+        }
 
-        if (T1_frame_should_update()) {
+        {
             float w = (float)T1_window_get_width();
             float h = (float)T1_window_get_height();
 
@@ -214,9 +238,6 @@ int main(void) {
                 }
             }
         }
-
-        T1_frame_render();
-        T1_window_present();
     }
 
     T1_shutdown();

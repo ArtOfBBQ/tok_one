@@ -22,14 +22,15 @@ already set, so you can call them in a row and check once at the end:
 
 T1_init(malloc, malloc, free, &fatal_error); // no GPU yet
 T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
-T1_gpu_try_shader_source(...); // at least once successfully
-T1_window_open(&fatal_error);
+T1_gpu_try_shader_source(...); // only if you make pipelines
+T1Tex window_tex = T1_tex_new(NULL, width, height, &fatal_error);
+T1_window_open(window_tex, &fatal_error);
 
-The GPU steps are optional. Without them, you draw your own pixels and
-show them with T1_window_blit_rgba(), see examples/ for the smallest app,
-and T1 doesn't allocate anything for rendering. If you use the GPU, call
-T1_gpu_init() before you use anything that renders: textures, buffers,
-pipelines or passes.
+The window always shows a T1Tex, so T1_gpu_init() comes first. Call it
+before you use anything that renders: textures, buffers, pipelines or
+passes. Shaders are only needed for your own pipelines: an app that draws
+its own pixels just uploads them to the window's T1Tex, see examples/ for
+the smallest app.
 
 T1 never shows errors in the window. Problems at startup come back through
 fatal_error; when T1 catches a bug (a failed check, see T1_ASSERTS_ACTIVE),
@@ -64,11 +65,14 @@ void T1_gpu_try_shader_source(
     const uint32_t error_recip_cap,
     char ** const fatal_error);
 
-// Opens the (one) window your frames are presented in. With the GPU, your
-// first frame after this reports T1_frame_resized(), so you can build your
-// scene there.
+// Opens the (one) window, showing tex (see MAIN LOOP). Your first frame
+// after this reports T1_frame_resized(), so you can build your scene there.
 void T1_window_open(
+    T1Tex tex,
     char ** const fatal_error);
+// The T1Tex the window shows from the next frame on, e.g. a new one at the
+// window's new size
+void T1_window_set_tex(T1Tex tex);
 void T1_window_toggle_fullscreen(void);
 
 /*
@@ -83,69 +87,38 @@ Functions that can fail fatally take char ** const fatal_error:
 
 /*
 MAIN LOOP
-T1 doesn't run a loop of its own, your app does. Without the GPU:
+T1 doesn't run a loop of its own, your app does:
 
-while (!T1_window_close_requested()) {
-    T1_window_poll_events();
-    draw_your_pixels(rgba);
-    T1_window_blit_rgba(rgba, width, height);
-}
-T1_shutdown();
-
-With the GPU:
-
-while (!T1_window_close_requested()) {
-    T1_window_poll_events();
-    if (!T1_window_visible()) { continue; }
-    T1_frame_begin();
+while (T1_frame_update()) {
     if (T1_frame_resized()) { rebuild what depends on the window size }
-    if (T1_frame_should_update()) { update(T1_frame_elapsed_us()); }
-    T1_frame_render();
-    T1_window_present();
+    update(T1_frame_elapsed_us()); // writes buffers, textures, ...
 }
 T1_shutdown();
 
-T1_window_poll_events() must be called from the main thread. Presenting
-blocks at the display's refresh rate; when nothing was presented (also
-after a blit), T1_window_poll_events() handles input until the next frame
-is due, see T1_window_set_fps_cap(), so the loop doesn't spin.
+T1_frame_update() finishes your frame and starts the next one: it runs
+your passes, shows the window's T1Tex as large as it fits in the window
+(keeping its aspect ratio, with black bands on the sides or on the top and
+bottom), handles input, and waits until the GPU is done with what your
+next frame writes. Showing the T1Tex blocks at the display's refresh rate.
+It doesn't care whether your passes or T1_tex_update() made the T1Tex.
+While the window is minimized or fully covered, it waits (handling input)
+until the window shows again, and that time doesn't count as elapsed. It
+returns 0 when the window's close button or the OS's quit command was
+used. Call it from the main thread.
 */
-void     T1_window_poll_events(void);
-// The window's close button or the OS's quit command
-uint8_t  T1_window_close_requested(void);
-// False while the window is minimized or fully covered
-uint8_t  T1_window_visible(void);
+uint8_t  T1_frame_update(void);
+// The window settled on a new size this frame. T1 keeps all your objects,
+// move, rebuild or delete what depends on the size. Until then, the
+// window's T1Tex was scaled to the window.
+uint8_t  T1_frame_resized(void);
+// Microseconds since the previous frame (0 on the first)
+uint64_t T1_frame_elapsed_us(void);
 // The window's size in points, the unit touches and the mouse use
 uint32_t T1_window_get_width(void);
 uint32_t T1_window_get_height(void);
-// Copies the frame T1_frame_render() made to the window
-void     T1_window_present(void);
-// Shows width * height * 4 bytes of rgba (row by row, top row first, alpha
-// ignored) as large as it fits in the window, keeping its aspect ratio, with
-// black bands on the sides or on the top and bottom. Copies the pixels, so
-// you can draw the next frame into the same buffer right away. Only for
-// windows opened without T1_gpu_init().
-void     T1_window_blit_rgba(
-    const uint8_t * rgba,
-    uint32_t width,
-    uint32_t height);
-// Caps loops that T1_window_present() doesn't pace (e.g. blitting ones) at
-// fps frames per second, 60 by default. 0 removes the cap: the loop then
-// runs as fast as your frames allow, using a whole CPU core.
-void     T1_window_set_fps_cap(uint32_t fps);
-
-// Waits until the GPU is done with the next frame's buffers and runs T1's
-// work that comes before your update (animations, ...)
-void     T1_frame_begin(void);
-// The window settled on a new size this frame. T1 keeps all your objects,
-// move, rebuild or delete what depends on the size.
-uint8_t  T1_frame_resized(void);
-// False e.g. while T1 shows a crash message or a resize is settling
-uint8_t  T1_frame_should_update(void);
-uint64_t T1_frame_elapsed_us(void);
-// Runs T1's work that comes after your update and renders the frame
-// (without showing it, that's T1_window_present())
-void     T1_frame_render(void);
+// The window's size in pixels: a T1Tex this size fills it pixel for pixel
+uint32_t T1_window_get_pixel_width(void);
+uint32_t T1_window_get_pixel_height(void);
 
 // Saves the engine's state (window position etc.)
 void     T1_shutdown(void);
@@ -229,13 +202,14 @@ is 0 if a function doesn't exist in the loaded shaders (names are checked
 when the first shaders load if there are none yet).
 
 Passes:
-- A clear pass fills a texture (or T1_TEX_WINDOW) with a color.
+- A clear pass fills a texture with a color.
 - A draw pass draws "vertex_count" (u32) vertices as triangles, from
   vertex_id "vertex_start" (u32) on, with a pipeline. T1 binds no geometry:
   your vertex function builds them from its vertex_id and your buffers.
   "color_tex[0]" to "color_tex[3]" (u32 T1Texs, all one size) are where the
-  fragment function's [[color(k)]] go, "color_tex[0]" may be T1_TEX_WINDOW.
-  With "depth_tex" (u32 T1Tex or T1_TEX_WINDOW) it depth-tests against a
+  fragment function's [[color(k)]] go. To show what you drew, draw into
+  the window's T1Tex (see MAIN LOOP).
+  With "depth_tex" (u32 T1Tex) it depth-tests against a
   depth buffer of that texture's size: passes with the same "depth_tex"
   share it, the first one of the frame clears it, and the targets must be
   its size.

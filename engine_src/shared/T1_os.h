@@ -210,9 +210,6 @@ void T1_os_enter_fullscreen(void);
 void T1_os_toggle_fullscreen(void);
 
 
-void T1_os_gpu_update_window_viewport(void);
-
-
 
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
@@ -254,7 +251,6 @@ void T1_os_gpu_init(char ** const fatal_error);
 u8 T1_os_gpu_active(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
-// if there is one, else showing what T1_os_window_blit_rgba() gets
 void T1_os_window_open(char ** const fatal_error);
 void T1_os_destroy_main_window_if_possible(void);
 
@@ -307,22 +303,15 @@ in T1.h).
 void T1_os_window_pump_events(const u64 max_wait_us);
 u8 T1_os_window_close_requested(void);
 u8 T1_os_window_visible(void);
-// Copies the last rendered frame to the window. Returns false if nothing
-// was presented.
-u8 T1_os_window_present(void);
-// Shows width * height rgba pixels (top row first, alpha ignored) as large
-// as they fit in the window, keeping their aspect ratio, with black bands
-// around them. Only for windows opened without T1_os_gpu_init().
-void T1_os_window_blit_rgba(
-    const u8 * rgba,
-    const u32 width,
-    const u32 height);
+// Shows the T1Tex tex as large as it fits in the window, keeping its aspect
+// ratio, with black bands around it. Returns false if nothing was
+// presented.
+u8 T1_os_window_present(const u32 tex);
 
 // Waits until fewer than T1_FRAMES_CAP frames are in flight. False if the
 // GPU isn't ready to render.
 u8 T1_os_gpu_begin_frame(void);
-// Encodes the passes, rendering into the final texture. Returns false if
-// nothing was rendered.
+// Encodes the passes. Returns false if nothing was rendered.
 u8 T1_os_gpu_render_frame(void);
 
 #endif // T1_OS_H

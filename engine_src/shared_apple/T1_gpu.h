@@ -16,13 +16,12 @@ void T1_apple_gpu_init(
 void * T1_gpu_get_device(void);
 
 void T1_gpu_update_render_view_size(s32 at_i);
-void T1_gpu_update_final_window_size(void);
 /*
-Copies the last rendered frame to the next drawable of the given
-CAMetalLayer and presents it. Blocks while all of the layer's drawables are
+Draws the T1Tex tex into the next drawable of the given CAMetalLayer, at
+tex's size, and presents it. Blocks while all of the layer's drawables are
 in use. Returns false if nothing was presented.
 */
-b8 T1_gpu_present_final_texture(void * metal_layer);
+b8 T1_gpu_present_tex(void * metal_layer, const u32 tex);
 
 
 #if 0

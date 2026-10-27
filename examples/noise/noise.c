@@ -1,6 +1,6 @@
 /*
-The smallest T1 app: no GPU setup and no shaders. We draw our own pixels,
-T1 gives us a window to show them in.
+The smallest T1 app: no shaders. We draw our own pixels into the window's
+texture, T1 shows it in the window.
 
 This folder has its own copy of T1.h and T1.c, like your app would: change
 the settings at the top of T1.h (concat starts this copy over, naming the
@@ -81,15 +81,15 @@ static float fbm(float x, float y, float drift) {
 int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
-    T1_window_open(&fatal_error);
+    T1_gpu_init(&fatal_error);
+    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT, &fatal_error);
+    T1_window_open(window_tex, &fatal_error);
     if (fatal_error != NULL) {
         printf("%s\n", fatal_error);
         return 1;
     }
 
-    for (uint32_t frame = 0; !T1_window_close_requested(); frame++) {
-        T1_window_poll_events();
-
+    for (uint32_t frame = 0; T1_frame_update(); frame++) {
         float drift = (float)frame * 0.01f;
         for (uint32_t y = 0; y < HEIGHT; y++) {
             for (uint32_t x = 0; x < WIDTH; x++) {
@@ -104,7 +104,7 @@ int main(void) {
             }
         }
 
-        T1_window_blit_rgba(rgba, WIDTH, HEIGHT);
+        T1_tex_update(window_tex, rgba);
     }
 
     T1_shutdown();

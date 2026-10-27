@@ -30,7 +30,7 @@ typedef struct {
     uint8_t upcoming_fullscreen_request;
 } T1Globals;
 
-#define T1_GLOBAL_WINDOW_RESIZE_TIMEOUT 2500000
+
 #define T1_GLOBAL_CLEARDEPTH 1.0f
 
 extern T1Globals * T1_global;

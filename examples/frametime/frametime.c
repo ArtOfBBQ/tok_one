@@ -1,19 +1,20 @@
 /*
-How fast can a software renderer go? T1 caps blitting loops at 60 frames
-per second by default, this example removes the cap and draws its own
-frames per second counter.
+A software renderer that shows how long its frames take, in microseconds.
+T1 shows the window's texture at the display's refresh rate, so frames per
+second only tell you the refresh rate. The time a frame takes (here the
+slowest one of the last second, the one that would miss a refresh first)
+shows how much room is left: at 60 Hz a frame has 16667 microseconds.
 
 This folder has its own copy of T1.h and T1.c, like your app would: change
-the settings at the top of T1.h (concat starts this copy over, naming the
-window "fps").
-
+the settings at the top of T1.h.
+ 
 Build and run, from the tok_one folder:
     gcc concat.c -o concat && ./concat
-    ./build/examples/fps
+    ./build/examples/frametime
 
 (concat builds every example, with
-    gcc -std=c11 -O2 examples/fps/fps.c examples/fps/T1.c
-        -o build/examples/fps)
+    gcc -std=c11 -O2 examples/frametime/frametime.c examples/frametime/T1.c
+        -o build/examples/frametime)
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,32 +57,31 @@ static void draw_number(uint32_t number, uint32_t left, uint32_t top) {
 int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
-    T1_window_open(&fatal_error);
+    T1_gpu_init(&fatal_error);
+    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT, &fatal_error);
+    T1_window_open(window_tex, &fatal_error);
     if (fatal_error != NULL) {
         printf("%s\n", fatal_error);
         return 1;
     }
 
-    T1_window_set_fps_cap(0);
-
     uint64_t second_start_us = T1_os_get_current_time_us();
-    uint32_t frames_this_second = 0;
-    uint32_t fps = 0;
+    uint32_t slowest_this_second_us = 0;
+    uint32_t slowest_us = 0;
 
-    while (!T1_window_close_requested()) {
-        T1_window_poll_events();
-
+    while (T1_frame_update()) {
+        // the frame starts here: T1_frame_update() waited for the display
         uint64_t now_us = T1_os_get_current_time_us();
         if (now_us - second_start_us >= 1000000) {
-            fps = frames_this_second;
-            printf("%u fps\n", fps);
+            slowest_us = slowest_this_second_us;
+            printf("slowest frame: %u microseconds\n", slowest_us);
             fflush(stdout);
-            frames_this_second = 0;
+            slowest_this_second_us = 0;
             second_start_us = now_us;
         }
-        frames_this_second++;
 
-        // Moves with time, not frames, so it looks the same at any fps
+        // Moves with time, not frames, so it looks the same at any refresh
+        // rate
         uint32_t t = (uint32_t)(now_us / 10000);
         for (uint32_t y = 0; y < HEIGHT; y++) {
             for (uint32_t x = 0; x < WIDTH; x++) {
@@ -91,9 +91,15 @@ int main(void) {
                 pixel[2] = (uint8_t)(x ^ y ^ (t / 2));
             }
         }
-        draw_number(fps, 8, 8);
+        draw_number(slowest_us, 8, 8);
+        
+        T1_tex_update(window_tex, rgba);
 
-        T1_window_blit_rgba(rgba, WIDTH, HEIGHT);
+        // and ends here, before T1_frame_update() waits again
+        uint32_t frame_us = (uint32_t)(T1_os_get_current_time_us() - now_us);
+        if (frame_us > slowest_this_second_us) {
+            slowest_this_second_us = frame_us;
+        }
     }
 
     T1_shutdown();

@@ -61,7 +61,7 @@
 #define T1_GPU_TARGET_COLOR_0 0x01
 #define T1_GPU_TARGET_DEPTH   0x10
 // color(0) is the window, in its format
-#define T1_GPU_TARGET_WINDOW  0x20
+#define T1_GPU_TARGET_WINDOW  0x20 // color(0) is a drawable (BGRA)
 #define T1_GPU_TARGETS_SIZE   0x40
 
 typedef struct {
@@ -230,7 +230,7 @@ typedef struct {
 } T1GPUBufRead;
 
 /*
-A depth buffer that belongs to a T1Tex (or T1_TEX_WINDOW): passes with that
+A depth buffer that belongs to a T1Tex: passes with that
 "depth_tex" share it, the first one of the frame clears it
 */
 #define T1_GPU_TEX_DEPTHS_CAP 16
@@ -245,7 +245,6 @@ typedef struct {
 
 typedef struct {
     uintptr_t pixel_format_renderpass1;
-    T1MTLViewport window_viewport;
     
     void * device;
     void * lib;
@@ -267,11 +266,10 @@ typedef struct {
     #error
     #endif
     
-    // A pass's T1_TEX_WINDOW, at window pixel size. This is the finished
-    // frame; presenting copies it to the screen.
-    void * final_texture;
-    u32 final_texture_w;
-    u32 final_texture_h;
+    // T1's own pipeline that draws the window's T1Tex into a drawable,
+    // built on first use, see T1_gpu_present_tex()
+    void * present_pls;
+    b8 present_pls_failed;
     // The drawableSize we last gave the CAMetalLayer
     u32 layer_drawable_w;
     u32 layer_drawable_h;
@@ -956,6 +954,12 @@ static void * T1_gpu_pipeline_state(
     return ags->pipeline_states[i][targets];
 }
 
+// What every Metal library T1 compiles starts with
+static const char * T1_gpu_metal_prelude =
+    "#include <metal_stdlib>\n"
+    "#include <simd/simd.h>\n"
+    "using namespace metal;\n";
+
 void T1_os_gpu_try_shader_source(
     const char * shader_source,
     u8 * good,
@@ -996,10 +1000,6 @@ void T1_os_gpu_try_shader_source(
     compile it (headers, T1's functions) goes around T1's settings and GPU
     structs, then the client's shaders follow
     */
-    static const char * metal_prelude =
-        "#include <metal_stdlib>\n"
-        "#include <simd/simd.h>\n"
-        "using namespace metal;\n";
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     #define T1_MIP_FILTER ", mip_filter::nearest"
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
@@ -1060,7 +1060,7 @@ void T1_os_gpu_try_shader_source(
         "}\n";
     #undef T1_MIP_FILTER
     const char * parts[5] = {
-        metal_prelude,
+        T1_gpu_metal_prelude,
         T1_embedded_data_shader_settings,
         T1_embedded_data_shader_includes,
         metal_functions,
@@ -1655,32 +1655,6 @@ static void * T1_gpu_new_render_pass_descriptor(void) {
         ags->sel_render_pass_desc);
 }
 
-void T1_gpu_update_final_window_size(void) {
-    if (!ags) { return; }
-    ags->window_viewport.originX = 0;
-    ags->window_viewport.originY = 0;
-    ags->window_viewport.width =
-        T1_global->window_wh[0] *
-            ags->retina_scaling_factor;
-    ags->window_viewport.height  =
-        T1_global->window_wh[1] *
-            ags->retina_scaling_factor;
-    if (ags->window_viewport.width < 10.0f) {
-        ags->window_viewport.width = 10.0f;
-    }
-    if (ags->window_viewport.height < 10.0f) {
-        ags->window_viewport.height = 10.0f;
-    }
-    
-    /*
-    These near/far values are the final viewport coordinates (after
-    fragment shader), not to be confused with
-    window_globals->projection_constants.near that's in our world space
-    and much larger numbers
-    */
-    ags->window_viewport.znear = 0.001f;
-    ags->window_viewport.zfar = 1.0f;
-}
 
 // A new depth buffer of width * height, NULL if Metal refused
 static void * T1_gpu_new_depth_texture(u32 width, u32 height) {
@@ -1810,9 +1784,8 @@ static void T1_gpu_bind_texture_arrays(
 }
 
 /*
-What a pass's T1Tex draws into: the finished frame for T1_TEX_WINDOW, else
-a new view of the texture's slice that *owned says the caller releases.
-NULL if the texture doesn't exist (yet).
+What a pass's T1Tex draws into: a new view of the texture's slice that
+*owned says the caller releases. NULL if the texture doesn't exist (yet).
 */
 static void * T1_gpu_pass_target(
     const u32 tex,
@@ -1820,9 +1793,7 @@ static void * T1_gpu_pass_target(
 {
     *owned = false;
 
-    if (tex == T1_TEX_WINDOW) {
-        return ags->final_texture;
-    }
+    if (tex == T1_TEX_NONE) { return NULL; }
 
     s32 array_i = T1_TEX_ARRAY_I(tex);
     s32 slice_i = T1_TEX_SLICE_I(tex);
@@ -2233,9 +2204,6 @@ static void T1_gpu_encode_draw_pass(
         u32 tex = pass->u32s.color_tex[k];
         if (tex == T1_TEX_NONE) { continue; }
         
-        // the window can only be the first target
-        T1_assert(tex != T1_TEX_WINDOW || k == 0);
-        
         targets[k] = T1_gpu_pass_target(tex, &owned[k]);
         if (targets[k] == NULL) { continue; }
         
@@ -2248,9 +2216,6 @@ static void T1_gpu_encode_draw_pass(
                 T1_objc_msg(targets[0], ags->sel_height)));
         
         target_bits |= (u8)(T1_GPU_TARGET_COLOR_0 << k);
-        if (tex == T1_TEX_WINDOW) {
-            target_bits |= T1_GPU_TARGET_WINDOW;
-        }
         
         void * color_attachment = (void *)T1_objc_msg_1arg(
             color_attachments, ags->sel_object_at_indexed_subscript, k);
@@ -2273,10 +2238,8 @@ static void T1_gpu_encode_draw_pass(
     b8 clear_depth = false;
     if (pass->u32s.depth_tex != T1_TEX_NONE) {
         u32 dt = pass->u32s.depth_tex;
-        u32 depth_w = dt == T1_TEX_WINDOW ?
-            ags->final_texture_w : T1_tex_get_width((T1Tex)dt);
-        u32 depth_h = dt == T1_TEX_WINDOW ?
-            ags->final_texture_h : T1_tex_get_height((T1Tex)dt);
+        u32 depth_w = T1_tex_get_width((T1Tex)dt);
+        u32 depth_h = T1_tex_get_height((T1Tex)dt);
         depth = T1_gpu_tex_depth(dt, depth_w, depth_h, &clear_depth);
         
         // the targets must be its size
@@ -2316,7 +2279,7 @@ static void T1_gpu_encode_draw_pass(
     }
     
     // nothing to draw into
-    if ((target_bits & ~T1_GPU_TARGET_WINDOW) == 0) { return; }
+    if (target_bits == 0) { return; }
     
     void * enc = (void *)T1_objc_msg_1arg(
         combuf,
@@ -2375,10 +2338,6 @@ static void T1_gpu_encode_compute_pass(
     const T1Pass * pass,
     void * combuf)
 {
-    // the window can't be written by compute shaders
-    T1_assert(pass->u32s.write_tex != T1_TEX_WINDOW);
-    if (pass->u32s.write_tex == T1_TEX_WINDOW) { return; }
-    
     // a grid of threads, a texture to write, or both
     b8 has_threads = pass->u32s.threads[0] > 0;
     T1_assert(has_threads || pass->u32s.write_tex != T1_TEX_NONE);
@@ -2457,74 +2416,10 @@ static void T1_gpu_wait_for_frame_slot(void) {
 }
 
 /*
-(Re)creates the final texture if the window's pixel size changed.
-*/
-static b8 T1_gpu_ensure_final_texture(void) {
-    u32 w = (u32)ags->window_viewport.width;
-    u32 h = (u32)ags->window_viewport.height;
-    
-    if (
-        ags->final_texture != NULL &&
-        ags->final_texture_w == w &&
-        ags->final_texture_h == h)
-    {
-        return true;
-    }
-    
-    if (ags->final_texture != NULL) {
-        // In-flight command buffers keep their own reference
-        T1_objc_msg(ags->final_texture, ags->sel_release);
-        ags->final_texture = NULL;
-    }
-    
-    void * desc = (void *)T1_objc_msg(
-        ags->class_mtl_texture_desc,
-        ags->sel_new);
-    if (desc == NULL) { return false; }
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_texture_type, T1MTLTextureType2D);
-    // Matches T1_GPU_TARGET_WINDOW pipelines and the drawable
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_pixel_format, T1MTLPixelFormatBGRA8Unorm);
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_width, w);
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_height, h);
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_mipmap_level_count, 1);
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_storage_mode, T1MTLStorageModePrivate);
-    T1_objc_msg_1arg(desc,
-        ags->sel_set_usage,
-        T1MTLTextureUsageRenderTarget |
-        T1MTLTextureUsageShaderRead);
-    
-    ags->final_texture = (void *)T1_objc_msg_1arg(
-        ags->device,
-        ags->sel_new_tex_with_desc,
-        (uintptr_t)desc);
-    T1_objc_msg(desc, ags->sel_release);
-    
-    if (ags->final_texture == NULL) {
-        return false;
-    }
-    
-    ags->final_texture_w = w;
-    ags->final_texture_h = h;
-    return true;
-}
-
-/*
-Encodes and commits the client's passes, the window being
-ags->final_texture. Doesn't touch the screen.
+Encodes and commits the client's passes. Doesn't touch the screen.
 Returns false if nothing was rendered.
 */
 static b8 T1_gpu_render_frame(void) {
-    if (!T1_gpu_ensure_final_texture()) {
-        T1_assert(0);
-        return false;
-    }
-    
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
@@ -2549,6 +2444,9 @@ static b8 T1_gpu_render_frame(void) {
     // the client's passes, in the order they were made
     for (u32 pass_i = 0; pass_i < T1_passes_size; pass_i++) {
         const T1Pass * pass = T1_passes + pass_i;
+        // without shaders (e.g. an app that only uploads its own pixels),
+        // only clear passes can run
+        if (!ags->shaders_ready && pass->kind != T1_PASS_CLEAR) { continue; }
         switch (pass->kind) {
             case T1_PASS_CLEAR:
                 T1_gpu_encode_clear_pass(pass, combuf);
@@ -2581,32 +2479,108 @@ static b8 T1_gpu_render_frame(void) {
 }
 
 /*
-Copies the final texture to the layer's next drawable and presents it.
-Grabs the drawable only now, so we hold it as briefly as possible. The copy
-is queued after the frame's command buffer, so it sees the finished frame.
-nextDrawable blocks while all of the layer's drawables are in use, which is
-what paces the main loop to the display's refresh rate.
+T1's own pipeline that draws a T1Tex into a drawable: Metal can't copy our
+RGBA textures into the layer's BGRA drawables. Plain MSL of its own,
+unrelated to the client's shaders, so it works without them. Built on first
+use, NULL if that failed.
+*/
+static void * T1_gpu_present_pls(void) {
+    if (ags->present_pls != NULL || ags->present_pls_failed) {
+        return ags->present_pls;
+    }
+    ags->present_pls_failed = true;
+    
+    static const char * source =
+        "struct T1PresentVertex { float4 pos [[position]]; };\n"
+        // one triangle that covers the whole drawable
+        "vertex T1PresentVertex T1_present_vertex(uint vid [[vertex_id]]) {\n"
+        "    float2 xy = float2((vid << 1) & 2, vid & 2);\n"
+        "    T1PresentVertex out;\n"
+        "    out.pos = float4(xy * 2.0f - 1.0f, 0.0f, 1.0f);\n"
+        "    return out;\n"
+        "}\n"
+        // the drawable is the texture's size, so pixels map 1:1
+        "fragment float4 T1_present_fragment(\n"
+        "    T1PresentVertex in [[stage_in]],\n"
+        "    texture2d<float> tex [[texture(0)]])\n"
+        "{\n"
+        "    return tex.read(uint2(in.pos.xy));\n"
+        "}\n";
+    
+    u32 full_source_cap = (u32)(
+        T1_std_strlen(T1_gpu_metal_prelude) + T1_std_strlen(source) + 1);
+    char * full_source = T1_mem_malloc_managed(full_source_cap);
+    full_source[0] = '\0';
+    T1_std_strcat_cap(full_source, full_source_cap, T1_gpu_metal_prelude);
+    T1_std_strcat_cap(full_source, full_source_cap, source);
+    // stringWithUTF8String: copies, so we can free right away
+    void * nsstr_source = T1_objc_nsstring_construct(full_source);
+    T1_mem_free_managed(full_source);
+    
+    void * error = NULL;
+    void * lib = (void *)T1_objc_msg_3arg(
+        ags->device,
+        ags->sel_new_lib_with_source_options_error,
+        (uintptr_t)nsstr_source,
+        /* options: */ (uintptr_t)NULL,
+        /* error: */ (uintptr_t)&error);
+    T1_assert(lib != NULL);
+    if (lib == NULL) { return NULL; }
+    
+    u8 ok = true;
+    void * vertex_fn = T1_gpu_new_shader_func(
+        lib, "T1_present_vertex", &ok, NULL, 0);
+    void * fragment_fn = T1_gpu_new_shader_func(
+        lib, "T1_present_fragment", &ok, NULL, 0);
+    if (ok) {
+        void * desc = T1_gpu_new_render_pipeline_descriptor(
+            vertex_fn,
+            fragment_fn,
+            T1_GPU_TARGET_COLOR_0 | T1_GPU_TARGET_WINDOW,
+            T1_BLEND_NONE);
+        ags->present_pls = T1_gpu_new_render_pls(
+            desc, "T1_present", &ok, NULL, 0);
+        T1_objc_msg(desc, ags->sel_release);
+    }
+    T1_gpu_release(&vertex_fn);
+    T1_gpu_release(&fragment_fn);
+    T1_gpu_release(&lib);
+    
+    T1_assert(ags->present_pls != NULL);
+    ags->present_pls_failed = ags->present_pls == NULL;
+    return ags->present_pls;
+}
+
+/*
+Draws tex into the layer's next drawable and presents it. The drawables are
+tex's size, the layer scales them into the window. Grabs the drawable only
+now, so we hold it as briefly as possible. The draw is queued after the
+frame's command buffer, so it sees the finished frame. nextDrawable blocks
+while all of the layer's drawables are in use, which is what paces the main
+loop to the display's refresh rate.
 Returns false if nothing was presented.
 */
-b8 T1_gpu_present_final_texture(void * metal_layer) {
-    if (metal_layer == NULL || ags->final_texture == NULL) {
+b8 T1_gpu_present_tex(void * metal_layer, const u32 tex) {
+    if (metal_layer == NULL || !ags || !ags->metal_active) {
         return false;
     }
     
-    if (
-        ags->layer_drawable_w != ags->final_texture_w ||
-        ags->layer_drawable_h != ags->final_texture_h)
-    {
+    void * pls = T1_gpu_present_pls();
+    if (pls == NULL) { return false; }
+    
+    u32 w = T1_tex_get_width((T1Tex)tex);
+    u32 h = T1_tex_get_height((T1Tex)tex);
+    if (ags->layer_drawable_w != w || ags->layer_drawable_h != h) {
         T1CGSize size;
-        size.width  = ags->final_texture_w;
-        size.height = ags->final_texture_h;
+        size.width  = w;
+        size.height = h;
         typedef void (* set_drawable_size_type)(void *, void *, T1CGSize);
         ((set_drawable_size_type)T1_objc_unsafe_get_raw_msg_send())(
             metal_layer,
             ags->sel_set_drawable_size,
             size);
-        ags->layer_drawable_w = ags->final_texture_w;
-        ags->layer_drawable_h = ags->final_texture_h;
+        ags->layer_drawable_w = w;
+        ags->layer_drawable_h = h;
     }
     
     // Can be nil, e.g. after a 1 second timeout while the window is hidden
@@ -2629,42 +2603,48 @@ b8 T1_gpu_present_final_texture(void * metal_layer) {
         return false;
     }
     
-    // Shouldn't differ since we set the drawable size above, but be safe
-    u64 drawable_w = T1_objc_msg(drawable_tex, ags->sel_width);
-    u64 drawable_h = T1_objc_msg(drawable_tex, ags->sel_height);
-    u64 copy_w = drawable_w < ags->final_texture_w ?
-        drawable_w : ags->final_texture_w;
-    u64 copy_h = drawable_h < ags->final_texture_h ?
-        drawable_h : ags->final_texture_h;
+    b8 owned = false;
+    void * src = T1_gpu_pass_target(tex, &owned);
+    if (src == NULL) {
+        return false;
+    }
     
-    void * blit_enc = (void *)T1_objc_msg(
-        combuf, ags->sel_blit_command_encoder);
+    void * desc = T1_gpu_new_render_pass_descriptor();
+    void * color_attachments = (void *)T1_objc_msg(
+        desc, ags->sel_color_attachments);
+    void * color_attachment_0 = (void *)T1_objc_msg_1arg(
+        color_attachments, ags->sel_object_at_indexed_subscript, 0);
+    T1_objc_msg_1arg(
+        color_attachment_0,
+        ags->sel_set_texture,
+        (uintptr_t)drawable_tex);
+    // every pixel gets drawn
+    T1_objc_msg_1arg(
+        color_attachment_0,
+        ags->sel_set_load_action,
+        T1MTLLoadActionDontCare);
+    T1_objc_msg_1arg(
+        color_attachment_0,
+        ags->sel_set_store_action,
+        T1MTLStoreActionStore);
     
-    typedef void (* copy_tex_region_to_tex_type)(
-        void *, void *,
-        /* copyFromTexture:(id<MTLTexture>)    : */ void *,
-        /* sourceSlice:(NSUInteger)            : */ uintptr_t,
-        /* sourceLevel:(NSUInteger)            : */ uintptr_t,
-        /* sourceOrigin:(MTLOrigin)            : */ T1MTLOrigin,
-        /* sourceSize:(MTLSize)                : */ T1MTLSize,
-        /* toTexture:(id<MTLTexture>)          : */ void *,
-        /* destinationSlice:(NSUInteger)       : */ uintptr_t,
-        /* destinationLevel:(NSUInteger)       : */ uintptr_t,
-        /* destinationOrigin:(MTLOrigin)       : */ T1MTLOrigin);
-    ((copy_tex_region_to_tex_type)T1_objc_unsafe_get_raw_msg_send())(
-        blit_enc,
-        ags->sel_copy_from_texture_region_to_texture,
-        ags->final_texture,
-        /* source_slice: */ 0,
-        /* source_level: */ 0,
-        /* source_origin: */ T1_mtlorigin_make(0, 0, 0),
-        /* source_size: */ T1_mtlsize_make(copy_w, copy_h, 1),
-        drawable_tex,
-        /* destination_slice: */ 0,
-        /* destination_level: */ 0,
-        /* destination_origin: */ T1_mtlorigin_make(0, 0, 0));
-    
-    T1_objc_msg(blit_enc, ags->sel_end_encoding);
+    void * enc = (void *)T1_objc_msg_1arg(
+        combuf,
+        ags->sel_render_cmd_enc_with_desc,
+        (uintptr_t)desc);
+    T1_objc_msg_1arg(enc, ags->sel_set_render_pls, (uintptr_t)pls);
+    T1_objc_msg_2arg(
+        enc,
+        ags->sel_set_fragment_texture_at_index,
+        (uintptr_t)src,
+        0);
+    T1_objc_msg_3arg(
+        enc,
+        ags->sel_draw_primitives_vertex_start_vertex_count,
+        /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
+        /* vertexStart: */ 0,
+        /* vertexCount: */ 3);
+    T1_objc_msg(enc, ags->sel_end_encoding);
     
     T1_objc_msg_1arg(
         combuf, ags->sel_present_drawable,
@@ -2673,11 +2653,13 @@ b8 T1_gpu_present_final_texture(void * metal_layer) {
     
     T1_objc_msg(combuf, ags->sel_commit);
     
+    if (owned) { T1_gpu_release(&src); }
+    
     return true;
 }
 
 u8 T1_os_gpu_begin_frame(void) {
-    if (!ags || !ags->metal_active || !ags->shaders_ready) {
+    if (!ags || !ags->metal_active) {
         return false;
     }
     
@@ -2689,19 +2671,11 @@ u8 T1_os_gpu_begin_frame(void) {
 }
 
 u8 T1_os_gpu_render_frame(void) {
-    if (!ags || !ags->metal_active || !ags->shaders_ready) {
+    if (!ags || !ags->metal_active) {
         return false;
     }
     
     ags->frame_consts = T1_global->frame_consts;
-    
-    if (
-        (ags->frame_consts.timestamp -
-            T1_global->last_resize_request_us)
-                < T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
-    {
-        return false;
-    }
     
     void * pool = T1_objc_autorelease_pool_push();
     
@@ -2711,12 +2685,6 @@ u8 T1_os_gpu_render_frame(void) {
     
     return rendered;
 }
-
-void T1_os_gpu_update_window_viewport(void)
-{
-    T1_gpu_update_final_window_size();
-}
-
 
 void T1_os_gpu_init(char ** const fatal_error) {
     if (*fatal_error != 0) { return; }

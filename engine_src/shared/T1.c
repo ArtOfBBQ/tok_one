@@ -9,14 +9,13 @@
 #include "T1_os.h"
 
 u32 T1_tex_read_start(T1Tex tex, u32 x, u32 y, u32 w, u32 h) {
-    T1_assert(tex != T1_TEX_NONE && tex != T1_TEX_WINDOW);
+    T1_assert(tex != T1_TEX_NONE);
     T1_assert(T1_TEX_ARRAY_I(tex) < T1_TEXARRAYS_CAP);
     T1_assert(w > 0 && h > 0);
     T1_assert(x + w <= T1_tex_get_width(tex));
     T1_assert(y + h <= T1_tex_get_height(tex));
     if (
         tex == T1_TEX_NONE ||
-        tex == T1_TEX_WINDOW ||
         T1_TEX_ARRAY_I(tex) >= T1_TEXARRAYS_CAP ||
         w == 0 || h == 0 ||
         x + w > T1_tex_get_width(tex) ||

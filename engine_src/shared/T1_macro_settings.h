@@ -22,7 +22,7 @@
 #endif
 
 // set to 3 for triple-buffering
-#define T1_FRAMES_CAP 3
+#define T1_FRAMES_CAP 2
 
 #define T1_TEXARRAYS_CAP 29
 #define T1_TEX_SLICES_CAP 250

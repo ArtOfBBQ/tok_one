@@ -245,11 +245,6 @@ void T1_gpu_init(
     T1_objc_autorelease_pool_pop(pool);
     
     T1_os_gpu_init(fatal_error);
-    if (*fatal_error != 0) { return; }
-    
-    pool = T1_objc_autorelease_pool_push();
-    T1_os_gpu_update_window_viewport();
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_gpu_try_shader_source(

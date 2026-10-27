@@ -23,7 +23,7 @@ static const char * encapsulation_h_file = "T1.h";
 // examples/<name>.c, built against the library into build/examples/<name>
 static const char * examples[] = {
     "noise",
-    "fps",
+    "frametime",
     "particles",
 };
 

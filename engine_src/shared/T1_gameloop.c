@@ -8,24 +8,22 @@
 u8 T1_gameloop_active = 0;
 
 /*
-When the last frame wasn't presented, nothing paced the client's loop to the
-display, so T1_window_poll_events() handles input until the next multiple of
-frame_step_us microseconds, instead of letting the loop spin. 0 lets it
-spin, see T1_window_set_fps_cap().
+When nothing was presented (e.g. the window is hidden), nothing paced the
+client's loop to the display, so T1_frame_update() handles input until the
+next multiple of this many microseconds instead of letting the loop spin
 */
-#define T1_GAMELOOP_DEFAULT_FPS_CAP 60
+#define T1_GAMELOOP_FRAME_STEP_US (1000000 / 60)
+// T1_frame_resized() once the window's size stayed the same this long
+#define T1_GAMELOOP_RESIZE_SETTLE_US 200000
 
 typedef struct {
-    b8 frame_begun; // between T1_frame_begin() and T1_frame_render()
-    u64 previous_time;
-    u64 frame_no;
-    u32 loading_text_T1_id;
-    b8 frame_should_update; // the client should run its update
+    u64 previous_time; // 0 for none, the next elapsed is then 0
+    u64 next_poll_us; // see T1_GAMELOOP_FRAME_STEP_US
+    u32 window_tex; // the T1Tex the window shows
+    b8 frame_begun; // the client's frame, between two T1_frame_update()s
     b8 frame_resized; // the window settled on a new size
-    b8 frame_rendered; // since the last T1_window_poll_events()
-    b8 frame_presented; // since the last T1_window_poll_events()
-    u64 next_poll_us; // see T1_GAMELOOP_DEFAULT_FPS_CAP
-    u64 frame_step_us; // 0 for no cap
+    b8 window_opened; // the first frame reports a resize right away
+    b8 presented_once; // before that, the OS may report the window hidden
 } T1GameloopState;
 static T1GameloopState * T1_gl_s = NULL;
 
@@ -34,146 +32,39 @@ void T1_gameloop_init(
 {
     T1_gl_s = arg_malloc_fptr(sizeof(T1GameloopState));
     T1_std_memset(T1_gl_s, 0, sizeof(T1GameloopState));
-    T1_gl_s->loading_text_T1_id = T1_ID_NONE;
-    T1_window_set_fps_cap(T1_GAMELOOP_DEFAULT_FPS_CAP);
+    T1_gl_s->window_tex = T1_TEX_NONE;
 }
 
-void T1_window_set_fps_cap(u32 fps) {
-    T1_gl_s->frame_step_us = fps > 0 ? 1000000 / fps : 0;
-}
-
-void T1_frame_begin(void)
-{
-    T1_gl_s->frame_should_update = 0;
-    T1_gl_s->frame_resized = 0;
-    T1_gl_s->frame_begun = 0;
-    
-    // Waits until the GPU is done with the frame T1_FRAMES_CAP ago
-    if (!T1_os_gpu_begin_frame()) {
-        return;
-    }
-    T1_gl_s->frame_begun = 1;
-    
-    T1_global->elapsed =
-        T1_global->this_frame_timestamp_us -
-            T1_gl_s->previous_time;
-    
-    T1_global->elapsed = (u64)(
-        (f64)T1_global->elapsed *
-        (f64)T1_global->timedelta_mult);
-    
-    T1_gl_s->previous_time =
-        T1_global->this_frame_timestamp_us;
-    
-    if (!T1_gameloop_active) {
-        return;
-    }
-    
-    T1_global->this_frame_timestamp_us =
-        T1_os_get_current_time_us();
-    T1_global->frame_consts.timestamp =
-        (u32)T1_global->this_frame_timestamp_us;
-    
-    if (T1_gl_s->previous_time < 1) {
-        T1_gl_s->previous_time = T1_global->this_frame_timestamp_us;
-        return;
-    }
-    
-    T1_gl_s->frame_no++;
-    
-    if (
-        T1_global->this_frame_timestamp_us -
-            T1_global->last_resize_request_us <
-                T1_GLOBAL_WINDOW_RESIZE_TIMEOUT)
-    {
-        if (
-            T1_global->this_frame_timestamp_us -
-            T1_global->last_resize_request_us < 200000)
-        {
-            // possibly a request we already handled, or not the final
-            // request, wait...
-            return;
-        } else {
-            T1_global_init();
-            
-            T1_global->last_resize_request_us = 0;
-            
-            // The client rebuilds its size dependent state now
-            T1_gl_s->frame_resized = 1;
-       }
-    } else {
-        // The client runs its update between T1_frame_begin() and
-        // T1_frame_render()
-        T1_gl_s->frame_should_update = 1;
-    }
-}
-
-u8 T1_frame_should_update(void) {
-    return T1_gl_s->frame_should_update;
-}
-
-u8 T1_frame_resized(void) {
-    return T1_gl_s->frame_resized;
-}
-
-u64 T1_frame_elapsed_us(void) {
-    return T1_global->elapsed;
-}
-
-void T1_frame_render(void) {
-    T1_gl_s->frame_rendered = 0;
-    
-    if (!T1_gl_s->frame_begun) {
-        return;
-    }
-    T1_gl_s->frame_begun = 0;
-    
-    T1_gl_s->frame_rendered = T1_os_gpu_render_frame();
-}
-
-void T1_window_present(void) {
-    if (!T1_gl_s->frame_rendered) {
-        return;
-    }
-    
-    T1_gl_s->frame_presented = T1_os_window_present();
-}
-
-void T1_window_open(char ** const fatal_error) {
+void T1_window_open(T1Tex tex, char ** const fatal_error) {
     if (*fatal_error != 0) { return; }
     
-    // Nothing can be drawn without shaders, so fail loudly here
-    if (T1_os_gpu_active() && !T1_os_gpu_shaders_ready()) {
-        *fatal_error = "T1_window_open() before T1_gpu_try_shader_source() succeeded";
+    if (!T1_os_gpu_active()) {
+        *fatal_error = "T1_window_open() before T1_gpu_init()";
+        return;
+    }
+    if (tex == T1_TEX_NONE) {
+        *fatal_error = "T1_window_open() needs a T1Tex to show";
         return;
     }
     
     T1_os_window_open(fatal_error);
     if (*fatal_error != 0) { return; }
     
+    T1_gl_s->window_tex = tex;
+    
     // The client's first frame reports a resize, so it can build its scene
     // for the window's size there
-    T1_os_layer_start_window_resize(T1_os_get_current_time_us());
+    T1_gl_s->window_opened = 1;
 }
 
-void T1_window_blit_rgba(const u8 * rgba, u32 width, u32 height) {
-    T1_os_window_blit_rgba(rgba, width, height);
-
-    // A finished frame like a rendered one, so this frame's input events
-    // are cleared, but it doesn't pace the loop like presenting does
-    T1_gl_s->frame_rendered = 1;
+void T1_window_set_tex(T1Tex tex) {
+    T1_assert(tex != T1_TEX_NONE);
+    if (tex == T1_TEX_NONE) { return; }
+    T1_gl_s->window_tex = tex;
 }
 
 void T1_window_toggle_fullscreen(void) {
     T1_os_toggle_fullscreen();
-}
-
-u8 T1_window_close_requested(void) {
-    return T1_os_window_close_requested();
-}
-
-u8 T1_window_visible(void) {
-    return T1_os_window_visible();
 }
 
 u32 T1_window_get_width(void) {
@@ -184,10 +75,27 @@ u32 T1_window_get_height(void) {
     return (u32)T1_global->window_wh[1];
 }
 
+u32 T1_window_get_pixel_width(void) {
+    return (u32)(
+        T1_global->window_wh[0] * T1_os_get_screen_backing_scale_factor());
+}
+
+u32 T1_window_get_pixel_height(void) {
+    return (u32)(
+        T1_global->window_wh[1] * T1_os_get_screen_backing_scale_factor());
+}
+
+u8 T1_frame_resized(void) {
+    return T1_gl_s->frame_resized;
+}
+
+u64 T1_frame_elapsed_us(void) {
+    return T1_global->elapsed;
+}
+
 /*
-What used to run after each rendered frame: clears the frame's one-shot
-input events (the client has seen them by now), polls gamepads and handles
-fullscreen requests.
+After the client's frame: clears its one-shot input events (it has seen
+them by now), polls gamepads and handles fullscreen requests
 */
 static void T1_gameloop_after_frame(void) {
     T1_io_update_and_clear_for_next_frame();
@@ -205,18 +113,13 @@ static void T1_gameloop_after_frame(void) {
     }
 }
 
-void T1_window_poll_events(void) {
-    // Like before, input events stay queued across frames that weren't
-    // rendered (e.g. while a resize settles)
-    if (T1_gl_s->frame_rendered) {
-        T1_gameloop_after_frame();
-        T1_gl_s->frame_rendered = 0;
-    }
-    
-    // Presenting blocks at the display's refresh rate. Without it (nothing
-    // rendered, or a software blit), handle input until the rest of the
-    // frame step has passed, so the client's loop doesn't spin.
-    if (T1_gl_s->frame_presented) {
+/*
+Presenting blocks at the display's refresh rate. Without it, handle input
+until the rest of the frame step has passed, so the client's loop doesn't
+spin.
+*/
+static void T1_gameloop_pump_events(const b8 presented) {
+    if (presented) {
         T1_os_window_pump_events(0);
     } else {
         while (1) {
@@ -229,13 +132,82 @@ void T1_window_poll_events(void) {
             }
         }
     }
-    T1_gl_s->frame_presented = 0;
     
     // Deadlines a fixed step apart, so oversleeping one doesn't slow down
     // the next. If we fell behind (a slow frame), restart from now.
     u64 now = T1_os_get_current_time_us();
-    T1_gl_s->next_poll_us += T1_gl_s->frame_step_us;
+    T1_gl_s->next_poll_us += T1_GAMELOOP_FRAME_STEP_US;
     if (T1_gl_s->next_poll_us < now) {
-        T1_gl_s->next_poll_us = now + T1_gl_s->frame_step_us;
+        T1_gl_s->next_poll_us = now + T1_GAMELOOP_FRAME_STEP_US;
     }
+}
+
+u8 T1_frame_update(void) {
+    T1_assert(T1_gameloop_active);
+    T1_assert(T1_gl_s->window_tex != T1_TEX_NONE);
+    if (!T1_gameloop_active || T1_gl_s->window_tex == T1_TEX_NONE) {
+        return 0;
+    }
+    
+    // Finishes the client's frame: renders its passes and shows the
+    // window's T1Tex
+    b8 presented = 0;
+    if (T1_gl_s->frame_begun) {
+        T1_gl_s->frame_begun = 0;
+        T1_os_gpu_render_frame();
+        if (!T1_gl_s->presented_once || T1_os_window_visible()) {
+            presented = T1_os_window_present(T1_gl_s->window_tex);
+            T1_gl_s->presented_once |= presented;
+        }
+        T1_gameloop_after_frame();
+    }
+    
+    T1_gameloop_pump_events(presented);
+    
+    /*
+    A hidden window (minimized or fully covered) pauses the client, and the
+    time it was hidden doesn't count as elapsed. Until the window showed a
+    frame, macOS may report it hidden although it's on screen.
+    */
+    while (
+        T1_gl_s->presented_once &&
+        !T1_os_window_close_requested() &&
+        !T1_os_window_visible())
+    {
+        T1_os_window_pump_events(T1_GAMELOOP_FRAME_STEP_US * 6);
+            T1_gl_s->previous_time = 0;
+    }
+    
+    if (T1_os_window_close_requested()) { return 0; }
+    
+    // Waits until the GPU is done with the frame T1_FRAMES_CAP ago, so the
+    // client can write the next one's buffers
+    T1_os_gpu_begin_frame();
+    
+    u64 now = T1_os_get_current_time_us();
+    T1_global->elapsed = T1_gl_s->previous_time == 0 ? 0 :
+        (u64)((f64)(now - T1_gl_s->previous_time) *
+            (f64)T1_global->timedelta_mult);
+    T1_gl_s->previous_time = now;
+    T1_global->this_frame_timestamp_us = now;
+    T1_global->frame_consts.timestamp = (u32)now;
+    
+    T1_gl_s->frame_resized = 0;
+    if (T1_gl_s->window_opened) {
+        T1_gl_s->window_opened = 0;
+        T1_global->last_resize_request_us = 0;
+        T1_gl_s->frame_resized = 1;
+    } else if (
+        T1_global->last_resize_request_us != 0 &&
+        now - T1_global->last_resize_request_us >=
+            T1_GAMELOOP_RESIZE_SETTLE_US)
+    {
+        // Until now the window showed its T1Tex scaled to the new size
+        T1_global_init();
+        T1_global->last_resize_request_us = 0;
+        T1_gl_s->frame_resized = 1;
+    }
+    
+    T1_gl_s->frame_begun = 1;
+    return 1;
 }
