@@ -4,6 +4,7 @@
 #include "T1_std.h"
 #include "T1_tex.h"
 #include "T1_img.h"
+#include "T1_macro_settings.h"
 
 typedef struct {
     T1Img image;

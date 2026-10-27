@@ -3,6 +3,7 @@
 #include "T1_types_public.h"
 #include "T1_std.h"
 #include "T1_assert.h"
+#include "T1_macro_settings.h"
 
 #define T1_AUDIO_ASSERTS_ACTIVE 1
 #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE

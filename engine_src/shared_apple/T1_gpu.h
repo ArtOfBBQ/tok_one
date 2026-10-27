@@ -1,6 +1,7 @@
 #ifndef T1_GPU_H
 #define T1_GPU_H
 
+#include "T1_stdint.h"
 
 #include <mach/mach_time.h>
 

@@ -530,9 +530,6 @@ static void strip_include_guards(char * in_out) {
     asm_state->arena_i = arena_pop_i;
 }
 
-// the line copy_build_file_to() replaces with an example's own name
-#define T1_APP_NAME_LINE "#define T1_APP_NAME \"Deck Assembler\""
-
 /*
 Copies build/filename to dir/filename, replacing the first line that is
 exactly replace_line (if not NULL) with replacement. Returns 0 on failure.
@@ -570,7 +567,12 @@ static uint8_t copy_build_file_to(
         fwrite(replacement, 1, strlen(replacement), dst);
         fwrite(at + replaced, 1, read - before - replaced, dst);
     } else {
-        assert(replace_line == NULL);
+        if (replace_line != NULL) {
+            printf(
+                "Error: expected replace_line to be NULL, got: %s\n",
+                replace_line);
+            assert(0);
+        }
         fwrite(contents, 1, read, dst);
     }
     
@@ -1001,15 +1003,8 @@ int main(void) {
         char dir[256];
         snprintf(dir, sizeof(dir), "examples/%s/", examples[e]);
         
-        char app_name_line[256];
-        snprintf(
-            app_name_line,
-            sizeof(app_name_line),
-            "#define T1_APP_NAME \"%s\"",
-            examples[e]);
-        
         if (
-            !copy_build_file_to("T1.h", dir, T1_APP_NAME_LINE, app_name_line) ||
+            !copy_build_file_to("T1.h", dir, NULL, NULL) ||
             !copy_build_file_to("T1.c", dir, NULL, NULL))
         {
             printf("ERROR - failed to copy T1.h/T1.c to %s\n", dir);

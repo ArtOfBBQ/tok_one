@@ -7,8 +7,9 @@
 #include "T1_os.h"
 #include "T1_gpu.h"
 #include "T1_gameloop.h"
+#include "T1_macro_settings.h"
 
-#include <unistd.h> // sysconf
+#include <unistd.h> // sysconf TODO: is this absolutely necessary?
 
 #define T1NSUserDomainMask 1
 #define T1NSUTF8StringEncoding 4

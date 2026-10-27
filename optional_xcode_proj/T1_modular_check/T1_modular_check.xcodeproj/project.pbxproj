@@ -1,0 +1,441 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		ECB40B84309057D000F1A6A6 /* T1_img.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B6B309057D000F1A6A6 /* T1_img.c */; };
+		ECB40B85309057D000F1A6A6 /* T1_assert.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B5C309057D000F1A6A6 /* T1_assert.c */; };
+		ECB40B86309057D000F1A6A6 /* T1_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B5E309057D000F1A6A6 /* T1_audio.c */; };
+		ECB40B87309057D000F1A6A6 /* T1_mem.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B70309057D000F1A6A6 /* T1_mem.c */; };
+		ECB40B88309057D000F1A6A6 /* T1_pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B78309057D000F1A6A6 /* T1_pipeline.c */; };
+		ECB40B89309057D000F1A6A6 /* T1_objc.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B72309057D000F1A6A6 /* T1_objc.c */; };
+		ECB40B8A309057D000F1A6A6 /* T1_fatal_error.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B65309057D000F1A6A6 /* T1_fatal_error.c */; };
+		ECB40B8B309057D000F1A6A6 /* T1_appinit.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B5A309057D000F1A6A6 /* T1_appinit.c */; };
+		ECB40B8C309057D000F1A6A6 /* T1_tex_array.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B80309057D000F1A6A6 /* T1_tex_array.c */; };
+		ECB40B8D309057D000F1A6A6 /* T1_embedded_data.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B63309057D000F1A6A6 /* T1_embedded_data.c */; };
+		ECB40B8E309057D000F1A6A6 /* T1_pass.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B76309057D000F1A6A6 /* T1_pass.c */; };
+		ECB40B8F309057D000F1A6A6 /* T1_io.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B6D309057D000F1A6A6 /* T1_io.c */; };
+		ECB40B90309057D000F1A6A6 /* T1_global.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B69309057D000F1A6A6 /* T1_global.c */; };
+		ECB40B91309057D000F1A6A6 /* T1_gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B67309057D000F1A6A6 /* T1_gameloop.c */; };
+		ECB40B92309057D000F1A6A6 /* T1_os_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B74309057D000F1A6A6 /* T1_os_common.c */; };
+		ECB40B93309057D000F1A6A6 /* T1_tex.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B7E309057D000F1A6A6 /* T1_tex.c */; };
+		ECB40B94309057D000F1A6A6 /* T1_std.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B7B309057D000F1A6A6 /* T1_std.c */; };
+		ECB40B95309057D000F1A6A6 /* T1_buf.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B60309057D000F1A6A6 /* T1_buf.c */; };
+		ECB40B96309057D000F1A6A6 /* T1.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B58309057D000F1A6A6 /* T1.c */; };
+		ECB40B9C309057E100F1A6A6 /* T1_os_apple.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B99309057E100F1A6A6 /* T1_os_apple.c */; };
+		ECB40B9D309057E100F1A6A6 /* T1_os_apple_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B9B309057E100F1A6A6 /* T1_os_apple_audio.c */; };
+		ECB40B9E309057E100F1A6A6 /* T1_gpu.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B98309057E100F1A6A6 /* T1_gpu.c */; };
+		ECB40BA03090581000F1A6A6 /* T1_os_macos.c in Sources */ = {isa = PBXBuildFile; fileRef = ECB40B9F3090581000F1A6A6 /* T1_os_macos.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		ECB40B4B309057BF00F1A6A6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		ECB40B4D309057BF00F1A6A6 /* T1_modular_check */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = T1_modular_check; sourceTree = BUILT_PRODUCTS_DIR; };
+		ECB40B57309057D000F1A6A6 /* T1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1.h; sourceTree = "<absolute>"; };
+		ECB40B58309057D000F1A6A6 /* T1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1.c; sourceTree = "<absolute>"; };
+		ECB40B59309057D000F1A6A6 /* T1_appinit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_appinit.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_appinit.h; sourceTree = "<absolute>"; };
+		ECB40B5A309057D000F1A6A6 /* T1_appinit.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_appinit.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_appinit.c; sourceTree = "<absolute>"; };
+		ECB40B5B309057D000F1A6A6 /* T1_assert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_assert.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_assert.h; sourceTree = "<absolute>"; };
+		ECB40B5C309057D000F1A6A6 /* T1_assert.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_assert.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_assert.c; sourceTree = "<absolute>"; };
+		ECB40B5D309057D000F1A6A6 /* T1_audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_audio.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_audio.h; sourceTree = "<absolute>"; };
+		ECB40B5E309057D000F1A6A6 /* T1_audio.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_audio.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_audio.c; sourceTree = "<absolute>"; };
+		ECB40B5F309057D000F1A6A6 /* T1_buf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_buf.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_buf.h; sourceTree = "<absolute>"; };
+		ECB40B60309057D000F1A6A6 /* T1_buf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_buf.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_buf.c; sourceTree = "<absolute>"; };
+		ECB40B61309057D000F1A6A6 /* T1_conditional_includes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_conditional_includes.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_conditional_includes.h; sourceTree = "<absolute>"; };
+		ECB40B62309057D000F1A6A6 /* T1_embedded_data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_embedded_data.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_embedded_data.h; sourceTree = "<absolute>"; };
+		ECB40B63309057D000F1A6A6 /* T1_embedded_data.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_embedded_data.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_embedded_data.c; sourceTree = "<absolute>"; };
+		ECB40B64309057D000F1A6A6 /* T1_fatal_error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_fatal_error.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_fatal_error.h; sourceTree = "<absolute>"; };
+		ECB40B65309057D000F1A6A6 /* T1_fatal_error.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_fatal_error.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_fatal_error.c; sourceTree = "<absolute>"; };
+		ECB40B66309057D000F1A6A6 /* T1_gameloop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_gameloop.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_gameloop.h; sourceTree = "<absolute>"; };
+		ECB40B67309057D000F1A6A6 /* T1_gameloop.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_gameloop.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_gameloop.c; sourceTree = "<absolute>"; };
+		ECB40B68309057D000F1A6A6 /* T1_global.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_global.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_global.h; sourceTree = "<absolute>"; };
+		ECB40B69309057D000F1A6A6 /* T1_global.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_global.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_global.c; sourceTree = "<absolute>"; };
+		ECB40B6A309057D000F1A6A6 /* T1_img.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_img.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_img.h; sourceTree = "<absolute>"; };
+		ECB40B6B309057D000F1A6A6 /* T1_img.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_img.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_img.c; sourceTree = "<absolute>"; };
+		ECB40B6C309057D000F1A6A6 /* T1_io.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_io.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_io.h; sourceTree = "<absolute>"; };
+		ECB40B6D309057D000F1A6A6 /* T1_io.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_io.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_io.c; sourceTree = "<absolute>"; };
+		ECB40B6E309057D000F1A6A6 /* T1_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_macro_settings.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_macro_settings.h; sourceTree = "<absolute>"; };
+		ECB40B6F309057D000F1A6A6 /* T1_mem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_mem.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_mem.h; sourceTree = "<absolute>"; };
+		ECB40B70309057D000F1A6A6 /* T1_mem.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_mem.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_mem.c; sourceTree = "<absolute>"; };
+		ECB40B71309057D000F1A6A6 /* T1_objc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_objc.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_objc.h; sourceTree = "<absolute>"; };
+		ECB40B72309057D000F1A6A6 /* T1_objc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_objc.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_objc.c; sourceTree = "<absolute>"; };
+		ECB40B73309057D000F1A6A6 /* T1_os.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_os.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_os.h; sourceTree = "<absolute>"; };
+		ECB40B74309057D000F1A6A6 /* T1_os_common.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_os_common.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_os_common.c; sourceTree = "<absolute>"; };
+		ECB40B75309057D000F1A6A6 /* T1_pass.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_pass.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_pass.h; sourceTree = "<absolute>"; };
+		ECB40B76309057D000F1A6A6 /* T1_pass.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_pass.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_pass.c; sourceTree = "<absolute>"; };
+		ECB40B77309057D000F1A6A6 /* T1_pipeline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_pipeline.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_pipeline.h; sourceTree = "<absolute>"; };
+		ECB40B78309057D000F1A6A6 /* T1_pipeline.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_pipeline.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_pipeline.c; sourceTree = "<absolute>"; };
+		ECB40B79309057D000F1A6A6 /* T1_simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_simd.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_simd.h; sourceTree = "<absolute>"; };
+		ECB40B7A309057D000F1A6A6 /* T1_std.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_std.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_std.h; sourceTree = "<absolute>"; };
+		ECB40B7B309057D000F1A6A6 /* T1_std.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_std.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_std.c; sourceTree = "<absolute>"; };
+		ECB40B7C309057D000F1A6A6 /* T1_stdint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_stdint.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_stdint.h; sourceTree = "<absolute>"; };
+		ECB40B7D309057D000F1A6A6 /* T1_tex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_tex.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_tex.h; sourceTree = "<absolute>"; };
+		ECB40B7E309057D000F1A6A6 /* T1_tex.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_tex.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_tex.c; sourceTree = "<absolute>"; };
+		ECB40B7F309057D000F1A6A6 /* T1_tex_array.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_tex_array.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_tex_array.h; sourceTree = "<absolute>"; };
+		ECB40B80309057D000F1A6A6 /* T1_tex_array.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_tex_array.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_tex_array.c; sourceTree = "<absolute>"; };
+		ECB40B81309057D000F1A6A6 /* T1_types_gpucpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_types_gpucpu.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_types_gpucpu.h; sourceTree = "<absolute>"; };
+		ECB40B82309057D000F1A6A6 /* T1_types_public.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_types_public.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_types_public.h; sourceTree = "<absolute>"; };
+		ECB40B83309057D000F1A6A6 /* T1_types_public_gpucpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_types_public_gpucpu.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared/T1_types_public_gpucpu.h; sourceTree = "<absolute>"; };
+		ECB40B97309057E100F1A6A6 /* T1_gpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_gpu.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared_apple/T1_gpu.h; sourceTree = "<absolute>"; };
+		ECB40B98309057E100F1A6A6 /* T1_gpu.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_gpu.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared_apple/T1_gpu.c; sourceTree = "<absolute>"; };
+		ECB40B99309057E100F1A6A6 /* T1_os_apple.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_os_apple.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared_apple/T1_os_apple.c; sourceTree = "<absolute>"; };
+		ECB40B9A309057E100F1A6A6 /* T1_os_apple_audio.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_os_apple_audio.h; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared_apple/T1_os_apple_audio.h; sourceTree = "<absolute>"; };
+		ECB40B9B309057E100F1A6A6 /* T1_os_apple_audio.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_os_apple_audio.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/shared_apple/T1_os_apple_audio.c; sourceTree = "<absolute>"; };
+		ECB40B9F3090581000F1A6A6 /* T1_os_macos.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_os_macos.c; path = /Users/jellevandeneynde/Documents/github/finite_engine/tok_one/engine_src/macos/T1_os_macos.c; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		ECB40B4F309057BF00F1A6A6 /* T1_modular_check */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = T1_modular_check;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		ECB40B4A309057BF00F1A6A6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		ECB40B44309057BF00F1A6A6 = {
+			isa = PBXGroup;
+			children = (
+				ECB40B9F3090581000F1A6A6 /* T1_os_macos.c */,
+				ECB40B97309057E100F1A6A6 /* T1_gpu.h */,
+				ECB40B98309057E100F1A6A6 /* T1_gpu.c */,
+				ECB40B99309057E100F1A6A6 /* T1_os_apple.c */,
+				ECB40B9A309057E100F1A6A6 /* T1_os_apple_audio.h */,
+				ECB40B9B309057E100F1A6A6 /* T1_os_apple_audio.c */,
+				ECB40B57309057D000F1A6A6 /* T1.h */,
+				ECB40B58309057D000F1A6A6 /* T1.c */,
+				ECB40B59309057D000F1A6A6 /* T1_appinit.h */,
+				ECB40B5A309057D000F1A6A6 /* T1_appinit.c */,
+				ECB40B5B309057D000F1A6A6 /* T1_assert.h */,
+				ECB40B5C309057D000F1A6A6 /* T1_assert.c */,
+				ECB40B5D309057D000F1A6A6 /* T1_audio.h */,
+				ECB40B5E309057D000F1A6A6 /* T1_audio.c */,
+				ECB40B5F309057D000F1A6A6 /* T1_buf.h */,
+				ECB40B60309057D000F1A6A6 /* T1_buf.c */,
+				ECB40B61309057D000F1A6A6 /* T1_conditional_includes.h */,
+				ECB40B62309057D000F1A6A6 /* T1_embedded_data.h */,
+				ECB40B63309057D000F1A6A6 /* T1_embedded_data.c */,
+				ECB40B64309057D000F1A6A6 /* T1_fatal_error.h */,
+				ECB40B65309057D000F1A6A6 /* T1_fatal_error.c */,
+				ECB40B66309057D000F1A6A6 /* T1_gameloop.h */,
+				ECB40B67309057D000F1A6A6 /* T1_gameloop.c */,
+				ECB40B68309057D000F1A6A6 /* T1_global.h */,
+				ECB40B69309057D000F1A6A6 /* T1_global.c */,
+				ECB40B6A309057D000F1A6A6 /* T1_img.h */,
+				ECB40B6B309057D000F1A6A6 /* T1_img.c */,
+				ECB40B6C309057D000F1A6A6 /* T1_io.h */,
+				ECB40B6D309057D000F1A6A6 /* T1_io.c */,
+				ECB40B6E309057D000F1A6A6 /* T1_macro_settings.h */,
+				ECB40B6F309057D000F1A6A6 /* T1_mem.h */,
+				ECB40B70309057D000F1A6A6 /* T1_mem.c */,
+				ECB40B71309057D000F1A6A6 /* T1_objc.h */,
+				ECB40B72309057D000F1A6A6 /* T1_objc.c */,
+				ECB40B73309057D000F1A6A6 /* T1_os.h */,
+				ECB40B74309057D000F1A6A6 /* T1_os_common.c */,
+				ECB40B75309057D000F1A6A6 /* T1_pass.h */,
+				ECB40B76309057D000F1A6A6 /* T1_pass.c */,
+				ECB40B77309057D000F1A6A6 /* T1_pipeline.h */,
+				ECB40B78309057D000F1A6A6 /* T1_pipeline.c */,
+				ECB40B79309057D000F1A6A6 /* T1_simd.h */,
+				ECB40B7A309057D000F1A6A6 /* T1_std.h */,
+				ECB40B7B309057D000F1A6A6 /* T1_std.c */,
+				ECB40B7C309057D000F1A6A6 /* T1_stdint.h */,
+				ECB40B7D309057D000F1A6A6 /* T1_tex.h */,
+				ECB40B7E309057D000F1A6A6 /* T1_tex.c */,
+				ECB40B7F309057D000F1A6A6 /* T1_tex_array.h */,
+				ECB40B80309057D000F1A6A6 /* T1_tex_array.c */,
+				ECB40B81309057D000F1A6A6 /* T1_types_gpucpu.h */,
+				ECB40B82309057D000F1A6A6 /* T1_types_public.h */,
+				ECB40B83309057D000F1A6A6 /* T1_types_public_gpucpu.h */,
+				ECB40B4F309057BF00F1A6A6 /* T1_modular_check */,
+				ECB40B4E309057BF00F1A6A6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		ECB40B4E309057BF00F1A6A6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				ECB40B4D309057BF00F1A6A6 /* T1_modular_check */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		ECB40B4C309057BF00F1A6A6 /* T1_modular_check */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ECB40B54309057BF00F1A6A6 /* Build configuration list for PBXNativeTarget "T1_modular_check" */;
+			buildPhases = (
+				ECB40B49309057BF00F1A6A6 /* Sources */,
+				ECB40B4A309057BF00F1A6A6 /* Frameworks */,
+				ECB40B4B309057BF00F1A6A6 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				ECB40B4F309057BF00F1A6A6 /* T1_modular_check */,
+			);
+			name = T1_modular_check;
+			packageProductDependencies = (
+			);
+			productName = T1_modular_check;
+			productReference = ECB40B4D309057BF00F1A6A6 /* T1_modular_check */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		ECB40B45309057BF00F1A6A6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					ECB40B4C309057BF00F1A6A6 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = ECB40B48309057BF00F1A6A6 /* Build configuration list for PBXProject "T1_modular_check" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = ECB40B44309057BF00F1A6A6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = ECB40B4E309057BF00F1A6A6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				ECB40B4C309057BF00F1A6A6 /* T1_modular_check */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ECB40B49309057BF00F1A6A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ECB40B84309057D000F1A6A6 /* T1_img.c in Sources */,
+				ECB40B85309057D000F1A6A6 /* T1_assert.c in Sources */,
+				ECB40B86309057D000F1A6A6 /* T1_audio.c in Sources */,
+				ECB40B87309057D000F1A6A6 /* T1_mem.c in Sources */,
+				ECB40B88309057D000F1A6A6 /* T1_pipeline.c in Sources */,
+				ECB40B89309057D000F1A6A6 /* T1_objc.c in Sources */,
+				ECB40BA03090581000F1A6A6 /* T1_os_macos.c in Sources */,
+				ECB40B8A309057D000F1A6A6 /* T1_fatal_error.c in Sources */,
+				ECB40B8B309057D000F1A6A6 /* T1_appinit.c in Sources */,
+				ECB40B8C309057D000F1A6A6 /* T1_tex_array.c in Sources */,
+				ECB40B8D309057D000F1A6A6 /* T1_embedded_data.c in Sources */,
+				ECB40B8E309057D000F1A6A6 /* T1_pass.c in Sources */,
+				ECB40B8F309057D000F1A6A6 /* T1_io.c in Sources */,
+				ECB40B90309057D000F1A6A6 /* T1_global.c in Sources */,
+				ECB40B91309057D000F1A6A6 /* T1_gameloop.c in Sources */,
+				ECB40B92309057D000F1A6A6 /* T1_os_common.c in Sources */,
+				ECB40B93309057D000F1A6A6 /* T1_tex.c in Sources */,
+				ECB40B94309057D000F1A6A6 /* T1_std.c in Sources */,
+				ECB40B95309057D000F1A6A6 /* T1_buf.c in Sources */,
+				ECB40B9C309057E100F1A6A6 /* T1_os_apple.c in Sources */,
+				ECB40B9D309057E100F1A6A6 /* T1_os_apple_audio.c in Sources */,
+				ECB40B9E309057E100F1A6A6 /* T1_gpu.c in Sources */,
+				ECB40B96309057D000F1A6A6 /* T1.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		ECB40B52309057BF00F1A6A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		ECB40B53309057BF00F1A6A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		ECB40B55309057BF00F1A6A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		ECB40B56309057BF00F1A6A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		ECB40B48309057BF00F1A6A6 /* Build configuration list for PBXProject "T1_modular_check" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ECB40B52309057BF00F1A6A6 /* Debug */,
+				ECB40B53309057BF00F1A6A6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ECB40B54309057BF00F1A6A6 /* Build configuration list for PBXNativeTarget "T1_modular_check" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ECB40B55309057BF00F1A6A6 /* Debug */,
+				ECB40B56309057BF00F1A6A6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = ECB40B45309057BF00F1A6A6 /* Project object */;
+}

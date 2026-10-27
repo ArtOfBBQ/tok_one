@@ -2,12 +2,10 @@
 #define T1_MACRO_SETTINGS_H
 
 // These macro definitions change the behavior of your app when you compile.
-#define T1_APP_NAME "Deck Assembler"
+#define T1_APP_NAME "T1 app"
 
 #define T1_ACTIVE 1
 #define T1_INACTIVE 2
-
-#define T1_IMG_PRINTF_ACTIVE 2
 
 #define T1_ASSERTS_ACTIVE 1
 

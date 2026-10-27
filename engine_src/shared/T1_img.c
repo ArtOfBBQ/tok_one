@@ -30,34 +30,16 @@ void T1_img_overwrite_subregion(
     const u32 at_column,
     const u32 at_row)
 {
+    // TODO: add *good = 0; here and *good = 1; at the end
+    
     T1_assert(at_column > 0);
     T1_assert(at_row > 0);
     
     if (at_column > column_count) {
-        #if T1_IMG_PRINTF_ACTIVE == 1
-        printf(
-            "can't write at [%u,%u], if only %u total columns\n",
-            at_column,
-            at_row,
-            column_count);
-        #elif T1_IMG_PRINTF_ACTIVE == 2
-        #else
-        #error
-        #endif
         return;
     }
     
     if (at_row > row_count) {
-        #if T1_IMG_PRINTF_ACTIVE == 1
-        printf(
-            "can't write at [%u,%u], if only %u total rows\n",
-            at_column,
-            at_row,
-            row_count);
-        #elif T1_IMG_PRINTF_ACTIVE == 2
-        #else
-        #error
-        #endif
         return;
     }
     
@@ -71,24 +53,6 @@ void T1_img_overwrite_subregion(
         ||
         (new_image->height != expected_height))
     {
-        #if T1_IMG_PRINTF_ACTIVE == 1
-        printf(
-            "Error - can't overwrite chunk [%u,%u] of dimensions [%u,%u] for image (%u x %u) with new subimage sized [%u,%u], expected size [%u,%u]\n",
-            at_column,
-            at_row,
-            column_count,
-            row_count,
-            whole_image->width,
-            whole_image->height,
-            new_image->width,
-            new_image->height,
-            expected_width,
-            expected_height);
-        #elif T1_IMG_PRINTF_ACTIVE == 2
-        #else
-        #error
-        #endif
-        
         return;
     }
     

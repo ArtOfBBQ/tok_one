@@ -1,8 +1,7 @@
 #ifndef T1_GAMELOOP_H
 #define T1_GAMELOOP_H
 
-#include <stdint.h>
-
+#include "T1_stdint.h"
 
 extern u8 T1_gameloop_active;
 

@@ -1,10 +1,9 @@
 #include "T1_os.h"
 
-#include <stdio.h>
-
 #include "T1_mem.h"
 #include "T1_assert.h"
 #include "T1_global.h"
+#include "T1_macro_settings.h"
 
 #include <pthread.h>
 #include <errno.h> // for pthread consts like EBUSY, EPERM

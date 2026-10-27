@@ -5,6 +5,7 @@
 
 #include "T1_types_public.h"
 #include "T1_stdint.h"
+#include "T1_macro_settings.h"
 
 typedef struct {
     s16 * samples_buffer;
