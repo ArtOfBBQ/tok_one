@@ -75,6 +75,3 @@ void T1_os_dir_filenames(
 {
     T1_os_get_filenames_in(path, filenames, filenames_cap);
 }
-void T1_os_dir_show(const char * path) {
-    T1_os_open_dir_in_file_explorer_window_if_possible(path);
-}

@@ -74,9 +74,7 @@ typedef struct {
     void * class_T1_ns_window_delegate; // T1NSWindowDelegate
     void * class_T1_app_delegate; // T1NSAppDelegate
     void * class_ns_app; // NSApp
-    void * class_ns_url; // NSURL;
     void * class_ns_file_manager; // NSFileManager
-    void * class_ns_workspace; // NSWorkspace
     void * class_ns_view; // NSView
     void * class_ca_metal_layer; // CAMetalLayer
     void * class_ns_menu; // NSMenu
@@ -98,11 +96,8 @@ typedef struct {
     void * sel_location_in_window; // locationInWindow:
     void * sel_button_number; // buttonNumber:
     void * sel_modifier_flags; // modifierFlags;
-    void * sel_file_url_with_path; // fileURLWithPath:
-    void * sel_shared_workspace; // sharedWorkspace
     void * func_ns_search_path_dirs_in_domains; // NSSearchPathForDirectoriesInDomains
     void * sel_delta_y; // deltaY
-    void * sel_open_url; // openURL:
     void * sel_content_view; // contentView
     void * sel_frame; // frame
     void * sel_get_key_code; // keyCode;
@@ -830,11 +825,7 @@ void T1_os_macos_init(void) {
     
     T1_os_macos_s->class_ns_app = T1_objc_get_class(
         "NSApplication");
-    T1_os_macos_s->class_ns_url = T1_objc_get_class(
-        "NSURL"); // NSURL;
     T1_assert(T1_os_macos_s->class_ns_app != NULL);
-    T1_os_macos_s->class_ns_workspace = T1_objc_get_class(
-        "NSWorkspace");
     T1_os_macos_s->class_ns_view = T1_objc_get_class(
         "NSView");
     T1_assert(T1_os_macos_s->class_ns_view != NULL);
@@ -929,10 +920,6 @@ void T1_os_macos_init(void) {
         "buttonNumber:");
     T1_os_macos_s->sel_modifier_flags = T1_objc_reg_sel(
         "modifierFlags");
-    T1_os_macos_s->sel_file_url_with_path = T1_objc_reg_sel(
-        "fileURLWithPath:");
-    T1_os_macos_s->sel_shared_workspace = T1_objc_reg_sel(
-        "sharedWorkspace");
     T1_assert(T1_os_macos_s->
         sel_current_dir_path != NULL);
     
@@ -942,8 +929,6 @@ void T1_os_macos_init(void) {
     
     T1_os_macos_s->sel_delta_y = T1_objc_reg_sel(
         "deltaY");
-    T1_os_macos_s->sel_open_url = T1_objc_reg_sel(
-        "openURL:");
     T1_os_macos_s->sel_content_view = T1_objc_reg_sel(
         "contentView");
     T1_os_macos_s->sel_frame = T1_objc_reg_sel(
@@ -1358,37 +1343,6 @@ float T1_os_x_to_x(const float x) {
 
 float T1_os_y_to_y(const float y) {
     return y;
-}
-
-void T1_os_open_dir_in_file_explorer_window_if_possible(
-    const char * folderpath)
-{
-    
-    if (folderpath == NULL || folderpath[0] == '\0') {
-        return;
-    }
-    
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    void * nsstr_folderpath =
-        T1_objc_nsstring_construct(folderpath);
-    
-    void * folder_url = (void *)T1_objc_msg_1arg(
-        T1_os_macos_s->class_ns_url,
-        T1_os_macos_s->sel_file_url_with_path,
-        (uintptr_t)nsstr_folderpath);
-    
-    // [[NSWorkspace sharedWorkspace] openURL: folderURL];
-    void * shared_ws = (void *)T1_objc_msg(
-        T1_os_macos_s->class_ns_workspace,
-        T1_os_macos_s->sel_shared_workspace);
-    
-    T1_objc_msg_1arg(
-        shared_ws,
-        T1_os_macos_s->sel_open_url,
-        (uintptr_t)folder_url);
-    
-    T1_objc_autorelease_pool_pop(pool);
 }
 
 void T1_os_enter_fullscreen(void) {

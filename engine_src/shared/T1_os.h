@@ -58,8 +58,6 @@ void T1_os_writable_filename_to_pathfile(
     c8 * recipient,
     u32 recipient_capacity);
 
-void T1_os_open_dir_in_file_explorer_window_if_possible(
-    const c8 * folderpath);
 
 // get current working directory
 

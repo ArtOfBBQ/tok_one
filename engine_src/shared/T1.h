@@ -328,8 +328,6 @@ void     T1_os_dir_filenames(
     const char * path,
     char * filenames,
     uint32_t filenames_cap);
-// Shows the dir in Finder (or the OS's file browser) where possible
-void     T1_os_dir_show(const char * path);
 
 /*
 OPERATING SYSTEM
