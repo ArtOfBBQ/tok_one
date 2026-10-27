@@ -204,7 +204,11 @@ T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
 Shaders are written in T1's small subset of MSL, which T1 will translate
 for other platforms, so keep them simple:
 - no #include or "using namespace", T1 puts what's needed in front
-- floats only (no half), and no typedefs of your own
+- floats only (no half), and no typedefs except typedef struct {...} Name;
+- no pointers: buffers are entry point parameters, e.g.
+  "const device MyStruct * things [[ buffer(T1_BUFS_I) ]]", used as
+  things[i].field. Copy an element into a local (MyStruct t = things[i]) or
+  pass the whole buffer on to a helper under the same name, never &things[i]
 - multiply matrices with mul(v, m), the row vector v times m, never with *
 - sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
   T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
