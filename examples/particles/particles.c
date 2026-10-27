@@ -39,8 +39,6 @@ typedef struct {
 } Settings;
 
 static const char * shader_source =
-"#include <metal_stdlib>\n"
-"using namespace metal;\n"
 "\n"
 "typedef struct {\n"
 "    float pos[2];\n"

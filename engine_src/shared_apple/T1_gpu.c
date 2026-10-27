@@ -992,26 +992,89 @@ void T1_os_gpu_try_shader_source(
     void * pool = T1_objc_autorelease_pool_push();
     
     /*
-    The macro settings T1 was compiled with, T1's embedded shader includes,
-    then the client's shaders
+    T1's shader language is a small subset of MSL. What Metal needs to
+    compile it (headers, T1's functions) goes around T1's settings and GPU
+    structs, then the client's shaders follow
     */
-    u32 full_source_cap = (u32)(
-        T1_std_strlen(T1_embedded_data_shader_settings) +
-        T1_std_strlen(T1_embedded_data_shader_includes) +
-        T1_std_strlen(shader_source) + 1);
+    static const char * metal_prelude =
+        "#include <metal_stdlib>\n"
+        "#include <simd/simd.h>\n"
+        "using namespace metal;\n";
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    #define T1_MIP_FILTER ", mip_filter::nearest"
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    #define T1_MIP_FILTER ""
+    #else
+    #error
+    #endif
+    static const char * metal_functions =
+        // the row vector v times the matrix m, never write v * m
+        "static inline float4 mul(float4 v, float4x4 m) { return v * m; }\n"
+        "static inline float3 mul(float3 v, float3x3 m) { return v * m; }\n"
+        // every texture, the texture(0) of every pass
+        "typedef array<texture2d_array<float>, T1_TEXARRAYS_CAP> T1Textures;\n"
+        // a compute pass's \"write_tex\", texture(T1_WRITE_TEX_I)
+        "typedef texture2d<float, access::read_write> T1WriteTex;\n"
+        "constexpr sampler T1_nearest_smp(\n"
+        "    mag_filter::nearest, min_filter::nearest,\n"
+        "    address::clamp_to_edge);\n"
+        "constexpr sampler T1_linear_smp(\n"
+        "    mag_filter::linear, min_filter::linear,\n"
+        "    address::clamp_to_edge" T1_MIP_FILTER ");\n"
+        "constexpr sampler T1_linear_repeat_smp(\n"
+        "    mag_filter::linear, min_filter::linear,\n"
+        "    address::repeat" T1_MIP_FILTER ");\n"
+        // the T1Tex tex at uv (0 to 1, top left is 0, 0)
+        "static inline float4 T1_sample_nearest(\n"
+        "    T1Textures t, u32 tex, float2 uv)\n"
+        "{\n"
+        "    return t[T1_TEX_ARRAY_I(tex)].sample(\n"
+        "        T1_nearest_smp, uv, T1_TEX_SLICE_I(tex));\n"
+        "}\n"
+        "static inline float4 T1_sample_linear(\n"
+        "    T1Textures t, u32 tex, float2 uv)\n"
+        "{\n"
+        "    return t[T1_TEX_ARRAY_I(tex)].sample(\n"
+        "        T1_linear_smp, uv, T1_TEX_SLICE_I(tex));\n"
+        "}\n"
+        "static inline float4 T1_sample_linear_repeat(\n"
+        "    T1Textures t, u32 tex, float2 uv)\n"
+        "{\n"
+        "    return t[T1_TEX_ARRAY_I(tex)].sample(\n"
+        "        T1_linear_repeat_smp, uv, T1_TEX_SLICE_I(tex));\n"
+        "}\n"
+        // the pixel of tex at pos (top left is 0, 0)
+        "static inline float4 T1_read(T1Textures t, u32 tex, uint2 pos) {\n"
+        "    return t[T1_TEX_ARRAY_I(tex)].read(pos, T1_TEX_SLICE_I(tex));\n"
+        "}\n"
+        "static inline float4 T1_write_tex_read(T1WriteTex t, uint2 pos) {\n"
+        "    return t.read(pos);\n"
+        "}\n"
+        "static inline void T1_write_tex_write(\n"
+        "    T1WriteTex t, uint2 pos, float4 color)\n"
+        "{\n"
+        "    t.write(color, pos);\n"
+        "}\n"
+        "static inline uint2 T1_write_tex_size(T1WriteTex t) {\n"
+        "    return uint2(t.get_width(), t.get_height());\n"
+        "}\n";
+    #undef T1_MIP_FILTER
+    const char * parts[5] = {
+        metal_prelude,
+        T1_embedded_data_shader_settings,
+        T1_embedded_data_shader_includes,
+        metal_functions,
+        shader_source,
+    };
+    u32 full_source_cap = 1;
+    for (u32 i = 0; i < 5; i++) {
+        full_source_cap += (u32)T1_std_strlen(parts[i]);
+    }
     char * full_source = T1_mem_malloc_managed(full_source_cap);
-    T1_std_strcpy_cap(
-        full_source,
-        full_source_cap,
-        T1_embedded_data_shader_settings);
-    T1_std_strcat_cap(
-        full_source,
-        full_source_cap,
-        T1_embedded_data_shader_includes);
-    T1_std_strcat_cap(
-        full_source,
-        full_source_cap,
-        shader_source);
+    full_source[0] = '\0';
+    for (u32 i = 0; i < 5; i++) {
+        T1_std_strcat_cap(full_source, full_source_cap, parts[i]);
+    }
     
     // stringWithUTF8String: copies, so we can free right away
     void * nsstr_source = T1_objc_nsstring_construct(full_source);

@@ -21,7 +21,6 @@ typedef uchar  u8;
 // typedef uchar  uint8_t;
 
 typedef float  f32;
-typedef half   f16;
 #else
 #include <stdint.h>
 #include <stddef.h>

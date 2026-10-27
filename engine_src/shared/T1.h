@@ -201,6 +201,17 @@ A frame is your list of passes, run in the order you made them. Passes and
 pipelines have ids: set a pass's properties with
 T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
 
+Shaders are written in T1's small subset of MSL, which T1 will translate
+for other platforms, so keep them simple:
+- no #include or "using namespace", T1 puts what's needed in front
+- floats only (no half), and no typedefs of your own
+- multiply matrices with mul(v, m), the row vector v times m, never with *
+- sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
+  T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
+  T1_read(), from the T1Textures at texture(0); no samplers of your own
+- a compute pass's "write_tex" is a T1WriteTex, used through
+  T1_write_tex_read(), T1_write_tex_write() and T1_write_tex_size()
+
 A pipeline is a function of your shaders (by name) plus the state that
 can't change afterwards: for drawing a vertex and a fragment function, how
 color(0) blends (T1_BLEND_*) and which triangles to skip (T1_CULL_*). *good
