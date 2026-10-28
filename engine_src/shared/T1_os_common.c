@@ -20,6 +20,7 @@ typedef struct {
     u64 thread_id_map_size;
     OSMutexID mutexes[T1_MUTEXES_CAP];
     u32 next_mutex_id;
+    u32 thread_id_map_mutex_id; // threads register themselves at any time
 } T1OSState;
 
 static T1OSState * T1_os_s = NULL;
@@ -27,6 +28,7 @@ static T1OSState * T1_os_s = NULL;
 void T1_os_init(void) {
     T1_os_s = T1_mem_malloc_unmanaged(sizeof(T1OSState));
     T1_std_memset(T1_os_s, 0, sizeof(T1OSState));
+    T1_os_s->thread_id_map_mutex_id = T1_os_init_mutex_and_return_id();
 }
 
 u64 T1_os_raw_thread_id_to_T1_thread_id(
@@ -35,21 +37,49 @@ u64 T1_os_raw_thread_id_to_T1_thread_id(
 {
     if (*fatal_error != 0) { return UINT64_MAX; }
     
+    T1_assert(raw_in != 0); // 0 marks a free slot
+    // new threads register themselves here, maybe several at once
+    T1_os_mutex_lock(T1_os_s->thread_id_map_mutex_id);
+    u64 out = UINT64_MAX;
     for (u64 i = 0; i < T1_os_s->thread_id_map_size; i++) {
         if (T1_os_s->thread_id_map[i] == raw_in) {
-            return i;
+            out = i;
+            break;
         }
     }
     
-    if ((T1_os_s->thread_id_map_size + 1) >= T1_THREAD_IDS_CAP) {
-        *fatal_error = "T1_os_raw_thread_id_to_T1_thread_id() overflowing T1_THREAD_IDS_CAP";
-        return UINT64_MAX;
+    // a slot an ended thread gave back (see T1_os_forget_raw_thread_id())
+    for (u64 i = 0; out == UINT64_MAX && i < T1_os_s->thread_id_map_size; i++) {
+        if (T1_os_s->thread_id_map[i] == 0) {
+            T1_os_s->thread_id_map[i] = raw_in;
+            out = i;
+        }
     }
     
-    T1_os_s->thread_id_map[T1_os_s->thread_id_map_size] = raw_in;
-    T1_os_s->thread_id_map_size += 1;
+    if (out == UINT64_MAX) {
+        if ((T1_os_s->thread_id_map_size + 1) >= T1_THREAD_IDS_CAP) {
+            *fatal_error = "T1_os_raw_thread_id_to_T1_thread_id() overflowing T1_THREAD_IDS_CAP";
+        } else {
+            T1_os_s->thread_id_map[T1_os_s->thread_id_map_size] = raw_in;
+            out = T1_os_s->thread_id_map_size;
+            T1_os_s->thread_id_map_size += 1;
+        }
+    }
+    T1_os_mutex_unlock(T1_os_s->thread_id_map_mutex_id);
     
-    return T1_os_s->thread_id_map_size - 1;
+    return out;
+}
+
+void T1_os_forget_raw_thread_id(u64 raw_in) {
+    T1_assert(raw_in != 0); // 0 marks a free slot
+    T1_os_mutex_lock(T1_os_s->thread_id_map_mutex_id);
+    for (u64 i = 0; i < T1_os_s->thread_id_map_size; i++) {
+        if (T1_os_s->thread_id_map[i] == raw_in) {
+            T1_os_s->thread_id_map[i] = 0;
+            break;
+        }
+    }
+    T1_os_mutex_unlock(T1_os_s->thread_id_map_mutex_id);
 }
 
 u32 T1_os_init_mutex_and_return_id(void)

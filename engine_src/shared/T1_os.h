@@ -180,6 +180,12 @@ void T1_os_start_thread(
     void *(*function_to_run)(void *),
     void * argument);
 u64 T1_os_get_T1_thread_id(char ** const fatal_error);
+/*
+A thread that ends gives its T1 thread id back, for the next thread to get:
+T1 thread ids index per-thread state (the objc autorelease pools), so
+without this only so many threads could ever start
+*/
+void T1_os_forget_raw_thread_id(u64 raw_in);
 u64 T1_os_raw_thread_id_to_T1_thread_id(
     u64 raw_in,
     char ** const fatal_error);

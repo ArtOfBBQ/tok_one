@@ -44,7 +44,6 @@ typedef struct {
     void * sel_active_processor_count; // activeProcessorCount
     void * sel_remove_item_at_path_error; // removeItemAtPath:error:
     void * sel_copy_item_at_path_to_path_error; // copyItemAtPath:toPath:error:
-    s32 mutex_id;
     b8 framework_good;
 } T1OSAppleState;
 
@@ -54,8 +53,6 @@ void T1_apple_os_init(void) {
     T1_os_apple_s = T1_mem_malloc_unmanaged(
         sizeof(T1OSAppleState));
     T1_std_memset(T1_os_apple_s, 0, sizeof(T1OSAppleState));
-    
-    T1_os_apple_s->mutex_id = T1_os_init_mutex_and_return_id();
     
     // classes
     T1_os_apple_s->class_ns_filemanager = T1_objc_get_class(
@@ -631,21 +628,35 @@ void T1_os_get_res_dir(
     T1_objc_autorelease_pool_pop(pool);
 }
 
-static void *(* T1_os_next_thread_function_to_run)(void *) = NULL;
+// What a new thread runs: its own copy, so threads started at the same time
+// can't overwrite each other's (the thread frees it)
+typedef struct {
+    void *(* function_to_run)(void *);
+    void * argument;
+} T1OSThreadStart;
 
 static void * T1_os_apple_start_thread_with_autorelease(
-    void * argument)
+    void * thread_start)
 {
+    T1OSThreadStart start = *(T1OSThreadStart *)thread_start;
+    T1_mem_free_managed(thread_start);
+
     char * dud_error = 0;
     u64 T1_thread_id = T1_os_get_T1_thread_id(&dud_error);
     T1_assert(dud_error == 0);
-    
+    (void)T1_thread_id;
+
     void * pool = T1_objc_autorelease_pool_push();
-    
-    void * out = T1_os_next_thread_function_to_run(argument);
-    
+
+    void * out = start.function_to_run(start.argument);
+
     T1_objc_autorelease_pool_pop(pool);
-    
+
+    // the thread ends: its T1 thread id goes to the next thread
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+    T1_os_forget_raw_thread_id(tid);
+
     return out;
 }
 
@@ -653,23 +664,22 @@ void T1_os_start_thread(
     void *(*function_to_run)(void *),
     void * argument)
 {
-    // TODO: maybe we should just use pthread for threads instead of
-    // dispatch_async, since we need pthreads for mutex locks anyway
-    // Let's revisit this when we port to other platforms
-    T1_os_mutex_lock(T1_os_apple_s->mutex_id);
-    
-    T1_os_next_thread_function_to_run = function_to_run;
+    T1OSThreadStart * start = T1_mem_malloc_managed(sizeof(T1OSThreadStart));
+    start->function_to_run = function_to_run;
+    start->argument = argument;
+
     pthread_t thread;
     u32 result = (u32)pthread_create(
         &thread,
         NULL,
         T1_os_apple_start_thread_with_autorelease,
-        argument);
+        start);
     T1_assert(result == 0);
     (void)result; // only used by T1_assert()
-    
-    T1_os_mutex_unlock(T1_os_apple_s->mutex_id);
+    // nobody joins our threads: their resources go when they end
+    pthread_detach(thread);
 }
+
 u64 T1_os_get_T1_thread_id(char ** const fatal_error) {
     if (*fatal_error != 0) { return 0; }
     
