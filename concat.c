@@ -72,6 +72,7 @@ static const char * c_files[] = {
 "T1_img.c",
 "T1_std.c",
 "T1_token.c",
+"T1_shader.c",
 "T1_assert.c",
 "T1_pipeline.c",
 "T1_pass.c",

@@ -9,6 +9,7 @@
 #include "T1_objc.h"
 #include "T1_embedded_data.h"
 #include "T1_assert.h"
+#include "T1_shader.h"
 #include "T1_audio.h"
 #include "T1_io.h"
 #include "T1_global.h"
@@ -254,6 +255,18 @@ void T1_gpu_try_shader_source(
     const u32 error_recip_cap,
     char ** const fatal_error)
 {
+    if (*fatal_error != 0) { return; }
+    
+    #if T1_SHADER_CHECK_ACTIVE == T1_ACTIVE
+    if (shader_source != NULL && shader_source[0] != '\0') {
+        T1_shader_check(shader_source, good, error_recip, error_recip_cap);
+        if (!*good) { return; }
+    }
+    #elif T1_SHADER_CHECK_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_os_gpu_try_shader_source(
         shader_source,
         good,

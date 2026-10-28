@@ -181,7 +181,8 @@ pipelines have ids: set a pass's properties with
 T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
 
 Shaders are written in T1's small subset of MSL, which T1 will translate
-for other platforms, so keep them simple:
+for other platforms, so keep them simple (with T1_SHADER_CHECK_ACTIVE,
+T1_gpu_try_shader_source() fails on anything outside it and says where):
 - no #include or "using namespace", T1 puts what's needed in front
 - floats only (no half), and no typedefs except typedef struct {...} Name;
 - no pointers: buffers are entry point parameters, e.g.

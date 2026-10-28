@@ -9,6 +9,9 @@
 
 #define T1_ASSERTS_ACTIVE 1
 
+// Check that shaders stay in T1's MSL subset when they load (see RENDERING)
+#define T1_SHADER_CHECK_ACTIVE 1
+
 #define T1_GAMEPAD_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_MIPMAPS_ACTIVE 2
