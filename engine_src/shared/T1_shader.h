@@ -15,4 +15,19 @@ void T1_shader_check(
     c8 * error_recip,
     u32 error_recip_cap);
 
+/*
+Translates shader_source (as for T1_gpu_try_shader_source, it's checked
+first) to GLSL 4.50 for Vulkan, with T1's settings and GPU headers in front
+like on Metal. Every entry point becomes a unit of its own, recip gets them
+one after another, each starting with a line "//T1_UNIT vert|frag|comp
+name". The descriptor layout a Vulkan backend must match is in T1_shader.c.
+*/
+void T1_shader_to_glsl(
+    const c8 * shader_source,
+    c8 * recip,
+    u32 recip_cap,
+    u8 * good,
+    c8 * error_recip,
+    u32 error_recip_cap);
+
 #endif // T1_SHADER_H

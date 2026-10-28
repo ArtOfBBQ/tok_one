@@ -190,6 +190,9 @@ T1_gpu_try_shader_source() fails on anything outside it and says where):
   things[i].field. Copy an element into a local (MyStruct t = things[i]) or
   pass the whole buffer on to a helper under the same name, never &things[i]
 - multiply matrices with mul(v, m), the row vector v times m, never with *
+- no implicit conversions between bool, ints and floats: write x != 0,
+  (b ? 1.0f : 0.0f), 35 instead of 35.0f for an s32, and both sides of
+  ?: of one type (float4(1.0f), not 1.0f, next to a float4)
 - sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
   T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
   T1_read(), from the T1Textures at texture(0); no samplers of your own
@@ -327,7 +330,58 @@ void T1_os_dir_filenames(
     uint32_t filenames_cap);
 
 /*
+OPERATING SYSTEM
+*/
+uint64_t T1_os_get_current_time_us(void);
+
+void T1_os_start_thread(
+    void *(*function_to_run)(void *), void * arg_on_heap);
+uint32_t T1_os_init_mutex_and_return_id(void);
+uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
+void T1_os_mutex_lock(uint32_t mutex_id);
+void T1_os_mutex_unlock(uint32_t mutex_id);
+
+/*
+AUDIO
+T1 plays raw samples (16-bit stereo at 44.1kHz), decode your sound files
+with whatever parser you like. A sound is known by a name (e.g. its
+filename): T1_audio_sound_id() returns its id, the same one every time,
+and T1_audio_set_samples() gives it its samples once. These only exist with
+T1_AUDIO_ACTIVE, so calls to them need the same #if.
+*/
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
+int32_t T1_audio_sound_id(
+    const char * name, char ** const fatal_error);
+void T1_audio_set_samples(
+    int32_t sound_id,
+    int16_t * samples,
+    int32_t samples_size);
+void T1_audio_play(int32_t sound_id, float volume);
+/*
+For music: copies samples_size samples of the sound, from sound_offset on,
+into what plays play_cursor_offset samples from now
+*/
+void T1_audio_stream(
+    int32_t  sound_id,
+    uint64_t sound_offset,
+    uint64_t play_cursor_offset,
+    uint32_t samples_size,
+    uint8_t  is_music);
+// how many samples have played
+uint64_t T1_audio_play_cursor(void);
+void T1_audio_stop_all(void);
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
+/*
 TOKENS
+
+A tokenizer is absolutely not necessary for rendering - it's exposed here
+only because T1 needs it for transpiling your shader code, and I experienced
+a regular need for it.
+
 Splits text into tokens by rules you register, e.g. for a parser of your
 own file format. Each rule gives its tokens a kind, a number you choose:
 - a literal is exact text: "==", "{", "float"
@@ -415,51 +469,5 @@ The whole value as a number, else *good is 0: f64 takes 12, -0.5, .5, 1e-3
 */
 double   T1_token_parse_f64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 int64_t  T1_token_parse_s64(uint32_t tokenizer, uint32_t i, uint8_t * good);
-
-/*
-OPERATING SYSTEM
-*/
-uint64_t T1_os_get_current_time_us(void);
-
-void T1_os_start_thread(
-    void *(*function_to_run)(void *), void * arg_on_heap);
-uint32_t T1_os_init_mutex_and_return_id(void);
-uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
-void T1_os_mutex_lock(uint32_t mutex_id);
-void T1_os_mutex_unlock(uint32_t mutex_id);
-
-/*
-AUDIO
-T1 plays raw samples (16-bit stereo at 44.1kHz), decode your sound files
-with whatever parser you like. A sound is known by a name (e.g. its
-filename): T1_audio_sound_id() returns its id, the same one every time,
-and T1_audio_set_samples() gives it its samples once. These only exist with
-T1_AUDIO_ACTIVE, so calls to them need the same #if.
-*/
-#if T1_AUDIO_ACTIVE == T1_ACTIVE
-int32_t T1_audio_sound_id(
-    const char * name, char ** const fatal_error);
-void T1_audio_set_samples(
-    int32_t sound_id,
-    int16_t * samples,
-    int32_t samples_size);
-void T1_audio_play(int32_t sound_id, float volume);
-/*
-For music: copies samples_size samples of the sound, from sound_offset on,
-into what plays play_cursor_offset samples from now
-*/
-void T1_audio_stream(
-    int32_t  sound_id,
-    uint64_t sound_offset,
-    uint64_t play_cursor_offset,
-    uint32_t samples_size,
-    uint8_t  is_music);
-// how many samples have played
-uint64_t T1_audio_play_cursor(void);
-void T1_audio_stop_all(void);
-#elif T1_AUDIO_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
 
 #endif // T1_H
