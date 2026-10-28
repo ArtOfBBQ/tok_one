@@ -4,7 +4,7 @@
 /*
 Search for documentation by section:
   APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT, TEXTURES,
-  RENDERING, BUFFERS, FILES, OPERATING SYSTEM, AUDIO
+  RENDERING, BUFFERS, FILES, TOKENS, OPERATING SYSTEM, AUDIO
 
 The macro settings at the top are yours to edit.
 */
@@ -324,6 +324,96 @@ void T1_os_dir_filenames(
     const char * path,
     char * filenames,
     uint32_t filenames_cap);
+
+/*
+TOKENS
+Splits text into tokens by rules you register, e.g. for a parser of your
+own file format. Each rule gives its tokens a kind, a number you choose:
+- a literal is exact text: "==", "{", "float"
+- a run is one byte from first_set, then as many bytes from rest_set as
+  follow: identifiers, numbers, whitespace. Sets are written like
+  "A-Za-z0-9_" (ranges and single bytes, a '-' first or last is itself), a
+  '^' first means every byte except those; "" is the empty set
+- a delimited token is start text, then everything up to stop text, and
+  the stop too if stop_in_token: block comments, strings, or line comments
+  that leave their newline. The byte after escape (0 for none) is never
+  part of stop. If stop never comes, the token ends with the text.
+At every position the longest match wins, and of equally long ones the rule
+registered first, so register keywords before an identifier run (then
+"float" is the keyword and "float4" an identifier). Tokens of discarded
+rules (whitespace, comments) aren't stored. Bytes no rule matches become
+T1_TOKEN_UNMATCHED tokens, a row of them is one token.
+
+uint32_t t = T1_token_new();
+T1_token_add_run(t, " \t\r\n", " \t\r\n", MY_SPACE, 1);
+T1_token_add_run(t, "#", "^\n", MY_COMMENT, 1); // to the end of the line
+T1_token_add_literal(t, "newmtl", MY_NEWMTL, 0);
+T1_token_add_run(t, "^ \t\r\n", "^ \t\r\n", MY_WORD, 0);
+T1_token_build(t); // once, after the last rule
+T1_token_run(t, text, text_size);
+
+T1_token_build() merges the rules into one state machine, so a run costs
+about one table lookup per byte, however many rules there are. Tokens point
+into the text you ran on: keep it until you're done with them, they last
+until the next T1_token_run(). Lines count from 1. Needs T1_init().
+
+A token's text is all it matched, its value is the same except that a
+delimited token's value leaves out start and stop ("abc" for "\"abc\"").
+T1_token_value() gives it 0-terminated, and T1_token_equals(), _copy() and
+_parse_*() work on values too. Asking for a token past the last one is fine:
+it's a T1_TOKEN_END token of size 0 at the end of the text, so a parser can
+look ahead without checking the count.
+*/
+#define T1_TOKEN_UNMATCHED UINT32_MAX
+#define T1_TOKEN_END       (UINT32_MAX - 1)
+// 0 is never a tokenizer
+uint32_t T1_token_new(void);
+void     T1_token_delete(uint32_t tokenizer);
+void     T1_token_add_literal(
+    uint32_t tokenizer,
+    const char * text,
+    uint32_t kind,
+    uint8_t discard);
+void     T1_token_add_run(
+    uint32_t tokenizer,
+    const char * first_set,
+    const char * rest_set,
+    uint32_t kind,
+    uint8_t discard);
+void     T1_token_add_delimited(
+    uint32_t tokenizer,
+    const char * start,
+    const char * stop,
+    char escape,
+    uint8_t stop_in_token,
+    uint32_t kind,
+    uint8_t discard);
+void     T1_token_build(uint32_t tokenizer);
+void     T1_token_run(
+    uint32_t tokenizer,
+    const char * text,
+    uint64_t text_size);
+uint32_t T1_token_count(uint32_t tokenizer);
+uint32_t T1_token_kind(uint32_t tokenizer, uint32_t i);
+// Not 0-terminated, see T1_token_size()
+const char * T1_token_text(uint32_t tokenizer, uint32_t i);
+// 0-terminated, lasts until the next T1_token_run()
+const char * T1_token_value(uint32_t tokenizer, uint32_t i);
+uint32_t T1_token_size(uint32_t tokenizer, uint32_t i);
+uint32_t T1_token_line(uint32_t tokenizer, uint32_t i);
+uint8_t  T1_token_equals(uint32_t tokenizer, uint32_t i, const char * str);
+// Copies the value and a 0, cut short to fit recip_cap
+void     T1_token_copy(
+    uint32_t tokenizer,
+    uint32_t i,
+    char * recip,
+    uint32_t recip_cap);
+/*
+The whole value as a number, else *good is 0: f64 takes 12, -0.5, .5, 1e-3
+(not rounded perfectly in the last bit), s64 takes -12 and 0x1F
+*/
+double   T1_token_parse_f64(uint32_t tokenizer, uint32_t i, uint8_t * good);
+int64_t  T1_token_parse_s64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 
 /*
 OPERATING SYSTEM

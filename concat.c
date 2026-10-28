@@ -71,6 +71,7 @@ static const char * c_files[] = {
 "T1_objc.c",
 "T1_img.c",
 "T1_std.c",
+"T1_token.c",
 "T1_assert.c",
 "T1_pipeline.c",
 "T1_pass.c",
@@ -793,7 +794,11 @@ static void append_shader_settings_to_out(void) {
     char path[512];
     FILE * file = NULL;
     for (uint32_t i = 0; i < asm_state->search_paths_size && !file; i++) {
-        snprintf(path, sizeof(path), "%s%s", search_paths[i], macro_settings_file);
+        snprintf(
+            path, sizeof(path),
+            "%s%s",
+            search_paths[i],
+            macro_settings_file);
         file = fopen(path, "rb");
     }
     assert(file != NULL);
@@ -1015,7 +1020,7 @@ int main(void) {
         snprintf(
             cmd,
             sizeof(cmd),
-            "gcc -std=c11 -O2 examples/%s/%s.c examples/%s/T1.c "
+            "gcc -std=c11 -O3 examples/%s/%s.c examples/%s/T1.c "
             "-o build/examples/%s",
             examples[e],
             examples[e],
