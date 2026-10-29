@@ -9,50 +9,18 @@
 
 #include <string.h>
 
-#include "T1_simd.h"
-
+/*
+Plain loops: the compiler turns them into vector stores (or a call to its
+own memset/memcpy) where the CPU has them, no intrinsics needed
+*/
 void * T1_std_memset(
     void * in,
     s32 value,
     u64 size_bytes)
 {
     T1_assert(in != NULL);
-    
     s8 * input = (s8 *)in;
-    
-    u32 i = 0;
-    
-    #ifdef __ARM_NEON
-    int8x16_t neon_preset = vld1q_dup_s8(&value);
-    for (; i+15 < size_bytes; i += 16) {
-	    vst1q_s8(input + i, neon_preset);
-    }
-    #endif
-    
-    #ifdef __AVX__
-    __m256i avx_preset = _mm256_set1_epi8((char)value);
-    
-    for (; i+31 < size_bytes; i += 32) {
-        _mm256_storeu_si256(
-            (__m256i *)(input + i),
-            avx_preset);
-    }
-    #endif
-    
-    #ifdef __SSE2__
-    __m128i sse_preset = _mm_set1_epi8((char)value);
-    
-    for (; i+15 < size_bytes; i += 16) {
-        _mm_storeu_si128(
-            (__m128i *)(input + i),
-            sse_preset);
-    }
-    #endif
-    
-    for (; i < size_bytes; i++) {
-        input[i] = (char)value;
-    }
-    
+    for (u64 i = 0; i < size_bytes; i++) { input[i] = (s8)value; }
     return in;
 }
 
@@ -63,39 +31,7 @@ T1_std_memset_i16(
     u32 size_bytes)
 {
     s16 * input = (s16 *)in;
-    
-    u32 i = 0;
-    
-    #ifdef __ARM_NEON
-    int16x8_t neon_preset = vld1q_dup_s16(&value);
-    for (; i+7 < (size_bytes / 2); i += 8) {
-        vst1q_s16(input + i, neon_preset);
-    }
-    #endif
-    
-    #ifdef __AVX__
-    __m256i avx_preset = _mm256_set1_epi16(value);
-    
-    for (; i+15 < (size_bytes / 2); i += 16) {
-        _mm256_storeu_si256(
-            (__m256i *)(input + i),
-            avx_preset);
-    }
-    #endif
-    
-    #ifdef __SSE2__
-    __m128i sse_preset = _mm_set1_epi16(value);
-    
-    for (; i+7 < (size_bytes / 2); i += 8) {
-        _mm_storeu_si128(
-            (__m128i *)(input + i),
-            sse_preset);
-    }
-    #endif
-    
-    for (; i < (size_bytes / 2); i++) {
-        input[i] = value;
-    }
+    for (u32 i = 0; i < size_bytes / 2; i++) { input[i] = value; }
 }
 
 void
@@ -105,39 +41,7 @@ T1_std_memset_s32(
     u32 size_bytes)
 {
     s32 * input = (s32 *)in;
-    
-    u32 i = 0;
-    
-    #ifdef __ARM_NEON
-    int16x8_t neon_preset = vld1q_dup_s32(&value);
-    for (; i+3 < (size_bytes / 4); i += 4) {
-        vst1q_s32(input + i, neon_preset);
-    }
-    #endif
-    
-    #ifdef __AVX__
-    __m256i avx_preset = _mm256_set1_epi32(value);
-    
-    for (; i+7 < (size_bytes / 4); i += 8) {
-        _mm256_storeu_si256(
-            (__m256i *)(input + i),
-            avx_preset);
-    }
-    #endif
-    
-    #ifdef __SSE2__
-    __m128i sse_preset = _mm_set1_epi32(value);
-    
-    for (; i+3 < (size_bytes / 4); i += 4) {
-        _mm_storeu_si128(
-            (__m128i *)(input + i),
-            sse_preset);
-    }
-    #endif
-    
-    for (; i < (size_bytes / 4); i++) {
-        input[i] = value;
-    }
+    for (u32 i = 0; i < size_bytes / 4; i++) { input[i] = value; }
 }
 
 void
@@ -147,39 +51,7 @@ T1_std_memset_f32(
     u32 size_bytes)
 {
     f32 * input = (f32 *)in;
-    
-    u32 i = 0;
-    
-    #ifdef __ARM_NEON
-    float32x4_t neon_preset = vld1q_dup_f32(&value);
-    for (; i+3 < (size_bytes / 4); i += 4) {
-        vst1q_f32(input + i, neon_preset);
-    }
-    #endif
-    
-    #ifdef __AVX__
-    __m256 avx_preset = _mm256_set1_ps(value);
-    
-    for (; i+7 < (size_bytes / 4); i += 8) {
-        _mm256_storeu_ps(
-            (input + i),
-            avx_preset);
-    }
-    #endif
-    
-    #ifdef __SSE2__
-    __m128 sse_preset = _mm_set1_ps(value);
-    
-    for (; i+3 < (size_bytes / 4); i += 4) {
-        _mm_storeu_ps(
-            (input + i),
-            sse_preset);
-    }
-    #endif
-    
-    for (; i < (size_bytes / 4); i++) {
-        input[i] = value;
-    }
+    for (u32 i = 0; i < size_bytes / 4; i++) { input[i] = value; }
 }
 
 void *
@@ -188,39 +60,9 @@ T1_std_memcpy(
     const void * src,
     u64 n_bytes)
 {
-    u32 i = 0;
-    char * destination = (char *)dest;
-    char * source = (char *)src;
-    
-    #ifdef __ARM_NEON
-    for (; i+15 < n_bytes; i += 16) {
-        int8x16_t neon_copy = vld1q_s8(src + i);
-        vst1q_s8(dest + i, neon_copy);
-    }
-    #endif
-    
-    #ifdef __AVX__
-    for (; i+31 < n_bytes; i += 32) {
-        __m256 sse_copy = _mm256_loadu_si256((const __m256i *)(source + i));
-        _mm256_storeu_si256(
-            (__m256i *)(destination + i),
-            sse_copy);
-    }
-    #endif
-    
-    #ifdef __SSE2__
-    for (; i+15 < n_bytes; i += 16) {
-        __m128 sse_copy = _mm_loadu_si128((const __m128i *)(source + i));
-        _mm_storeu_si128(
-            (__m128i *)(destination + i),
-            sse_copy);
-    }
-    #endif
-    
-    for (; i < n_bytes; i++) {
-        destination[i] = source[i];
-    }
-    
+    s8 * destination = (s8 *)dest;
+    const s8 * source = (const s8 *)src;
+    for (u64 i = 0; i < n_bytes; i++) { destination[i] = source[i]; }
     return dest;
 }
 
@@ -477,24 +319,6 @@ T1_std_copy_strings(
 u64 T1_std_strlen(const char * null_terminated_string)
 {
     u32 return_value = 0;
-    
-    #if 0
-    #ifdef __ARM_NEON
-    s8 * str_as_i8 = (s8 *)null_terminated_string;
-    s8 nullchar = (s8)'\0';
-    int8x16_t nullterm = vld1q_dup_s8(&nullchar);
-    
-    while (1) {
-        int8x16_t chunk = vld1q_s8(str_as_i8);
-        uint8x16_t matches = vceqq_s8(nullterm, chunk);
-        u8 any_match = vmaxvq_u8(matches);
-        if (any_match) { break; }
-        
-        return_value += 16;
-        str_as_i8 += 16;
-    }
-    #endif
-    #endif
     
     while (
         null_terminated_string[return_value] != '\0')
