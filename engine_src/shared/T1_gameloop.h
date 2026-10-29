@@ -13,6 +13,7 @@ void T1_gameloop_init(
 void T1_window_open(T1Tex tex, char ** const fatal_error);
 void T1_window_set_tex(T1Tex tex);
 void T1_window_toggle_fullscreen(void);
+void T1_window_set_pause_when_hidden(u8 pause);
 u32  T1_window_get_width(void);
 u32  T1_window_get_height(void);
 u32  T1_window_get_pixel_width(void);

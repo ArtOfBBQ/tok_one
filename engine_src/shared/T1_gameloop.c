@@ -24,6 +24,7 @@ typedef struct {
     b8 frame_resized; // the window settled on a new size
     b8 window_opened; // the first frame reports a resize right away
     b8 presented_once; // before that, the OS may report the window hidden
+    b8 run_hidden; // see T1_window_set_pause_when_hidden()
 } T1GameloopState;
 static T1GameloopState * T1_gl_s = NULL;
 
@@ -55,6 +56,10 @@ void T1_window_open(T1Tex tex, char ** const fatal_error) {
     // The client's first frame reports a resize, so it can build its scene
     // for the window's size there
     T1_gl_s->window_opened = 1;
+}
+
+void T1_window_set_pause_when_hidden(u8 pause) {
+    T1_gl_s->run_hidden = !pause;
 }
 
 void T1_window_set_tex(T1Tex tex) {
@@ -170,6 +175,7 @@ u8 T1_frame_update(void) {
     frame, macOS may report it hidden although it's on screen.
     */
     while (
+        !T1_gl_s->run_hidden &&
         T1_gl_s->presented_once &&
         !T1_os_window_close_requested() &&
         !T1_os_window_visible())

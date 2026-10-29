@@ -107,6 +107,12 @@ returns 0 when the window's close button or the OS's quit command was
 used. Call it from the main thread.
 */
 uint8_t  T1_frame_update(void);
+/*
+Whether T1_frame_update() waits while the window is hidden (1, the
+default). 0 keeps your frames running at about 60 a second, unshown: for
+tools and automated runs that don't watch the window
+*/
+void T1_window_set_pause_when_hidden(uint8_t pause);
 // The window settled on a new size this frame. T1 keeps all your objects,
 // move, rebuild or delete what depends on the size. Until then, the
 // window's T1Tex was scaled to the window.
