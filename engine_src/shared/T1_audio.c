@@ -260,13 +260,31 @@ void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
 
 void T1_audio_play(
     s32 permasound_id,
-    f32 volume_mult)
+    f32 volume_mult,
+    u64 pause_us)
 {
+    // the samples are 2 channels interleaved: whole frames ahead
+    const u64 frames_ahead = (u64)(
+        (f64)pause_us * (f64)T1_audio_s->sample_rate / 1000000.0);
+    const u64 offset = DEFAULT_WRITING_OFFSET + frames_ahead * 2;
+    
+    #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(permasound_id >= 0);
+    T1_assert(
+        offset +
+            (u64)(all_permasounds[permasound_id].allsamples_tail_i -
+                all_permasounds[permasound_id].allsamples_head_i) <
+        T1_audio_s->global_samples_size);
+    #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
     T1_audio_add_permasound_to_global_buffer_at_offset(
         /* s32 permasound_id: */
             permasound_id,
         /* u64 play_cursor_offset: */
-            DEFAULT_WRITING_OFFSET,
+            offset,
         /* f32 volume_mult: */
             volume_mult);
 }

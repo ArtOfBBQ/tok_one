@@ -362,7 +362,12 @@ void T1_audio_set_samples(
     int32_t sound_id,
     int16_t * samples,
     int32_t samples_size);
-void T1_audio_play(int32_t sound_id, float volume);
+/*
+Plays the sound pause_us from now (0: right away). The mix is written ahead
+into a buffer of about 20 seconds, so pause_us plus the sound's length must
+stay below that
+*/
+void T1_audio_play(int32_t sound_id, float volume, uint64_t pause_us);
 /*
 For music: copies samples_size samples of the sound, from sound_offset on,
 into what plays play_cursor_offset samples from now

@@ -69,7 +69,8 @@ void T1_audio_add_offset_permasound_to_global_buffer_at_offset(
 
 void T1_audio_play(
     s32 permasound_id,
-    f32 volume_f32);
+    f32 volume_f32,
+    u64 pause_us);
 
 void T1_audio_copy_permasound_to_global_buffer_at_offset(
     s32 permasound_id,
