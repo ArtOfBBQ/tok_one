@@ -355,11 +355,16 @@ static b8 T1_os_apple_mkdir_if_not_exist_unpooled(
         return 0;
     }
     
+    // fileExistsAtPath:isDirectory: takes the path and where to put whether
+    // it's a directory (2 arguments)
+    u8 is_directory = 0;
     if (
-        !T1_objc_msg_1arg(
+        !T1_objc_msg_2arg(
             manager,
             T1_os_apple_s->sel_file_exists_at_path_is_directory,
-            (uintptr_t)ns_dirname))
+            (uintptr_t)ns_dirname,
+            (uintptr_t)&is_directory) ||
+        !is_directory)
     {
         void * error = NULL;
         

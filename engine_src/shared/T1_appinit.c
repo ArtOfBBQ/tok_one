@@ -99,6 +99,15 @@ void T1_init(
     T1_os_macos_init();
     #endif
     
+    // The writables dir (saves, caches) has to exist before anything is
+    // written to it: nothing else creates it
+    {
+        char writables_dir[512];
+        T1_std_memset(writables_dir, 0, 512);
+        T1_os_writable_filename_to_pathfile("", writables_dir, 512);
+        T1_os_mkdir_if_not_exist(writables_dir);
+    }
+    
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     engine_save_file = (T1EngineSaveFile *)T1_mem_malloc_unmanaged(
         sizeof(T1EngineSaveFile));
