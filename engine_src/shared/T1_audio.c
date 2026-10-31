@@ -88,10 +88,26 @@ void T1_audio_init(
 }
 
 //__attribute__((noinline))
+/*
+The bitcrusher (T1_audio_set_crush()), applied as samples leave for the
+platform (the mix is written far ahead, so this is where a change is heard
+at once): a frame held for crush_hold frames, crush_bits bits kept
+*/
+static volatile u32 crush_hold = 1;
+static volatile u32 crush_bits = 16;
+static s32 crush_held[2];
+
+void T1_audio_set_crush(u32 hold_frames, u32 bits) {
+    crush_hold = hold_frames < 1 ? 1 : hold_frames;
+    crush_bits = bits < 1 || bits > 16 ? 16 : bits;
+}
+
 void T1_audio_consume_int16_samples(
     s16 * recipient,
     u32 samples_to_copy)
 {
+    const u32 hold = crush_hold;
+    const s32 drop_mask = ~((1 << (16 - crush_bits)) - 1);
     for (u32 _ = 0; _ < samples_to_copy; _++) {
         u32 next_i = (T1_audio_s->play_cursor) %
             T1_audio_s->global_samples_size;
@@ -104,6 +120,13 @@ void T1_audio_consume_int16_samples(
         
         new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
         new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
+        
+        // the samples are 2 channels interleaved: a frame is 2 of them
+        const u32 channel = (u32)(T1_audio_s->play_cursor & 1);
+        if ((T1_audio_s->play_cursor / 2) % hold == 0) {
+            crush_held[channel] = new_val & drop_mask;
+        }
+        new_val = crush_held[channel];
         *recipient++ = (s16)new_val;
         T1_audio_s->play_cursor += 1;
     }

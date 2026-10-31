@@ -47,7 +47,7 @@ static const c8 * const builtin_types[] = {
 static const c8 * const builtin_functions[] = {
     "abs", "acos", "all", "any", "asin", "atan", "atan2", "ceil", "clamp",
     "cos", "cross", "distance", "dot", "exp", "exp2", "floor", "fmax",
-    "fmin", "fmod", "fract", "length", "log", "log2", "max", "min", "mix",
+    "fmin", "fmod", "fract", "fwidth", "length", "log", "log2", "max", "min", "mix",
     "normalize", "pow", "reflect", "round", "rsqrt", "saturate", "sign",
     "sin", "smoothstep", "sqrt", "step", "tan", "transpose", "trunc",
     "discard_fragment", "mul", "as_type",

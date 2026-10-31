@@ -92,6 +92,8 @@ u64 T1_audio_play_cursor(void);
 
 void T1_audio_stop_all(void);
 
+void T1_audio_set_crush(u32 hold_frames, u32 bits);
+
 s32 T1_audio_sound_id(
     const char * for_resource_name,
     char ** const fatal_error);

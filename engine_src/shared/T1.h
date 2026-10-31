@@ -381,6 +381,12 @@ void T1_audio_stream(
 // how many samples have played
 uint64_t T1_audio_play_cursor(void);
 void T1_audio_stop_all(void);
+/*
+Bitcrushes everything that plays from now on: each frame is held for
+hold_frames frames (the sample rate divided by it) and keeps only its top
+bits bits. 1 and 16 (or 0 and 0): as it is
+*/
+void T1_audio_set_crush(uint32_t hold_frames, uint32_t bits);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else
 #error
