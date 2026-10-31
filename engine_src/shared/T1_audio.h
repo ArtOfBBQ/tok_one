@@ -90,6 +90,8 @@ void T1_audio_copy_permasound_to_global_buffer(
 
 u64 T1_audio_play_cursor(void);
 
+void T1_audio_peek(s16 * recip, u32 samples_size);
+
 void T1_audio_stop_all(void);
 
 s32 T1_audio_sound_id(

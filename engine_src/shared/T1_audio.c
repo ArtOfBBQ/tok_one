@@ -360,6 +360,20 @@ u64 T1_audio_play_cursor(void) {
     return T1_audio_s->play_cursor;
 }
 
+void T1_audio_peek(s16 * recip, u32 samples_size) {
+    T1_assert(samples_size <= T1_audio_s->global_samples_size);
+
+    /*
+    The audio thread may be playing (and zeroing) these as we read, which
+    at worst gives a mix of old and new samples: fine to draw
+    */
+    u64 play_cursor = T1_audio_s->play_cursor;
+    for (u32 i = 0; i < samples_size; i++) {
+        recip[i] = T1_audio_s->samples_buffer[
+            (play_cursor + i) % T1_audio_s->global_samples_size];
+    }
+}
+
 void T1_audio_stop_all(void)
 {
     T1_std_memset(

@@ -18,7 +18,8 @@ typedef uint32_t T1Buf;
 // how many T1_buf_read_start()s can wait for T1_buf_read_finish()
 #define T1_BUF_READS_CAP 64
 
-typedef enum : uint16_t {
+typedef uint16_t T1IOKey;
+enum {
     T1_IO_KEYBOARD_LEFTARROW     =  0,
     T1_IO_KEYBOARD_RIGHTARROW    =  1,
     T1_IO_KEYBOARD_UPARROW       =  2,
@@ -152,6 +153,6 @@ typedef enum : uint16_t {
     T1_IO_GAMEPAD_MENU           = 181,
     T1_IO_GAMEPAD_OPTIONS        = 182,
     T1_IO_KEY_ABOVEBOUNDS, // must be last
-} T1IOKey;
+};
 
 #endif // T1_PUBLIC_TYPES_H

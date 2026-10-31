@@ -7,8 +7,6 @@
 #error
 #endif
 
-#include <string.h>
-
 /*
 Plain loops: the compiler turns them into vector stores (or a call to its
 own memset/memcpy) where the CPU has them, no intrinsics needed
@@ -258,7 +256,25 @@ T1_std_strlcat(
     const char * source,
     u64 size)
 {
-    return strlcat(dst, source, size);
+    // like BSD's strlcat(), which Windows doesn't have
+    u64 dst_len = 0;
+    while (dst_len < size && dst[dst_len] != '\0') { dst_len++; }
+
+    u64 source_len = 0;
+    while (source[source_len] != '\0') { source_len++; }
+
+    if (dst_len == size) {
+        return size + source_len;
+    }
+
+    u64 i = 0;
+    while (i < source_len && dst_len + i + 1 < size) {
+        dst[dst_len + i] = source[i];
+        i++;
+    }
+    dst[dst_len + i] = '\0';
+
+    return dst_len + source_len;
 }
 
 void

@@ -235,7 +235,8 @@ u32 T1_tex_array_get_img_width(s32 array_i) {
 void T1_tex_array_delete_array(
     s32 array_i)
 {
-    T1_assert(array_i != 0);
+    // array 0 too: e.g. an app's only texture, its window's, when the
+    // window gets a new size. T1_tex_array_new_slice() reuses it
     for (u32 slice_i = 0; slice_i < T1_tex_arrays[array_i].images_size; slice_i++) {
         T1_assert(!T1_tex_arrays[array_i].images[slice_i].image.never_delete_me);
     }
