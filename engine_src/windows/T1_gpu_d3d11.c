@@ -223,12 +223,36 @@ static T1D3DBlob * T1_gpu_d3d11_compile(
         T1_std_strcat_cap(error_recip, error_recip_cap, entry);
         T1_std_strcat_cap(error_recip, error_recip_cap, ":\n");
         if (errors != NULL) {
-            // the compiler's messages, cut to what fits
+            /*
+            The compiler's messages, cut to what fits: its errors first
+            (it lists every warning before them), then its warnings
+            */
             u32 at = (u32)T1_std_strlen(error_recip);
             const c8 * text = errors->vtbl->GetBufferPointer(errors);
             u32 size = (u32)errors->vtbl->GetBufferSize(errors);
-            for (u32 i = 0; i < size && text[i] != '\0' && at + 1 < error_recip_cap; i++) {
-                error_recip[at++] = text[i];
+            for (u32 pass = 0; pass < 2; pass++) {
+                u32 line = 0;
+                while (line < size && text[line] != '\0') {
+                    u32 end = line;
+                    b8 is_error = 0;
+                    while (end < size && text[end] != '\0' && text[end] != '\n') {
+                        if (
+                            end + 7 <= size &&
+                            T1_std_are_equal_strings_of_length(
+                                text + end, ": error", 7))
+                        {
+                            is_error = 1;
+                        }
+                        end++;
+                    }
+                    if (end < size && text[end] == '\n') { end++; }
+                    if (is_error == (pass == 0)) {
+                        for (u32 i = line; i < end && at + 1 < error_recip_cap; i++) {
+                            error_recip[at++] = text[i];
+                        }
+                    }
+                    line = end;
+                }
             }
             error_recip[at] = '\0';
         }
@@ -238,6 +262,71 @@ static T1D3DBlob * T1_gpu_d3d11_compile(
         T1_D3D_RELEASE(code);
     }
     return code;
+}
+
+/*
+THE SHADER CACHE
+FXC takes seconds for a big shader, so the bytecode of every unit it
+compiles is kept in the writables, t1_shader_<hash>.dxbc, and the next
+start reads it instead. The hash covers the HLSL (which has the client's
+shader and every setting baked in), the entry point and the target, so a
+changed shader compiles again on its own. Old units' files stay behind.
+*/
+static void T1_gpu_d3d11_cache_path(
+    const c8 * source,
+    const u32 source_size,
+    const c8 * entry,
+    const c8 * target,
+    c8 * recip,
+    const u32 recip_cap)
+{
+    // FNV-1a
+    u64 hash = 14695981039346656037ull;
+    for (u32 i = 0; i < source_size; i++) {
+        hash = (hash ^ (u8)source[i]) * 1099511628211ull;
+    }
+    for (u32 i = 0; entry[i] != '\0'; i++) {
+        hash = (hash ^ (u8)entry[i]) * 1099511628211ull;
+    }
+    for (u32 i = 0; target[i] != '\0'; i++) {
+        hash = (hash ^ (u8)target[i]) * 1099511628211ull;
+    }
+
+    c8 name[64];
+    T1_std_strcpy_cap(name, 64, "t1_shader_");
+    u32 at = (u32)T1_std_strlen(name);
+    for (s32 shift = 60; shift >= 0; shift -= 4) {
+        name[at++] = "0123456789abcdef"[(hash >> shift) & 15];
+    }
+    name[at] = '\0';
+    T1_std_strcat_cap(name, 64, ".dxbc");
+    T1_os_writable_filename_to_pathfile(name, recip, recip_cap);
+}
+
+/*
+A unit's bytecode from the cache, or NULL (*size 0) if it has none. Free it
+with T1_mem_free_managed()
+*/
+static c8 * T1_gpu_d3d11_cache_read(const c8 * path, u32 * size) {
+    *size = 0;
+    u64 file_size = T1_os_get_filesize(path);
+    if (file_size < 4 || file_size > UINT32_MAX - 1) { return NULL; }
+    c8 * bytes = T1_mem_malloc_managed(file_size + 1);
+    if (bytes == NULL) { return NULL; }
+    char * error = NULL;
+    u32 read = 0;
+    T1_os_read_file(path, bytes, &read, file_size + 1, &error);
+    // bytecode starts with "DXBC", anything else isn't ours
+    if (
+        error != NULL ||
+        read != (u32)file_size ||
+        !T1_std_are_equal_strings_of_length(bytes, "DXBC", 4))
+    {
+        T1_mem_free_managed(bytes);
+        return NULL;
+    }
+    *size = read;
+    return bytes;
 }
 
 static T1D3D11View * T1_gpu_d3d11_raw_srv(T1D3D11Resource * buffer, u64 size) {
@@ -1408,27 +1497,55 @@ void T1_os_gpu_try_shader_source(
             }
         }
 
-        T1D3DBlob * code = T1_gpu_d3d11_compile(
-            unit,
-            unit_size,
-            u->name,
-            u->stage == 1 ? "vs_5_0" : u->stage == 2 ? "ps_5_0" : "cs_5_0",
-            error_recip,
-            error_recip_cap);
-        if (code == NULL) {
-            ok = 0;
-            break;
-        }
-        const void * bytes = code->vtbl->GetBufferPointer(code);
-        size_t size = code->vtbl->GetBufferSize(code);
+        const c8 * target =
+            u->stage == 1 ? "vs_5_0" : u->stage == 2 ? "ps_5_0" : "cs_5_0";
+        c8 cache_path[512];
+        T1_gpu_d3d11_cache_path(
+            unit, unit_size, u->name, target, cache_path, 512);
+
+        // the cache's bytecode, else FXC's (then cached for next time)
         T1D3D11Device * device = T1_d3d->device;
-        s32 created =
-            u->stage == 1 ?
-                device->vtbl->CreateVertexShader(device, bytes, size, NULL, &u->shader) :
-            u->stage == 2 ?
-                device->vtbl->CreatePixelShader(device, bytes, size, NULL, &u->shader) :
-                device->vtbl->CreateComputeShader(device, bytes, size, NULL, &u->shader);
-        T1_D3D_RELEASE(code);
+        s32 created = -1;
+        for (u32 attempt = 0; attempt < 2 && created < 0; attempt++) {
+            u32 cached_size = 0;
+            c8 * cached = attempt == 0 ?
+                T1_gpu_d3d11_cache_read(cache_path, &cached_size) : NULL;
+            T1D3DBlob * code = NULL;
+            const void * bytes = cached;
+            size_t size = cached_size;
+            if (cached == NULL) {
+                code = T1_gpu_d3d11_compile(
+                    unit,
+                    unit_size,
+                    u->name,
+                    target,
+                    error_recip,
+                    error_recip_cap);
+                if (code == NULL) { break; }
+                bytes = code->vtbl->GetBufferPointer(code);
+                size = code->vtbl->GetBufferSize(code);
+            }
+            u->shader = NULL;
+            created =
+                u->stage == 1 ?
+                    device->vtbl->CreateVertexShader(device, bytes, size, NULL, &u->shader) :
+                u->stage == 2 ?
+                    device->vtbl->CreatePixelShader(device, bytes, size, NULL, &u->shader) :
+                    device->vtbl->CreateComputeShader(device, bytes, size, NULL, &u->shader);
+            if (code != NULL && created >= 0) {
+                // a write that fails only costs the next start a compile
+                u8 good = 0;
+                T1_os_write_file(cache_path, bytes, (u32)size, &good);
+            }
+            if (cached != NULL) {
+                T1_mem_free_managed(cached);
+                // the device refused it: a stale or broken file
+                if (created < 0) { T1_os_del_file(cache_path); }
+            }
+            T1_D3D_RELEASE(code);
+            // only a cached unit gets a second try, compiled
+            if (cached == NULL) { break; }
+        }
         if (created < 0 || u->shader == NULL) {
             ok = 0;
             break;

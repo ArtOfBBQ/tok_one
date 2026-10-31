@@ -1960,8 +1960,18 @@ static const c8 * const hlsl_prelude =
     "#define fmin min\n"
     "#define fract frac\n"
     "#define mix lerp\n"
-    // see the matrices above
-    "#define mul(a, b) mul(b, a)\n"
+    /*
+    See the matrices above: mul() swaps its arguments. Through functions
+    defined before the macro: FXC's preprocessor doesn't swap them with
+    #define mul(a, b) mul(b, a) (every projection came out transposed)
+    */
+    "float4 t1_mul(float4 a, float4x4 b) { return mul(b, a); }\n"
+    "float3 t1_mul(float3 a, float3x3 b) { return mul(b, a); }\n"
+    "float2 t1_mul(float2 a, float2x2 b) { return mul(b, a); }\n"
+    "float4x4 t1_mul(float4x4 a, float4x4 b) { return mul(b, a); }\n"
+    "float3x3 t1_mul(float3x3 a, float3x3 b) { return mul(b, a); }\n"
+    "float2x2 t1_mul(float2x2 a, float2x2 b) { return mul(b, a); }\n"
+    "#define mul(a, b) t1_mul(a, b)\n"
     // MSL rounds halfway away from 0, HLSL to even
     "#define round(x) trunc((x) + 0.5f * sign(x))\n"
     "#define T1_MAX(a, b) ((a) > (b) ? (a) : (b))\n"
@@ -2543,10 +2553,68 @@ static b8 is_assign_op(const u32 i) {
 }
 
 /*
+Turns the members after a buffer element (the chain from t to chain_end,
+like .pos[1]) into offsets added to its address: .pos[1] becomes
+" + t1_off_T_m + (1) * t1_size_float", as far as there are load functions.
+type_i starts as the element's type and ends as the type at the address,
+*last is the last token of the address (it starts as the element's ']')
+*/
+static void hlsl_member_offsets(
+    Gen * g,
+    const b8 * loadable,
+    u32 t,
+    const u32 chain_end,
+    u32 * type_i,
+    u32 * last)
+{
+    Check * c = g->c;
+    Buf * a = &g->arena;
+    while (t < chain_end && is_punct(t, ".")) {
+        const StructDef * d = find_struct(c, *type_i);
+        if (d == NULL || !loadable[d - c->struct_defs]) { break; }
+        DataMember members[DATA_MEMBERS_CAP];
+        u32 size = data_members(c, d, members);
+        u32 m = 0;
+        while (m < size && !same_text(members[m].name_i, t + 1)) {
+            m++;
+        }
+        if (m == size) { break; }
+        b8 array = members[m].count_open != UINT32_MAX;
+        // a whole array member has no load function
+        if (array && !is_punct(t + 2, "[")) { break; }
+
+        u32 s = str_begin(g);
+        buf_cat(a, " + t1_off_");
+        cat_name(a, d->name_i);
+        buf_cat(a, "_");
+        cat_u32(a, m);
+        g->g_repl[t] = str_end(g, s);
+        g->g_skip[t + 1] = 1;
+        *type_i = members[m].type_i;
+        *last = t + 1;
+        t += 2;
+        if (array) {
+            u32 index_close = after_match(c, t, "[", "]") - 1;
+            g->g_repl[t] = " + (";
+            s = str_begin(g);
+            buf_cat(a, ") * t1_size_");
+            cat_hlsl_type(a, *type_i);
+            g->g_repl[index_close] = str_end(g, s);
+            *last = index_close;
+            t = index_close + 1;
+        }
+    }
+}
+
+/*
 name[i] of a buffer becomes t1_load_T(name, (i) * t1_size_T), and a
 statement that writes to it, like name[i].pos += v;, becomes
 { uint t1_a = (i) * t1_size_T; T t1_e = t1_load_T(name, t1_a);
 t1_e.pos += v; t1_store_T(name, t1_a, t1_e); }
+Only the member read or written is loaded (and stored): name[i].pos[1]
+reads t1_load_float(name, (i) * t1_size_T + t1_off_T_m + (1) * ...).
+Loading whole elements to use one member made FXC take a minute per
+shader, throwing the rest away
 */
 static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
     Check * c = g->c;
@@ -2587,8 +2655,14 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             u32 s = str_begin(g);
             Buf * a = &g->arena;
             if (!is_assign_op(chain_end)) {
+                u32 type_i = ptr->type_i;
+                u32 last = close;
+                hlsl_member_offsets(
+                    g, loadable, close + 1, chain_end, &type_i, &last);
+
+                s = str_begin(g);
                 buf_cat(a, "t1_load_");
-                cat_hlsl_type(a, ptr->type_i);
+                cat_hlsl_type(a, type_i);
                 buf_cat(a, "(");
                 cat_name(a, i);
                 buf_cat(a, ", (");
@@ -2597,8 +2671,8 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
                 s = str_begin(g);
                 buf_cat(a, ") * t1_size_");
                 cat_hlsl_type(a, ptr->type_i);
-                buf_cat(a, ")");
                 g->g_repl[close] = str_end(g, s);
+                add_text(g, &g->g_post[last], ")");
                 continue;
             }
 
@@ -2631,48 +2705,13 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             g->g_repl[close] = str_end(g, s);
 
             /*
-            Only the member written to is loaded and stored: .pos[1] adds
-            the offset of pos and 1 element to the address, then the
-            rest of the chain (e.g. a swizzle) works on the member
+            Only the member written to is loaded and stored, then the rest
+            of the chain (e.g. a swizzle) works on the member
             */
             u32 type_i = ptr->type_i;
             u32 last = close; // the last token of the address
-            u32 t = close + 1;
-            while (t < chain_end && is_punct(t, ".")) {
-                const StructDef * d = find_struct(c, type_i);
-                if (d == NULL || !loadable[d - c->struct_defs]) { break; }
-                DataMember members[DATA_MEMBERS_CAP];
-                u32 size = data_members(c, d, members);
-                u32 m = 0;
-                while (m < size && !same_text(members[m].name_i, t + 1)) {
-                    m++;
-                }
-                if (m == size) { break; }
-                b8 array = members[m].count_open != UINT32_MAX;
-                // a whole array member has no load function
-                if (array && !is_punct(t + 2, "[")) { break; }
-
-                s = str_begin(g);
-                buf_cat(a, " + t1_off_");
-                cat_name(a, d->name_i);
-                buf_cat(a, "_");
-                cat_u32(a, m);
-                g->g_repl[t] = str_end(g, s);
-                g->g_skip[t + 1] = 1;
-                type_i = members[m].type_i;
-                last = t + 1;
-                t += 2;
-                if (array) {
-                    u32 index_close = after_match(c, t, "[", "]") - 1;
-                    g->g_repl[t] = " + (";
-                    s = str_begin(g);
-                    buf_cat(a, ") * t1_size_");
-                    cat_hlsl_type(a, type_i);
-                    g->g_repl[index_close] = str_end(g, s);
-                    last = index_close;
-                    t = index_close + 1;
-                }
-            }
+            hlsl_member_offsets(
+                g, loadable, close + 1, chain_end, &type_i, &last);
 
             s = str_begin(g);
             buf_cat(a, "; ");

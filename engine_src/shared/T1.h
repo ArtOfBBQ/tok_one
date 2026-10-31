@@ -346,6 +346,8 @@ void T1_os_dir_filenames(
 OPERATING SYSTEM
 */
 uint64_t T1_os_get_current_time_us(void);
+// at least 1
+uint32_t T1_os_get_cpu_logical_core_count(void);
 
 void T1_os_start_thread(
     void *(*function_to_run)(void *), void * arg_on_heap);
