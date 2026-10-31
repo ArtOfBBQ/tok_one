@@ -16,6 +16,87 @@
 
 #define T1NSDataReadingUncached 2
 
+// T1_os_init_mutex_and_return_id()'s, in static memory: T1_os_init() makes
+// the first one, before anything else is set up
+static pthread_mutex_t T1_apple_mutexes[T1_MUTEXES_CAP];
+static u32 T1_apple_mutexes_size = 0;
+
+u32 T1_os_init_mutex_and_return_id(void) {
+    T1_assert(T1_apple_mutexes_size + 1 < T1_MUTEXES_CAP);
+    
+    s32 mutex_init_error_value = pthread_mutex_init(
+        &T1_apple_mutexes[T1_apple_mutexes_size],
+        NULL);
+    
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(mutex_init_error_value == 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
+    (void)mutex_init_error_value;
+    #else
+    #error
+    #endif
+    
+    T1_apple_mutexes_size++;
+    return T1_apple_mutexes_size - 1;
+}
+
+/*
+Attempt to lock a mutex and return True if succesful
+*/
+u8 T1_os_mutex_trylock(const u32 mutex_id) {
+    T1_assert(mutex_id < T1_apple_mutexes_size);
+    
+    /*
+    If successful, pthread_mutex_trylock() will return zero.
+    Otherwise, an error number will be returned to indicate the error.
+    */
+    s32 return_val = pthread_mutex_trylock(&T1_apple_mutexes[mutex_id]);
+    
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    if (return_val != 0) {
+        // EINVAL = The value specified by mutex is invalid
+        T1_assert(return_val != EINVAL);
+        
+        // EPERM = Operation not permitted
+        T1_assert(return_val != EPERM);
+        
+        // EBUSY = Mutex is already locked
+        T1_assert(return_val == EBUSY);
+    }
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    return return_val == 0;
+}
+
+void T1_os_mutex_lock(u32 mutex_id) {
+    T1_assert(mutex_id < T1_apple_mutexes_size);
+    s32 return_value = pthread_mutex_lock(&T1_apple_mutexes[mutex_id]);
+    
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(return_value == 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
+    (void)return_value;
+    #else
+    #error
+    #endif
+}
+
+void T1_os_mutex_unlock(u32 mutex_id) {
+    T1_assert(mutex_id < T1_apple_mutexes_size);
+    s32 return_value = pthread_mutex_unlock(&T1_apple_mutexes[mutex_id]);
+    
+    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
+    T1_assert(return_value == 0);
+    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
+    (void)return_value;
+    #else
+    #error
+    #endif
+}
+
 typedef struct {
     void * class_ns_filemanager; // NSFileManager
     void * class_ns_data; // NSData

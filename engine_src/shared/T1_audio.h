@@ -8,7 +8,11 @@
 #include "T1_macro_settings.h"
 
 typedef struct {
-    s16 * samples_buffer;
+    /*
+    The mix, 32 bits a sample so overlapping sounds add up without
+    clipping: only what leaves for the platform is limited to 16 bits
+    */
+    s32 * samples_buffer;
     u64 play_cursor;
     u64 callback_runs;
     u32 platform_buffer_size_bytes;
@@ -19,6 +23,18 @@ typedef struct {
 } T1AudioSettings;
 
 extern T1AudioSettings * T1_audio_s;
+
+/*
+How far ahead of what's heard the platform holds T1's mix, the same on
+every platform: T1_AUDIO_PLATFORM_CHUNKS chunks of T1_AUDIO_CHUNK_FRAMES
+frames (a frame is a left and a right sample), 1500 frames, about 34 ms.
+macOS's audio queue gets that many buffers of that size, Windows' WASAPI
+is kept topped up to that many frames
+*/
+#define T1_AUDIO_CHUNK_FRAMES 750
+#define T1_AUDIO_PLATFORM_CHUNKS 2
+#define T1_AUDIO_PLATFORM_FRAMES \
+    (T1_AUDIO_CHUNK_FRAMES * T1_AUDIO_PLATFORM_CHUNKS)
 typedef struct {
     float volume;
     float sfx_volume;

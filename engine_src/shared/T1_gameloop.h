@@ -20,6 +20,7 @@ u32  T1_window_get_pixel_width(void);
 u32  T1_window_get_pixel_height(void);
 
 u8   T1_frame_update(void);
+u8   T1_gpu_lost(void);
 u8   T1_frame_resized(void);
 u64  T1_frame_elapsed_us(void);
 

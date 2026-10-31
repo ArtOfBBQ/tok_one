@@ -90,6 +90,10 @@ u32 T1_window_get_pixel_height(void) {
         T1_global->window_wh[1] * T1_os_get_screen_backing_scale_factor());
 }
 
+u8 T1_gpu_lost(void) {
+    return T1_os_gpu_lost();
+}
+
 u8 T1_frame_resized(void) {
     return T1_gl_s->frame_resized;
 }
@@ -184,7 +188,7 @@ u8 T1_frame_update(void) {
             T1_gl_s->previous_time = 0;
     }
     
-    if (T1_os_window_close_requested()) { return 0; }
+    if (T1_os_window_close_requested() || T1_os_gpu_lost()) { return 0; }
     
     // Waits until the GPU is done with the frame T1_FRAMES_CAP ago, so the
     // client can write the next one's buffers

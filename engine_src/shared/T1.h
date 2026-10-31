@@ -104,9 +104,16 @@ It doesn't care whether your passes or T1_tex_update() made the T1Tex.
 While the window is minimized or fully covered, it waits (handling input)
 until the window shows again, and that time doesn't count as elapsed. It
 returns 0 when the window's close button or the OS's quit command was
-used. Call it from the main thread.
+used, or the GPU was lost (see T1_gpu_lost()). Call it from the main thread.
 */
 uint8_t  T1_frame_update(void);
+/*
+The GPU device stopped working: its driver crashed or was updated, or the
+GPU was removed. Every texture, buffer and pipeline went with it, T1 can't
+make them again, so the app ends (T1_frame_update() returns 0). Check this
+after your loop to tell the user why
+*/
+uint8_t  T1_gpu_lost(void);
 /*
 Whether T1_frame_update() waits while the window is hidden (1, the
 default). 0 keeps your frames running at about 60 a second, unshown: for

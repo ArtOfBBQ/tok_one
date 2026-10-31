@@ -164,7 +164,9 @@ static void T1_apple_audio_callback(
 }
 
 void T1_apple_audio_start_loop(void) {
-    u32 platform_buffer_size_bytes = 3000;
+    // a chunk each, see T1_AUDIO_PLATFORM_FRAMES
+    T1_assert(T1_AUDIO_PLATFORM_CHUNKS == 2);
+    u32 platform_buffer_size_bytes = T1_AUDIO_CHUNK_FRAMES * 4;
     
     // stereo 16-bit interleaved linear PCM audio data at 48kHz in SNORM format
     T1AudioStreamBasicDescription audio_stream_basic_description;

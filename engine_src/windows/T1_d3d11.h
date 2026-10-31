@@ -498,8 +498,12 @@ typedef struct {
     // IDXGIDevice: GetAdapter, IDXGIAdapter: EnumOutputs,
     // IDXGIFactory: EnumAdapters
     s32 (T1_WINAPI * Method7)(T1DXGIObject *, void *);
-    // IDXGIAdapter: GetDesc, IDXGIFactory: MakeWindowAssociation
-    s32 (T1_WINAPI * Method8)(T1DXGIObject *, void *, u32);
+    // the same slot, with the parameters of each interface's method
+    union {
+        s32 (T1_WINAPI * GetDesc)(T1DXGIObject *, void * desc); // adapter
+        s32 (T1_WINAPI * MakeWindowAssociation)( // factory
+            T1DXGIObject *, T1WinHandle, u32 flags);
+    } Method8;
     void * Method9;
     // IDXGIFactory: CreateSwapChain
     s32 (T1_WINAPI * CreateSwapChain)(

@@ -38,6 +38,14 @@ array, made just before it, instead (see T1_gpu_d3d11_tex_srvs()).
 #define T1_D3D_SRVS_SIZE (T1_HLSL_BUFS_T + T1_BUFS_I + T1_PASS_BUFS_CAP)
 #define T1_D3D_UAVS_SIZE 8
 
+// what Present() and GetData() return when it matters
+#define T1DXGI_STATUS_OCCLUDED 0x087A0001
+#define T1DXGI_PRESENT_TEST 0x1u
+#define T1DXGI_ERROR_DEVICE_REMOVED ((s32)0x887A0005u)
+#define T1DXGI_ERROR_DEVICE_HUNG ((s32)0x887A0006u)
+#define T1DXGI_ERROR_DEVICE_RESET ((s32)0x887A0007u)
+#define T1DXGI_ERROR_DRIVER_INTERNAL_ERROR ((s32)0x887A0020u)
+
 static const T1D3DGUID T1_IID_IDXGIDevice = {
     0x54ec77fa, 0x1377, 0x44e6,
     {0x8c, 0x32, 0x88, 0xfd, 0x5f, 0x44, 0xc8, 0x4c}};
@@ -113,6 +121,8 @@ typedef struct {
     // copies for passes that draw into the array, made on first use
     T1D3D11Resource * tex_copies[T1_TEXARRAYS_CAP];
     T1D3D11View * tex_copy_srvs[T1_TEXARRAYS_CAP];
+    // the slices written since their copy was made, see T1_gpu_d3d11_written()
+    b8 tex_copy_stale[T1_TEXARRAYS_CAP][T1_TEX_SLICES_CAP];
     // what passes draw and write into, per slice, made on first use
     T1D3D11View * tex_rtvs[T1_TEXARRAYS_CAP][T1_TEX_SLICES_CAP];
     T1D3D11View * tex_uavs[T1_TEXARRAYS_CAP][T1_TEX_SLICES_CAP];
@@ -120,6 +130,7 @@ typedef struct {
     T1D3D11Resource * bufs[T1_BUFS_CAP];
     T1D3D11View * buf_srvs[T1_BUFS_CAP];
     T1D3D11View * buf_uavs[T1_BUFS_CAP];
+    u64 buf_sizes[T1_BUFS_CAP]; // in bytes, rounded up to 4
     T1D3DRead reads[T1_BUF_READS_CAP];
 
     // what every pass's shaders get at T1_FRAME_CONSTS_I and T1_PARAMS_I
@@ -155,8 +166,10 @@ typedef struct {
     u32 back_buffer_h;
     T1D3D11Shader * present_vs;
     T1D3D11Shader * present_ps;
+    b8 occluded; // as the last Present() found
 
     b8 active;
+    b8 lost; // see T1_gpu_lost()
 } T1D3DState;
 
 static T1D3DState * T1_d3d = NULL;
@@ -283,7 +296,22 @@ static T1D3D11Resource * T1_gpu_d3d11_new_raw_buffer(u64 size) {
     return buffer;
 }
 
-static T1D3D11State * T1_gpu_d3d11_new_sampler(u32 filter, u32 address) {
+/*
+max_lod 0: the base level only, like Metal's samplers without a mip_filter
+(the nearest one, and every one without mipmaps)
+*/
+#if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+#define T1_LINEAR_MAX_LOD T1_F32_MAX
+#elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+#define T1_LINEAR_MAX_LOD 0.0f
+#else
+#error
+#endif
+static T1D3D11State * T1_gpu_d3d11_new_sampler(
+    u32 filter,
+    u32 address,
+    f32 max_lod)
+{
     T1D3D11SamplerDesc desc;
     T1_std_memset(&desc, 0, sizeof(T1D3D11SamplerDesc));
     desc.filter = filter;
@@ -293,7 +321,7 @@ static T1D3D11State * T1_gpu_d3d11_new_sampler(u32 filter, u32 address) {
     desc.max_anisotropy = 1;
     desc.comparison_func = T1D3D11_COMPARISON_NEVER;
     desc.min_lod = 0.0f;
-    desc.max_lod = T1_F32_MAX;
+    desc.max_lod = max_lod;
     T1D3D11State * sampler = NULL;
     T1_d3d->device->vtbl->CreateSamplerState(T1_d3d->device, &desc, &sampler);
     return sampler;
@@ -325,13 +353,15 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
     T1D3D11Device * device = T1_d3d->device;
 
     T1_d3d->samplers[0] = T1_gpu_d3d11_new_sampler(
-        T1D3D11_FILTER_MIN_MAG_MIP_POINT, T1D3D11_TEXTURE_ADDRESS_CLAMP);
+        T1D3D11_FILTER_MIN_MAG_MIP_POINT, T1D3D11_TEXTURE_ADDRESS_CLAMP, 0.0f);
     T1_d3d->samplers[1] = T1_gpu_d3d11_new_sampler(
         T1D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT,
-        T1D3D11_TEXTURE_ADDRESS_CLAMP);
+        T1D3D11_TEXTURE_ADDRESS_CLAMP,
+        T1_LINEAR_MAX_LOD);
     T1_d3d->samplers[2] = T1_gpu_d3d11_new_sampler(
         T1D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT,
-        T1D3D11_TEXTURE_ADDRESS_WRAP);
+        T1D3D11_TEXTURE_ADDRESS_WRAP,
+        T1_LINEAR_MAX_LOD);
 
     // only color(0) blends, the others are data (like touch ids)
     for (u32 blend = 0; blend < 4; blend++) {
@@ -411,7 +441,7 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
     }
     T1D3D11BufferDesc grid;
     T1_std_memset(&grid, 0, sizeof(T1D3D11BufferDesc));
-    grid.byte_width = 16;
+    grid.byte_width = 32;
     grid.usage = T1D3D11_USAGE_DEFAULT;
     grid.bind_flags = T1D3D11_BIND_CONSTANT_BUFFER;
     device->vtbl->CreateBuffer(device, &grid, NULL, &T1_d3d->grid_cb);
@@ -547,7 +577,27 @@ void T1_os_gpu_init(char ** const fatal_error) {
 }
 
 u8 T1_os_gpu_active(void) {
-    return T1_d3d != NULL && T1_d3d->active;
+    return T1_d3d != NULL && T1_d3d->active && !T1_d3d->lost;
+}
+
+u8 T1_os_gpu_lost(void) {
+    return T1_d3d != NULL && T1_d3d->lost;
+}
+
+/*
+A result of Present() or GetData() that says the device is gone (a driver
+crash, TDR, or update, the GPU removed): every resource went with it, see
+T1_gpu_lost()
+*/
+static void T1_gpu_d3d11_check_lost(s32 result) {
+    if (
+        result == T1DXGI_ERROR_DEVICE_REMOVED ||
+        result == T1DXGI_ERROR_DEVICE_HUNG ||
+        result == T1DXGI_ERROR_DEVICE_RESET ||
+        result == T1DXGI_ERROR_DRIVER_INTERNAL_ERROR)
+    {
+        T1_d3d->lost = 1;
+    }
 }
 
 // The DXGI adapter (the GPU) of the device, the caller releases it
@@ -573,7 +623,7 @@ void T1_os_gpu_get_device_name(c8 * recipient, u32 recipient_cap) {
     // a DXGI_ADAPTER_DESC starts with the name, 128 WCHARs
     u8 desc[512];
     T1_std_memset(desc, 0, sizeof(desc));
-    if (adapter->vtbl->Method8(adapter, desc, 0) >= 0) {
+    if (adapter->vtbl->Method8.GetDesc(adapter, desc) >= 0) {
         WideCharToMultiByte(
             T1CP_UTF8, 0, (const T1WChar *)desc, -1,
             recipient, (s32)recipient_cap, NULL, NULL);
@@ -611,6 +661,19 @@ static T1D3D11View * T1_gpu_d3d11_array_srv(
     T1_d3d->device->vtbl->CreateShaderResourceView(
         T1_d3d->device, tex, &desc, &srv);
     return srv;
+}
+
+/*
+A slice changed (a pass drew or wrote into it, pixels were pushed): the
+next copy of its array copies it again. slice_i -1: every slice
+*/
+static void T1_gpu_d3d11_written(s32 array_i, s32 slice_i) {
+    if (array_i < 0 || array_i >= T1_TEXARRAYS_CAP) { return; }
+    for (s32 s = 0; s < T1_TEX_SLICES_CAP; s++) {
+        if (slice_i < 0 || s == slice_i) {
+            T1_d3d->tex_copy_stale[array_i][s] = 1;
+        }
+    }
 }
 
 // What draws into a slice, made on first use
@@ -783,6 +846,15 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
 
 void T1_os_gpu_delete_texture_array(s32 array_i) {
     if (!T1_os_gpu_active()) { return; }
+    // the depth buffers of its slices, they'd wait for a slot to be reused
+    for (u32 i = 0; i < T1_D3D_TEX_DEPTHS_CAP; i++) {
+        T1D3DTexDepth * d = &T1_d3d->tex_depths[i];
+        if (d->depth != NULL && T1_TEX_ARRAY_I(d->tex) == (u32)array_i) {
+            T1_D3D_RELEASE(d->dsv);
+            T1_D3D_RELEASE(d->depth);
+            d->last_used_frame = 0;
+        }
+    }
     T1_gpu_d3d11_release_tex_views(array_i);
     T1_D3D_RELEASE(T1_d3d->texs[array_i]);
     T1_d3d->tex_slices[array_i] = 0;
@@ -810,6 +882,7 @@ void T1_os_gpu_push_tex_slice(s32 tex_array_i, s32 tex_slice_i) {
         image->rgba_values_page_aligned,
         width * 4,
         width * height * 4);
+    T1_gpu_d3d11_written(tex_array_i, tex_slice_i);
 
     // like on Metal, the GPU has the pixels now
     if (image->rgba_values_freeable != NULL) {
@@ -828,6 +901,7 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(s32 texture_array_i) {
     {
         T1_d3d->ctx->vtbl->GenerateMips(
             T1_d3d->ctx, T1_d3d->tex_srvs[texture_array_i]);
+        T1_gpu_d3d11_written(texture_array_i, -1);
     }
 }
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
@@ -938,9 +1012,12 @@ void T1_os_gpu_buf_new(u32 buf_i, u64 size, u8 * good) {
     if (T1_d3d->bufs[buf_i] == NULL) { return; }
     T1_d3d->buf_srvs[buf_i] = T1_gpu_d3d11_raw_srv(T1_d3d->bufs[buf_i], rounded);
     T1_d3d->buf_uavs[buf_i] = T1_gpu_d3d11_raw_uav(T1_d3d->bufs[buf_i], rounded);
+    T1_d3d->buf_sizes[buf_i] = rounded;
     *good =
         T1_d3d->buf_srvs[buf_i] != NULL &&
         T1_d3d->buf_uavs[buf_i] != NULL;
+    // nothing half made: the slot is free for the next try
+    if (!*good) { T1_os_gpu_buf_delete(buf_i); }
 }
 
 /*
@@ -974,6 +1051,7 @@ void T1_os_gpu_buf_delete(u32 buf_i) {
     T1_D3D_RELEASE(T1_d3d->buf_srvs[buf_i]);
     T1_D3D_RELEASE(T1_d3d->buf_uavs[buf_i]);
     T1_D3D_RELEASE(T1_d3d->bufs[buf_i]);
+    T1_d3d->buf_sizes[buf_i] = 0;
 }
 
 static u32 T1_gpu_d3d11_new_read(void) {
@@ -1045,10 +1123,13 @@ static void T1_gpu_d3d11_encode_reads(void) {
         if (r->buf_i == T1_BUFS_CAP) {
             s32 array_i = T1_TEX_ARRAY_I(r->tex);
             s32 slice_i = T1_TEX_SLICE_I(r->tex);
+            // the texture may have changed size since the read started
             if (
                 array_i >= T1_TEXARRAYS_CAP ||
                 T1_d3d->texs[array_i] == NULL ||
-                (u32)slice_i >= T1_d3d->tex_slices[array_i])
+                (u32)slice_i >= T1_d3d->tex_slices[array_i] ||
+                r->tex_x + r->tex_w > T1_d3d->tex_widths[array_i] ||
+                r->tex_y + r->tex_h > T1_d3d->tex_heights[array_i])
             {
                 r->missing = 1;
                 continue;
@@ -1067,13 +1148,18 @@ static void T1_gpu_d3d11_encode_reads(void) {
                 (u32)slice_i * T1_d3d->tex_mips[array_i],
                 &box);
         } else {
-            if (r->buf_i >= T1_BUFS_CAP || T1_d3d->bufs[r->buf_i] == NULL) {
+            if (
+                r->buf_i >= T1_BUFS_CAP ||
+                T1_d3d->bufs[r->buf_i] == NULL ||
+                r->offset + r->size > T1_d3d->buf_sizes[r->buf_i])
+            {
                 r->missing = 1;
                 continue;
             }
+            // in bytes, no alignment needed (only the views count in 4s)
             T1D3D11Box box;
             box.left = (u32)r->offset;
-            box.right = (u32)(r->offset + ((r->size + 3) & ~(u64)3));
+            box.right = (u32)(r->offset + r->size);
             box.top = 0;
             box.bottom = 1;
             box.front = 0;
@@ -1229,6 +1315,10 @@ void T1_os_gpu_try_shader_source(
     }
 
     T1D3DShaders * shaders = T1_mem_malloc_managed(sizeof(T1D3DShaders));
+    if (shaders == NULL) {
+        T1_mem_free_managed(hlsl);
+        return;
+    }
     T1_std_memset(shaders, 0, sizeof(T1D3DShaders));
     b8 ok = 1;
 
@@ -1250,6 +1340,10 @@ void T1_os_gpu_try_shader_source(
             continue;
         }
         if (shaders->units_size >= T1_D3D_UNITS_CAP) {
+            if (error_recip != NULL) {
+                T1_std_strcpy_cap(error_recip, error_recip_cap,
+                    "More entry points than T1_D3D_UNITS_CAP");
+            }
             ok = 0;
             break;
         }
@@ -1347,6 +1441,10 @@ void T1_os_gpu_try_shader_source(
 
     // the pipelines made so far must find their functions
     s32 (* units)[2] = T1_mem_malloc_managed(sizeof(s32) * 2 * T1_PIPELINES_CAP);
+    if (units == NULL) {
+        T1_gpu_d3d11_free_shaders(shaders);
+        return;
+    }
     for (s32 i = 0; i < T1_PIPELINES_CAP; i++) {
         units[i][0] = -1;
         units[i][1] = -1;
@@ -1468,7 +1566,10 @@ static T1D3D11View * T1_gpu_d3d11_tex_depth(
 /*
 The texture arrays a pass's shaders read, in srvs. An array the pass also
 draws or writes into (target_arrays) can't be read: if the pass reads
-textures, it reads a copy of the array made now instead
+textures, it reads a copy of the array instead, brought up to date now.
+Only the slices written since the last copy are copied (FE's render views
+of one size share an array, a whole copy per pass would be most of the
+frame's bandwidth)
 */
 static void T1_gpu_d3d11_tex_srvs(
     T1D3D11View ** srvs,
@@ -1497,9 +1598,21 @@ static void T1_gpu_d3d11_tex_srvs(
             if (T1_d3d->tex_copies[a] == NULL) { continue; }
             T1_d3d->tex_copy_srvs[a] = T1_gpu_d3d11_array_srv(
                 T1_d3d->tex_copies[a], T1_d3d->tex_slices[a]);
+            T1_gpu_d3d11_written((s32)a, -1);
         }
-        T1_d3d->ctx->vtbl->CopyResource(
-            T1_d3d->ctx, T1_d3d->tex_copies[a], T1_d3d->texs[a]);
+        u32 mips = T1_d3d->tex_mips[a];
+        for (u32 slice = 0; slice < T1_d3d->tex_slices[a]; slice++) {
+            if (!T1_d3d->tex_copy_stale[a][slice]) { continue; }
+            T1_d3d->tex_copy_stale[a][slice] = 0;
+            for (u32 m = 0; m < mips; m++) {
+                T1_d3d->ctx->vtbl->CopySubresourceRegion(
+                    T1_d3d->ctx,
+                    T1_d3d->tex_copies[a], m + slice * mips,
+                    0, 0, 0,
+                    T1_d3d->texs[a], m + slice * mips,
+                    NULL);
+            }
+        }
         srvs[a] = T1_d3d->tex_copy_srvs[a];
     }
 }
@@ -1551,6 +1664,7 @@ static void T1_gpu_d3d11_encode_clear_pass(const T1Pass * pass) {
         T1_TEX_ARRAY_I(tex), T1_TEX_SLICE_I(tex));
     if (rtv == NULL) { return; }
     T1_d3d->ctx->vtbl->ClearRenderTargetView(T1_d3d->ctx, rtv, pass->clear_rgba);
+    T1_gpu_d3d11_written(T1_TEX_ARRAY_I(tex), T1_TEX_SLICE_I(tex));
 }
 
 static void T1_gpu_d3d11_encode_draw_pass(const T1Pass * pass) {
@@ -1643,6 +1757,13 @@ static void T1_gpu_d3d11_encode_draw_pass(const T1Pass * pass) {
     T1_gpu_d3d11_viewport(width, height);
 
     ctx->vtbl->Draw(ctx, pass->u32s.vertex_count, pass->u32s.vertex_start);
+    // after the copies of the arrays it read
+    for (u32 k = 0; k < rtvs_size; k++) {
+        u32 tex = pass->u32s.color_tex[k];
+        if (rtvs[k] != NULL) {
+            T1_gpu_d3d11_written(T1_TEX_ARRAY_I(tex), T1_TEX_SLICE_I(tex));
+        }
+    }
 
     T1_gpu_d3d11_unbind_all();
 }
@@ -1702,21 +1823,46 @@ static void T1_gpu_d3d11_encode_compute_pass(const T1Pass * pass) {
     T1_gpu_d3d11_pass_srvs(
         srvs, pass, target_arrays, cs->reads_textures, written);
 
-    u32 grid_cb[4] = {grid[0], grid[1], grid[2], 0};
-    ctx->vtbl->UpdateSubresource(ctx, T1_d3d->grid_cb, 0, NULL, grid_cb, 0, 0);
-
     ctx->vtbl->CSSetShader(ctx, cs->shader, NULL, 0);
     ctx->vtbl->CSSetUnorderedAccessViews(ctx, 0, T1_D3D_UAVS_SIZE, uavs, NULL);
     ctx->vtbl->CSSetShaderResources(ctx, 0, T1_D3D_SRVS_SIZE, srvs);
     ctx->vtbl->CSSetSamplers(ctx, 0, 3, T1_d3d->samplers);
     ctx->vtbl->CSSetConstantBuffers(ctx, 0, 1, &T1_d3d->grid_cb);
 
-    // enough groups to cover the grid, threads past it return right away
-    ctx->vtbl->Dispatch(
-        ctx,
-        (grid[0] + cs->threads[0] - 1) / cs->threads[0],
-        (grid[1] + cs->threads[1] - 1) / cs->threads[1],
-        (grid[2] + cs->threads[2] - 1) / cs->threads[2]);
+    /*
+    Enough groups to cover the grid, threads past it return right away.
+    Direct3D takes at most 65535 groups a dimension a Dispatch(), more
+    (e.g. a long 1D grid) go in several, each told its first group
+    */
+    u32 groups[3];
+    for (u32 d = 0; d < 3; d++) {
+        groups[d] = (grid[d] + cs->threads[d] - 1) / cs->threads[d];
+    }
+    const u32 max_groups = 65535;
+    for (u32 gz = 0; gz < groups[2]; gz += max_groups) {
+        for (u32 gy = 0; gy < groups[1]; gy += max_groups) {
+            for (u32 gx = 0; gx < groups[0]; gx += max_groups) {
+                // the grid's size, then its first thread (see T1_shader.c)
+                u32 grid_cb[8] = {
+                    grid[0], grid[1], grid[2], 0,
+                    gx * cs->threads[0], gy * cs->threads[1],
+                    gz * cs->threads[2], 0,
+                };
+                ctx->vtbl->UpdateSubresource(
+                    ctx, T1_d3d->grid_cb, 0, NULL, grid_cb, 0, 0);
+                ctx->vtbl->Dispatch(
+                    ctx,
+                    groups[0] - gx < max_groups ? groups[0] - gx : max_groups,
+                    groups[1] - gy < max_groups ? groups[1] - gy : max_groups,
+                    groups[2] - gz < max_groups ? groups[2] - gz : max_groups);
+            }
+        }
+    }
+    if (pass->u32s.write_tex != T1_TEX_NONE) {
+        T1_gpu_d3d11_written(
+            T1_TEX_ARRAY_I(pass->u32s.write_tex),
+            T1_TEX_SLICE_I(pass->u32s.write_tex));
+    }
 
     T1_gpu_d3d11_unbind_all();
 }
@@ -1734,16 +1880,23 @@ u8 T1_os_gpu_begin_frame(void) {
 
     u32 f = T1_d3d->frame_i;
     if (T1_d3d->frame_query_issued[f] && T1_d3d->frame_queries[f] != NULL) {
-        // S_FALSE (1) while it isn't done
-        while (
-            T1_d3d->ctx->vtbl->GetData(
-                T1_d3d->ctx, T1_d3d->frame_queries[f], NULL, 0, 0) == 1)
-        {
-            Sleep(0);
+        /*
+        S_FALSE (1) while it isn't done. Sleeping 1 ms between asks (with
+        timeBeginPeriod(1), see T1_os_windows_init()) instead of spinning
+        a core: the GPU is a frame behind, a ms late costs nothing
+        */
+        while (1) {
+            s32 result = T1_d3d->ctx->vtbl->GetData(
+                T1_d3d->ctx, T1_d3d->frame_queries[f], NULL, 0, 0);
+            if (result != 1) {
+                T1_gpu_d3d11_check_lost(result);
+                break;
+            }
+            Sleep(1);
         }
         T1_d3d->frame_query_issued[f] = 0;
     }
-    return 1;
+    return !T1_d3d->lost;
 }
 
 u8 T1_os_gpu_render_frame(void) {
@@ -1838,7 +1991,8 @@ static b8 T1_gpu_d3d11_make_swap_chain(T1WinHandle hwnd, u32 w, u32 h) {
     }
     // T1 makes the window fullscreen itself, Alt+Enter would be DXGI's
     if (T1_d3d->swap_chain != NULL) {
-        factory->vtbl->Method8(factory, hwnd, T1DXGI_MWA_NO_ALT_ENTER);
+        factory->vtbl->Method8.MakeWindowAssociation(
+            factory, hwnd, T1DXGI_MWA_NO_ALT_ENTER);
     }
     T1_D3D_RELEASE(factory);
 
@@ -1872,8 +2026,11 @@ b8 T1_gpu_d3d11_present_tex(void * hwnd, const u32 tex) {
     {
         T1_D3D_RELEASE(T1_d3d->back_buffer_rtv);
         ctx->vtbl->OMSetRenderTargets(ctx, 0, NULL, NULL);
-        T1_d3d->swap_chain->vtbl->ResizeBuffers(
+        s32 resized = T1_d3d->swap_chain->vtbl->ResizeBuffers(
             T1_d3d->swap_chain, 0, win_w, win_h, T1DXGI_FORMAT_UNKNOWN, 0);
+        T1_gpu_d3d11_check_lost(resized);
+        // the old size stays, so the next frame tries again
+        if (resized < 0) { return 0; }
         T1_d3d->back_buffer_w = win_w;
         T1_d3d->back_buffer_h = win_h;
     }
@@ -1947,7 +2104,26 @@ b8 T1_gpu_d3d11_present_tex(void * hwnd, const u32 tex) {
     T1_gpu_d3d11_unbind_all();
     T1_D3D_RELEASE(srv);
 
-    // waits for the display's next refresh, which paces the main loop
+    /*
+    Waits for the display's next refresh, which paces the main loop. Not
+    when the window can't be seen: then it returns right away, occluded,
+    and we report nothing presented, so the loop paces itself and pauses
+    (see T1_os_window_visible())
+    */
     s32 presented = T1_d3d->swap_chain->vtbl->Present(T1_d3d->swap_chain, 1, 0);
-    return presented >= 0;
+    T1_gpu_d3d11_check_lost(presented);
+    T1_d3d->occluded = presented == T1DXGI_STATUS_OCCLUDED;
+    return presented >= 0 && !T1_d3d->occluded;
+}
+
+b8 T1_gpu_d3d11_occluded(void) {
+    if (!T1_os_gpu_active() || T1_d3d->swap_chain == NULL) { return 0; }
+    if (T1_d3d->occluded) {
+        // presents nothing, only says whether it would be seen
+        s32 result = T1_d3d->swap_chain->vtbl->Present(
+            T1_d3d->swap_chain, 0, T1DXGI_PRESENT_TEST);
+        T1_gpu_d3d11_check_lost(result);
+        T1_d3d->occluded = result == T1DXGI_STATUS_OCCLUDED;
+    }
+    return T1_d3d->occluded;
 }

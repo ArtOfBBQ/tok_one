@@ -5,6 +5,7 @@
 #include "T1_mem.h"
 #include "T1_std.h"
 #include "T1_token.h"
+#include "T1_types_public_gpucpu.h"
 
 /*
 The subset, beyond plain C expressions and statements:
@@ -935,6 +936,7 @@ typedef struct {
     const c8 ** u_pre;
     const c8 ** u_post;
     u8 * reachable; // per function
+    u32 user_first_token; // the client's first, after T1's headers
     b8 failed;
 } Gen;
 
@@ -1398,9 +1400,13 @@ static void write_unit(Gen * g) {
     buf_cat(g->out, "\n");
 }
 
-static void make_unit(Gen * g, const u32 entry_f) {
+/*
+A unit's start, in both translations: no edits of its own yet, and the
+functions entry_f doesn't reach dropped. Returns where the first function
+it keeps starts
+*/
+static u32 unit_begin(Gen * g, const u32 entry_f) {
     Check * c = g->c;
-    const Func * e = &c->funcs[entry_f];
     u32 count = c->count;
 
     T1_std_memset(g->u_skip, 0, count + 1);
@@ -1425,6 +1431,13 @@ static void make_unit(Gen * g, const u32 entry_f) {
             first_kept_func = fn->decl_start;
         }
     }
+    return first_kept_func;
+}
+
+static void make_unit(Gen * g, const u32 entry_f) {
+    Check * c = g->c;
+    const Func * e = &c->funcs[entry_f];
+    u32 first_kept_func = unit_begin(g, entry_f);
 
     // the unit's marker line
     static const c8 * const stage_names[] = {"", "vert", "frag", "comp"};
@@ -1663,27 +1676,34 @@ static void make_unit(Gen * g, const u32 entry_f) {
     write_unit(g);
 }
 
-void T1_shader_to_glsl(
+/*
+What both translations start with: the client's shaders checked, T1's
+headers before them, tokenized, collected, and g set up to write into
+recip. 0 if the check failed (its errors are in error_recip): then there's
+nothing to gen_end(). hlsl says which translation runs, see hlsl_target
+*/
+static b8 gen_begin(
+    Gen * g,
+    Buf * out,
     const c8 * shader_source,
     c8 * recip,
     const u32 recip_cap,
-    u8 * good,
     c8 * error_recip,
-    const u32 error_recip_cap)
+    const u32 error_recip_cap,
+    const b8 hlsl)
 {
-    *good = 0;
     T1_assert(recip != NULL && recip_cap > 0);
     recip[0] = '\0';
 
     // the shaders must be in the subset, T1's own headers aren't checked
-    T1_shader_check(shader_source, good, error_recip, error_recip_cap);
-    if (!*good) { return; }
-    *good = 0;
+    u8 checked = 0;
+    T1_shader_check(shader_source, &checked, error_recip, error_recip_cap);
+    if (!checked) { return 0; }
 
-    u32 full_cap = (u32)(
+    u32 headers_size = (u32)(
         T1_std_strlen(T1_embedded_data_shader_settings) +
-        T1_std_strlen(T1_embedded_data_shader_includes) +
-        T1_std_strlen(shader_source) + 1);
+        T1_std_strlen(T1_embedded_data_shader_includes));
+    u32 full_cap = headers_size + (u32)T1_std_strlen(shader_source) + 1;
     c8 * full = T1_mem_malloc_managed(full_cap);
     full[0] = '\0';
     T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_settings);
@@ -1691,6 +1711,7 @@ void T1_shader_to_glsl(
     T1_std_strcat_cap(full, full_cap, shader_source);
 
     T1_token_run(tz, full, T1_std_strlen(full));
+    hlsl_target = hlsl;
 
     Check * c = T1_mem_malloc_managed(sizeof(Check));
     T1_std_memset(c, 0, sizeof(Check));
@@ -1703,57 +1724,88 @@ void T1_shader_to_glsl(
     mark_secondary(c);
     collect(c);
 
-    Gen g;
-    T1_std_memset(&g, 0, sizeof(Gen));
-    g.c = c;
-    g.arena.cap = 4 * 1024 * 1024;
-    g.arena.data = T1_mem_malloc_managed(g.arena.cap);
-    g.arena.data[0] = '\0';
-    Buf out;
-    out.data = recip;
-    out.size = 0;
-    out.cap = recip_cap;
-    out.overflow = 0;
-    g.out = &out;
+    T1_std_memset(g, 0, sizeof(Gen));
+    g->c = c;
+    g->arena.cap = 4 * 1024 * 1024;
+    g->arena.data = T1_mem_malloc_managed(g->arena.cap);
+    g->arena.data[0] = '\0';
+    out->data = recip;
+    out->size = 0;
+    out->cap = recip_cap;
+    out->overflow = 0;
+    g->out = out;
     u32 n = c->count + 1;
-    g.g_skip = T1_mem_malloc_managed(n);
-    g.u_skip = T1_mem_malloc_managed(n);
-    g.u_drop = T1_mem_malloc_managed(n);
-    g.g_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.g_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.reachable = T1_mem_malloc_managed(c->funcs_size + 1);
-    T1_std_memset(g.g_skip, 0, n);
+    g->g_skip = T1_mem_malloc_managed(n);
+    g->u_skip = T1_mem_malloc_managed(n);
+    g->u_drop = T1_mem_malloc_managed(n);
+    g->g_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->g_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->u_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->u_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->u_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->reachable = T1_mem_malloc_managed(c->funcs_size + 1);
+    T1_std_memset(g->g_skip, 0, n);
     for (u32 i = 0; i < n; i++) {
-        g.g_repl[i] = NULL;
-        g.g_post[i] = NULL;
+        g->g_repl[i] = NULL;
+        g->g_post[i] = NULL;
+    }
+
+    g->user_first_token = c->count;
+    for (u32 i = 0; i < c->count; i++) {
+        if ((u32)(T1_token_text(tz, i) - full) >= headers_size) {
+            g->user_first_token = i;
+            break;
+        }
+    }
+    return 1;
+}
+
+// Frees what gen_begin() made, *good says whether the translation worked
+static void gen_end(Gen * g, u8 * good, const c8 * ran_out) {
+    if (g->arena.overflow || g->out->overflow) { fail(g, 0, ran_out); }
+    *good = !g->failed;
+
+    hlsl_target = 0;
+    T1_mem_free_managed(g->arena.data);
+    T1_mem_free_managed(g->g_skip);
+    T1_mem_free_managed(g->u_skip);
+    T1_mem_free_managed(g->u_drop);
+    T1_mem_free_managed((void *)g->g_repl);
+    T1_mem_free_managed((void *)g->g_post);
+    T1_mem_free_managed((void *)g->u_repl);
+    T1_mem_free_managed((void *)g->u_pre);
+    T1_mem_free_managed((void *)g->u_post);
+    T1_mem_free_managed(g->reachable);
+    T1_mem_free_managed(g->c->secondary);
+    T1_mem_free_managed((void *)g->c->source);
+    T1_mem_free_managed(g->c);
+}
+
+void T1_shader_to_glsl(
+    const c8 * shader_source,
+    c8 * recip,
+    const u32 recip_cap,
+    u8 * good,
+    c8 * error_recip,
+    const u32 error_recip_cap)
+{
+    *good = 0;
+    Gen g;
+    Buf out;
+    if (
+        !gen_begin(
+            &g, &out, shader_source, recip, recip_cap,
+            error_recip, error_recip_cap, /* hlsl: */ 0))
+    {
+        return;
     }
 
     global_edits(&g);
-    for (u32 f = 0; f < c->funcs_size && !g.failed; f++) {
-        if (c->funcs[f].is_entry) { make_unit(&g, f); }
+    for (u32 f = 0; f < g.c->funcs_size && !g.failed; f++) {
+        if (g.c->funcs[f].is_entry) { make_unit(&g, f); }
     }
 
-    if (g.arena.overflow || out.overflow) {
-        fail(&g, 0, "T1_shader_to_glsl() ran out of room");
-    }
-    *good = !g.failed;
-
-    T1_mem_free_managed(g.arena.data);
-    T1_mem_free_managed(g.g_skip);
-    T1_mem_free_managed(g.u_skip);
-    T1_mem_free_managed(g.u_drop);
-    T1_mem_free_managed((void *)g.g_repl);
-    T1_mem_free_managed((void *)g.g_post);
-    T1_mem_free_managed((void *)g.u_repl);
-    T1_mem_free_managed((void *)g.u_pre);
-    T1_mem_free_managed((void *)g.u_post);
-    T1_mem_free_managed(g.reachable);
-    T1_mem_free_managed(c->secondary);
-    T1_mem_free_managed(c);
-    T1_mem_free_managed(full);
+    gen_end(&g, good, "T1_shader_to_glsl() ran out of room");
 }
 
 /*
@@ -1772,8 +1824,9 @@ The layout a Direct3D 11 backend must match:
 - a compute pass's write_tex: u0, an R32_UINT view of its slice, each uint
   an rgba8 pixel that T1's helpers pack and unpack
 - kernels: a line "//T1_THREADS x y z" has their group's size, b0 is a
-  constant buffer with the grid's size (a uint3), threads past it return
-  right away
+  constant buffer with the grid's size (a uint3, threads past it return
+  right away) and, 16 bytes in, the first thread of this Dispatch() (a
+  uint3: a grid of more than 65535 groups a dimension takes several)
 - an HLSL matrix holds the columns of the MSL one as its rows: in memory
   they're the same (#pragma pack_matrix(row_major)), constructors and m[i]
   stay as they are, and mul() swaps its arguments
@@ -1800,7 +1853,7 @@ static const c8 * const hlsl_reserved[] = {
     "frac", "rcp", "mad", "clip", "ddx", "ddy", "asuint", "asint", "asfloat",
     "countbits", "firstbithigh", "firstbitlow", "reversebits", "isnan",
     "isinf", "isfinite", "noise", "lit", "dst", "log10", "sincos", "modf",
-    "ldexp", "frexp", "determinant", "fwidth", "numthreads",
+    "ldexp", "frexp", "determinant", "numthreads",
 };
 
 static b8 is_hlsl_reserved(const u32 i) {
@@ -2098,14 +2151,145 @@ typedef struct {
 
 #define DATA_MEMBERS_CAP 64
 
+// whether an #if's line from text on ends here
+static b8 eval_line_end(const c8 * s) {
+    return
+        *s == '\0' || *s == '\r' || *s == '\n' ||
+        (s[0] == '/' && (s[1] == '/' || s[1] == '*'));
+}
+
+/*
+An #if's condition: sums compared with == != < > <= >=, joined by && and
+||, and defined(NAME). -1 if it has anything else
+*/
+static s64 eval_condition(Eval * e) {
+    s64 result = 0;
+    b8 in_or = 0;
+    while (!e->bad) {
+        s64 all = 1; // of the && chain
+        while (!e->bad) {
+            eval_space(e);
+            s64 value;
+            if (T1_std_are_equal_strings_of_length(e->s, "defined", 7)) {
+                e->s += 7;
+                eval_space(e);
+                b8 paren = *e->s == '(';
+                if (paren) { e->s++; eval_space(e); }
+                const c8 * name = e->s;
+                while (is_name_char(*e->s)) { e->s++; }
+                u32 n = (u32)(e->s - name);
+                value = n > 0 && macro_value(e->c, name, n) != NULL;
+                if (n == 0) { e->bad = 1; }
+                eval_space(e);
+                if (paren) {
+                    if (*e->s == ')') { e->s++; } else { e->bad = 1; }
+                }
+            } else {
+                value = eval_sum(e);
+                eval_space(e);
+                static const c8 * const ops[] = {
+                    "==", "!=", "<=", ">=", "<", ">",
+                };
+                for (u32 o = 0; o < 6; o++) {
+                    u32 n = o < 4 ? 2 : 1;
+                    if (!T1_std_are_equal_strings_of_length(e->s, ops[o], n)) {
+                        continue;
+                    }
+                    e->s += n;
+                    s64 rhs = eval_sum(e);
+                    value =
+                        o == 0 ? value == rhs : o == 1 ? value != rhs :
+                        o == 2 ? value <= rhs : o == 3 ? value >= rhs :
+                        o == 4 ? value < rhs : value > rhs;
+                    break;
+                }
+            }
+            all = all && value != 0;
+            eval_space(e);
+            if (!T1_std_are_equal_strings_of_length(e->s, "&&", 2)) { break; }
+            e->s += 2;
+        }
+        result = in_or ? (result || all) : all;
+        in_or = 1;
+        eval_space(e);
+        if (!T1_std_are_equal_strings_of_length(e->s, "||", 2)) { break; }
+        e->s += 2;
+    }
+    eval_space(e);
+    return e->bad || !eval_line_end(e->s) ? -1 : result;
+}
+
 /*
 A struct's members for its load and store functions: [const] Type name;
-also "Type a, b[N];". 0 if it has something else (attributes, #ifs)
+also "Type a, b[N];", and the members of the #if branches its macros take
+(so the layout is the one the client's headers compile to). 0 if it has
+something else (attributes, conditions it can't evaluate)
 */
-static u32 data_members(const StructDef * d, DataMember * recip) {
+static u32 data_members(
+    const Check * c,
+    const StructDef * d,
+    DataMember * recip)
+{
+    // per #if level: whether it's taken, whether a branch of it was
+    b8 taken[16];
+    b8 any_taken[16];
+    u32 depth = 0;
+    b8 active = 1;
+
     u32 size = 0;
     u32 i = d->body_open + 1;
     while (i < d->body_close) {
+        if (kind(i) == SK_PREPROC) {
+            const c8 * t = T1_token_text(tz, i) + 1;
+            while (*t == ' ' || *t == '\t') { t++; }
+            b8 parent = depth == 0 || taken[depth - 1];
+            if (preproc_is(i, "ifdef") || preproc_is(i, "ifndef")) {
+                b8 negate = preproc_is(i, "ifndef");
+                t += negate ? 6 : 5;
+                while (*t == ' ' || *t == '\t') { t++; }
+                const c8 * name = t;
+                while (is_name_char(*t)) { t++; }
+                if (depth >= 16 || t == name) { return 0; }
+                b8 is_defined =
+                    macro_value(c, name, (u32)(t - name)) != NULL;
+                taken[depth] = parent && (is_defined != negate);
+                any_taken[depth] = taken[depth];
+                depth++;
+            } else if (preproc_is(i, "if") || preproc_is(i, "elif")) {
+                b8 elif = preproc_is(i, "elif");
+                if (elif && depth == 0) { return 0; }
+                if (!elif && depth >= 16) { return 0; }
+                Eval e = {c, t + (elif ? 4 : 2), 0, 0};
+                s64 value = eval_condition(&e);
+                if (value < 0) { return 0; }
+                if (elif) {
+                    parent = depth == 1 || taken[depth - 2];
+                    taken[depth - 1] =
+                        parent && !any_taken[depth - 1] && value != 0;
+                    any_taken[depth - 1] =
+                        any_taken[depth - 1] || taken[depth - 1];
+                } else {
+                    taken[depth] = parent && value != 0;
+                    any_taken[depth] = taken[depth];
+                    depth++;
+                }
+            } else if (preproc_is(i, "else")) {
+                if (depth == 0) { return 0; }
+                parent = depth == 1 || taken[depth - 2];
+                taken[depth - 1] = parent && !any_taken[depth - 1];
+                any_taken[depth - 1] = 1;
+            } else if (preproc_is(i, "endif")) {
+                if (depth == 0) { return 0; }
+                depth--;
+            } else if (active) {
+                // an #error the macros reach, or a #define of its own
+                return 0;
+            }
+            active = depth == 0 || taken[depth - 1];
+            i++;
+            continue;
+        }
+        if (!active) { i++; continue; }
         if (is(i, "const")) { i++; }
         if (kind(i) != SK_IDENT) { return 0; }
         u32 type = i++;
@@ -2131,7 +2315,7 @@ static u32 data_members(const StructDef * d, DataMember * recip) {
             return 0;
         }
     }
-    return size;
+    return depth == 0 ? size : 0;
 }
 
 // "(N)" of an array member, "1" if it's not one
@@ -2174,7 +2358,7 @@ static void hlsl_struct_functions(Gen * g, b8 * loadable) {
         loadable[s] = 0;
 
         DataMember members[DATA_MEMBERS_CAP];
-        u32 size = data_members(d, members);
+        u32 size = data_members(c, d, members);
         if (size == 0) { continue; }
 
         // every member's type must be loadable and defined before
@@ -2308,8 +2492,8 @@ static void hlsl_struct_functions(Gen * g, b8 * loadable) {
                 buf_cat(a, "    ");
                 /*
                 In braces: a for's variable lives on after the loop in
-                HLSL. Unrolled: elements of local arrays can't be indexed
-                with variables
+                HLSL. Unrolled: the arrays are short, and it spares the
+                compiler a local array indexed with a variable
                 */
                 if (array) {
                     buf_cat(a, "{ [unroll] for (uint t1_i = 0; t1_i < ");
@@ -2458,7 +2642,7 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
                 const StructDef * d = find_struct(c, type_i);
                 if (d == NULL || !loadable[d - c->struct_defs]) { break; }
                 DataMember members[DATA_MEMBERS_CAP];
-                u32 size = data_members(d, members);
+                u32 size = data_members(c, d, members);
                 u32 m = 0;
                 while (m < size && !same_text(members[m].name_i, t + 1)) {
                     m++;
@@ -2654,9 +2838,21 @@ static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
     #else
     #error
     #endif
+    /*
+    The uv's derivatives are taken before the switch: tex may differ from
+    pixel to pixel, and inside a branch that does the neighbouring pixels
+    of a quad may not run the same case, so implicit derivatives there
+    (Sample()) would pick wrong mips or make the compiler flatten it
+    */
     buf_cat(b,
         "float4 t1_sample(SamplerState smp, uint tex, float2 uv) {\n"
-        "    float3 c = float3(uv, (float)T1_TEX_SLICE_I(tex));\n"
+        "    float3 c = float3(uv, (float)T1_TEX_SLICE_I(tex));\n");
+    if (implicit_lod) {
+        buf_cat(b,
+            "    float2 dx = ddx(uv);\n"
+            "    float2 dy = ddy(uv);\n");
+    }
+    buf_cat(b,
         "    float4 r = float4(0.0f, 0.0f, 0.0f, 0.0f);\n"
         "    switch (T1_TEX_ARRAY_I(tex)) {\n");
     for (u32 t = 0; t < T1_TEXARRAYS_CAP; t++) {
@@ -2665,7 +2861,7 @@ static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
         buf_cat(b, ": r = t1_textures[");
         cat_u32(b, t);
         buf_cat(b, implicit_lod ?
-            "].Sample(smp, c); break;\n" :
+            "].SampleGrad(smp, c, dx, dy); break;\n" :
             "].SampleLevel(smp, c, 0.0f); break;\n");
     }
     buf_cat(b,
@@ -2751,32 +2947,11 @@ static void cat_hlsl_prims(Buf * b) {
     }
 }
 
-static void make_unit_hlsl(
-    Gen * g,
-    const u32 entry_f,
-    const u32 user_first_token)
-{
+static void make_unit_hlsl(Gen * g, const u32 entry_f) {
     Check * c = g->c;
     const Func * e = &c->funcs[entry_f];
     u32 count = c->count;
-
-    T1_std_memset(g->u_skip, 0, count + 1);
-    T1_std_memset(g->u_drop, 0, count + 1);
-    for (u32 i = 0; i <= count; i++) {
-        g->u_repl[i] = NULL;
-        g->u_pre[i] = NULL;
-        g->u_post[i] = NULL;
-    }
-    T1_std_memset(g->reachable, 0, c->funcs_size);
-    mark_reachable(g, entry_f);
-    for (u32 f = 0; f < c->funcs_size; f++) {
-        const Func * fn = &c->funcs[f];
-        if (!g->reachable[f]) {
-            for (u32 t = fn->decl_start; t <= fn->body_close; t++) {
-                g->u_drop[t] = 1;
-            }
-        }
-    }
+    unit_begin(g, entry_f);
 
     // The globals and helpers go before the shaders, after T1's headers
     Buf globals_buf;
@@ -2841,9 +3016,20 @@ static void make_unit_hlsl(
     Buf * hp = &params_buf;
 
     if (e->stage == STAGE_KERNEL) {
-        buf_cat(gl, "cbuffer T1Grid : register(b0) { uint3 t1_grid_size; };\n");
-        buf_cat(hp, "uint3 t1_dtid : SV_DispatchThreadID");
+        /*
+        A grid of more than 65535 groups a dimension is dispatched in
+        parts, t1_grid_start is the part's first thread (see
+        T1_gpu_d3d11.c)
+        */
+        buf_cat(gl,
+            "cbuffer T1Grid : register(b0) {\n"
+            "    uint3 t1_grid_size;\n"
+            "    uint t1_grid_pad;\n"
+            "    uint3 t1_grid_start;\n"
+            "};\n");
+        buf_cat(hp, "uint3 t1_part_dtid : SV_DispatchThreadID");
         buf_cat(pro,
+            "    uint3 t1_dtid = t1_part_dtid + t1_grid_start;\n"
             "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
     } else if (e->stage == STAGE_VERTEX) {
         buf_cat(hp,
@@ -2901,9 +3087,22 @@ static void make_unit_hlsl(
                 fail(g, start, "a buffer parameter must be a pointer");
                 continue;
             }
+            /*
+            Only what a pass binds: T1_FRAME_CONSTS_I, T1_PARAMS_I and
+            its buffers, writable ones only its buffers. Anything else
+            would read zeros (or drop writes) on Direct3D without a word
+            */
             s64 n = eval_attr_arg(c, attr, "buffer");
-            if (n < 0 || n + T1_HLSL_BUFS_T > 127) {
-                fail(g, attr, "buffer(n) needs a constant from 0 to 95");
+            b8 pass_buf = n >= T1_BUFS_I && n < T1_BUFS_I + T1_PASS_BUFS_CAP;
+            if (n != T1_FRAME_CONSTS_I && n != T1_PARAMS_I && !pass_buf) {
+                fail(g, attr,
+                    "buffer(n) needs T1_FRAME_CONSTS_I, T1_PARAMS_I or a "
+                    "constant from T1_BUFS_I to T1_BUFS_I + "
+                    "T1_PASS_BUFS_CAP - 1");
+                continue;
+            }
+            if (e->stage == STAGE_KERNEL && !readonly && !pass_buf) {
+                fail(g, attr, "a kernel only writes its pass's buffers");
                 continue;
             }
             if (e->stage == STAGE_KERNEL && !readonly) {
@@ -2995,8 +3194,8 @@ static void make_unit_hlsl(
     buf_cat(g->out, "//T1_UNIT ");
     buf_cat(g->out, stage_names[e->stage]);
     buf_cat(g->out, " ");
-    buf_cat_n(g->out, T1_token_text(tz, e->name_i),
-        T1_token_size(tz, e->name_i));
+    // as the head names it (e.g. "sample_"), the backend compiles that
+    cat_name(g->out, e->name_i);
     buf_cat(g->out, "\n");
     if (e->stage == STAGE_KERNEL) {
         buf_cat(g->out, "//T1_THREADS ");
@@ -3049,7 +3248,7 @@ static void make_unit_hlsl(
     if (gl->overflow) { fail(g, e->name_i, "too many globals"); }
     {
         // before the first of the client's tokens this unit keeps
-        u32 first = user_first_token;
+        u32 first = g->user_first_token;
         while (first < count && g->u_drop[first]) { first++; }
         u32 s = str_begin(g);
         buf_cat(&g->arena, gl->data);
@@ -3071,103 +3270,26 @@ void T1_shader_to_hlsl(
     const u32 error_recip_cap)
 {
     *good = 0;
-    T1_assert(recip != NULL && recip_cap > 0);
-    recip[0] = '\0';
-
-    // the shaders must be in the subset, T1's own headers aren't checked
-    T1_shader_check(shader_source, good, error_recip, error_recip_cap);
-    if (!*good) { return; }
-    *good = 0;
-
-    u32 headers_size = (u32)(
-        T1_std_strlen(T1_embedded_data_shader_settings) +
-        T1_std_strlen(T1_embedded_data_shader_includes));
-    u32 full_cap = headers_size + (u32)T1_std_strlen(shader_source) + 1;
-    c8 * full = T1_mem_malloc_managed(full_cap);
-    full[0] = '\0';
-    T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_settings);
-    T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_includes);
-    T1_std_strcat_cap(full, full_cap, shader_source);
-
-    T1_token_run(tz, full, T1_std_strlen(full));
-    hlsl_target = 1;
-
-    Check * c = T1_mem_malloc_managed(sizeof(Check));
-    T1_std_memset(c, 0, sizeof(Check));
-    c->count = T1_token_count(tz);
-    c->source = full;
-    c->error_recip = error_recip;
-    c->error_recip_cap = error_recip_cap;
-    if (error_recip != NULL) { error_recip[0] = '\0'; }
-    c->secondary = T1_mem_malloc_managed(c->count + 1);
-    mark_secondary(c);
-    collect(c);
-
-    // the first token of the client's shaders, after T1's headers
-    u32 user_first_token = c->count;
-    for (u32 i = 0; i < c->count; i++) {
-        if ((u32)(T1_token_text(tz, i) - full) >= headers_size) {
-            user_first_token = i;
-            break;
-        }
-    }
-
     Gen g;
-    T1_std_memset(&g, 0, sizeof(Gen));
-    g.c = c;
-    g.arena.cap = 4 * 1024 * 1024;
-    g.arena.data = T1_mem_malloc_managed(g.arena.cap);
-    g.arena.data[0] = '\0';
     Buf out;
-    out.data = recip;
-    out.size = 0;
-    out.cap = recip_cap;
-    out.overflow = 0;
-    g.out = &out;
-    u32 n = c->count + 1;
-    g.g_skip = T1_mem_malloc_managed(n);
-    g.u_skip = T1_mem_malloc_managed(n);
-    g.u_drop = T1_mem_malloc_managed(n);
-    g.g_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.g_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.u_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
-    g.reachable = T1_mem_malloc_managed(c->funcs_size + 1);
-    b8 * loadable = T1_mem_malloc_managed(c->struct_defs_size + 1);
-    T1_std_memset(g.g_skip, 0, n);
-    for (u32 i = 0; i < n; i++) {
-        g.g_repl[i] = NULL;
-        g.g_post[i] = NULL;
+    if (
+        !gen_begin(
+            &g, &out, shader_source, recip, recip_cap,
+            error_recip, error_recip_cap, /* hlsl: */ 1))
+    {
+        return;
     }
 
+    b8 * loadable = T1_mem_malloc_managed(g.c->struct_defs_size + 1);
     global_edits(&g);
     hlsl_struct_functions(&g, loadable);
     hlsl_buffer_edits(&g, loadable);
     hlsl_constructor_edits(&g);
     hlsl_stage_edits(&g);
-    for (u32 f = 0; f < c->funcs_size && !g.failed; f++) {
-        if (c->funcs[f].is_entry) { make_unit_hlsl(&g, f, user_first_token); }
+    for (u32 f = 0; f < g.c->funcs_size && !g.failed; f++) {
+        if (g.c->funcs[f].is_entry) { make_unit_hlsl(&g, f); }
     }
-
-    if (g.arena.overflow || out.overflow) {
-        fail(&g, 0, "T1_shader_to_hlsl() ran out of room");
-    }
-    *good = !g.failed;
-
-    hlsl_target = 0;
     T1_mem_free_managed(loadable);
-    T1_mem_free_managed(g.arena.data);
-    T1_mem_free_managed(g.g_skip);
-    T1_mem_free_managed(g.u_skip);
-    T1_mem_free_managed(g.u_drop);
-    T1_mem_free_managed((void *)g.g_repl);
-    T1_mem_free_managed((void *)g.g_post);
-    T1_mem_free_managed((void *)g.u_repl);
-    T1_mem_free_managed((void *)g.u_pre);
-    T1_mem_free_managed((void *)g.u_post);
-    T1_mem_free_managed(g.reachable);
-    T1_mem_free_managed(c->secondary);
-    T1_mem_free_managed(c);
-    T1_mem_free_managed(full);
+
+    gen_end(&g, good, "T1_shader_to_hlsl() ran out of room");
 }

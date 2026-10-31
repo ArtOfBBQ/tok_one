@@ -47,7 +47,7 @@ void T1_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
 
-    #ifdef __APPLE__
+    #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_objc_init(
         T1_mem_malloc_unmanaged,
         fatal_error);
@@ -69,6 +69,9 @@ void T1_init(
     }
 
     void * pool = T1_objc_autorelease_pool_push();
+    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #else
+    #error
     #endif
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
@@ -77,9 +80,12 @@ void T1_init(
     T1_std_memset(T1_global, 0, sizeof(T1Globals));
 
     // before audio, which needs its DLLs
-    #ifdef _WIN32
+    #if T1_PLATFORM_WINDOWS == T1_ACTIVE
     T1_os_windows_init(fatal_error);
     if (*fatal_error != 0) { return; }
+    #elif T1_PLATFORM_APPLE == T1_ACTIVE
+    #else
+    #error
     #endif
 
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -99,12 +105,14 @@ void T1_init(
     #error "T1_AUDIO_ACTIVE undefined!"
     #endif
     
-    #ifdef __APPLE__
+    #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_apple_os_init();
-    #endif
-    
     #ifdef TARGET_OS_OSX
     T1_os_macos_init();
+    #endif
+    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #else
+    #error
     #endif
     
     // The writables dir (saves, caches) has to exist before anything is
@@ -226,8 +234,11 @@ void T1_init(
         /* void *(*arg_malloc_fptr)(size_t): */
             T1_mem_malloc_unmanaged);
 
-    #ifdef __APPLE__
+    #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_objc_autorelease_pool_pop(pool);
+    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #else
+    #error
     #endif
 
     T1_gameloop_active = 1;
@@ -260,12 +271,14 @@ void T1_gpu_init(
         return;
     }
     
-    #ifdef __APPLE__
+    #if T1_PLATFORM_APPLE == T1_ACTIVE
     void * pool = T1_objc_autorelease_pool_push();
     T1_appinit_gpu_modules(fatal_error);
     T1_objc_autorelease_pool_pop(pool);
-    #else
+    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
     T1_appinit_gpu_modules(fatal_error);
+    #else
+    #error
     #endif
     
     T1_os_gpu_init(fatal_error);

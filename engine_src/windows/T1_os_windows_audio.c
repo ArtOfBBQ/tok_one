@@ -26,6 +26,20 @@ works with COM objects, and we don't choose that for the app's main thread.
 
 // If the device is gone (e.g. unplugged), we try the new default this often
 #define T1_WASAPI_REOPEN_MS 500
+// and whether the default output changed (in Windows' settings) this often
+#define T1_WASAPI_DEFAULT_CHECK_MS 1000
+/*
+Our buffer, in 100 ns units: room for T1_AUDIO_PLATFORM_FRAMES (rounded
+up), what macOS's audio queue holds. Windows may give us more, we never
+fill more than that (see T1_os_win_audio_fill()), so both platforms play
+the same distance behind the mix. The engine wakes us every period (10 ms)
+to top it up, a late wake is heard only once it's about 24 ms late
+*/
+#define T1_WASAPI_BUFFER_100NS \
+    (((s64)T1_AUDIO_PLATFORM_FRAMES * 10000000 + \
+        T1_WASAPI_SAMPLE_RATE - 1) / T1_WASAPI_SAMPLE_RATE)
+// a device's id, cut to this many characters (they're about 55)
+#define T1_WASAPI_DEVICE_ID_CAP 256
 // T1_os_audio_init() waits this long for the audio thread to open the device
 #define T1_WASAPI_OPEN_TIMEOUT_MS 3000
 
@@ -37,7 +51,6 @@ works with COM objects, and we don't choose that for the app's main thread.
 #define T1AUDCLNT_STREAMFLAGS_EVENTCALLBACK 0x00040000u
 #define T1AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY 0x08000000u
 #define T1AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM 0x80000000u
-#define T1AUDCLNT_E_DEVICE_INVALIDATED ((s32)0x88890004u)
 #define T1WAVE_FORMAT_PCM 1
 
 typedef struct {
@@ -103,6 +116,9 @@ typedef struct {
         u32 cls_context,
         void * activation_params,
         void ** interface);
+    void * OpenPropertyStore;
+    // the id string is the caller's, freed with CoTaskMemFree()
+    s32 (T1_WINAPI * GetId)(T1MMDevice *, T1WChar ** id);
 } T1MMDeviceVtbl;
 
 struct T1MMDevice {
@@ -166,6 +182,7 @@ typedef s32 (T1_WINAPI * T1CoCreateInstanceFn)(
     u32 cls_context,
     const T1WinGUID * iid,
     void ** object);
+typedef void (T1_WINAPI * T1CoTaskMemFreeFn)(void *);
 typedef T1WinHandle (T1_WINAPI * T1AvSetMmThreadCharacteristicsWFn)(
     const T1WChar * task,
     u32 * task_index);
@@ -173,6 +190,7 @@ typedef T1WinHandle (T1_WINAPI * T1AvSetMmThreadCharacteristicsWFn)(
 typedef struct {
     T1CoInitializeExFn CoInitializeEx;
     T1CoCreateInstanceFn CoCreateInstance;
+    T1CoTaskMemFreeFn CoTaskMemFree;
     T1AvSetMmThreadCharacteristicsWFn AvSetMmThreadCharacteristicsW;
     T1MMDeviceEnumerator * enumerator;
     T1MMDevice * device;
@@ -182,6 +200,8 @@ typedef struct {
     T1WinHandle opened; // the audio thread tried to open the device
     T1WinHandle start; // T1_os_audio_start_loop() was called
     u32 buffer_frames;
+    T1WChar device_id[T1_WASAPI_DEVICE_ID_CAP]; // the open device's
+    u64 default_checked_ms;
     b8 good;
 } T1OSWindowsAudioState;
 
@@ -206,11 +226,54 @@ static void T1_os_win_audio_close(void) {
     s->client = NULL;
     s->device = NULL;
     s->buffer_frames = 0;
+    s->device_id[0] = 0;
+}
+
+// A device's id in recip, empty if it has none
+static void T1_os_win_audio_device_id(T1MMDevice * device, T1WChar * recip) {
+    T1OSWindowsAudioState * s = &T1_os_win_audio_s;
+    recip[0] = 0;
+    T1WChar * id = NULL;
+    if (device->vtbl->GetId(device, &id) < 0 || id == NULL) { return; }
+    u32 i = 0;
+    while (id[i] != 0 && i + 1 < T1_WASAPI_DEVICE_ID_CAP) {
+        recip[i] = id[i];
+        i++;
+    }
+    recip[i] = 0;
+    s->CoTaskMemFree(id);
 }
 
 /*
-Hands the audio engine T1's mix for all the room left in our buffer, the
-part it hasn't played yet ("padding") stays
+Whether Windows' default output is another device than ours now (the
+user picked another one), which isn't an error of our stream: it keeps
+playing on the old device as long as that's there
+*/
+static b8 T1_os_win_audio_default_changed(void) {
+    T1OSWindowsAudioState * s = &T1_os_win_audio_s;
+    T1MMDevice * device = NULL;
+    if (
+        s->enumerator->vtbl->GetDefaultAudioEndpoint(
+            s->enumerator, T1eRender, T1eConsole, &device) < 0 ||
+        device == NULL)
+    {
+        return 0;
+    }
+    T1WChar id[T1_WASAPI_DEVICE_ID_CAP];
+    T1_os_win_audio_device_id(device, id);
+    device->vtbl->Release(device);
+    if (id[0] == 0 || s->device_id[0] == 0) { return 0; }
+    for (u32 i = 0; i < T1_WASAPI_DEVICE_ID_CAP; i++) {
+        if (id[i] != s->device_id[i]) { return 1; }
+        if (id[i] == 0) { break; }
+    }
+    return 0;
+}
+
+/*
+Hands the audio engine T1's mix up to T1_AUDIO_PLATFORM_FRAMES ahead, the
+part it hasn't played yet ("padding") stays. Not all the room in our
+buffer: Windows may have made it bigger than we asked
 */
 static s32 T1_os_win_audio_fill(void) {
     T1OSWindowsAudioState * s = &T1_os_win_audio_s;
@@ -219,8 +282,10 @@ static s32 T1_os_win_audio_fill(void) {
     s32 result = s->client->vtbl->GetCurrentPadding(s->client, &padding);
     if (result < 0) { return result; }
 
-    u32 frames = s->buffer_frames - padding;
-    if (frames == 0) { return 0; }
+    u32 target = s->buffer_frames < T1_AUDIO_PLATFORM_FRAMES ?
+        s->buffer_frames : T1_AUDIO_PLATFORM_FRAMES;
+    if (padding >= target) { return 0; }
+    u32 frames = target - padding;
 
     u8 * data = NULL;
     result = s->render->vtbl->GetBuffer(s->render, frames, &data);
@@ -254,6 +319,7 @@ static b8 T1_os_win_audio_open(void) {
         T1_os_win_audio_close();
         return 0;
     }
+    T1_os_win_audio_device_id(s->device, s->device_id);
 
     T1WaveFormatEx format;
     T1_std_memset(&format, 0, sizeof(T1WaveFormatEx));
@@ -264,7 +330,6 @@ static b8 T1_os_win_audio_open(void) {
     format.block_align = T1_WASAPI_FRAME_BYTES;
     format.avg_bytes_per_sec = T1_WASAPI_SAMPLE_RATE * T1_WASAPI_FRAME_BYTES;
 
-    // A buffer duration of 0 asks for the smallest buffer the engine allows
     if (
         s->client->vtbl->Initialize(
             s->client,
@@ -272,7 +337,7 @@ static b8 T1_os_win_audio_open(void) {
             T1AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
                 T1AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM |
                 T1AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
-            0,
+            T1_WASAPI_BUFFER_100NS,
             0,
             &format,
             NULL) < 0 ||
@@ -335,9 +400,21 @@ static void * T1_os_win_audio_thread(void * unused) {
             continue;
         }
 
-        if (T1_os_win_audio_fill() == T1AUDCLNT_E_DEVICE_INVALIDATED) {
-            // e.g. headphones unplugged: Windows moved on to another device
+        /*
+        Any error ends the stream (e.g. headphones unplugged, the audio
+        service restarted): we open the default device again
+        */
+        if (T1_os_win_audio_fill() < 0) {
             T1_os_win_audio_close();
+            continue;
+        }
+
+        u64 now_ms = GetTickCount64();
+        if (now_ms - s->default_checked_ms >= T1_WASAPI_DEFAULT_CHECK_MS) {
+            s->default_checked_ms = now_ms;
+            if (T1_os_win_audio_default_changed()) {
+                T1_os_win_audio_close();
+            }
         }
     }
 
@@ -352,7 +429,12 @@ void T1_os_audio_init(u8 * good) {
     T1WinHandle ole32 = LoadLibraryW(L"ole32.dll");
     T1_os_win_audio_get_fn(&s->CoInitializeEx, ole32, "CoInitializeEx");
     T1_os_win_audio_get_fn(&s->CoCreateInstance, ole32, "CoCreateInstance");
-    if (s->CoInitializeEx == NULL || s->CoCreateInstance == NULL) {
+    T1_os_win_audio_get_fn(&s->CoTaskMemFree, ole32, "CoTaskMemFree");
+    if (
+        s->CoInitializeEx == NULL ||
+        s->CoCreateInstance == NULL ||
+        s->CoTaskMemFree == NULL)
+    {
         return;
     }
     // optional

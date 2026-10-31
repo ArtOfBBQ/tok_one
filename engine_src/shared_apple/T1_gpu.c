@@ -2723,6 +2723,11 @@ u8 T1_os_gpu_active(void) {
     return ags != NULL && ags->metal_active;
 }
 
+// TODO: an eGPU unplugged (MTLDeviceWasRemovedNotification)
+u8 T1_os_gpu_lost(void) {
+    return 0;
+}
+
 void * T1_gpu_get_device(void) {
     return ags != NULL ? ags->device : NULL;
 }

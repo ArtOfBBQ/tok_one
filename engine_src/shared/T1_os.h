@@ -8,6 +8,22 @@ your platform
 #define T1_OS_H
 
 #include "T1_stdint.h"
+#include "T1_macro_settings.h"
+
+/*
+The platform T1 is built for, as the compiler says: one of these is
+T1_ACTIVE, the rest T1_INACTIVE. Its layer is in engine_src/ (shared_apple/
+and macos/, windows/), shared/ code reaches it only through this header
+*/
+#if defined(_WIN32)
+#define T1_PLATFORM_APPLE T1_INACTIVE
+#define T1_PLATFORM_WINDOWS T1_ACTIVE
+#elif defined(__APPLE__)
+#define T1_PLATFORM_APPLE T1_ACTIVE
+#define T1_PLATFORM_WINDOWS T1_INACTIVE
+#else
+#error "T1 has no platform layer for this OS"
+#endif
 
 #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct {
@@ -27,16 +43,16 @@ extern T1EngineSaveFile * engine_save_file;
 #error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
 #endif
 
-#ifdef __APPLE__
+#if T1_PLATFORM_APPLE == T1_ACTIVE
 void T1_apple_os_init(void);
-#endif
-
 #ifdef TARGET_OS_OSX
 void T1_os_macos_init(void);
 #endif
-
-#ifdef _WIN32
+#elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+// loads the DLLs the rest of the platform layer calls, after T1_os_init()
 void T1_os_windows_init(char ** const fatal_error);
+#else
+#error
 #endif
 
 // Needs T1_mem_init()
@@ -194,8 +210,10 @@ u64 T1_os_raw_thread_id_to_T1_thread_id(
     u64 raw_in,
     char ** const fatal_error);
 /*
-creates a mutex and return the ID of said mutex for you to store
+creates a mutex and return the ID of said mutex for you to store. Mutexes
+are the platform layer's (pthreads, Windows' SRW locks), not recursive
 */
+#define T1_MUTEXES_CAP 50
 u32 T1_os_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
@@ -259,6 +277,8 @@ void T1_os_layer_start_window_resize(u64 timestamp);
 void T1_os_gpu_init(char ** const fatal_error);
 // T1_os_gpu_init() succeeded
 u8 T1_os_gpu_active(void);
+// see T1_gpu_lost() in T1.h
+u8 T1_os_gpu_lost(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
 void T1_os_window_open(char ** const fatal_error);

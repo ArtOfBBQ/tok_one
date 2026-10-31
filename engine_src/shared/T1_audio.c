@@ -46,10 +46,9 @@ void T1_audio_init(
     T1_audio_s->play_cursor    = 0;
     T1_audio_s->callback_runs  = 0;
     // sound_settings->platform_buffer_size_bytes = platform_buffer_size;
-    T1_audio_s->global_buffer_size_bytes = 41000 * 45 * 2;
-    T1_assert(T1_audio_s->global_buffer_size_bytes % 2 == 0);
-    T1_audio_s->global_samples_size = T1_audio_s->
-        global_buffer_size_bytes / 2;
+    T1_audio_s->global_samples_size = 41000 * 45;
+    T1_audio_s->global_buffer_size_bytes =
+        T1_audio_s->global_samples_size * (u32)sizeof(s32);
     
     T1_audio_s->samples_buffer = arg_malloc_function(
         T1_audio_s->global_buffer_size_bytes);
@@ -97,6 +96,26 @@ static volatile u32 crush_hold = 1;
 static volatile u32 crush_bits = 16;
 static s32 crush_held[2];
 
+/*
+The mix's sample (times the volume) as 16 bits: as it is up to 3/4 of full
+scale, above that bent smoothly toward full scale instead of clipped, so
+many loud sounds at once get louder without crackling
+*/
+static s32 T1_audio_limit(f32 x) {
+    const f32 knee = 24576.0f;
+    const f32 room = 32767.0f - knee;
+    f32 size = x < 0.0f ? -x : x;
+    if (size <= knee) { return (s32)x; }
+    f32 over = size - knee;
+    f32 limited = knee + room * over / (over + room);
+    return (s32)(x < 0.0f ? -limited : limited);
+}
+
+// The play cursor as the audio thread has it now
+static u64 T1_audio_cursor_now(void) {
+    return *(volatile u64 *)&T1_audio_s->play_cursor;
+}
+
 void T1_audio_set_crush(u32 hold_frames, u32 bits) {
     crush_hold = hold_frames < 1 ? 1 : hold_frames;
     crush_bits = bits < 1 || bits > 16 ? 16 : bits;
@@ -112,14 +131,11 @@ void T1_audio_consume_int16_samples(
         u32 next_i = (T1_audio_s->play_cursor) %
             T1_audio_s->global_samples_size;
         
-        s32 new_val = (s32)(
+        s32 new_val = T1_audio_limit(
             (f32)T1_audio_s->samples_buffer[next_i] *
                 T1_audio_state->volume);
         
         T1_audio_s->samples_buffer[next_i] = 0;
-        
-        new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
-        new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
         
         // the samples are 2 channels interleaved: a frame is 2 of them
         const u32 channel = (u32)(T1_audio_s->play_cursor & 1);
@@ -142,23 +158,28 @@ void T1_audio_add_at_offset(
     f32 volume_mult)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_assert(data_size < (T1_audio_s->global_buffer_size_bytes / 2));
+    T1_assert(data_size < T1_audio_s->global_samples_size);
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
+    /*
+    The audio thread moves the play cursor while this runs, by a platform
+    buffer at a time: the sound goes where the cursor was when it started,
+    or it would jump ahead in the middle. A sample the cursor passed
+    already is dropped, written it would play a whole buffer later
+    */
+    const u64 start = T1_audio_s->play_cursor + play_cursor_offset;
+    const s32 cap = 1 << 30; // far from overflowing, whatever is added
     for (u32 i = 0; i < data_size; i++) {
-        f32 new_value = data[i];
-        new_value = new_value * volume_mult;
-        new_value += T1_audio_s->samples_buffer[
-            (T1_audio_s->play_cursor + i + play_cursor_offset) %
-                    T1_audio_s->global_samples_size];
-        new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
-        new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
-        T1_audio_s->samples_buffer[
-            (T1_audio_s->play_cursor + i + play_cursor_offset) %
-                T1_audio_s->global_samples_size] = (s16)new_value;
+        if (start + i < T1_audio_cursor_now()) { continue; }
+        u32 at = (u32)((start + i) % T1_audio_s->global_samples_size);
+        s32 new_value = T1_audio_s->samples_buffer[at] +
+            (s32)((f32)data[i] * volume_mult);
+        new_value = new_value > cap ? cap : new_value;
+        new_value = new_value < -cap ? -cap : new_value;
+        T1_audio_s->samples_buffer[at] = new_value;
     }
 }
 
@@ -184,7 +205,7 @@ void T1_audio_copy(
     b8 is_music)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_assert(data_size < T1_audio_s->global_buffer_size_bytes);
+    T1_assert(data_size < T1_audio_s->global_samples_size);
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -208,22 +229,19 @@ void T1_audio_copy_at_offset(
     b8 is_music)
 {
     #if T1_AUDIO_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_assert(samples_size < T1_audio_s->global_buffer_size_bytes);
+    T1_assert(samples_size < T1_audio_s->global_samples_size);
     #elif T1_AUDIO_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     for (u32 i = 0; i < samples_size; i++) {
-        s32 new_value = (s32)(samples[i] * (
-            is_music ?
-                T1_audio_state->music_volume :
-                T1_audio_state->sfx_volume));
-        new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
-        new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
         T1_audio_s->samples_buffer[
             (i + play_cursor_offset) %
-                T1_audio_s->global_samples_size] = (s16)new_value;
+                T1_audio_s->global_samples_size] = (s32)(samples[i] * (
+                    is_music ?
+                        T1_audio_state->music_volume :
+                        T1_audio_state->sfx_volume));
     }
 }
 
@@ -392,8 +410,11 @@ void T1_audio_peek(s16 * recip, u32 samples_size) {
     */
     u64 play_cursor = T1_audio_s->play_cursor;
     for (u32 i = 0; i < samples_size; i++) {
-        recip[i] = T1_audio_s->samples_buffer[
+        s32 value = T1_audio_s->samples_buffer[
             (play_cursor + i) % T1_audio_s->global_samples_size];
+        value = value > INT16_MAX ? INT16_MAX : value;
+        value = value < INT16_MIN ? INT16_MIN : value;
+        recip[i] = (s16)value;
     }
 }
 

@@ -54,7 +54,6 @@ typedef struct {
     T1WinHandle hinstance;
     // the window's placement before fullscreen, to go back to
     T1WinWindowPlacement pre_fullscreen_placement;
-    s64 perf_freq;
     u64 xinput_next_scan_us;
     f32 scale; // pixels per point, read once at startup like on macOS
     s32 xinput_user; // the connected gamepad, -1 for none
@@ -63,6 +62,51 @@ typedef struct {
 } T1OSWindowsState;
 
 static T1OSWindowsState * T1_os_win_s = NULL;
+
+/*
+T1_os_init_mutex_and_return_id()'s: slim reader/writer locks, used only
+exclusively. In static memory, T1_os_init() makes the first one before
+T1_os_windows_init(). Unlike pthreads, they don't check how they're used:
+locking one twice on a thread deadlocks without a word, unlocking it from
+another thread is undefined. With asserts, each one's owner (a thread id,
+0 for none) catches both
+*/
+static T1WinSRWLock T1_os_win_mutexes[T1_MUTEXES_CAP];
+static u32 T1_os_win_mutex_owners[T1_MUTEXES_CAP];
+static u32 T1_os_win_mutexes_size = 0;
+
+u32 T1_os_init_mutex_and_return_id(void) {
+    T1_assert(T1_os_win_mutexes_size + 1 < T1_MUTEXES_CAP);
+    InitializeSRWLock(&T1_os_win_mutexes[T1_os_win_mutexes_size]);
+    T1_os_win_mutex_owners[T1_os_win_mutexes_size] = 0;
+    T1_os_win_mutexes_size++;
+    return T1_os_win_mutexes_size - 1;
+}
+
+u8 T1_os_mutex_trylock(const u32 mutex_id) {
+    T1_assert(mutex_id < T1_os_win_mutexes_size);
+    // like pthread_mutex_trylock(): 0 if it's held, by us too
+    u8 locked =
+        TryAcquireSRWLockExclusive(&T1_os_win_mutexes[mutex_id]) != 0;
+    if (locked) { T1_os_win_mutex_owners[mutex_id] = GetCurrentThreadId(); }
+    return locked;
+}
+
+void T1_os_mutex_lock(u32 mutex_id) {
+    T1_assert(mutex_id < T1_os_win_mutexes_size);
+    // this thread holds it already: it would wait for itself forever
+    T1_assert(T1_os_win_mutex_owners[mutex_id] != GetCurrentThreadId());
+    AcquireSRWLockExclusive(&T1_os_win_mutexes[mutex_id]);
+    T1_os_win_mutex_owners[mutex_id] = GetCurrentThreadId();
+}
+
+void T1_os_mutex_unlock(u32 mutex_id) {
+    T1_assert(mutex_id < T1_os_win_mutexes_size);
+    // only the thread that locked it may unlock it
+    T1_assert(T1_os_win_mutex_owners[mutex_id] == GetCurrentThreadId());
+    T1_os_win_mutex_owners[mutex_id] = 0;
+    ReleaseSRWLockExclusive(&T1_os_win_mutexes[mutex_id]);
+}
 
 /*
 Sets *fn to the function called name in dll, NULL if there's no such
@@ -101,6 +145,8 @@ void T1_win32_load(char ** const fatal_error) {
         T1_win32_get_fn(&T1_win32->name, dll, #name)
 
     T1_WIN32_LOAD(user32, AdjustWindowRectEx);
+    T1_WIN32_LOAD(user32, AttachThreadInput);
+    T1_WIN32_LOAD(user32, BringWindowToTop);
     T1_WIN32_LOAD(user32, ClientToScreen);
     T1_WIN32_LOAD(user32, CreateWindowExW);
     T1_WIN32_LOAD(user32, DefWindowProcW);
@@ -108,16 +154,19 @@ void T1_win32_load(char ** const fatal_error) {
     T1_WIN32_LOAD(user32, DispatchMessageW);
     T1_WIN32_LOAD(user32, GetClientRect);
     T1_WIN32_LOAD(user32, GetDC);
+    T1_WIN32_LOAD(user32, GetForegroundWindow);
     T1_WIN32_LOAD(user32, GetKeyState);
     T1_WIN32_LOAD(user32, GetMonitorInfoW);
     T1_WIN32_LOAD(user32, GetSystemMetrics);
     T1_WIN32_LOAD(user32, GetWindowLongW);
     T1_WIN32_LOAD(user32, GetWindowPlacement);
+    T1_WIN32_LOAD(user32, GetWindowThreadProcessId);
     T1_WIN32_LOAD(user32, IsIconic);
     T1_WIN32_LOAD(user32, IsWindowVisible);
     T1_WIN32_LOAD(user32, LoadCursorW);
     T1_WIN32_LOAD(user32, LoadIconW);
     T1_WIN32_LOAD(user32, MapVirtualKeyW);
+    T1_WIN32_LOAD(user32, MonitorFromRect);
     T1_WIN32_LOAD(user32, MonitorFromWindow);
     T1_WIN32_LOAD(user32, MsgWaitForMultipleObjectsEx);
     T1_WIN32_LOAD(user32, PeekMessageW);
@@ -125,6 +174,7 @@ void T1_win32_load(char ** const fatal_error) {
     T1_WIN32_LOAD(user32, ReleaseCapture);
     T1_WIN32_LOAD(user32, ReleaseDC);
     T1_WIN32_LOAD(user32, SetCapture);
+    T1_WIN32_LOAD(user32, SetFocus);
     T1_WIN32_LOAD(user32, SetForegroundWindow);
     T1_WIN32_LOAD(user32, SetWindowLongW);
     T1_WIN32_LOAD(user32, SetWindowPlacement);
@@ -211,11 +261,14 @@ void T1_os_windows_init(char ** const fatal_error) {
     if (*fatal_error != 0) { return; }
 
     T1_os_win_s = T1_mem_malloc_unmanaged(sizeof(T1OSWindowsState));
+    if (T1_os_win_s == NULL) {
+        *fatal_error = "Malloc fail";
+        return;
+    }
     T1_std_memset(T1_os_win_s, 0, sizeof(T1OSWindowsState));
 
     T1_os_win_s->hinstance = GetModuleHandleW(NULL);
     T1_os_win_s->xinput_user = -1;
-    QueryPerformanceFrequency(&T1_os_win_s->perf_freq);
 
     /*
     System DPI aware: we size the window in real pixels for the DPI the
@@ -255,11 +308,21 @@ void T1_os_get_dir_separator(char * recipient) {
     recipient[1] = '\0';
 }
 
+/*
+QueryPerformanceFrequency() never changes while Windows runs, so it's read
+once, on the first call: this works before T1_os_windows_init() too, like
+macOS's
+*/
+static s64 T1_os_win_perf_freq = 0;
+
 u64 T1_os_get_current_time_us(void) {
     s64 now = 0;
     QueryPerformanceCounter(&now);
 
-    u64 freq = (u64)T1_os_win_s->perf_freq;
+    if (T1_os_win_perf_freq == 0) {
+        QueryPerformanceFrequency(&T1_os_win_perf_freq);
+    }
+    u64 freq = (u64)T1_os_win_perf_freq;
     u64 ticks = (u64)now;
 
     // in 2 steps, ticks * 1000000 would overflow after a few days uptime
@@ -304,10 +367,11 @@ void T1_os_read_file(
     T1WChar wpath[T1_OS_WIN_PATH_CAP];
     T1_os_win_utf8_to_wide(filepath, wpath, T1_OS_WIN_PATH_CAP);
 
+    // others may have it open for writing, e.g. an editor
     T1WinHandle file = CreateFileW(
         wpath,
         T1GENERIC_READ,
-        T1FILE_SHARE_READ,
+        T1FILE_SHARE_READ | T1FILE_SHARE_WRITE,
         NULL,
         T1OPEN_EXISTING,
         T1FILE_ATTRIBUTE_NORMAL,
@@ -338,6 +402,7 @@ void T1_os_read_file(
     if (to_read > recip_cap) { to_read = (u32)recip_cap; }
 
     u32 total_read = 0;
+    b8 failed = 0;
     while (total_read < to_read) {
         u32 bytes_read = 0;
         if (
@@ -346,14 +411,27 @@ void T1_os_read_file(
                 recip + total_read,
                 to_read - total_read,
                 &bytes_read,
-                NULL) ||
-            bytes_read == 0)
+                NULL))
         {
+            failed = 1;
             break;
         }
+        // the end of the file: it got shorter since we asked its size
+        if (bytes_read == 0) { break; }
         total_read += bytes_read;
     }
     CloseHandle(file);
+
+    // like on macOS, a read that fails is an error, not a shorter file
+    if (failed) {
+        T1_fatal_error_new(
+            fatal_error,
+            "T1_os_read_file() Error - failed while reading: ");
+        if (T1_std_strlen(filepath) < 450) {
+            T1_std_strcat_cap(*fatal_error, 512, filepath);
+        }
+        return;
+    }
 
     *recip_size = total_read;
     recip[total_read] = '\0';
@@ -445,9 +523,22 @@ void T1_os_write_file(
 
     T1WChar wpath[T1_OS_WIN_PATH_CAP];
     T1_os_win_utf8_to_wide(filepath, wpath, T1_OS_WIN_PATH_CAP);
+    if (wpath[0] == 0) { return; }
+
+    /*
+    Written to a file next to it, then moved over it: a crash or power cut
+    in the middle leaves the old file, never half of the new one
+    */
+    T1WChar wtemp[T1_OS_WIN_PATH_CAP];
+    u32 len = 0;
+    while (wpath[len] != 0) { wtemp[len] = wpath[len]; len++; }
+    static const T1WChar suffix[] = L".t1tmp";
+    u32 suffix_size = sizeof(suffix) / sizeof(suffix[0]); // with its 0
+    if (len + suffix_size > T1_OS_WIN_PATH_CAP) { return; }
+    for (u32 i = 0; i < suffix_size; i++) { wtemp[len + i] = suffix[i]; }
 
     T1WinHandle file = CreateFileW(
-        wpath,
+        wtemp,
         T1GENERIC_WRITE,
         0,
         NULL,
@@ -474,9 +565,18 @@ void T1_os_write_file(
         }
         total_written += written;
     }
+    b8 flushed = FlushFileBuffers(file);
     CloseHandle(file);
 
-    *good = total_written == output_size;
+    if (total_written != output_size || !flushed) {
+        DeleteFileW(wtemp);
+        return;
+    }
+    *good = MoveFileExW(
+        wtemp,
+        wpath,
+        T1MOVEFILE_REPLACE_EXISTING | T1MOVEFILE_WRITE_THROUGH) != 0;
+    if (!*good) { DeleteFileW(wtemp); }
 }
 
 void T1_os_get_filenames_in(
@@ -844,6 +944,110 @@ static u32 T1_os_win_vk_to_T1_key(T1WParam vk) {
     return T1_IO_KEYBOARD_UNKNOWNBTN;
 }
 
+/*
+A key by where it is on the keyboard, like macOS's keyCode (see
+T1_apple_keycode_to_tokone_keycode()), not by what the layout prints on
+it: WASD stays where it is on AZERTY. The names are the ones macOS's
+mapping gives each position, a Japanese keyboard's (the key right of 0 and
+- is HAT, right of P is AT). The scancode is bits 16 to 23 of a key
+message's lparam, bit 24 says it's an extended (E0) one. 0 for keys that
+have none (e.g. from an IME): their virtual key is used instead
+*/
+static u32 T1_os_win_scancode_to_T1_key(T1LParam lparam) {
+    u32 scan = (u32)(((u64)lparam >> 16) & 0xFF);
+    b8 extended = (((u64)lparam >> 24) & 1) != 0;
+
+    if (extended) {
+        switch (scan) {
+            case 0x1C: return T1_IO_KEYBOARD_ENTER; // numpad
+            case 0x1D: return T1_IO_KEYBOARD_CONTROL; // right
+            case 0x35: return T1_IO_KEYBOARD_BACKSLASH; // numpad '/'
+            case 0x38: return T1_IO_KEYBOARD_ALT; // right, AltGr
+            // num lock, where a Mac's numpad has clear (0x45 without E0 is pause)
+            case 0x45: return T1_IO_KEYBOARD_NUMPADCLEAR;
+            case 0x47: return T1_IO_KEYBOARD_HOME;
+            case 0x48: return T1_IO_KEYBOARD_UPARROW;
+            case 0x49: return T1_IO_KEYBOARD_PAGEUP;
+            case 0x4B: return T1_IO_KEYBOARD_LEFTARROW;
+            case 0x4D: return T1_IO_KEYBOARD_RIGHTARROW;
+            case 0x4F: return T1_IO_KEYBOARD_END;
+            case 0x50: return T1_IO_KEYBOARD_DOWNARROW;
+            case 0x51: return T1_IO_KEYBOARD_PAGEDOWN;
+            case 0x52: return T1_IO_KEYBOARD_INSERT;
+            case 0x5B:
+            case 0x5C: return T1_IO_KEYBOARD_WINKEY;
+            default: return T1_IO_KEYBOARD_UNKNOWNBTN;
+        }
+    }
+
+    // the letter rows, left to right
+    static const u8 row_q[10] = {'Q','W','E','R','T','Y','U','I','O','P'};
+    static const u8 row_a[9] = {'A','S','D','F','G','H','J','K','L'};
+    static const u8 row_z[7] = {'Z','X','C','V','B','N','M'};
+    if (scan >= 0x02 && scan <= 0x0A) { return T1_IO_KEYBOARD_1 + (scan - 0x02); }
+    if (scan >= 0x10 && scan <= 0x19) { return row_q[scan - 0x10]; }
+    if (scan >= 0x1E && scan <= 0x26) { return row_a[scan - 0x1E]; }
+    if (scan >= 0x2C && scan <= 0x32) { return row_z[scan - 0x2C]; }
+    if (scan >= 0x3B && scan <= 0x44) { return T1_IO_KEYBOARD_F1 + (scan - 0x3B); }
+
+    switch (scan) {
+        case 0x01: return T1_IO_KEYBOARD_ESCAPE;
+        case 0x0B: return T1_IO_KEYBOARD_0;
+        case 0x0C: return T1_IO_KEYBOARD_MINUS;
+        case 0x0D: return T1_IO_KEYBOARD_HAT; // '=' on US keyboards
+        case 0x0E: return T1_IO_KEYBOARD_BACKSPACE;
+        case 0x0F: return T1_IO_KEYBOARD_TAB;
+        case 0x1A: return T1_IO_KEYBOARD_AT; // '[' on US keyboards
+        case 0x1B: return T1_IO_KEYBOARD_OPENSQUARE; // ']' on US ones
+        case 0x1C: return T1_IO_KEYBOARD_ENTER;
+        case 0x1D: return T1_IO_KEYBOARD_CONTROL;
+        case 0x27: return T1_IO_KEYBOARD_SEMICOLON;
+        case 0x28: return T1_IO_KEYBOARD_COLON; // apostrophe on US ones
+        case 0x29: return T1_IO_KEYBOARD_TILDE; // left of 1
+        case 0x2A:
+        case 0x36: return T1_IO_KEYBOARD_SHIFT;
+        case 0x2B: return T1_IO_KEYBOARD_CLOSESQUARE; // '\' on US ones
+        case 0x33: return T1_IO_KEYBOARD_COMMA;
+        case 0x34: return T1_IO_KEYBOARD_FULLSTOP;
+        case 0x35: return T1_IO_KEYBOARD_BACKSLASH; // T1's name for '/'
+        case 0x37: return T1_IO_KEYBOARD_ASTERISK; // numpad
+        case 0x38: return T1_IO_KEYBOARD_ALT;
+        case 0x39: return T1_IO_KEYBOARD_SPACEBAR;
+        case 0x3A: return T1_IO_KEYBOARD_CAPSLOCK;
+        // the numpad, whatever num lock says, like on macOS
+        case 0x47: return T1_IO_KEYBOARD_7;
+        case 0x48: return T1_IO_KEYBOARD_8;
+        case 0x49: return T1_IO_KEYBOARD_9;
+        case 0x4A: return T1_IO_KEYBOARD_MINUS;
+        case 0x4B: return T1_IO_KEYBOARD_4;
+        case 0x4C: return T1_IO_KEYBOARD_5;
+        case 0x4D: return T1_IO_KEYBOARD_6;
+        case 0x4E: return T1_IO_KEYBOARD_PLUS;
+        case 0x4F: return T1_IO_KEYBOARD_1;
+        case 0x50: return T1_IO_KEYBOARD_2;
+        case 0x51: return T1_IO_KEYBOARD_3;
+        case 0x52: return T1_IO_KEYBOARD_0;
+        case 0x53: return T1_IO_KEYBOARD_FULLSTOP;
+        case 0x57: return T1_IO_KEYBOARD_F11;
+        case 0x58: return T1_IO_KEYBOARD_F12;
+        // Japanese keyboards
+        case 0x70:
+        case 0x79: return T1_IO_KEYBOARD_KANA; // kana, henkan
+        case 0x7B: return T1_IO_KEYBOARD_ROMAJI; // muhenkan, Mac's eisu
+        case 0x73: return T1_IO_KEYBOARD_UNDERSCORE; // ro
+        case 0x7D: return T1_IO_KEYBOARD_YENSIGN;
+        default: return T1_IO_KEYBOARD_UNKNOWNBTN;
+    }
+}
+
+// A key message's key: where it is, else what the layout makes of it
+static u32 T1_os_win_key(T1WParam vk, T1LParam lparam) {
+    if ((((u64)lparam >> 16) & 0xFF) == 0) {
+        return T1_os_win_vk_to_T1_key(vk);
+    }
+    return T1_os_win_scancode_to_T1_key(lparam);
+}
+
 // The window's client area in T1's screen space (see top of file)
 static void T1_os_win_update_global_window_pos(void) {
     T1WinHandle hwnd = T1_os_win_s->hwnd;
@@ -905,6 +1109,23 @@ static void T1_os_win_mouse_button(u32 key, b8 down) {
     }
 }
 
+/*
+The window lost the keyboard (e.g. Alt+Tab): the key-ups go to another
+window, so every key and mouse button held now comes up, or it would stay
+down until pressed again. Gamepads are polled, they stay as they are
+*/
+static void T1_os_win_release_keys(void) {
+    for (u32 key = 0; key <= T1_IO_MOUSE_OTHERCLICK4; key++) {
+        if (
+            key != T1_IO_KEYBOARD_ABOVEBOUNDS &&
+            key != T1_IO_MOUSE &&
+            T1_io_key_is_down((T1IOKey)key))
+        {
+            T1_io_register_keyup(key, /* debounces: */ 0);
+        }
+    }
+}
+
 static T1LResult T1_WINAPI T1_os_win_window_proc(
     T1WinHandle hwnd,
     u32 message,
@@ -935,6 +1156,19 @@ static T1LResult T1_WINAPI T1_os_win_window_proc(
         case T1WM_MOVE:
             T1_os_win_update_global_window_pos();
             return 0;
+        case T1WM_KILLFOCUS:
+            T1_os_win_release_keys();
+            break;
+        case T1WM_CAPTURECHANGED:
+            // another window took the mouse while a button was held
+            if ((T1WinHandle)lparam != hwnd) {
+                for (u32 b = T1_IO_MOUSE_LCLICK; b <= T1_IO_MOUSE_OTHERCLICK4; b++) {
+                    if (T1_io_key_is_down((T1IOKey)b)) {
+                        T1_io_register_keyup(b, /* debounces: */ 0);
+                    }
+                }
+            }
+            break;
         case T1WM_ERASEBKGND:
             // T1_os_window_present() paints all of it
             return 1;
@@ -946,7 +1180,7 @@ static T1LResult T1_WINAPI T1_os_win_window_proc(
             // bit 30: was already down, a key repeat
             if ((lparam & (1 << 30)) == 0) {
                 T1_io_register_keydown(
-                    T1_os_win_vk_to_T1_key(wparam),
+                    T1_os_win_key(wparam, lparam),
                     /* debounces: */ 0);
             }
             /*
@@ -958,7 +1192,7 @@ static T1LResult T1_WINAPI T1_os_win_window_proc(
         case T1WM_KEYUP:
         case T1WM_SYSKEYUP:
             T1_io_register_keyup(
-                T1_os_win_vk_to_T1_key(wparam),
+                T1_os_win_key(wparam, lparam),
                 /* debounces: */ 0);
             return 0;
         case T1WM_SYSCHAR:
@@ -1024,6 +1258,33 @@ static T1LResult T1_WINAPI T1_os_win_window_proc(
     return T1_win32->DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
+/*
+Windows only lets the app the user is in bring a window to the front: one
+started from a terminal or an IDE often isn't, and SetForegroundWindow()
+then just flashes the taskbar button. Joining the input of the window in
+front for a moment makes us that app, like macOS's
+activateIgnoringOtherApps
+*/
+static void T1_os_win_bring_to_front(T1WinHandle hwnd) {
+    T1_win32->SetForegroundWindow(hwnd);
+    T1WinHandle front = T1_win32->GetForegroundWindow();
+    if (front == hwnd) { return; }
+
+    u32 front_thread = front != NULL ?
+        T1_win32->GetWindowThreadProcessId(front, NULL) : 0;
+    u32 our_thread = GetCurrentThreadId();
+    b8 attached =
+        front_thread != 0 &&
+        front_thread != our_thread &&
+        T1_win32->AttachThreadInput(front_thread, our_thread, 1);
+    T1_win32->BringWindowToTop(hwnd);
+    T1_win32->SetForegroundWindow(hwnd);
+    T1_win32->SetFocus(hwnd);
+    if (attached) {
+        T1_win32->AttachThreadInput(front_thread, our_thread, 0);
+    }
+}
+
 void T1_os_window_open(char ** const fatal_error) {
     if (*fatal_error != 0) { return; }
 
@@ -1041,7 +1302,11 @@ void T1_os_window_open(char ** const fatal_error) {
     window_class.icon = T1_win32->LoadIconW(NULL, T1IDI_APPLICATION);
     window_class.background = T1_win32->GetStockObject(T1BLACK_BRUSH);
     window_class.class_name = L"T1Window";
-    if (!T1_win32->RegisterClassExW(&window_class)) {
+    // registered already when a window was opened before (and destroyed)
+    if (
+        !T1_win32->RegisterClassExW(&window_class) &&
+        GetLastError() != T1ERROR_CLASS_ALREADY_EXISTS)
+    {
         *fatal_error = "Failed to register the window class";
         return;
     }
@@ -1062,10 +1327,26 @@ void T1_os_window_open(char ** const fatal_error) {
     /*
     The initial size is in points, e.g. 1400 x 1000, which may not fit a
     laptop's screen at 150%. Keep the whole window, title bar included, on
-    the work area (the screen without the taskbar).
+    the work area (the screen without the taskbar) of the monitor it's
+    mostly on, e.g. a second one it was on when the app last closed.
     */
+    T1WinMonitorInfo monitor;
+    T1_std_memset(&monitor, 0, sizeof(T1WinMonitorInfo));
+    monitor.size = sizeof(T1WinMonitorInfo);
     T1WinRect work;
-    if (T1_win32->SystemParametersInfoW(T1SPI_GETWORKAREA, 0, &work, 0)) {
+    b8 has_work = 0;
+    if (
+        T1_win32->GetMonitorInfoW(
+            T1_win32->MonitorFromRect(&rect, T1MONITOR_DEFAULTTONEAREST),
+            &monitor))
+    {
+        work = monitor.work;
+        has_work = 1;
+    } else {
+        has_work = T1_win32->SystemParametersInfoW(
+            T1SPI_GETWORKAREA, 0, &work, 0) != 0;
+    }
+    if (has_work) {
         s32 width = rect.right - rect.left;
         s32 height = rect.bottom - rect.top;
         if (width > work.right - work.left) {
@@ -1109,8 +1390,8 @@ void T1_os_window_open(char ** const fatal_error) {
         return;
     }
 
-    T1_win32->ShowWindow(T1_os_win_s->hwnd, T1SW_SHOW);
-    T1_win32->SetForegroundWindow(T1_os_win_s->hwnd);
+    T1_win32->ShowWindow(T1_os_win_s->hwnd, T1SW_SHOWNORMAL);
+    T1_os_win_bring_to_front(T1_os_win_s->hwnd);
 }
 
 void T1_os_destroy_main_window_if_possible(void) {
@@ -1224,11 +1505,12 @@ u8 T1_os_window_close_requested(void) {
 }
 
 u8 T1_os_window_visible(void) {
-    // False while minimized
+    // False while minimized, fully covered or on a locked screen, like macOS
     return
         T1_os_win_s->hwnd != NULL &&
         T1_win32->IsWindowVisible(T1_os_win_s->hwnd) &&
-        !T1_win32->IsIconic(T1_os_win_s->hwnd);
+        !T1_win32->IsIconic(T1_os_win_s->hwnd) &&
+        !T1_gpu_d3d11_occluded();
 }
 
 u8 T1_os_window_present(const u32 tex) {

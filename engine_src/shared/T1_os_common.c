@@ -5,45 +5,10 @@
 #include "T1_global.h"
 #include "T1_macro_settings.h"
 
-#ifdef _WIN32
-/*
-Slim reader/writer locks of kernel32, declared here instead of including
-<windows.h> (see T1_win32.h). Like pthread mutexes, they're not recursive.
-*/
-#if defined(_MSC_VER)
-#define T1_SRW_WINAPI __stdcall
-#else
-#define T1_SRW_WINAPI __attribute__((stdcall))
-#endif
-typedef struct { void * ptr; } T1SRWLock;
-__declspec(dllimport) void T1_SRW_WINAPI InitializeSRWLock(T1SRWLock *);
-__declspec(dllimport) void T1_SRW_WINAPI AcquireSRWLockExclusive(
-    T1SRWLock *);
-__declspec(dllimport) unsigned char T1_SRW_WINAPI TryAcquireSRWLockExclusive(
-    T1SRWLock *);
-__declspec(dllimport) void T1_SRW_WINAPI ReleaseSRWLockExclusive(
-    T1SRWLock *);
-#else
-#include <pthread.h>
-#include <errno.h> // for pthread consts like EBUSY, EPERM
-#endif
-
-typedef struct {
-    #ifdef _WIN32
-    T1SRWLock mutex;
-    #else
-    pthread_mutex_t mutex;
-    #endif
-    b8 initialized;
-} OSMutexID;
-
 #define T1_THREAD_IDS_CAP 50
-#define T1_MUTEXES_CAP 50
 typedef struct {
     u64 thread_id_map[T1_THREAD_IDS_CAP];
     u64 thread_id_map_size;
-    OSMutexID mutexes[T1_MUTEXES_CAP];
-    u32 next_mutex_id;
     u32 thread_id_map_mutex_id; // threads register themselves at any time
 } T1OSState;
 
@@ -104,119 +69,6 @@ void T1_os_forget_raw_thread_id(u64 raw_in) {
         }
     }
     T1_os_mutex_unlock(T1_os_s->thread_id_map_mutex_id);
-}
-
-u32 T1_os_init_mutex_and_return_id(void)
-{
-    T1_assert(
-        T1_os_s->next_mutex_id + 1 < T1_MUTEXES_CAP);
-    T1_assert(
-        !T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized);
-    
-    #ifdef _WIN32
-    InitializeSRWLock(&(T1_os_s->mutexes[T1_os_s->next_mutex_id].mutex));
-    s32 mutex_init_error_value = 0;
-    #else
-    s32 mutex_init_error_value = pthread_mutex_init(
-        &(T1_os_s->mutexes[T1_os_s->next_mutex_id].mutex),
-        NULL);
-    #endif
-    
-    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_assert(mutex_init_error_value == 0);
-    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)mutex_init_error_value;
-    #else
-    #error
-    #endif
-    
-    u32 return_value = T1_os_s->next_mutex_id;
-    
-    T1_os_s->mutexes[T1_os_s->next_mutex_id].initialized = 1;
-    
-    T1_os_s->next_mutex_id++;
-    return return_value;
-}
-
-/*
-Attempt to lock a mutex and return True if succesful
-*/
-u8 T1_os_mutex_trylock(const u32 mutex_id)
-{
-    /*
-    If successful, pthread_mutex_trylock() will return zero.
-    Otherwise, an error number will be returned to indicate the error.
-    */
-    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
-
-    #ifdef _WIN32
-    return TryAcquireSRWLockExclusive(&T1_os_s->mutexes[mutex_id].mutex) != 0;
-    #else
-    s32 return_val = pthread_mutex_trylock(&T1_os_s->mutexes[mutex_id].mutex);
-    
-    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-    if (return_val != 0) {
-        // EINVAL = The value specified by mutex is invalid
-        T1_assert(return_val != EINVAL);
-        
-        // EPERM = Operation not permitted
-        T1_assert(return_val != EPERM);
-        
-        // EBUSY = Mutex is already locked
-        T1_assert(return_val == EBUSY);
-    }
-    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
-    return return_val == 0;
-    #endif
-}
-
-/*
-returns whether or not a mutex was locked, and locks the mutex if it
-was unlocked
-*/
-void T1_os_mutex_lock(u32 mutex_id)
-{
-    T1_assert(mutex_id < T1_MUTEXES_CAP);
-    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
-    #ifdef _WIN32
-    AcquireSRWLockExclusive(&(T1_os_s->mutexes[mutex_id].mutex));
-    #else
-    s32 return_value =
-        pthread_mutex_lock(&(T1_os_s->mutexes[mutex_id].mutex));
-
-    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-    T1_assert(return_value == 0);
-    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
-    (void)return_value;
-    #else
-    #error
-    #endif
-    #endif
-    
-    return;
-}
-
-void T1_os_mutex_unlock(u32 mutex_id) {
-    T1_assert(mutex_id < T1_MUTEXES_CAP);
-    T1_assert(T1_os_s->mutexes[mutex_id].initialized);
-
-    #ifdef _WIN32
-    ReleaseSRWLockExclusive(&(T1_os_s->mutexes[mutex_id].mutex));
-    #else
-    #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-    s32 out = pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
-    #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
-    pthread_mutex_unlock(&(T1_os_s->mutexes[mutex_id].mutex));
-    #else
-    #error
-    #endif
-
-    T1_assert(out == 0);
-    #endif
 }
 
 #define MAX_FILENAME_SIZE  512

@@ -10,4 +10,10 @@ the display's next refresh. Returns false if nothing was presented.
 */
 b8 T1_gpu_d3d11_present_tex(void * hwnd, const u32 tex);
 
+/*
+Whether the window can't be seen (covered, minimized, the screen locked),
+as its last present found: asks again while it is
+*/
+b8 T1_gpu_d3d11_occluded(void);
+
 #endif // T1_GPU_D3D11_H

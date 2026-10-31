@@ -137,10 +137,14 @@ typedef struct {
 #define T1GENERIC_READ 0x80000000u
 #define T1GENERIC_WRITE 0x40000000u
 #define T1FILE_SHARE_READ 0x1u
+#define T1FILE_SHARE_WRITE 0x2u
+#define T1MOVEFILE_REPLACE_EXISTING 0x1u
+#define T1MOVEFILE_WRITE_THROUGH 0x8u
 #define T1CREATE_ALWAYS 2u
 #define T1OPEN_EXISTING 3u
 #define T1ERROR_SUCCESS 0u
 #define T1ERROR_ALREADY_EXISTS 183u
+#define T1ERROR_CLASS_ALREADY_EXISTS 1410u
 #define T1CP_UTF8 65001u
 #define T1MAX_PATH 260
 #define T1THREAD_PRIORITY_TIME_CRITICAL 15
@@ -150,6 +154,8 @@ typedef struct {
 
 #define T1WM_NCCREATE 0x0081u
 #define T1WM_SIZE 0x0005u
+#define T1WM_KILLFOCUS 0x0008u
+#define T1WM_CAPTURECHANGED 0x0215u
 #define T1WM_MOVE 0x0003u
 #define T1WM_CLOSE 0x0010u
 #define T1WM_QUIT 0x0012u
@@ -178,9 +184,11 @@ typedef struct {
 #define T1WS_POPUP 0x80000000u
 #define T1GWL_STYLE (-16)
 #define T1SW_SHOW 5
+#define T1SW_SHOWNORMAL 1
 #define T1SM_CYSCREEN 1
 #define T1SPI_GETWORKAREA 0x0030u
 #define T1MONITOR_DEFAULTTOPRIMARY 1u
+#define T1MONITOR_DEFAULTTONEAREST 2u
 #define T1HWND_TOP ((T1WinHandle)0)
 #define T1SWP_NOSIZE 0x0001u
 #define T1SWP_NOMOVE 0x0002u
@@ -232,7 +240,14 @@ typedef struct {
 #define T1LOGPIXELSX 88
 #define T1BLACK_BRUSH 4
 
+// SRWLOCK, a pointer-sized slot
+typedef struct { void * ptr; } T1WinSRWLock;
+
 // kernel32, linked
+T1_WIN_IMPORT void T1_WINAPI AcquireSRWLockExclusive(T1WinSRWLock *);
+T1_WIN_IMPORT void T1_WINAPI InitializeSRWLock(T1WinSRWLock *);
+T1_WIN_IMPORT void T1_WINAPI ReleaseSRWLockExclusive(T1WinSRWLock *);
+T1_WIN_IMPORT u8 T1_WINAPI TryAcquireSRWLockExclusive(T1WinSRWLock *);
 T1_WIN_IMPORT T1WinBool T1_WINAPI CloseHandle(T1WinHandle);
 T1_WIN_IMPORT T1WinBool T1_WINAPI CopyFileW(
     const T1WChar *, const T1WChar *, T1WinBool);
@@ -249,6 +264,7 @@ T1_WIN_IMPORT T1WinHandle T1_WINAPI FindFirstFileW(
     const T1WChar *, T1WinFindDataW *);
 T1_WIN_IMPORT T1WinBool T1_WINAPI FindNextFileW(
     T1WinHandle, T1WinFindDataW *);
+T1_WIN_IMPORT T1WinBool T1_WINAPI FlushFileBuffers(T1WinHandle);
 T1_WIN_IMPORT u32 T1_WINAPI GetCurrentDirectoryW(u32, T1WChar *);
 T1_WIN_IMPORT u32 T1_WINAPI GetCurrentThreadId(void);
 T1_WIN_IMPORT u32 T1_WINAPI GetEnvironmentVariableW(
@@ -262,10 +278,13 @@ T1_WIN_IMPORT T1WinBool T1_WINAPI GetFileSizeEx(T1WinHandle, s64 *);
 T1_WIN_IMPORT u32 T1_WINAPI GetLastError(void);
 T1_WIN_IMPORT u32 T1_WINAPI GetModuleFileNameW(T1WinHandle, T1WChar *, u32);
 T1_WIN_IMPORT T1WinHandle T1_WINAPI GetModuleHandleW(const T1WChar *);
+T1_WIN_IMPORT u64 T1_WINAPI GetTickCount64(void);
 T1_WIN_IMPORT T1WinFarProc T1_WINAPI GetProcAddress(
     T1WinHandle, const char *);
 T1_WIN_IMPORT void T1_WINAPI GetSystemInfo(T1WinSystemInfo *);
 T1_WIN_IMPORT T1WinHandle T1_WINAPI LoadLibraryW(const T1WChar *);
+T1_WIN_IMPORT T1WinBool T1_WINAPI MoveFileExW(
+    const T1WChar *, const T1WChar *, u32);
 T1_WIN_IMPORT s32 T1_WINAPI MultiByteToWideChar(
     u32, u32, const char *, s32, T1WChar *, s32);
 T1_WIN_IMPORT T1WinBool T1_WINAPI QueryPerformanceCounter(s64 *);
@@ -286,6 +305,8 @@ typedef struct {
     // user32
     T1WinBool (T1_WINAPI * AdjustWindowRectEx)(
         T1WinRect *, u32, T1WinBool, u32);
+    T1WinBool (T1_WINAPI * AttachThreadInput)(u32, u32, T1WinBool);
+    T1WinBool (T1_WINAPI * BringWindowToTop)(T1WinHandle);
     T1WinBool (T1_WINAPI * ClientToScreen)(T1WinHandle, T1WinPoint *);
     T1WinHandle (T1_WINAPI * CreateWindowExW)(
         u32, const T1WChar *, const T1WChar *, u32,
@@ -297,17 +318,20 @@ typedef struct {
     T1LResult (T1_WINAPI * DispatchMessageW)(const T1WinMsg *);
     T1WinBool (T1_WINAPI * GetClientRect)(T1WinHandle, T1WinRect *);
     T1WinHandle (T1_WINAPI * GetDC)(T1WinHandle);
+    T1WinHandle (T1_WINAPI * GetForegroundWindow)(void);
     s16 (T1_WINAPI * GetKeyState)(s32);
     T1WinBool (T1_WINAPI * GetMonitorInfoW)(T1WinHandle, T1WinMonitorInfo *);
     s32 (T1_WINAPI * GetSystemMetrics)(s32);
     s32 (T1_WINAPI * GetWindowLongW)(T1WinHandle, s32);
     T1WinBool (T1_WINAPI * GetWindowPlacement)(
         T1WinHandle, T1WinWindowPlacement *);
+    u32 (T1_WINAPI * GetWindowThreadProcessId)(T1WinHandle, u32 *);
     T1WinBool (T1_WINAPI * IsIconic)(T1WinHandle);
     T1WinBool (T1_WINAPI * IsWindowVisible)(T1WinHandle);
     T1WinHandle (T1_WINAPI * LoadCursorW)(T1WinHandle, const T1WChar *);
     T1WinHandle (T1_WINAPI * LoadIconW)(T1WinHandle, const T1WChar *);
     u32 (T1_WINAPI * MapVirtualKeyW)(u32, u32);
+    T1WinHandle (T1_WINAPI * MonitorFromRect)(const T1WinRect *, u32);
     T1WinHandle (T1_WINAPI * MonitorFromWindow)(T1WinHandle, u32);
     u32 (T1_WINAPI * MsgWaitForMultipleObjectsEx)(
         u32, const T1WinHandle *, u32, u32, u32);
@@ -317,6 +341,7 @@ typedef struct {
     T1WinBool (T1_WINAPI * ReleaseCapture)(void);
     s32 (T1_WINAPI * ReleaseDC)(T1WinHandle, T1WinHandle);
     T1WinHandle (T1_WINAPI * SetCapture)(T1WinHandle);
+    T1WinHandle (T1_WINAPI * SetFocus)(T1WinHandle);
     T1WinBool (T1_WINAPI * SetForegroundWindow)(T1WinHandle);
     s32 (T1_WINAPI * SetWindowLongW)(T1WinHandle, s32, s32);
     T1WinBool (T1_WINAPI * SetWindowPlacement)(
