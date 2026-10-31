@@ -17,21 +17,50 @@ against it too, their binaries are in /build/examples
 #include <assert.h>
 #include <sys/stat.h>
 
+/*
+concat builds T1 for the platform it runs on: its own copy of gcc picks the
+platform layer
+*/
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#endif
+
 
 static const char * encapsulation_h_file = "T1.h";
 
-// examples/<name>.c, built against the library into build/examples/<name>
-static const char * examples[] = {
-    "noise",
-    "frametime",
-    "particles",
+/*
+examples/<name>.c, built against the library into build/examples/<name>.
+An example can change one macro setting in its copy of T1.h: setting_line
+(exactly as in T1_macro_settings.h, NULL for none) becomes new_setting_line
+*/
+typedef struct {
+    const char * name;
+    const char * setting_line;
+    const char * new_setting_line;
+} Example;
+
+static const Example examples[] = {
+    {"noise", NULL, NULL},
+    {"frametime", NULL, NULL},
+    {"particles", NULL, NULL},
+    {"gamepad", NULL, NULL},
+    {
+        "soundkeyboard",
+        "#define T1_AUDIO_ACTIVE 2",
+        "#define T1_AUDIO_ACTIVE 1",
+    },
 };
 
 static const char * search_paths[] = {
 "./",
 "engine_src/shared/",
+#ifdef _WIN32
+"engine_src/windows/",
+#else
 "engine_src/shared_apple/",
 "engine_src/macos/",
+#endif
 "resources/",
 };
 
@@ -68,7 +97,9 @@ static const char * c_files[] = {
 "T1.c",
 "T1_embedded_data.c",
 "T1_fatal_error.c",
+#ifndef _WIN32
 "T1_objc.c",
+#endif
 "T1_img.c",
 "T1_std.c",
 "T1_token.c",
@@ -79,13 +110,23 @@ static const char * c_files[] = {
 "T1_buf.c",
 "T1_audio.c",
 "T1_global.c",
+#ifdef _WIN32
+"T1_os_common.c",
+"T1_os_windows.c",
+"T1_os_windows_audio.c",
+#else
 "T1_os_apple_audio.c",
 "T1_os_common.c",
 "T1_os_macos.c",
 "T1_os_apple.c",
+#endif
 "T1_mem.c",
 "T1_io.c",
+#ifdef _WIN32
+"T1_gpu_d3d11.c",
+#else
 "T1_gpu.c",
+#endif
 "T1_tex.c",
 "T1_tex_array.c",
 "T1_gameloop.c",
@@ -150,18 +191,27 @@ static void try_get_file_at_path(
     asm_state->arena_i += strlen(full_path);
     assert(asm_state->arena_i < ARENA_CAP);
     
-    FILE * file = fopen(full_path, "r");
-    
+    FILE * file = fopen(full_path, "rb");
+
     if (file != NULL) {
         fseek(file, 0, SEEK_END);
         *recip_size = ftell(file)+1;
         assert(*recip_size > 0);
         assert(*recip_size <= recip_cap);
         fseek(file, 0, SEEK_SET);
-        
+
         memset(recip, 0, (*recip_size)+1);
-        fread(recip, 1, (*recip_size), file);
+        size_t bytes_read = fread(recip, 1, (*recip_size), file);
         fclose(file);
+
+        // Windows line endings (git checks out CRLF there) become \n, so
+        // the output is the same on every platform
+        uint32_t kept = 0;
+        for (size_t i = 0; i < bytes_read; i++) {
+            if (recip[i] != '\r') { recip[kept++] = recip[i]; }
+        }
+        memset(recip + kept, 0, (*recip_size) - kept);
+        *recip_size = kept + 1;
     }
     
     asm_state->arena_i = arena_pop_i;
@@ -820,7 +870,7 @@ static void append_shader_settings_to_out(void) {
         uint32_t n = 0;
         while (
             at[n] != '\0' && at[n] != ' ' && at[n] != '\t' &&
-            at[n] != '\n' && at[n] != '(')
+            at[n] != '\r' && at[n] != '\n' && at[n] != '(')
         {
             assert(n + 1 < sizeof(name));
             name[n] = at[n];
@@ -1007,29 +1057,34 @@ int main(void) {
     uint32_t examples_size = sizeof(examples) / sizeof(examples[0]);
     for (uint32_t e = 0; e < examples_size; e++) {
         char dir[256];
-        snprintf(dir, sizeof(dir), "examples/%s/", examples[e]);
-        
+        const char * name = examples[e].name;
+        snprintf(dir, sizeof(dir), "examples/%s/", name);
+
         if (
-            !copy_build_file_to("T1.h", dir, NULL, NULL) ||
+            !copy_build_file_to(
+                "T1.h",
+                dir,
+                examples[e].setting_line,
+                examples[e].new_setting_line) ||
             !copy_build_file_to("T1.c", dir, NULL, NULL))
         {
             printf("ERROR - failed to copy T1.h/T1.c to %s\n", dir);
             return 1;
         }
-        
+
         char cmd[512];
         snprintf(
             cmd,
             sizeof(cmd),
             "gcc -std=c11 -O3 examples/%s/%s.c examples/%s/T1.c "
             "-o build/examples/%s",
-            examples[e],
-            examples[e],
-            examples[e],
-            examples[e]);
-        printf("building example: build/examples/%s\n", examples[e]);
+            name,
+            name,
+            name,
+            name);
+        printf("building example: build/examples/%s\n", name);
         if (system(cmd) != 0) {
-            printf("ERROR - failed to build example: %s\n", examples[e]);
+            printf("ERROR - failed to build example: %s\n", name);
             return 1;
         }
     }

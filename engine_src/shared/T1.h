@@ -380,6 +380,11 @@ void T1_audio_stream(
     uint8_t  is_music);
 // how many samples have played
 uint64_t T1_audio_play_cursor(void);
+/*
+Copies the next samples_size samples of the mix (left and right taking
+turns), the ones that play from T1_audio_play_cursor() on, e.g. to draw them
+*/
+void T1_audio_peek(int16_t * recip, uint32_t samples_size);
 void T1_audio_stop_all(void);
 /*
 Bitcrushes everything that plays from now on: each frame is held for

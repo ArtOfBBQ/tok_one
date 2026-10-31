@@ -47,6 +47,7 @@ void T1_init(
         T1_os_mutex_lock,
         T1_os_mutex_unlock);
 
+    #ifdef __APPLE__
     T1_objc_init(
         T1_mem_malloc_unmanaged,
         fatal_error);
@@ -68,12 +69,19 @@ void T1_init(
     }
 
     void * pool = T1_objc_autorelease_pool_push();
+    #endif
     
     T1_global = (T1Globals *)T1_mem_malloc_unmanaged(
         sizeof(T1Globals));
     if (!T1_global) { *fatal_error = "Malloc fail"; return; }
     T1_std_memset(T1_global, 0, sizeof(T1Globals));
-    
+
+    // before audio, which needs its DLLs
+    #ifdef _WIN32
+    T1_os_windows_init(fatal_error);
+    if (*fatal_error != 0) { return; }
+    #endif
+
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
         /* void *(*arg_malloc_function)(u64): */
@@ -217,9 +225,11 @@ void T1_init(
     T1_gameloop_init(
         /* void *(*arg_malloc_fptr)(size_t): */
             T1_mem_malloc_unmanaged);
-    
+
+    #ifdef __APPLE__
     T1_objc_autorelease_pool_pop(pool);
-    
+    #endif
+
     T1_gameloop_active = 1;
 }
 
@@ -250,9 +260,13 @@ void T1_gpu_init(
         return;
     }
     
+    #ifdef __APPLE__
     void * pool = T1_objc_autorelease_pool_push();
     T1_appinit_gpu_modules(fatal_error);
     T1_objc_autorelease_pool_pop(pool);
+    #else
+    T1_appinit_gpu_modules(fatal_error);
+    #endif
     
     T1_os_gpu_init(fatal_error);
 }

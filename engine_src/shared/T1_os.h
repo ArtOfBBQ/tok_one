@@ -35,6 +35,10 @@ void T1_apple_os_init(void);
 void T1_os_macos_init(void);
 #endif
 
+#ifdef _WIN32
+void T1_os_windows_init(char ** const fatal_error);
+#endif
+
 // Needs T1_mem_init()
 void T1_os_init(void);
 

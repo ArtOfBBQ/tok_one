@@ -25,11 +25,12 @@ reaches up to its stop text, found by scanning on).
 #define START_STATE 1
 #define TRIE_ROOT 0
 
-typedef enum : u8 {
+typedef u8 RuleType;
+enum {
     RULE_LITERAL,
     RULE_RUN,
     RULE_DELIMITED,
-} RuleType;
+};
 
 typedef struct {
     c8 * stop; // delimited only, owned

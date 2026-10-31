@@ -1,6 +1,7 @@
 #include "T1_shader.h"
 
 #include "T1_assert.h"
+#include "T1_macro_settings.h"
 #include "T1_mem.h"
 #include "T1_std.h"
 #include "T1_token.h"
@@ -21,14 +22,15 @@ The subset, beyond plain C expressions and statements:
   below, which T1 knows how to translate
 */
 
-typedef enum : u8 {
+typedef u8 ShaderTokenKind;
+enum {
     SK_SPACE, // never stored
     SK_PREPROC,
     SK_IDENT,
     SK_NUMBER,
     SK_ATTR, // [[ ... ]]
     SK_PUNCT,
-} ShaderTokenKind;
+};
 
 static const c8 * const puncts[] = {
     "->", "::", "<<=", ">>=", "<<", ">>", "<=", ">=", "==", "!=", "&&", "||",
@@ -139,12 +141,13 @@ typedef struct {
 
 #define PARAMS_CAP 32
 
-typedef enum : u8 {
+typedef u8 Stage;
+enum {
     STAGE_NONE, // a helper
     STAGE_VERTEX,
     STAGE_FRAGMENT,
     STAGE_KERNEL,
-} Stage;
+};
 
 typedef struct {
     PtrParam ptrs[PTRS_CAP];
@@ -194,6 +197,8 @@ typedef struct {
 } Check;
 
 static u32 tz = 0;
+// what the translation is for: GLSL (0) or HLSL (1), see cat_name()
+static b8 hlsl_target = 0;
 
 static void init_tokenizer(void) {
     tz = T1_token_new();
@@ -881,6 +886,8 @@ static const c8 * const glsl_reserved[] = {
     "image2D", "texture2DArray", "sampler2DArray", "mod", "inversesqrt",
 };
 
+static const c8 * hlsl_as_type_name(const u32 i);
+
 // the GLSL name of an as_type<> target
 static const c8 * glsl_type_name(const u32 i) {
     static const c8 * const map[][2] = {
@@ -931,16 +938,25 @@ typedef struct {
     b8 failed;
 } Gen;
 
+static b8 is_hlsl_reserved(const u32 i);
+
 static b8 needs_rename(const u32 i) {
     if (kind(i) != SK_IDENT) { return 0; }
-    if (in_list(i, glsl_reserved,
+    if (hlsl_target) {
+        if (is_hlsl_reserved(i)) { return 1; }
+    } else if (in_list(i, glsl_reserved,
         sizeof(glsl_reserved) / sizeof(glsl_reserved[0])))
     {
         return 1;
     }
     const c8 * t = T1_token_text(tz, i);
     u32 n = T1_token_size(tz, i);
-    if (n >= 3 && t[0] == 'g' && t[1] == 'l' && t[2] == '_') { return 1; }
+    if (
+        !hlsl_target &&
+        n >= 3 && t[0] == 'g' && t[1] == 'l' && t[2] == '_')
+    {
+        return 1;
+    }
     for (u32 j = 0; j + 1 < n; j++) {
         if (t[j] == '_' && t[j + 1] == '_') { return 1; }
     }
@@ -1061,10 +1077,15 @@ static void global_edits(Gen * g) {
         } else if (is(i, "static") || is(i, "inline")) {
             g->g_skip[i] = 1;
         } else if (is(i, "constexpr")) {
+            // HLSL's globals are uniforms unless they're static
             if (is(i + 1, "const")) {
-                g->g_skip[i] = 1;
+                if (hlsl_target) {
+                    g->g_repl[i] = "static";
+                } else {
+                    g->g_skip[i] = 1;
+                }
             } else {
-                g->g_repl[i] = "const";
+                g->g_repl[i] = hlsl_target ? "static const" : "const";
             }
         } else if (
             is(i, "discard_fragment") &&
@@ -1075,13 +1096,15 @@ static void global_edits(Gen * g) {
             g->g_skip[i + 1] = 1;
             g->g_skip[i + 2] = 1;
         } else if (is(i, "as_type") && is_punct(i + 1, "<")) {
-            const c8 * type = glsl_type_name(i + 2);
+            const c8 * type = hlsl_target ?
+                hlsl_as_type_name(i + 2) :
+                glsl_type_name(i + 2);
             if (type == NULL || !is_punct(i + 3, ">")) {
                 fail(g, i, "unsupported as_type<>, use a 32-bit type");
                 continue;
             }
             u32 s = str_begin(g);
-            buf_cat(&g->arena, "t1_as_");
+            buf_cat(&g->arena, hlsl_target ? "as" : "t1_as_");
             buf_cat(&g->arena, type);
             g->g_repl[i] = str_end(g, s);
             g->g_skip[i + 1] = 1;
@@ -1109,10 +1132,10 @@ static void global_edits(Gen * g) {
                 g->g_skip[j] = 1;
             }
         } else if (is_cast(c, i) && is(i + 1, "void")) {
-            // (void)x; only says x is unused, GLSL has no void casts
+            // (void)x; only says x is unused, GLSL and HLSL can't cast to void
             u32 end = unary_end(c, i + 3);
             for (u32 t = i; t < end; t++) { g->g_skip[t] = 1; }
-        } else if (is_cast(c, i)) {
+        } else if (is_cast(c, i) && !hlsl_target) {
             // (type)x -> type(x)
             g->g_skip[i] = 1;
             g->g_repl[i + 2] = "(";
@@ -1329,6 +1352,50 @@ static void cat_tokens(Buf * b, const u32 from, const u32 to) {
         if (t > from) { buf_cat(b, " "); }
         cat_name(b, t);
     }
+}
+
+// The source with the global and the unit's edits, after what's in g->out
+static void write_unit(Gen * g) {
+    u32 prev_end = 0; // offset in the source after the previous token
+    for (u32 i = 0; i < g->c->count; i++) {
+        const c8 * t = T1_token_text(tz, i);
+        u32 size = T1_token_size(tz, i);
+        u32 offset = (u32)(t - g->c->source);
+        if (!g->u_drop[i]) {
+            buf_cat_n(g->out, g->c->source + prev_end, offset - prev_end);
+            if (g->u_pre[i]) { buf_cat(g->out, g->u_pre[i]); }
+            if (!g->g_skip[i] && !g->u_skip[i]) {
+                if (g->u_repl[i]) {
+                    buf_cat(g->out, g->u_repl[i]);
+                } else if (g->g_repl[i]) {
+                    buf_cat(g->out, g->g_repl[i]);
+                } else if (kind(i) == SK_PREPROC) {
+                    // __METAL_VERSION__ -> T1_GLSL or T1_HLSL
+                    const c8 * mv = "__METAL_VERSION__";
+                    u32 j = 0;
+                    while (j < size) {
+                        if (
+                            j + 17 <= size &&
+                            T1_std_are_equal_strings_of_length(t + j, mv, 17))
+                        {
+                            buf_cat(g->out, hlsl_target ? "T1_HLSL" : "T1_GLSL");
+                            j += 17;
+                        } else {
+                            buf_cat_n(g->out, t + j, 1);
+                            j++;
+                        }
+                    }
+                } else {
+                    cat_name(g->out, i);
+                }
+            }
+            if (g->g_post[i]) { buf_cat(g->out, g->g_post[i]); }
+            if (g->u_post[i]) { buf_cat(g->out, g->u_post[i]); }
+        }
+        prev_end = offset + size;
+    }
+    buf_cat(g->out, g->c->source + prev_end);
+    buf_cat(g->out, "\n");
 }
 
 static void make_unit(Gen * g, const u32 entry_f) {
@@ -1593,47 +1660,7 @@ static void make_unit(Gen * g, const u32 entry_f) {
     }
     T1_mem_free_managed(gl->data);
 
-    // write the unit
-    u32 prev_end = 0; // offset in the source after the previous token
-    for (u32 i = 0; i < count; i++) {
-        const c8 * t = T1_token_text(tz, i);
-        u32 size = T1_token_size(tz, i);
-        u32 offset = (u32)(t - g->c->source);
-        if (!g->u_drop[i]) {
-            buf_cat_n(g->out, g->c->source + prev_end, offset - prev_end);
-            if (g->u_pre[i]) { buf_cat(g->out, g->u_pre[i]); }
-            if (!g->g_skip[i] && !g->u_skip[i]) {
-                if (g->u_repl[i]) {
-                    buf_cat(g->out, g->u_repl[i]);
-                } else if (g->g_repl[i]) {
-                    buf_cat(g->out, g->g_repl[i]);
-                } else if (kind(i) == SK_PREPROC) {
-                    // __METAL_VERSION__ -> T1_GLSL
-                    const c8 * mv = "__METAL_VERSION__";
-                    u32 j = 0;
-                    while (j < size) {
-                        if (
-                            j + 17 <= size &&
-                            T1_std_are_equal_strings_of_length(t + j, mv, 17))
-                        {
-                            buf_cat(g->out, "T1_GLSL");
-                            j += 17;
-                        } else {
-                            buf_cat_n(g->out, t + j, 1);
-                            j++;
-                        }
-                    }
-                } else {
-                    cat_name(g->out, i);
-                }
-            }
-            if (g->g_post[i]) { buf_cat(g->out, g->g_post[i]); }
-            if (g->u_post[i]) { buf_cat(g->out, g->u_post[i]); }
-        }
-        prev_end = offset + size;
-    }
-    buf_cat(g->out, g->c->source + prev_end);
-    buf_cat(g->out, "\n");
+    write_unit(g);
 }
 
 void T1_shader_to_glsl(
@@ -1714,6 +1741,1422 @@ void T1_shader_to_glsl(
     }
     *good = !g.failed;
 
+    T1_mem_free_managed(g.arena.data);
+    T1_mem_free_managed(g.g_skip);
+    T1_mem_free_managed(g.u_skip);
+    T1_mem_free_managed(g.u_drop);
+    T1_mem_free_managed((void *)g.g_repl);
+    T1_mem_free_managed((void *)g.g_post);
+    T1_mem_free_managed((void *)g.u_repl);
+    T1_mem_free_managed((void *)g.u_pre);
+    T1_mem_free_managed((void *)g.u_post);
+    T1_mem_free_managed(g.reachable);
+    T1_mem_free_managed(c->secondary);
+    T1_mem_free_managed(c);
+    T1_mem_free_managed(full);
+}
+
+/*
+TRANSLATION TO HLSL (SHADER MODEL 5.0) FOR DIRECT3D 11
+
+Like the GLSL translation, every entry point becomes a unit of its own that
+starts with a line "//T1_UNIT vert|frag|comp name". Entry points keep their
+names, so a unit is compiled with its entry point's name.
+
+The layout a Direct3D 11 backend must match:
+- buffer(n): register t(T1_HLSL_BUFS_T + n), a ByteAddressBuffer (raw
+  bytes, like a Metal buffer), except a kernel's writable buffers:
+  RWByteAddressBuffers from u1 on, a line "//T1_UAV slot n" each
+- T1Textures: t0 to t(T1_TEXARRAYS_CAP - 1), a Texture2DArray each
+- samplers s0 to s2: T1_nearest, T1_linear and T1_linear_repeat
+- a compute pass's write_tex: u0, an R32_UINT view of its slice, each uint
+  an rgba8 pixel that T1's helpers pack and unpack
+- kernels: a line "//T1_THREADS x y z" has their group's size, b0 is a
+  constant buffer with the grid's size (a uint3), threads past it return
+  right away
+- an HLSL matrix holds the columns of the MSL one as its rows: in memory
+  they're the same (#pragma pack_matrix(row_major)), constructors and m[i]
+  stay as they are, and mul() swaps its arguments
+- buffers are read byte by byte with MSL's layout (a float3 takes 16 bytes
+  and starts at a multiple of 16), through t1_load_ and t1_store_ functions
+- clip space, texture coordinates and the winding of front faces are
+  Metal's already
+*/
+
+// HLSL words and intrinsics that can't be names, they get a '_'
+static const c8 * const hlsl_reserved[] = {
+    "in", "out", "inout", "uniform", "register", "packoffset", "sampler",
+    "sampler1D", "sampler2D", "sampler3D", "samplerCUBE", "SamplerState",
+    "SamplerComparisonState", "texture", "Texture1D", "Texture2D",
+    "Texture3D", "TextureCube", "Texture2DArray", "RWTexture2DArray",
+    "Buffer", "ByteAddressBuffer", "RWByteAddressBuffer", "StructuredBuffer",
+    "RWStructuredBuffer", "cbuffer", "tbuffer", "technique", "pass",
+    "compile", "line", "lineadj", "point", "triangle", "triangleadj",
+    "linear", "centroid", "nointerpolation", "noperspective", "sample",
+    "precise", "shared", "groupshared", "row_major", "column_major", "snorm",
+    "unorm", "string", "vector", "matrix", "half", "dword", "export", "asm",
+    "long", "short", "signed", "unsigned", "explicit", "friend", "mutable",
+    "protected", "throw", "try", "catch", "globallycoherent", "lerp",
+    "frac", "rcp", "mad", "clip", "ddx", "ddy", "asuint", "asint", "asfloat",
+    "countbits", "firstbithigh", "firstbitlow", "reversebits", "isnan",
+    "isinf", "isfinite", "noise", "lit", "dst", "log10", "sincos", "modf",
+    "ldexp", "frexp", "determinant", "fwidth", "numthreads",
+};
+
+static b8 is_hlsl_reserved(const u32 i) {
+    return in_list(
+        i, hlsl_reserved, sizeof(hlsl_reserved) / sizeof(hlsl_reserved[0]));
+}
+
+// the as*() of an as_type<> target: asuint(), asint() or asfloat()
+static const c8 * hlsl_as_type_name(const u32 i) {
+    static const c8 * const map[][2] = {
+        {"u32", "uint"}, {"uint", "uint"}, {"uint32_t", "uint"},
+        {"s32", "int"}, {"int", "int"}, {"int32_t", "int"},
+        {"f32", "float"}, {"float", "float"},
+        {"uint4", "uint"}, {"float4", "float"},
+    };
+    for (u32 m = 0; m < sizeof(map) / sizeof(map[0]); m++) {
+        if (is(i, map[m][0])) { return map[m][1]; }
+    }
+    return NULL;
+}
+
+/*
+The types buffers can hold besides structs, with MSL's sizes and alignments
+and how to load and store them at the byte a of the raw buffer b
+*/
+typedef struct {
+    const c8 * type;
+    const c8 * size;
+    const c8 * align;
+    const c8 * load;
+    const c8 * store;
+} HlslPrim;
+
+static const HlslPrim hlsl_prims[] = {
+    {"float", "4", "4", "asfloat(b.Load(a))", "b.Store(a, asuint(v))"},
+    {"float2", "8", "8", "asfloat(b.Load2(a))", "b.Store2(a, asuint(v))"},
+    {"float3", "16", "16", "asfloat(b.Load3(a))", "b.Store3(a, asuint(v))"},
+    {"float4", "16", "16", "asfloat(b.Load4(a))", "b.Store4(a, asuint(v))"},
+    {"uint", "4", "4", "b.Load(a)", "b.Store(a, v)"},
+    {"uint2", "8", "8", "b.Load2(a)", "b.Store2(a, v)"},
+    {"uint3", "16", "16", "b.Load3(a)", "b.Store3(a, v)"},
+    {"uint4", "16", "16", "b.Load4(a)", "b.Store4(a, v)"},
+    {"int", "4", "4", "asint(b.Load(a))", "b.Store(a, asuint(v))"},
+    {"int2", "8", "8", "asint(b.Load2(a))", "b.Store2(a, asuint(v))"},
+    {"int3", "16", "16", "asint(b.Load3(a))", "b.Store3(a, asuint(v))"},
+    {"int4", "16", "16", "asint(b.Load4(a))", "b.Store4(a, asuint(v))"},
+    // a matrix is its columns, each aligned like a vector
+    {"float2x2", "16", "8",
+        "float2x2(asfloat(b.Load2(a)), asfloat(b.Load2(a + 8)))",
+        "b.Store2(a, asuint(v[0])); b.Store2(a + 8, asuint(v[1]))"},
+    {"float3x3", "48", "16",
+        "float3x3(asfloat(b.Load3(a)), asfloat(b.Load3(a + 16)), "
+            "asfloat(b.Load3(a + 32)))",
+        "b.Store3(a, asuint(v[0])); b.Store3(a + 16, asuint(v[1])); "
+            "b.Store3(a + 32, asuint(v[2]))"},
+    {"float4x4", "64", "16",
+        "float4x4(asfloat(b.Load4(a)), asfloat(b.Load4(a + 16)), "
+            "asfloat(b.Load4(a + 32)), asfloat(b.Load4(a + 48)))",
+        "b.Store4(a, asuint(v[0])); b.Store4(a + 16, asuint(v[1])); "
+            "b.Store4(a + 32, asuint(v[2])); b.Store4(a + 48, asuint(v[3]))"},
+};
+
+// The prim's name in HLSL (u32 is uint), NULL if it's not a prim
+static const c8 * hlsl_prim(const u32 i) {
+    static const c8 * const aliases[][2] = {
+        {"f32", "float"}, {"u32", "uint"}, {"uint32_t", "uint"},
+        {"s32", "int"}, {"int32_t", "int"},
+    };
+    for (u32 a = 0; a < sizeof(aliases) / sizeof(aliases[0]); a++) {
+        if (is(i, aliases[a][0])) { return aliases[a][1]; }
+    }
+    for (u32 p = 0; p < sizeof(hlsl_prims) / sizeof(hlsl_prims[0]); p++) {
+        if (is(i, hlsl_prims[p].type)) { return hlsl_prims[p].type; }
+    }
+    return NULL;
+}
+
+// a type as it is in HLSL
+static void cat_hlsl_type(Buf * b, const u32 i) {
+    const c8 * prim = hlsl_prim(i);
+    if (prim != NULL) {
+        buf_cat(b, prim);
+    } else {
+        cat_name(b, i);
+    }
+}
+
+static void cat_u32(Buf * b, const u32 value) {
+    c8 n[16];
+    n[0] = '\0';
+    T1_std_strcat_u32_cap(n, 16, value);
+    buf_cat(b, n);
+}
+
+static const c8 * const hlsl_prelude =
+    "#define T1_HLSL 1\n"
+    "#pragma pack_matrix(row_major)\n"
+    "#define f32 float\n"
+    "#define u32 uint\n"
+    "#define s32 int\n"
+    "#define uint32_t uint\n"
+    "#define int32_t int\n"
+    "#define fmax max\n"
+    "#define fmin min\n"
+    "#define fract frac\n"
+    "#define mix lerp\n"
+    // see the matrices above
+    "#define mul(a, b) mul(b, a)\n"
+    // MSL rounds halfway away from 0, HLSL to even
+    "#define round(x) trunc((x) + 0.5f * sign(x))\n"
+    "#define T1_MAX(a, b) ((a) > (b) ? (a) : (b))\n"
+    "#define T1_MIN(a, b) ((a) < (b) ? (a) : (b))\n"
+    "#define T1_ROUND_UP(x, a) (((x) + (a) - 1) / (a) * (a))\n";
+
+/*
+An integer constant expression of numbers, macros, + - * / % and
+parentheses, e.g. the n of buffer(T1_BUFS_I + 1): HLSL needs it as a plain
+number in register()
+*/
+typedef struct {
+    const Check * c;
+    const c8 * s;
+    u32 depth; // of macros
+    b8 bad;
+} Eval;
+
+static s64 eval_sum(Eval * e);
+
+static void eval_space(Eval * e) {
+    while (*e->s == ' ' || *e->s == '\t') { e->s++; }
+}
+
+// what a #define gives name, NULL if it's not one
+static const c8 * macro_value(const Check * c, const c8 * name, const u32 n) {
+    for (u32 i = 0; i < c->count; i++) {
+        if (!preproc_is(i, "define")) { continue; }
+        const c8 * t = T1_token_text(tz, i) + 1;
+        while (*t == ' ' || *t == '\t') { t++; }
+        t += 6;
+        while (*t == ' ' || *t == '\t') { t++; }
+        if (
+            T1_std_are_equal_strings_of_length(t, name, n) &&
+            !is_name_char(t[n]) &&
+            t[n] != '(')
+        {
+            return t + n;
+        }
+    }
+    return NULL;
+}
+
+static s64 eval_atom(Eval * e) {
+    eval_space(e);
+    c8 ch = *e->s;
+    if (ch == '(') {
+        e->s++;
+        s64 value = eval_sum(e);
+        eval_space(e);
+        if (*e->s == ')') { e->s++; } else { e->bad = 1; }
+        return value;
+    }
+    if (ch == '-') { e->s++; return -eval_atom(e); }
+    if (ch >= '0' && ch <= '9') {
+        s64 value = 0;
+        if (ch == '0' && (e->s[1] == 'x' || e->s[1] == 'X')) {
+            e->s += 2;
+            while (1) {
+                c8 d = *e->s;
+                s64 digit =
+                    d >= '0' && d <= '9' ? d - '0' :
+                    d >= 'a' && d <= 'f' ? d - 'a' + 10 :
+                    d >= 'A' && d <= 'F' ? d - 'A' + 10 : -1;
+                if (digit < 0) { break; }
+                value = value * 16 + digit;
+                e->s++;
+            }
+        } else {
+            while (*e->s >= '0' && *e->s <= '9') {
+                value = value * 10 + (*e->s - '0');
+                e->s++;
+            }
+        }
+        while (*e->s == 'u' || *e->s == 'U') { e->s++; }
+        return value;
+    }
+    if (is_name_char(ch)) {
+        const c8 * name = e->s;
+        while (is_name_char(*e->s)) { e->s++; }
+        const c8 * value_text =
+            macro_value(e->c, name, (u32)(e->s - name));
+        if (value_text == NULL || e->depth >= 16) {
+            e->bad = 1;
+            return 0;
+        }
+        Eval sub = {e->c, value_text, e->depth + 1, 0};
+        s64 value = eval_sum(&sub);
+        eval_space(&sub);
+        if (
+            sub.bad ||
+            !(*sub.s == '\0' || *sub.s == '\r' || *sub.s == '\n' ||
+            (sub.s[0] == '/' && (sub.s[1] == '/' || sub.s[1] == '*'))))
+        {
+            e->bad = 1;
+        }
+        return value;
+    }
+    e->bad = 1;
+    return 0;
+}
+
+static s64 eval_product(Eval * e) {
+    s64 value = eval_atom(e);
+    while (!e->bad) {
+        eval_space(e);
+        c8 op = *e->s;
+        if ((op != '*' && op != '/' && op != '%') || e->s[1] == '/') { break; }
+        e->s++;
+        s64 rhs = eval_atom(e);
+        if (op != '*' && rhs == 0) { e->bad = 1; break; }
+        value = op == '*' ? value * rhs : op == '/' ? value / rhs : value % rhs;
+    }
+    return value;
+}
+
+static s64 eval_sum(Eval * e) {
+    s64 value = eval_product(e);
+    while (!e->bad) {
+        eval_space(e);
+        c8 op = *e->s;
+        if (op != '+' && op != '-') { break; }
+        e->s++;
+        s64 rhs = eval_product(e);
+        value = op == '+' ? value + rhs : value - rhs;
+    }
+    return value;
+}
+
+// buffer(n) in an attribute as a number, -1 if it's not a constant
+static s64 eval_attr_arg(const Check * c, const u32 attr_i, const c8 * name) {
+    c8 arg[256];
+    Buf b = {arg, 0, 256, 0};
+    arg[0] = '\0';
+    cat_attr_arg(&b, attr_i, name);
+    if (b.overflow || arg[0] == '\0') { return -1; }
+    Eval e = {c, arg, 0, 0};
+    s64 value = eval_sum(&e);
+    eval_space(&e);
+    return e.bad || *e.s != '\0' ? -1 : value;
+}
+
+/*
+The #pragma pack(n) in effect at token i, 0 for none: it caps the alignment
+of struct members
+*/
+static u32 pack_at(const Check * c, const u32 at) {
+    u32 stack[16];
+    u32 size = 0;
+    u32 pack = 0;
+    for (u32 i = 0; i < at && i < c->count; i++) {
+        if (!preproc_is(i, "pragma")) { continue; }
+        const c8 * t = T1_token_value(tz, i);
+        const c8 * p = t;
+        while (*p != '\0' && !T1_std_are_equal_strings_of_length(p, "pack", 4)) {
+            p++;
+        }
+        if (*p == '\0') { continue; }
+        b8 push = 0;
+        b8 pop = 0;
+        u32 value = 0;
+        b8 has_value = 0;
+        for (; *p != '\0' && *p != '\n'; p++) {
+            if (T1_std_are_equal_strings_of_length(p, "push", 4)) { push = 1; }
+            if (T1_std_are_equal_strings_of_length(p, "pop", 3)) { pop = 1; }
+            if (*p >= '0' && *p <= '9') {
+                value = value * 10 + (u32)(*p - '0');
+                has_value = 1;
+            }
+        }
+        if (push && size < 16) { stack[size++] = pack; }
+        if (pop) {
+            pack = size > 0 ? stack[--size] : 0;
+        } else {
+            pack = has_value ? value : (push ? pack : 0);
+        }
+    }
+    return pack;
+}
+
+typedef struct {
+    u32 type_i;
+    u32 name_i;
+    u32 count_open; // '[' of an array, UINT32_MAX if it's not one
+    u32 count_close;
+} DataMember;
+
+#define DATA_MEMBERS_CAP 64
+
+/*
+A struct's members for its load and store functions: [const] Type name;
+also "Type a, b[N];". 0 if it has something else (attributes, #ifs)
+*/
+static u32 data_members(const StructDef * d, DataMember * recip) {
+    u32 size = 0;
+    u32 i = d->body_open + 1;
+    while (i < d->body_close) {
+        if (is(i, "const")) { i++; }
+        if (kind(i) != SK_IDENT) { return 0; }
+        u32 type = i++;
+        while (1) {
+            if (kind(i) != SK_IDENT || size >= DATA_MEMBERS_CAP) { return 0; }
+            DataMember * m = &recip[size++];
+            m->type_i = type;
+            m->name_i = i++;
+            m->count_open = UINT32_MAX;
+            m->count_close = UINT32_MAX;
+            if (is_punct(i, "[")) {
+                m->count_open = i;
+                while (i < d->body_close && !is_punct(i, "]")) {
+                    if (kind(i) == SK_ATTR || kind(i) == SK_PREPROC) {
+                        return 0;
+                    }
+                    i++;
+                }
+                m->count_close = i++;
+            }
+            if (is_punct(i, ",")) { i++; continue; }
+            if (is_punct(i, ";")) { i++; break; }
+            return 0;
+        }
+    }
+    return size;
+}
+
+// "(N)" of an array member, "1" if it's not one
+static void cat_count(Buf * b, const DataMember * m) {
+    if (m->count_open == UINT32_MAX) { buf_cat(b, "1"); return; }
+    buf_cat(b, "(");
+    cat_tokens(b, m->count_open + 1, m->count_close);
+    buf_cat(b, ")");
+}
+
+// "t1_size_" or "t1_align_" etc. and the type
+static void cat_layout_name(Buf * b, const c8 * what, const u32 type_i) {
+    buf_cat(b, what);
+    cat_hlsl_type(b, type_i);
+}
+
+static void cat_member_access(
+    Buf * b,
+    const DataMember * m,
+    const c8 * index)
+{
+    cat_name(b, m->name_i);
+    if (m->count_open != UINT32_MAX) {
+        buf_cat(b, "[");
+        buf_cat(b, index);
+        buf_cat(b, "]");
+    }
+}
+
+/*
+The layout (MSL's) of a struct and its load and store functions, after its
+definition. Structs with something they can't load (bool, attributes) get
+none, using them in a buffer is then an error of HLSL's
+*/
+static void hlsl_struct_functions(Gen * g, b8 * loadable) {
+    Check * c = g->c;
+
+    for (u32 s = 0; s < c->struct_defs_size; s++) {
+        const StructDef * d = &c->struct_defs[s];
+        loadable[s] = 0;
+
+        DataMember members[DATA_MEMBERS_CAP];
+        u32 size = data_members(d, members);
+        if (size == 0) { continue; }
+
+        // every member's type must be loadable and defined before
+        b8 ok = 1;
+        for (u32 m = 0; m < size && ok; m++) {
+            if (hlsl_prim(members[m].type_i) != NULL) { continue; }
+            b8 found = 0;
+            for (u32 earlier = 0; earlier < s; earlier++) {
+                if (
+                    loadable[earlier] &&
+                    same_text(c->struct_defs[earlier].name_i,
+                        members[m].type_i))
+                {
+                    found = 1;
+                }
+            }
+            ok = found;
+        }
+        if (!ok) { continue; }
+
+        // where its definition ends
+        u32 semi = d->name_i > d->body_close ? d->name_i + 1 : d->body_close + 1;
+        if (!is_punct(semi, ";")) { continue; }
+        loadable[s] = 1;
+
+        u32 pack = pack_at(c, d->body_open);
+        u32 start = str_begin(g);
+        Buf * a = &g->arena;
+
+        // static const uint t1_align_T_0 = T1_MAX(4u, t1_align_U0); ...
+        buf_cat(a, "\n");
+        for (u32 m = 0; m < size; m++) {
+            buf_cat(a, "static const uint t1_align_");
+            cat_name(a, d->name_i);
+            buf_cat(a, "_");
+            cat_u32(a, m);
+            buf_cat(a, " = T1_MAX(");
+            if (m == 0) {
+                buf_cat(a, "4u");
+            } else {
+                buf_cat(a, "t1_align_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "_");
+                cat_u32(a, m - 1);
+            }
+            buf_cat(a, ", ");
+            if (pack > 0) { buf_cat(a, "T1_MIN("); }
+            cat_layout_name(a, "t1_align_", members[m].type_i);
+            if (pack > 0) {
+                buf_cat(a, ", ");
+                cat_u32(a, pack);
+                buf_cat(a, "u)");
+            }
+            buf_cat(a, ");\n");
+
+            // the member starts at the first multiple of its alignment
+            buf_cat(a, "static const uint t1_off_");
+            cat_name(a, d->name_i);
+            buf_cat(a, "_");
+            cat_u32(a, m);
+            buf_cat(a, " = ");
+            if (m == 0) {
+                buf_cat(a, "0;\n");
+            } else {
+                buf_cat(a, "T1_ROUND_UP(t1_off_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "_");
+                cat_u32(a, m - 1);
+                buf_cat(a, " + ");
+                cat_layout_name(a, "t1_size_", members[m - 1].type_i);
+                buf_cat(a, " * ");
+                cat_count(a, &members[m - 1]);
+                buf_cat(a, ", ");
+                if (pack > 0) { buf_cat(a, "T1_MIN("); }
+                cat_layout_name(a, "t1_align_", members[m].type_i);
+                if (pack > 0) {
+                    buf_cat(a, ", ");
+                    cat_u32(a, pack);
+                    buf_cat(a, "u)");
+                }
+                buf_cat(a, ");\n");
+            }
+        }
+        buf_cat(a, "static const uint t1_align_");
+        cat_name(a, d->name_i);
+        buf_cat(a, " = t1_align_");
+        cat_name(a, d->name_i);
+        buf_cat(a, "_");
+        cat_u32(a, size - 1);
+        buf_cat(a, ";\n");
+        // its size is a multiple of its alignment, like in an array
+        buf_cat(a, "static const uint t1_size_");
+        cat_name(a, d->name_i);
+        buf_cat(a, " = T1_ROUND_UP(t1_off_");
+        cat_name(a, d->name_i);
+        buf_cat(a, "_");
+        cat_u32(a, size - 1);
+        buf_cat(a, " + ");
+        cat_layout_name(a, "t1_size_", members[size - 1].type_i);
+        buf_cat(a, " * ");
+        cat_count(a, &members[size - 1]);
+        buf_cat(a, ", t1_align_");
+        cat_name(a, d->name_i);
+        buf_cat(a, ");\n");
+
+        // a load function for read-only and writable buffers, a store one
+        static const c8 * const buffer_types[] = {
+            "ByteAddressBuffer", "RWByteAddressBuffer",
+        };
+        for (u32 bt = 0; bt < 3; bt++) {
+            b8 store = bt == 2;
+            if (store) {
+                buf_cat(a, "void t1_store_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "(RWByteAddressBuffer b, uint a, ");
+                cat_name(a, d->name_i);
+                buf_cat(a, " v) {\n");
+            } else {
+                cat_name(a, d->name_i);
+                buf_cat(a, " t1_load_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "(");
+                buf_cat(a, buffer_types[bt]);
+                buf_cat(a, " b, uint a) {\n    ");
+                cat_name(a, d->name_i);
+                buf_cat(a, " v;\n");
+            }
+            for (u32 m = 0; m < size; m++) {
+                b8 array = members[m].count_open != UINT32_MAX;
+                const c8 * index = array ? "t1_i" : "";
+                buf_cat(a, "    ");
+                /*
+                In braces: a for's variable lives on after the loop in
+                HLSL. Unrolled: elements of local arrays can't be indexed
+                with variables
+                */
+                if (array) {
+                    buf_cat(a, "{ [unroll] for (uint t1_i = 0; t1_i < ");
+                    cat_count(a, &members[m]);
+                    buf_cat(a, "; t1_i++) { ");
+                }
+                if (store) {
+                    cat_layout_name(a, "t1_store_", members[m].type_i);
+                    buf_cat(a, "(b, ");
+                } else {
+                    buf_cat(a, "v.");
+                    cat_member_access(a, &members[m], index);
+                    buf_cat(a, " = ");
+                    cat_layout_name(a, "t1_load_", members[m].type_i);
+                    buf_cat(a, "(b, ");
+                }
+                buf_cat(a, "a + t1_off_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "_");
+                cat_u32(a, m);
+                if (array) {
+                    buf_cat(a, " + t1_i * ");
+                    cat_layout_name(a, "t1_size_", members[m].type_i);
+                }
+                if (store) {
+                    buf_cat(a, ", v.");
+                    cat_member_access(a, &members[m], index);
+                }
+                buf_cat(a, ");");
+                if (array) { buf_cat(a, " } }"); }
+                buf_cat(a, "\n");
+            }
+            buf_cat(a, store ? "}\n" : "    return v;\n}\n");
+        }
+        add_text(g, &g->g_post[semi], str_end(g, start));
+    }
+}
+
+static b8 is_assign_op(const u32 i) {
+    static const c8 * const ops[] = {
+        "=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>=",
+        "++", "--",
+    };
+    return
+        kind(i) == SK_PUNCT &&
+        in_list(i, ops, sizeof(ops) / sizeof(ops[0]));
+}
+
+/*
+name[i] of a buffer becomes t1_load_T(name, (i) * t1_size_T), and a
+statement that writes to it, like name[i].pos += v;, becomes
+{ uint t1_a = (i) * t1_size_T; T t1_e = t1_load_T(name, t1_a);
+t1_e.pos += v; t1_store_T(name, t1_a, t1_e); }
+*/
+static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
+    Check * c = g->c;
+
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 i = fn->body_open + 1; i < fn->body_close; i++) {
+            if (
+                kind(i) != SK_IDENT ||
+                is_punct(i - 1, ".") ||
+                !is_punct(i + 1, "["))
+            {
+                continue;
+            }
+            const PtrParam * ptr = NULL;
+            for (u32 p = 0; p < fn->ptrs_size; p++) {
+                if (same_text(fn->ptrs[p].name_i, i)) { ptr = &fn->ptrs[p]; }
+            }
+            if (ptr == NULL) { continue; }
+
+            u32 close = after_match(c, i + 1, "[", "]") - 1;
+            u32 chain_end = close + 1;
+            while (chain_end < fn->body_close) {
+                if (is_punct(chain_end, ".") && kind(chain_end + 1) == SK_IDENT) {
+                    chain_end += 2;
+                } else if (is_punct(chain_end, "[")) {
+                    chain_end = after_match(c, chain_end, "[", "]");
+                } else {
+                    break;
+                }
+            }
+
+            if (is_punct(i - 1, "++") || is_punct(i - 1, "--")) {
+                fail(g, i, "write buffer elements as name[i] op= value;");
+                continue;
+            }
+
+            u32 s = str_begin(g);
+            Buf * a = &g->arena;
+            if (!is_assign_op(chain_end)) {
+                buf_cat(a, "t1_load_");
+                cat_hlsl_type(a, ptr->type_i);
+                buf_cat(a, "(");
+                cat_name(a, i);
+                buf_cat(a, ", (");
+                g->g_repl[i] = str_end(g, s);
+                g->g_skip[i + 1] = 1;
+                s = str_begin(g);
+                buf_cat(a, ") * t1_size_");
+                cat_hlsl_type(a, ptr->type_i);
+                buf_cat(a, ")");
+                g->g_repl[close] = str_end(g, s);
+                continue;
+            }
+
+            // a write: the statement must start here and end with a ';'
+            u32 semi = chain_end;
+            u32 nesting = 0;
+            while (semi < fn->body_close) {
+                if (is_punct(semi, "(")) { nesting++; }
+                if (is_punct(semi, ")")) {
+                    if (nesting == 0) { break; }
+                    nesting--;
+                }
+                if (nesting == 0 && is_punct(semi, ";")) { break; }
+                semi++;
+            }
+            b8 starts_statement =
+                is_punct(i - 1, ";") || is_punct(i - 1, "{") ||
+                is_punct(i - 1, "}") || is_punct(i - 1, ")") ||
+                is(i - 1, "else");
+            if (!is_punct(semi, ";") || !starts_statement) {
+                fail(g, i, "write buffer elements as name[i] op= value;");
+                continue;
+            }
+            buf_cat(a, "{ uint t1_a = (");
+            g->g_repl[i] = str_end(g, s);
+            g->g_skip[i + 1] = 1;
+            s = str_begin(g);
+            buf_cat(a, ") * t1_size_");
+            cat_hlsl_type(a, ptr->type_i);
+            g->g_repl[close] = str_end(g, s);
+
+            /*
+            Only the member written to is loaded and stored: .pos[1] adds
+            the offset of pos and 1 element to the address, then the
+            rest of the chain (e.g. a swizzle) works on the member
+            */
+            u32 type_i = ptr->type_i;
+            u32 last = close; // the last token of the address
+            u32 t = close + 1;
+            while (t < chain_end && is_punct(t, ".")) {
+                const StructDef * d = find_struct(c, type_i);
+                if (d == NULL || !loadable[d - c->struct_defs]) { break; }
+                DataMember members[DATA_MEMBERS_CAP];
+                u32 size = data_members(d, members);
+                u32 m = 0;
+                while (m < size && !same_text(members[m].name_i, t + 1)) {
+                    m++;
+                }
+                if (m == size) { break; }
+                b8 array = members[m].count_open != UINT32_MAX;
+                // a whole array member has no load function
+                if (array && !is_punct(t + 2, "[")) { break; }
+
+                s = str_begin(g);
+                buf_cat(a, " + t1_off_");
+                cat_name(a, d->name_i);
+                buf_cat(a, "_");
+                cat_u32(a, m);
+                g->g_repl[t] = str_end(g, s);
+                g->g_skip[t + 1] = 1;
+                type_i = members[m].type_i;
+                last = t + 1;
+                t += 2;
+                if (array) {
+                    u32 index_close = after_match(c, t, "[", "]") - 1;
+                    g->g_repl[t] = " + (";
+                    s = str_begin(g);
+                    buf_cat(a, ") * t1_size_");
+                    cat_hlsl_type(a, type_i);
+                    g->g_repl[index_close] = str_end(g, s);
+                    last = index_close;
+                    t = index_close + 1;
+                }
+            }
+
+            s = str_begin(g);
+            buf_cat(a, "; ");
+            cat_hlsl_type(a, type_i);
+            buf_cat(a, " t1_e = t1_load_");
+            cat_hlsl_type(a, type_i);
+            buf_cat(a, "(");
+            cat_name(a, i);
+            buf_cat(a, ", t1_a); t1_e");
+            add_text(g, &g->g_post[last], str_end(g, s));
+            s = str_begin(g);
+            buf_cat(a, "; t1_store_");
+            cat_hlsl_type(a, type_i);
+            buf_cat(a, "(");
+            cat_name(a, i);
+            buf_cat(a, ", t1_a, t1_e); }");
+            g->g_repl[semi] = str_end(g, s);
+        }
+    }
+}
+
+/*
+float4(1.0f) fills every component in MSL, HLSL's constructors need them
+all: ((float4)(1.0f)) does the same
+*/
+static void hlsl_constructor_edits(Gen * g) {
+    static const c8 * const vectors[] = {
+        "float2", "float3", "float4", "int2", "int3", "int4", "uint2",
+        "uint3", "uint4",
+    };
+    Check * c = g->c;
+    for (u32 i = 0; i + 1 < c->count; i++) {
+        if (
+            kind(i) != SK_IDENT ||
+            !is_punct(i + 1, "(") ||
+            is_punct(i - 1, ".") ||
+            !in_list(i, vectors, sizeof(vectors) / sizeof(vectors[0])))
+        {
+            continue;
+        }
+        u32 close = after_match(c, i + 1, "(", ")") - 1;
+        if (close <= i + 2) { continue; }
+        u32 nesting = 0;
+        b8 one_arg = 1;
+        for (u32 t = i + 2; t < close; t++) {
+            if (is_punct(t, "(") || is_punct(t, "[")) { nesting++; }
+            if (is_punct(t, ")") || is_punct(t, "]")) { nesting--; }
+            if (nesting == 0 && is_punct(t, ",")) { one_arg = 0; }
+        }
+        if (!one_arg) { continue; }
+
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, "((");
+        cat_name(&g->arena, i);
+        buf_cat(&g->arena, ")");
+        g->g_repl[i] = str_end(g, s);
+        add_text(g, &g->g_post[close], ")");
+    }
+}
+
+/*
+The members of stage structs (what vertex functions return and fragment
+functions get or return) get semantics: [[position]] is SV_Position,
+[[color(n)]] SV_Targetn, the others TEXCOORDn in their order. Flat or
+integer ones aren't interpolated.
+*/
+static void hlsl_stage_edits(Gen * g) {
+    Check * c = g->c;
+    u8 * done = T1_mem_malloc_managed(c->struct_defs_size + 1);
+    T1_std_memset(done, 0, c->struct_defs_size + 1);
+
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * e = &c->funcs[f];
+        if (e->stage != STAGE_VERTEX && e->stage != STAGE_FRAGMENT) {
+            continue;
+        }
+
+        u32 types[PARAMS_CAP + 1];
+        u32 types_size = 0;
+        types[types_size++] = e->name_i - 1;
+        for (u32 p = 0; p < e->params_size; p++) {
+            for (u32 t = e->params_start[p]; t < e->params_end[p]; t++) {
+                if (kind(t) == SK_ATTR && attr_has(t, "stage_in")) {
+                    types[types_size++] = t - 2;
+                }
+            }
+        }
+
+        for (u32 ti = 0; ti < types_size; ti++) {
+            const StructDef * d = find_struct(c, types[ti]);
+            if (d == NULL) { continue; }
+            u32 s = (u32)(d - c->struct_defs);
+            if (done[s]) { continue; }
+            done[s] = 1;
+
+            Member members[MEMBERS_CAP];
+            u32 size = struct_members(g, d, members);
+            u32 location = 0;
+            for (u32 m = 0; m < size; m++) {
+                u32 str = str_begin(g);
+                Buf * a = &g->arena;
+                if (attr_has(members[m].attr_i, "position")) {
+                    buf_cat(a, " : SV_Position");
+                } else if (attr_has(members[m].attr_i, "color")) {
+                    buf_cat(a, " : SV_Target");
+                    cat_attr_arg(a, members[m].attr_i, "color");
+                } else {
+                    buf_cat(a, " : TEXCOORD");
+                    cat_u32(a, location);
+                    location += locations_of(members[m].type_i);
+                }
+                const c8 * semantic = str_end(g, str);
+                if (members[m].attr_i != UINT32_MAX) {
+                    // global_edits() skipped every attribute
+                    g->g_skip[members[m].attr_i] = 0;
+                    g->g_repl[members[m].attr_i] = semantic;
+                } else {
+                    add_text(g, &g->g_post[members[m].name_i], semantic);
+                }
+
+                if (
+                    !attr_has(members[m].attr_i, "position") &&
+                    !attr_has(members[m].attr_i, "color") &&
+                    (attr_has(members[m].attr_i, "flat") ||
+                    is_integer_type(members[m].type_i)))
+                {
+                    str = str_begin(g);
+                    buf_cat(a, "nointerpolation ");
+                    cat_hlsl_type(a, members[m].type_i);
+                    g->g_repl[members[m].type_i] = str_end(g, str);
+                }
+            }
+        }
+    }
+
+    T1_mem_free_managed(done);
+}
+
+/*
+What a unit's stage needs before the shaders: sampling any T1Tex (a switch,
+shader model 5.0 can't index an array of textures with a variable), the
+write_tex helpers and buffers
+*/
+static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
+    if (!used) {
+        // saves compiling the switches below
+        buf_cat(b, "Texture2DArray t1_textures[1] : register(t0);\n");
+        return;
+    }
+    buf_cat(b, "Texture2DArray t1_textures[");
+    cat_u32(b, T1_TEXARRAYS_CAP);
+    buf_cat(b, "] : register(t0);\n"
+        "SamplerState t1_nearest_smp : register(s0);\n"
+        "SamplerState t1_linear_smp : register(s1);\n"
+        "SamplerState t1_linear_repeat_smp : register(s2);\n");
+
+    // implicit mip levels only where they exist: fragments with mipmaps
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    b8 implicit_lod = stage == STAGE_FRAGMENT;
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    b8 implicit_lod = 0;
+    (void)stage;
+    #else
+    #error
+    #endif
+    buf_cat(b,
+        "float4 t1_sample(SamplerState smp, uint tex, float2 uv) {\n"
+        "    float3 c = float3(uv, (float)T1_TEX_SLICE_I(tex));\n"
+        "    float4 r = float4(0.0f, 0.0f, 0.0f, 0.0f);\n"
+        "    switch (T1_TEX_ARRAY_I(tex)) {\n");
+    for (u32 t = 0; t < T1_TEXARRAYS_CAP; t++) {
+        buf_cat(b, "    case ");
+        cat_u32(b, t);
+        buf_cat(b, ": r = t1_textures[");
+        cat_u32(b, t);
+        buf_cat(b, implicit_lod ?
+            "].Sample(smp, c); break;\n" :
+            "].SampleLevel(smp, c, 0.0f); break;\n");
+    }
+    buf_cat(b,
+        "    }\n"
+        "    return r;\n"
+        "}\n"
+        "float4 t1_read(uint tex, uint2 pos) {\n"
+        "    int4 c = int4(int2(pos), (int)T1_TEX_SLICE_I(tex), 0);\n"
+        "    float4 r = float4(0.0f, 0.0f, 0.0f, 0.0f);\n"
+        "    switch (T1_TEX_ARRAY_I(tex)) {\n");
+    for (u32 t = 0; t < T1_TEXARRAYS_CAP; t++) {
+        buf_cat(b, "    case ");
+        cat_u32(b, t);
+        buf_cat(b, ": r = t1_textures[");
+        cat_u32(b, t);
+        buf_cat(b, "].Load(c); break;\n");
+    }
+    buf_cat(b,
+        "    }\n"
+        "    return r;\n"
+        "}\n"
+        // the T1 helpers, their first argument is the texture parameter
+        "#define T1_sample_nearest(t, tex, uv) "
+            "t1_sample(t1_nearest_smp, (tex), (uv))\n"
+        "#define T1_sample_linear(t, tex, uv) "
+            "t1_sample(t1_linear_smp, (tex), (uv))\n"
+        "#define T1_sample_linear_repeat(t, tex, uv) "
+            "t1_sample(t1_linear_repeat_smp, (tex), (uv))\n"
+        "#define T1_read(t, tex, pos) t1_read((tex), (pos))\n");
+}
+
+static const c8 * const hlsl_write_tex =
+    "RWTexture2DArray<uint> t1_write_tex : register(u0);\n"
+    "float4 t1_unpack_rgba8(uint v) {\n"
+    "    return float4(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF, v >> 24)"
+        " / 255.0f;\n"
+    "}\n"
+    "uint t1_pack_rgba8(float4 color) {\n"
+    "    uint4 u = (uint4)(saturate(color) * 255.0f + 0.5f);\n"
+    "    return u.x | (u.y << 8) | (u.z << 16) | (u.w << 24);\n"
+    "}\n"
+    "uint2 t1_write_tex_size() {\n"
+    "    uint w; uint h; uint slices;\n"
+    "    t1_write_tex.GetDimensions(w, h, slices);\n"
+    "    return uint2(w, h);\n"
+    "}\n"
+    "#define T1_write_tex_read(t, pos) "
+        "t1_unpack_rgba8(t1_write_tex[uint3((pos), 0)])\n"
+    "#define T1_write_tex_write(t, pos, color) "
+        "(t1_write_tex[uint3((pos), 0)] = t1_pack_rgba8(color))\n"
+    "#define T1_write_tex_size(t) t1_write_tex_size()\n";
+
+// The load and store functions of the types that aren't structs
+static void cat_hlsl_prims(Buf * b) {
+    for (u32 p = 0; p < sizeof(hlsl_prims) / sizeof(hlsl_prims[0]); p++) {
+        const HlslPrim * prim = &hlsl_prims[p];
+        buf_cat(b, "#define t1_size_");
+        buf_cat(b, prim->type);
+        buf_cat(b, " ");
+        buf_cat(b, prim->size);
+        buf_cat(b, "u\n#define t1_align_");
+        buf_cat(b, prim->type);
+        buf_cat(b, " ");
+        buf_cat(b, prim->align);
+        buf_cat(b, "u\n");
+        for (u32 rw = 0; rw < 2; rw++) {
+            buf_cat(b, prim->type);
+            buf_cat(b, " t1_load_");
+            buf_cat(b, prim->type);
+            buf_cat(b, rw ?
+                "(RWByteAddressBuffer b, uint a) { return " :
+                "(ByteAddressBuffer b, uint a) { return ");
+            buf_cat(b, prim->load);
+            buf_cat(b, "; }\n");
+        }
+        buf_cat(b, "void t1_store_");
+        buf_cat(b, prim->type);
+        buf_cat(b, "(RWByteAddressBuffer b, uint a, ");
+        buf_cat(b, prim->type);
+        buf_cat(b, " v) { ");
+        buf_cat(b, prim->store);
+        buf_cat(b, "; }\n");
+    }
+}
+
+static void make_unit_hlsl(
+    Gen * g,
+    const u32 entry_f,
+    const u32 user_first_token)
+{
+    Check * c = g->c;
+    const Func * e = &c->funcs[entry_f];
+    u32 count = c->count;
+
+    T1_std_memset(g->u_skip, 0, count + 1);
+    T1_std_memset(g->u_drop, 0, count + 1);
+    for (u32 i = 0; i <= count; i++) {
+        g->u_repl[i] = NULL;
+        g->u_pre[i] = NULL;
+        g->u_post[i] = NULL;
+    }
+    T1_std_memset(g->reachable, 0, c->funcs_size);
+    mark_reachable(g, entry_f);
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        if (!g->reachable[f]) {
+            for (u32 t = fn->decl_start; t <= fn->body_close; t++) {
+                g->u_drop[t] = 1;
+            }
+        }
+    }
+
+    // The globals and helpers go before the shaders, after T1's headers
+    Buf globals_buf;
+    globals_buf.cap = 64 * 1024;
+    globals_buf.data = T1_mem_malloc_managed(globals_buf.cap);
+    globals_buf.data[0] = '\0';
+    globals_buf.size = 0;
+    globals_buf.overflow = 0;
+    Buf * gl = &globals_buf;
+    buf_cat(gl, "\n");
+
+    // whether the functions this unit keeps read textures
+    b8 reads_textures = 0;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        if (!g->reachable[f]) { continue; }
+        const Func * fn = &c->funcs[f];
+        for (u32 t = fn->body_open; t < fn->body_close; t++) {
+            if (
+                kind(t) == SK_IDENT &&
+                T1_token_size(tz, t) >= 7 &&
+                (T1_std_are_equal_strings_of_length(
+                    T1_token_text(tz, t), "T1_sample", 9) ||
+                is(t, "T1_read")))
+            {
+                reads_textures = 1;
+            }
+        }
+    }
+    // or a macro of theirs could
+    for (u32 t = 0; t < count && !reads_textures; t++) {
+        if (kind(t) != SK_PREPROC) { continue; }
+        const c8 * text = T1_token_text(tz, t);
+        u32 size = T1_token_size(tz, t);
+        for (u32 j = 0; j + 7 <= size; j++) {
+            if (
+                (j + 9 <= size &&
+                T1_std_are_equal_strings_of_length(text + j, "T1_sample", 9)) ||
+                T1_std_are_equal_strings_of_length(text + j, "T1_read", 7))
+            {
+                reads_textures = 1;
+            }
+        }
+    }
+    cat_hlsl_textures(gl, e->stage, reads_textures);
+
+    // lines for the backend, after the unit's marker line
+    c8 header_data[1024];
+    Buf header_buf = {header_data, 0, 1024, 0};
+    header_data[0] = '\0';
+    Buf * hd = &header_buf;
+
+    c8 prologue_data[8192];
+    Buf prologue_buf = {prologue_data, 0, 8192, 0};
+    prologue_data[0] = '\0';
+    Buf * pro = &prologue_buf;
+    buf_cat(pro, "\n");
+
+    // the head's parameters, which replace the entry point's
+    c8 params_data[1024];
+    Buf params_buf = {params_data, 0, 1024, 0};
+    params_data[0] = '\0';
+    Buf * hp = &params_buf;
+
+    if (e->stage == STAGE_KERNEL) {
+        buf_cat(gl, "cbuffer T1Grid : register(b0) { uint3 t1_grid_size; };\n");
+        buf_cat(hp, "uint3 t1_dtid : SV_DispatchThreadID");
+        buf_cat(pro,
+            "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
+    } else if (e->stage == STAGE_VERTEX) {
+        buf_cat(hp,
+            "uint t1_vertex_id : SV_VertexID, "
+            "uint t1_instance_id : SV_InstanceID");
+    }
+
+    // a fragment's stage_in, and its member at [[position]] if any
+    u32 stage_in_name = UINT32_MAX;
+    u32 stage_in_position = UINT32_MAX;
+    for (u32 p = 0; p < e->params_size; p++) {
+        for (u32 t = e->params_start[p]; t < e->params_end[p]; t++) {
+            if (kind(t) != SK_ATTR || !attr_has(t, "stage_in")) { continue; }
+            stage_in_name = t - 1;
+            const StructDef * d = find_struct(c, t - 2);
+            if (d == NULL) {
+                fail(g, t - 2, "stage_in needs a struct");
+                continue;
+            }
+            Member members[MEMBERS_CAP];
+            u32 size = struct_members(g, d, members);
+            for (u32 m = 0; m < size; m++) {
+                if (attr_has(members[m].attr_i, "position")) {
+                    stage_in_position = members[m].name_i;
+                }
+            }
+            if (hp->size > 0) { buf_cat(hp, ", "); }
+            cat_tokens(hp, t - 2, t);
+        }
+    }
+
+    u32 uav_slot = 1; // u0 is the write_tex
+    u32 threads[3] = {16, 16, 1}; // for a write_tex without a grid
+    b8 frag_coord = 0;
+
+    for (u32 p = 0; p < e->params_size; p++) {
+        u32 start = e->params_start[p];
+        u32 end = e->params_end[p];
+        u32 attr = UINT32_MAX;
+        u32 star = UINT32_MAX;
+        b8 readonly = 0;
+        for (u32 t = start; t < end; t++) {
+            if (kind(t) == SK_ATTR) { attr = t; }
+            if (is_punct(t, "*")) { star = t; }
+            if (is(t, "const") || is(t, "constant")) { readonly = 1; }
+        }
+        u32 name = (attr != UINT32_MAX ? attr : end) - 1;
+        if (attr == UINT32_MAX || kind(name) != SK_IDENT) {
+            fail(g, start, "entry point parameters need an attribute");
+            continue;
+        }
+
+        if (attr_has(attr, "buffer")) {
+            if (star == UINT32_MAX) {
+                fail(g, start, "a buffer parameter must be a pointer");
+                continue;
+            }
+            s64 n = eval_attr_arg(c, attr, "buffer");
+            if (n < 0 || n + T1_HLSL_BUFS_T > 127) {
+                fail(g, attr, "buffer(n) needs a constant from 0 to 95");
+                continue;
+            }
+            if (e->stage == STAGE_KERNEL && !readonly) {
+                if (uav_slot > 7) {
+                    fail(g, attr, "at most 7 writable buffers per kernel");
+                    continue;
+                }
+                buf_cat(gl, "RWByteAddressBuffer ");
+                cat_name(gl, name);
+                buf_cat(gl, " : register(u");
+                cat_u32(gl, uav_slot);
+                buf_cat(gl, ");\n");
+                buf_cat(hd, "//T1_UAV ");
+                cat_u32(hd, uav_slot);
+                buf_cat(hd, " ");
+                cat_u32(hd, (u32)n);
+                buf_cat(hd, "\n");
+                uav_slot++;
+            } else {
+                buf_cat(gl, "ByteAddressBuffer ");
+                cat_name(gl, name);
+                buf_cat(gl, " : register(t");
+                cat_u32(gl, (u32)n + T1_HLSL_BUFS_T);
+                buf_cat(gl, ");\n");
+            }
+        } else if (attr_has(attr, "texture")) {
+            if (is(name - 1, "T1WriteTex")) {
+                if (e->stage != STAGE_KERNEL) {
+                    fail(g, start, "only kernels have a T1WriteTex");
+                    continue;
+                }
+                buf_cat(gl, hlsl_write_tex);
+            } else if (!is(name - 1, "T1Textures")) {
+                fail(g, start, "textures are T1Textures or T1WriteTex");
+            }
+        } else if (
+            attr_has(attr, "vertex_id") ||
+            attr_has(attr, "instance_id") ||
+            attr_has(attr, "thread_position_in_grid") ||
+            (attr_has(attr, "position") && !attr_has(attr, "stage_in")))
+        {
+            b8 grid = attr_has(attr, "thread_position_in_grid");
+            if (grid) {
+                if (is(name - 1, "uint3")) {
+                    threads[0] = 8; threads[1] = 8; threads[2] = 4;
+                } else if (!is(name - 1, "uint2")) {
+                    threads[0] = 256; threads[1] = 1; threads[2] = 1;
+                }
+            }
+            u32 s = str_begin(g);
+            Buf * a = &g->arena;
+            if (attr_has(attr, "vertex_id")) {
+                buf_cat(a, "t1_vertex_id");
+            } else if (attr_has(attr, "instance_id")) {
+                buf_cat(a, "t1_instance_id");
+            } else if (attr_has(attr, "position")) {
+                if (stage_in_position != UINT32_MAX) {
+                    cat_name(a, stage_in_name);
+                    buf_cat(a, ".");
+                    cat_name(a, stage_in_position);
+                } else {
+                    buf_cat(a, "t1_frag_coord");
+                    frag_coord = 1;
+                }
+            } else {
+                buf_cat(a,
+                    is(name - 1, "uint3") ? "t1_dtid" :
+                    is(name - 1, "uint2") ? "t1_dtid.xy" : "t1_dtid.x");
+            }
+            const c8 * value = str_end(g, s);
+            buf_cat(pro, "    ");
+            cat_tokens(pro, start, name + 1);
+            buf_cat(pro, " = (");
+            cat_hlsl_type(pro, name - 1);
+            buf_cat(pro, ")(");
+            buf_cat(pro, value);
+            buf_cat(pro, ");\n");
+        } else if (!attr_has(attr, "stage_in")) {
+            fail(g, attr, "unsupported entry point parameter");
+        }
+    }
+    if (frag_coord) {
+        if (hp->size > 0) { buf_cat(hp, ", "); }
+        buf_cat(hp, "float4 t1_frag_coord : SV_Position");
+    }
+
+    // the unit's marker line, its lines for the backend and the prelude
+    static const c8 * const stage_names[] = {"", "vert", "frag", "comp"};
+    buf_cat(g->out, "//T1_UNIT ");
+    buf_cat(g->out, stage_names[e->stage]);
+    buf_cat(g->out, " ");
+    buf_cat_n(g->out, T1_token_text(tz, e->name_i),
+        T1_token_size(tz, e->name_i));
+    buf_cat(g->out, "\n");
+    if (e->stage == STAGE_KERNEL) {
+        buf_cat(g->out, "//T1_THREADS ");
+        for (u32 d = 0; d < 3; d++) {
+            cat_u32(g->out, threads[d]);
+            buf_cat(g->out, d < 2 ? " " : "\n");
+        }
+    }
+    buf_cat(g->out, hd->data);
+    buf_cat(g->out, hlsl_prelude);
+    cat_hlsl_prims(g->out);
+
+    // the entry point's head
+    {
+        u32 s = str_begin(g);
+        Buf * a = &g->arena;
+        if (e->stage == STAGE_KERNEL) {
+            buf_cat(a, "[numthreads(");
+            for (u32 d = 0; d < 3; d++) {
+                cat_u32(a, threads[d]);
+                buf_cat(a, d < 2 ? ", " : ")]\n");
+            }
+            buf_cat(a, "void ");
+        } else {
+            cat_hlsl_type(a, e->name_i - 1);
+            buf_cat(a, " ");
+        }
+        cat_name(a, e->name_i);
+        buf_cat(a, "(");
+        buf_cat(a, hp->data);
+        buf_cat(a, ")");
+        if (e->stage == STAGE_FRAGMENT && find_struct(c, e->name_i - 1) == NULL) {
+            buf_cat(a, " : SV_Target0");
+        }
+        g->u_repl[e->decl_start] = str_end(g, s);
+        for (u32 t = e->decl_start + 1; t <= e->params_close; t++) {
+            g->u_skip[t] = 1;
+        }
+    }
+
+    if (pro->overflow || hp->overflow || hd->overflow) {
+        fail(g, e->name_i, "too many parameters");
+    }
+    {
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, pro->data);
+        g->u_post[e->body_open] = str_end(g, s);
+    }
+    buf_cat(gl, "\n");
+    if (gl->overflow) { fail(g, e->name_i, "too many globals"); }
+    {
+        // before the first of the client's tokens this unit keeps
+        u32 first = user_first_token;
+        while (first < count && g->u_drop[first]) { first++; }
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, gl->data);
+        if (first < count) {
+            g->u_pre[first] = str_end(g, s);
+        }
+    }
+    T1_mem_free_managed(gl->data);
+
+    write_unit(g);
+}
+
+void T1_shader_to_hlsl(
+    const c8 * shader_source,
+    c8 * recip,
+    const u32 recip_cap,
+    u8 * good,
+    c8 * error_recip,
+    const u32 error_recip_cap)
+{
+    *good = 0;
+    T1_assert(recip != NULL && recip_cap > 0);
+    recip[0] = '\0';
+
+    // the shaders must be in the subset, T1's own headers aren't checked
+    T1_shader_check(shader_source, good, error_recip, error_recip_cap);
+    if (!*good) { return; }
+    *good = 0;
+
+    u32 headers_size = (u32)(
+        T1_std_strlen(T1_embedded_data_shader_settings) +
+        T1_std_strlen(T1_embedded_data_shader_includes));
+    u32 full_cap = headers_size + (u32)T1_std_strlen(shader_source) + 1;
+    c8 * full = T1_mem_malloc_managed(full_cap);
+    full[0] = '\0';
+    T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_settings);
+    T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_includes);
+    T1_std_strcat_cap(full, full_cap, shader_source);
+
+    T1_token_run(tz, full, T1_std_strlen(full));
+    hlsl_target = 1;
+
+    Check * c = T1_mem_malloc_managed(sizeof(Check));
+    T1_std_memset(c, 0, sizeof(Check));
+    c->count = T1_token_count(tz);
+    c->source = full;
+    c->error_recip = error_recip;
+    c->error_recip_cap = error_recip_cap;
+    if (error_recip != NULL) { error_recip[0] = '\0'; }
+    c->secondary = T1_mem_malloc_managed(c->count + 1);
+    mark_secondary(c);
+    collect(c);
+
+    // the first token of the client's shaders, after T1's headers
+    u32 user_first_token = c->count;
+    for (u32 i = 0; i < c->count; i++) {
+        if ((u32)(T1_token_text(tz, i) - full) >= headers_size) {
+            user_first_token = i;
+            break;
+        }
+    }
+
+    Gen g;
+    T1_std_memset(&g, 0, sizeof(Gen));
+    g.c = c;
+    g.arena.cap = 4 * 1024 * 1024;
+    g.arena.data = T1_mem_malloc_managed(g.arena.cap);
+    g.arena.data[0] = '\0';
+    Buf out;
+    out.data = recip;
+    out.size = 0;
+    out.cap = recip_cap;
+    out.overflow = 0;
+    g.out = &out;
+    u32 n = c->count + 1;
+    g.g_skip = T1_mem_malloc_managed(n);
+    g.u_skip = T1_mem_malloc_managed(n);
+    g.u_drop = T1_mem_malloc_managed(n);
+    g.g_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g.g_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g.u_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g.u_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g.u_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g.reachable = T1_mem_malloc_managed(c->funcs_size + 1);
+    b8 * loadable = T1_mem_malloc_managed(c->struct_defs_size + 1);
+    T1_std_memset(g.g_skip, 0, n);
+    for (u32 i = 0; i < n; i++) {
+        g.g_repl[i] = NULL;
+        g.g_post[i] = NULL;
+    }
+
+    global_edits(&g);
+    hlsl_struct_functions(&g, loadable);
+    hlsl_buffer_edits(&g, loadable);
+    hlsl_constructor_edits(&g);
+    hlsl_stage_edits(&g);
+    for (u32 f = 0; f < c->funcs_size && !g.failed; f++) {
+        if (c->funcs[f].is_entry) { make_unit_hlsl(&g, f, user_first_token); }
+    }
+
+    if (g.arena.overflow || out.overflow) {
+        fail(&g, 0, "T1_shader_to_hlsl() ran out of room");
+    }
+    *good = !g.failed;
+
+    hlsl_target = 0;
+    T1_mem_free_managed(loadable);
     T1_mem_free_managed(g.arena.data);
     T1_mem_free_managed(g.g_skip);
     T1_mem_free_managed(g.u_skip);

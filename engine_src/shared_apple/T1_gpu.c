@@ -208,11 +208,12 @@ A T1_buf_read_start(): the next frame copies the bytes to staging (shared
 memory) after its passes, T1_buf_read_finish() hands them over once that
 frame's combuf is done
 */
-typedef enum : u8 {
+typedef u8 T1GPUBufReadState;
+enum {
     T1_GPU_BUF_READ_FREE = 0,
     T1_GPU_BUF_READ_QUEUED, // for the next frame
     T1_GPU_BUF_READ_ENCODED, // into combuf
-} T1GPUBufReadState;
+};
 
 typedef struct {
     void * staging;
