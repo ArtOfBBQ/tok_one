@@ -11,7 +11,6 @@
 #define T1_F32_MIN -T1_F32_MAX
 
 #define T1_std_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
-#define T1_std_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
 
 void * T1_std_memset(
     void * input,
@@ -33,16 +32,47 @@ void T1_std_memset_f32(
     f32 value,
     u32 size_bytes);
 
+// dest and src may not overlap (asserted)
 void * T1_std_memcpy(
-    void * dest,
-    const void * src,
+    void * restrict dest,
+    const void * restrict src,
     u64 n_bytes);
 
 s32 T1_std_mini(s32 x, s32 y);
 s32 T1_std_maxi(s32 x, s32 y);
-f32 T1_std_minf(f32 x, f32 y);
-f32 T1_std_maxf(f32 x, f32 y);
-f32 T1_std_clampf(f32 x, f32 lo, f32 hi);
+typedef union { f32 f; s32 s; } T1StdF32Bits;
+
+// |a|: the sign bit cleared
+static inline f32 T1_std_fabs(const f32 a) {
+    T1StdF32Bits bits;
+    bits.f = a;
+    bits.s &= 0x7FFFFFFF;
+    return bits.f;
+}
+
+// x if x <= y, else y
+static inline f32 T1_std_minf(const f32 x, const f32 y) {
+    T1StdF32Bits ux, uy, picked;
+    ux.f = x;
+    uy.f = y;
+    const s32 x_wins = -(s32)(x <= y); // all 1 bits or all 0
+    picked.s = (ux.s & x_wins) | (uy.s & ~x_wins);
+    return picked.f;
+}
+
+// x if x > y, else y
+static inline f32 T1_std_maxf(const f32 x, const f32 y) {
+    T1StdF32Bits ux, uy, picked;
+    ux.f = x;
+    uy.f = y;
+    const s32 x_wins = -(s32)(x > y); // all 1 bits or all 0
+    picked.s = (ux.s & x_wins) | (uy.s & ~x_wins);
+    return picked.f;
+}
+
+static inline f32 T1_std_clampf(const f32 x, const f32 lo, const f32 hi) {
+    return T1_std_minf(T1_std_maxf(x, lo), hi);
+}
 
 void T1_std_strcat_cap(
     c8 * recipient,

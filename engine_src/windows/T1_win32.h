@@ -18,8 +18,10 @@ collide with <windows.h> in your own files.
 
 #if defined(_MSC_VER)
 #define T1_WINAPI __stdcall
-#else
+#elif defined(__GNUC__)
 #define T1_WINAPI __attribute__((stdcall))
+#else
+#error "unknown compiler: MSVC, GCC or clang"
 #endif
 #define T1_WIN_IMPORT __declspec(dllimport)
 

@@ -21,9 +21,12 @@ against it too, their binaries are in /build/examples
 concat builds T1 for the platform it runs on: its own copy of gcc picks the
 platform layer
 */
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <direct.h>
 #define mkdir(path, mode) _mkdir(path)
+#elif defined(__APPLE__)
+#else
+#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
 #endif
 
 
@@ -55,11 +58,13 @@ static const Example examples[] = {
 static const char * search_paths[] = {
 "./",
 "engine_src/shared/",
-#ifdef _WIN32
+#if defined(_WIN32)
 "engine_src/windows/",
-#else
+#elif defined(__APPLE__)
 "engine_src/shared_apple/",
 "engine_src/macos/",
+#else
+#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
 #endif
 "resources/",
 };
@@ -97,8 +102,11 @@ static const char * c_files[] = {
 "T1.c",
 "T1_embedded_data.c",
 "T1_fatal_error.c",
-#ifndef _WIN32
+#if defined(_WIN32)
+#elif defined(__APPLE__)
 "T1_objc.c",
+#else
+#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
 #endif
 "T1_img.c",
 "T1_std.c",
@@ -110,22 +118,26 @@ static const char * c_files[] = {
 "T1_buf.c",
 "T1_audio.c",
 "T1_global.c",
-#ifdef _WIN32
+#if defined(_WIN32)
 "T1_os_common.c",
 "T1_os_windows.c",
 "T1_os_windows_audio.c",
-#else
+#elif defined(__APPLE__)
 "T1_os_apple_audio.c",
 "T1_os_common.c",
 "T1_os_macos.c",
 "T1_os_apple.c",
+#else
+#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
 #endif
 "T1_mem.c",
 "T1_io.c",
-#ifdef _WIN32
+#if defined(_WIN32)
 "T1_gpu_d3d11.c",
-#else
+#elif defined(__APPLE__)
 "T1_gpu.c",
+#else
+#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
 #endif
 "T1_tex.c",
 "T1_tex_array.c",

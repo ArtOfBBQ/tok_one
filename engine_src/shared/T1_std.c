@@ -18,7 +18,8 @@ void * T1_std_memset(
 {
     T1_assert(in != NULL);
     s8 * input = (s8 *)in;
-    for (u64 i = 0; i < size_bytes; i++) { input[i] = (s8)value; }
+    const s8 byte = (s8)value;
+    for (u64 i = 0; i < size_bytes; i++) { input[i] = byte; }
     return in;
 }
 
@@ -29,7 +30,8 @@ T1_std_memset_i16(
     u32 size_bytes)
 {
     s16 * input = (s16 *)in;
-    for (u32 i = 0; i < size_bytes / 2; i++) { input[i] = value; }
+    const u32 count = size_bytes / 2;
+    for (u32 i = 0; i < count; i++) { input[i] = value; }
 }
 
 void
@@ -39,7 +41,8 @@ T1_std_memset_s32(
     u32 size_bytes)
 {
     s32 * input = (s32 *)in;
-    for (u32 i = 0; i < size_bytes / 4; i++) { input[i] = value; }
+    const u32 count = size_bytes / 4;
+    for (u32 i = 0; i < count; i++) { input[i] = value; }
 }
 
 void
@@ -49,36 +52,23 @@ T1_std_memset_f32(
     u32 size_bytes)
 {
     f32 * input = (f32 *)in;
-    for (u32 i = 0; i < size_bytes / 4; i++) { input[i] = value; }
+    const u32 count = size_bytes / 4;
+    for (u32 i = 0; i < count; i++) { input[i] = value; }
 }
 
 void *
 T1_std_memcpy(
-    void * dest,
-    const void * src,
+    void * restrict dest,
+    const void * restrict src,
     u64 n_bytes)
 {
-    s8 * destination = (s8 *)dest;
-    const s8 * source = (const s8 *)src;
+    T1_assert(n_bytes == 0 ||
+        (const s8 *)dest + n_bytes <= (const s8 *)src ||
+        (const s8 *)src + n_bytes <= (const s8 *)dest);
+    s8 * restrict destination = (s8 *)dest;
+    const s8 * restrict source = (const s8 *)src;
     for (u64 i = 0; i < n_bytes; i++) { destination[i] = source[i]; }
     return dest;
-}
-
-f32
-T1_std_minf(const f32 x, const f32 y)
-{
-    return ((x <= y) * x) + ((y < x) * y);
-}
-
-f32
-T1_std_maxf(const f32 x, const f32 y)
-{
-    return ((x >  y) * x) + ((x <= y) * y);
-}
-
-f32 T1_std_clampf(f32 x, f32 lo, f32 hi) {
-    f32 out = T1_std_maxf(x, lo);
-    return T1_std_minf(out, hi);
 }
 
 s32

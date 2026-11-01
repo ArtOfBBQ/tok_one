@@ -336,10 +336,6 @@ void T1_token_add_delimited(
     }
 }
 
-/*
-Two bytes share a class if no literal (or delimited start) contains either
-and every run treats them the same
-*/
 static void build_byte_classes(Tokenizer * t, u8 class_rep[256]) {
     b8 in_trie[256];
     T1_std_memset(in_trie, 0, 256);

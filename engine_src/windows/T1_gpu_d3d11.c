@@ -1684,9 +1684,9 @@ static T1D3D11View * T1_gpu_d3d11_tex_depth(
 The texture arrays a pass's shaders read, in srvs. An array the pass also
 draws or writes into (target_arrays) can't be read: if the pass reads
 textures, it reads a copy of the array instead, brought up to date now.
-Only the slices written since the last copy are copied (FE's render views
-of one size share an array, a whole copy per pass would be most of the
-frame's bandwidth)
+Only the slices written since the last copy are copied (a client may keep
+many render targets of one size as slices of one array: a whole copy per
+pass would be most of the frame's bandwidth)
 */
 static void T1_gpu_d3d11_tex_srvs(
     T1D3D11View ** srvs,

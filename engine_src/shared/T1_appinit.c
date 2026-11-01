@@ -107,8 +107,10 @@ void T1_init(
     
     #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_apple_os_init();
-    #ifdef TARGET_OS_OSX
+    #if TARGET_OS_OSX
     T1_os_macos_init();
+    #else
+    #error "T1's only Apple layer is macOS's"
     #endif
     #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
     #else

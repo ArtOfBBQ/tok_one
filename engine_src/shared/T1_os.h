@@ -19,6 +19,7 @@ and macos/, windows/), shared/ code reaches it only through this header
 #define T1_PLATFORM_APPLE T1_INACTIVE
 #define T1_PLATFORM_WINDOWS T1_ACTIVE
 #elif defined(__APPLE__)
+#include <TargetConditionals.h> // TARGET_OS_OSX (macOS: 1, iOS: 0)
 #define T1_PLATFORM_APPLE T1_ACTIVE
 #define T1_PLATFORM_WINDOWS T1_INACTIVE
 #else
@@ -45,8 +46,10 @@ extern T1EngineSaveFile * engine_save_file;
 
 #if T1_PLATFORM_APPLE == T1_ACTIVE
 void T1_apple_os_init(void);
-#ifdef TARGET_OS_OSX
+#if TARGET_OS_OSX
 void T1_os_macos_init(void);
+#else
+#error "T1's only Apple layer is macOS's"
 #endif
 #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
 // loads the DLLs the rest of the platform layer calls, after T1_os_init()
