@@ -94,6 +94,10 @@ u8 T1_gpu_lost(void) {
     return T1_os_gpu_lost();
 }
 
+u64 T1_gpu_frame_us(void) {
+    return T1_os_gpu_frame_us();
+}
+
 u8 T1_frame_resized(void) {
     return T1_gl_s->frame_resized;
 }

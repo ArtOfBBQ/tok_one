@@ -5,9 +5,10 @@
 
 /*
 Checks that shader_source stays inside T1's MSL subset (see RENDERING in
-T1.h), so T1 can translate it for other platforms. *good is 0 if it doesn't,
-and error_recip (cap 512+, may be NULL) lists the first problems with their
-line numbers in shader_source.
+T1.h) and that T1 can translate it for every other platform (it runs the
+translations), so a shader that passes on one platform passes on all.
+*good is 0 if it doesn't, and error_recip (cap 512+, may be NULL) lists the
+first problems with their line numbers in shader_source.
 */
 void T1_shader_check(
     const c8 * shader_source,

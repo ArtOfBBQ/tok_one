@@ -115,6 +115,14 @@ after your loop to tell the user why
 */
 uint8_t  T1_gpu_lost(void);
 /*
+How long the GPU took to run a recent frame's passes, in microseconds: the
+latest frame T1 knows is done (a frame or two ago, see T1_FRAMES_CAP), 0
+until one is. GPUs differ too much for this to mean anything on its own:
+compare passes on one GPU, e.g. against a trivial pass, running the same
+passes for several frames and taking the smallest
+*/
+uint64_t T1_gpu_frame_us(void);
+/*
 Whether T1_frame_update() waits while the window is hidden (1, the
 default). 0 keeps your frames running at about 60 a second, unshown: for
 tools and automated runs that don't watch the window
@@ -195,14 +203,19 @@ T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
 
 Shaders are written in T1's small subset of MSL, which T1 will translate
 for other platforms, so keep them simple (with T1_SHADER_CHECK_ACTIVE,
-T1_gpu_try_shader_source() fails on anything outside it and says where):
+T1_gpu_try_shader_source() fails on anything outside it, or that a
+translation can't take, on every platform alike, and says where):
 - no #include or "using namespace", T1 puts what's needed in front
 - floats only (no half), and no typedefs except typedef struct {...} Name;
+- constants shared by your functions go at program scope with constant,
+  e.g. constant float2 offsets[4] = { float2(0.0f, 1.0f), ... };
 - no pointers: buffers are entry point parameters, e.g.
   "const device MyStruct * things [[ buffer(T1_BUFS_I) ]]", used as
   things[i].field. Copy an element into a local (MyStruct t = things[i]) or
   pass the whole buffer on to a helper under the same name, never &things[i]
-- multiply matrices with mul(v, m), the row vector v times m, never with *
+- multiply matrices with mul(v, m), the row vector v times m, and two
+  matrices with mul(a, b) (a then b: mul(mul(v, a), b) is mul(v, mul(a, b))),
+  never with *
 - no implicit conversions between bool, ints and floats: write x != 0,
   (b ? 1.0f : 0.0f), 35 instead of 35.0f for an s32, and both sides of
   ?: of one type (float4(1.0f), not 1.0f, next to a float4)

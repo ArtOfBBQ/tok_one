@@ -33,22 +33,27 @@ platform layer
 static const char * encapsulation_h_file = "T1.h";
 
 /*
-examples/<name>.c, built against the library into build/examples/<name>.
+<dir>/<name>/<name>.c, built against the library into build/<dir>/<name>:
+the examples, and the tests (tests/shadertest checks a GPU backend against
+Metal, see its header).
 An example can change one macro setting in its copy of T1.h: setting_line
 (exactly as in T1_macro_settings.h, NULL for none) becomes new_setting_line
 */
 typedef struct {
+    const char * dir;
     const char * name;
     const char * setting_line;
     const char * new_setting_line;
 } Example;
 
 static const Example examples[] = {
-    {"noise", NULL, NULL},
-    {"frametime", NULL, NULL},
-    {"particles", NULL, NULL},
-    {"gamepad", NULL, NULL},
+    {"examples", "noise", NULL, NULL},
+    {"examples", "frametime", NULL, NULL},
+    {"examples", "particles", NULL, NULL},
+    {"examples", "gamepad", NULL, NULL},
+    {"tests", "shadertest", NULL, NULL},
     {
+        "examples",
         "soundkeyboard",
         "#define T1_AUDIO_ACTIVE 2",
         "#define T1_AUDIO_ACTIVE 1",
@@ -1066,11 +1071,13 @@ int main(void) {
     app would, with its own settings (e.g. its window title)
     */
     mkdir("build/examples", 0777);
+    mkdir("build/tests", 0777);
     uint32_t examples_size = sizeof(examples) / sizeof(examples[0]);
     for (uint32_t e = 0; e < examples_size; e++) {
         char dir[256];
+        const char * kind = examples[e].dir;
         const char * name = examples[e].name;
-        snprintf(dir, sizeof(dir), "examples/%s/", name);
+        snprintf(dir, sizeof(dir), "%s/%s/", kind, name);
 
         if (
             !copy_build_file_to(
@@ -1088,15 +1095,18 @@ int main(void) {
         snprintf(
             cmd,
             sizeof(cmd),
-            "gcc -std=c11 -O3 examples/%s/%s.c examples/%s/T1.c "
-            "-o build/examples/%s",
+            "gcc -std=c11 -O3 %s/%s/%s.c %s/%s/T1.c "
+            "-o build/%s/%s",
+            kind,
             name,
             name,
+            kind,
             name,
+            kind,
             name);
-        printf("building example: build/examples/%s\n", name);
+        printf("building: build/%s/%s\n", kind, name);
         if (system(cmd) != 0) {
-            printf("ERROR - failed to build example: %s\n", name);
+            printf("ERROR - failed to build: %s/%s\n", kind, name);
             return 1;
         }
     }

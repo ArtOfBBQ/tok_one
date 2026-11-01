@@ -155,6 +155,12 @@ typedef struct {
     // a query per frame in flight, see T1_os_gpu_begin_frame()
     T1ComObject * frame_queries[T1_FRAMES_CAP];
     b8 frame_query_issued[T1_FRAMES_CAP];
+    // the GPU's time for each frame's passes: a disjoint query around a
+    // timestamp at the start and one at the end (NULL if not made)
+    T1ComObject * frame_disjoints[T1_FRAMES_CAP];
+    T1ComObject * frame_starts[T1_FRAMES_CAP];
+    T1ComObject * frame_ends[T1_FRAMES_CAP];
+    u64 frame_gpu_us; // see T1_gpu_frame_us()
     u32 frame_i;
     u64 frames_encoded;
 
@@ -540,6 +546,12 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
         query.query = T1D3D11_QUERY_EVENT;
         query.misc_flags = 0;
         device->vtbl->CreateQuery(device, &query, &T1_d3d->frame_queries[f]);
+        query.query = T1D3D11_QUERY_TIMESTAMP_DISJOINT;
+        device->vtbl->CreateQuery(
+            device, &query, &T1_d3d->frame_disjoints[f]);
+        query.query = T1D3D11_QUERY_TIMESTAMP;
+        device->vtbl->CreateQuery(device, &query, &T1_d3d->frame_starts[f]);
+        device->vtbl->CreateQuery(device, &query, &T1_d3d->frame_ends[f]);
     }
 
     u32 source_size = (u32)T1_std_strlen(T1_gpu_d3d11_present_source);
@@ -1998,6 +2010,45 @@ static void T1_gpu_d3d11_encode_compute_pass(const T1Pass * pass) {
 FRAMES
 */
 
+static b8 T1_gpu_d3d11_has_frame_timer(const u32 f) {
+    return
+        T1_d3d->frame_disjoints[f] != NULL &&
+        T1_d3d->frame_starts[f] != NULL &&
+        T1_d3d->frame_ends[f] != NULL;
+}
+
+/*
+The frame in slot f is done (its event query said so), so its timestamps
+are too, unless the driver is still busy with them: then that frame's
+time stays unknown (S_FALSE, 1) and the last one stays
+*/
+static void T1_gpu_d3d11_read_frame_time(const u32 f) {
+    if (!T1_gpu_d3d11_has_frame_timer(f)) { return; }
+    T1D3D11Context * ctx = T1_d3d->ctx;
+    T1D3D11QueryDataTimestampDisjoint disjoint;
+    u64 start = 0;
+    u64 end = 0;
+    if (
+        ctx->vtbl->GetData(
+            ctx, T1_d3d->frame_disjoints[f], &disjoint,
+            sizeof(T1D3D11QueryDataTimestampDisjoint), 0) != 0 ||
+        ctx->vtbl->GetData(
+            ctx, T1_d3d->frame_starts[f], &start, sizeof(u64), 0) != 0 ||
+        ctx->vtbl->GetData(
+            ctx, T1_d3d->frame_ends[f], &end, sizeof(u64), 0) != 0)
+    {
+        return;
+    }
+    if (disjoint.disjoint || disjoint.frequency == 0 || end <= start) {
+        return;
+    }
+    T1_d3d->frame_gpu_us = (end - start) * 1000000 / disjoint.frequency;
+}
+
+u64 T1_os_gpu_frame_us(void) {
+    return T1_d3d != NULL ? T1_d3d->frame_gpu_us : 0;
+}
+
 /*
 Waits until the frame that last used this slot, T1_FRAMES_CAP frames ago,
 is done: this limits the number of frames in flight
@@ -2022,6 +2073,7 @@ u8 T1_os_gpu_begin_frame(void) {
             Sleep(1);
         }
         T1_d3d->frame_query_issued[f] = 0;
+        T1_gpu_d3d11_read_frame_time(f);
     }
     return !T1_d3d->lost;
 }
@@ -2035,6 +2087,13 @@ u8 T1_os_gpu_render_frame(void) {
 
     for (u32 i = 0; i < T1_D3D_TEX_DEPTHS_CAP; i++) {
         T1_d3d->tex_depths[i].cleared = 0;
+    }
+
+    const u32 f = T1_d3d->frame_i;
+    const b8 timed = T1_gpu_d3d11_has_frame_timer(f);
+    if (timed) {
+        T1_d3d->ctx->vtbl->Begin(T1_d3d->ctx, T1_d3d->frame_disjoints[f]);
+        T1_d3d->ctx->vtbl->End(T1_d3d->ctx, T1_d3d->frame_starts[f]);
     }
 
     // the client's passes, in the order they were made. Without shaders
@@ -2061,7 +2120,10 @@ u8 T1_os_gpu_render_frame(void) {
 
     T1_gpu_d3d11_encode_reads();
 
-    u32 f = T1_d3d->frame_i;
+    if (timed) {
+        T1_d3d->ctx->vtbl->End(T1_d3d->ctx, T1_d3d->frame_ends[f]);
+        T1_d3d->ctx->vtbl->End(T1_d3d->ctx, T1_d3d->frame_disjoints[f]);
+    }
     if (T1_d3d->frame_queries[f] != NULL) {
         T1_d3d->ctx->vtbl->End(T1_d3d->ctx, T1_d3d->frame_queries[f]);
         T1_d3d->frame_query_issued[f] = 1;

@@ -13,6 +13,7 @@ The subset, beyond plain C expressions and statements:
 - typedef struct {...} Name; and struct Name {...};, no other typedefs
 - 32-bit numbers only: float(N), int(N), uint(N), bool, u32, s32, f32,
   matrices floatNxN, no half, double or 8/16-bit types
+- constants at program scope: constant float table[4] = {...};
 - pointers only as buffer parameters, "const device Type * name" or
   "constant Type * name", used as name[i] or passed on whole to a helper,
   whose parameter has the same name and type as an entry point's buffer
@@ -41,7 +42,8 @@ static const c8 * const puncts[] = {
 };
 
 static const c8 * const builtin_types[] = {
-    "void", "bool", "float", "float2", "float3", "float4",
+    "void", "bool", "bool2", "bool3", "bool4",
+    "float", "float2", "float3", "float4",
     "float2x2", "float3x3", "float4x4", "int", "int2", "int3", "int4",
     "uint", "uint2", "uint3", "uint4", "u32", "s32", "f32",
     "uint32_t", "int32_t", "T1Textures", "T1WriteTex",
@@ -600,6 +602,20 @@ static void check_attribute(Check * c, const u32 i) {
     }
 }
 
+/*
+Outside every function and struct: where "constant float table[4] = {...};"
+makes a constant (MSL needs program scope variables in the constant address
+space, other languages just call them const)
+*/
+static b8 at_program_scope(const Check * c, const u32 i) {
+    if (func_at(c, i) != NULL) { return 0; }
+    for (u32 d = 0; d < c->struct_defs_size; d++) {
+        const StructDef * def = &c->struct_defs[d];
+        if (i > def->body_open && i < def->body_close) { return 0; }
+    }
+    return 1;
+}
+
 static void check_tokens(Check * c) {
     const u32 banned_size = sizeof(banned) / sizeof(banned[0]);
 
@@ -623,9 +639,14 @@ static void check_tokens(Check * c) {
             if (is(i, "typedef") && !is(i + 1, "struct")) {
                 report(c, i, "no typedefs except typedef struct");
             }
-            if ((is(i, "device") || is(i, "constant")) && !in_params) {
+            if (
+                (is(i, "device") || is(i, "constant")) &&
+                !in_params &&
+                !(is(i, "constant") && at_program_scope(c, i)))
+            {
                 report(c, i,
-                    "address spaces only for buffer parameters");
+                    "address spaces only for buffer parameters and "
+                    "constants at program scope");
             }
 
             // a call
@@ -740,7 +761,8 @@ static void check_tokens(Check * c) {
     }
 }
 
-void T1_shader_check(
+// The subset's rules, without translating
+static void check_subset(
     const c8 * shader_source,
     u8 * good,
     c8 * error_recip,
@@ -783,6 +805,9 @@ without the other entry points and the helpers this one doesn't call. The
 text between tokens (spaces, comments) is copied as it is, tokens are kept,
 replaced or skipped.
 
+Comparisons of vectors become GLSL's greaterThan() etc., see VECTOR
+COMPARISONS IN GLSL.
+
 The layout a Vulkan backend must match:
 - set 0, binding n: buffer(n), a std430 storage buffer
 - set 1, binding 0: T1Textures, texture2DArray[T1_TEXARRAYS_CAP]
@@ -820,6 +845,9 @@ static const c8 * const glsl_prelude =
     "#define uint2 uvec2\n"
     "#define uint3 uvec3\n"
     "#define uint4 uvec4\n"
+    "#define bool2 bvec2\n"
+    "#define bool3 bvec3\n"
+    "#define bool4 bvec4\n"
     "#define fmax max\n"
     "#define fmin min\n"
     "#define rsqrt inversesqrt\n"
@@ -928,6 +956,7 @@ typedef struct {
     // for all units
     u8 * g_skip;
     const c8 ** g_repl;
+    const c8 ** g_pre;
     const c8 ** g_post;
     // for the unit being made
     u8 * u_skip;
@@ -997,11 +1026,21 @@ static void fail(Gen * g, const u32 i, const c8 * why) {
 }
 
 static b8 is_cast(const Check * c, const u32 i) {
+    /*
+    After an operand, ( type ) is a call's argument list, except after
+    another cast: (float)(uint)x
+    */
+    const b8 after_cast =
+        i >= 3 &&
+        is_punct(i - 1, ")") &&
+        is_type(c, i - 2) &&
+        is_punct(i - 3, "(") &&
+        !(i >= 4 && ends_operand(i - 4));
     return
         is_punct(i, "(") &&
         is_type(c, i + 1) &&
         is_punct(i + 2, ")") &&
-        !(i > 0 && ends_operand(i - 1)) &&
+        !(i > 0 && ends_operand(i - 1) && !after_cast) &&
         (ends_operand(i + 3) || is_punct(i + 3, "(") ||
         is_punct(i + 3, "-") || is_punct(i + 3, "!") ||
         is_punct(i + 3, "~"));
@@ -1019,6 +1058,14 @@ static u32 unary_end(const Check * c, const u32 i) {
 
     u32 j = i + 1;
     if (is_punct(i, "(")) { j = after_match(c, i, "(", ")"); }
+    if (
+        is(i, "as_type") &&
+        is_punct(i + 1, "<") &&
+        is_punct(i + 3, ">") &&
+        is_punct(i + 4, "("))
+    {
+        j = after_match(c, i + 4, "(", ")"); // as_type<T>(x)
+    }
     while (j < c->count) {
         if (is_punct(j, "(") && kind(j - 1) == SK_IDENT) {
             j = after_match(c, j, "(", ")");
@@ -1086,6 +1133,20 @@ static void global_edits(Gen * g) {
                 } else {
                     g->g_skip[i] = 1;
                 }
+            } else {
+                g->g_repl[i] = hlsl_target ? "static const" : "const";
+            }
+        } else if (is(i, "constant") && at_program_scope(c, i)) {
+            // a constant at program scope, HLSL's globals are uniforms
+            // unless they're static
+            if (is(i + 1, "const")) {
+                if (hlsl_target) {
+                    g->g_repl[i] = "static";
+                } else {
+                    g->g_skip[i] = 1;
+                }
+            } else if (is(i - 1, "constexpr")) {
+                g->g_skip[i] = 1; // constexpr already became const
             } else {
                 g->g_repl[i] = hlsl_target ? "static const" : "const";
             }
@@ -1365,6 +1426,7 @@ static void write_unit(Gen * g) {
         u32 offset = (u32)(t - g->c->source);
         if (!g->u_drop[i]) {
             buf_cat_n(g->out, g->c->source + prev_end, offset - prev_end);
+            if (g->g_pre[i]) { buf_cat(g->out, g->g_pre[i]); }
             if (g->u_pre[i]) { buf_cat(g->out, g->u_pre[i]); }
             if (!g->g_skip[i] && !g->u_skip[i]) {
                 if (g->u_repl[i]) {
@@ -1697,7 +1759,7 @@ static b8 gen_begin(
 
     // the shaders must be in the subset, T1's own headers aren't checked
     u8 checked = 0;
-    T1_shader_check(shader_source, &checked, error_recip, error_recip_cap);
+    check_subset(shader_source, &checked, error_recip, error_recip_cap);
     if (!checked) { return 0; }
 
     u32 headers_size = (u32)(
@@ -1739,6 +1801,7 @@ static b8 gen_begin(
     g->u_skip = T1_mem_malloc_managed(n);
     g->u_drop = T1_mem_malloc_managed(n);
     g->g_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
+    g->g_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
     g->g_post = T1_mem_malloc_managed(sizeof(c8 *) * n);
     g->u_repl = T1_mem_malloc_managed(sizeof(c8 *) * n);
     g->u_pre = T1_mem_malloc_managed(sizeof(c8 *) * n);
@@ -1747,6 +1810,7 @@ static b8 gen_begin(
     T1_std_memset(g->g_skip, 0, n);
     for (u32 i = 0; i < n; i++) {
         g->g_repl[i] = NULL;
+        g->g_pre[i] = NULL;
         g->g_post[i] = NULL;
     }
 
@@ -1771,6 +1835,7 @@ static void gen_end(Gen * g, u8 * good, const c8 * ran_out) {
     T1_mem_free_managed(g->u_skip);
     T1_mem_free_managed(g->u_drop);
     T1_mem_free_managed((void *)g->g_repl);
+    T1_mem_free_managed((void *)g->g_pre);
     T1_mem_free_managed((void *)g->g_post);
     T1_mem_free_managed((void *)g->u_repl);
     T1_mem_free_managed((void *)g->u_pre);
@@ -1779,6 +1844,633 @@ static void gen_end(Gen * g, u8 * good, const c8 * ran_out) {
     T1_mem_free_managed(g->c->secondary);
     T1_mem_free_managed((void *)g->c->source);
     T1_mem_free_managed(g->c);
+}
+
+/*
+VECTOR COMPARISONS IN GLSL
+
+MSL's a > b on vectors compares each component (a bool vector, for any(),
+all() or a boolN), GLSL only compares scalars that way: vectors need
+greaterThan(a, b), and its a == b is a single bool (and !v is not(v)).
+So comparisons whose
+operands are vectors become calls, a scalar beside a vector becomes a
+vector (MSL compares each component with it):
+    pos >= size  ->  greaterThanEqual(pos, size)
+    uv > 0.5f    ->  greaterThan(uv, vec2(0.5f))
+That takes the operands' types, so this infers the types of expressions:
+from declarations (parameters, locals, program scope constants, struct
+members), literals, constructors, casts, swizzles, indexing and calls. An
+expression it can't follow is left as it is.
+*/
+
+typedef u8 VBase;
+enum {
+    VB_NONE, // not known
+    VB_FLOAT,
+    VB_INT,
+    VB_UINT,
+    VB_BOOL,
+    VB_MATRIX, // width is the number of columns
+    VB_STRUCT,
+};
+
+typedef struct {
+    VBase base;
+    u8 width; // 1 for scalars
+    b8 array; // indexing gives the type itself (an array or a buffer)
+    u32 type_i; // a token naming the struct, for VB_STRUCT
+} VType;
+
+static VType vtype_none(void) {
+    VType t;
+    t.base = VB_NONE;
+    t.width = 0;
+    t.array = 0;
+    t.type_i = 0;
+    return t;
+}
+
+static VType vtype(const VBase base, const u8 width) {
+    VType t = vtype_none();
+    t.base = base;
+    t.width = width;
+    return t;
+}
+
+static b8 is_vector(const VType t) {
+    return
+        t.width > 1 && !t.array &&
+        (t.base == VB_FLOAT || t.base == VB_INT ||
+        t.base == VB_UINT || t.base == VB_BOOL);
+}
+
+static b8 is_scalar(const VType t) {
+    return
+        t.width == 1 && !t.array &&
+        (t.base == VB_FLOAT || t.base == VB_INT ||
+        t.base == VB_UINT || t.base == VB_BOOL);
+}
+
+// The type a type name means
+static VType vtype_of_name(const Check * c, const u32 i) {
+    if (kind(i) != SK_IDENT) { return vtype_none(); }
+    if (is_matrix_type(i)) {
+        return vtype(VB_MATRIX, (u8)(T1_token_text(tz, i)[5] - '0'));
+    }
+    typedef struct {
+        const c8 * prefix;
+        VBase base;
+    } Prim;
+    static const Prim prims[] = {
+        {"float", VB_FLOAT}, {"int", VB_INT}, {"uint", VB_UINT},
+        {"bool", VB_BOOL},
+    };
+    const c8 * t = T1_token_text(tz, i);
+    const u32 n = T1_token_size(tz, i);
+    for (u32 p = 0; p < sizeof(prims) / sizeof(prims[0]); p++) {
+        const u32 pn = (u32)T1_std_strlen(prims[p].prefix);
+        if (!T1_std_are_equal_strings_of_length(t, prims[p].prefix, pn)) {
+            continue;
+        }
+        if (n == pn) { return vtype(prims[p].base, 1); }
+        if (n == pn + 1 && t[pn] >= '2' && t[pn] <= '4') {
+            return vtype(prims[p].base, (u8)(t[pn] - '0'));
+        }
+    }
+    if (is(i, "f32")) { return vtype(VB_FLOAT, 1); }
+    if (is(i, "u32") || is(i, "uint32_t")) { return vtype(VB_UINT, 1); }
+    if (is(i, "s32") || is(i, "int32_t")) { return vtype(VB_INT, 1); }
+    if (in_names(i, c->structs, c->structs_size)) {
+        VType st = vtype(VB_STRUCT, 1);
+        st.type_i = i;
+        return st;
+    }
+    return vtype_none();
+}
+
+/*
+Whether the name at j is declared there: Type name, or Type * name (a
+buffer), followed by what can follow a declared name
+*/
+static b8 declares(const Check * c, const u32 j) {
+    if (kind(j) != SK_IDENT || j < 2) { return 0; }
+    const b8 typed =
+        is_type(c, j - 1) ||
+        (is_punct(j - 1, "*") && is_type(c, j - 2));
+    return
+        typed &&
+        (is_punct(j + 1, "=") || is_punct(j + 1, ";") ||
+        is_punct(j + 1, ",") || is_punct(j + 1, "[") ||
+        is_punct(j + 1, ")") || kind(j + 1) == SK_ATTR);
+}
+
+static VType vtype_declared_at(const Check * c, const u32 j) {
+    const b8 pointer = is_punct(j - 1, "*");
+    VType t = vtype_of_name(c, pointer ? j - 2 : j - 1);
+    t.array = pointer || is_punct(j + 1, "[");
+    return t;
+}
+
+// The type of the variable named at i: the latest declaration before it in
+// its function, else one at program scope
+static VType vtype_of_variable(const Check * c, const u32 i) {
+    const Func * f = func_at(c, i);
+    if (f != NULL) {
+        for (u32 j = i; j > f->params_open; j--) {
+            if (same_text(j - 1, i) && declares(c, j - 1)) {
+                return vtype_declared_at(c, j - 1);
+            }
+        }
+    }
+    for (u32 j = 0; j < c->count; j++) {
+        if (same_text(j, i) && declares(c, j) && at_program_scope(c, j)) {
+            return vtype_declared_at(c, j);
+        }
+    }
+    return vtype_none();
+}
+
+static VType vtype_of_member(
+    const Check * c, const VType owner, const u32 member_i)
+{
+    const StructDef * d = find_struct(c, owner.type_i);
+    if (d == NULL) { return vtype_none(); }
+    for (u32 j = d->body_open + 1; j < d->body_close; j++) {
+        if (same_text(j, member_i) && is_type(c, j - 1)) {
+            VType t = vtype_of_name(c, j - 1);
+            t.array = is_punct(j + 1, "[");
+            return t;
+        }
+    }
+    return vtype_none();
+}
+
+// A swizzle's length, 0 if member_i isn't one
+static u8 swizzle_size(const u32 member_i) {
+    const c8 * t = T1_token_text(tz, member_i);
+    const u32 n = T1_token_size(tz, member_i);
+    if (n < 1 || n > 4) { return 0; }
+    for (u32 k = 0; k < n; k++) {
+        const c8 ch = t[k];
+        const b8 xyzw = ch == 'x' || ch == 'y' || ch == 'z' || ch == 'w';
+        const b8 rgba = ch == 'r' || ch == 'g' || ch == 'b' || ch == 'a';
+        if (!xyzw && !rgba) { return 0; }
+    }
+    return (u8)n;
+}
+
+static VType vtype_of_number(const u32 i) {
+    const c8 * t = T1_token_text(tz, i);
+    const u32 n = T1_token_size(tz, i);
+    const b8 hex = n > 1 && t[0] == '0' && (t[1] == 'x' || t[1] == 'X');
+    if (hex) {
+        return vtype(t[n - 1] == 'u' || t[n - 1] == 'U' ? VB_UINT : VB_INT, 1);
+    }
+    for (u32 k = 0; k < n; k++) {
+        if (t[k] == '.' || t[k] == 'e' || t[k] == 'f' || t[k] == 'F') {
+            return vtype(VB_FLOAT, 1);
+        }
+    }
+    return vtype(
+        t[n - 1] == 'u' || t[n - 1] == 'U' ? VB_UINT : VB_INT, 1);
+}
+
+// The wider of two types (a vector beside a scalar)
+static VType vtype_wider(const VType a, const VType b) {
+    if (a.base == VB_NONE) { return b; }
+    if (b.base == VB_NONE) { return a; }
+    return b.width > a.width ? b : a;
+}
+
+#define VARGS_CAP 8
+
+static VType vtype_of_call(
+    const Check * c, const u32 name_i, const VType * args, const u32 size)
+{
+    VType widest = vtype_none();
+    for (u32 a = 0; a < size; a++) { widest = vtype_wider(widest, args[a]); }
+    if (is_type(c, name_i)) { return vtype_of_name(c, name_i); }
+    if (
+        is(name_i, "dot") || is(name_i, "length") || is(name_i, "distance"))
+    {
+        return vtype(VB_FLOAT, 1);
+    }
+    if (is(name_i, "any") || is(name_i, "all")) { return vtype(VB_BOOL, 1); }
+    if (is(name_i, "cross")) { return vtype(VB_FLOAT, 3); }
+    if (
+        is(name_i, "T1_sample_nearest") || is(name_i, "T1_sample_linear") ||
+        is(name_i, "T1_sample_linear_repeat") || is(name_i, "T1_read") ||
+        is(name_i, "T1_write_tex_read"))
+    {
+        return vtype(VB_FLOAT, 4);
+    }
+    if (is(name_i, "T1_write_tex_size")) { return vtype(VB_UINT, 2); }
+    if (is(name_i, "mul") && size == 2) {
+        if (args[0].base == VB_MATRIX) { return args[0]; }
+        return vtype(VB_FLOAT, args[1].width);
+    }
+    if (is(name_i, "transpose") || is(name_i, "reflect")) {
+        return size > 0 ? args[0] : vtype_none();
+    }
+    const Func * f = find_func(c, name_i);
+    if (f != NULL) { return vtype_of_name(c, f->name_i - 1); }
+    if (
+        in_list(name_i, builtin_functions,
+            sizeof(builtin_functions) / sizeof(builtin_functions[0])))
+    {
+        return widest; // abs(), clamp(), mix(), step(), ...: per component
+    }
+    return vtype_none(); // a macro
+}
+
+#define VEDITS_CAP 64
+
+typedef struct {
+    u32 left_first; // the operand's first token for a !
+    u32 op;
+    u32 right_last;
+    VType left;
+    VType right;
+} VEdit;
+
+/*
+A small parser of expressions: types and the comparisons to rewrite. end
+is exclusive, bad set means it found something it doesn't follow (its
+edits are then dropped)
+*/
+typedef struct {
+    const Check * c;
+    u32 i;
+    u32 end;
+    b8 bad;
+    VEdit edits[VEDITS_CAP];
+    u32 edits_size;
+    u32 compared[VEDITS_CAP]; // every comparison operator and ! parsed
+    u32 compared_size;
+} VParse;
+
+static VType vparse_expr(VParse * p, const u32 min_prec);
+
+static b8 vparse_at(const VParse * p, const c8 * punct) {
+    return p->i < p->end && is_punct(p->i, punct);
+}
+
+// C's precedences, 0 for anything that isn't a binary operator
+static u32 binary_prec(const u32 i) {
+    if (kind(i) != SK_PUNCT) { return 0; }
+    static const c8 * const assign[] = {
+        "=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>=",
+    };
+    if (in_list(i, assign, sizeof(assign) / sizeof(assign[0]))) { return 2; }
+    if (is(i, "||")) { return 4; }
+    if (is(i, "&&")) { return 5; }
+    if (is(i, "|")) { return 6; }
+    if (is(i, "^")) { return 7; }
+    if (is(i, "&")) { return 8; }
+    if (is(i, "==") || is(i, "!=")) { return 9; }
+    if (is(i, "<") || is(i, ">") || is(i, "<=") || is(i, ">=")) {
+        return 10;
+    }
+    if (is(i, "<<") || is(i, ">>")) { return 11; }
+    if (is(i, "+") || is(i, "-")) { return 12; }
+    if (is(i, "*") || is(i, "/") || is(i, "%")) { return 13; }
+    return 0;
+}
+
+// ( ... ) at p->i: the expression inside, p->i after the ')'
+static VType vparse_parens(VParse * p) {
+    const u32 close = after_match(p->c, p->i, "(", ")") - 1;
+    if (close >= p->end) { p->bad = 1; return vtype_none(); }
+    const u32 outer_end = p->end;
+    p->end = close;
+    p->i++;
+    VType t = vparse_expr(p, 1);
+    if (p->i != close) { p->bad = 1; }
+    p->end = outer_end;
+    p->i = close + 1;
+    return t;
+}
+
+// a call's arguments at p->i (its '('), p->i after the ')'
+static u32 vparse_args(VParse * p, VType * args) {
+    const u32 close = after_match(p->c, p->i, "(", ")") - 1;
+    if (close >= p->end) { p->bad = 1; return 0; }
+    const u32 outer_end = p->end;
+    p->end = close;
+    p->i++;
+    u32 size = 0;
+    while (p->i < close && !p->bad) {
+        VType a = vparse_expr(p, 2); // above the comma
+        if (size < VARGS_CAP) { args[size++] = a; }
+        if (p->i == close) { break; }
+        if (!vparse_at(p, ",")) { p->bad = 1; break; }
+        p->i++;
+    }
+    p->end = outer_end;
+    p->i = close + 1;
+    return size;
+}
+
+static VType vparse_primary(VParse * p) {
+    const Check * c = p->c;
+    const u32 t = p->i;
+    if (t >= p->end) { p->bad = 1; return vtype_none(); }
+    if (is_punct(t, "(")) { return vparse_parens(p); }
+    if (kind(t) == SK_NUMBER) {
+        p->i++;
+        return vtype_of_number(t);
+    }
+    if (kind(t) != SK_IDENT) { p->bad = 1; return vtype_none(); }
+    if (is(t, "true") || is(t, "false")) {
+        p->i++;
+        return vtype(VB_BOOL, 1);
+    }
+    if (
+        is(t, "as_type") && is_punct(t + 1, "<") && is_punct(t + 3, ">") &&
+        is_punct(t + 4, "("))
+    {
+        p->i = t + 4;
+        VType args[VARGS_CAP];
+        vparse_args(p, args);
+        return vtype_of_name(c, t + 2);
+    }
+    if (t + 1 < p->end && is_punct(t + 1, "(")) {
+        p->i = t + 1;
+        VType args[VARGS_CAP];
+        u32 size = vparse_args(p, args);
+        return vtype_of_call(c, t, args, size);
+    }
+    p->i++;
+    return vtype_of_variable(c, t);
+}
+
+static VType vparse_postfix(VParse * p) {
+    VType t = vparse_primary(p);
+    while (!p->bad && p->i < p->end) {
+        if (vparse_at(p, ".") && kind(p->i + 1) == SK_IDENT) {
+            const u32 member = p->i + 1;
+            const u8 swizzle = swizzle_size(member);
+            if (t.base == VB_STRUCT && !t.array) {
+                t = vtype_of_member(p->c, t, member);
+            } else if (is_vector(t) || is_scalar(t)) {
+                t = swizzle > 0 ? vtype(t.base, swizzle) : vtype_none();
+            } else {
+                t = vtype_none();
+            }
+            p->i += 2;
+        } else if (vparse_at(p, "[")) {
+            const u32 close = after_match(p->c, p->i, "[", "]") - 1;
+            if (close >= p->end) { p->bad = 1; break; }
+            const u32 outer_end = p->end;
+            p->end = close;
+            p->i++;
+            vparse_expr(p, 1);
+            if (p->i != close) { p->bad = 1; }
+            p->end = outer_end;
+            p->i = close + 1;
+            if (t.array) {
+                t.array = 0;
+            } else if (t.base == VB_MATRIX) {
+                t = vtype(VB_FLOAT, t.width);
+            } else if (is_vector(t)) {
+                t = vtype(t.base, 1);
+            } else {
+                t = vtype_none();
+            }
+        } else if (vparse_at(p, "++") || vparse_at(p, "--")) {
+            p->i++;
+        } else {
+            break;
+        }
+    }
+    return t;
+}
+
+static VType vparse_unary(VParse * p) {
+    const u32 t = p->i;
+    if (t >= p->end) { p->bad = 1; return vtype_none(); }
+    if (is_punct(t, "!")) {
+        if (p->compared_size < VEDITS_CAP) {
+            p->compared[p->compared_size++] = t;
+        }
+        p->i++;
+        const u32 operand = p->i;
+        VType v = vparse_unary(p);
+        // !v on a bool vector: GLSL's not(v)
+        if (!p->bad && is_vector(v) && p->edits_size < VEDITS_CAP) {
+            VEdit * e = &p->edits[p->edits_size++];
+            e->left_first = operand;
+            e->op = t;
+            e->right_last = p->i - 1;
+            e->left = v;
+            e->right = v;
+        }
+        return vtype(VB_BOOL, v.width);
+    }
+    if (
+        is_punct(t, "-") || is_punct(t, "+") || is_punct(t, "~") ||
+        is_punct(t, "++") || is_punct(t, "--"))
+    {
+        p->i++;
+        return vparse_unary(p);
+    }
+    if (is_cast(p->c, t)) {
+        p->i += 3;
+        vparse_unary(p);
+        return vtype_of_name(p->c, t + 1);
+    }
+    return vparse_postfix(p);
+}
+
+static VType vparse_expr(VParse * p, const u32 min_prec) {
+    const u32 first = p->i;
+    VType left = vparse_unary(p);
+    while (!p->bad && p->i < p->end) {
+        const u32 op = p->i;
+        if (is_punct(op, "?")) {
+            if (min_prec > 3) { break; }
+            p->i++;
+            VType a = vparse_expr(p, 1);
+            if (!vparse_at(p, ":")) { p->bad = 1; break; }
+            p->i++;
+            VType b = vparse_expr(p, 3);
+            left = a.base != VB_NONE ? a : b;
+            continue;
+        }
+        const u32 prec = binary_prec(op);
+        if (prec == 0 || prec < min_prec) { break; }
+        p->i++;
+        VType right = vparse_expr(p, prec == 2 ? 2 : prec + 1);
+        if (p->bad) { break; }
+        if (prec == 9 || prec == 10) {
+            if (p->compared_size < VEDITS_CAP) {
+                p->compared[p->compared_size++] = op;
+            }
+            if (
+                (is_vector(left) || is_vector(right)) &&
+                p->edits_size < VEDITS_CAP)
+            {
+                VEdit * e = &p->edits[p->edits_size++];
+                e->left_first = first;
+                e->op = op;
+                e->right_last = p->i - 1;
+                e->left = left;
+                e->right = right;
+            }
+            VType wider = vtype_wider(left, right);
+            left = vtype(VB_BOOL, wider.width > 0 ? wider.width : 1);
+        } else if (prec == 4 || prec == 5) {
+            left = vtype(VB_BOOL, 1);
+        } else if (prec != 2) {
+            left = vtype_wider(left, right);
+        }
+    }
+    return left;
+}
+
+// Ends an expression a comparison is in: lower precedence or a bracket
+static b8 vparse_boundary(const u32 i) {
+    if (kind(i) == SK_PREPROC || kind(i) == SK_ATTR) { return 1; }
+    if (kind(i) == SK_IDENT) {
+        return is(i, "return") || is(i, "case") || is(i, "else");
+    }
+    if (kind(i) != SK_PUNCT) { return 0; }
+    const u32 prec = binary_prec(i);
+    if (prec != 0 && prec <= 8) { return 1; } // & ^ | && || =
+    return
+        is(i, ";") || is(i, ",") || is(i, "?") || is(i, ":") ||
+        is(i, "{") || is(i, "}");
+}
+
+// The '(' or '[' matching the close at i, going back
+static u32 before_match(const Check * c, const u32 close) {
+    const c8 * open_s = is_punct(close, ")") ? "(" : "[";
+    const c8 * close_s = is_punct(close, ")") ? ")" : "]";
+    u32 depth = 0;
+    for (u32 j = close + 1; j > 0; j--) {
+        const u32 k = j - 1;
+        if (is_bracket(c, k, close_s)) { depth++; }
+        if (is_bracket(c, k, open_s)) {
+            depth--;
+            if (depth == 0) { return k; }
+        }
+    }
+    return 0;
+}
+
+static const c8 * glsl_compare_fn(const u32 op) {
+    if (is(op, "<")) { return "lessThan("; }
+    if (is(op, "<=")) { return "lessThanEqual("; }
+    if (is(op, ">")) { return "greaterThan("; }
+    if (is(op, ">=")) { return "greaterThanEqual("; }
+    if (is(op, "==")) { return "equal("; }
+    return "notEqual(";
+}
+
+// "vec3(" for a float3 etc.: a scalar as wide as v
+static void cat_glsl_vector_open(Buf * b, const VType v) {
+    if (v.base == VB_INT) { buf_cat(b, "i"); }
+    if (v.base == VB_UINT) { buf_cat(b, "u"); }
+    if (v.base == VB_BOOL) { buf_cat(b, "b"); }
+    buf_cat(b, "vec");
+    const c8 width[2] = {(c8)('0' + v.width), '\0'};
+    buf_cat(b, width);
+    buf_cat(b, "(");
+}
+
+static void vedit_apply(Gen * g, const VEdit * e) {
+    if (is_punct(e->op, "!")) {
+        g->g_repl[e->op] = "not(";
+        add_text(g, &g->g_post[e->right_last], ")");
+        return;
+    }
+    const b8 widen_left = is_scalar(e->left) && is_vector(e->right);
+    const b8 widen_right = is_scalar(e->right) && is_vector(e->left);
+
+    // before the left operand: the call, and the left's widening, in front
+    // of an inner comparison's that starts there too
+    u32 s = str_begin(g);
+    buf_cat(&g->arena, glsl_compare_fn(e->op));
+    if (widen_left) { cat_glsl_vector_open(&g->arena, e->right); }
+    if (g->g_pre[e->left_first]) {
+        buf_cat(&g->arena, g->g_pre[e->left_first]);
+    }
+    g->g_pre[e->left_first] = str_end(g, s);
+
+    s = str_begin(g);
+    if (widen_left) { buf_cat(&g->arena, ")"); }
+    buf_cat(&g->arena, ", ");
+    if (widen_right) { cat_glsl_vector_open(&g->arena, e->left); }
+    g->g_repl[e->op] = str_end(g, s);
+
+    add_text(g, &g->g_post[e->right_last], widen_right ? "))" : ")");
+}
+
+static void glsl_vector_comparisons(Gen * g) {
+    const Check * c = g->c;
+    u8 * seen = T1_mem_malloc_managed(c->count + 1);
+    T1_std_memset(seen, 0, c->count + 1);
+    VParse * p = T1_mem_malloc_managed(sizeof(VParse));
+    for (u32 i = g->user_first_token; i < c->count; i++) {
+        // comparisons and !, the operators whose vector forms differ
+        const u32 prec = binary_prec(i);
+        const b8 compares = prec == 9 || prec == 10 || is_punct(i, "!");
+        if (!compares || seen[i] || c->secondary[i]) { continue; }
+        const Func * f = func_at(c, i);
+        if (f == NULL || i <= f->body_open) { continue; }
+        // as_type<T>: not a comparison
+        if (is(i - 1, "as_type") || (i >= 3 && is(i - 3, "as_type"))) {
+            continue;
+        }
+
+        // the expression around it, up to lower precedence or a bracket
+        u32 first = i;
+        while (first > f->body_open + 1) {
+            const u32 b = first - 1;
+            if (is_punct(b, ")") || is_punct(b, "]")) {
+                first = before_match(c, b);
+                continue;
+            }
+            if (is_punct(b, "(") || is_punct(b, "[") || vparse_boundary(b)) {
+                break;
+            }
+            first = b;
+        }
+        u32 end = i + 1;
+        while (end < f->body_close) {
+            if (is_punct(end, "(")) {
+                end = after_match(c, end, "(", ")");
+                continue;
+            }
+            if (is_punct(end, "[")) {
+                end = after_match(c, end, "[", "]");
+                continue;
+            }
+            if (
+                is_punct(end, ")") || is_punct(end, "]") ||
+                vparse_boundary(end))
+            {
+                break;
+            }
+            end++;
+        }
+
+        T1_std_memset(p, 0, sizeof(VParse));
+        p->c = c;
+        p->i = first;
+        p->end = end;
+        vparse_expr(p, 1);
+        if (p->bad || p->i != end) { continue; }
+        // an inner one may be done already, parsed alone (inside brackets)
+        for (u32 e = 0; e < p->edits_size; e++) {
+            if (!seen[p->edits[e].op]) { vedit_apply(g, &p->edits[e]); }
+        }
+        for (u32 k = 0; k < p->compared_size; k++) {
+            seen[p->compared[k]] = 1;
+        }
+    }
+    T1_mem_free_managed(p);
+    T1_mem_free_managed(seen);
 }
 
 void T1_shader_to_glsl(
@@ -1801,6 +2493,7 @@ void T1_shader_to_glsl(
     }
 
     global_edits(&g);
+    glsl_vector_comparisons(&g);
     for (u32 f = 0; f < g.c->funcs_size && !g.failed; f++) {
         if (g.c->funcs[f].is_entry) { make_unit(&g, f); }
     }
@@ -2647,7 +3340,10 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
                 }
             }
 
-            if (is_punct(i - 1, "++") || is_punct(i - 1, "--")) {
+            if (
+                is_punct(i - 1, "++") || is_punct(i - 1, "--") ||
+                is_punct(chain_end, "++") || is_punct(chain_end, "--"))
+            {
                 fail(g, i, "write buffer elements as name[i] op= value;");
                 continue;
             }
@@ -3343,4 +4039,31 @@ void T1_shader_to_hlsl(
     T1_mem_free_managed(loadable);
 
     gen_end(&g, good, "T1_shader_to_hlsl() ran out of room");
+}
+
+/*
+THE CHECK: the subset's rules, then every translation, so a shader that
+passes on one platform translates on all of them (some rules only show
+while translating, e.g. which buffers a kernel may write)
+*/
+void T1_shader_check(
+    const c8 * shader_source,
+    u8 * good,
+    c8 * error_recip,
+    const u32 error_recip_cap)
+{
+    check_subset(shader_source, good, error_recip, error_recip_cap);
+    if (!*good) { return; }
+
+    const u32 cap =
+        4 * 1024 * 1024 + (u32)T1_std_strlen(shader_source) * 64;
+    c8 * translated = T1_mem_malloc_managed(cap);
+    T1_shader_to_hlsl(
+        shader_source, translated, cap, good, error_recip, error_recip_cap);
+    if (*good) {
+        T1_shader_to_glsl(
+            shader_source, translated, cap, good, error_recip,
+            error_recip_cap);
+    }
+    T1_mem_free_managed(translated);
 }

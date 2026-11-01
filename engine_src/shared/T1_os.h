@@ -282,6 +282,8 @@ void T1_os_gpu_init(char ** const fatal_error);
 u8 T1_os_gpu_active(void);
 // see T1_gpu_lost() in T1.h
 u8 T1_os_gpu_lost(void);
+// see T1_gpu_frame_us() in T1.h
+u64 T1_os_gpu_frame_us(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
 void T1_os_window_open(char ** const fatal_error);

@@ -78,6 +78,8 @@ typedef struct {
 #define T1D3D11_TEXTURE_ADDRESS_CLAMP 3
 
 #define T1D3D11_QUERY_EVENT 0
+#define T1D3D11_QUERY_TIMESTAMP 2
+#define T1D3D11_QUERY_TIMESTAMP_DISJOINT 3
 #define T1D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 4
 
 #define T1D3D_DRIVER_TYPE_HARDWARE 1
@@ -214,6 +216,12 @@ typedef struct {
     u32 query;
     u32 misc_flags;
 } T1D3D11QueryDesc;
+
+// what a T1D3D11_QUERY_TIMESTAMP_DISJOINT query gives
+typedef struct {
+    u64 frequency; // timestamps per second
+    s32 disjoint; // the timestamps can't be trusted (the clock changed)
+} T1D3D11QueryDataTimestampDisjoint;
 
 typedef struct {
     f32 top_left_x;
@@ -404,7 +412,7 @@ typedef struct {
         T1D3D11Context *, u32, u32, T1D3D11View * const *);
     void (T1_WINAPI * VSSetSamplers)(
         T1D3D11Context *, u32, u32, T1D3D11State * const *);
-    void * Begin;
+    void (T1_WINAPI * Begin)(T1D3D11Context *, T1ComObject *);
     void (T1_WINAPI * End)(T1D3D11Context *, T1ComObject *);
     s32 (T1_WINAPI * GetData)(
         T1D3D11Context *, T1ComObject *, void *, u32, u32);

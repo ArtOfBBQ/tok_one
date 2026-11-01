@@ -362,6 +362,8 @@ typedef struct {
     void * sel_present_drawable; // presentDrawable:
     void * sel_commit; // commit
     void * sel_wait_until_completed; // waitUntilCompleted
+    void * sel_gpu_start_time; // GPUStartTime
+    void * sel_gpu_end_time; // GPUEndTime
     void * sel_status; // status
     void * sel_retain; // retain
     void * sel_release; // release
@@ -392,6 +394,7 @@ typedef struct {
     // what shaders get at T1_FRAME_CONSTS_I this frame
     T1GPUFrameConsts frame_consts;
     f32 retina_scaling_factor;
+    u64 frame_gpu_us; // see T1_gpu_frame_us()
     u8  frame_i;
     b8  metal_active;
     b8  shaders_ready;
@@ -627,6 +630,10 @@ void T1_apple_gpu_init(
         "commit");
     ags->sel_wait_until_completed = T1_objc_reg_sel(
         "waitUntilCompleted");
+    ags->sel_gpu_start_time = T1_objc_reg_sel(
+        "GPUStartTime");
+    ags->sel_gpu_end_time = T1_objc_reg_sel(
+        "GPUEndTime");
     ags->sel_status = T1_objc_reg_sel(
         "status");
     ags->sel_retain = T1_objc_reg_sel(
@@ -1012,6 +1019,11 @@ void T1_os_gpu_try_shader_source(
         // the row vector v times the matrix m, never write v * m
         "static inline float4 mul(float4 v, float4x4 m) { return v * m; }\n"
         "static inline float3 mul(float3 v, float3x3 m) { return v * m; }\n"
+        "static inline float2 mul(float2 v, float2x2 m) { return v * m; }\n"
+        // a times b, so mul(mul(v, a), b) is mul(v, mul(a, b))
+        "static inline float4x4 mul(float4x4 a, float4x4 b) { return a * b; }\n"
+        "static inline float3x3 mul(float3x3 a, float3x3 b) { return a * b; }\n"
+        "static inline float2x2 mul(float2x2 a, float2x2 b) { return a * b; }\n"
         // every texture, the texture(0) of every pass
         "typedef array<texture2d_array<float>, T1_TEXARRAYS_CAP> T1Textures;\n"
         // a compute pass's \"write_tex\", texture(T1_WRITE_TEX_I)
@@ -2413,6 +2425,12 @@ static void T1_gpu_wait_for_frame_slot(void) {
     if (*combuf == NULL) { return; }
     
     T1_objc_msg(*combuf, ags->sel_wait_until_completed);
+    // seconds, on the GPU's clock
+    const f64 start = T1_objc_msg_get_f64(*combuf, ags->sel_gpu_start_time);
+    const f64 end = T1_objc_msg_get_f64(*combuf, ags->sel_gpu_end_time);
+    if (end > start) {
+        ags->frame_gpu_us = (u64)((end - start) * 1000000.0);
+    }
     T1_gpu_release(combuf);
 }
 
@@ -2721,6 +2739,10 @@ void T1_os_gpu_init(char ** const fatal_error) {
 
 u8 T1_os_gpu_active(void) {
     return ags != NULL && ags->metal_active;
+}
+
+u64 T1_os_gpu_frame_us(void) {
+    return ags != NULL ? ags->frame_gpu_us : 0;
 }
 
 // TODO: an eGPU unplugged (MTLDeviceWasRemovedNotification)
