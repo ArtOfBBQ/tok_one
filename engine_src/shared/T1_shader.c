@@ -3071,9 +3071,21 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
             "    uint3 t1_dtid = t1_part_dtid + t1_grid_start;\n"
             "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
     } else if (e->stage == STAGE_VERTEX) {
+        /*
+        Metal's [[vertex_id]] counts from the draw's first vertex, D3D's
+        SV_VertexID from 0 whatever the StartVertexLocation, so the draw
+        passes its first vertex (see T1_gpu_d3d11.c)
+        */
+        buf_cat(gl,
+            "cbuffer T1Draw : register(b0) {\n"
+            "    uint t1_vertex_start;\n"
+            "    uint3 t1_draw_pad;\n"
+            "};\n");
         buf_cat(hp,
-            "uint t1_vertex_id : SV_VertexID, "
+            "uint t1_part_vertex_id : SV_VertexID, "
             "uint t1_instance_id : SV_InstanceID");
+        buf_cat(pro,
+            "    uint t1_vertex_id = t1_part_vertex_id + t1_vertex_start;\n");
     }
 
     // a fragment's stage_in, and its member at [[position]] if any

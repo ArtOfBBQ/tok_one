@@ -1873,7 +1873,17 @@ static void T1_gpu_d3d11_encode_draw_pass(const T1Pass * pass) {
         ctx, dsv != NULL ? T1_d3d->depth_state : T1_d3d->no_depth_state, 0);
     T1_gpu_d3d11_viewport(width, height);
 
-    ctx->vtbl->Draw(ctx, pass->u32s.vertex_count, pass->u32s.vertex_start);
+    /*
+    SV_VertexID counts from 0 whatever the StartVertexLocation, so the
+    shader adds the first vertex itself (t1_vertex_start, see
+    T1_shader_to_hlsl()) and the draw starts at 0, to count it once
+    */
+    u32 draw_cb[8] = { pass->u32s.vertex_start, 0, 0, 0, 0, 0, 0, 0 };
+    ctx->vtbl->UpdateSubresource(
+        ctx, T1_d3d->grid_cb, 0, NULL, draw_cb, 0, 0);
+    ctx->vtbl->VSSetConstantBuffers(ctx, 0, 1, &T1_d3d->grid_cb);
+
+    ctx->vtbl->Draw(ctx, pass->u32s.vertex_count, 0);
     // after the copies of the arrays it read
     for (u32 k = 0; k < rtvs_size; k++) {
         u32 tex = pass->u32s.color_tex[k];
