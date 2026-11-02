@@ -165,7 +165,10 @@ typedef struct {
     b8 profile;
     T1ComObject * pass_ends[T1_FRAMES_CAP][T1_PASSES_CAP];
     u32 pass_ends_size[T1_FRAMES_CAP]; // how many the frame ended
+    // and the pass's pipeline statistics, from just before it to its end
+    T1ComObject * pass_stats[T1_FRAMES_CAP][T1_PASSES_CAP];
     u64 profile_us[T1_PASSES_CAP]; // summed over profile_frames
+    u64 profile_shaded[T1_PASSES_CAP]; // fragment shader runs, summed too
     u32 profile_passes; // the passes the sums are of
     u32 profile_frames;
     u32 frame_i;
@@ -457,7 +460,12 @@ anything), every pass ends with a timestamp, and every
 T1_D3D_PROFILE_FRAMES frames the console gets each pass's average GPU time
 (from the end of the pass before it: what the GPU spent on it, including
 waiting for its inputs) with what the pass is. For finding where a frame's
-GPU time goes; without the variable nothing is timed but the frame
+GPU time goes; without the variable nothing is timed but the frame.
+A draw pass also gets how many times its fragment shader ran a frame and
+that per pixel of its target ("shaded 3.4M, 4.0x"): above 1x, pixels are
+shaded and then drawn over (or the shader runs for pixels it discards).
+The count is the GPU's (a pipeline statistics query), helper pixels may be
+in it
 */
 #define T1_D3D_PROFILE_FRAMES 300
 
@@ -474,6 +482,13 @@ static void T1_gpu_d3d11_profile_init(void) {
         for (u32 p = 0; p < T1_PASSES_CAP; p++) {
             device->vtbl->CreateQuery(
                 device, &query, &T1_d3d->pass_ends[f][p]);
+        }
+    }
+    query.query = T1D3D11_QUERY_PIPELINE_STATISTICS;
+    for (u32 f = 0; f < T1_FRAMES_CAP; f++) {
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) {
+            device->vtbl->CreateQuery(
+                device, &query, &T1_d3d->pass_stats[f][p]);
         }
     }
 }
@@ -535,6 +550,22 @@ static void T1_gpu_d3d11_profile_report(void) {
         if (pass->u32s.depth_tex != T1_TEX_NONE) {
             T1_std_strcat_cap(line, sizeof(line), ", depth");
         }
+        // the fragment shader's runs, in thousands, and per pixel in tenths
+        const u64 shaded = T1_d3d->profile_shaded[p] / frames;
+        if (pass->kind == T1_PASS_DRAW && tex != T1_TEX_NONE) {
+            const u64 pixels =
+                (u64)T1_tex_get_width((T1Tex)tex) *
+                (u64)T1_tex_get_height((T1Tex)tex);
+            const u32 tenths =
+                pixels > 0 ? (u32)((shaded * 10 + pixels / 2) / pixels) : 0;
+            T1_std_strcat_cap(line, sizeof(line), ", shaded ");
+            T1_std_strcat_u32_cap(line, sizeof(line), (u32)(shaded / 1000));
+            T1_std_strcat_cap(line, sizeof(line), "K, ");
+            T1_std_strcat_u32_cap(line, sizeof(line), tenths / 10);
+            T1_std_strcat_cap(line, sizeof(line), ".");
+            T1_std_strcat_u32_cap(line, sizeof(line), tenths % 10);
+            T1_std_strcat_cap(line, sizeof(line), "x");
+        }
         T1_std_strcat_cap(line, sizeof(line), "\n");
         T1_gpu_d3d11_profile_write(line);
     }
@@ -556,29 +587,42 @@ static void T1_gpu_d3d11_profile_read(
         // other passes: start over
         T1_d3d->profile_passes = size;
         T1_d3d->profile_frames = 0;
-        for (u32 p = 0; p < T1_PASSES_CAP; p++) { T1_d3d->profile_us[p] = 0; }
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) {
+            T1_d3d->profile_us[p] = 0;
+            T1_d3d->profile_shaded[p] = 0;
+        }
     }
     u64 ends[T1_PASSES_CAP];
+    u64 shaded[T1_PASSES_CAP];
     for (u32 p = 0; p < size; p++) {
+        T1D3D11QueryDataPipelineStatistics stats;
         if (
             T1_d3d->ctx->vtbl->GetData(
                 T1_d3d->ctx, T1_d3d->pass_ends[f][p], &ends[p],
-                sizeof(u64), 0) != 0)
+                sizeof(u64), 0) != 0 ||
+            T1_d3d->ctx->vtbl->GetData(
+                T1_d3d->ctx, T1_d3d->pass_stats[f][p], &stats,
+                sizeof(T1D3D11QueryDataPipelineStatistics), 0) != 0)
         {
             return; // not there yet: this frame doesn't count
         }
+        shaded[p] = stats.ps_invocations;
     }
     u64 before = start;
     for (u32 p = 0; p < size; p++) {
         const u64 end = ends[p] > before ? ends[p] : before;
         T1_d3d->profile_us[p] += (end - before) * 1000000 / frequency;
+        T1_d3d->profile_shaded[p] += shaded[p];
         before = end;
     }
     T1_d3d->profile_frames += 1;
     if (T1_d3d->profile_frames >= T1_D3D_PROFILE_FRAMES) {
         T1_gpu_d3d11_profile_report();
         T1_d3d->profile_frames = 0;
-        for (u32 p = 0; p < T1_PASSES_CAP; p++) { T1_d3d->profile_us[p] = 0; }
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) {
+            T1_d3d->profile_us[p] = 0;
+            T1_d3d->profile_shaded[p] = 0;
+        }
     }
 }
 
@@ -2242,24 +2286,34 @@ u8 T1_os_gpu_render_frame(void) {
     // (e.g. an app that uploads its own pixels) only clear passes run
     for (u32 pass_i = 0; pass_i < T1_passes_size; pass_i++) {
         const T1Pass * pass = T1_passes + pass_i;
-        if (!T1_os_gpu_shaders_ready() && pass->kind != T1_PASS_CLEAR) {
-            continue;
+        // a pass that doesn't run is profiled too (as nothing), so that
+        // every query of the frame has something to say
+        const b8 profiled = T1_d3d->profile && timed && pass_i < T1_PASSES_CAP;
+        if (profiled) {
+            T1_d3d->ctx->vtbl->Begin(
+                T1_d3d->ctx, T1_d3d->pass_stats[f][pass_i]);
         }
-        if (pass->u32s.off) { continue; } // switched off this frame
-        switch (pass->kind) {
-            case T1_PASS_CLEAR:
-                T1_gpu_d3d11_encode_clear_pass(pass);
-                break;
-            case T1_PASS_DRAW:
-                T1_gpu_d3d11_encode_draw_pass(pass);
-                break;
-            case T1_PASS_COMPUTE:
-                T1_gpu_d3d11_encode_compute_pass(pass);
-                break;
-            default:
-                T1_assert(0);
+        const b8 runs =
+            (T1_os_gpu_shaders_ready() || pass->kind == T1_PASS_CLEAR) &&
+            !pass->u32s.off; // off: switched off this frame
+        if (runs) {
+            switch (pass->kind) {
+                case T1_PASS_CLEAR:
+                    T1_gpu_d3d11_encode_clear_pass(pass);
+                    break;
+                case T1_PASS_DRAW:
+                    T1_gpu_d3d11_encode_draw_pass(pass);
+                    break;
+                case T1_PASS_COMPUTE:
+                    T1_gpu_d3d11_encode_compute_pass(pass);
+                    break;
+                default:
+                    T1_assert(0);
+            }
         }
-        if (T1_d3d->profile && timed && pass_i < T1_PASSES_CAP) {
+        if (profiled) {
+            T1_d3d->ctx->vtbl->End(
+                T1_d3d->ctx, T1_d3d->pass_stats[f][pass_i]);
             T1_d3d->ctx->vtbl->End(
                 T1_d3d->ctx, T1_d3d->pass_ends[f][pass_i]);
         }

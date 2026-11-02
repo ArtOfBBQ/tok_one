@@ -80,6 +80,7 @@ typedef struct {
 #define T1D3D11_QUERY_EVENT 0
 #define T1D3D11_QUERY_TIMESTAMP 2
 #define T1D3D11_QUERY_TIMESTAMP_DISJOINT 3
+#define T1D3D11_QUERY_PIPELINE_STATISTICS 4
 #define T1D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST 4
 
 #define T1D3D_DRIVER_TYPE_HARDWARE 1
@@ -222,6 +223,22 @@ typedef struct {
     u64 frequency; // timestamps per second
     s32 disjoint; // the timestamps can't be trusted (the clock changed)
 } T1D3D11QueryDataTimestampDisjoint;
+
+// what a T1D3D11_QUERY_PIPELINE_STATISTICS query gives, between its
+// Begin() and End()
+typedef struct {
+    u64 ia_vertices;
+    u64 ia_primitives;
+    u64 vs_invocations;
+    u64 gs_invocations;
+    u64 gs_primitives;
+    u64 c_invocations; // primitives sent to the rasterizer
+    u64 c_primitives; // primitives it drew
+    u64 ps_invocations; // the fragment shader's runs
+    u64 hs_invocations;
+    u64 ds_invocations;
+    u64 cs_invocations;
+} T1D3D11QueryDataPipelineStatistics;
 
 typedef struct {
     f32 top_left_x;
