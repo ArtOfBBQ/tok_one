@@ -2665,6 +2665,28 @@ static const c8 * const hlsl_prelude =
     "float3x3 t1_mul(float3x3 a, float3x3 b) { return mul(b, a); }\n"
     "float2x2 t1_mul(float2x2 a, float2x2 b) { return mul(b, a); }\n"
     "#define mul(a, b) t1_mul(a, b)\n"
+    /*
+    HLSL's fmod goes through a reciprocal, fmod(7, -3.5) came out 3.5. MSL's
+    truncates: a - b * trunc(a / b), and a / b just off a whole number
+    (rounding) is put right, so the result is below |b|, with a's sign
+    */
+#define T1_HLSL_FMOD(A, B) \
+    A " t1_fmod(" A " a, " B " b) {\n" \
+    "    " A " r = a - b * trunc(a / b);\n" \
+    "    " A " ab = abs(b);\n" \
+    "    r = abs(r) >= ab ? r - ab * sign(r) : r;\n" \
+    "    r = r * sign(a) < 0.0f ? r + ab * sign(a) : r;\n" \
+    "    return r;\n" \
+    "}\n"
+    T1_HLSL_FMOD("float", "float")
+    T1_HLSL_FMOD("float2", "float2")
+    T1_HLSL_FMOD("float3", "float3")
+    T1_HLSL_FMOD("float4", "float4")
+    T1_HLSL_FMOD("float2", "float")
+    T1_HLSL_FMOD("float3", "float")
+    T1_HLSL_FMOD("float4", "float")
+#undef T1_HLSL_FMOD
+    "#define fmod(a, b) t1_fmod(a, b)\n"
     // MSL rounds halfway away from 0, HLSL to even
     "#define round(x) trunc((x) + 0.5f * sign(x))\n"
     "#define T1_MAX(a, b) ((a) > (b) ? (a) : (b))\n"
@@ -3433,6 +3455,231 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
 float4(1.0f) fills every component in MSL, HLSL's constructors need them
 all: ((float4)(1.0f)) does the same
 */
+// text, then *slot after it (for edits that must come before older ones)
+static void add_text_before(Gen * g, const c8 ** slot, const c8 * text) {
+    if (*slot == NULL) { *slot = text; return; }
+    u32 s = str_begin(g);
+    buf_cat(&g->arena, text);
+    buf_cat(&g->arena, *slot);
+    *slot = str_end(g, s);
+}
+
+/*
+FXC refuses a case that runs on into the next one, MSL allows it. A switch
+with one keeps its selector in a local, and each run of cases that fall
+into each other becomes one case with all their labels, where each part
+but the last runs only if the selector isn't one of the later parts'
+labels (where the old switch would have come in):
+    switch (x) { case 0: a; case 1: b; break; default: c; }
+->  { int t1_swN = (int)(x); switch (t1_swN) {
+        case 0: case 1: if (!(t1_swN == (int)(1))) { a; } b; break;
+        default: c; break; } }
+The last case of every switch gets a break too, FXC wants one there.
+Switches are done innermost first, so their edits nest: a pre is put
+before the ones already there, a post after them.
+*/
+#define SWITCH_SEGS_CAP 64
+typedef struct {
+    u32 first_label; // 'case' or 'default'
+    u32 body_start;  // after the last label's ':'
+    u32 body_end;    // the next label or the switch's '}'
+    b8 has_default;
+    b8 falls;        // into the next one
+} SwitchSeg;
+
+// the body's last statement can't run on (break, return, ...)
+static b8 switch_seg_ends(const Check * c, const SwitchSeg * s) {
+    if (s->body_end <= s->body_start) { return 0; }
+    if (!is_punct(s->body_end - 1, ";")) { return 0; }
+    u32 depth = 0;
+    u32 last_start = s->body_start;
+    for (u32 t = s->body_start; t + 1 < s->body_end; t++) {
+        if (
+            is_bracket(c, t, "(") ||
+            is_bracket(c, t, "[") ||
+            is_bracket(c, t, "{"))
+        {
+            depth++;
+        } else if (
+            is_bracket(c, t, ")") ||
+            is_bracket(c, t, "]") ||
+            is_bracket(c, t, "}"))
+        {
+            depth--;
+            if (depth == 0 && is_punct(t, "}")) { last_start = t + 1; }
+        } else if (depth == 0 && is_punct(t, ";")) {
+            last_start = t + 1;
+        }
+    }
+    return
+        is(last_start, "break") ||
+        is(last_start, "return") ||
+        is(last_start, "continue") ||
+        is(last_start, "discard_fragment");
+}
+
+// sel op (int)(v), with join between them, for seg's case labels
+static void cat_switch_labels(
+    Buf * b,
+    const SwitchSeg * seg,
+    const c8 * sel,
+    const c8 * op,
+    const c8 * join,
+    b8 * first)
+{
+    for (u32 t = seg->first_label; t < seg->body_start; t++) {
+        if (!is(t, "case")) { continue; }
+        u32 colon = t + 1;
+        while (colon < seg->body_start && !is_punct(colon, ":")) {
+            colon++;
+        }
+        if (!*first) { buf_cat(b, join); }
+        *first = 0;
+        buf_cat(b, sel);
+        buf_cat(b, op);
+        buf_cat(b, "(int)(");
+        cat_tokens(b, t + 1, colon);
+        buf_cat(b, ")");
+        t = colon;
+    }
+}
+
+static void hlsl_switch_edits(Gen * g) {
+    Check * c = g->c;
+    for (u32 sw = c->count; sw-- > 0;) {
+        if (!is(sw, "switch") || !is_punct(sw + 1, "(")) { continue; }
+        u32 sel_close = after_match(c, sw + 1, "(", ")") - 1;
+        u32 open = sel_close + 1;
+        if (!is_bracket(c, open, "{")) { continue; }
+        u32 close = after_match(c, open, "{", "}") - 1;
+
+        SwitchSeg segs[SWITCH_SEGS_CAP];
+        u32 segs_size = 0;
+        b8 plain = 1; // no #if inside, nothing before the first label
+        u32 depth = 0;
+        b8 in_labels = 0;
+        for (u32 t = open + 1; t < close; t++) {
+            if (c->secondary[t] || kind(t) == SK_PREPROC) { plain = 0; }
+            b8 label =
+                depth == 0 &&
+                (is(t, "case") ||
+                 (is(t, "default") && is_punct(t + 1, ":")));
+            if (label) {
+                if (!in_labels) {
+                    if (segs_size == SWITCH_SEGS_CAP) { plain = 0; break; }
+                    if (segs_size > 0) { segs[segs_size - 1].body_end = t; }
+                    segs[segs_size].first_label = t;
+                    segs[segs_size].has_default = 0;
+                    segs_size++;
+                }
+                in_labels = 1;
+                SwitchSeg * s = &segs[segs_size - 1];
+                if (is(t, "default")) { s->has_default = 1; }
+                while (t < close && !is_punct(t, ":")) { t++; }
+                s->body_start = t + 1;
+                s->body_end = close;
+                continue;
+            }
+            if (segs_size == 0) { plain = 0; }
+            in_labels = 0;
+            if (
+                is_bracket(c, t, "(") ||
+                is_bracket(c, t, "[") ||
+                is_bracket(c, t, "{"))
+            {
+                depth++;
+            }
+            if (
+                is_bracket(c, t, ")") ||
+                is_bracket(c, t, "]") ||
+                is_bracket(c, t, "}"))
+            {
+                depth--;
+            }
+        }
+        if (!plain || segs_size == 0) { continue; }
+
+        b8 any_falls = 0;
+        for (u32 k = 0; k < segs_size; k++) {
+            segs[k].falls =
+                k + 1 < segs_size && !switch_seg_ends(c, &segs[k]);
+            if (segs[k].falls) { any_falls = 1; }
+        }
+
+        // the last case's break
+        const SwitchSeg * last = &segs[segs_size - 1];
+        if (last->body_end > last->body_start && !switch_seg_ends(c, last)) {
+            add_text(g, &g->g_post[last->body_end - 1], " break;");
+        }
+        if (!any_falls) { continue; }
+
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, "t1_sw");
+        cat_u32(&g->arena, sw);
+        const c8 * sel = str_end(g, s);
+
+        s = str_begin(g);
+        buf_cat(&g->arena, "{ int ");
+        buf_cat(&g->arena, sel);
+        buf_cat(&g->arena, " = (int)");
+        add_text_before(g, &g->g_pre[sw], str_end(g, s));
+        g->g_skip[sw] = 1;
+        s = str_begin(g);
+        buf_cat(&g->arena, "; switch (");
+        buf_cat(&g->arena, sel);
+        buf_cat(&g->arena, ")");
+        add_text(g, &g->g_post[sel_close], str_end(g, s));
+        add_text(g, &g->g_post[close], " }");
+
+        for (u32 k = 0; k < segs_size; k++) {
+            if (!segs[k].falls) { continue; }
+            // a run of cases: k to end - 1 fall into the next one
+            u32 end = k;
+            while (segs[end].falls) { end++; }
+            for (u32 p = k; p < end; p++) {
+                // part p runs unless the switch came in later
+                s = str_begin(g);
+                buf_cat(&g->arena, "if (!(");
+                b8 first = 1;
+                for (u32 q = p + 1; q <= end; q++) {
+                    cat_switch_labels(
+                        &g->arena, &segs[q], sel, " == ", " || ", &first);
+                    if (!segs[q].has_default) { continue; }
+                    // default: none of the switch's labels
+                    if (!first) { buf_cat(&g->arena, " || "); }
+                    first = 0;
+                    buf_cat(&g->arena, "(");
+                    b8 first_d = 1;
+                    for (u32 r = 0; r < segs_size; r++) {
+                        cat_switch_labels(
+                            &g->arena, &segs[r], sel, " != ", " && ",
+                            &first_d);
+                    }
+                    if (first_d) { buf_cat(&g->arena, "true"); }
+                    buf_cat(&g->arena, ")");
+                }
+                if (first) { buf_cat(&g->arena, "false"); }
+                buf_cat(&g->arena, ")) { ");
+                add_text_before(
+                    g, &g->g_pre[segs[p].body_start], str_end(g, s));
+                add_text(g, &g->g_post[segs[p].body_end - 1], " }");
+            }
+            // the later parts' labels join the first part's
+            s = str_begin(g);
+            for (u32 q = k + 1; q <= end; q++) {
+                buf_cat(&g->arena, " ");
+                cat_tokens(
+                    &g->arena, segs[q].first_label, segs[q].body_start);
+                for (u32 t = segs[q].first_label; t < segs[q].body_start; t++) {
+                    g->g_skip[t] = 1;
+                }
+            }
+            add_text(g, &g->g_post[segs[k].body_start - 1], str_end(g, s));
+            k = end;
+        }
+    }
+}
+
 static void hlsl_constructor_edits(Gen * g) {
     static const c8 * const vectors[] = {
         "float2", "float3", "float4", "int2", "int3", "int4", "uint2",
@@ -4029,6 +4276,7 @@ void T1_shader_to_hlsl(
 
     b8 * loadable = T1_mem_malloc_managed(g.c->struct_defs_size + 1);
     global_edits(&g);
+    hlsl_switch_edits(&g);
     hlsl_struct_functions(&g, loadable);
     hlsl_buffer_edits(&g, loadable);
     hlsl_constructor_edits(&g);
