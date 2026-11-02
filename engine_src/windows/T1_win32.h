@@ -271,6 +271,8 @@ T1_WIN_IMPORT u32 T1_WINAPI GetCurrentDirectoryW(u32, T1WChar *);
 T1_WIN_IMPORT u32 T1_WINAPI GetCurrentThreadId(void);
 T1_WIN_IMPORT u32 T1_WINAPI GetEnvironmentVariableW(
     const T1WChar *, T1WChar *, u32);
+// STD_OUTPUT_HANDLE is (u32)-11
+T1_WIN_IMPORT T1WinHandle T1_WINAPI GetStdHandle(u32);
 // the 2nd parameter is GetFileExInfoStandard, 0
 T1_WIN_IMPORT T1WinBool T1_WINAPI GetFileAttributesExW(
     const T1WChar *, s32, void *);

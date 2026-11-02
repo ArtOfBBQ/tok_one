@@ -3794,13 +3794,52 @@ static void hlsl_stage_edits(Gen * g) {
 }
 
 /*
-What a unit's stage needs before the shaders: sampling any T1Tex (a switch,
-shader model 5.0 can't index an array of textures with a variable), the
-write_tex helpers and buffers
+Picking a texture array by a variable: shader model 5.0 can't index an
+array of textures with one, so the array's index goes down a tree of
+branches, half the arrays left at each (log2 of T1_TEXARRAYS_CAP compares
+to any of them). A switch with a case per array did the same, but AMD's
+drivers ran it far slower (a shadow map's pass: 4.5 ms of its 11)
+*/
+static void cat_hlsl_tex_tree(
+    Buf * b,
+    const u32 lo,
+    const u32 hi, // past the last array
+    const c8 * call, // what follows "r = t1_textures[i"
+    const u32 depth)
+{
+    c8 indent[32];
+    u32 n = 0;
+    for (u32 d = 0; d < depth + 1 && n + 4 < sizeof(indent); d++) {
+        for (u32 s = 0; s < 4; s++) { indent[n++] = ' '; }
+    }
+    indent[n] = '\0';
+    if (hi - lo == 1) {
+        buf_cat(b, indent);
+        buf_cat(b, "r = t1_textures[");
+        cat_u32(b, lo);
+        buf_cat(b, call);
+        return;
+    }
+    const u32 mid = (lo + hi) / 2;
+    buf_cat(b, indent);
+    buf_cat(b, "[branch] if (a < ");
+    cat_u32(b, mid);
+    buf_cat(b, "u) {\n");
+    cat_hlsl_tex_tree(b, lo, mid, call, depth + 1);
+    buf_cat(b, indent);
+    buf_cat(b, "} else {\n");
+    cat_hlsl_tex_tree(b, mid, hi, call, depth + 1);
+    buf_cat(b, indent);
+    buf_cat(b, "}\n");
+}
+
+/*
+What a unit's stage needs before the shaders: sampling any T1Tex (see
+cat_hlsl_tex_tree()), the write_tex helpers and buffers
 */
 static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
     if (!used) {
-        // saves compiling the switches below
+        // saves compiling the trees below
         buf_cat(b, "Texture2DArray t1_textures[1] : register(t0);\n");
         return;
     }
@@ -3821,10 +3860,11 @@ static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
     #error
     #endif
     /*
-    The uv's derivatives are taken before the switch: tex may differ from
+    The uv's derivatives are taken before the branches: tex may differ from
     pixel to pixel, and inside a branch that does the neighbouring pixels
-    of a quad may not run the same case, so implicit derivatives there
-    (Sample()) would pick wrong mips or make the compiler flatten it
+    of a quad may not take the same one, so implicit derivatives there
+    (Sample()) would pick wrong mips or make the compiler flatten it. An
+    array past the last one gives 0s
     */
     buf_cat(b,
         "float4 t1_sample(SamplerState smp, uint tex, float2 uv) {\n"
@@ -3836,16 +3876,13 @@ static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
     }
     buf_cat(b,
         "    float4 r = float4(0.0f, 0.0f, 0.0f, 0.0f);\n"
-        "    switch (T1_TEX_ARRAY_I(tex)) {\n");
-    for (u32 t = 0; t < T1_TEXARRAYS_CAP; t++) {
-        buf_cat(b, "    case ");
-        cat_u32(b, t);
-        buf_cat(b, ": r = t1_textures[");
-        cat_u32(b, t);
-        buf_cat(b, implicit_lod ?
-            "].SampleGrad(smp, c, dx, dy); break;\n" :
-            "].SampleLevel(smp, c, 0.0f); break;\n");
-    }
+        "    uint a = T1_TEX_ARRAY_I(tex);\n"
+        "    [branch] if (a < ");
+    cat_u32(b, T1_TEXARRAYS_CAP);
+    buf_cat(b, "u) {\n");
+    cat_hlsl_tex_tree(b, 0, T1_TEXARRAYS_CAP, implicit_lod ?
+        "].SampleGrad(smp, c, dx, dy);\n" :
+        "].SampleLevel(smp, c, 0.0f);\n", 1);
     buf_cat(b,
         "    }\n"
         "    return r;\n"
@@ -3853,14 +3890,11 @@ static void cat_hlsl_textures(Buf * b, const Stage stage, const b8 used) {
         "float4 t1_read(uint tex, uint2 pos) {\n"
         "    int4 c = int4(int2(pos), (int)T1_TEX_SLICE_I(tex), 0);\n"
         "    float4 r = float4(0.0f, 0.0f, 0.0f, 0.0f);\n"
-        "    switch (T1_TEX_ARRAY_I(tex)) {\n");
-    for (u32 t = 0; t < T1_TEXARRAYS_CAP; t++) {
-        buf_cat(b, "    case ");
-        cat_u32(b, t);
-        buf_cat(b, ": r = t1_textures[");
-        cat_u32(b, t);
-        buf_cat(b, "].Load(c); break;\n");
-    }
+        "    uint a = T1_TEX_ARRAY_I(tex);\n"
+        "    [branch] if (a < ");
+    cat_u32(b, T1_TEXARRAYS_CAP);
+    buf_cat(b, "u) {\n");
+    cat_hlsl_tex_tree(b, 0, T1_TEXARRAYS_CAP, "].Load(c);\n", 1);
     buf_cat(b,
         "    }\n"
         "    return r;\n"

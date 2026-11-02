@@ -161,6 +161,13 @@ typedef struct {
     T1ComObject * frame_starts[T1_FRAMES_CAP];
     T1ComObject * frame_ends[T1_FRAMES_CAP];
     u64 frame_gpu_us; // see T1_gpu_frame_us()
+    // THE PASS PROFILE (T1_GPU_PROFILE): a timestamp after each pass
+    b8 profile;
+    T1ComObject * pass_ends[T1_FRAMES_CAP][T1_PASSES_CAP];
+    u32 pass_ends_size[T1_FRAMES_CAP]; // how many the frame ended
+    u64 profile_us[T1_PASSES_CAP]; // summed over profile_frames
+    u32 profile_passes; // the passes the sums are of
+    u32 profile_frames;
     u32 frame_i;
     u64 frames_encoded;
 
@@ -444,6 +451,137 @@ static const c8 * const T1_gpu_d3d11_present_source =
     "    return t1_window_tex.Sample(t1_nearest_smp, float3(i.uv, 0.0f));\n"
     "}\n";
 
+/*
+THE PASS PROFILE: with the environment variable T1_GPU_PROFILE set (to
+anything), every pass ends with a timestamp, and every
+T1_D3D_PROFILE_FRAMES frames the console gets each pass's average GPU time
+(from the end of the pass before it: what the GPU spent on it, including
+waiting for its inputs) with what the pass is. For finding where a frame's
+GPU time goes; without the variable nothing is timed but the frame
+*/
+#define T1_D3D_PROFILE_FRAMES 300
+
+static void T1_gpu_d3d11_profile_init(void) {
+    T1WChar value[8];
+    T1_d3d->profile =
+        GetEnvironmentVariableW(L"T1_GPU_PROFILE", value, 8) > 0;
+    if (!T1_d3d->profile) { return; }
+    T1D3D11Device * device = T1_d3d->device;
+    T1D3D11QueryDesc query;
+    query.query = T1D3D11_QUERY_TIMESTAMP;
+    query.misc_flags = 0;
+    for (u32 f = 0; f < T1_FRAMES_CAP; f++) {
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) {
+            device->vtbl->CreateQuery(
+                device, &query, &T1_d3d->pass_ends[f][p]);
+        }
+    }
+}
+
+static void T1_gpu_d3d11_profile_write(const c8 * text) {
+    T1WinHandle out = GetStdHandle((u32)-11);
+    if (out == NULL || out == T1_WIN_INVALID_HANDLE) { return; }
+    u32 written = 0;
+    WriteFile(out, text, (u32)T1_std_strlen(text), &written, NULL);
+}
+
+static void T1_gpu_d3d11_profile_report(void) {
+    const u32 frames = T1_d3d->profile_frames;
+    c8 line[512];
+    line[0] = '\0';
+    T1_std_strcat_cap(line, sizeof(line), "T1_GPU_PROFILE: ");
+    T1_std_strcat_u32_cap(line, sizeof(line), frames);
+    T1_std_strcat_cap(line, sizeof(line), " frames, us a frame per pass:\n");
+    T1_gpu_d3d11_profile_write(line);
+    u64 total = 0;
+    for (u32 p = 0; p < T1_d3d->profile_passes; p++) {
+        total += T1_d3d->profile_us[p];
+    }
+    for (u32 p = 0; p < T1_d3d->profile_passes && p < T1_passes_size; p++) {
+        const T1Pass * pass = T1_passes + p;
+        const u32 us = (u32)(T1_d3d->profile_us[p] / frames);
+        line[0] = '\0';
+        T1_std_strcat_cap(line, sizeof(line), "  ");
+        T1_std_strcat_u32_cap(line, sizeof(line), p);
+        T1_std_strcat_cap(line, sizeof(line), "\t");
+        T1_std_strcat_u32_cap(line, sizeof(line), us);
+        T1_std_strcat_cap(line, sizeof(line), " us\t");
+        const s32 pipeline_i = pass->kind == T1_PASS_CLEAR ?
+            -1 : T1_pipeline_id_to_i(pass->pipeline);
+        if (pass->kind == T1_PASS_CLEAR) {
+            T1_std_strcat_cap(line, sizeof(line), "clear");
+        } else if (pipeline_i >= 0) {
+            const T1Pipeline * pl = T1_pipelines + pipeline_i;
+            T1_std_strcat_cap(line, sizeof(line), pl->vertex_fn);
+            if (!pl->is_compute) {
+                T1_std_strcat_cap(line, sizeof(line), " / ");
+                T1_std_strcat_cap(line, sizeof(line), pl->fragment_fn);
+                T1_std_strcat_cap(line, sizeof(line), ", ");
+                T1_std_strcat_u32_cap(
+                    line, sizeof(line), pass->u32s.vertex_count);
+                T1_std_strcat_cap(line, sizeof(line), " vertices");
+            }
+        }
+        const u32 tex = pass->kind == T1_PASS_COMPUTE ?
+            pass->u32s.write_tex : pass->u32s.color_tex[0];
+        if (tex != T1_TEX_NONE) {
+            T1_std_strcat_cap(line, sizeof(line), ", ");
+            T1_std_strcat_u32_cap(
+                line, sizeof(line), T1_tex_get_width((T1Tex)tex));
+            T1_std_strcat_cap(line, sizeof(line), "x");
+            T1_std_strcat_u32_cap(
+                line, sizeof(line), T1_tex_get_height((T1Tex)tex));
+        }
+        if (pass->u32s.depth_tex != T1_TEX_NONE) {
+            T1_std_strcat_cap(line, sizeof(line), ", depth");
+        }
+        T1_std_strcat_cap(line, sizeof(line), "\n");
+        T1_gpu_d3d11_profile_write(line);
+    }
+    line[0] = '\0';
+    T1_std_strcat_cap(line, sizeof(line), "  all\t");
+    T1_std_strcat_u32_cap(line, sizeof(line), (u32)(total / frames));
+    T1_std_strcat_cap(line, sizeof(line), " us\n");
+    T1_gpu_d3d11_profile_write(line);
+}
+
+// frame slot f is done: its passes' times, from its start timestamp on
+static void T1_gpu_d3d11_profile_read(
+    const u32 f,
+    const u64 start,
+    const u64 frequency)
+{
+    const u32 size = T1_d3d->pass_ends_size[f];
+    if (size != T1_d3d->profile_passes) {
+        // other passes: start over
+        T1_d3d->profile_passes = size;
+        T1_d3d->profile_frames = 0;
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) { T1_d3d->profile_us[p] = 0; }
+    }
+    u64 ends[T1_PASSES_CAP];
+    for (u32 p = 0; p < size; p++) {
+        if (
+            T1_d3d->ctx->vtbl->GetData(
+                T1_d3d->ctx, T1_d3d->pass_ends[f][p], &ends[p],
+                sizeof(u64), 0) != 0)
+        {
+            return; // not there yet: this frame doesn't count
+        }
+    }
+    u64 before = start;
+    for (u32 p = 0; p < size; p++) {
+        const u64 end = ends[p] > before ? ends[p] : before;
+        T1_d3d->profile_us[p] += (end - before) * 1000000 / frequency;
+        before = end;
+    }
+    T1_d3d->profile_frames += 1;
+    if (T1_d3d->profile_frames >= T1_D3D_PROFILE_FRAMES) {
+        T1_gpu_d3d11_profile_report();
+        T1_d3d->profile_frames = 0;
+        for (u32 p = 0; p < T1_PASSES_CAP; p++) { T1_d3d->profile_us[p] = 0; }
+    }
+}
+
 static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
     T1D3D11Device * device = T1_d3d->device;
 
@@ -553,6 +691,7 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
         device->vtbl->CreateQuery(device, &query, &T1_d3d->frame_starts[f]);
         device->vtbl->CreateQuery(device, &query, &T1_d3d->frame_ends[f]);
     }
+    T1_gpu_d3d11_profile_init();
 
     u32 source_size = (u32)T1_std_strlen(T1_gpu_d3d11_present_source);
     T1D3DBlob * vs = T1_gpu_d3d11_compile(
@@ -2043,6 +2182,9 @@ static void T1_gpu_d3d11_read_frame_time(const u32 f) {
         return;
     }
     T1_d3d->frame_gpu_us = (end - start) * 1000000 / disjoint.frequency;
+    if (T1_d3d->profile) {
+        T1_gpu_d3d11_profile_read(f, start, disjoint.frequency);
+    }
 }
 
 u64 T1_os_gpu_frame_us(void) {
@@ -2116,7 +2258,13 @@ u8 T1_os_gpu_render_frame(void) {
             default:
                 T1_assert(0);
         }
+        if (T1_d3d->profile && timed && pass_i < T1_PASSES_CAP) {
+            T1_d3d->ctx->vtbl->End(
+                T1_d3d->ctx, T1_d3d->pass_ends[f][pass_i]);
+        }
     }
+    T1_d3d->pass_ends_size[f] =
+        T1_passes_size < T1_PASSES_CAP ? T1_passes_size : T1_PASSES_CAP;
 
     T1_gpu_d3d11_encode_reads();
 
