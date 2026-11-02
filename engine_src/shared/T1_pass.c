@@ -139,6 +139,7 @@ static const T1PassProperty T1_pass_properties[] = {
     T1_PASS_PROP("threads[0]", threads[0]),
     T1_PASS_PROP("threads[1]", threads[1]),
     T1_PASS_PROP("threads[2]", threads[2]),
+    T1_PASS_PROP("off", off),
 };
 #define T1_PASS_PROPERTIES_SIZE \
     (sizeof(T1_pass_properties) / sizeof(T1_pass_properties[0]))

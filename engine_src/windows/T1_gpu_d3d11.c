@@ -2245,6 +2245,7 @@ u8 T1_os_gpu_render_frame(void) {
         if (!T1_os_gpu_shaders_ready() && pass->kind != T1_PASS_CLEAR) {
             continue;
         }
+        if (pass->u32s.off) { continue; } // switched off this frame
         switch (pass->kind) {
             case T1_PASS_CLEAR:
                 T1_gpu_d3d11_encode_clear_pass(pass);

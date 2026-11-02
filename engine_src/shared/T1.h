@@ -232,6 +232,8 @@ is 0 if a function doesn't exist in the loaded shaders (names are checked
 when the first shaders load if there are none yet).
 
 Passes:
+- Any pass with "off" (u32) 1 is skipped until it's 0 again: e.g. a cache
+  drawn only when what it holds changed. It keeps its place in the order.
 - A clear pass fills a texture with a color.
 - A draw pass draws "vertex_count" (u32) vertices as triangles, from
   vertex_id "vertex_start" (u32) on, with a pipeline. T1 binds no geometry:

@@ -2466,6 +2466,7 @@ static b8 T1_gpu_render_frame(void) {
         // without shaders (e.g. an app that only uploads its own pixels),
         // only clear passes can run
         if (!ags->shaders_ready && pass->kind != T1_PASS_CLEAR) { continue; }
+        if (pass->u32s.off) { continue; } // switched off this frame
         switch (pass->kind) {
             case T1_PASS_CLEAR:
                 T1_gpu_encode_clear_pass(pass, combuf);

@@ -27,6 +27,7 @@ typedef struct {
     u32 vertex_start; // a draw pass's first vertex_id
     u32 vertex_count; // a draw pass's
     u32 threads[3]; // a compute pass's grid, 0 for write_tex's size
+    u32 off; // 1: skipped this frame (it keeps its place in the list)
 } T1PassU32s;
 
 typedef struct {
