@@ -1529,14 +1529,18 @@ static void T1_os_macos_attach_metal_layer(
         T1_os_macos_s->sel_set_framebuffer_only,
         true);
     /*
-    Double buffering: one drawable on screen, one to draw the next frame
-    into. nextDrawable blocks while both are in use, and with display sync
-    a drawable is only shown at a refresh, so our main loop runs at the
-    display's refresh rate and never tears
+    Triple buffering: one drawable on screen, one waiting for its refresh,
+    one to draw the next frame into. nextDrawable blocks while all are in
+    use, and with display sync a drawable is only shown at a refresh, so
+    our main loop runs at the display's refresh rate and never tears. With
+    only 2, full screen (where macOS shows the drawable itself and keeps
+    the one on screen until the next refresh) had the main loop wait in
+    nextDrawable before it could even start a frame: a third of the frames
+    took 2 refreshes with the GPU two thirds idle
     */
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_maximum_drawable_count,
-        2);
+        3);
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_display_sync_enabled,
         true);

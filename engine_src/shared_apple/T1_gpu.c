@@ -421,7 +421,7 @@ static void T1_gpu_release(void ** obj) {
 static void * T1_gpu_new_render_pipeline_descriptor(
     void * vertex_shader,
     void * fragment_shader,
-    u8 targets,
+    u32 targets,
     u8 blend)
 {
     T1_assert(targets < T1_GPU_TARGETS_SIZE);
@@ -455,6 +455,7 @@ static void * T1_gpu_new_render_pipeline_descriptor(
             (k == 0 && (targets & T1_GPU_TARGET_WINDOW)) ?
                 T1MTLPixelFormatBGRA8Unorm :
                 ags->pixel_format_renderpass1);
+
         // only color(0) blends, the others are data (like touch ids)
         if (k == 0 && blend != T1_BLEND_NONE) {
             T1_objc_msg_1arg(
@@ -846,7 +847,7 @@ static void * T1_gpu_new_compute_pls(
 // Sticky: does nothing if *ok is already false
 static void * T1_gpu_build_pipeline_state(
     s32 pipeline_i,
-    u8 targets,
+    u32 targets,
     void * funcs[2],
     u8 * ok,
     char * error_recip,
@@ -942,7 +943,7 @@ T1_ID_NONE
 */
 static void * T1_gpu_pipeline_state(
     const u32 pipeline_T1_id,
-    u8 targets)
+    u32 targets)
 {
     if (pipeline_T1_id == T1_ID_NONE) { return NULL; }
 
@@ -1132,14 +1133,14 @@ void T1_os_gpu_try_shader_source(
         // Rebuild the states in use. Pipelines without any get one, so
         // their shaders are known to link before they're first drawn with
         b8 any_states = false;
-        for (u8 t = 0; t < T1_GPU_TARGETS_SIZE; t++) {
+        for (u32 t = 0; t < T1_GPU_TARGETS_SIZE; t++) {
             if (ags->pipeline_states[i][t] == NULL) { continue; }
             any_states = true;
             new_states[i][t] = T1_gpu_build_pipeline_state(
                 i, t, new_funcs[i], &ok, error_recip, error_recip_cap);
         }
         if (!any_states) {
-            u8 t = T1_pipelines[i].is_compute ? 0 : (
+            u32 t = T1_pipelines[i].is_compute ? 0 : (
                 T1_GPU_TARGET_COLOR_0 |
                 T1_GPU_TARGET_DEPTH);
             new_states[i][t] = T1_gpu_build_pipeline_state(
@@ -2193,15 +2194,170 @@ static void T1_gpu_encode_clear_pass(
     if (owned) { T1_gpu_release(&tex); }
 }
 
-static void T1_gpu_encode_draw_pass(
-    const T1Pass * pass,
+/*
+SHARED ENCODERS. Apple's GPUs draw an encoder's targets in on-chip tiles:
+each render encoder loads its targets from memory when it starts (or
+clears them, or neither) and stores them when it ends, a full picture's
+traffic each way, for every encoder. The client's pass list stays exactly
+as it was made; T1 runs it in fewer encoders, with the same pictures:
+- a clear pass becomes the load action ("clear") of its texture in the
+  encoder of the next pass that draws into it, when no pass in between
+  mentions the texture: any of its u32 values. T1 can't tell which params
+  are textures, so a param that only happens to be the same number keeps
+  the clear a pass of its own (a lost saving, never a wrong picture)
+- consecutive draw passes share one encoder when they have the same
+  targets (color(k) and depth_tex) and none of them reads one (mentions
+  it other than as its target). Full screen on an M4 that was no faster
+  than an encoder each (letting passes with fewer targets join too, those
+  left as they were, was slower: every pass then carried every target),
+  but it's what a frame of passes is to these GPUs, and on others (tiled
+  mobile GPUs) the saved stores and loads may count
+Folding the clears saved 5% of the GPU's frame there. Other GPU APIs have
+the same choice per target (Vulkan's loadOp/storeOp, render passes) or
+none (D3D11: a clear is a command, passes cost no traffic), so this lives
+in each backend, not in T1's API.
+*/
+#define T1_GPU_U32S_SIZE (sizeof(T1PassU32s) / sizeof(u32))
+
+// any of pass's u32 values is tex
+static b8 T1_gpu_pass_mentions(const T1Pass * pass, const u32 tex) {
+    const u32 * v = (const u32 *)&pass->u32s;
+    b8 found = false;
+    for (u32 i = 0; i < T1_GPU_U32S_SIZE; i++) { found |= v[i] == tex; }
+    return found;
+}
+
+// pass mentions tex other than as its own target
+static b8 T1_gpu_pass_reads(const T1Pass * pass, const u32 tex) {
+    T1Pass others = *pass;
+    for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+        others.u32s.color_tex[k] = T1_TEX_NONE;
+    }
+    others.u32s.depth_tex = T1_TEX_NONE;
+    return T1_gpu_pass_mentions(&others, tex);
+}
+
+static b8 T1_gpu_pass_draws(const T1Pass * pass) {
+    return
+        pass->kind == T1_PASS_DRAW &&
+        !pass->u32s.off &&
+        T1_pipeline_id_to_i(pass->pipeline) >= 0;
+}
+
+/*
+For each clear pass, the draw pass whose encoder clears its texture
+instead, or -1 (encoded as a pass of its own)
+*/
+static void T1_gpu_plan_clears(s16 * fold_into) {
+    for (u32 i = 0; i < T1_passes_size; i++) {
+        fold_into[i] = -1;
+        const T1Pass * pass = T1_passes + i;
+        if (pass->kind != T1_PASS_CLEAR || pass->u32s.off) { continue; }
+        const u32 tex = pass->u32s.color_tex[0];
+        if (tex == T1_TEX_NONE) { continue; }
+        for (u32 j = i + 1; j < T1_passes_size; j++) {
+            const T1Pass * next = T1_passes + j;
+            if (next->u32s.off || !T1_gpu_pass_mentions(next, tex)) {
+                continue;
+            }
+            // the first pass to mention it: it must draw into it
+            b8 targets_it = false;
+            for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+                targets_it |= next->u32s.color_tex[k] == tex;
+            }
+            if (
+                T1_gpu_pass_draws(next) && targets_it &&
+                !T1_gpu_pass_reads(next, tex))
+            {
+                fold_into[i] = (s16)j;
+            }
+            break;
+        }
+    }
+}
+
+/*
+The end (exclusive) of the encoder that starts at draw pass first: the
+passes after it that can share it (SHARED ENCODERS); its targets into
+colors and *depth_tex
+*/
+static u32 T1_gpu_plan_encoder(
+    const u32 first,
+    const s16 * fold_into,
+    u32 colors[T1_PASS_COLOR_TEXS_CAP],
+    u32 * depth_tex)
+{
+    const T1Pass * pass = T1_passes + first;
+    for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+        colors[k] = pass->u32s.color_tex[k];
+    }
+    *depth_tex = pass->u32s.depth_tex;
+    u32 end = first + 1;
+    for (; end < T1_passes_size; end++) {
+        const T1Pass * next = T1_passes + end;
+        if (next->u32s.off) { continue; }
+        if (next->kind == T1_PASS_CLEAR) {
+            // a clear another encoder makes doesn't stop this one, unless
+            // this one already draws into its texture (it comes between)
+            if (fold_into[end] < 0) { break; }
+            b8 attached = false;
+            for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+                attached |= colors[k] == next->u32s.color_tex[0];
+            }
+            if (attached) { break; }
+            continue;
+        }
+        if (!T1_gpu_pass_draws(next)) { break; }
+        if (next->u32s.depth_tex != *depth_tex) { break; }
+        b8 fits = true;
+        for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+            fits &= next->u32s.color_tex[k] == colors[k];
+        }
+        if (!fits) { break; }
+        // it reads none of the targets
+        b8 reads = false;
+        for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+            if (colors[k] != T1_TEX_NONE) {
+                reads |= T1_gpu_pass_reads(next, colors[k]);
+            }
+        }
+        if (*depth_tex != T1_TEX_NONE) {
+            reads |= T1_gpu_pass_reads(next, *depth_tex);
+        }
+        if (reads) { break; }
+    }
+    return end;
+}
+
+// The draw passes from first to end (exclusive) in one encoder
+static void T1_gpu_encode_draw_passes(
+    const u32 first,
+    const u32 end,
+    const u32 colors[T1_PASS_COLOR_TEXS_CAP],
+    const u32 depth_tex,
+    const s16 * fold_into,
     void * combuf)
 {
-    s32 pipeline_i = T1_pipeline_id_to_i(pass->pipeline);
-    T1_assert(pipeline_i >= 0);
-    if (pipeline_i < 0) { return; }
-    
-    if (pass->u32s.vertex_count < 1) { return; }
+    // the clears it makes: of the clear passes folded into its passes
+    s32 clear_from[T1_PASS_COLOR_TEXS_CAP];
+    b8 has_work = false;
+    for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) { clear_from[k] = -1; }
+    for (u32 c = 0; c < T1_passes_size; c++) {
+        if (fold_into[c] < (s16)first || fold_into[c] >= (s16)end) {
+            continue;
+        }
+        for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
+            if (colors[k] == T1_passes[c].u32s.color_tex[0]) {
+                clear_from[k] = (s32)c;
+                has_work = true;
+            }
+        }
+    }
+    for (u32 i = first; i < end; i++) {
+        has_work |= T1_gpu_pass_draws(T1_passes + i) &&
+            T1_passes[i].u32s.vertex_count > 0;
+    }
+    if (!has_work) { return; }
     
     void * desc = T1_gpu_new_render_pass_descriptor();
     void * color_attachments = (void *)T1_objc_msg(
@@ -2209,15 +2365,13 @@ static void T1_gpu_encode_draw_pass(
     
     void * targets[T1_PASS_COLOR_TEXS_CAP];
     b8 owned[T1_PASS_COLOR_TEXS_CAP];
-    u8 target_bits = 0;
+    u32 target_bits = 0;
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
         targets[k] = NULL;
         owned[k] = false;
+        if (colors[k] == T1_TEX_NONE) { continue; }
         
-        u32 tex = pass->u32s.color_tex[k];
-        if (tex == T1_TEX_NONE) { continue; }
-        
-        targets[k] = T1_gpu_pass_target(tex, &owned[k]);
+        targets[k] = T1_gpu_pass_target(colors[k], &owned[k]);
         if (targets[k] == NULL) { continue; }
         
         // every target must be the first one's size
@@ -2228,7 +2382,7 @@ static void T1_gpu_encode_draw_pass(
              T1_objc_msg(targets[k], ags->sel_height) ==
                 T1_objc_msg(targets[0], ags->sel_height)));
         
-        target_bits |= (u8)(T1_GPU_TARGET_COLOR_0 << k);
+        target_bits |= (u32)(T1_GPU_TARGET_COLOR_0 << k);
         
         void * color_attachment = (void *)T1_objc_msg_1arg(
             color_attachments, ags->sel_object_at_indexed_subscript, k);
@@ -2236,10 +2390,22 @@ static void T1_gpu_encode_draw_pass(
             color_attachment,
             ags->sel_set_texture,
             (uintptr_t)targets[k]);
-        T1_objc_msg_1arg(
-            color_attachment,
-            ags->sel_set_load_action,
-            T1MTLLoadActionLoad);
+        if (clear_from[k] >= 0) {
+            const f32 * rgba = T1_passes[clear_from[k]].clear_rgba;
+            T1_objc_msg_1arg(
+                color_attachment,
+                ags->sel_set_load_action,
+                T1MTLLoadActionClear);
+            ((setClearColorFuncType)T1_objc_unsafe_get_raw_msg_send())(
+                color_attachment,
+                ags->sel_set_clear_color,
+                T1_mtl_clearcolor_make(rgba[0], rgba[1], rgba[2], rgba[3]));
+        } else {
+            T1_objc_msg_1arg(
+                color_attachment,
+                ags->sel_set_load_action,
+                T1MTLLoadActionLoad);
+        }
         T1_objc_msg_1arg(
             color_attachment,
             ags->sel_set_store_action,
@@ -2249,11 +2415,10 @@ static void T1_gpu_encode_draw_pass(
     // the "depth_tex"'s depth buffer, cleared by its first pass of the frame
     void * depth = NULL;
     b8 clear_depth = false;
-    if (pass->u32s.depth_tex != T1_TEX_NONE) {
-        u32 dt = pass->u32s.depth_tex;
-        u32 depth_w = T1_tex_get_width((T1Tex)dt);
-        u32 depth_h = T1_tex_get_height((T1Tex)dt);
-        depth = T1_gpu_tex_depth(dt, depth_w, depth_h, &clear_depth);
+    if (depth_tex != T1_TEX_NONE) {
+        u32 depth_w = T1_tex_get_width((T1Tex)depth_tex);
+        u32 depth_h = T1_tex_get_height((T1Tex)depth_tex);
+        depth = T1_gpu_tex_depth(depth_tex, depth_w, depth_h, &clear_depth);
         
         // the targets must be its size
         for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
@@ -2292,55 +2457,63 @@ static void T1_gpu_encode_draw_pass(
     }
     
     // nothing to draw into
-    if (target_bits == 0) { return; }
-    
-    void * enc = (void *)T1_objc_msg_1arg(
-        combuf,
-        ags->sel_render_cmd_enc_with_desc,
-        (uintptr_t)desc);
-    
-    T1_objc_msg_1arg(
-        enc,
-        ags->sel_set_render_pls,
-        (uintptr_t)T1_gpu_pipeline_state(pass->pipeline, target_bits));
-    if (depth != NULL) {
-        T1_objc_msg_1arg(enc,
-            ags->sel_set_depth_stencil_state,
-            (uintptr_t)ags->opaque_depth_stencil_state);
+    if (target_bits != 0) {
+        void * enc = (void *)T1_objc_msg_1arg(
+            combuf,
+            ags->sel_render_cmd_enc_with_desc,
+            (uintptr_t)desc);
+        
+        T1_objc_msg_1arg(
+            enc,
+            ags->sel_set_front_facing_winding,
+            T1MTLWindingCounterClockwise);
+        if (depth != NULL) {
+            T1_objc_msg_1arg(enc,
+                ags->sel_set_depth_stencil_state,
+                (uintptr_t)ags->opaque_depth_stencil_state);
+        }
+        T1_gpu_bind_texture_arrays(
+            enc, ags->sel_set_fragment_texture_at_index);
+        
+        for (u32 i = first; i < end; i++) {
+            const T1Pass * pass = T1_passes + i;
+            if (!T1_gpu_pass_draws(pass)) { continue; }
+            if (pass->u32s.vertex_count < 1) { continue; }
+            const s32 pipeline_i = T1_pipeline_id_to_i(pass->pipeline);
+            
+            T1_objc_msg_1arg(
+                enc,
+                ags->sel_set_render_pls,
+                (uintptr_t)T1_gpu_pipeline_state(
+                    pass->pipeline, target_bits));
+            T1_objc_msg_1arg(
+                enc,
+                ags->sel_set_cull_mode,
+                T1_pipelines[pipeline_i].cull == T1_CULL_BACK ?
+                    T1MTLCullModeBack :
+                T1_pipelines[pipeline_i].cull == T1_CULL_FRONT ?
+                    T1MTLCullModeFront :
+                    T1MTLCullModeNone);
+            T1_gpu_bind_pass_buffers(
+                enc,
+                ags->sel_set_vertex_buffer_offset_atindex,
+                ags->sel_set_vertex_bytes_length_atindex,
+                pass);
+            T1_gpu_bind_pass_buffers(
+                enc,
+                ags->sel_set_fragment_buffer_offset_atindex,
+                ags->sel_set_fragment_bytes_length_atindex,
+                pass);
+            T1_objc_msg_3arg(
+                enc,
+                ags->sel_draw_primitives_vertex_start_vertex_count,
+                /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
+                /* vertexStart: */ (uintptr_t)pass->u32s.vertex_start,
+                /* vertexCount: */ (uintptr_t)pass->u32s.vertex_count);
+        }
+        
+        T1_objc_msg(enc, ags->sel_end_encoding);
     }
-    T1_objc_msg_1arg(
-        enc,
-        ags->sel_set_cull_mode,
-        T1_pipelines[pipeline_i].cull == T1_CULL_BACK ?
-            T1MTLCullModeBack :
-        T1_pipelines[pipeline_i].cull == T1_CULL_FRONT ?
-            T1MTLCullModeFront :
-            T1MTLCullModeNone);
-    T1_objc_msg_1arg(
-        enc,
-        ags->sel_set_front_facing_winding,
-        T1MTLWindingCounterClockwise);
-    
-    T1_gpu_bind_texture_arrays(enc, ags->sel_set_fragment_texture_at_index);
-    T1_gpu_bind_pass_buffers(
-        enc,
-        ags->sel_set_vertex_buffer_offset_atindex,
-        ags->sel_set_vertex_bytes_length_atindex,
-        pass);
-    T1_gpu_bind_pass_buffers(
-        enc,
-        ags->sel_set_fragment_buffer_offset_atindex,
-        ags->sel_set_fragment_bytes_length_atindex,
-        pass);
-    
-    T1_objc_msg_3arg(
-        enc,
-        ags->sel_draw_primitives_vertex_start_vertex_count,
-        /* drawPrimitives: */ T1MTLPrimitiveTypeTriangle,
-        /* vertexStart: */ (uintptr_t)pass->u32s.vertex_start,
-        /* vertexCount: */ (uintptr_t)pass->u32s.vertex_count);
-    
-    T1_objc_msg(enc, ags->sel_end_encoding);
     
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
         if (owned[k]) { T1_gpu_release(&targets[k]); }
@@ -2460,25 +2633,56 @@ static b8 T1_gpu_render_frame(void) {
     
     T1_gpu_encode_buf_writes(combuf);
     
-    // the client's passes, in the order they were made
-    for (u32 pass_i = 0; pass_i < T1_passes_size; pass_i++) {
+    /*
+    The client's passes, in the order they were made, in as few encoders
+    as give the same pictures (SHARED ENCODERS). Without shaders (e.g. an
+    app that only uploads its own pixels), only clear passes run, each on
+    its own
+    */
+    s16 fold_into[T1_PASSES_CAP];
+    if (ags->shaders_ready) {
+        T1_gpu_plan_clears(fold_into);
+    } else {
+        for (u32 i = 0; i < T1_passes_size; i++) { fold_into[i] = -1; }
+    }
+    u32 pass_i = 0;
+    while (pass_i < T1_passes_size) {
         const T1Pass * pass = T1_passes + pass_i;
-        // without shaders (e.g. an app that only uploads its own pixels),
-        // only clear passes can run
-        if (!ags->shaders_ready && pass->kind != T1_PASS_CLEAR) { continue; }
-        if (pass->u32s.off) { continue; } // switched off this frame
+        if (
+            pass->u32s.off || // switched off this frame
+            (!ags->shaders_ready && pass->kind != T1_PASS_CLEAR))
+        {
+            pass_i++;
+            continue;
+        }
         switch (pass->kind) {
             case T1_PASS_CLEAR:
-                T1_gpu_encode_clear_pass(pass, combuf);
+                if (fold_into[pass_i] < 0) {
+                    T1_gpu_encode_clear_pass(pass, combuf);
+                }
+                pass_i++;
                 break;
-            case T1_PASS_DRAW:
-                T1_gpu_encode_draw_pass(pass, combuf);
-                break;
+            case T1_PASS_DRAW: {
+                if (T1_pipeline_id_to_i(pass->pipeline) < 0) {
+                    T1_assert(0);
+                    pass_i++;
+                    break;
+                }
+                u32 colors[T1_PASS_COLOR_TEXS_CAP];
+                u32 depth_tex;
+                const u32 end = T1_gpu_plan_encoder(
+                    pass_i, fold_into, colors, &depth_tex);
+                T1_gpu_encode_draw_passes(
+                    pass_i, end, colors, depth_tex, fold_into, combuf);
+                pass_i = end;
+            } break;
             case T1_PASS_COMPUTE:
                 T1_gpu_encode_compute_pass(pass, combuf);
+                pass_i++;
                 break;
             default:
                 T1_assert(0);
+                pass_i++;
         }
     }
     
