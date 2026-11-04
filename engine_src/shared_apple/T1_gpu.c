@@ -193,9 +193,14 @@ typedef struct {
 /*
 Shared memory T1_buf_write() copies into, one per frame in flight: a
 frame's writes all go to its own, which is only reused once the GPU is done
-with that frame. It grows to fit the largest frame's writes.
+with that frame. It grows to fit a frame's writes, up to
+T1_GPU_STAGING_MAX_SIZE: a frame that writes more (loading: every mesh at
+once) has its writes copied in pieces, the ones so far sent to the GPU on
+their own and waited for whenever it's full (a wait only then: a frame of
+play writes far less)
 */
 #define T1_GPU_STAGING_MIN_SIZE 65536
+#define T1_GPU_STAGING_MAX_SIZE (8u * 1024u * 1024u)
 typedef struct {
     void * buffer;
     void * combuf; // retained, the last frame that copied from it
@@ -1683,11 +1688,15 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
 }
 
 /*
-Room for size bytes in this frame's staging, waiting for the GPU if it
-still copies from it (from T1_FRAMES_CAP frames ago). Returns the buffer
-(retained for the caller) and the offset.
+Room for size bytes (T1_GPU_STAGING_MAX_SIZE at most) in this frame's
+staging, waiting for the GPU if it still copies from it (from
+T1_FRAMES_CAP frames ago). Returns the buffer (retained for the caller) and
+the offset; NULL with *full set if it's at its largest and has no room left
+(then the writes so far must go first, see T1_os_gpu_buf_write())
 */
-static void * T1_gpu_staging_alloc(u64 size, u64 * offset) {
+static void * T1_gpu_staging_alloc(u64 size, u64 * offset, u8 * full) {
+    *full = 0;
+    T1_assert(size <= T1_GPU_STAGING_MAX_SIZE);
     T1GPUStaging * st = &ags->staging[ags->frame_i];
     
     if (st->combuf != NULL) {
@@ -1704,12 +1713,19 @@ static void * T1_gpu_staging_alloc(u64 size, u64 * offset) {
     // 16 byte aligned, blits need multiples of 4
     u64 at = (st->used + 15) & ~(u64)15;
     if (st->buffer == NULL || at + size > st->capacity) {
+        if (st->buffer != NULL && st->capacity >= T1_GPU_STAGING_MAX_SIZE) {
+            *full = 1;
+            return NULL;
+        }
         // Earlier writes keep the old buffer alive until they're copied
         u64 capacity = st->capacity * 2;
         if (capacity < T1_GPU_STAGING_MIN_SIZE) {
             capacity = T1_GPU_STAGING_MIN_SIZE;
         }
         while (capacity < size) { capacity *= 2; }
+        if (capacity > T1_GPU_STAGING_MAX_SIZE) {
+            capacity = T1_GPU_STAGING_MAX_SIZE;
+        }
         
         T1_gpu_release(&st->buffer);
         st->buffer = (void *)T1_objc_msg_2arg(
@@ -1752,31 +1768,52 @@ void T1_os_gpu_buf_write(
     if (!ags || !ags->metal_active) { return; }
     T1_assert(buf_i < T1_BUFS_CAP && ags->bufs[buf_i] != NULL);
     
-    // Too many waiting: apply them now, in a command buffer of their own.
-    // It's committed first, so it still runs before the next frame.
-    if (ags->buf_writes_size >= T1_GPU_BUF_WRITES_CAP) {
-        void * combuf = (void *)T1_objc_msg(
-            ags->command_queue,
-            ags->sel_command_buffer);
-        T1_gpu_encode_buf_writes(combuf);
-        T1_objc_msg(combuf, ags->sel_commit);
+    // a piece at a time, T1_GPU_STAGING_MAX_SIZE at most (see there)
+    const u8 * from = (const u8 *)data;
+    u64 done = 0;
+    while (done < size) {
+        const u64 left = size - done;
+        const u64 piece =
+            left < T1_GPU_STAGING_MAX_SIZE ? left : T1_GPU_STAGING_MAX_SIZE;
+        
+        // Too many waiting: apply them now, in a command buffer of their
+        // own. It's committed first, so it still runs before the next frame.
+        if (ags->buf_writes_size >= T1_GPU_BUF_WRITES_CAP) {
+            void * combuf = (void *)T1_objc_msg(
+                ags->command_queue,
+                ags->sel_command_buffer);
+            T1_gpu_encode_buf_writes(combuf);
+            T1_objc_msg(combuf, ags->sel_commit);
+        }
+        
+        u64 staging_offset = 0;
+        u8 full = 0;
+        void * staging = T1_gpu_staging_alloc(piece, &staging_offset, &full);
+        if (full) {
+            // the staging is full: the writes so far go now, the same way
+            // (and the staging waits for them, then it's empty)
+            void * combuf = (void *)T1_objc_msg(
+                ags->command_queue,
+                ags->sel_command_buffer);
+            T1_gpu_encode_buf_writes(combuf);
+            T1_objc_msg(combuf, ags->sel_commit);
+            staging = T1_gpu_staging_alloc(piece, &staging_offset, &full);
+        }
+        if (staging == NULL) { return; }
+        T1_std_memcpy(
+            (u8 *)T1_objc_msg(staging, ags->sel_contents) + staging_offset,
+            from + done,
+            piece);
+        
+        T1GPUBufWrite * w = ags->buf_writes + ags->buf_writes_size;
+        ags->buf_writes_size += 1;
+        w->staging = staging;
+        w->staging_offset = staging_offset;
+        w->offset = offset + done;
+        w->size = piece;
+        w->buf_i = buf_i;
+        done += piece;
     }
-    
-    u64 staging_offset = 0;
-    void * staging = T1_gpu_staging_alloc(size, &staging_offset);
-    if (staging == NULL) { return; }
-    T1_std_memcpy(
-        (u8 *)T1_objc_msg(staging, ags->sel_contents) + staging_offset,
-        data,
-        size);
-    
-    T1GPUBufWrite * w = ags->buf_writes + ags->buf_writes_size;
-    ags->buf_writes_size += 1;
-    w->staging = staging;
-    w->staging_offset = staging_offset;
-    w->offset = offset;
-    w->size = size;
-    w->buf_i = buf_i;
 }
 
 // A free read slot with a staging buffer of size, or T1_BUF_READ_NONE
