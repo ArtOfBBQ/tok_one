@@ -271,7 +271,8 @@ static b8 T1_os_win_audio_default_changed(void) {
 }
 
 /*
-Hands the audio engine T1's mix up to T1_AUDIO_PLATFORM_FRAMES ahead, the
+Hands the audio engine the client's samples (T1_audio_fill_platform()) up
+to T1_AUDIO_PLATFORM_FRAMES ahead, the
 part it hasn't played yet ("padding") stays. Not all the room in our
 buffer: Windows may have made it bigger than we asked
 */
@@ -291,7 +292,7 @@ static s32 T1_os_win_audio_fill(void) {
     result = s->render->vtbl->GetBuffer(s->render, frames, &data);
     if (result < 0) { return result; }
 
-    T1_audio_consume_int16_samples((s16 *)data, frames * 2);
+    T1_audio_fill_platform((s16 *)data, frames);
 
     return s->render->vtbl->ReleaseBuffer(s->render, frames, 0);
 }

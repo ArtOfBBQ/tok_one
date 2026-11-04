@@ -33,29 +33,15 @@ T1Tex T1_tex_array_new_slice(
     b8 never_delete,
     char ** const fatal_error);
 
-u32 T1_tex_array_get_img_height(s32 array_i);
-u32 T1_tex_array_get_img_width(s32 array_i);
-
 void T1_tex_array_delete_array(s32 array_i);
 
 void T1_tex_array_delete_slice(s32 array_i, s32 slice_i);
-
-const u8 * T1_tex_array_get_const_rgba(
-    s32 array_i,
-    s32 slice_i);
 
 void T1_tex_array_update_rgba(
     s32 array_i,
     s32 slice_i,
     const u8 * rgba,
     u32 rgba_size);
-
-void T1_tex_array_reg_new_by_splitting_img(
-    T1Img * new_image,
-    u32 rows,
-    u32 columns,
-    b8 free_rgba,
-    char ** const fatal_error);
 
 
 /*
@@ -72,10 +58,5 @@ void T1_tex_update(
 void T1_tex_delete(T1Tex tex);
 u32 T1_tex_get_width(T1Tex tex);
 u32 T1_tex_get_height(T1Tex tex);
-
-
-void T1_tex_array_debug_dump_to_writables(
-    s32 texture_array_i,
-    u32 * success);
 
 #endif // T1_TEX_ARRAY_H

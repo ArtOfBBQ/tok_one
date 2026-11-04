@@ -9,7 +9,7 @@
 #include "T1_gameloop.h"
 #include "T1_macro_settings.h"
 
-#include <unistd.h> // sysconf TODO: is this absolutely necessary?
+#include <mach/mach.h> // vm_page_size (mach, not libc)
 
 #define T1NSUserDomainMask 1
 #define T1NSUTF8StringEncoding 4
@@ -55,13 +55,6 @@ typedef struct {
     f64 x;
     f64 y;
 } T1NSPoint;
-
-T1NSPoint T1_nspoint_make(f32 x, f32 y) {
-    T1NSPoint out;
-    out.x = x;
-    out.y = y;
-    return out;
-}
 
 typedef struct {
     f64 width;
@@ -1234,8 +1227,8 @@ void T1_os_get_writables_dir(
 }
 
 u32 T1_os_get_page_size(void) {
-    long query_result = sysconf(_SC_PAGESIZE);
-    if (query_result <= 0 || query_result > UINT32_MAX) {
+    const u64 query_result = (u64)vm_page_size;
+    if (query_result == 0 || query_result > UINT32_MAX) {
         return 4096;
     }
     return (u32)query_result;
@@ -1280,32 +1273,6 @@ f32 T1_os_get_screen_backing_scale_factor(void) {
     }
     
     return (f32)scale;
-}
-
-void T1_os_get_cwd(char * recip, u32 recip_size) {
-    void * pool = T1_objc_autorelease_pool_push();
-    
-    void * manager = (void *)T1_objc_msg(
-        T1_os_macos_s->class_ns_file_manager,
-        T1_os_macos_s->sel_default_manager);
-    void * nsstr_cwd = (void *)T1_objc_msg(
-        manager,
-        T1_os_macos_s->sel_current_dir_path);
-    
-    char * return_value = T1_objc_nsstring_to_cstring(
-        nsstr_cwd);
-    
-    T1_std_strcpy_cap(recip, recip_size, return_value);
-    
-    T1_objc_autorelease_pool_pop(pool);
-}
-
-float T1_os_x_to_x(const float x) {
-    return x;
-}
-
-float T1_os_y_to_y(const float y) {
-    return y;
 }
 
 void T1_os_enter_fullscreen(void) {
@@ -1431,12 +1398,6 @@ static void T1_os_macos_create_window(
     T1_objc_msg(window, T1_os_macos_s->sel_order_front_regardless);
     
     T1_objc_autorelease_pool_pop(pool);
-}
-
-void T1_os_destroy_main_window_if_possible(void) {
-    if (window) {
-        T1_objc_msg(window, T1_os_macos_s->sel_close);
-    }
 }
 
 /*

@@ -31,11 +31,6 @@
 #define T1_TEXARRAYS_CAP 29
 #define T1_TEX_SLICES_CAP 250
 
-// the max # of perma stored sounds in your app
-#define T1_ALL_PERMASOUNDS_CAP 75
-// 60million samples = 120MB     60...000
-#define T1_ALL_AUDIOSAMPLES_SIZE 45000000
-
 #define T1_INITIAL_WINDOW_HEIGHT 1000.0f
 #define T1_INITIAL_WINDOW_WIDTH  1400.0f // 800.0f// 375.0f
 #define T1_INITIAL_WINDOW_LEFT    200.0f

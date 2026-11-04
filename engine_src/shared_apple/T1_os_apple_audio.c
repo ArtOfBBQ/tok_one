@@ -132,29 +132,23 @@ void T1_apple_audio_init(u8 * good) {
     *good = 1;
 }
 
+// a buffer filled by the client (see T1_audio_fill_platform())
+static void T1_apple_audio_fill_buffer(T1AudioQueueBufferRef buffer) {
+    T1_assert(buffer->mAudioDataByteSize ==
+        buffer->mAudioDataBytesCapacity);
+    // 4 bytes a frame: a left and a right 16-bit sample
+    const u32 frames = buffer->mAudioDataBytesCapacity / 4;
+    T1_audio_fill_platform((s16 *)buffer->mAudioData, frames);
+}
+
+// the queue hands back a buffer it played: filled again and queued again
 static void T1_apple_audio_callback(
     void * in_user_data,
     T1AudioQueueRef queue,
     T1AudioQueueBufferRef buffer)
 {
     (void)in_user_data;
-    
-    T1_assert(buffer->mAudioDataByteSize ==
-        buffer->mAudioDataBytesCapacity);
-    
-    u32 audio_data_cap = buffer->mAudioDataBytesCapacity;
-    u32 samples_to_copy = audio_data_cap / 2;
-    // u32 frames_to_copy_both_runs = bytes_to_copy_both_runs / 4;
-    // buffer->mAudioDataByteSize = bytes_to_copy_both_runs;
-    
-    int16_t * platform_buffer_at = (int16_t *)buffer->mAudioData;
-    
-    T1_audio_consume_int16_samples(
-        /* int16_t * recipient: */
-            platform_buffer_at,
-        /* const u32 samples_to_copy: */
-            samples_to_copy);
-    
+    T1_apple_audio_fill_buffer(buffer);
     s32 err = T1_aa_s->audio_queue_enqueue_buffer(
         queue, buffer, 0, NULL);
     if (err != 0) {
@@ -241,14 +235,10 @@ void T1_apple_audio_start_loop(void) {
     buf = audio_queue_buffer_refs[1];
     buf->mAudioDataByteSize = platform_buffer_size_bytes;
     
-    T1_apple_audio_callback(
-        NULL,
-        audio_queue_ref,
-        audio_queue_buffer_refs[0]);
-    T1_apple_audio_callback(
-        NULL,
-        audio_queue_ref,
-        audio_queue_buffer_refs[1]);
+    // (filled first, then queued once each: the callback would queue
+    // them as well)
+    T1_apple_audio_fill_buffer(audio_queue_buffer_refs[0]);
+    T1_apple_audio_fill_buffer(audio_queue_buffer_refs[1]);
     
     T1_aa_s->audio_queue_enqueue_buffer(
         /* AudioQueueRef  _Nonnull inAQ: */

@@ -4,12 +4,18 @@
 #include "T1_stdint.h"
 
 /*
-T1_assert() is libc's assert() when T1_ASSERTS_ACTIVE is T1_ACTIVE, and
-compiled out when it's T1_INACTIVE, so conditions mustn't have side effects.
+T1_assert(): when T1_ASSERTS_ACTIVE is T1_ACTIVE, a false condition prints
+where it was and what ("T1_shader.c:120: T1_assert(n < 8) failed") and
+crashes right away (a trap: the debugger stops on it), like libc's assert()
+without libc. Compiled out when it's T1_INACTIVE, so conditions mustn't have
+side effects.
 */
 #if T1_ASSERTS_ACTIVE == T1_ACTIVE
-#include <assert.h>
-#define T1_assert(condition) assert(condition)
+void T1_assert_failed(
+    const char * file, uint32_t line, const char * condition);
+#define T1_assert(condition) \
+    ((condition) ? (void)0 : \
+        T1_assert_failed(__FILE__, __LINE__, #condition))
 #elif T1_ASSERTS_ACTIVE == T1_INACTIVE
 #define T1_assert(condition) ((void)0)
 #else

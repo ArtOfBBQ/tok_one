@@ -1,10 +1,12 @@
 #include "T1_os.h"
 
 #include <pthread.h>
-#include <dirent.h>
 #include <errno.h> // for pthreads error codes
-#include <sys/time.h>
-#include <sys/sysctl.h> // for sysctl to get clock frequency
+#include <mach/mach_time.h> // the clock (mach, not libc)
+
+// the kernel's write() (libsystem_kernel, not libc), see
+// T1_os_write_error()
+long write(int fd, const void * bytes, unsigned long size);
 
 #include "T1_std.h"
 #include "T1_mem.h"
@@ -167,7 +169,7 @@ void T1_apple_os_init(void) {
     T1_os_apple_s->sel_contents_of_directory_at_path_error =
         T1_objc_reg_sel(
             "contentsOfDirectoryAtPath:error:");
-    T1_os_apple_s->sel_count = T1_objc_reg_sel("count:");
+    T1_os_apple_s->sel_count = T1_objc_reg_sel("count");
     T1_os_apple_s->sel_get_bytes_length = T1_objc_reg_sel("getBytes:length:");
     T1_os_apple_s->sel_last_path_component =
         T1_objc_reg_sel("lastPathComponent"); 
@@ -198,31 +200,24 @@ void T1_os_get_dir_separator(char * recipient) {
     recipient[1] = '\0';
 }
 
+/*
+Microseconds since boot, the time asleep too (mach's continuous clock, in
+its ticks: times numer / denom is nanoseconds)
+*/
 u64 T1_os_get_current_time_us(void)
 {
-    struct timeval tv;
-    gettimeofday(&tv,NULL);
-    u64 result =
-        1000000 *
-            (u64)tv.tv_sec +
-            (u64)tv.tv_usec;
-    
-    return result;
+    static mach_timebase_info_data_t timebase = { 0, 0 };
+    if (timebase.denom == 0) { mach_timebase_info(&timebase); }
+    const u64 ticks = mach_continuous_time();
+    // (in two steps: ticks * numer alone overflows after a few days)
+    const u64 ns =
+        (ticks / timebase.denom) * timebase.numer +
+        (ticks % timebase.denom) * timebase.numer / timebase.denom;
+    return ns / 1000;
 }
 
-u64 T1_os_get_clock_frequency(void) {
-    //    int mib[2];
-    //    size_t len;
-    //    mib[0] = CTL_KERN;
-    //    mib[1] = KERN_CLOCKRATE;
-    //    struct clockinfo clockinfo;
-    //    len = sizeof(clockinfo);
-    //    int result = sysctl(mib, 2, &clockinfo, &len, NULL, 0);
-    //    T1_assert(result != -1);
-    // log_trace("clockinfo.hz: %d\n", clockinfo.hz);
-    // log_trace("clockinfo.tick: %d\n", clockinfo.tick);
-    // return (u64)clockinfo.tick;
-    return 3600000000; // a guess: 3.6 GHz
+void T1_os_write_error(const char * text) {
+    write(2, text, (unsigned long)T1_std_strlen(text));
 }
 
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -596,54 +591,19 @@ void T1_os_get_filenames_in(
     char * filenames,
     const u32 filenames_cap)
 {
-    #if 1
-    DIR * dir = opendir(directory);
-    if (!dir) {
-        return;
-    }
-    
-    struct dirent * entry;
-    u32 i = 0;
-    while (
-        (entry = readdir(dir)) != NULL)
-    {
-        if (
-            entry->d_name[0] == '\0' ||
-            entry->d_name[0] == '.')
-        {
-            continue;
-        }
-        
-        u32 new_len = (u32)T1_std_strlen(entry->d_name);
-        if (i + new_len + 1 >= filenames_cap) {
-            break;
-        }
-        
-        T1_std_strcpy_cap(
-            filenames + i,
-            filenames_cap - i,
-            entry->d_name);
-        i += new_len;
-        i += 1;
-    }
-    
-    closedir(dir);
-    #else
+    // (NSFileManager: libc's opendir() and readdir() are what T1 doesn't use)
     void * pool = T1_objc_autorelease_pool_push();
     
     void * ns_path = T1_objc_nsstring_construct(
         directory);
-    // NSURL * url = [NSURL URLWithString: path];
-    
-    // T1_assert(url != NULL);
     
     void * manager = (void *)T1_objc_msg(
-        T1_apple_os_s->class_ns_filemanager,
-        T1_apple_os_s->sel_default_manager);
+        T1_os_apple_s->class_ns_filemanager,
+        T1_os_apple_s->sel_default_manager);
     
     void * results = (void *)T1_objc_msg_2arg(
         manager,
-        T1_apple_os_s->sel_contents_of_directory_at_path_error,
+        T1_os_apple_s->sel_contents_of_directory_at_path_error,
         (uintptr_t)ns_path,
         0);
     
@@ -654,7 +614,7 @@ void T1_os_get_filenames_in(
     
     u32 results_count = (u32)T1_objc_msg(
         results,
-        T1_apple_os_s->sel_count);
+        T1_os_apple_s->sel_count);
     
     u32 char_i = 0;
     for (
@@ -664,13 +624,21 @@ void T1_os_get_filenames_in(
     {
         void * results_i = (void *)T1_objc_msg_1arg(
             results,
-            T1_apple_os_s->sel_object_at_index,
+            T1_os_apple_s->sel_object_at_index,
             i);
         void * nsstr_cur_result = (void *)T1_objc_msg(
             results_i,
-            T1_apple_os_s->sel_last_path_component);
+            T1_os_apple_s->sel_last_path_component);
         char * cur_result = T1_objc_nsstring_to_cstring(
             nsstr_cur_result);
+        // (hidden files too, like .DS_Store: not those)
+        if (
+            cur_result == NULL ||
+            cur_result[0] == '\0' ||
+            cur_result[0] == '.')
+        {
+            continue;
+        }
         
         u32 new_len = (u32)T1_std_strlen(cur_result);
         if (char_i + new_len + 1 >= filenames_cap) {
@@ -686,7 +654,6 @@ void T1_os_get_filenames_in(
         char_i += 1;
     }
     T1_objc_autorelease_pool_pop(pool);
-    #endif
 }
 
 void T1_os_get_res_dir(

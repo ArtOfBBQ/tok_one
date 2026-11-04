@@ -88,22 +88,7 @@ void T1_init(
     #error
     #endif
 
-    #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_init(
-        /* void *(*arg_malloc_function)(u64): */
-            T1_mem_malloc_unmanaged);
-    
-    u8 audio_good;
-    T1_os_audio_init(&audio_good);
-    
-    if (audio_good) {
-        T1_os_audio_start_loop();
-    }
-    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_AUDIO_ACTIVE undefined!"
-    #endif
+    // (audio waits for T1_audio_start(): the client's fill makes it)
     
     #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_apple_os_init();
@@ -187,14 +172,6 @@ void T1_init(
         T1_global->fullscreen = engine_save_file->window_fullscreen;
         T1_global->upcoming_fullscreen_request =
             T1_global->fullscreen;
-        #if T1_AUDIO_ACTIVE == T1_ACTIVE
-        T1_audio_state->music_volume = engine_save_file->music_volume;
-        T1_audio_state->sfx_volume = engine_save_file->sound_volume;
-        #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_AUDIO_ACTIVE undefined!"
-        #endif // T1_AUDIO_ACTIVE
     } else {
         T1_global->fullscreen = 0;
         T1_global_update_window_size(
@@ -214,15 +191,6 @@ void T1_init(
     T1_global->window_wh[1]  = T1_INITIAL_WINDOW_HEIGHT;
     T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
     T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
-    
-    #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    T1_audio_state->music_volume  = 0.6f;
-    T1_audio_state->sfx_volume    = 0.8f;
-    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_AUDIO_ACTIVE undefined!"
-    #endif
     
     #else
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"

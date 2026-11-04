@@ -898,23 +898,6 @@ static T1DXGIObject * T1_gpu_d3d11_adapter(void) {
     return adapter;
 }
 
-void T1_os_gpu_get_device_name(c8 * recipient, u32 recipient_cap) {
-    recipient[0] = '\0';
-    if (!T1_os_gpu_active()) { return; }
-
-    T1DXGIObject * adapter = T1_gpu_d3d11_adapter();
-    if (adapter == NULL) { return; }
-    // a DXGI_ADAPTER_DESC starts with the name, 128 WCHARs
-    u8 desc[512];
-    T1_std_memset(desc, 0, sizeof(desc));
-    if (adapter->vtbl->Method8.GetDesc(adapter, desc) >= 0) {
-        WideCharToMultiByte(
-            T1CP_UTF8, 0, (const T1WChar *)desc, -1,
-            recipient, (s32)recipient_cap, NULL, NULL);
-    }
-    T1_D3D_RELEASE(adapter);
-}
-
 /*
 TEXTURES
 */
@@ -1226,54 +1209,6 @@ static void T1_gpu_d3d11_copy_rows(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-void T1_os_gpu_fetch_rgba_at(
-    s32 texture_array_i,
-    s32 texture_i,
-    u8 * rgba_recipient,
-    u32 * recipient_size,
-    u32 * recipient_width,
-    u32 * recipient_height,
-    u32 recipient_cap,
-    u32 * good)
-{
-    *good = 0;
-    *recipient_size = 0;
-    if (
-        !T1_os_gpu_active() ||
-        texture_array_i < 0 || texture_array_i >= T1_TEXARRAYS_CAP ||
-        T1_d3d->texs[texture_array_i] == NULL)
-    {
-        return;
-    }
-
-    u32 w = T1_tex_arrays[texture_array_i].single_img_width;
-    u32 h = T1_tex_arrays[texture_array_i].single_img_height;
-    if (w < 1 || h < 1 || recipient_cap < w * h * 4) { return; }
-
-    T1D3D11Resource * staging = T1_gpu_d3d11_new_staging_tex(w, h);
-    if (staging == NULL) { return; }
-    T1_d3d->ctx->vtbl->CopySubresourceRegion(
-        T1_d3d->ctx,
-        staging, 0, 0, 0, 0,
-        T1_d3d->texs[texture_array_i],
-        (u32)texture_i * T1_d3d->tex_mips[texture_array_i],
-        NULL);
-
-    // waits for the GPU
-    T1D3D11MappedSubresource mapped;
-    if (
-        T1_d3d->ctx->vtbl->Map(
-            T1_d3d->ctx, staging, 0, T1D3D11_MAP_READ, 0, &mapped) >= 0)
-    {
-        T1_gpu_d3d11_copy_rows(rgba_recipient, &mapped, w, h);
-        T1_d3d->ctx->vtbl->Unmap(T1_d3d->ctx, staging, 0);
-        *recipient_width = w;
-        *recipient_height = h;
-        *recipient_size = w * h * 4;
-        *good = 1;
-    }
-    T1_D3D_RELEASE(staging);
-}
 #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
 #else
 #error

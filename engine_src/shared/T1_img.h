@@ -13,16 +13,4 @@ typedef struct {
     b8  never_delete_me; // rgba_values_freeable must be NULL
 } T1Img;
 
-u64 T1_img_get_sum_rgba(const T1Img * input);
-
-u32 T1_img_get_avg_rgba(const T1Img * input);
-
-void T1_img_overwrite_subregion(
-    T1Img * whole_image,
-    const T1Img * new_image,
-    const u32 column_count,
-    const u32 row_count,
-    const u32 at_column,
-    const u32 at_row);
-
 #endif // T1_IMG_H

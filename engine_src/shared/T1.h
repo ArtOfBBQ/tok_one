@@ -373,49 +373,28 @@ void T1_os_mutex_unlock(uint32_t mutex_id);
 
 /*
 AUDIO
-T1 plays raw samples (16-bit stereo at 44.1kHz), decode your sound files
-with whatever parser you like. A sound is known by a name (e.g. its
-filename): T1_audio_sound_id() returns its id, the same one every time,
-and T1_audio_set_samples() gives it its samples once. These only exist with
-T1_AUDIO_ACTIVE, so calls to them need the same #if.
+T1 plays 16-bit stereo at T1_AUDIO_RATE (44.1kHz) and makes none of it:
+your fill makes every sample. T1_audio_start() opens the audio device, and
+from then on T1's audio thread calls fill whenever the device wants more:
+out gets frames frames, a frame a left and a right sample (frames * 2
+int16_t, left first). Calls come every few milliseconds, a few hundred
+frames each, so whatever you put in out plays almost at once.
+
+fill runs on the audio thread, not yours: it must be quick and must never
+wait (no locks held for long, no allocations, no file reads, no printing),
+or the sound stutters. Hand it work through memory both threads can see,
+e.g. C11's <stdatomic.h> (see examples/soundkeyboard: notes tapped on the
+main thread start playing in fill). Mixing sounds, volumes, music, effects
+are all yours to make in fill.
+
+Call it once. *good is 0 when there's no audio device (the app goes on,
+silent). This exists only with T1_AUDIO_ACTIVE (T1_macro_settings.h), so
+calls to it need the same #if.
 */
+#define T1_AUDIO_RATE 44100
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
-int32_t T1_audio_sound_id(
-    const char * name, char ** const fatal_error);
-void T1_audio_set_samples(
-    int32_t sound_id,
-    int16_t * samples,
-    int32_t samples_size);
-/*
-Plays the sound pause_us from now (0: right away). The mix is written ahead
-into a buffer of about 20 seconds, so pause_us plus the sound's length must
-stay below that
-*/
-void T1_audio_play(int32_t sound_id, float volume, uint64_t pause_us);
-/*
-For music: copies samples_size samples of the sound, from sound_offset on,
-into what plays play_cursor_offset samples from now
-*/
-void T1_audio_stream(
-    int32_t  sound_id,
-    uint64_t sound_offset,
-    uint64_t play_cursor_offset,
-    uint32_t samples_size,
-    uint8_t  is_music);
-// how many samples have played
-uint64_t T1_audio_play_cursor(void);
-/*
-Copies the next samples_size samples of the mix (left and right taking
-turns), the ones that play from T1_audio_play_cursor() on, e.g. to draw them
-*/
-void T1_audio_peek(int16_t * recip, uint32_t samples_size);
-void T1_audio_stop_all(void);
-/*
-Bitcrushes everything that plays from now on: each frame is held for
-hold_frames frames (the sample rate divided by it) and keeps only its top
-bits bits. 1 and 16 (or 0 and 0): as it is
-*/
-void T1_audio_set_crush(uint32_t hold_frames, uint32_t bits);
+typedef void (* T1AudioFill)(int16_t * out, uint32_t frames, void * user);
+void T1_audio_start(T1AudioFill fill, void * user, uint8_t * good);
 #elif T1_AUDIO_ACTIVE == T1_INACTIVE
 #else
 #error

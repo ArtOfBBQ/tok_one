@@ -315,6 +315,13 @@ macOS's
 */
 static s64 T1_os_win_perf_freq = 0;
 
+void T1_os_write_error(const char * text) {
+    T1WinHandle err = GetStdHandle((u32)-12); // STD_ERROR_HANDLE
+    if (err == NULL || err == T1_WIN_INVALID_HANDLE) { return; }
+    u32 written = 0;
+    WriteFile(err, text, (u32)T1_std_strlen(text), &written, NULL);
+}
+
 u64 T1_os_get_current_time_us(void) {
     s64 now = 0;
     QueryPerformanceCounter(&now);
@@ -327,10 +334,6 @@ u64 T1_os_get_current_time_us(void) {
 
     // in 2 steps, ticks * 1000000 would overflow after a few days uptime
     return (ticks / freq) * 1000000 + ((ticks % freq) * 1000000) / freq;
-}
-
-u64 T1_os_get_clock_frequency(void) {
-    return 3600000000; // a guess: 3.6 GHz, like on macOS
 }
 
 u64 T1_os_get_filesize(const char * filepath) {
@@ -640,17 +643,6 @@ void T1_os_get_res_dir(char * recip, u32 recip_cap) {
     T1_os_win_wide_to_utf8(wpath, recip, recip_cap);
 }
 
-void T1_os_get_cwd(char * recip, u32 recip_size) {
-    T1WChar wpath[T1_OS_WIN_PATH_CAP];
-    u32 len = GetCurrentDirectoryW(T1_OS_WIN_PATH_CAP, wpath);
-    if (len == 0 || len >= T1_OS_WIN_PATH_CAP) {
-        recip[0] = '\0';
-        return;
-    }
-
-    T1_os_win_wide_to_utf8(wpath, recip, recip_size);
-}
-
 // %APPDATA%\T1_APP_NAME, like macOS's Application Support/T1_APP_NAME
 void T1_os_get_writables_dir(char * recipient, const u32 recipient_size) {
     recipient[0] = '\0';
@@ -752,14 +744,6 @@ f32 T1_os_get_screen_backing_scale_factor(void) {
     }
 
     return T1_os_win_s->scale;
-}
-
-float T1_os_x_to_x(const float x) {
-    return x;
-}
-
-float T1_os_y_to_y(const float y) {
-    return y;
 }
 
 #if T1_GAMEPAD_ACTIVE == T1_ACTIVE
@@ -1392,13 +1376,6 @@ void T1_os_window_open(char ** const fatal_error) {
 
     T1_win32->ShowWindow(T1_os_win_s->hwnd, T1SW_SHOWNORMAL);
     T1_os_win_bring_to_front(T1_os_win_s->hwnd);
-}
-
-void T1_os_destroy_main_window_if_possible(void) {
-    if (T1_os_win_s->hwnd != NULL) {
-        T1_win32->DestroyWindow(T1_os_win_s->hwnd);
-        T1_os_win_s->hwnd = NULL;
-    }
 }
 
 /*

@@ -5,16 +5,19 @@ sound T1 is about to play: the left channel in orange, the right in blue.
 The arrow keys move the panel.
 
 What it shows of T1:
-- sounds: register each with T1_audio_sound_id(), give it its samples once
-  with T1_audio_set_samples(), then T1_audio_play() it any time
-- T1_audio_peek(): the mix that's about to play
+- audio: T1_audio_start(fill) once, and T1 calls fill on its audio thread
+  whenever the speakers need more. T1 makes no sound of its own: this file
+  is the whole mixer (THE MIXER below), a few dozen lines: notes made at
+  startup, voices that play them, the main thread telling fill which keys
+  were tapped through C11 atomics, and fill keeping a copy of what it
+  played for the panel
 - keys: T1_io_key_consume_tap_began_frame() for a press (once per tap),
   T1_io_key_is_down() for as long as a key is held
 - T1_frame_elapsed_us(): movement that doesn't depend on the frame rate
 - no shaders: the app draws its own pixels and uploads them to the
   window's T1Tex, like examples/noise
 
-The audio functions only exist with T1_AUDIO_ACTIVE: concat turns it on in
+T1_audio_start() only exists with T1_AUDIO_ACTIVE: concat turns it on in
 this folder's copy of T1.h. In your own app, set it at the top of T1.h.
 
 Build and run, from the tok_one folder:
@@ -26,6 +29,7 @@ Build and run, from the tok_one folder:
         examples/soundkeyboard/T1.c -o build/examples/soundkeyboard)
 */
 #include <math.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -46,14 +50,14 @@ Build and run, from the tok_one folder:
 // The arrow keys move the panel this far per second
 #define PANEL_SPEED 240.0f
 
-// T1 plays 16-bit stereo at 44.1 kHz: samples go left, right, left, ...
-#define SAMPLE_RATE 44100
-#define NOTE_FRAMES (SAMPLE_RATE / 2)
+// T1 plays 16-bit stereo at T1_AUDIO_RATE: samples go left, right, ...
+#define NOTE_FRAMES (T1_AUDIO_RATE / 2)
 #define NOTES_SIZE 8
 
 static uint8_t rgba[WIDTH * HEIGHT * 4];
-static int16_t samples[PANEL_WIDTH * FRAMES_PER_COLUMN * 2];
-static int16_t note_samples[NOTE_FRAMES * 2];
+// what the panel draws: a copy of what fill played last
+#define SCOPE_FRAMES (PANEL_WIDTH * FRAMES_PER_COLUMN)
+static int16_t samples[SCOPE_FRAMES * 2];
 
 static const float note_frequencies[NOTES_SIZE] = {
     261.63f, 293.66f, 329.63f, 349.23f, 392.00f, 440.00f, 493.88f, 523.25f,
@@ -62,11 +66,87 @@ static const T1IOKey note_keys[NOTES_SIZE] = {
     T1_IO_KEYBOARD_A, T1_IO_KEYBOARD_S, T1_IO_KEYBOARD_D, T1_IO_KEYBOARD_F,
     T1_IO_KEYBOARD_G, T1_IO_KEYBOARD_H, T1_IO_KEYBOARD_J, T1_IO_KEYBOARD_K,
 };
-// A sound's name is how T1 knows it, T1_audio_sound_id() gives its id
 static const char * note_names[NOTES_SIZE] = {
     "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5",
 };
-static int32_t note_sounds[NOTES_SIZE];
+
+/*
+THE MIXER: what T1 asks for, made here. A note is a sound (its samples,
+made at startup, never changed after: both threads may read them). A voice
+plays one, from where it is; fill adds up the voices playing.
+
+The main thread and the audio thread share only atomics: taps[i] counts
+how often note i was tapped (the main thread adds, fill reads), so fill
+starts a voice for each tap it hasn't seen yet. And scope[] is a copy of
+what fill played last, which the main thread draws. Nothing waits on
+anything: fill must never block (see AUDIO in T1.h)
+*/
+static int16_t note_samples[NOTES_SIZE][NOTE_FRAMES * 2];
+static atomic_uint taps[NOTES_SIZE];
+static atomic_short scope[SCOPE_FRAMES * 2];
+
+// only fill touches these
+#define VOICES_CAP 16
+typedef struct {
+    int32_t note; // -1: free
+    uint32_t frame; // how far it played
+} Voice;
+static Voice voices[VOICES_CAP];
+static unsigned taps_seen[NOTES_SIZE];
+
+static void start_voice(int32_t note) {
+    // a free voice, or (16 notes ringing) the one that played longest
+    uint32_t pick = 0;
+    for (uint32_t v = 0; v < VOICES_CAP; v++) {
+        if (voices[v].note < 0) { pick = v; break; }
+        if (voices[v].frame > voices[pick].frame) { pick = v; }
+    }
+    voices[pick].note = note;
+    voices[pick].frame = 0;
+}
+
+// T1 calls this on its audio thread: frames frames, left and right
+static void fill(int16_t * out, uint32_t frames, void * user) {
+    (void)user;
+    // the taps since the last call
+    for (int32_t i = 0; i < NOTES_SIZE; i++) {
+        const unsigned tapped = atomic_load(&taps[i]);
+        while (taps_seen[i] != tapped) {
+            start_voice(i);
+            taps_seen[i]++;
+        }
+    }
+    for (uint32_t f = 0; f < frames; f++) {
+        // 32 bits: overlapping notes add up past 16 before the clamp
+        int32_t left = 0;
+        int32_t right = 0;
+        for (uint32_t v = 0; v < VOICES_CAP; v++) {
+            Voice * voice = &voices[v];
+            if (voice->note < 0) { continue; }
+            const int16_t * note = note_samples[voice->note];
+            left += note[voice->frame * 2 + 0];
+            right += note[voice->frame * 2 + 1];
+            voice->frame++;
+            if (voice->frame == NOTE_FRAMES) { voice->note = -1; }
+        }
+        left = left > 32767 ? 32767 : (left < -32768 ? -32768 : left);
+        right = right > 32767 ? 32767 : (right < -32768 ? -32768 : right);
+        out[f * 2 + 0] = (int16_t)left;
+        out[f * 2 + 1] = (int16_t)right;
+    }
+    // the panel's copy: the last SCOPE_FRAMES frames played
+    const uint32_t n = frames < SCOPE_FRAMES ? frames : SCOPE_FRAMES;
+    const uint32_t keep = SCOPE_FRAMES - n; // older ones move up
+    for (uint32_t i = 0; i < keep * 2; i++) {
+        atomic_store_explicit(&scope[i],
+            atomic_load_explicit(&scope[i + n * 2], memory_order_relaxed),
+            memory_order_relaxed);
+    }
+    for (uint32_t i = 0; i < n * 2; i++) {
+        atomic_store_explicit(&scope[keep * 2 + i],
+            out[(frames - n) * 2 + i], memory_order_relaxed);
+    }
+}
 
 #define CAP_WIDTH  48
 #define CAP_HEIGHT 58
@@ -239,8 +319,10 @@ static void draw(int32_t panel_left, int32_t panel_top) {
         PANEL_WIDTH, 1,
         40, 44, 60);
 
-    // The samples that play next, starting at T1_audio_play_cursor()
-    T1_audio_peek(samples, PANEL_WIDTH * FRAMES_PER_COLUMN * 2);
+    // What fill played last (a few milliseconds ago: what you hear)
+    for (uint32_t i = 0; i < SCOPE_FRAMES * 2; i++) {
+        samples[i] = atomic_load_explicit(&scope[i], memory_order_relaxed);
+    }
     draw_channel(panel_left, panel_top, 1, 80, 160, 255);
     draw_channel(panel_left, panel_top, 0, 255, 160, 60);
 
@@ -248,25 +330,15 @@ static void draw(int32_t panel_left, int32_t panel_top) {
 }
 
 // A sine wave that fades out, the same in the left and right channel
-static void make_note(
-    float frequency,
-    const char * name,
-    int32_t * sound_id,
-    char ** const fatal_error)
-{
+static void make_note(float frequency, int16_t * note) {
     for (uint32_t i = 0; i < NOTE_FRAMES; i++) {
-        float t = (float)i / (float)SAMPLE_RATE;
+        float t = (float)i / (float)T1_AUDIO_RATE;
         float fade = expf(-6.0f * t);
         float value = sinf(2.0f * 3.14159265f * frequency * t) * fade;
-        int16_t sample = (int16_t)(value * 20000.0f);
-        note_samples[i * 2 + 0] = sample;
-        note_samples[i * 2 + 1] = sample;
+        int16_t sample = (int16_t)(value * 12000.0f);
+        note[i * 2 + 0] = sample;
+        note[i * 2 + 1] = sample;
     }
-
-    // T1 copies the samples, note_samples is free for the next note
-    *sound_id = T1_audio_sound_id(name, fatal_error);
-    if (*fatal_error != NULL) { return; }
-    T1_audio_set_samples(*sound_id, note_samples, NOTE_FRAMES * 2);
 }
 
 int main(void) {
@@ -276,18 +348,19 @@ int main(void) {
     T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
 
-    for (uint32_t i = 0; i < NOTES_SIZE; i++) {
-        make_note(
-            note_frequencies[i],
-            note_names[i],
-            &note_sounds[i],
-            &fatal_error);
-    }
-
     if (fatal_error != NULL) {
         printf("%s\n", fatal_error);
         return 1;
     }
+
+    // the notes before the audio starts: fill reads them from then on
+    for (uint32_t i = 0; i < NOTES_SIZE; i++) {
+        make_note(note_frequencies[i], note_samples[i]);
+    }
+    for (uint32_t v = 0; v < VOICES_CAP; v++) { voices[v].note = -1; }
+    uint8_t audio_good = 0;
+    T1_audio_start(fill, NULL, &audio_good);
+    if (!audio_good) { printf("no audio device: the keys stay silent\n"); }
 
     float panel_left = (WIDTH - PANEL_WIDTH) / 2.0f;
     float panel_top = (HEIGHT - PANEL_HEIGHT) / 2.0f;
@@ -299,8 +372,8 @@ int main(void) {
         */
         for (uint32_t i = 0; i < NOTES_SIZE; i++) {
             if (T1_io_key_consume_tap_began_frame(note_keys[i])) {
-                // volume 1, no pause before it plays
-                T1_audio_play(note_sounds[i], 1.0f, 0);
+                // fill sees it the next time T1 calls it, a few ms on
+                atomic_fetch_add(&taps[i], 1);
             }
         }
 

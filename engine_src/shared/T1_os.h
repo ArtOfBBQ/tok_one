@@ -32,8 +32,6 @@ typedef struct {
     f32 window_width;
     f32 window_bottom;
     f32 window_height;
-    f32 music_volume;
-    f32 sound_volume;
     b8 window_fullscreen;
 } T1EngineSaveFile;
 
@@ -88,17 +86,10 @@ void T1_os_get_res_dir(
     c8 * recip,
     u32 recip_cap);
 
-void T1_os_get_cwd(
-    c8 * recipient,
-    u32 recipient_size);
-
 // a root directory where we're allowed to write
 void T1_os_get_writables_dir(
     c8 * recipient,
     u32 recipient_size);
-
-u8 T1_os_writable_exists(const c8 * writable_name);
-u8 T1_os_res_exists(const c8 * resource_name);
 
 u8 T1_os_file_exists(const c8 * filepath);
 
@@ -118,14 +109,6 @@ void T1_os_write_file_to_writables(
     u32 output_size,
     b8 * good);
 
-void T1_os_write_rgba_to_writables(
-    const c8 * local_filename,
-    u8 * rgba,
-    u32 rgba_size,
-    u32 width,
-    u32 height,
-    u8 * good);
-
 void T1_os_copy_file(
     const c8 * filepath_source,
     const c8 * filepath_destination);
@@ -137,14 +120,6 @@ void T1_os_get_filenames_in(
     const c8 * directory,
     char * filenames,
     const u32 filenames_cap);
-
-// Sizes in bytes, 0 if there's no such file. A resource or writable is a
-// filename in that dir, a filepath is a full path.
-u64 T1_os_get_resource_size(
-    const c8 * filename);
-
-u64 T1_os_get_writable_size(
-    const c8 * filename);
 
 u64 T1_os_get_filesize(
     const c8 * filepath);
@@ -167,22 +142,6 @@ void T1_os_read_file(
     u32 * recip_size,
     u64 recip_cap,
     char ** const fatal_error);
-
-void T1_os_read_resource_file(
-    const c8 * filename,
-    c8 * recip,
-    u64 recip_cap,
-    char ** const fatal_error);
-
-void T1_os_read_writable_file(
-    const c8 * filepath_inside_writables,
-    c8 * recip,
-    u64 recip_cap,
-    char ** const fatal_error);
-
-void T1_os_gpu_get_device_name(
-    c8 * recipient,
-    u32 recipient_cap);
 
 void T1_os_gpu_update_capacity_if_needed(
     s32 tex_array_i);
@@ -227,20 +186,15 @@ void T1_os_mutex_lock(u32 mutex_id);
 
 void T1_os_mutex_unlock(u32 mutex_id);
 
-
+// Microseconds since some moment (boot): for durations, not dates
 u64 T1_os_get_current_time_us(void);
 
-u64 T1_os_get_clock_frequency(void);
-
-f32 T1_os_x_to_x(f32 x);
-
-f32 T1_os_y_to_y(f32 y);
+// text to the error output (stderr), as it is: no newline added
+void T1_os_write_error(const char * text);
 
 void T1_os_enter_fullscreen(void);
 
 void T1_os_toggle_fullscreen(void);
-
-
 
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
@@ -256,15 +210,6 @@ void T1_os_gpu_push_tex_slice(
     s32 tex_slice_i);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-void T1_os_gpu_fetch_rgba_at(
-    s32 texture_array_i,
-    s32 texture_i,
-    u8 * rgba_recipient,
-    u32 * recipient_size,
-    u32 * recipient_width,
-    u32 * recipient_height,
-    u32 recipient_cap,
-    u32 * good);
 
 void T1_os_gpu_delete_texture_array(
     s32 array_i);
@@ -287,7 +232,6 @@ u64 T1_os_gpu_frame_us(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
 void T1_os_window_open(char ** const fatal_error);
-void T1_os_destroy_main_window_if_possible(void);
 
 // see T1_gpu_try_shader_source() in T1.h
 void T1_os_gpu_try_shader_source(
