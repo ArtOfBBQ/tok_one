@@ -375,9 +375,12 @@ static T1D3D11View * T1_gpu_d3d11_raw_uav(T1D3D11Resource * buffer, u64 size) {
 
 /*
 A buffer of raw bytes that shaders read (and kernels write), its size a
-multiple of 4, zeroed
+multiple of 4, zeroed. At least room for a Dispatch()'s 3 u32s underneath:
+Direct3D won't make a smaller one with DRAWINDIRECT_ARGS (the views stay the
+size asked for)
 */
 static T1D3D11Resource * T1_gpu_d3d11_new_raw_buffer(u64 size) {
+    if (size < 12) { size = 12; }
     T1D3D11BufferDesc desc;
     T1_std_memset(&desc, 0, sizeof(T1D3D11BufferDesc));
     desc.byte_width = (u32)size;

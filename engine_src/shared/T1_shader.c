@@ -1635,23 +1635,27 @@ static b8 kernel_has_barrier(const Func * e) {
 
 /*
 The kernel's threadgroup memory goes out of its body, to program scope as
-the keyword says ("shared " in GLSL, "groupshared " in HLSL): every entry
-point is a unit of its own, so nothing else sees it
+the keyword says ("shared " in GLSL, "groupshared " in HLSL), right in front
+of the kernel, after the structs and macros it may use (so after the unit's
+other edits there): every entry point is a unit of its own, so nothing else
+sees it
 */
 static void threadgroup_decls(
     Gen * g,
     const Func * e,
-    Buf * b,
     const c8 * keyword)
 {
+    Buf * b = &g->arena;
     for (u32 t = e->body_open; t < e->body_close; t++) {
         if (!is(t, "threadgroup")) { continue; }
         const u32 semi = after_match(g->c, t + 3, "[", "]");
+        const u32 start = str_begin(g);
         buf_cat(b, keyword);
         cat_name(b, t + 1);
         buf_cat(b, " ");
         cat_tokens(b, t + 2, semi);
         buf_cat(b, ";\n");
+        add_text(g, &g->u_pre[e->decl_start], str_end(g, start));
         for (u32 s = t; s <= semi; s++) { g->u_skip[s] = 1; }
     }
 }
@@ -1667,17 +1671,19 @@ static void cat_hlsl_atomics(Buf * b, const u32 name) {
         buf_cat(b, ops[o][0]);
         buf_cat(b, "_");
         cat_name(b, name);
-        buf_cat(b, "(uint i, uint v) { uint o; ");
+        buf_cat(b, "(uint t1_i, uint t1_v) { uint t1_o; ");
         cat_name(b, name);
         buf_cat(b, ".Interlocked");
         buf_cat(b, ops[o][1]);
-        buf_cat(b, "(i * 4, v, o); return o; }\n");
+        buf_cat(b, "(t1_i * 4, t1_v, t1_o); return t1_o; }\n");
     }
     buf_cat(b, "uint t1_atomic_compare_exchange_");
     cat_name(b, name);
-    buf_cat(b, "(uint i, uint e, uint v) { uint o; ");
+    buf_cat(b, "(uint t1_i, uint t1_e, uint t1_v) { uint t1_o; ");
     cat_name(b, name);
-    buf_cat(b, ".InterlockedCompareExchange(i * 4, e, v, o); return o; }\n");
+    buf_cat(b,
+        ".InterlockedCompareExchange(t1_i * 4, t1_e, t1_v, t1_o); "
+        "return t1_o; }\n");
 }
 
 static void make_unit(Gen * g, const u32 entry_f) {
@@ -1732,7 +1738,6 @@ static void make_unit(Gen * g, const u32 entry_f) {
                 "    if (any(greaterThanEqual(gl_GlobalInvocationID, "
                 "t1_grid_size))) { return; }\n");
         }
-        threadgroup_decls(g, e, gl, "shared ");
     }
 
     // the parameters
@@ -1943,6 +1948,8 @@ static void make_unit(Gen * g, const u32 entry_f) {
         g->u_pre[first_kept_func] = str_end(g, s);
     }
     T1_mem_free_managed(gl->data);
+
+    if (e->stage == STAGE_KERNEL) { threadgroup_decls(g, e, "shared "); }
 
     write_unit(g);
 }
@@ -2863,7 +2870,19 @@ static const c8 * const hlsl_prelude =
     "#define T1_atomic_exchange(b, i, v) t1_atomic_exchange_##b((i), (v))\n"
     "#define T1_atomic_compare_exchange(b, i, e, v) "
         "t1_atomic_compare_exchange_##b((i), (e), (v))\n"
-    "#define T1_threadgroup_barrier() GroupMemoryBarrierWithGroupSync()\n"
+    // (FXC's preprocessor refuses "name()": no parameters, no parentheses)
+    "#define T1_threadgroup_barrier GroupMemoryBarrierWithGroupSync\n"
+    // (see hlsl_vector_writes())
+    "#define T1_VEC_SET_2(T) T##2 t1_vec_set_##T##2(T##2 v, uint i, T e) { "
+        "v.x = i == 0u ? e : v.x; v.y = i == 1u ? e : v.y; return v; }\n"
+    "#define T1_VEC_SET_3(T) T##3 t1_vec_set_##T##3(T##3 v, uint i, T e) { "
+        "v.x = i == 0u ? e : v.x; v.y = i == 1u ? e : v.y; "
+        "v.z = i == 2u ? e : v.z; return v; }\n"
+    "#define T1_VEC_SET_4(T) T##4 t1_vec_set_##T##4(T##4 v, uint i, T e) { "
+        "v.x = i == 0u ? e : v.x; v.y = i == 1u ? e : v.y; "
+        "v.z = i == 2u ? e : v.z; v.w = i == 3u ? e : v.w; return v; }\n"
+    "#define T1_VEC_SET(T) T1_VEC_SET_2(T) T1_VEC_SET_3(T) T1_VEC_SET_4(T)\n"
+    "T1_VEC_SET(float) T1_VEC_SET(int) T1_VEC_SET(uint) T1_VEC_SET(bool)\n"
     "#define T1_HLSL 1\n"
     "#pragma pack_matrix(row_major)\n"
     "#define f32 float\n"
@@ -3487,6 +3506,115 @@ static b8 is_assign_op(const u32 i) {
     return
         kind(i) == SK_PUNCT &&
         in_list(i, ops, sizeof(ops) / sizeof(ops[0]));
+}
+
+/*
+FXC can't write a vector's component through an index it doesn't know, MSL
+and GLSL can (X3500, or "forced to unroll loop, but unrolling failed" around
+it). A statement like v[i] += e;, on a variable or its members, becomes
+{ uint t1_c = (i); v = t1_vec_set_float3(v, t1_c, v[t1_c] + (e)); }
+(reading through an index is fine). Literal indices stay as they are.
+*/
+static void hlsl_vector_writes(Gen * g) {
+    Check * c = g->c;
+    Buf * a = &g->arena;
+
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 i = fn->body_open + 1; i < fn->body_close; i++) {
+            if (kind(i) != SK_IDENT || is_punct(i - 1, ".")) { continue; }
+            if (!is_punct(i + 1, "[") && !is_punct(i + 1, ".")) { continue; }
+
+            VType t = vtype_of_variable(c, i);
+            u32 open = i + 1;
+            while (is_punct(open, ".") && kind(open + 1) == SK_IDENT) {
+                t = t.base == VB_STRUCT && !t.array ?
+                    vtype_of_member(c, t, open + 1) : vtype_none();
+                open += 2;
+            }
+            if (!is_vector(t) || !is_punct(open, "[")) { continue; }
+            const u32 close = after_match(c, open, "[", "]") - 1;
+            const u32 op = close + 1;
+            if (!is_assign_op(op)) {
+                if (is_punct(i - 1, "++") || is_punct(i - 1, "--")) {
+                    fail(g, i, "write a vector's component as v[i] op= value;");
+                }
+                continue;
+            }
+            if (kind(open + 1) == SK_NUMBER && open + 2 == close) { continue; }
+
+            // the statement must start here and end with a ';'
+            u32 semi = op;
+            u32 nesting = 0;
+            while (semi < fn->body_close) {
+                if (is_punct(semi, "(")) { nesting++; }
+                if (is_punct(semi, ")")) {
+                    if (nesting == 0) { break; }
+                    nesting--;
+                }
+                if (nesting == 0 && is_punct(semi, ";")) { break; }
+                semi++;
+            }
+            const b8 starts_statement =
+                is_punct(i - 1, ";") || is_punct(i - 1, "{") ||
+                is_punct(i - 1, "}") || is_punct(i - 1, ")") ||
+                is_punct(i - 1, ":") || is(i - 1, "else");
+            if (!is_punct(semi, ";") || !starts_statement) {
+                fail(g, i, "write a vector's component as v[i] op= value;");
+                continue;
+            }
+
+            // (the new statement reads the vector: FXC won't have that of a
+            // local with nothing in it yet, whatever MSL's undefined holds)
+            for (u32 j = i; j > fn->params_open; j--) {
+                if (same_text(j - 1, i) && declares(c, j - 1)) {
+                    const u32 name = j - 1;
+                    if (
+                        g->g_post[name] == NULL &&
+                        (is_punct(name + 1, ";") || is_punct(name + 1, ",")) &&
+                        name > fn->body_open)
+                    {
+                        u32 z = str_begin(g);
+                        buf_cat(a, " = (");
+                        cat_name(a, name - 1);
+                        buf_cat(a, ")0");
+                        g->g_post[name] = str_end(g, z);
+                    }
+                    break;
+                }
+            }
+
+            g->g_repl[i] = "{ uint t1_c = (";
+            for (u32 s = i + 1; s <= open; s++) { g->g_skip[s] = 1; }
+
+            const b8 step = is_punct(op, "++") || is_punct(op, "--");
+            u32 s = str_begin(g);
+            buf_cat(a, "); ");
+            for (u32 n = i; n < open; n++) { cat_name(a, n); }
+            buf_cat(a, " = t1_vec_set_");
+            buf_cat(a,
+                t.base == VB_FLOAT ? "float" :
+                t.base == VB_INT ? "int" :
+                t.base == VB_UINT ? "uint" : "bool");
+            cat_u32(a, t.width);
+            buf_cat(a, "(");
+            for (u32 n = i; n < open; n++) { cat_name(a, n); }
+            buf_cat(a, ", t1_c, ");
+            if (!is_punct(op, "=")) {
+                for (u32 n = i; n < open; n++) { cat_name(a, n); }
+                buf_cat(a, "[t1_c] ");
+                // the operator without its '=' (++ and -- add or take 1)
+                buf_cat_n(a,
+                    T1_token_text(tz, op),
+                    step ? 1 : T1_token_size(tz, op) - 1);
+                buf_cat(a, " ");
+            }
+            buf_cat(a, step ? "(1" : "(");
+            g->g_repl[close] = str_end(g, s);
+            g->g_skip[op] = 1;
+            g->g_repl[semi] = ")); }";
+        }
+    }
 }
 
 /*
@@ -4280,7 +4408,6 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
         if (!kernel_has_barrier(e)) {
             buf_cat(pro, "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
         }
-        threadgroup_decls(g, e, gl, "groupshared ");
     } else if (e->stage == STAGE_VERTEX) {
         /*
         Metal's [[vertex_id]] counts from the draw's first vertex, D3D's
@@ -4524,6 +4651,8 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
     }
     T1_mem_free_managed(gl->data);
 
+    if (e->stage == STAGE_KERNEL) { threadgroup_decls(g, e, "groupshared "); }
+
     write_unit(g);
 }
 
@@ -4550,6 +4679,7 @@ void T1_shader_to_hlsl(
     global_edits(&g);
     hlsl_switch_edits(&g);
     hlsl_struct_functions(&g, loadable);
+    hlsl_vector_writes(&g);
     hlsl_buffer_edits(&g, loadable);
     hlsl_constructor_edits(&g);
     hlsl_stage_edits(&g);
