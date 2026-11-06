@@ -462,6 +462,17 @@ kernel void k(
     out[t] = 1.0f;
 }
 
+//== threadgroup_never_written
+// why: nothing writes this threadgroup memory
+kernel void k(
+    uint t [[ thread_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    threadgroup uint s[256];
+    T1_threadgroup_barrier();
+    out[t] = s[0];
+}
+
 //== index_with_side_effect_before_component
 // why: keep the indices before it plain
 kernel void k(
