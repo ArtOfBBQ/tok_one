@@ -3553,8 +3553,9 @@ static b8 is_assign_op(const u32 i) {
 /*
 FXC can't write a vector's component or a matrix's column through an index it
 doesn't know, MSL and GLSL can (X3500, or "forced to unroll loop, but
-unrolling failed" around it). So a statement that does, on a variable, its
-members or a buffer's element, sets the whole vector or matrix instead:
+unrolling failed" around it). So a statement that does, on a variable or its
+members, sets the whole vector or matrix instead (a buffer's element needs
+none of this, its address goes down to what's written, hlsl_member_offsets()):
     v[i] += e;  ->  { uint t1_c = (i); v = t1_vec_set_float3(v, t1_c,
                       v[t1_c] + (e)); }
     m[i].x = e; ->  { uint t1_c = (i); float3 t1_v = m[t1_c]; t1_v.x = e;
@@ -3646,25 +3647,21 @@ static void cat_set_value_open(
 
 /*
 The statement from first to semi writes through the index at open, of a
-vector or matrix of type t. root goes in front of first..open to name that
-vector or matrix ("" if first is its name), after comes after the rewrite.
+vector or matrix of type t that first..open names.
 */
 static void hlsl_chain_write(
     Gen * g,
-    const c8 * root,
     const VType t,
     const u32 first,
     const u32 open,
     const u32 op,
-    const u32 semi,
-    const c8 * after)
+    const u32 semi)
 {
     Check * c = g->c;
     Buf * a = &g->arena;
     const u32 close = after_match(c, open, "[", "]") - 1;
 
     u32 s = str_begin(g);
-    buf_cat(a, root);
     for (u32 n = first; n < open; n++) { cat_name(a, n); }
     const c8 * base = str_end(g, s);
 
@@ -3686,7 +3683,6 @@ static void hlsl_chain_write(
 
         s = str_begin(g);
         buf_cat(a, ")); }");
-        buf_cat(a, after);
         g->g_repl[semi] = str_end(g, s);
         return;
     }
@@ -3726,8 +3722,21 @@ static void hlsl_chain_write(
     buf_cat(a, "(");
     buf_cat(a, base);
     buf_cat(a, ", t1_c, t1_v); }");
-    buf_cat(a, after);
     g->g_repl[semi] = str_end(g, store);
+}
+
+// Goes past the .member and [index] parts of a chain, from t
+static u32 chain_after(const Check * c, const Func * fn, u32 t) {
+    while (t < fn->body_close) {
+        if (is_punct(t, ".") && kind(t + 1) == SK_IDENT) {
+            t += 2;
+        } else if (is_punct(t, "[")) {
+            t = after_match(c, t, "[", "]");
+        } else {
+            break;
+        }
+    }
+    return t;
 }
 
 // The statement that op starts ends at the ';' this returns, or fails
@@ -3770,16 +3779,7 @@ static void hlsl_vector_writes(Gen * g) {
             if (buffer) { continue; }
 
             // the chain up to what comes after it
-            u32 op = i + 1;
-            while (op < fn->body_close) {
-                if (is_punct(op, ".") && kind(op + 1) == SK_IDENT) {
-                    op += 2;
-                } else if (is_punct(op, "[")) {
-                    op = after_match(c, op, "[", "]");
-                } else {
-                    break;
-                }
-            }
+            const u32 op = chain_after(c, fn, i + 1);
             VType t = vtype_of_variable(c, i);
             const u32 open = chain_first_runtime_index(c, &t, i + 1, op);
             if (open == op) { continue; }
@@ -3813,15 +3813,79 @@ static void hlsl_vector_writes(Gen * g) {
                     break;
                 }
             }
-            hlsl_chain_write(g, "", t, i, open, op, semi, "");
+            hlsl_chain_write(g, t, i, open, op, semi);
         }
     }
 }
 
 /*
+The type's token of the declaration that j names: float a = 1.0f, b; gives
+float for a and b. UINT32_MAX if j isn't one
+*/
+static u32 local_declaration_type(
+    const Check * c,
+    const Func * fn,
+    const u32 j)
+{
+    u32 nesting = 0;
+    for (u32 t = j - 1; t > fn->body_open; t--) {
+        if (
+            is_bracket(c, t, ")") || is_bracket(c, t, "]") ||
+            is_bracket(c, t, "}"))
+        {
+            nesting++;
+            continue;
+        }
+        if (
+            is_bracket(c, t, "(") || is_bracket(c, t, "[") ||
+            is_bracket(c, t, "{"))
+        {
+            if (nesting == 0) { return UINT32_MAX; }
+            nesting--;
+            continue;
+        }
+        if (nesting > 0) { continue; }
+        if (is_punct(t, ";")) { return UINT32_MAX; }
+        if (is_type(c, t) && declares(c, t + 1)) {
+            return t + 1 == j || is_punct(j - 1, ",") ? t : UINT32_MAX;
+        }
+    }
+    return UINT32_MAX;
+}
+
+/*
+Whether FXC would refuse this array's reads unless it starts with values: its
+first use isn't a write, or it's read at a literal index (FXC follows those).
+Otherwise it stays as it is: zeros are work for every thread, which a stack
+or a table filled before it's read shouldn't pay for
+*/
+static b8 local_array_needs_zeros(
+    const Check * c,
+    const Func * fn,
+    const u32 name)
+{
+    b8 first = 1;
+    for (u32 t = name + 1; t < fn->body_close; t++) {
+        if (
+            !same_text(t, name) ||
+            is_punct(t - 1, ".") ||
+            !is_punct(t + 1, "["))
+        {
+            continue;
+        }
+        const u32 close = after_match(c, t + 1, "[", "]") - 1;
+        const u32 op = chain_after(c, fn, close + 1);
+        const b8 write = is_assign_op(op);
+        if (first && !is_punct(op, "=")) { return 1; }
+        if (!write && kind(t + 2) == SK_NUMBER && t + 3 == close) { return 1; }
+        first = 0;
+    }
+    return 0;
+}
+
+/*
 A local with nothing in it is undefined in MSL, and a read of it an error in
-FXC (X4000) where it can tell: they all start at 0. Arrays can't be cast to,
-and FXC doesn't mind them.
+FXC (X4000, X4575) where it can tell: they start at 0, arrays if they must.
 */
 static void hlsl_local_zeros(Gen * g) {
     Check * c = g->c;
@@ -3829,23 +3893,21 @@ static void hlsl_local_zeros(Gen * g) {
     for (u32 f = 0; f < c->funcs_size; f++) {
         const Func * fn = &c->funcs[f];
         for (u32 j = fn->body_open + 1; j < fn->body_close; j++) {
-            if (
-                kind(j) != SK_IDENT ||
-                (!is_punct(j + 1, ";") && !is_punct(j + 1, ",")))
-            {
-                continue;
-            }
-            u32 type = j - 1;
-            while (is_punct(type, ",") && kind(type - 1) == SK_IDENT) {
-                type -= 2;
-            }
-            if (!is_type(c, type) || !declares(c, type + 1)) { continue; }
+            if (kind(j) != SK_IDENT) { continue; }
+            const b8 array = is_punct(j + 1, "[");
+            const u32 end = array ? after_match(c, j + 1, "[", "]") : j + 1;
+            if (!is_punct(end, ";") && !is_punct(end, ",")) { continue; }
+            const u32 type = local_declaration_type(c, fn, j);
+            if (type == UINT32_MAX) { continue; }
             if (is(type, "T1Textures") || is(type, "T1WriteTex")) { continue; }
+            if (is(type - 1, "threadgroup")) { continue; }
+            if (array && !local_array_needs_zeros(c, fn, j)) { continue; }
             u32 s = str_begin(g);
             buf_cat(a, " = (");
             cat_name(a, type);
+            for (u32 n = j + 1; n < end; n++) { cat_name(a, n); }
             buf_cat(a, ")0");
-            add_text(g, &g->g_post[j], str_end(g, s));
+            add_text(g, &g->g_post[end - 1], str_end(g, s));
         }
     }
 }
@@ -3853,22 +3915,29 @@ static void hlsl_local_zeros(Gen * g) {
 /*
 Turns the members after a buffer element (the chain from t to chain_end,
 like .pos[1]) into offsets added to its address: .pos[1] becomes
-" + t1_off_T_m + (1) * t1_size_float", as far as there are load functions.
-type_i starts as the element's type and ends as the type at the address,
-*last is the last token of the address (it starts as the element's ']')
+" + t1_off_T_m + (1) * t1_size_float", as far as there are load functions,
+then on into a matrix's column and a vector's component: .m[j].x becomes
+" + t1_off_T_m + (j) * t1_size_float3 + 0u". Only what's used is loaded and
+stored, which spares FXC the rest and leaves the neighbours to other threads
+(and a store of a whole matrix right after loading one, in a thread that has
+just stored it, loses the change on some AMD drivers).
+type_i starts as the element's type, *type_name ends as the type at the
+address, *last is the last token of the address (it starts as the element's
+']')
 */
 static void hlsl_member_offsets(
     Gen * g,
     const b8 * loadable,
     u32 t,
     const u32 chain_end,
-    u32 * type_i,
+    u32 type_i,
+    const c8 ** type_name,
     u32 * last)
 {
     Check * c = g->c;
     Buf * a = &g->arena;
     while (t < chain_end && is_punct(t, ".")) {
-        const StructDef * d = find_struct(c, *type_i);
+        const StructDef * d = find_struct(c, type_i);
         if (d == NULL || !loadable[d - c->struct_defs]) { break; }
         DataMember members[DATA_MEMBERS_CAP];
         u32 size = data_members(c, d, members);
@@ -3888,7 +3957,7 @@ static void hlsl_member_offsets(
         cat_u32(a, m);
         g->g_repl[t] = str_end(g, s);
         g->g_skip[t + 1] = 1;
-        *type_i = members[m].type_i;
+        type_i = members[m].type_i;
         *last = t + 1;
         t += 2;
         if (array) {
@@ -3896,11 +3965,60 @@ static void hlsl_member_offsets(
             g->g_repl[t] = " + (";
             s = str_begin(g);
             buf_cat(a, ") * t1_size_");
-            cat_hlsl_type(a, *type_i);
+            cat_hlsl_type(a, type_i);
             g->g_repl[index_close] = str_end(g, s);
             *last = index_close;
             t = index_close + 1;
         }
+    }
+
+    u32 s = str_begin(g);
+    cat_hlsl_type(a, type_i);
+    *type_name = str_end(g, s);
+
+    VType v = vtype_of_name(c, type_i);
+    if (v.base == VB_MATRIX && t < chain_end && is_punct(t, "[")) {
+        const u32 close = after_match(c, t, "[", "]") - 1;
+        g->g_repl[t] = " + (";
+        s = str_begin(g);
+        buf_cat(a, ") * t1_size_float");
+        cat_u32(a, v.width);
+        g->g_repl[close] = str_end(g, s);
+        s = str_begin(g);
+        buf_cat(a, "float");
+        cat_u32(a, v.width);
+        *type_name = str_end(g, s);
+        *last = close;
+        t = close + 1;
+        v = vtype(VB_FLOAT, v.width);
+    }
+    if (!is_vector(v) || v.base == VB_BOOL || t >= chain_end) { return; }
+
+    const c8 * component =
+        v.base == VB_FLOAT ? "float" : v.base == VB_INT ? "int" : "uint";
+    if (is_punct(t, "[")) {
+        const u32 close = after_match(c, t, "[", "]") - 1;
+        g->g_repl[t] = " + (";
+        g->g_repl[close] = ") * 4u";
+        *type_name = component;
+        *last = close;
+    } else if (
+        is_punct(t, ".") &&
+        swizzle_size(t + 1) == 1 &&
+        T1_token_size(tz, t + 1) == 1)
+    {
+        const c8 letter = T1_token_text(tz, t + 1)[0];
+        s = str_begin(g);
+        buf_cat(a, " + ");
+        cat_u32(a,
+            (letter == 'x' || letter == 'r') ? 0u :
+            (letter == 'y' || letter == 'g') ? 4u :
+            (letter == 'z' || letter == 'b') ? 8u : 12u);
+        buf_cat(a, "u");
+        g->g_repl[t] = str_end(g, s);
+        g->g_skip[t + 1] = 1;
+        *type_name = component;
+        *last = t + 1;
     }
 }
 
@@ -3934,16 +4052,7 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             if (ptr == NULL) { continue; }
 
             u32 close = after_match(c, i + 1, "[", "]") - 1;
-            u32 chain_end = close + 1;
-            while (chain_end < fn->body_close) {
-                if (is_punct(chain_end, ".") && kind(chain_end + 1) == SK_IDENT) {
-                    chain_end += 2;
-                } else if (is_punct(chain_end, "[")) {
-                    chain_end = after_match(c, chain_end, "[", "]");
-                } else {
-                    break;
-                }
-            }
+            const u32 chain_end = chain_after(c, fn, close + 1);
 
             if (
                 is_punct(i - 1, "++") || is_punct(i - 1, "--") ||
@@ -3956,14 +4065,15 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             u32 s = str_begin(g);
             Buf * a = &g->arena;
             if (!is_assign_op(chain_end)) {
-                u32 type_i = ptr->type_i;
+                const c8 * type_name = NULL;
                 u32 last = close;
                 hlsl_member_offsets(
-                    g, loadable, close + 1, chain_end, &type_i, &last);
+                    g, loadable, close + 1, chain_end, ptr->type_i,
+                    &type_name, &last);
 
                 s = str_begin(g);
                 buf_cat(a, "t1_load_");
-                cat_hlsl_type(a, type_i);
+                buf_cat(a, type_name);
                 buf_cat(a, "(");
                 cat_name(a, i);
                 buf_cat(a, ", (");
@@ -3995,47 +4105,24 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             Only the member written to is loaded and stored, then the rest
             of the chain (e.g. a swizzle) works on the member
             */
-            u32 type_i = ptr->type_i;
+            const c8 * type_name = NULL;
             u32 last = close; // the last token of the address
             hlsl_member_offsets(
-                g, loadable, close + 1, chain_end, &type_i, &last);
-
-            // (an index FXC can't write through: hlsl_chain_write())
-            VType tail = vtype_of_name(c, type_i);
-            const u32 tail_open = chain_first_runtime_index(
-                c, &tail, last + 1, chain_end);
-            const b8 indexed = tail_open != chain_end;
-            if (indexed && !chain_is_plain(fn, last + 1, tail_open)) {
-                fail(g, i,
-                    "writing a vector's component through a variable index, "
-                    "keep the indices before it plain (no calls or buffers)");
-                continue;
-            }
+                g, loadable, close + 1, chain_end, ptr->type_i,
+                &type_name, &last);
 
             s = str_begin(g);
             buf_cat(a, "; ");
-            cat_hlsl_type(a, type_i);
+            buf_cat(a, type_name);
             buf_cat(a, " t1_e = t1_load_");
-            cat_hlsl_type(a, type_i);
+            buf_cat(a, type_name);
             buf_cat(a, "(");
             cat_name(a, i);
-            buf_cat(a, indexed ? ", t1_a); " : ", t1_a); t1_e");
+            buf_cat(a, ", t1_a); t1_e");
             add_text(g, &g->g_post[last], str_end(g, s));
-            if (indexed) {
-                s = str_begin(g);
-                buf_cat(a, " t1_store_");
-                cat_hlsl_type(a, type_i);
-                buf_cat(a, "(");
-                cat_name(a, i);
-                buf_cat(a, ", t1_a, t1_e); }");
-                hlsl_chain_write(
-                    g, "t1_e", tail, last + 1, tail_open, chain_end, semi,
-                    str_end(g, s));
-                continue;
-            }
             s = str_begin(g);
             buf_cat(a, "; t1_store_");
-            cat_hlsl_type(a, type_i);
+            buf_cat(a, type_name);
             buf_cat(a, "(");
             cat_name(a, i);
             buf_cat(a, ", t1_a, t1_e); }");
@@ -4985,6 +5072,33 @@ static b8 statement_returns(const Check * c, u32 * at) {
         *at = s;
         return 0;
     }
+    /*
+    A switch returns if it has a default, nothing breaks out of it (or out of
+    a loop in it: that doesn't matter here, and is rare) and it ends in a return
+    */
+    if (is(t, "switch") && is_punct(t + 1, "(")) {
+        const u32 open = next_real(c, after_match(c, t + 1, "(", ")"));
+        if (is_bracket(c, open, "{")) {
+            const u32 after = after_match(c, open, "{", "}");
+            b8 has_default = 0;
+            b8 breaks = 0;
+            for (u32 s = open + 1; s + 1 < after; s++) {
+                if (is(s, "default")) { has_default = 1; }
+                if (is(s, "break")) { breaks = 1; }
+            }
+            // the last statement, after a ';', a brace or its label's ':'
+            u32 last = after - 2;
+            while (
+                last > open + 1 &&
+                !is_punct(last - 1, ";") && !is_punct(last - 1, ":") &&
+                !is_punct(last - 1, "{") && !is_punct(last - 1, "}"))
+            {
+                last--;
+            }
+            *at = after;
+            return has_default && !breaks && is(last, "return");
+        }
+    }
     if (
         (is(t, "for") || is(t, "while") || is(t, "switch")) &&
         is_punct(t + 1, "("))
@@ -5173,9 +5287,19 @@ static b8 text_has(const c8 * text, const c8 * part) {
     return 0;
 }
 
+#define THREADGROUP_DECLS_CAP 16
+
+static u32 shared_index(const u32 t, const Name * shared, const u32 size) {
+    for (u32 n = 0; n < size && n < THREADGROUP_DECLS_CAP; n++) {
+        if (equal_names(shared[n], t)) { return n; }
+    }
+    return THREADGROUP_DECLS_CAP - 1;
+}
+
 /*
 A write to threadgroup memory that every thread makes to the same place is a
-race in MSL and GLSL, and an error in FXC (X3695). Its index must depend on
+race in MSL and GLSL, and an error in FXC (X3695) where it can tell: a loop
+over every slot gets past FXC, and is the same race. Its index must depend on
 the thread's position (found by following the kernel's assignments), or it's
 inside an if that does.
 */
@@ -5194,6 +5318,7 @@ static void check_threadgroup_writes(
         }
     }
     if (shared_size == 0) { return; }
+    b8 written[THREADGROUP_DECLS_CAP] = {0};
 
     u32 moving_size = 0;
     for (u32 t = f->params_open + 1; t < f->params_close; t++) {
@@ -5248,17 +5373,9 @@ static void check_threadgroup_writes(
             continue;
         }
         const u32 close = after_match(c, t + 1, "[", "]") - 1;
-        u32 op = close + 1;
-        while (op < f->body_close) {
-            if (is_punct(op, ".") && kind(op + 1) == SK_IDENT) {
-                op += 2;
-            } else if (is_punct(op, "[")) {
-                op = after_match(c, op, "[", "]");
-            } else {
-                break;
-            }
-        }
+        const u32 op = chain_after(c, f, close + 1);
         if (!is_assign_op(op)) { continue; }
+        written[shared_index(t, shared, shared_size)] = 1;
         b8 moves = name_tainted(t + 2, close, moving, moving_size);
         for (u32 u = f->body_open + 1; u < t && !moves; u++) {
             if (!is(u, "if") || !is_punct(u + 1, "(")) { continue; }
@@ -5278,6 +5395,16 @@ static void check_threadgroup_writes(
             report(c, t,
                 "every thread writes the same threadgroup memory: index it "
                 "by the thread's position, or write in an if on it");
+        }
+    }
+
+    // (undefined in MSL and GLSL, an error in FXC: X4575)
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (
+            is(t, "threadgroup") &&
+            !written[shared_index(t + 2, shared, shared_size)])
+        {
+            report(c, t + 2, "nothing writes this threadgroup memory");
         }
     }
 }
@@ -5615,7 +5742,7 @@ static void check_portable(Check * c) {
             u32 s = fn->body_open;
             if (!statement_returns(c, &s)) {
                 report(c, fn->name_i,
-                    "every path must return a value, FXC refuses it (X3080)");
+                    "every path must return a value, FXC refuses it (X3507)");
             }
         }
         check_for_names(c, fn);

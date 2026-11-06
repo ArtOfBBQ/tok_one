@@ -234,10 +234,11 @@ translation can't take, on every platform alike, and says where):
 - a for's variable has a name of its own among those around it
 - = { ... } lists every element; no arrays as parameters, or assigned whole
 - structs go at program scope
-- threads share no vector: two threads writing parts of one element of a
-  buffer may undo each other, and threadgroup memory's vectors take literal
-  indices only. A write to threadgroup memory is indexed by the thread's
-  position, or inside an if on it (not one place for all threads)
+- threads write a buffer's vector one component at a time: a swizzle of
+  several may undo what another thread wrote to the rest of it. Threadgroup
+  memory's vectors take literal indices only. A write to threadgroup memory
+  is indexed by the thread's position, or inside an if on it (not one place
+  for all threads), and something must write it
 - sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
   T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
   T1_read(), from the T1Textures at texture(0); no samplers of your own
