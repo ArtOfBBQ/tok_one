@@ -578,7 +578,7 @@ static void T1_os_macos_ns_window_delegate_window_will_close(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    // The client's loop sees T1_window_close_requested() and shuts down
+    // T1_frame_update() then returns 0, and the client's loop ends
     T1_os_close_app();
 }
 
@@ -1235,7 +1235,7 @@ u32 T1_os_get_page_size(void) {
 }
 
 void T1_os_close_app(void) {
-    // The client's loop sees T1_window_close_requested() and shuts down
+    // T1_frame_update() then returns 0, and the client's loop ends
     T1_os_macos_s->quit_requested = true;
 }
 

@@ -26,9 +26,15 @@ file), so a port can tell what still differs:
 - PERFORMANCE: a few heavy passes (math, transcendentals, branches, tables
   at program scope and local ones, struct loads and stores, texture samples, write_tex, blending) each run alone for
   some frames, timed on the GPU (T1_gpu_frame_us()), divided by the time of
-  a plain arithmetic pass on the same GPU. That ratio is about the same on
-  any machine, unlike the times: a case more than SLOW_FACTOR times
-  Metal's ratio is reported SLOW (a translation that's much worse)
+  a pass doing the same with nothing to translate, on the same GPU (its
+  unit). That ratio is about the same on any machine, unlike the times: a
+  case more than SLOW_FACTOR times Metal's ratio is reported SLOW (a
+  translation that's much worse). Its unit matters: GPUs differ a lot in
+  how their arithmetic, memory and blending compare (Apple's tiles make
+  blending nearly free), so a table is compared to the same loop without
+  one, a struct to plain floats, blending to drawing without, and only
+  what's mostly arithmetic to the arithmetic pass. The units themselves
+  are only printed.
 
 Every case's shaders are compiled on their own first, so a case that
 doesn't compile on a backend fails alone (with the compiler's message) and
@@ -1453,12 +1459,26 @@ static void perf_transcendental(void) {
 static void perf_branches(void) { perf_kernel("t1t_perf_branches"); }
 static void perf_global_table(void) { perf_kernel("t1t_perf_global_table"); }
 static void perf_local_table(void) { perf_kernel("t1t_perf_local_table"); }
+static void perf_hash_loop(void) { perf_kernel("t1t_perf_hash_loop"); }
 
 static void perf_struct_loads(void) {
     uint32_t pass = compute_threads(
         new_compute_pipeline("t1t_perf_struct_loads"), PERF_SIDE, PERF_SIDE);
     T1_pass_set_u32(pass, "buf[0]", perf_layouts);
     T1_pass_set_u32(pass, "buf[1]", perf_out);
+}
+
+static void perf_flat_loads(void) {
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_perf_flat_loads"), PERF_SIDE, PERF_SIDE);
+    T1_pass_set_u32(pass, "buf[0]", perf_layouts);
+    T1_pass_set_u32(pass, "buf[1]", perf_out);
+}
+
+static void perf_flat_stores(void) {
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_perf_flat_stores"), PERF_SIDE, PERF_SIDE);
+    T1_pass_set_u32(pass, "buf[0]", perf_layouts);
 }
 
 static void perf_struct_stores(void) {
@@ -1488,25 +1508,37 @@ static void perf_blend(void) {
     for (uint32_t k = 0; k < 8; k++) { draw(pipeline, perf_target, 3); }
 }
 
+static void perf_opaque(void) {
+    uint32_t pipeline = new_draw_pipeline(
+        "t1t_full_vertex", "t1t_perf_blend_fragment",
+        T1_BLEND_NONE, T1_CULL_NONE);
+    for (uint32_t k = 0; k < 8; k++) { draw(pipeline, perf_target, 3); }
+}
+
 typedef struct {
     const char * name;
     void (* setup)(void);
     uint64_t us; // the fastest frame
+    int32_t unit; // perf_cases[unit] is what it's compared to, -1: it's one
 } PerfCase;
 
 // the first is the frame's own cost, the second the unit
 static PerfCase perf_cases[] = {
-    {"empty", perf_empty, 0},
-    {"alu", perf_alu, 0},
-    {"transcendental", perf_transcendental, 0},
-    {"branches", perf_branches, 0},
-    {"global_table", perf_global_table, 0},
-    {"local_table", perf_local_table, 0},
-    {"struct_loads", perf_struct_loads, 0},
-    {"struct_stores", perf_struct_stores, 0},
-    {"samples", perf_samples, 0},
-    {"write_tex", perf_write_tex, 0},
-    {"blend", perf_blend, 0},
+    {"empty", perf_empty, 0, -1},
+    {"alu", perf_alu, 0, -1},
+    {"hash_loop", perf_hash_loop, 0, -1},
+    {"flat_loads", perf_flat_loads, 0, -1},
+    {"flat_stores", perf_flat_stores, 0, -1},
+    {"opaque", perf_opaque, 0, -1},
+    {"transcendental", perf_transcendental, 0, 1},
+    {"branches", perf_branches, 0, 1},
+    {"global_table", perf_global_table, 0, 2},
+    {"local_table", perf_local_table, 0, 2},
+    {"struct_loads", perf_struct_loads, 0, 3},
+    {"struct_stores", perf_struct_stores, 0, 4},
+    {"samples", perf_samples, 0, 1},
+    {"write_tex", perf_write_tex, 0, 1},
+    {"blend", perf_blend, 0, 5},
 };
 #define PERF_CASES_SIZE (sizeof(perf_cases) / sizeof(perf_cases[0]))
 
@@ -1521,16 +1553,24 @@ static void compare_perf(void) {
         failures++;
         return;
     }
-    const float unit = (float)(alu - empty);
     for (uint32_t c = 2; c < PERF_CASES_SIZE; c++) {
         const PerfCase * pc = &perf_cases[c];
         const uint64_t net = pc->us > empty ? pc->us - empty : 0;
+        if (pc->unit < 0) {
+            printf("unit  perf_%-17s %6.2f alu (%llu us)\n", pc->name,
+                (double)((float)net / (float)(alu - empty)),
+                (unsigned long long)pc->us);
+            continue;
+        }
+        const uint64_t unit_us = perf_cases[pc->unit].us;
+        const float unit = unit_us > empty ? (float)(unit_us - empty) : 1.0f;
         const float ratio = (float)net / unit;
         char name[64];
         snprintf(name, sizeof(name), "perf_%s", pc->name);
         if (recording) {
             record(name, &ratio, sizeof(ratio));
-            printf("recorded %s: %.2f alu (%llu us)\n", name, (double)ratio,
+            printf("recorded %s: %.2f of %s (%llu us)\n", name, (double)ratio,
+                perf_cases[pc->unit].name,
                 (unsigned long long)pc->us);
             continue;
         }
@@ -1545,8 +1585,9 @@ static void compare_perf(void) {
         memcpy(&metal_ratio, metal->data, sizeof(float));
         const uint8_t slow =
             ratio > metal_ratio * SLOW_FACTOR && net >= SLOW_MIN_US;
-        printf("%s  %-22s %6.2f alu, Metal %6.2f (%llu us)\n",
-            slow ? "SLOW" : "pass", name, (double)ratio, (double)metal_ratio,
+        printf("%s  %-22s %6.2f of %s, Metal %6.2f (%llu us)\n",
+            slow ? "SLOW" : "pass", name, (double)ratio,
+            perf_cases[pc->unit].name, (double)metal_ratio,
             (unsigned long long)pc->us);
         failures += slow;
     }

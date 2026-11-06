@@ -15,7 +15,7 @@ declared here instead of including <audioclient.h>.
 We share the default output device with other apps: Windows' audio engine
 mixes us in, converting T1's 44.1 kHz 16-bit stereo to the device's format.
 It wakes our thread every period (usually 10 ms) to top up our buffer with
-T1's mix, like the 2 buffers macOS's audio queue asks us to fill.
+the client's samples, like the 2 buffers macOS's audio queue asks us to fill.
 
 Everything COM happens on that thread: COM makes a thread choose how it
 works with COM objects, and we don't choose that for the app's main thread.
@@ -32,7 +32,7 @@ works with COM objects, and we don't choose that for the app's main thread.
 Our buffer, in 100 ns units: room for T1_AUDIO_PLATFORM_FRAMES (rounded
 up), what macOS's audio queue holds. Windows may give us more, we never
 fill more than that (see T1_os_win_audio_fill()), so both platforms play
-the same distance behind the mix. The engine wakes us every period (10 ms)
+the same distance behind the client's fill. The engine wakes us every period (10 ms)
 to top it up, a late wake is heard only once it's about 24 ms late
 */
 #define T1_WASAPI_BUFFER_100NS \

@@ -55,8 +55,8 @@ Compiles shader_source, with T1's macro settings and GPU struct headers put
 in front of it, and builds your pipelines from it. If anything fails, *good
 is 0, error_recip (optional, may be NULL, else needs a cap of at least 512)
 gets a description, and the shaders of an earlier successful call stay, so
-you can retry with a different source. Needs T1_gpu_init(). It must succeed
-once before T1_window_open(), else that's fatal.
+you can retry with a different source. Needs T1_gpu_init(). Until one succeeds,
+only clear passes run.
 */
 void T1_gpu_try_shader_source(
     const char * shader_source,
@@ -144,7 +144,8 @@ uint32_t T1_window_get_height(void);
 uint32_t T1_window_get_pixel_width(void);
 uint32_t T1_window_get_pixel_height(void);
 
-// Saves the engine's state (window position etc.)
+// With T1_ENGINE_SAVEFILE_ACTIVE: saves the engine's state (window position
+// etc.). Without it (the default), does nothing
 void     T1_shutdown(void);
 
 /*
@@ -344,7 +345,7 @@ void     T1_pipeline_delete(uint32_t pipeline);
 /*
 BUFFERS
 GPU memory of any size for your shaders, zeroed at first. A pass binds up to
-8 of them with its "buf[0]" to "buf[7]" properties, and its shaders read
+12 of them with its "buf[0]" to "buf[11]" properties, and its shaders read
 "buf[k]" at buffer(T1_BUFS_I + k) as whatever you stored there, e.g.
     device MyParticle * particles [[ buffer(T1_BUFS_I) ]]
 Compute passes can write to them, and later passes see what they wrote.

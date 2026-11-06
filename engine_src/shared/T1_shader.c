@@ -3884,6 +3884,46 @@ static b8 local_array_needs_zeros(
 }
 
 /*
+A local array of constants (const float t[4] = { 0.1f, ... };) would be
+filled again by every thread that runs it, in memory of its own: on a GPU
+that means memory, per thread. FXC keeps a static one in a table the GPU
+only reads. It makes no difference to what the shader does: nothing can
+write to it, and only numbers, constructors and macros are in it.
+*/
+static void hlsl_const_tables(Gen * g) {
+    Check * c = g->c;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 i = fn->body_open + 1; i + 4 < fn->body_close; i++) {
+            if (!is(i, "const") || c->secondary[i]) {
+                continue;
+            }
+            // (constexpr is static already, see global_edits())
+            if (is(i - 1, "constexpr")) { continue; }
+            const u32 type = i + 1;
+            if (
+                !is_type(c, type) ||
+                kind(type + 1) != SK_IDENT ||
+                !is_punct(type + 2, "["))
+            {
+                continue;
+            }
+            const u32 eq = after_match(c, type + 2, "[", "]");
+            if (!is_punct(eq, "=") || !is_punct(eq + 1, "{")) { continue; }
+            const u32 end = after_match(c, eq + 1, "{", "}");
+            b8 constants = 1;
+            for (u32 t = eq + 2; t < end && constants; t++) {
+                constants =
+                    kind(t) != SK_IDENT ||
+                    is_type(c, t) ||
+                    in_names(t, c->macros, c->macros_size);
+            }
+            if (constants) { g->g_pre[i] = "static "; }
+        }
+    }
+}
+
+/*
 A local with nothing in it is undefined in MSL, and a read of it an error in
 FXC (X4000, X4575) where it can tell: they start at 0, arrays if they must.
 */
@@ -4114,11 +4154,16 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             s = str_begin(g);
             buf_cat(a, "; ");
             buf_cat(a, type_name);
-            buf_cat(a, " t1_e = t1_load_");
-            buf_cat(a, type_name);
-            buf_cat(a, "(");
-            cat_name(a, i);
-            buf_cat(a, ", t1_a); t1_e");
+            if (last + 1 == chain_end && is_punct(chain_end, "=")) {
+                // (all of it replaced: nothing to load)
+                buf_cat(a, " t1_e");
+            } else {
+                buf_cat(a, " t1_e = t1_load_");
+                buf_cat(a, type_name);
+                buf_cat(a, "(");
+                cat_name(a, i);
+                buf_cat(a, ", t1_a); t1_e");
+            }
             add_text(g, &g->g_post[last], str_end(g, s));
             s = str_begin(g);
             buf_cat(a, "; t1_store_");
@@ -5021,6 +5066,7 @@ void T1_shader_to_hlsl(
     hlsl_struct_functions(&g, loadable);
     hlsl_vector_writes(&g);
     hlsl_local_zeros(&g);
+    hlsl_const_tables(&g);
     hlsl_buffer_edits(&g, loadable);
     hlsl_constructor_edits(&g);
     hlsl_stage_edits(&g);

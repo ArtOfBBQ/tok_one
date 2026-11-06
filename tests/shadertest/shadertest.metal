@@ -554,6 +554,20 @@ kernel void t1t_perf_global_table(
     out[t.y * T1T_PERF_SIDE + t.x] = v;
 }
 
+// The tables' loop without a table: what they're compared to
+kernel void t1t_perf_hash_loop(
+    uint2 t [[ thread_position_in_grid ]],
+    device float * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    float v = 0.0f;
+    uint k = t.x ^ t.y;
+    for (int r = 0; r < 256; r++) {
+        v = v * 0.5f + (float)(k & 15u) * 0.0625f;
+        k = k * 1664525 + 1013904223;
+    }
+    out[t.y * T1T_PERF_SIDE + t.x] = v;
+}
+
 // The same table local to the function, to compare with the global one
 kernel void t1t_perf_local_table(
     uint2 t [[ thread_position_in_grid ]],
@@ -572,6 +586,21 @@ kernel void t1t_perf_local_table(
     out[t.y * T1T_PERF_SIDE + t.x] = v;
 }
 
+// As struct_loads, plain floats at the same places: what it's compared to
+kernel void t1t_perf_flat_loads(
+    uint2 t [[ thread_position_in_grid ]],
+    const device float * in [[ buffer(T1_BUFS_I + 0) ]],
+    device float * out [[ buffer(T1_BUFS_I + 1) ]])
+{
+    float acc = 0.0f;
+    const uint start = t.y * T1T_PERF_SIDE + t.x;
+    for (uint k = 0; k < 16; k++) {
+        const uint i = ((start + k * 97) & 1023) * 64;
+        acc += in[i + 5] + in[i + 14] + in[i + 34] + in[i + 4] + in[i + 28];
+    }
+    out[start] = acc;
+}
+
 // 1024 T1TLayouts in buf[0]
 kernel void t1t_perf_struct_loads(
     uint2 t [[ thread_position_in_grid ]],
@@ -585,6 +614,17 @@ kernel void t1t_perf_struct_loads(
         acc += l.b.y + l.m[1][2] + l.n[2].x + l.c.x + l.arr[1];
     }
     out[start] = acc;
+}
+
+// As struct_stores, plain floats: what it's compared to
+kernel void t1t_perf_flat_stores(
+    uint2 t [[ thread_position_in_grid ]],
+    device float * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    const uint i = ((t.y * T1T_PERF_SIDE + t.x) & 1023) * 64;
+    for (uint w = 0; w < 44; w++) {
+        out[i + w] = (float)(t.x + w);
+    }
 }
 
 // 1024 T1TLayouts in buf[0]

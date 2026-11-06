@@ -217,8 +217,8 @@ void T1_init(
 
 
 /*
-What only matters when T1 renders: pipelines, passes, buffers and texture
-arrays. Apps that blit their own pixels never pay for these.
+T1's GPU objects: pipelines, passes, buffers and texture arrays. Every app
+that opens a window needs them, it shows a T1Tex.
 */
 static void T1_appinit_gpu_modules(
     char ** const fatal_error)
