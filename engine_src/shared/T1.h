@@ -308,7 +308,9 @@ They order nothing else: another thread may see the other memory you wrote
 before or after them. Don't mix them with plain buf[i] in the same pass.
 */
 #define T1_BLEND_NONE                0
-#define T1_BLEND_ADDITIVE            1 // black adds nothing
+// black adds nothing; it's tested against depth but doesn't write it: what
+// adds up doesn't depend on its order, so nothing it draws may hide the rest
+#define T1_BLEND_ADDITIVE            1
 #define T1_BLEND_PREMULTIPLIED_ALPHA 2 // rgb already multiplied by alpha
 #define T1_BLEND_STRAIGHT_ALPHA      3
 #define T1_CULL_NONE  0

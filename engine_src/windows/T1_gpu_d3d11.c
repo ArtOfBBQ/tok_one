@@ -146,6 +146,7 @@ typedef struct {
     T1D3D11State * raster_states[3]; // by T1_CULL_*
     T1D3D11State * depth_state;
     T1D3D11State * no_depth_state;
+    T1D3D11State * additive_depth_state; // tests depth, doesn't write it
     T1D3DTexDepth tex_depths[T1_D3D_TEX_DEPTHS_CAP];
 
     T1D3DShaders * shaders; // NULL until the client's first load
@@ -705,6 +706,10 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
     depth.back_face = depth.front_face;
     device->vtbl->CreateDepthStencilState(
         device, &depth, &T1_d3d->depth_state);
+    depth.depth_write_mask = T1D3D11_DEPTH_WRITE_MASK_ZERO;
+    device->vtbl->CreateDepthStencilState(
+        device, &depth, &T1_d3d->additive_depth_state);
+    depth.depth_write_mask = T1D3D11_DEPTH_WRITE_MASK_ALL;
     depth.depth_enable = 0;
     device->vtbl->CreateDepthStencilState(
         device, &depth, &T1_d3d->no_depth_state);
@@ -784,6 +789,7 @@ static void T1_gpu_d3d11_init_states(char ** const fatal_error) {
     if (
         T1_d3d->depth_state == NULL ||
         T1_d3d->no_depth_state == NULL ||
+        T1_d3d->additive_depth_state == NULL ||
         T1_d3d->frame_consts_srv == NULL ||
         T1_d3d->params_srv == NULL ||
         T1_d3d->grid_cb == NULL ||
@@ -2006,7 +2012,11 @@ static void T1_gpu_d3d11_encode_draw_pass(const T1Pass * pass) {
         blend_factor,
         0xFFFFFFFF);
     ctx->vtbl->OMSetDepthStencilState(
-        ctx, dsv != NULL ? T1_d3d->depth_state : T1_d3d->no_depth_state, 0);
+        ctx,
+        dsv == NULL ? T1_d3d->no_depth_state :
+        p->blend == T1_BLEND_ADDITIVE ? T1_d3d->additive_depth_state :
+            T1_d3d->depth_state,
+        0);
     T1_gpu_d3d11_viewport(width, height);
 
     /*

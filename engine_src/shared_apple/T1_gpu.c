@@ -269,6 +269,7 @@ typedef struct {
     void * pipeline_states[T1_PIPELINES_CAP][T1_GPU_TARGETS_SIZE];
     
     void * opaque_depth_stencil_state;
+    void * additive_depth_stencil_state; // tests depth, doesn't write it
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     void * metal_textures[T1_TEXARRAYS_CAP];
@@ -724,7 +725,14 @@ void T1_apple_gpu_init(
         ags->device,
         ags->sel_new_depth_stencil_state_with_desc,
         (uintptr_t)depth_desc);
-    if (ags->opaque_depth_stencil_state == NULL)
+    T1_objc_msg_1arg(depth_desc, ags->sel_set_depth_write_enabled, false);
+    ags->additive_depth_stencil_state = (void *)T1_objc_msg_1arg(
+        ags->device,
+        ags->sel_new_depth_stencil_state_with_desc,
+        (uintptr_t)depth_desc);
+    if (
+        ags->opaque_depth_stencil_state == NULL ||
+        ags->additive_depth_stencil_state == NULL)
     {
         *sticky_error = "Failed to load the depth stencil state";
         T1_objc_autorelease_pool_pop(pool);
@@ -2376,11 +2384,6 @@ static void T1_gpu_encode_draw_passes(
             enc,
             ags->sel_set_front_facing_winding,
             T1MTLWindingCounterClockwise);
-        if (depth != NULL) {
-            T1_objc_msg_1arg(enc,
-                ags->sel_set_depth_stencil_state,
-                (uintptr_t)ags->opaque_depth_stencil_state);
-        }
         T1_gpu_bind_texture_arrays(
             enc, ags->sel_set_fragment_texture_at_index);
         
@@ -2390,6 +2393,13 @@ static void T1_gpu_encode_draw_passes(
             if (pass->u32s.vertex_count < 1) { continue; }
             const s32 pipeline_i = T1_pipeline_id_to_i(pass->pipeline);
             
+            if (depth != NULL) {
+                T1_objc_msg_1arg(enc,
+                    ags->sel_set_depth_stencil_state,
+                    (uintptr_t)(T1_pipelines[pipeline_i].blend == T1_BLEND_ADDITIVE ?
+                        ags->additive_depth_stencil_state :
+                        ags->opaque_depth_stencil_state));
+            }
             T1_objc_msg_1arg(
                 enc,
                 ags->sel_set_render_pls,
