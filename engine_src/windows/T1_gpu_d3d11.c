@@ -384,7 +384,10 @@ static T1D3D11Resource * T1_gpu_d3d11_new_raw_buffer(u64 size) {
     desc.usage = T1D3D11_USAGE_DEFAULT;
     desc.bind_flags =
         T1D3D11_BIND_SHADER_RESOURCE | T1D3D11_BIND_UNORDERED_ACCESS;
-    desc.misc_flags = T1D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+    desc.misc_flags =
+        T1D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS |
+        // (any buffer may hold a compute pass's "threads_buf")
+        T1D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
 
     // Direct3D doesn't zero new buffers
     void * zeros = T1_mem_malloc_managed(size);
@@ -2034,9 +2037,15 @@ static void T1_gpu_d3d11_encode_compute_pass(const T1Pass * pass) {
     if (cs_i < 0) { return; }
     const T1D3DUnit * cs = &T1_d3d->shaders->units[cs_i];
 
-    // a grid of threads, a texture to write, or both
+    // a grid of threads, a texture to write, or both; or groups from a buffer
     b8 has_threads = pass->u32s.threads[0] > 0;
-    T1_assert(has_threads || pass->u32s.write_tex != T1_TEX_NONE);
+    const u32 groups_buf = pass->u32s.threads_buf;
+    const b8 indirect = groups_buf != T1_BUF_NONE;
+    T1_assert(
+        indirect || has_threads || pass->u32s.write_tex != T1_TEX_NONE);
+    if (indirect && (groups_buf >= T1_BUFS_CAP || !T1_d3d->bufs[groups_buf])) {
+        return;
+    }
 
     T1D3D11View * uavs[T1_D3D_UAVS_SIZE];
     T1_std_memset(uavs, 0, sizeof(uavs));
@@ -2052,10 +2061,10 @@ static void T1_gpu_d3d11_encode_compute_pass(const T1Pass * pass) {
         grid[0] = T1_tex_get_width((T1Tex)tex);
         grid[1] = T1_tex_get_height((T1Tex)tex);
         grid[2] = 1;
-    } else if (!has_threads) {
+    } else if (!has_threads && !indirect) {
         return;
     }
-    if (has_threads) {
+    if (has_threads && !indirect) {
         grid[0] = pass->u32s.threads[0];
         grid[1] = pass->u32s.threads[1] > 0 ? pass->u32s.threads[1] : 1;
         grid[2] = pass->u32s.threads[2] > 0 ? pass->u32s.threads[2] : 1;
@@ -2085,6 +2094,19 @@ static void T1_gpu_d3d11_encode_compute_pass(const T1Pass * pass) {
     ctx->vtbl->CSSetShaderResources(ctx, 0, T1_D3D_SRVS_SIZE, srvs);
     ctx->vtbl->CSSetSamplers(ctx, 0, 3, T1_d3d->samplers);
     ctx->vtbl->CSSetConstantBuffers(ctx, 0, 1, &T1_d3d->grid_cb);
+
+    if (indirect) {
+        // every thread its group has runs: no grid to stop them
+        u32 grid_cb[8] = {
+            0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0,
+        };
+        ctx->vtbl->UpdateSubresource(
+            ctx, T1_d3d->grid_cb, 0, NULL, grid_cb, 0, 0);
+        ctx->vtbl->DispatchIndirect(
+            ctx, T1_d3d->bufs[groups_buf], pass->u32s.threads_buf_offset);
+        T1_gpu_d3d11_unbind_all();
+        return;
+    }
 
     /*
     Enough groups to cover the grid, threads past it return right away.

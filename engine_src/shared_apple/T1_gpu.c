@@ -128,6 +128,12 @@ typedef struct {
     double originX, originY, width, height, znear, zfar;
 } T1MTLViewport;
 
+typedef void (* dispatchGroupsIndirectFuncType)(
+    void *, void *,
+    /* dispatchThreadgroupsWithIndirectBuffer:(id<MTLBuffer>): */ void *,
+    /* indirectBufferOffset:(NSUInteger): */ uintptr_t,
+    /* threadsPerThreadgroup:(MTLSize): */ T1MTLSize);
+
 typedef void (* dispatchThreadsFuncType)(
     void *, void *,
     /* dispatchThreads:(MTLSize): */ T1MTLSize,
@@ -394,6 +400,7 @@ typedef struct {
     void * sel_render_pass_desc; // renderPassDescriptor
     void * sel_file_URL_with_path_is_directory; // fileURLWithPath:isDirectory:
     void * sel_dispatch_threads_threadsperthreadgroup; // dispatchThreads:threadsPerThreadsGroup:
+    void * sel_dispatch_groups_indirect; // dispatchThreadgroupsWithIndirectBuffer:...
     void * sel_new_lib_with_source_options_error; // newLibraryWithSource:options:error:
     void * sel_description; // description 
     // what shaders get at T1_FRAME_CONSTS_I this frame
@@ -689,6 +696,9 @@ void T1_apple_gpu_init(
         "renderPassDescriptor");
     ags->sel_file_URL_with_path_is_directory = T1_objc_reg_sel(
         "fileURLWithPath:isDirectory:");
+    ags->sel_dispatch_groups_indirect = T1_objc_reg_sel(
+        "dispatchThreadgroupsWithIndirectBuffer:indirectBufferOffset:"
+        "threadsPerThreadgroup:");
     ags->sel_dispatch_threads_threadsperthreadgroup = T1_objc_reg_sel(
         "dispatchThreads:threadsPerThreadgroup:");
     ags->sel_new_lib_with_source_options_error = T1_objc_reg_sel(
@@ -1030,6 +1040,43 @@ void T1_os_gpu_try_shader_source(
         "static inline float4x4 mul(float4x4 a, float4x4 b) { return a * b; }\n"
         "static inline float3x3 mul(float3x3 a, float3x3 b) { return a * b; }\n"
         "static inline float2x2 mul(float2x2 a, float2x2 b) { return a * b; }\n"
+        // on a buffer of uints, index i: see COMPUTE in T1.h
+        "#define T1_ATOMIC_AT(b, i) ((device atomic_uint *)&(b)[i])\n"
+        "#define T1_atomic_load(b, i) atomic_load_explicit("
+            "T1_ATOMIC_AT(b, i), memory_order_relaxed)\n"
+        "#define T1_atomic_store(b, i, v) atomic_store_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_add(b, i, v) atomic_fetch_add_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_min(b, i, v) atomic_fetch_min_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_max(b, i, v) atomic_fetch_max_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_and(b, i, v) atomic_fetch_and_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_or(b, i, v) atomic_fetch_or_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_xor(b, i, v) atomic_fetch_xor_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "#define T1_atomic_exchange(b, i, v) atomic_exchange_explicit("
+            "T1_ATOMIC_AT(b, i), (v), memory_order_relaxed)\n"
+        "static inline uint t1_atomic_cas(\n"
+        "    device atomic_uint * a, uint expected, uint v)\n"
+        "{\n"
+        "    uint seen = expected;\n"
+        "    while (\n"
+        "        !atomic_compare_exchange_weak_explicit(\n"
+        "            a, &seen, v, memory_order_relaxed, memory_order_relaxed)"
+            " &&\n"
+        "        seen == expected)\n"
+        "    {\n"
+        "    }\n"
+        "    return seen;\n"
+        "}\n"
+        "#define T1_atomic_compare_exchange(b, i, e, v) t1_atomic_cas("
+            "T1_ATOMIC_AT(b, i), (e), (v))\n"
+        "#define T1_threadgroup_barrier() "
+            "threadgroup_barrier(mem_flags::mem_threadgroup)\n"
         // every texture, the texture(0) of every pass
         "typedef array<texture2d_array<float>, T1_TEXARRAYS_CAP> T1Textures;\n"
         // a compute pass's \"write_tex\", texture(T1_WRITE_TEX_I)
@@ -2386,16 +2433,24 @@ static void T1_gpu_encode_compute_pass(
     const T1Pass * pass,
     void * combuf)
 {
-    // a grid of threads, a texture to write, or both
+    // a grid of threads, a texture to write, or both; or groups from a buffer
     b8 has_threads = pass->u32s.threads[0] > 0;
-    T1_assert(has_threads || pass->u32s.write_tex != T1_TEX_NONE);
+    const u32 groups_buf = pass->u32s.threads_buf;
+    const b8 indirect = groups_buf != T1_BUF_NONE;
+    T1_assert(
+        indirect || has_threads || pass->u32s.write_tex != T1_TEX_NONE);
+    T1_assert(!indirect || (
+        groups_buf < T1_BUFS_CAP && ags->bufs[groups_buf] != NULL));
+    if (indirect && (groups_buf >= T1_BUFS_CAP || !ags->bufs[groups_buf])) {
+        return;
+    }
     
     b8 owned = false;
     void * out = NULL;
     if (pass->u32s.write_tex != T1_TEX_NONE) {
         out = T1_gpu_pass_target(pass->u32s.write_tex, &owned);
         if (out == NULL) { return; }
-    } else if (!has_threads) {
+    } else if (!has_threads && !indirect) {
         return;
     }
 
@@ -2419,6 +2474,22 @@ static void T1_gpu_encode_compute_pass(
         ags->sel_set_buffer_offset_atindex,
         ags->sel_set_bytes_length_atindex,
         pass);
+
+    if (indirect) {
+        // (the group's size as for a grid, by the kernel's position)
+        const u32 dims = pass->u32s.threads_dims;
+        ((dispatchGroupsIndirectFuncType)T1_objc_unsafe_get_raw_msg_send())(
+            enc,
+            ags->sel_dispatch_groups_indirect,
+            ags->bufs[groups_buf],
+            pass->u32s.threads_buf_offset,
+            dims <= 1 ? T1_mtlsize_make(256, 1, 1) :
+            dims == 2 ? T1_mtlsize_make(16, 16, 1) :
+                T1_mtlsize_make(8, 8, 4));
+        T1_objc_msg(enc, ags->sel_end_encoding);
+        if (owned) { T1_gpu_release(&out); }
+        return;
+    }
 
     // "threads", else one thread per pixel of the texture written to
     T1MTLSize grid;

@@ -22,6 +22,8 @@ The subset, beyond plain C expressions and statements:
 - matrices multiply with mul(v, m), not *
 - calls only to your own functions, macros, constructors and the builtins
   below, which T1 knows how to translate
+- threadgroup memory only as "threadgroup Type name[N];" at the top of a
+  kernel's body, T1_threadgroup_barrier() only at the top of one too
 */
 
 typedef u8 ShaderTokenKind;
@@ -59,6 +61,10 @@ static const c8 * const builtin_functions[] = {
     "T1_sample_nearest", "T1_sample_linear", "T1_sample_linear_repeat",
     "T1_read", "T1_write_tex_read", "T1_write_tex_write",
     "T1_write_tex_size",
+    "T1_atomic_load", "T1_atomic_store", "T1_atomic_add", "T1_atomic_min",
+    "T1_atomic_max", "T1_atomic_and", "T1_atomic_or", "T1_atomic_xor",
+    "T1_atomic_exchange", "T1_atomic_compare_exchange",
+    "T1_threadgroup_barrier",
 };
 
 // keywords that may stand before '(' without being a call
@@ -68,7 +74,9 @@ static const c8 * const paren_keywords[] = {
 
 static const c8 * const attributes[] = {
     "vertex_id", "instance_id", "position", "stage_in", "buffer",
-    "texture", "color", "thread_position_in_grid", "flat", "maybe_unused",
+    "texture", "color", "thread_position_in_grid",
+    "thread_position_in_threadgroup", "threadgroup_position_in_grid",
+    "flat", "maybe_unused",
 };
 
 typedef struct {
@@ -102,7 +110,6 @@ static const Banned banned[] = {
     {"texturecube", "use T1Textures or T1WriteTex"},
     {"depth2d", "use T1Textures or T1WriteTex"},
     {"thread", "no address spaces except buffer parameters"},
-    {"threadgroup", "no threadgroup memory"},
     {"template", "no templates"},
     {"typename", "no templates"},
     {"namespace", "no namespaces"},
@@ -616,6 +623,75 @@ static b8 at_program_scope(const Check * c, const u32 i) {
     return 1;
 }
 
+// how many { of f's body i is inside (1: directly in the body)
+static u32 body_depth(const Check * c, const Func * f, const u32 i) {
+    u32 depth = 0;
+    for (u32 t = f->body_open; t < i; t++) {
+        if (is_bracket(c, t, "{")) { depth++; }
+        if (is_bracket(c, t, "}")) { depth--; }
+    }
+    return depth;
+}
+
+static b8 is_atomic_call(const u32 i) {
+    return
+        T1_token_size(tz, i) > 10 &&
+        T1_std_are_equal_strings_of_length(
+            T1_token_text(tz, i), "T1_atomic_", 10);
+}
+
+/*
+T1_atomic_*(buffer, i, ...): the buffer must be a writable one of uints, in
+a kernel or a helper (helpers get the buffers of the entry point that calls
+them, and only a kernel's can be written)
+*/
+static void check_atomic_call(const Check * c, const Func * f, const u32 i) {
+    if (f == NULL || (f->is_entry && f->stage != STAGE_KERNEL)) {
+        report(c, i, "T1_atomic_*() only in kernels and their helpers");
+        return;
+    }
+    const PtrParam * ptr = NULL;
+    if (is_punct(i + 1, "(")) {
+        for (u32 p = 0; p < f->ptrs_size; p++) {
+            if (same_text(f->ptrs[p].name_i, i + 2)) { ptr = &f->ptrs[p]; }
+        }
+    }
+    b8 uints = ptr != NULL && (
+        is(ptr->type_i, "uint") || is(ptr->type_i, "u32") ||
+        is(ptr->type_i, "uint32_t"));
+    b8 writable = uints && is(ptr->type_i - 1, "device");
+    for (u32 t = f->params_open; writable && t < ptr->type_i; t++) {
+        // (the const of this parameter: after the last comma before it)
+        if (is_punct(t, ",") || is_punct(t, "(")) { writable = 1; }
+        if (is(t, "const") && t + 2 == ptr->type_i) { writable = 0; }
+    }
+    if (!writable) {
+        report(c, i, "T1_atomic_*() takes a writable buffer of uints");
+    }
+}
+
+// threadgroup Type name[N]; at the top of a kernel's body
+static void check_threadgroup_decl(
+    const Check * c,
+    const Func * f,
+    const u32 i)
+{
+    if (
+        f == NULL ||
+        f->stage != STAGE_KERNEL ||
+        i <= f->body_open ||
+        body_depth(c, f, i) != 1 ||
+        !is_type(c, i + 1) ||
+        kind(i + 2) != SK_IDENT ||
+        !is_punct(i + 3, "[") ||
+        !is_punct(after_match(c, i + 3, "[", "]"), ";"))
+    {
+        report(c, i,
+            "threadgroup memory only as threadgroup Type name[N]; at the "
+            "top of a kernel's body");
+    }
+}
+
 static void check_tokens(Check * c) {
     const u32 banned_size = sizeof(banned) / sizeof(banned[0]);
 
@@ -638,6 +714,17 @@ static void check_tokens(Check * c) {
 
             if (is(i, "typedef") && !is(i + 1, "struct")) {
                 report(c, i, "no typedefs except typedef struct");
+            }
+            if (is(i, "threadgroup")) { check_threadgroup_decl(c, f, i); }
+            if (is_atomic_call(i)) { check_atomic_call(c, f, i); }
+            if (
+                is(i, "T1_threadgroup_barrier") &&
+                (f == NULL || f->stage != STAGE_KERNEL ||
+                    body_depth(c, f, i) != 1))
+            {
+                report(c, i,
+                    "T1_threadgroup_barrier() only at the top of a "
+                    "kernel's body, outside every if and loop");
             }
             if (
                 (is(i, "device") || is(i, "constant")) &&
@@ -814,8 +901,10 @@ The layout a Vulkan backend must match:
 - set 1, bindings 1 to 3: the samplers T1_nearest, T1_linear and
   T1_linear_repeat
 - set 1, binding 4: a compute pass's write_tex, an rgba8 image2D
-- kernels: local size 8 x 8 x 1, and a push constant uvec3 with the grid's
-  size, threads past it return right away
+- kernels: local size by their position's type (see kernel_group_size()),
+  and a push constant uvec3 with the grid's size, threads past it return
+  right away (not in a kernel with a T1_threadgroup_barrier(): its grid is
+  a multiple of its group)
 - vertex outputs are flipped in y (Vulkan's clip space points down), so a
   backend flips its front face too
 - stage structs' members go in locations in their order (matrices take
@@ -891,7 +980,19 @@ static const c8 * const glsl_prelude =
     "#define T1_write_tex_read(t, pos) imageLoad(t1_write_tex, ivec2(pos))\n"
     "#define T1_write_tex_write(t, pos, color) "
         "imageStore(t1_write_tex, ivec2(pos), (color))\n"
-    "#define T1_write_tex_size(t) uvec2(imageSize(t1_write_tex))\n";
+    "#define T1_write_tex_size(t) uvec2(imageSize(t1_write_tex))\n"
+    "#define T1_atomic_load(b, i) atomicAdd(b[i], 0u)\n"
+    "#define T1_atomic_store(b, i, v) atomicExchange(b[i], (v))\n"
+    "#define T1_atomic_add(b, i, v) atomicAdd(b[i], (v))\n"
+    "#define T1_atomic_min(b, i, v) atomicMin(b[i], (v))\n"
+    "#define T1_atomic_max(b, i, v) atomicMax(b[i], (v))\n"
+    "#define T1_atomic_and(b, i, v) atomicAnd(b[i], (v))\n"
+    "#define T1_atomic_or(b, i, v) atomicOr(b[i], (v))\n"
+    "#define T1_atomic_xor(b, i, v) atomicXor(b[i], (v))\n"
+    "#define T1_atomic_exchange(b, i, v) atomicExchange(b[i], (v))\n"
+    "#define T1_atomic_compare_exchange(b, i, expected, v) "
+        "atomicCompSwap(b[i], (expected), (v))\n"
+    "#define T1_threadgroup_barrier() barrier()\n";
 
 static const c8 * const glsl_textures =
     "layout(set = 1, binding = 0) uniform texture2DArray "
@@ -1496,6 +1597,89 @@ static u32 unit_begin(Gen * g, const u32 entry_f) {
     return first_kept_func;
 }
 
+static void cat_u32(Buf * b, const u32 v);
+
+/*
+A kernel's group, by the type of its position in the grid (or in its group):
+uint: 256 x 1 x 1, uint2: 16 x 16 x 1, uint3: 8 x 8 x 4
+*/
+static void kernel_group_size(const Func * e, u32 threads[3]) {
+    threads[0] = 16; threads[1] = 16; threads[2] = 1;
+    for (u32 p = 0; p < e->params_size; p++) {
+        for (u32 t = e->params_start[p]; t < e->params_end[p]; t++) {
+            if (
+                kind(t) != SK_ATTR ||
+                (!attr_has(t, "thread_position_in_grid") &&
+                !attr_has(t, "thread_position_in_threadgroup") &&
+                !attr_has(t, "threadgroup_position_in_grid")))
+            {
+                continue;
+            }
+            const u32 type_i = t - 2;
+            if (is(type_i, "uint3")) {
+                threads[0] = 8; threads[1] = 8; threads[2] = 4;
+            } else if (!is(type_i, "uint2")) {
+                threads[0] = 256; threads[1] = 1; threads[2] = 1;
+            }
+            return;
+        }
+    }
+}
+
+static b8 kernel_has_barrier(const Func * e) {
+    for (u32 t = e->body_open; t < e->body_close; t++) {
+        if (is(t, "T1_threadgroup_barrier")) { return 1; }
+    }
+    return 0;
+}
+
+/*
+The kernel's threadgroup memory goes out of its body, to program scope as
+the keyword says ("shared " in GLSL, "groupshared " in HLSL): every entry
+point is a unit of its own, so nothing else sees it
+*/
+static void threadgroup_decls(
+    Gen * g,
+    const Func * e,
+    Buf * b,
+    const c8 * keyword)
+{
+    for (u32 t = e->body_open; t < e->body_close; t++) {
+        if (!is(t, "threadgroup")) { continue; }
+        const u32 semi = after_match(g->c, t + 3, "[", "]");
+        buf_cat(b, keyword);
+        cat_name(b, t + 1);
+        buf_cat(b, " ");
+        cat_tokens(b, t + 2, semi);
+        buf_cat(b, ";\n");
+        for (u32 s = t; s <= semi; s++) { g->u_skip[s] = 1; }
+    }
+}
+
+// a writable buffer's atomics (T1_atomic_*() in HLSL's prelude call them)
+static void cat_hlsl_atomics(Buf * b, const u32 name) {
+    static const c8 * const ops[][2] = {
+        {"add", "Add"}, {"min", "Min"}, {"max", "Max"}, {"and", "And"},
+        {"or", "Or"}, {"xor", "Xor"}, {"exchange", "Exchange"},
+    };
+    for (u32 o = 0; o < sizeof(ops) / sizeof(ops[0]); o++) {
+        buf_cat(b, "uint t1_atomic_");
+        buf_cat(b, ops[o][0]);
+        buf_cat(b, "_");
+        cat_name(b, name);
+        buf_cat(b, "(uint i, uint v) { uint o; ");
+        cat_name(b, name);
+        buf_cat(b, ".Interlocked");
+        buf_cat(b, ops[o][1]);
+        buf_cat(b, "(i * 4, v, o); return o; }\n");
+    }
+    buf_cat(b, "uint t1_atomic_compare_exchange_");
+    cat_name(b, name);
+    buf_cat(b, "(uint i, uint e, uint v) { uint o; ");
+    cat_name(b, name);
+    buf_cat(b, ".InterlockedCompareExchange(i * 4, e, v, o); return o; }\n");
+}
+
 static void make_unit(Gen * g, const u32 entry_f) {
     Check * c = g->c;
     const Func * e = &c->funcs[entry_f];
@@ -1533,13 +1717,22 @@ static void make_unit(Gen * g, const u32 entry_f) {
     buf_cat(pro, "\n");
 
     if (e->stage == STAGE_KERNEL) {
-        buf_cat(gl,
-            "layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) "
-            "in;\n"
+        u32 threads[3];
+        kernel_group_size(e, threads);
+        buf_cat(gl, "layout(local_size_x = ");
+        cat_u32(gl, threads[0]);
+        buf_cat(gl, ", local_size_y = ");
+        cat_u32(gl, threads[1]);
+        buf_cat(gl, ", local_size_z = ");
+        cat_u32(gl, threads[2]);
+        buf_cat(gl, ") in;\n"
             "layout(push_constant) uniform T1Grid { uvec3 t1_grid_size; };\n");
-        buf_cat(pro,
-            "    if (any(greaterThanEqual(gl_GlobalInvocationID, "
-            "t1_grid_size))) { return; }\n");
+        if (!kernel_has_barrier(e)) {
+            buf_cat(pro,
+                "    if (any(greaterThanEqual(gl_GlobalInvocationID, "
+                "t1_grid_size))) { return; }\n");
+        }
+        threadgroup_decls(g, e, gl, "shared ");
     }
 
     // the parameters
@@ -1586,15 +1779,31 @@ static void make_unit(Gen * g, const u32 entry_f) {
             attr_has(attr, "vertex_id") ||
             attr_has(attr, "instance_id") ||
             attr_has(attr, "thread_position_in_grid") ||
+            attr_has(attr, "thread_position_in_threadgroup") ||
+            attr_has(attr, "threadgroup_position_in_grid") ||
             (attr_has(attr, "position") && !attr_has(attr, "stage_in")))
         {
-            const c8 * value =
+            const c8 * swizzle =
+                is(name - 1, "uint3") ? "" :
+                is(name - 1, "uint2") ? ".xy" : ".x";
+            u32 sv = str_begin(g);
+            buf_cat(&g->arena,
                 attr_has(attr, "vertex_id") ? "gl_VertexIndex" :
                 attr_has(attr, "instance_id") ? "gl_InstanceIndex" :
                 attr_has(attr, "position") ? "gl_FragCoord" :
-                is(name - 1, "uint3") ? "gl_GlobalInvocationID" :
-                is(name - 1, "uint2") ? "gl_GlobalInvocationID.xy" :
-                "gl_GlobalInvocationID.x";
+                attr_has(attr, "thread_position_in_threadgroup") ?
+                    "gl_LocalInvocationID" :
+                attr_has(attr, "threadgroup_position_in_grid") ?
+                    "gl_WorkGroupID" :
+                "gl_GlobalInvocationID");
+            if (
+                attr_has(attr, "thread_position_in_grid") ||
+                attr_has(attr, "thread_position_in_threadgroup") ||
+                attr_has(attr, "threadgroup_position_in_grid"))
+            {
+                buf_cat(&g->arena, swizzle);
+            }
+            const c8 * value = str_end(g, sv);
             buf_cat(pro, "    ");
             cat_tokens(pro, start, name + 1);
             buf_cat(pro, " = ");
@@ -2642,6 +2851,19 @@ static void cat_u32(Buf * b, const u32 value) {
 }
 
 static const c8 * const hlsl_prelude =
+    // (see cat_hlsl_atomics(): each writable buffer of uints has its own)
+    "#define T1_atomic_load(b, i) t1_atomic_add_##b((i), 0u)\n"
+    "#define T1_atomic_store(b, i, v) t1_atomic_exchange_##b((i), (v))\n"
+    "#define T1_atomic_add(b, i, v) t1_atomic_add_##b((i), (v))\n"
+    "#define T1_atomic_min(b, i, v) t1_atomic_min_##b((i), (v))\n"
+    "#define T1_atomic_max(b, i, v) t1_atomic_max_##b((i), (v))\n"
+    "#define T1_atomic_and(b, i, v) t1_atomic_and_##b((i), (v))\n"
+    "#define T1_atomic_or(b, i, v) t1_atomic_or_##b((i), (v))\n"
+    "#define T1_atomic_xor(b, i, v) t1_atomic_xor_##b((i), (v))\n"
+    "#define T1_atomic_exchange(b, i, v) t1_atomic_exchange_##b((i), (v))\n"
+    "#define T1_atomic_compare_exchange(b, i, e, v) "
+        "t1_atomic_compare_exchange_##b((i), (e), (v))\n"
+    "#define T1_threadgroup_barrier() GroupMemoryBarrierWithGroupSync()\n"
     "#define T1_HLSL 1\n"
     "#pragma pack_matrix(row_major)\n"
     "#define f32 float\n"
@@ -4031,6 +4253,8 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
     params_data[0] = '\0';
     Buf * hp = &params_buf;
 
+    u32 threads[3] = {16, 16, 1};
+    if (e->stage == STAGE_KERNEL) { kernel_group_size(e, threads); }
     if (e->stage == STAGE_KERNEL) {
         /*
         A grid of more than 65535 groups a dimension is dispatched in
@@ -4043,10 +4267,20 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
             "    uint t1_grid_pad;\n"
             "    uint3 t1_grid_start;\n"
             "};\n");
-        buf_cat(hp, "uint3 t1_part_dtid : SV_DispatchThreadID");
-        buf_cat(pro,
-            "    uint3 t1_dtid = t1_part_dtid + t1_grid_start;\n"
-            "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
+        buf_cat(hp,
+            "uint3 t1_part_dtid : SV_DispatchThreadID, "
+            "uint3 t1_gtid : SV_GroupThreadID, "
+            "uint3 t1_part_gid : SV_GroupID");
+        buf_cat(pro, "    uint3 t1_dtid = t1_part_dtid + t1_grid_start;\n");
+        buf_cat(pro, "    uint3 t1_gid = t1_part_gid + t1_grid_start / uint3(");
+        for (u32 d = 0; d < 3; d++) {
+            cat_u32(pro, threads[d]);
+            buf_cat(pro, d < 2 ? ", " : ");\n");
+        }
+        if (!kernel_has_barrier(e)) {
+            buf_cat(pro, "    if (any(t1_dtid >= t1_grid_size)) { return; }\n");
+        }
+        threadgroup_decls(g, e, gl, "groupshared ");
     } else if (e->stage == STAGE_VERTEX) {
         /*
         Metal's [[vertex_id]] counts from the draw's first vertex, D3D's
@@ -4090,7 +4324,6 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
     }
 
     u32 uav_slot = 1; // u0 is the write_tex
-    u32 threads[3] = {16, 16, 1}; // for a write_tex without a grid
     b8 frag_coord = 0;
 
     for (u32 p = 0; p < e->params_size; p++) {
@@ -4143,6 +4376,12 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
                 buf_cat(gl, " : register(u");
                 cat_u32(gl, uav_slot);
                 buf_cat(gl, ");\n");
+                if (
+                    is(star - 1, "uint") || is(star - 1, "u32") ||
+                    is(star - 1, "uint32_t"))
+                {
+                    cat_hlsl_atomics(gl, name);
+                }
                 buf_cat(hd, "//T1_UAV ");
                 cat_u32(hd, uav_slot);
                 buf_cat(hd, " ");
@@ -4170,16 +4409,10 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
             attr_has(attr, "vertex_id") ||
             attr_has(attr, "instance_id") ||
             attr_has(attr, "thread_position_in_grid") ||
+            attr_has(attr, "thread_position_in_threadgroup") ||
+            attr_has(attr, "threadgroup_position_in_grid") ||
             (attr_has(attr, "position") && !attr_has(attr, "stage_in")))
         {
-            b8 grid = attr_has(attr, "thread_position_in_grid");
-            if (grid) {
-                if (is(name - 1, "uint3")) {
-                    threads[0] = 8; threads[1] = 8; threads[2] = 4;
-                } else if (!is(name - 1, "uint2")) {
-                    threads[0] = 256; threads[1] = 1; threads[2] = 1;
-                }
-            }
             u32 s = str_begin(g);
             Buf * a = &g->arena;
             if (attr_has(attr, "vertex_id")) {
@@ -4197,8 +4430,13 @@ static void make_unit_hlsl(Gen * g, const u32 entry_f) {
                 }
             } else {
                 buf_cat(a,
-                    is(name - 1, "uint3") ? "t1_dtid" :
-                    is(name - 1, "uint2") ? "t1_dtid.xy" : "t1_dtid.x");
+                    attr_has(attr, "thread_position_in_threadgroup") ?
+                        "t1_gtid" :
+                    attr_has(attr, "threadgroup_position_in_grid") ?
+                        "t1_gid" : "t1_dtid");
+                buf_cat(a,
+                    is(name - 1, "uint3") ? "" :
+                    is(name - 1, "uint2") ? ".xy" : ".x");
             }
             const c8 * value = str_end(g, s);
             buf_cat(pro, "    ");

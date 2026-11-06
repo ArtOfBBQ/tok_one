@@ -1038,6 +1038,67 @@ static void setup_compute_read_write(void) {
     expect_pixels("compute_read_write", target, 1);
 }
 
+#define ATOMIC_WORDS 60
+static void setup_atomics(void) {
+    if (!compiled("atomics")) { return; }
+    T1Buf out = new_buf(ATOMIC_WORDS * 4);
+    uint32_t start[ATOMIC_WORDS];
+    memset(start, 0, sizeof(start));
+    start[1] = 0xFFFFFFFF; // the min's
+    start[4] = 0xFFFFFFFF; // the and's
+    start[59] = 3; // read by every thread
+    T1_buf_write(out, 0, start, sizeof(start));
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_atomics_kernel"), 1024, 0);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    pass = compute_threads(
+        new_compute_pipeline("t1t_atomics_settle_kernel"), 1, 0);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    expect_buf("atomics", EXPECT_WORDS, out, ATOMIC_WORDS * 4);
+}
+
+static void setup_threadgroup_1d(void) {
+    if (!compiled("threadgroup_1d")) { return; }
+    T1Buf out = new_buf(1024 * 4);
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_threadgroup_1d_kernel"), 1024, 0);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    expect_buf("threadgroup_1d", EXPECT_WORDS, out, 1024 * 4);
+}
+
+static void setup_threadgroup_2d(void) {
+    if (!compiled("threadgroup_2d")) { return; }
+    T1Buf out = new_buf(1024 * 4);
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_threadgroup_2d_kernel"), 32, 32);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    expect_buf("threadgroup_2d", EXPECT_WORDS, out, 1024 * 4);
+}
+
+static void setup_indirect(void) {
+    if (!compiled("indirect")) { return; }
+    T1Buf args = new_buf(8 * 4);
+    T1Buf out_1d = new_buf(1024 * 4);
+    T1Buf out_2d = new_buf(1024 * 4);
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_indirect_args_kernel"), 1, 0);
+    T1_pass_set_u32(pass, "buf[0]", args);
+    pass = keep_pass(T1_pass_new_compute(
+        new_compute_pipeline("t1t_indirect_1d_kernel")));
+    T1_pass_set_u32(pass, "threads_buf", args);
+    T1_pass_set_u32(pass, "threads_buf_offset", 4);
+    T1_pass_set_u32(pass, "threads_dims", 1);
+    T1_pass_set_u32(pass, "buf[0]", out_1d);
+    pass = keep_pass(T1_pass_new_compute(
+        new_compute_pipeline("t1t_indirect_2d_kernel")));
+    T1_pass_set_u32(pass, "threads_buf", args);
+    T1_pass_set_u32(pass, "threads_buf_offset", 20);
+    T1_pass_set_u32(pass, "threads_dims", 2);
+    T1_pass_set_u32(pass, "buf[0]", out_2d);
+    expect_buf("indirect_1d", EXPECT_WORDS, out_1d, 1024 * 4);
+    expect_buf("indirect_2d", EXPECT_WORDS, out_2d, 1024 * 4);
+}
+
 static void (* const check_setups[])(void) = {
     setup_math,
     setup_control,
@@ -1054,6 +1115,10 @@ static void (* const check_setups[])(void) = {
     setup_derivatives,
     setup_compute_write,
     setup_compute_read_write,
+    setup_atomics,
+    setup_threadgroup_1d,
+    setup_threadgroup_2d,
+    setup_indirect,
 };
 
 static uint32_t differing(float got, float metal, float tolerance) {

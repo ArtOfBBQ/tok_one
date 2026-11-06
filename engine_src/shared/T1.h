@@ -250,11 +250,43 @@ Passes:
   "threads[1]" * "threads[2]" grid (u32s, 0 counts as 1) if "threads[0]" is
   set, e.g. once per particle in a buffer. Its kernel gets its position in
   the grid as [[thread_position_in_grid]], threads past the end don't run.
+  For a grid sized by the GPU, "threads_buf" (a T1Buf) holds it as 3 u32s,
+  "threads_buf_offset" (a multiple of 4) bytes in, read when the pass runs (an
+  earlier compute pass may have written them), in groups, not threads:
+  COMPUTE GROUPS below, set "threads_dims" (1, 2 or 3) to what the kernel's
+  position has. At most 65535 groups each way there.
 Draw and compute passes also have "params[0]" to "params[7]" (u32s for
 your shaders, e.g. T1Texs to sample, see T1_PARAMS_I), and "buf[0]" to
 "buf[11]" (u32 T1Bufs, see BUFFERS). Every pass's shaders also get a
 T1GPUFrameConsts at buffer(T1_FRAME_CONSTS_I). A pass that reads what an
 earlier pass drew or wrote waits for it.
+
+COMPUTE GROUPS
+Threads run in groups, whose size the type of the kernel's position says:
+uint: 256 x 1 x 1, uint2: 16 x 16 x 1, uint3: 8 x 8 x 4 (a uint2 kernel needs
+a grid more than a thread tall to be in groups of 16 x 16). The kernel gets
+[[thread_position_in_threadgroup]] and [[threadgroup_position_in_grid]] as
+well, same type. At the top of a kernel's body it may declare memory that its
+group shares, not its helpers', starting out with anything in it, at most
+32 KB in all:
+    threadgroup float samples[256];
+T1_threadgroup_barrier(), only at the top of a kernel's body (outside every
+if and loop), waits for all of its group, and what they wrote is then seen.
+A kernel with one needs a grid that's a multiple of its group.
+
+COMPUTE ATOMICS
+Any number of threads may change the same uint at once with these, in kernels
+and their helpers. buf is a writable buffer of uints ("device uint * buf",
+one of the kernel's own, by name), i its index. Each gives what was there
+before, but T1_atomic_store() (nothing):
+    T1_atomic_load(buf, i)                T1_atomic_store(buf, i, value)
+    T1_atomic_add(buf, i, value)          T1_atomic_exchange(buf, i, value)
+    T1_atomic_min(buf, i, value)          T1_atomic_max(buf, i, value)
+    T1_atomic_and(buf, i, value)          T1_atomic_or(buf, i, value)
+    T1_atomic_xor(buf, i, value)
+    T1_atomic_compare_exchange(buf, i, expected, value) // if it's expected
+They order nothing else: another thread may see the other memory you wrote
+before or after them. Don't mix them with plain buf[i] in the same pass.
 */
 #define T1_BLEND_NONE                0
 #define T1_BLEND_ADDITIVE            1 // black adds nothing

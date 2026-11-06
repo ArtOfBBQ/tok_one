@@ -625,3 +625,98 @@ kernel void t1t_perf_write_tex(
 fragment float4 t1t_perf_blend_fragment(T1TPixel in [[ stage_in ]]) {
     return float4(in.uv, 0.5f, 0.25f);
 }
+
+//== atomics
+// Every atomic on 1024 threads: only what doesn't depend on who came first
+static void t1t_atomics_tally(
+    device uint * out,
+    uint at)
+{
+    T1_atomic_add(out, at, 1u);
+}
+
+kernel void t1t_atomics_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    T1_atomic_add(out, 0, 1u);
+    T1_atomic_min(out, 1, t + 5u);
+    T1_atomic_max(out, 2, t + 5u);
+    T1_atomic_or(out, 3, 1u << (t % 32u));
+    T1_atomic_and(out, 4, ~(1u << (t % 32u)));
+    T1_atomic_xor(out, 5, t * 3u);
+    // all that was exchanged plus what's left is everything put in
+    const uint old = T1_atomic_exchange(out, 6, t + 1u);
+    T1_atomic_add(out, 7, old);
+    // each of 32 slots lets exactly one thread in
+    const uint slot = 8u + t % 32u;
+    if (T1_atomic_compare_exchange(out, slot, 0u, t + 1u) == 0u) {
+        T1_atomic_add(out, 40, 1u);
+    }
+    // through a helper, and read back through the old values: 1024 distinct
+    t1t_atomics_tally(out, 41u + t % 16u);
+    T1_atomic_store(out, 57, 77u);
+    T1_atomic_add(out, 58, T1_atomic_load(out, 59));
+}
+
+kernel void t1t_atomics_settle_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    out[7] = out[7] + out[6];
+    out[6] = 0u;
+    for (uint s = 8u; s < 40u; s++) { out[s] = out[s] > 0u ? 1u : 0u; }
+}
+
+//== threadgroup_1d
+// Each thread writes its slot, then reads its neighbour's after the barrier
+kernel void t1t_threadgroup_1d_kernel(
+    uint t [[ thread_position_in_grid ]],
+    uint local [[ thread_position_in_threadgroup ]],
+    uint group [[ threadgroup_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    threadgroup uint slots[256];
+    slots[local] = group * 1000u + local;
+    T1_threadgroup_barrier();
+    out[t] = slots[(local + 1u) % 256u];
+}
+
+//== threadgroup_2d
+kernel void t1t_threadgroup_2d_kernel(
+    uint2 t [[ thread_position_in_grid ]],
+    uint2 local [[ thread_position_in_threadgroup ]],
+    uint2 group [[ threadgroup_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    threadgroup float2 slots[256];
+    slots[local.y * 16u + local.x] = float2(
+        (float)group.x, (float)(group.y * 100u + local.x));
+    T1_threadgroup_barrier();
+    const float2 v = slots[(15u - local.y) * 16u + (15u - local.x)];
+    out[t.y * 32u + t.x] = (uint)v.x + (uint)v.y * 2u;
+}
+
+//== indirect
+// One pass says how many groups the next ones run, 4 bytes in
+kernel void t1t_indirect_args_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device uint * args [[ buffer(T1_BUFS_I + 0) ]])
+{
+    args[1] = 3u; args[2] = 1u; args[3] = 1u; // 3 groups of 256
+    args[5] = 2u; args[6] = 1u; args[7] = 1u; // 2 groups of 16 x 16
+}
+
+kernel void t1t_indirect_1d_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    out[t] = t + 1u;
+}
+
+kernel void t1t_indirect_2d_kernel(
+    uint2 t [[ thread_position_in_grid ]],
+    device uint * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    out[t.y * 32u + t.x] = t.y * 1000u + t.x + 1u;
+}

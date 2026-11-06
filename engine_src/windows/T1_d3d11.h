@@ -36,6 +36,7 @@ typedef struct {
 #define T1D3D11_CPU_ACCESS_WRITE 0x10000u
 #define T1D3D11_CPU_ACCESS_READ 0x20000u
 #define T1D3D11_RESOURCE_MISC_GENERATE_MIPS 0x1u
+#define T1D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS 0x10u
 #define T1D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS 0x20u
 
 #define T1D3D11_SRV_DIMENSION_TEXTURE2DARRAY 5
@@ -448,7 +449,8 @@ typedef struct {
     void * DrawIndexedInstancedIndirect;
     void * DrawInstancedIndirect;
     void (T1_WINAPI * Dispatch)(T1D3D11Context *, u32, u32, u32);
-    void * DispatchIndirect;
+    void (T1_WINAPI * DispatchIndirect)(
+        T1D3D11Context *, T1D3D11Resource *, u32);
     void (T1_WINAPI * RSSetState)(T1D3D11Context *, T1D3D11State *);
     void (T1_WINAPI * RSSetViewports)(
         T1D3D11Context *, u32, const T1D3D11Viewport *);

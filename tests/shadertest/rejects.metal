@@ -85,11 +85,54 @@ fragment float4 f(
     return float4(1.0f);
 }
 
-//== threadgroup_memory
-// why: no threadgroup memory
+//== threadgroup_memory_nested
+// why: threadgroup memory only as threadgroup Type name[N];
 kernel void k(uint t [[ thread_position_in_grid ]]) {
+    if (t > 0) {
+        threadgroup float shared[64];
+        shared[t % 64] = 1.0f;
+    }
+}
+
+//== threadgroup_memory_in_helper
+// why: threadgroup memory only as threadgroup Type name[N];
+static float f(uint t) {
     threadgroup float shared[64];
-    shared[t % 64] = 1.0f;
+    return shared[t % 64];
+}
+kernel void k(uint t [[ thread_position_in_grid ]]) { f(t); }
+
+//== threadgroup_barrier_in_if
+// why: T1_threadgroup_barrier() only at the top
+kernel void k(uint t [[ thread_position_in_grid ]]) {
+    if (t > 0) { T1_threadgroup_barrier(); }
+}
+
+//== atomic_in_fragment
+// why: T1_atomic_*() only in kernels and their helpers
+fragment float4 f(
+    float4 p [[ position ]],
+    device uint * c [[ buffer(T1_BUFS_I) ]])
+{
+    return float4((float)T1_atomic_add(c, 0, 1u));
+}
+
+//== atomic_on_floats
+// why: T1_atomic_*() takes a writable buffer of uints
+kernel void k(
+    uint t [[ thread_position_in_grid ]],
+    device float * c [[ buffer(T1_BUFS_I) ]])
+{
+    T1_atomic_add(c, 0, 1u);
+}
+
+//== atomic_on_read_only
+// why: T1_atomic_*() takes a writable buffer of uints
+kernel void k(
+    uint t [[ thread_position_in_grid ]],
+    const device uint * c [[ buffer(T1_BUFS_I) ]])
+{
+    T1_atomic_add(c, 0, 1u);
 }
 
 //== thread_address_space
@@ -266,7 +309,7 @@ kernel void k(
 // why: unsupported attribute
 kernel void k(
     uint t [[ thread_position_in_grid ]],
-    uint g [[ threadgroup_position_in_grid ]])
+    uint g [[ threads_per_threadgroup ]])
 {
 }
 

@@ -37,6 +37,7 @@ static T1Pass * T1_pass_new(u8 kind, u32 pipeline_id) {
     }
     p->u32s.write_tex = T1_TEX_NONE;
     p->u32s.depth_tex = T1_TEX_NONE;
+    p->u32s.threads_buf = T1_BUF_NONE;
     for (u32 i = 0; i < T1_PASS_BUFS_CAP; i++) {
         p->u32s.buf[i] = T1_BUF_NONE;
     }
@@ -139,6 +140,9 @@ static const T1PassProperty T1_pass_properties[] = {
     T1_PASS_PROP("threads[0]", threads[0]),
     T1_PASS_PROP("threads[1]", threads[1]),
     T1_PASS_PROP("threads[2]", threads[2]),
+    T1_PASS_PROP("threads_buf", threads_buf),
+    T1_PASS_PROP("threads_buf_offset", threads_buf_offset),
+    T1_PASS_PROP("threads_dims", threads_dims),
     T1_PASS_PROP("off", off),
 };
 #define T1_PASS_PROPERTIES_SIZE \
