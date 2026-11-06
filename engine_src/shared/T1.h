@@ -132,8 +132,11 @@ void T1_window_set_pause_when_hidden(uint8_t pause);
 // move, rebuild or delete what depends on the size. Until then, the
 // window's T1Tex was scaled to the window.
 uint8_t  T1_frame_resized(void);
-// Microseconds since the previous frame (0 on the first)
+// Microseconds since the previous frame (0 on the first), times the speed
 uint64_t T1_frame_elapsed_us(void);
+// How fast time passes for T1_frame_elapsed_us(): 1 as it is (at first), 0.5
+// at half speed, 0 stopped
+void T1_frame_set_speed(float speed);
 // The window's size in points, the unit touches and the mouse use
 uint32_t T1_window_get_width(void);
 uint32_t T1_window_get_height(void);
@@ -152,6 +155,8 @@ frame they end or lose them (and there may have been several in a frame).
 */
 uint8_t   T1_io_key_is_down(T1IOKey key);
 uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key);
+// Whether any key at all began a tap this frame (consumes them all)
+uint8_t   T1_io_any_key_consume_tap_began_frame(void);
 uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
 uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
 float     T1_io_get_pos_x_this_frame(T1IOKey key); 

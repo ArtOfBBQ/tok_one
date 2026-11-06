@@ -302,6 +302,14 @@ b8 T1_io_key_consume_tap_began_frame(T1IOKey key) {
     return T1_io_key_consume_event(key, 0, 0);
 }
 
+b8 T1_io_any_key_consume_tap_began_frame(void) {
+    b8 any = 0;
+    for (u32 key = 0; key < T1_IO_KEY_ABOVEBOUNDS; key++) {
+        any |= T1_io_key_consume_tap_began_frame((T1IOKey)key);
+    }
+    return any;
+}
+
 b8 T1_io_key_consume_short_tap_this_frame(T1IOKey key) {
     return T1_io_key_consume_event(key, 1, 0);
 }

@@ -106,6 +106,11 @@ u64 T1_frame_elapsed_us(void) {
     return T1_global->elapsed;
 }
 
+void T1_frame_set_speed(const f32 speed) {
+    T1_assert(speed >= 0.0f);
+    T1_global->timedelta_mult = speed;
+}
+
 /*
 After the client's frame: clears its one-shot input events (it has seen
 them by now), polls gamepads and handles fullscreen requests

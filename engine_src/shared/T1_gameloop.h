@@ -24,5 +24,6 @@ u8   T1_gpu_lost(void);
 u64  T1_gpu_frame_us(void);
 u8   T1_frame_resized(void);
 u64  T1_frame_elapsed_us(void);
+void T1_frame_set_speed(f32 speed);
 
 #endif // T1_GAMELOOP_H
