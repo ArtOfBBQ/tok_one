@@ -720,3 +720,131 @@ kernel void t1t_indirect_2d_kernel(
 {
     out[t.y * 32u + t.x] = t.y * 1000u + t.x + 1u;
 }
+
+//== indexed_writes
+// Writes through indices the compiler doesn't know: FXC can't do these, so
+// T1 sets the whole vector or matrix
+typedef struct {
+    float3 v;
+    float4x4 m;
+} T1TIndexed;
+
+kernel void t1t_indexed_writes_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device float * out [[ buffer(T1_BUFS_I + 0) ]],
+    device float3 * out3 [[ buffer(T1_BUFS_I + 1) ]],
+    device T1TIndexed * outs [[ buffer(T1_BUFS_I + 2) ]])
+{
+    uint i = t % 3u;
+    uint j = (t + 1u) % 3u;
+    uint b = t * 64u;
+
+    float3 v = float3(1.0f, 2.0f, 3.0f);
+    v[i] = 5.0f;
+    v[j] += 2.0f;
+    v[i]++;
+    out[b + 0u] = v.x; out[b + 1u] = v.y; out[b + 2u] = v.z;
+
+    float3x3 m = float3x3(2.0f);
+    m[i] = float3(7.0f, 8.0f, 9.0f);
+    m[j] += float3(1.0f, 1.0f, 1.0f);
+    m[i][j] = 11.0f;
+    m[1][i] *= 2.0f;
+    m[j][1] = 13.0f;
+    m[i].x = 17.0f;
+    for (uint c = 0u; c < 3u; c++) {
+        out[b + 3u + c * 3u] = m[c].x;
+        out[b + 4u + c * 3u] = m[c].y;
+        out[b + 5u + c * 3u] = m[c].z;
+    }
+
+    float3 a[3];
+    a[0] = float3(0.0f, 1.0f, 2.0f);
+    a[1] = float3(3.0f, 4.0f, 5.0f);
+    a[2] = float3(6.0f, 7.0f, 8.0f);
+    a[1][i] = 20.0f;
+    a[j][i] += 30.0f;
+    for (uint c = 0u; c < 3u; c++) {
+        out[b + 12u + c * 3u] = a[c].x;
+        out[b + 13u + c * 3u] = a[c].y;
+        out[b + 14u + c * 3u] = a[c].z;
+    }
+
+    T1TIndexed s;
+    s.v = float3(1.0f, 1.0f, 1.0f);
+    s.m = float4x4(3.0f);
+    s.v[i] += 40.0f;
+    s.m[i] = float4(50.0f, 51.0f, 52.0f, 53.0f);
+    s.m[j][i] = 60.0f;
+    out[b + 21u] = s.v.x; out[b + 22u] = s.v.y; out[b + 23u] = s.v.z;
+    for (uint c = 0u; c < 4u; c++) {
+        out[b + 24u + c * 4u] = s.m[c].x;
+        out[b + 25u + c * 4u] = s.m[c].y;
+        out[b + 26u + c * 4u] = s.m[c].z;
+        out[b + 27u + c * 4u] = s.m[c].w;
+    }
+
+    out3[t] = float3(1.0f, 2.0f, 3.0f);
+    out3[t][i] = 70.0f;
+    out3[t][j] += 80.0f;
+
+    outs[t].v = float3(4.0f, 5.0f, 6.0f);
+    outs[t].m = float4x4(1.0f);
+    outs[t].v[i] = 90.0f;
+    outs[t].m[i] = float4(100.0f, 101.0f, 102.0f, 103.0f);
+    outs[t].m[j][i] += 110.0f;
+    outs[t].m[i].y = 120.0f;
+
+    // (read back here: a float3's fourth word isn't anyone's)
+    out[b + 40u] = out3[t].x;
+    out[b + 41u] = out3[t].y;
+    out[b + 42u] = out3[t].z;
+    out[b + 43u] = outs[t].v.x;
+    out[b + 44u] = outs[t].v.y;
+    out[b + 45u] = outs[t].v.z;
+    for (uint c = 0u; c < 4u; c++) {
+        out[b + 46u + c * 4u] = outs[t].m[c].x;
+        out[b + 47u + c * 4u] = outs[t].m[c].y;
+        out[b + 48u + c * 4u] = outs[t].m[c].z;
+        out[b + 49u + c * 4u] = outs[t].m[c].w;
+    }
+    out[b + 62u] = 1.0f;
+    out[b + 63u] = 2.0f;
+}
+
+//== small_named_buffers
+// Writable uint buffers of the smallest sizes, named like the locals of T1's
+// atomics helpers. Every buffer's first word counts the threads
+kernel void t1t_small_named_buffers_kernel(
+    uint t [[ thread_position_in_grid ]],
+    device uint * o [[ buffer(T1_BUFS_I + 0) ]],
+    device uint * i [[ buffer(T1_BUFS_I + 1) ]],
+    device uint * v [[ buffer(T1_BUFS_I + 2) ]],
+    device uint * e [[ buffer(T1_BUFS_I + 3) ]])
+{
+    T1_atomic_add(o, 0u, 1u);
+    T1_atomic_add(i, 0u, 2u);
+    T1_atomic_add(v, 0u, 3u);
+    T1_atomic_add(e, 0u, t + 1u);
+}
+
+//== threadgroup_struct
+// threadgroup memory of a struct: its declaration must come after the struct
+typedef struct {
+    float a;
+    float3 b;
+} T1TSlot;
+
+kernel void t1t_threadgroup_struct_kernel(
+    uint t [[ thread_position_in_grid ]],
+    uint local [[ thread_position_in_threadgroup ]],
+    device float * out [[ buffer(T1_BUFS_I + 0) ]])
+{
+    threadgroup T1TSlot slots[256];
+    slots[local].a = (float)local;
+    slots[local].b = float3(1.0f, 2.0f, (float)local);
+    slots[local].b[1] = 7.0f;
+    T1_threadgroup_barrier();
+    T1TSlot other = slots[(local + 1u) % 256u];
+    out[t] = other.a + other.b.y + other.b.z * 2.0f;
+}

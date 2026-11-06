@@ -224,6 +224,20 @@ translation can't take, on every platform alike, and says where):
 - no implicit conversions between bool, ints and floats: write x != 0,
   (b ? 1.0f : 0.0f), 35 instead of 35.0f for an s32, and both sides of
   ?: of one type (float4(1.0f), not 1.0f, next to a float4)
+- a condition is one bool (a number: compare it; a vector: any() or all()),
+  no ! or math on the wrong type, % only on integers, and a vector or matrix
+  takes only its own type (a constructor converts)
+- || and && and ?: may run both of their sides, so no ++, = or calls that
+  write in what they might skip; ?: is between numbers and vectors, not structs
+- every path through a function that returns a value returns one, and no
+  recursion
+- a for's variable has a name of its own among those around it
+- = { ... } lists every element; no arrays as parameters, or assigned whole
+- structs go at program scope
+- threads share no vector: two threads writing parts of one element of a
+  buffer may undo each other, and threadgroup memory's vectors take literal
+  indices only. A write to threadgroup memory is indexed by the thread's
+  position, or inside an if on it (not one place for all threads)
 - sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
   T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
   T1_read(), from the T1Textures at texture(0); no samplers of your own

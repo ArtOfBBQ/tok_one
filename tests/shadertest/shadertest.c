@@ -134,7 +134,7 @@ static void fail_fatal(const char * where) {
 THE SHADERS: shadertest.metal's sections plus the math section, made from
 the tables below
 */
-#define SECTIONS_CAP 64
+#define SECTIONS_CAP 256
 typedef struct {
     char name[64];
     char * text;
@@ -1066,6 +1066,54 @@ static void setup_threadgroup_1d(void) {
     expect_buf("threadgroup_1d", EXPECT_WORDS, out, 1024 * 4);
 }
 
+/*
+Four threads, not constants: T1 must translate writes through indices the
+shader compiler can't see through
+*/
+static void setup_indexed_writes(void) {
+    if (!compiled("indexed_writes")) { return; }
+    const uint32_t threads = 4;
+    T1Buf out = new_buf(threads * 64 * 4);
+    T1Buf out3 = new_buf(threads * 16);
+    T1Buf outs = new_buf(threads * 80);
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_indexed_writes_kernel"), threads, 0);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    T1_pass_set_u32(pass, "buf[1]", out3);
+    T1_pass_set_u32(pass, "buf[2]", outs);
+    expect_buf("indexed_writes", EXPECT_WORDS, out, threads * 64 * 4);
+}
+
+// (a D3D buffer of 4 or 8 bytes is padded, it must still work)
+static void setup_small_named_buffers(void) {
+    if (!compiled("small_named_buffers")) { return; }
+    const uint32_t sizes[4] = {4, 8, 12, 16};
+    T1Buf bufs[4];
+    const uint32_t zeros[4] = {0, 0, 0, 0};
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_small_named_buffers_kernel"), 16, 0);
+    for (uint32_t b = 0; b < 4; b++) {
+        bufs[b] = new_buf(sizes[b]);
+        T1_buf_write(bufs[b], 0, zeros, sizes[b]);
+        char name[16];
+        snprintf(name, sizeof(name), "buf[%u]", b);
+        T1_pass_set_u32(pass, name, bufs[b]);
+    }
+    expect_buf("small_buffer_4", EXPECT_WORDS, bufs[0], sizes[0]);
+    expect_buf("small_buffer_8", EXPECT_WORDS, bufs[1], sizes[1]);
+    expect_buf("small_buffer_12", EXPECT_WORDS, bufs[2], sizes[2]);
+    expect_buf("small_buffer_16", EXPECT_WORDS, bufs[3], sizes[3]);
+}
+
+static void setup_threadgroup_struct(void) {
+    if (!compiled("threadgroup_struct")) { return; }
+    T1Buf out = new_buf(256 * 4);
+    uint32_t pass = compute_threads(
+        new_compute_pipeline("t1t_threadgroup_struct_kernel"), 256, 0);
+    T1_pass_set_u32(pass, "buf[0]", out);
+    expect_buf("threadgroup_struct", EXPECT_WORDS, out, 256 * 4);
+}
+
 static void setup_threadgroup_2d(void) {
     if (!compiled("threadgroup_2d")) { return; }
     T1Buf out = new_buf(1024 * 4);
@@ -1118,6 +1166,9 @@ static void (* const check_setups[])(void) = {
     setup_atomics,
     setup_threadgroup_1d,
     setup_threadgroup_2d,
+    setup_threadgroup_struct,
+    setup_indexed_writes,
+    setup_small_named_buffers,
     setup_indirect,
 };
 

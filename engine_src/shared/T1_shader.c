@@ -24,6 +24,8 @@ The subset, beyond plain C expressions and statements:
   below, which T1 knows how to translate
 - threadgroup memory only as "threadgroup Type name[N];" at the top of a
   kernel's body, T1_threadgroup_barrier() only at the top of one too
+- what one language refuses or runs differently and T1 can't translate, see
+  THE PORTABILITY CHECK
 */
 
 typedef u8 ShaderTokenKind;
@@ -129,6 +131,7 @@ static const Banned banned[] = {
     {"enum",   "no enums, use #define"},
     {"union",  "no unions"},
     {"goto",   "no goto"},
+    {"register", "not a name Metal takes"},
     {"sizeof", "no sizeof"},
     {"extern", "no extern"},
     {"volatile", "no volatile"},
@@ -645,7 +648,7 @@ T1_atomic_*(buffer, i, ...): the buffer must be a writable one of uints, in
 a kernel or a helper (helpers get the buffers of the entry point that calls
 them, and only a kernel's can be written)
 */
-static void check_atomic_call(const Check * c, const Func * f, const u32 i) {
+static void check_atomic_call(Check * c, const Func * f, const u32 i) {
     if (f == NULL || (f->is_entry && f->stage != STAGE_KERNEL)) {
         report(c, i, "T1_atomic_*() only in kernels and their helpers");
         return;
@@ -672,7 +675,7 @@ static void check_atomic_call(const Check * c, const Func * f, const u32 i) {
 
 // threadgroup Type name[N]; at the top of a kernel's body
 static void check_threadgroup_decl(
-    const Check * c,
+    Check * c,
     const Func * f,
     const u32 i)
 {
@@ -849,6 +852,8 @@ static void check_tokens(Check * c) {
 }
 
 // The subset's rules, without translating
+static void check_portable(Check * c);
+
 static void check_subset(
     const c8 * shader_source,
     u8 * good,
@@ -874,6 +879,7 @@ static void check_subset(
 
     collect(c);
     check_tokens(c);
+    if (c->errors_size == 0) { check_portable(c); }
 
     if (c->errors_size > ERRORS_CAP && error_recip != NULL) {
         T1_std_strcat_cap(error_recip, error_recip_cap, "\n...");
@@ -2323,6 +2329,10 @@ typedef struct {
     u32 edits_size;
     u32 compared[VEDITS_CAP]; // every comparison operator and ! parsed
     u32 compared_size;
+    u32 float_mod; // a % on floats
+    u32 scalar_swizzle; // a swizzle on one number
+    u32 not_number; // a ! on a number
+    u32 bool_math; // + - * / on a bool
 } VParse;
 
 static VType vparse_expr(VParse * p, const u32 min_prec);
@@ -2429,6 +2439,7 @@ static VType vparse_postfix(VParse * p) {
             if (t.base == VB_STRUCT && !t.array) {
                 t = vtype_of_member(p->c, t, member);
             } else if (is_vector(t) || is_scalar(t)) {
+                if (is_scalar(t) && swizzle > 0) { p->scalar_swizzle = member; }
                 t = swizzle > 0 ? vtype(t.base, swizzle) : vtype_none();
             } else {
                 t = vtype_none();
@@ -2472,6 +2483,12 @@ static VType vparse_unary(VParse * p) {
         p->i++;
         const u32 operand = p->i;
         VType v = vparse_unary(p);
+        if (
+            !v.array && v.width == 1 &&
+            (v.base == VB_FLOAT || v.base == VB_INT || v.base == VB_UINT))
+        {
+            p->not_number = t;
+        }
         // !v on a bool vector: GLSL's not(v)
         if (!p->bad && is_vector(v) && p->edits_size < VEDITS_CAP) {
             VEdit * e = &p->edits[p->edits_size++];
@@ -2518,6 +2535,12 @@ static VType vparse_expr(VParse * p, const u32 min_prec) {
         p->i++;
         VType right = vparse_expr(p, prec == 2 ? 2 : prec + 1);
         if (p->bad) { break; }
+        if (is_punct(op, "%") && (left.base == VB_FLOAT || right.base == VB_FLOAT)) {
+            p->float_mod = op;
+        }
+        if (prec >= 12 && (left.base == VB_BOOL || right.base == VB_BOOL)) {
+            p->bool_math = op;
+        }
         if (prec == 9 || prec == 10) {
             if (p->compared_size < VEDITS_CAP) {
                 p->compared[p->compared_size++] = op;
@@ -2883,6 +2906,25 @@ static const c8 * const hlsl_prelude =
         "v.z = i == 2u ? e : v.z; v.w = i == 3u ? e : v.w; return v; }\n"
     "#define T1_VEC_SET(T) T1_VEC_SET_2(T) T1_VEC_SET_3(T) T1_VEC_SET_4(T)\n"
     "T1_VEC_SET(float) T1_VEC_SET(int) T1_VEC_SET(uint) T1_VEC_SET(bool)\n"
+    "float2x2 t1_mat_set_float2x2(float2x2 m, uint i, float2 e) { "
+        "m[0] = i == 0u ? e : m[0]; m[1] = i == 1u ? e : m[1]; return m; }\n"
+    "float3x3 t1_mat_set_float3x3(float3x3 m, uint i, float3 e) { "
+        "m[0] = i == 0u ? e : m[0]; m[1] = i == 1u ? e : m[1]; "
+        "m[2] = i == 2u ? e : m[2]; return m; }\n"
+    "float4x4 t1_mat_set_float4x4(float4x4 m, uint i, float4 e) { "
+        "m[0] = i == 0u ? e : m[0]; m[1] = i == 1u ? e : m[1]; "
+        "m[2] = i == 2u ? e : m[2]; m[3] = i == 3u ? e : m[3]; return m; }\n"
+    // (see hlsl_constructor_edits())
+    "float2x2 t1_mat_fill_float2x2(float x) { "
+        "return float2x2(x, 0.0f, 0.0f, x); }\n"
+    "float2x2 t1_mat_fill_float2x2(float2x2 m) { return m; }\n"
+    "float3x3 t1_mat_fill_float3x3(float x) { "
+        "return float3x3(x, 0.0f, 0.0f, 0.0f, x, 0.0f, 0.0f, 0.0f, x); }\n"
+    "float3x3 t1_mat_fill_float3x3(float3x3 m) { return m; }\n"
+    "float4x4 t1_mat_fill_float4x4(float x) { return float4x4("
+        "x, 0.0f, 0.0f, 0.0f, 0.0f, x, 0.0f, 0.0f, "
+        "0.0f, 0.0f, x, 0.0f, 0.0f, 0.0f, 0.0f, x); }\n"
+    "float4x4 t1_mat_fill_float4x4(float4x4 m) { return m; }\n"
     "#define T1_HLSL 1\n"
     "#pragma pack_matrix(row_major)\n"
     "#define f32 float\n"
@@ -3509,15 +3551,210 @@ static b8 is_assign_op(const u32 i) {
 }
 
 /*
-FXC can't write a vector's component through an index it doesn't know, MSL
-and GLSL can (X3500, or "forced to unroll loop, but unrolling failed" around
-it). A statement like v[i] += e;, on a variable or its members, becomes
-{ uint t1_c = (i); v = t1_vec_set_float3(v, t1_c, v[t1_c] + (e)); }
-(reading through an index is fine). Literal indices stay as they are.
+FXC can't write a vector's component or a matrix's column through an index it
+doesn't know, MSL and GLSL can (X3500, or "forced to unroll loop, but
+unrolling failed" around it). So a statement that does, on a variable, its
+members or a buffer's element, sets the whole vector or matrix instead:
+    v[i] += e;  ->  { uint t1_c = (i); v = t1_vec_set_float3(v, t1_c,
+                      v[t1_c] + (e)); }
+    m[i].x = e; ->  { uint t1_c = (i); float3 t1_v = m[t1_c]; t1_v.x = e;
+                      m = t1_mat_set_float3x3(m, t1_c, t1_v); }
+    m[i][j] = e; does both. Reading through an index is fine, and so are
+literal indices, which stay as they are.
 */
-static void hlsl_vector_writes(Gen * g) {
+
+// The first index in the chain (up to op) FXC can't write through, or op
+static u32 chain_first_runtime_index(
+    const Check * c,
+    VType * t,
+    const u32 chain,
+    const u32 op)
+{
+    u32 at = chain;
+    while (at < op) {
+        if (is_punct(at, ".")) {
+            if (t->base != VB_STRUCT || t->array) { return op; } // a swizzle
+            *t = vtype_of_member(c, *t, at + 1);
+            at += 2;
+        } else if (is_punct(at, "[")) {
+            const u32 close = after_match(c, at, "[", "]") - 1;
+            if (t->array) {
+                t->array = 0;
+            } else if (t->base == VB_MATRIX || is_vector(*t)) {
+                if (kind(at + 1) != SK_NUMBER || at + 2 != close) {
+                    return at;
+                }
+                *t = t->base == VB_MATRIX ?
+                    vtype(VB_FLOAT, t->width) : vtype(t->base, 1);
+            } else {
+                return op;
+            }
+            at = close + 1;
+        } else {
+            return op;
+        }
+    }
+    return op;
+}
+
+/*
+first..open is written out again (and again) for the rewrite, so it can't
+hold what must happen once, or what has edits of its own: buffers' reads
+*/
+static b8 chain_is_plain(const Func * fn, const u32 first, const u32 open) {
+    for (u32 t = first; t < open; t++) {
+        if (is_assign_op(t) || (is_punct(t, "(") && kind(t - 1) == SK_IDENT)) {
+            return 0;
+        }
+        for (u32 p = 0; p < fn->ptrs_size; p++) {
+            if (same_text(fn->ptrs[p].name_i, t)) { return 0; }
+        }
+    }
+    return 1;
+}
+
+static void cat_vec_set_name(Buf * a, const VType t) {
+    buf_cat(a, "t1_vec_set_");
+    buf_cat(a,
+        t.base == VB_FLOAT ? "float" :
+        t.base == VB_INT ? "int" :
+        t.base == VB_UINT ? "uint" : "bool");
+    cat_u32(a, t.width);
+}
+
+// What op says on top of the value set: "v[t1_c] + (", or just "("
+static void cat_set_value_open(
+    Buf * a,
+    const c8 * vec,
+    const c8 * index,
+    const u32 op)
+{
+    const b8 step = is_punct(op, "++") || is_punct(op, "--");
+    if (!is_punct(op, "=")) {
+        buf_cat(a, vec);
+        buf_cat(a, "[");
+        buf_cat(a, index);
+        buf_cat(a, "] ");
+        // the operator without its '=' (++ and -- add or take 1)
+        buf_cat_n(a,
+            T1_token_text(tz, op),
+            step ? 1 : T1_token_size(tz, op) - 1);
+        buf_cat(a, " ");
+    }
+    buf_cat(a, step ? "(1" : "(");
+}
+
+/*
+The statement from first to semi writes through the index at open, of a
+vector or matrix of type t. root goes in front of first..open to name that
+vector or matrix ("" if first is its name), after comes after the rewrite.
+*/
+static void hlsl_chain_write(
+    Gen * g,
+    const c8 * root,
+    const VType t,
+    const u32 first,
+    const u32 open,
+    const u32 op,
+    const u32 semi,
+    const c8 * after)
+{
     Check * c = g->c;
     Buf * a = &g->arena;
+    const u32 close = after_match(c, open, "[", "]") - 1;
+
+    u32 s = str_begin(g);
+    buf_cat(a, root);
+    for (u32 n = first; n < open; n++) { cat_name(a, n); }
+    const c8 * base = str_end(g, s);
+
+    g->g_repl[first] = "{ uint t1_c = (";
+    for (u32 n = first + 1; n <= open; n++) { g->g_skip[n] = 1; }
+
+    if (t.base != VB_MATRIX) {
+        s = str_begin(g);
+        buf_cat(a, "); ");
+        buf_cat(a, base);
+        buf_cat(a, " = ");
+        cat_vec_set_name(a, t);
+        buf_cat(a, "(");
+        buf_cat(a, base);
+        buf_cat(a, ", t1_c, ");
+        cat_set_value_open(a, base, "t1_c", op);
+        g->g_repl[close] = str_end(g, s);
+        g->g_skip[op] = 1;
+
+        s = str_begin(g);
+        buf_cat(a, ")); }");
+        buf_cat(a, after);
+        g->g_repl[semi] = str_end(g, s);
+        return;
+    }
+
+    const VType column = vtype(VB_FLOAT, t.width);
+    s = str_begin(g);
+    buf_cat(a, "); float");
+    cat_u32(a, t.width);
+    buf_cat(a, " t1_v = ");
+    buf_cat(a, base);
+    buf_cat(a, "[t1_c]; ");
+    const b8 element = is_punct(close + 1, "[");
+    buf_cat(a, element ? "{ uint t1_d = (" : "t1_v");
+    g->g_repl[close] = str_end(g, s);
+
+    u32 store = str_begin(g);
+    if (element) {
+        const u32 close2 = after_match(c, close + 1, "[", "]") - 1;
+        g->g_skip[close + 1] = 1;
+        s = str_begin(g);
+        buf_cat(a, "); t1_v = ");
+        cat_vec_set_name(a, column);
+        buf_cat(a, "(t1_v, t1_d, ");
+        cat_set_value_open(a, "t1_v", "t1_d", op);
+        g->g_repl[close2] = str_end(g, s);
+        g->g_skip[op] = 1;
+        store = str_begin(g);
+        buf_cat(a, ")); } ");
+    } else {
+        buf_cat(a, "; ");
+    }
+    buf_cat(a, base);
+    buf_cat(a, " = t1_mat_set_float");
+    cat_u32(a, t.width);
+    buf_cat(a, "x");
+    cat_u32(a, t.width);
+    buf_cat(a, "(");
+    buf_cat(a, base);
+    buf_cat(a, ", t1_c, t1_v); }");
+    buf_cat(a, after);
+    g->g_repl[semi] = str_end(g, store);
+}
+
+// The statement that op starts ends at the ';' this returns, or fails
+static u32 assign_statement_end(const Func * fn, const u32 op) {
+    u32 semi = op;
+    u32 nesting = 0;
+    while (semi < fn->body_close) {
+        if (is_punct(semi, "(")) { nesting++; }
+        if (is_punct(semi, ")")) {
+            if (nesting == 0) { break; }
+            nesting--;
+        }
+        if (nesting == 0 && is_punct(semi, ";")) { break; }
+        semi++;
+    }
+    return semi;
+}
+
+static b8 starts_statement(const u32 i) {
+    return
+        is_punct(i - 1, ";") || is_punct(i - 1, "{") ||
+        is_punct(i - 1, "}") || is_punct(i - 1, ")") ||
+        is_punct(i - 1, ":") || is(i - 1, "else");
+}
+
+static void hlsl_vector_writes(Gen * g) {
+    Check * c = g->c;
 
     for (u32 f = 0; f < c->funcs_size; f++) {
         const Func * fn = &c->funcs[f];
@@ -3525,94 +3762,90 @@ static void hlsl_vector_writes(Gen * g) {
             if (kind(i) != SK_IDENT || is_punct(i - 1, ".")) { continue; }
             if (!is_punct(i + 1, "[") && !is_punct(i + 1, ".")) { continue; }
 
-            VType t = vtype_of_variable(c, i);
-            u32 open = i + 1;
-            while (is_punct(open, ".") && kind(open + 1) == SK_IDENT) {
-                t = t.base == VB_STRUCT && !t.array ?
-                    vtype_of_member(c, t, open + 1) : vtype_none();
-                open += 2;
+            // (a buffer's element: hlsl_buffer_edits())
+            b8 buffer = 0;
+            for (u32 p = 0; p < fn->ptrs_size; p++) {
+                if (same_text(fn->ptrs[p].name_i, i)) { buffer = 1; }
             }
-            if (!is_vector(t) || !is_punct(open, "[")) { continue; }
-            const u32 close = after_match(c, open, "[", "]") - 1;
-            const u32 op = close + 1;
+            if (buffer) { continue; }
+
+            // the chain up to what comes after it
+            u32 op = i + 1;
+            while (op < fn->body_close) {
+                if (is_punct(op, ".") && kind(op + 1) == SK_IDENT) {
+                    op += 2;
+                } else if (is_punct(op, "[")) {
+                    op = after_match(c, op, "[", "]");
+                } else {
+                    break;
+                }
+            }
+            VType t = vtype_of_variable(c, i);
+            const u32 open = chain_first_runtime_index(c, &t, i + 1, op);
+            if (open == op) { continue; }
+
             if (!is_assign_op(op)) {
                 if (is_punct(i - 1, "++") || is_punct(i - 1, "--")) {
                     fail(g, i, "write a vector's component as v[i] op= value;");
                 }
                 continue;
             }
-            if (kind(open + 1) == SK_NUMBER && open + 2 == close) { continue; }
-
-            // the statement must start here and end with a ';'
-            u32 semi = op;
-            u32 nesting = 0;
-            while (semi < fn->body_close) {
-                if (is_punct(semi, "(")) { nesting++; }
-                if (is_punct(semi, ")")) {
-                    if (nesting == 0) { break; }
-                    nesting--;
-                }
-                if (nesting == 0 && is_punct(semi, ";")) { break; }
-                semi++;
-            }
-            const b8 starts_statement =
-                is_punct(i - 1, ";") || is_punct(i - 1, "{") ||
-                is_punct(i - 1, "}") || is_punct(i - 1, ")") ||
-                is_punct(i - 1, ":") || is(i - 1, "else");
-            if (!is_punct(semi, ";") || !starts_statement) {
+            const u32 semi = assign_statement_end(fn, op);
+            if (!is_punct(semi, ";") || !starts_statement(i)) {
                 fail(g, i, "write a vector's component as v[i] op= value;");
                 continue;
             }
-
-            // (the new statement reads the vector: FXC won't have that of a
-            // local with nothing in it yet, whatever MSL's undefined holds)
+            if (!chain_is_plain(fn, i, open)) {
+                fail(g, i,
+                    "writing a vector's component through a variable index, "
+                    "keep the indices before it plain (no calls or buffers)");
+                continue;
+            }
+            // (setting the whole vector would undo what other threads wrote
+            // to its other components)
             for (u32 j = i; j > fn->params_open; j--) {
                 if (same_text(j - 1, i) && declares(c, j - 1)) {
-                    const u32 name = j - 1;
-                    if (
-                        g->g_post[name] == NULL &&
-                        (is_punct(name + 1, ";") || is_punct(name + 1, ",")) &&
-                        name > fn->body_open)
-                    {
-                        u32 z = str_begin(g);
-                        buf_cat(a, " = (");
-                        cat_name(a, name - 1);
-                        buf_cat(a, ")0");
-                        g->g_post[name] = str_end(g, z);
+                    if (is(j - 3, "threadgroup")) {
+                        fail(g, i,
+                            "threadgroup memory's vectors take literal "
+                            "indices only");
                     }
                     break;
                 }
             }
+            hlsl_chain_write(g, "", t, i, open, op, semi, "");
+        }
+    }
+}
 
-            g->g_repl[i] = "{ uint t1_c = (";
-            for (u32 s = i + 1; s <= open; s++) { g->g_skip[s] = 1; }
-
-            const b8 step = is_punct(op, "++") || is_punct(op, "--");
-            u32 s = str_begin(g);
-            buf_cat(a, "); ");
-            for (u32 n = i; n < open; n++) { cat_name(a, n); }
-            buf_cat(a, " = t1_vec_set_");
-            buf_cat(a,
-                t.base == VB_FLOAT ? "float" :
-                t.base == VB_INT ? "int" :
-                t.base == VB_UINT ? "uint" : "bool");
-            cat_u32(a, t.width);
-            buf_cat(a, "(");
-            for (u32 n = i; n < open; n++) { cat_name(a, n); }
-            buf_cat(a, ", t1_c, ");
-            if (!is_punct(op, "=")) {
-                for (u32 n = i; n < open; n++) { cat_name(a, n); }
-                buf_cat(a, "[t1_c] ");
-                // the operator without its '=' (++ and -- add or take 1)
-                buf_cat_n(a,
-                    T1_token_text(tz, op),
-                    step ? 1 : T1_token_size(tz, op) - 1);
-                buf_cat(a, " ");
+/*
+A local with nothing in it is undefined in MSL, and a read of it an error in
+FXC (X4000) where it can tell: they all start at 0. Arrays can't be cast to,
+and FXC doesn't mind them.
+*/
+static void hlsl_local_zeros(Gen * g) {
+    Check * c = g->c;
+    Buf * a = &g->arena;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 j = fn->body_open + 1; j < fn->body_close; j++) {
+            if (
+                kind(j) != SK_IDENT ||
+                (!is_punct(j + 1, ";") && !is_punct(j + 1, ",")))
+            {
+                continue;
             }
-            buf_cat(a, step ? "(1" : "(");
-            g->g_repl[close] = str_end(g, s);
-            g->g_skip[op] = 1;
-            g->g_repl[semi] = ")); }";
+            u32 type = j - 1;
+            while (is_punct(type, ",") && kind(type - 1) == SK_IDENT) {
+                type -= 2;
+            }
+            if (!is_type(c, type) || !declares(c, type + 1)) { continue; }
+            if (is(type, "T1Textures") || is(type, "T1WriteTex")) { continue; }
+            u32 s = str_begin(g);
+            buf_cat(a, " = (");
+            cat_name(a, type);
+            buf_cat(a, ")0");
+            add_text(g, &g->g_post[j], str_end(g, s));
         }
     }
 }
@@ -3745,22 +3978,8 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             }
 
             // a write: the statement must start here and end with a ';'
-            u32 semi = chain_end;
-            u32 nesting = 0;
-            while (semi < fn->body_close) {
-                if (is_punct(semi, "(")) { nesting++; }
-                if (is_punct(semi, ")")) {
-                    if (nesting == 0) { break; }
-                    nesting--;
-                }
-                if (nesting == 0 && is_punct(semi, ";")) { break; }
-                semi++;
-            }
-            b8 starts_statement =
-                is_punct(i - 1, ";") || is_punct(i - 1, "{") ||
-                is_punct(i - 1, "}") || is_punct(i - 1, ")") ||
-                is(i - 1, "else");
-            if (!is_punct(semi, ";") || !starts_statement) {
+            const u32 semi = assign_statement_end(fn, chain_end);
+            if (!is_punct(semi, ";") || !starts_statement(i)) {
                 fail(g, i, "write buffer elements as name[i] op= value;");
                 continue;
             }
@@ -3781,6 +4000,18 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             hlsl_member_offsets(
                 g, loadable, close + 1, chain_end, &type_i, &last);
 
+            // (an index FXC can't write through: hlsl_chain_write())
+            VType tail = vtype_of_name(c, type_i);
+            const u32 tail_open = chain_first_runtime_index(
+                c, &tail, last + 1, chain_end);
+            const b8 indexed = tail_open != chain_end;
+            if (indexed && !chain_is_plain(fn, last + 1, tail_open)) {
+                fail(g, i,
+                    "writing a vector's component through a variable index, "
+                    "keep the indices before it plain (no calls or buffers)");
+                continue;
+            }
+
             s = str_begin(g);
             buf_cat(a, "; ");
             cat_hlsl_type(a, type_i);
@@ -3788,8 +4019,20 @@ static void hlsl_buffer_edits(Gen * g, const b8 * loadable) {
             cat_hlsl_type(a, type_i);
             buf_cat(a, "(");
             cat_name(a, i);
-            buf_cat(a, ", t1_a); t1_e");
+            buf_cat(a, indexed ? ", t1_a); " : ", t1_a); t1_e");
             add_text(g, &g->g_post[last], str_end(g, s));
+            if (indexed) {
+                s = str_begin(g);
+                buf_cat(a, " t1_store_");
+                cat_hlsl_type(a, type_i);
+                buf_cat(a, "(");
+                cat_name(a, i);
+                buf_cat(a, ", t1_a, t1_e); }");
+                hlsl_chain_write(
+                    g, "t1_e", tail, last + 1, tail_open, chain_end, semi,
+                    str_end(g, s));
+                continue;
+            }
             s = str_begin(g);
             buf_cat(a, "; t1_store_");
             cat_hlsl_type(a, type_i);
@@ -4041,7 +4284,8 @@ static void hlsl_constructor_edits(Gen * g) {
             kind(i) != SK_IDENT ||
             !is_punct(i + 1, "(") ||
             is_punct(i - 1, ".") ||
-            !in_list(i, vectors, sizeof(vectors) / sizeof(vectors[0])))
+            (!is_matrix_type(i) &&
+                !in_list(i, vectors, sizeof(vectors) / sizeof(vectors[0]))))
         {
             continue;
         }
@@ -4055,6 +4299,15 @@ static void hlsl_constructor_edits(Gen * g) {
             if (nesting == 0 && is_punct(t, ",")) { one_arg = 0; }
         }
         if (!one_arg) { continue; }
+
+        // float3x3(x) has x on its diagonal in MSL and GLSL
+        if (is_matrix_type(i)) {
+            u32 m = str_begin(g);
+            buf_cat(&g->arena, "t1_mat_fill_");
+            cat_name(&g->arena, i);
+            g->g_repl[i] = str_end(g, m);
+            continue;
+        }
 
         u32 s = str_begin(g);
         buf_cat(&g->arena, "((");
@@ -4680,6 +4933,7 @@ void T1_shader_to_hlsl(
     hlsl_switch_edits(&g);
     hlsl_struct_functions(&g, loadable);
     hlsl_vector_writes(&g);
+    hlsl_local_zeros(&g);
     hlsl_buffer_edits(&g, loadable);
     hlsl_constructor_edits(&g);
     hlsl_stage_edits(&g);
@@ -4689,6 +4943,690 @@ void T1_shader_to_hlsl(
     T1_mem_free_managed(loadable);
 
     gen_end(&g, good, "T1_shader_to_hlsl() ran out of room");
+}
+
+/*
+THE PORTABILITY CHECK: what one of MSL, HLSL (FXC) or GLSL refuses, or runs
+differently, and T1 can't translate, is outside the subset for all of them.
+A Mac can't run FXC and Windows can't run Metal, so this is what keeps a
+shader written on one working on the other.
+*/
+
+static u32 next_real(const Check * c, u32 t) {
+    while (t < c->count && (kind(t) == SK_PREPROC || c->secondary[t])) { t++; }
+    return t;
+}
+
+// Goes past the statement at *at, returns whether every path through it returns
+static b8 statement_returns(const Check * c, u32 * at) {
+    const u32 t = next_real(c, *at);
+    if (t >= c->count) { *at = t; return 0; }
+    if (is_bracket(c, t, "{")) {
+        const u32 after = after_match(c, t, "{", "}");
+        b8 returns = 0;
+        u32 s = next_real(c, t + 1);
+        while (s + 1 < after) {
+            if (statement_returns(c, &s)) { returns = 1; }
+            s = next_real(c, s);
+        }
+        *at = after;
+        return returns;
+    }
+    if (is(t, "if") && is_punct(t + 1, "(")) {
+        u32 s = after_match(c, t + 1, "(", ")");
+        const b8 then_returns = statement_returns(c, &s);
+        const u32 e = next_real(c, s);
+        if (is(e, "else")) {
+            s = e + 1;
+            const b8 else_returns = statement_returns(c, &s);
+            *at = s;
+            return then_returns && else_returns;
+        }
+        *at = s;
+        return 0;
+    }
+    if (
+        (is(t, "for") || is(t, "while") || is(t, "switch")) &&
+        is_punct(t + 1, "("))
+    {
+        u32 s = after_match(c, t + 1, "(", ")");
+        statement_returns(c, &s);
+        *at = s;
+        return 0;
+    }
+    if (is(t, "do")) {
+        u32 s = t + 1;
+        statement_returns(c, &s); // then its while (...);
+        statement_returns(c, &s);
+        *at = s;
+        return 0;
+    }
+    const b8 returns = is(t, "return");
+    u32 s = t;
+    while (s < c->count && (!is_punct(s, ";") || c->secondary[s])) { s++; }
+    *at = s + 1;
+    return returns;
+}
+
+static const Func * func_named(const Check * c, const u32 i) {
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        if (same_text(c->funcs[f].name_i, i)) { return &c->funcs[f]; }
+    }
+    return NULL;
+}
+
+// Whether f calls target, through other functions or itself
+static b8 calls_reach(
+    const Check * c,
+    const Func * f,
+    const Func * target,
+    u8 * visited)
+{
+    const u32 f_i = (u32)(f - c->funcs);
+    if (visited[f_i]) { return 0; }
+    visited[f_i] = 1;
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (kind(t) != SK_IDENT || !is_punct(t + 1, "(")) { continue; }
+        if (is_punct(t - 1, ".")) { continue; }
+        const Func * callee = func_named(c, t);
+        if (callee == NULL) { continue; }
+        if (callee == target || calls_reach(c, callee, target, visited)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void check_calls(Check * c, u8 * visited) {
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        T1_std_memset(visited, 0, c->funcs_size);
+        if (calls_reach(c, fn, fn, visited)) {
+            report(c, fn->name_i, "no recursion");
+        }
+
+        // what only a fragment function may use, by itself or its helpers
+        for (u32 t = fn->body_open + 1; t < fn->body_close; t++) {
+            if (!is(t, "fwidth") && !is(t, "discard_fragment")) { continue; }
+            for (u32 e = 0; e < c->funcs_size; e++) {
+                const Func * entry = &c->funcs[e];
+                if (!entry->is_entry || entry->stage == STAGE_FRAGMENT) {
+                    continue;
+                }
+                T1_std_memset(visited, 0, c->funcs_size);
+                if (entry == fn || calls_reach(c, entry, fn, visited)) {
+                    report(c, t, "only fragment functions have this");
+                }
+            }
+        }
+    }
+}
+
+// The '{' around t, or the function's
+static u32 enclosing_brace(const Check * c, const Func * f, const u32 t) {
+    u32 depth = 0;
+    for (u32 j = t; j > f->body_open; j--) {
+        if (is_bracket(c, j, "}")) { depth++; }
+        if (is_bracket(c, j, "{")) {
+            if (depth == 0) { return j; }
+            depth--;
+        }
+    }
+    return f->body_open;
+}
+
+// The 'for' whose header t is in, or UINT32_MAX
+static u32 for_of_header(const Check * c, const Func * f, const u32 t) {
+    u32 depth = 0;
+    for (u32 j = t; j > f->body_open; j--) {
+        if (is_bracket(c, j, ")")) { depth++; }
+        if (is_bracket(c, j, "(")) {
+            if (depth == 0) {
+                if (is(j - 1, "for")) { return j - 1; }
+            } else {
+                depth--;
+            }
+        }
+        if (is_bracket(c, j, "{") || is_bracket(c, j, "}")) { break; }
+    }
+    return UINT32_MAX;
+}
+
+static u32 for_end(const Check * c, const u32 for_i) {
+    u32 s = after_match(c, for_i + 1, "(", ")");
+    statement_returns(c, &s);
+    return s;
+}
+
+/*
+FXC's for variables outlive their loop, and one that has another's name takes
+over from it: a for's variable can't share a name with one around it
+*/
+static void check_for_names(Check * c, const Func * f) {
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (!is(t, "for") || !is_punct(t + 1, "(") || c->secondary[t]) {
+            continue;
+        }
+        const u32 end = for_end(c, t);
+        for (u32 n = t + 2; n < f->body_close && !is_punct(n, ";"); n++) {
+            if (!declares(c, n)) { continue; }
+            for (u32 d = f->params_open + 1; d < f->body_close; d++) {
+                if (
+                    d == n ||
+                    !same_text(d, n) ||
+                    !declares(c, d) ||
+                    c->secondary[d])
+                {
+                    continue;
+                }
+                b8 clash;
+                if (d < f->params_close) {
+                    clash = 1;
+                } else {
+                    const u32 other_for = for_of_header(c, f, d);
+                    const b8 inside = d > t && d < end;
+                    if (other_for != UINT32_MAX) {
+                        clash =
+                            inside ||
+                            (t > other_for && t < for_end(c, other_for));
+                    } else {
+                        const u32 b = enclosing_brace(c, f, d);
+                        clash =
+                            !inside &&
+                            t > b && t < after_match(c, b, "{", "}");
+                    }
+                }
+                if (clash) {
+                    report(c, n,
+                        "a for's variable can't have the name of one around "
+                        "it (FXC keeps it after the loop)");
+                    break;
+                }
+            }
+        }
+    }
+}
+
+static b8 name_tainted(
+    const u32 from,
+    const u32 to,
+    const Name * names,
+    const u32 size)
+{
+    for (u32 t = from; t < to; t++) {
+        if (
+            kind(t) == SK_IDENT &&
+            !is_punct(t - 1, ".") &&
+            in_names(t, names, size))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static b8 text_has(const c8 * text, const c8 * part) {
+    const u64 n = T1_std_strlen(part);
+    for (; *text != '\0'; text++) {
+        if (T1_std_are_equal_strings_of_length(text, part, n)) { return 1; }
+    }
+    return 0;
+}
+
+/*
+A write to threadgroup memory that every thread makes to the same place is a
+race in MSL and GLSL, and an error in FXC (X3695). Its index must depend on
+the thread's position (found by following the kernel's assignments), or it's
+inside an if that does.
+*/
+static void check_threadgroup_writes(
+    Check * c,
+    const Func * f,
+    Name * shared,
+    Name * moving)
+{
+    u32 shared_size = 0;
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (is(t, "threadgroup")) {
+            add_name(
+                shared, &shared_size,
+                T1_token_text(tz, t + 2), T1_token_size(tz, t + 2));
+        }
+    }
+    if (shared_size == 0) { return; }
+
+    u32 moving_size = 0;
+    for (u32 t = f->params_open + 1; t < f->params_close; t++) {
+        if (
+            kind(t) == SK_ATTR &&
+            text_has(T1_token_value(tz, t), "thread_position_in"))
+        {
+            add_name(
+                moving, &moving_size,
+                T1_token_text(tz, t - 1), T1_token_size(tz, t - 1));
+        }
+    }
+    u32 before;
+    do {
+        before = moving_size;
+        for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+            if (!is_assign_op(t) || is_punct(t, "++") || is_punct(t, "--")) {
+                continue;
+            }
+            // the variable it's written to: where the chain starts
+            u32 root = t - 1;
+            while (root > f->body_open) {
+                if (is_punct(root, "]")) {
+                    root = before_match(c, root);
+                    root -= 1;
+                } else if (is_punct(root - 1, ".")) {
+                    root -= 2;
+                } else {
+                    break;
+                }
+            }
+            if (kind(root) != SK_IDENT || in_names(root, moving, moving_size)) {
+                continue;
+            }
+            u32 end = t + 1;
+            while (end < f->body_close && !is_punct(end, ";")) { end++; }
+            if (name_tainted(t + 1, end, moving, moving_size)) {
+                add_name(
+                    moving, &moving_size,
+                    T1_token_text(tz, root), T1_token_size(tz, root));
+            }
+        }
+    } while (moving_size != before);
+
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (
+            kind(t) != SK_IDENT ||
+            is_punct(t - 1, ".") ||
+            !is_punct(t + 1, "[") ||
+            !in_names(t, shared, shared_size))
+        {
+            continue;
+        }
+        const u32 close = after_match(c, t + 1, "[", "]") - 1;
+        u32 op = close + 1;
+        while (op < f->body_close) {
+            if (is_punct(op, ".") && kind(op + 1) == SK_IDENT) {
+                op += 2;
+            } else if (is_punct(op, "[")) {
+                op = after_match(c, op, "[", "]");
+            } else {
+                break;
+            }
+        }
+        if (!is_assign_op(op)) { continue; }
+        b8 moves = name_tainted(t + 2, close, moving, moving_size);
+        for (u32 u = f->body_open + 1; u < t && !moves; u++) {
+            if (!is(u, "if") || !is_punct(u + 1, "(")) { continue; }
+            const u32 cond_end = after_match(c, u + 1, "(", ")");
+            u32 s = cond_end;
+            statement_returns(c, &s);
+            const u32 e = next_real(c, s);
+            if (is(e, "else")) {
+                s = e + 1;
+                statement_returns(c, &s);
+            }
+            if (t < s && name_tainted(u + 2, cond_end, moving, moving_size)) {
+                moves = 1;
+            }
+        }
+        if (!moves) {
+            report(c, t,
+                "every thread writes the same threadgroup memory: index it "
+                "by the thread's position, or write in an if on it");
+        }
+    }
+}
+
+// Whether what's from from to to changes anything but its own value
+static b8 has_side_effects(const Check * c, const u32 from, const u32 to) {
+    for (u32 t = from; t < to; t++) {
+        if (is_assign_op(t) || is_atomic_call(t) || is(t, "T1_write_tex_write")) {
+            return 1;
+        }
+        if (kind(t) != SK_IDENT || !is_punct(t + 1, "(")) { continue; }
+        const Func * callee = func_named(c, t);
+        if (callee == NULL) { continue; }
+        for (u32 p = 0; p < callee->ptrs_size; p++) {
+            const u32 type_i = callee->ptrs[p].type_i;
+            if (is(type_i - 1, "device") && !is(type_i - 2, "const")) {
+                return 1;
+            }
+        }
+        for (u32 a = callee->params_open; a < callee->params_close; a++) {
+            if (is(a, "T1WriteTex")) { return 1; }
+        }
+    }
+    return 0;
+}
+
+// The end of the operand starting at from: at a stop of its bracket level
+static u32 operand_end(const Check * c, const Func * f, const u32 from) {
+    u32 t = from;
+    while (t < f->body_close) {
+        if (is_punct(t, "(")) { t = after_match(c, t, "(", ")"); continue; }
+        if (is_punct(t, "[")) { t = after_match(c, t, "[", "]"); continue; }
+        if (
+            is_punct(t, ")") || is_punct(t, "]") || is_punct(t, ";") ||
+            is_punct(t, ",") || is_punct(t, "}") || is_punct(t, ":") ||
+            is_punct(t, "?"))
+        {
+            break;
+        }
+        t++;
+    }
+    return t;
+}
+
+// The ':' of the '?' at q
+static u32 ternary_colon(const Check * c, const Func * f, const u32 q) {
+    u32 t = q + 1;
+    u32 inner = 0;
+    while (t < f->body_close) {
+        if (is_punct(t, "(")) { t = after_match(c, t, "(", ")"); continue; }
+        if (is_punct(t, "[")) { t = after_match(c, t, "[", "]"); continue; }
+        if (is_punct(t, "?")) { inner++; }
+        if (is_punct(t, ":")) {
+            if (inner == 0) { return t; }
+            inner--;
+        }
+        if (is_punct(t, ";")) { break; }
+        t++;
+    }
+    return t;
+}
+
+// The type of from..to, none if the parser doesn't follow it
+static VType vparse_range(
+    const Check * c,
+    VParse * p,
+    const u32 from,
+    const u32 to)
+{
+    T1_std_memset(p, 0, sizeof(VParse));
+    p->c = c;
+    p->i = from;
+    p->end = to;
+    const VType t = vparse_expr(p, 1);
+    return p->bad || p->i != to ? vtype_none() : t;
+}
+
+// The first token of the expression around i (up to lower precedence)
+static u32 expression_first(const Check * c, const Func * f, const u32 i) {
+    u32 first = i;
+    while (first > f->body_open + 1) {
+        const u32 b = first - 1;
+        if (is_punct(b, ")") || is_punct(b, "]")) {
+            first = before_match(c, b);
+            continue;
+        }
+        if (is_punct(b, "(") || is_punct(b, "[") || vparse_boundary(b)) {
+            break;
+        }
+        first = b;
+    }
+    return first;
+}
+
+static u32 expression_last(const Check * c, const Func * f, const u32 i) {
+    u32 end = i + 1;
+    while (end < f->body_close) {
+        if (is_punct(end, "(")) { end = after_match(c, end, "(", ")"); continue; }
+        if (is_punct(end, "[")) { end = after_match(c, end, "[", "]"); continue; }
+        if (is_punct(end, ")") || is_punct(end, "]") || vparse_boundary(end)) {
+            break;
+        }
+        end++;
+    }
+    return end;
+}
+
+// One number that isn't a bool: GLSL won't take it as a condition
+static b8 is_number(const VType t) {
+    return
+        !t.array && t.width == 1 &&
+        (t.base == VB_FLOAT || t.base == VB_INT || t.base == VB_UINT);
+}
+
+// .xx: as a place to write to, one component twice
+static b8 swizzle_repeats(const u32 i) {
+    const c8 * n = T1_token_text(tz, i);
+    const u32 size = T1_token_size(tz, i);
+    for (u32 a = 0; a < size; a++) {
+        for (u32 b = a + 1; b < size; b++) {
+            if (n[a] == n[b]) { return 1; }
+        }
+    }
+    return 0;
+}
+
+static void check_expressions(Check * c, const Func * f, VParse * p) {
+    for (u32 t = f->body_open + 1; t < f->body_close; t++) {
+        if (c->secondary[t]) { continue; }
+
+        // HLSL runs both sides of these, MSL and GLSL only what they need
+        if (is_punct(t, "&&") || is_punct(t, "||")) {
+            if (has_side_effects(c, t + 1, operand_end(c, f, t + 1))) {
+                report(c, t,
+                    "HLSL runs both sides of && and ||: no ++, = or writing "
+                    "calls on the right of one");
+            }
+        }
+        if (is_punct(t, "?")) {
+            const u32 colon = ternary_colon(c, f, t);
+            const u32 end = operand_end(c, f, colon + 1);
+            if (has_side_effects(c, t + 1, end)) {
+                report(c, t,
+                    "HLSL runs both sides of ?: : no ++, = or writing calls "
+                    "in them");
+            }
+            const VType arm = vparse_range(c, p, t + 1, colon);
+            if (arm.base == VB_STRUCT || arm.array) {
+                report(c, t, "?: between numbers and vectors only, not structs");
+            }
+            const u32 first = expression_first(c, f, t);
+            const VType cond = vparse_range(c, p, first, t);
+            if (is_vector(cond)) {
+                report(c, t, "?: takes one bool, use any() or all()");
+            } else if (is_number(cond)) {
+                report(c, t, "?: takes a bool, compare the number");
+            }
+        }
+
+        if ((is(t, "if") || is(t, "while")) && is_punct(t + 1, "(")) {
+            const u32 close = after_match(c, t + 1, "(", ")") - 1;
+            const VType cond = vparse_range(c, p, t + 2, close);
+            if (is_vector(cond)) {
+                report(c, t + 1, "a condition is one bool, use any() or all()");
+            } else if (is_number(cond)) {
+                report(c, t + 1, "a condition is a bool, compare the number");
+            }
+        }
+
+        if (
+            is_punct(t, "%") || is_punct(t, "!") || is_punct(t, "+") ||
+            is_punct(t, "-") || is_punct(t, "*") || is_punct(t, "/"))
+        {
+            vparse_range(
+                c, p, expression_first(c, f, t), expression_last(c, f, t));
+            if (p->float_mod != 0) {
+                report(c, t, "% is for integers, use fmod() on floats");
+            }
+            if (p->not_number != 0) {
+                report(c, t, "! takes a bool, compare the number");
+            }
+            if (p->bool_math != 0) {
+                report(c, t, "no math on bools, convert them first");
+            }
+        }
+        if (is_punct(t, ".") && kind(t + 1) == SK_IDENT) {
+            vparse_range(
+                c, p, expression_first(c, f, t), expression_last(c, f, t));
+            if (p->scalar_swizzle != 0) {
+                report(c, t, "no swizzles on a single number");
+            }
+        }
+
+        // what's assigned must be what it's assigned to, as MSL has it (FXC
+        // cuts vectors short with a warning, and converts them)
+        if (is_punct(t, "=") && !is_punct(t + 1, "{")) {
+            const b8 declared = declares(c, t - 1);
+            const u32 first = expression_first(c, f, t);
+            const VType left =
+                declared ?
+                    vtype_declared_at(c, t - 1) :
+                    vparse_range(c, p, first, t);
+            u32 end = t + 1;
+            while (end < f->body_close) {
+                if (is_punct(end, "(")) {
+                    end = after_match(c, end, "(", ")");
+                } else if (is_punct(end, "[")) {
+                    end = after_match(c, end, "[", "]");
+                } else if (
+                    is_punct(end, ";") || is_punct(end, ",") ||
+                    is_punct(end, ")") || is_punct(end, "]"))
+                {
+                    break;
+                } else {
+                    end++;
+                }
+            }
+            const VType right = vparse_range(c, p, t + 1, end);
+            if (left.array && !declared) {
+                report(c, t, "arrays can't be assigned, copy their elements");
+            } else if (
+                (is_vector(left) || left.base == VB_MATRIX) &&
+                (is_vector(right) || right.base == VB_MATRIX) &&
+                (left.base != right.base || left.width != right.width))
+            {
+                report(c, t,
+                    "a vector or matrix takes only its own type, convert it "
+                    "with a constructor");
+            } else if (is_scalar(left) && is_vector(right)) {
+                report(c, t, "a vector doesn't fit in a single number");
+            } else if (
+                !left.array && left.width == 1 &&
+                (left.base == VB_INT || left.base == VB_UINT) &&
+                is_number(right) && right.base == VB_FLOAT)
+            {
+                report(c, t, "a float doesn't become an integer unasked, cast it");
+            }
+            if (
+                is_punct(t - 2, ".") &&
+                swizzle_size(t - 1) > 0 &&
+                swizzle_repeats(t - 1))
+            {
+                report(c, t, "a swizzle written to can't repeat a component");
+            }
+        }
+    }
+}
+
+// = { ... }: HLSL and GLSL want every element, MSL fills in the rest with 0
+static void check_initializers(Check * c) {
+    for (u32 t = 0; t + 1 < c->count; t++) {
+        if (!is_punct(t, "=") || !is_punct(t + 1, "{") || c->secondary[t]) {
+            continue;
+        }
+        const u32 close = after_match(c, t + 1, "{", "}") - 1;
+        u32 elements = close > t + 2 ? 1 : 0;
+        u32 nesting = 0;
+        for (u32 e = t + 2; e < close; e++) {
+            if (
+                is_bracket(c, e, "(") || is_bracket(c, e, "[") ||
+                is_bracket(c, e, "{"))
+            {
+                nesting++;
+            }
+            if (
+                is_bracket(c, e, ")") || is_bracket(c, e, "]") ||
+                is_bracket(c, e, "}"))
+            {
+                nesting--;
+            }
+            if (nesting == 0 && is_punct(e, ",") && e + 1 < close) {
+                elements++;
+            }
+        }
+        b8 short_of = elements == 0;
+        if (is_punct(t - 1, "]")) {
+            const u32 open = before_match(c, t - 1);
+            if (open + 1 == t - 1) {
+                // float a[] = {...}: the size is what's there
+            } else if (kind(open + 1) == SK_NUMBER && open + 2 == t - 1) {
+                u32 size = 0;
+                const c8 * n = T1_token_text(tz, open + 1);
+                for (u32 d = 0; d < T1_token_size(tz, open + 1); d++) {
+                    if (n[d] >= '0' && n[d] <= '9') {
+                        size = size * 10 + (u32)(n[d] - '0');
+                    }
+                }
+                if (elements < size) { short_of = 1; }
+            } else if (elements == 1) {
+                short_of = 1; // float a[N] = {0};
+            }
+        } else if (declares(c, t - 1)) {
+            const StructDef * d = find_struct(c, t - 2);
+            if (d != NULL) {
+                DataMember members[DATA_MEMBERS_CAP];
+                const u32 size = data_members(c, d, members);
+                b8 arrays = 0;
+                for (u32 m = 0; m < size; m++) {
+                    if (members[m].count_open != UINT32_MAX) { arrays = 1; }
+                }
+                if (!arrays && elements < size) { short_of = 1; }
+            }
+        }
+        if (short_of) {
+            report(c, t,
+                "an initializer lists every element (HLSL and GLSL don't "
+                "fill in the rest)");
+        }
+    }
+}
+
+static void check_portable(Check * c) {
+    u8 * visited = T1_mem_malloc_managed(c->funcs_size + 1);
+    Name * names = T1_mem_malloc_managed(sizeof(Name) * NAMES_CAP * 2);
+    VParse * p = T1_mem_malloc_managed(sizeof(VParse));
+
+    check_calls(c, visited);
+    check_initializers(c);
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+
+        for (u32 t = fn->params_open + 1; t < fn->params_close; t++) {
+            if (is_punct(t, "[")) {
+                report(c, t,
+                    "no arrays as parameters (MSL shares them with the "
+                    "caller, HLSL and GLSL copy them)");
+            }
+        }
+        for (u32 t = fn->body_open + 1; t < fn->body_close; t++) {
+            if (is(t, "struct")) {
+                report(c, t, "structs at program scope only");
+            }
+        }
+        if (!is(fn->name_i - 1, "void")) {
+            u32 s = fn->body_open;
+            if (!statement_returns(c, &s)) {
+                report(c, fn->name_i,
+                    "every path must return a value, FXC refuses it (X3080)");
+            }
+        }
+        check_for_names(c, fn);
+        if (fn->stage == STAGE_KERNEL) {
+            check_threadgroup_writes(c, fn, names, names + NAMES_CAP);
+        }
+        check_expressions(c, fn, p);
+    }
+    T1_mem_free_managed(p);
+    T1_mem_free_managed(names);
+    T1_mem_free_managed(visited);
 }
 
 /*
