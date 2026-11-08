@@ -589,7 +589,7 @@ static void T1_os_macos_ns_window_delegate_window_will_enter_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_global->fullscreen = true;
+    T1_global->fullscreen = 1;
 }
 
 static void T1_os_macos_ns_window_delegate_window_will_exit_full_screen(
@@ -599,7 +599,7 @@ static void T1_os_macos_ns_window_delegate_window_will_exit_full_screen(
 {
     (void)self_ptr; (void)selector; (void)notification;
     
-    T1_global->fullscreen = false;
+    T1_global->fullscreen = 0;
 }
 
 #if 0
@@ -1236,7 +1236,7 @@ u32 T1_os_get_page_size(void) {
 
 void T1_os_close_app(void) {
     // T1_frame_update() then returns 0, and the client's loop ends
-    T1_os_macos_s->quit_requested = true;
+    T1_os_macos_s->quit_requested = 1;
 }
 
 /*
@@ -1445,7 +1445,7 @@ static void T1_os_macos_set_content_layer(
         (uintptr_t)new_layer);
     T1_objc_msg_1arg(content_view,
         T1_os_macos_s->sel_set_wants_layer,
-        true);
+        1);
     
     T1_objc_msg_1arg(
         window,
@@ -1488,7 +1488,7 @@ static void T1_os_macos_attach_metal_layer(
         T1MTLPixelFormatBGRA8Unorm);
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_framebuffer_only,
-        true);
+        1);
     /*
     Triple buffering: one drawable on screen, one waiting for its refresh,
     one to draw the next frame into. nextDrawable blocks while all are in
@@ -1504,7 +1504,7 @@ static void T1_os_macos_attach_metal_layer(
         3);
     T1_objc_msg_1arg(metal_layer,
         T1_os_macos_s->sel_set_display_sync_enabled,
-        true);
+        1);
     T1_objc_msg_1f64(metal_layer,
         T1_os_macos_s->sel_set_contents_scale,
         (f64)T1_os_get_screen_backing_scale_factor());
@@ -1557,7 +1557,7 @@ void T1_os_window_open(
         T1_os_macos_s->sel_shared_application);
     if (ns_app != NULL && !T1_os_macos_s->launched) {
         T1_os_macos_finish_launching(ns_app);
-        T1_os_macos_s->launched = true;
+        T1_os_macos_s->launched = 1;
     }
     
     T1_os_macos_create_window(fatal_error);
@@ -1650,7 +1650,7 @@ static void T1_os_macos_pump_events(
                 T1NSEventMaskAny,
                 until,
                 T1_os_macos_s->ns_default_run_loop_mode,
-                true);
+                1);
         
         if (event == NULL) {
             break;
@@ -1693,7 +1693,7 @@ static void T1_os_macos_finish_launching(void * ns_app) {
     T1_objc_msg_1arg(
         ns_app,
         T1_os_macos_s->sel_activate_ignoring_other_apps,
-        true);
+        1);
 }
 
 void T1_os_window_pump_events(const u64 max_wait_us) {
@@ -1716,7 +1716,7 @@ void T1_os_window_pump_events(const u64 max_wait_us) {
     
     if (!T1_os_macos_s->launched) {
         T1_os_macos_finish_launching(ns_app);
-        T1_os_macos_s->launched = true;
+        T1_os_macos_s->launched = 1;
     }
     
     T1_os_macos_pump_events(
@@ -1730,7 +1730,7 @@ u8 T1_os_window_close_requested(void) {
 
 u8 T1_os_window_visible(void) {
     if (window == NULL) {
-        return false;
+        return 0;
     }
     
     // False while minimized or fully covered

@@ -5,8 +5,6 @@
 Search for documentation by section:
   APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT, TEXTURES,
   RENDERING, BUFFERS, FILES, TOKENS, OPERATING SYSTEM, AUDIO
-
-The macro settings at the top are yours to edit.
 */
 
 #include <stdint.h>
@@ -18,7 +16,7 @@ The macro settings at the top are yours to edit.
 /*
 APPLICATION STARTUP
 Each step reports problems through fatal_error and does nothing if it's
-already set, so you can call them in a row and check once at the end:
+already set, so you can call multiple and check for errors once at the end:
 
 T1_init(malloc, malloc, free, &fatal_error); // no GPU yet
 T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
@@ -31,11 +29,8 @@ before you use anything that renders: textures, buffers, pipelines or
 passes. Shaders are only needed for your own pipelines: an app that draws
 its own pixels just uploads them to the window's T1Tex, see examples/ for
 the smallest app.
-
-T1 never shows errors in the window. Problems at startup come back through
-fatal_error; when T1 catches a bug (a failed check, see T1_ASSERTS_ACTIVE),
-it crashes right away, so your debugger stops there.
 */
+
 /*
 T1 allocates all its memory through your functions, they only need to align
 like malloc(). alloc_forever's memory is never freed, so it can be a bump
@@ -426,6 +421,9 @@ uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
 void T1_os_mutex_lock(uint32_t mutex_id);
 void T1_os_mutex_unlock(uint32_t mutex_id);
 
+// text to the error output (stderr), as it is: no newline added
+void T1_os_write_error(const char * text);
+
 /*
 AUDIO
 T1 plays 16-bit stereo at T1_AUDIO_RATE (44.1kHz) and makes none of it:
@@ -443,8 +441,7 @@ main thread start playing in fill). Mixing sounds, volumes, music, effects
 are all yours to make in fill.
 
 Call it once. *good is 0 when there's no audio device (the app goes on,
-silent). This exists only with T1_AUDIO_ACTIVE (T1_macro_settings.h), so
-calls to it need the same #if.
+silent).
 */
 #define T1_AUDIO_RATE 44100
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -551,3 +548,4 @@ double   T1_token_parse_f64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 int64_t  T1_token_parse_s64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 
 #endif // T1_H
+

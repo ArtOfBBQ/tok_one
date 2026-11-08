@@ -717,7 +717,7 @@ void T1_apple_gpu_init(
         ags->class_mtl_depth_stencil_desc,
         ags->sel_new);
     T1_objc_msg_1arg(depth_desc,
-        ags->sel_set_depth_write_enabled, true); 
+        ags->sel_set_depth_write_enabled, 1); 
     T1_objc_msg_1arg(depth_desc,
         ags->sel_set_depth_compare_function,
         T1MTLCompareFunctionLessEqual);
@@ -725,7 +725,7 @@ void T1_apple_gpu_init(
         ags->device,
         ags->sel_new_depth_stencil_state_with_desc,
         (uintptr_t)depth_desc);
-    T1_objc_msg_1arg(depth_desc, ags->sel_set_depth_write_enabled, false);
+    T1_objc_msg_1arg(depth_desc, ags->sel_set_depth_write_enabled, 0);
     ags->additive_depth_stencil_state = (void *)T1_objc_msg_1arg(
         ags->device,
         ags->sel_new_depth_stencil_state_with_desc,
@@ -743,7 +743,7 @@ void T1_apple_gpu_init(
         ags->device,
         ags->sel_new_command_queue);
     
-    ags->metal_active = true;
+    ags->metal_active = 1;
     
     T1_objc_autorelease_pool_pop(pool);
     return;
@@ -758,7 +758,7 @@ static void T1_gpu_shader_attempt_failed(
     char * error_recip,
     const u32 error_recip_cap)
 {
-    *ok = false;
+    *ok = 0;
     
     if (error_recip == NULL) { return; }
     
@@ -923,7 +923,7 @@ static void T1_gpu_release_pipeline(
 }
 
 void T1_os_gpu_pipeline_added(s32 pipeline_i, u8 * good) {
-    *good = true;
+    *good = 1;
 
     T1_assert(pipeline_i >= 0);
     T1_assert(pipeline_i < T1_PIPELINES_CAP);
@@ -977,7 +977,7 @@ static void * T1_gpu_pipeline_state(
     if (T1_pipelines[i].is_compute) { targets = 0; }
 
     if (ags->pipeline_states[i][targets] == NULL) {
-        u8 ok = true;
+        u8 ok = 1;
         ags->pipeline_states[i][targets] = T1_gpu_build_pipeline_state(
             i, targets, ags->pipeline_funcs[i], &ok, NULL, 0);
         T1_assert(ok);
@@ -999,7 +999,7 @@ void T1_os_gpu_try_shader_source(
     const u32 error_recip_cap,
     char ** const fatal_error)
 {
-    *good = false;
+    *good = 0;
     
     if (*fatal_error != 0) { return; }
     
@@ -1016,7 +1016,7 @@ void T1_os_gpu_try_shader_source(
         return;
     }
     
-    u8 ok = true;
+    u8 ok = 1;
     
     if (shader_source == NULL || shader_source[0] == '\0') {
         T1_gpu_shader_attempt_failed(
@@ -1192,10 +1192,10 @@ void T1_os_gpu_try_shader_source(
 
         // Rebuild the states in use. Pipelines without any get one, so
         // their shaders are known to link before they're first drawn with
-        b8 any_states = false;
+        b8 any_states = 0;
         for (u32 t = 0; t < T1_GPU_TARGETS_SIZE; t++) {
             if (ags->pipeline_states[i][t] == NULL) { continue; }
-            any_states = true;
+            any_states = 1;
             new_states[i][t] = T1_gpu_build_pipeline_state(
                 i, t, new_funcs[i], &ok, error_recip, error_recip_cap);
         }
@@ -1232,9 +1232,9 @@ void T1_os_gpu_try_shader_source(
 
     T1_gpu_release(&ags->lib);
     ags->lib = lib;
-    ags->shaders_ready = true;
+    ags->shaders_ready = 1;
 
-    *good = true;
+    *good = 1;
 
     T1_objc_autorelease_pool_pop(pool);
 }
@@ -1250,7 +1250,7 @@ void T1_os_gpu_update_capacity_if_needed(
     
     T1_assert(tex_array_i >=  0);
     T1_assert(tex_array_i <  31);
-    u8 copy_prev = false;
+    u8 copy_prev = 0;
     void * prev_copy = NULL;
     
     if (T1_tex_arrays[tex_array_i].deleted) {
@@ -1272,14 +1272,14 @@ void T1_os_gpu_update_capacity_if_needed(
                     ags->sel_height))
     {
         T1_gpu_release(&ags->metal_textures[tex_array_i]);
-        copy_prev = false;
+        copy_prev = 0;
     } else if (
         T1_tex_arrays[tex_array_i].images_size >
             T1_objc_msg(
                 ags->metal_textures[tex_array_i],
                 ags->sel_array_length))
     {
-        copy_prev = true;
+        copy_prev = 1;
         prev_copy = ags->metal_textures[tex_array_i];
         ags->metal_textures[tex_array_i] = NULL;
     } else {
@@ -1325,15 +1325,17 @@ void T1_os_gpu_update_capacity_if_needed(
         T1_tex_arrays[tex_array_i].single_img_height);
     
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    // one level per halving of the longest side, down to 1 pixel
+    const u32 mip_w = T1_tex_arrays[tex_array_i].single_img_width;
+    const u32 mip_h = T1_tex_arrays[tex_array_i].single_img_height;
+    uintptr_t mip_levels = 1;
+    for (u32 side = mip_w > mip_h ? mip_w : mip_h; side > 1; side /= 2) {
+        mip_levels += 1;
+    }
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_mipmap_level_count,
-        tex_array_i == 0 ?
-        1 :
-        (uintptr_t)floor(
-            log2((double)MAX(
-                T1_tex_arrays[tex_array_i].single_img_width,
-                T1_tex_arrays[tex_array_i].single_img_height))) + 1);
+        tex_array_i == 0 ? 1 : mip_levels);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     T1_objc_msg_1arg(
         texture_descriptor,
@@ -1612,12 +1614,12 @@ static void * T1_gpu_tex_depth(u32 tex, u32 width, u32 height, b8 * clear) {
         found->depth = T1_gpu_new_depth_texture(width, height);
         found->width = width;
         found->height = height;
-        found->cleared = false;
+        found->cleared = 0;
     }
     
     found->last_used_frame = ags->frames_encoded + 1;
     *clear = !found->cleared;
-    found->cleared = true;
+    found->cleared = 1;
     return found->depth;
 }
 
@@ -1690,7 +1692,7 @@ static void * T1_gpu_pass_target(
     const u32 tex,
     b8 * owned)
 {
-    *owned = false;
+    *owned = 0;
 
     if (tex == T1_TEX_NONE) { return NULL; }
 
@@ -1705,7 +1707,7 @@ static void * T1_gpu_pass_target(
         return NULL;
     }
 
-    *owned = true;
+    *owned = 1;
     return get_tex_slice(array_i, slice_i);
 }
 
@@ -2139,7 +2141,7 @@ in each backend, not in T1's API.
 // any of pass's u32 values is tex
 static b8 T1_gpu_pass_mentions(const T1Pass * pass, const u32 tex) {
     const u32 * v = (const u32 *)&pass->u32s;
-    b8 found = false;
+    b8 found = 0;
     for (u32 i = 0; i < T1_GPU_U32S_SIZE; i++) { found |= v[i] == tex; }
     return found;
 }
@@ -2178,7 +2180,7 @@ static void T1_gpu_plan_clears(s16 * fold_into) {
                 continue;
             }
             // the first pass to mention it: it must draw into it
-            b8 targets_it = false;
+            b8 targets_it = 0;
             for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
                 targets_it |= next->u32s.color_tex[k] == tex;
             }
@@ -2217,7 +2219,7 @@ static u32 T1_gpu_plan_encoder(
             // a clear another encoder makes doesn't stop this one, unless
             // this one already draws into its texture (it comes between)
             if (fold_into[end] < 0) { break; }
-            b8 attached = false;
+            b8 attached = 0;
             for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
                 attached |= colors[k] == next->u32s.color_tex[0];
             }
@@ -2226,13 +2228,13 @@ static u32 T1_gpu_plan_encoder(
         }
         if (!T1_gpu_pass_draws(next)) { break; }
         if (next->u32s.depth_tex != *depth_tex) { break; }
-        b8 fits = true;
+        b8 fits = 1;
         for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
             fits &= next->u32s.color_tex[k] == colors[k];
         }
         if (!fits) { break; }
         // it reads none of the targets
-        b8 reads = false;
+        b8 reads = 0;
         for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
             if (colors[k] != T1_TEX_NONE) {
                 reads |= T1_gpu_pass_reads(next, colors[k]);
@@ -2257,7 +2259,7 @@ static void T1_gpu_encode_draw_passes(
 {
     // the clears it makes: of the clear passes folded into its passes
     s32 clear_from[T1_PASS_COLOR_TEXS_CAP];
-    b8 has_work = false;
+    b8 has_work = 0;
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) { clear_from[k] = -1; }
     for (u32 c = 0; c < T1_passes_size; c++) {
         if (fold_into[c] < (s16)first || fold_into[c] >= (s16)end) {
@@ -2266,7 +2268,7 @@ static void T1_gpu_encode_draw_passes(
         for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
             if (colors[k] == T1_passes[c].u32s.color_tex[0]) {
                 clear_from[k] = (s32)c;
-                has_work = true;
+                has_work = 1;
             }
         }
     }
@@ -2285,7 +2287,7 @@ static void T1_gpu_encode_draw_passes(
     u32 target_bits = 0;
     for (u32 k = 0; k < T1_PASS_COLOR_TEXS_CAP; k++) {
         targets[k] = NULL;
-        owned[k] = false;
+        owned[k] = 0;
         if (colors[k] == T1_TEX_NONE) { continue; }
         
         targets[k] = T1_gpu_pass_target(colors[k], &owned[k]);
@@ -2331,7 +2333,7 @@ static void T1_gpu_encode_draw_passes(
     
     // the "depth_tex"'s depth buffer, cleared by its first pass of the frame
     void * depth = NULL;
-    b8 clear_depth = false;
+    b8 clear_depth = 0;
     if (depth_tex != T1_TEX_NONE) {
         u32 depth_w = T1_tex_get_width((T1Tex)depth_tex);
         u32 depth_h = T1_tex_get_height((T1Tex)depth_tex);
@@ -2455,7 +2457,7 @@ static void T1_gpu_encode_compute_pass(
         return;
     }
     
-    b8 owned = false;
+    b8 owned = 0;
     void * out = NULL;
     if (pass->u32s.write_tex != T1_TEX_NONE) {
         out = T1_gpu_pass_target(pass->u32s.write_tex, &owned);
@@ -2567,11 +2569,11 @@ static b8 T1_gpu_render_frame(void) {
         #error
         #endif
         
-        return false;
+        return 0;
     }
     
     for (u32 i = 0; i < T1_GPU_TEX_DEPTHS_CAP; i++) {
-        ags->tex_depths[i].cleared = false;
+        ags->tex_depths[i].cleared = 0;
     }
     
     T1_gpu_encode_buf_writes(combuf);
@@ -2642,7 +2644,7 @@ static b8 T1_gpu_render_frame(void) {
     
     T1_objc_msg(combuf, ags->sel_commit);
     
-    return true;
+    return 1;
 }
 
 /*
@@ -2655,7 +2657,7 @@ static void * T1_gpu_present_pls(void) {
     if (ags->present_pls != NULL || ags->present_pls_failed) {
         return ags->present_pls;
     }
-    ags->present_pls_failed = true;
+    ags->present_pls_failed = 1;
     
     static const char * source =
         "struct T1PresentVertex { float4 pos [[position]]; };\n"
@@ -2694,7 +2696,7 @@ static void * T1_gpu_present_pls(void) {
     T1_assert(lib != NULL);
     if (lib == NULL) { return NULL; }
     
-    u8 ok = true;
+    u8 ok = 1;
     void * vertex_fn = T1_gpu_new_shader_func(
         lib, "T1_present_vertex", &ok, NULL, 0);
     void * fragment_fn = T1_gpu_new_shader_func(
@@ -2729,11 +2731,11 @@ Returns false if nothing was presented.
 */
 b8 T1_gpu_present_tex(void * metal_layer, const u32 tex) {
     if (metal_layer == NULL || !ags || !ags->metal_active) {
-        return false;
+        return 0;
     }
     
     void * pls = T1_gpu_present_pls();
-    if (pls == NULL) { return false; }
+    if (pls == NULL) { return 0; }
     
     u32 w = T1_tex_get_width((T1Tex)tex);
     u32 h = T1_tex_get_height((T1Tex)tex);
@@ -2755,25 +2757,25 @@ b8 T1_gpu_present_tex(void * metal_layer, const u32 tex) {
         metal_layer,
         ags->sel_next_drawable);
     if (drawable == NULL) {
-        return false;
+        return 0;
     }
     
     void * drawable_tex = (void *)T1_objc_msg(drawable, ags->sel_texture);
     if (drawable_tex == NULL) {
-        return false;
+        return 0;
     }
     
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
     if (combuf == NULL) {
-        return false;
+        return 0;
     }
     
-    b8 owned = false;
+    b8 owned = 0;
     void * src = T1_gpu_pass_target(tex, &owned);
     if (src == NULL) {
-        return false;
+        return 0;
     }
     
     void * desc = T1_gpu_new_render_pass_descriptor();
@@ -2822,24 +2824,24 @@ b8 T1_gpu_present_tex(void * metal_layer, const u32 tex) {
     
     if (owned) { T1_gpu_release(&src); }
     
-    return true;
+    return 1;
 }
 
 u8 T1_os_gpu_begin_frame(void) {
     if (!ags || !ags->metal_active) {
-        return false;
+        return 0;
     }
     
     void * pool = T1_objc_autorelease_pool_push();
     T1_gpu_wait_for_frame_slot();
     T1_objc_autorelease_pool_pop(pool);
     
-    return true;
+    return 1;
 }
 
 u8 T1_os_gpu_render_frame(void) {
     if (!ags || !ags->metal_active) {
-        return false;
+        return 0;
     }
     
     ags->frame_consts = T1_global->frame_consts;
