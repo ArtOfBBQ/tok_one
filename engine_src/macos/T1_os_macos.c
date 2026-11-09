@@ -986,7 +986,9 @@ static void update_simple_key(
 
 typedef struct {
     void * class_GCController;
-    void * sel_current;
+    void * sel_controllers;
+    void * sel_count;
+    void * sel_object_at_index;
     void * sel_extendedgamepad;
     void * sel_left_shoulder;
     void * sel_right_shoulder;
@@ -1012,7 +1014,9 @@ typedef struct {
     void * sel_xaxis;
     void * sel_yaxis;
     void * sel_value;
-    u8 good;
+    // the GCController being listened to, only ever compared (see
+    // T1_os_gamepad_pick())
+    void * active;
 } ObjCFrameworkGCC;
 
 static ObjCFrameworkGCC * T1_mpl_objc = NULL;
@@ -1027,7 +1031,9 @@ static void T1_os_setup_obj_frameworks(void) {
     T1_std_memset(T1_mpl_objc, 0, sizeof(ObjCFrameworkGCC));
     
     T1_mpl_objc->class_GCController = T1_objc_get_class("GCController");
-    T1_mpl_objc->sel_current = T1_objc_reg_sel("current");
+    T1_mpl_objc->sel_controllers = T1_objc_reg_sel("controllers");
+    T1_mpl_objc->sel_count = T1_objc_reg_sel("count");
+    T1_mpl_objc->sel_object_at_index = T1_objc_reg_sel("objectAtIndex:");
     T1_mpl_objc->sel_extendedgamepad = T1_objc_reg_sel("extendedGamepad");
     T1_mpl_objc->sel_dpad = T1_objc_reg_sel("dpad");
     T1_mpl_objc->sel_left_shoulder = T1_objc_reg_sel("leftShoulder");
@@ -1075,31 +1081,116 @@ static void update_chain_key(
     update_simple_key(isdown_u32 & 1, T1_io_key);
 }
 
-void T1_os_poll_gamepad_events(void) {
-    
-    if (!T1_mpl_objc) {
-        T1_os_setup_obj_frameworks();
-        return;
+// an axis's value (a float: not what T1_objc_msg_get_f64() can read)
+static f32 T1_os_gamepad_axis_value(void * axis) {
+    if (!axis) { return 0.0f; }
+    typedef f32 (* GetF32)(void *, void *);
+    return ((GetF32)T1_objc_unsafe_get_raw_msg_send())(
+        axis, T1_mpl_objc->sel_value);
+}
+
+// a stick counts as used past this
+#define T1_OS_GAMEPAD_STICK_IN_USE 0.5f
+
+static b8 T1_os_gamepad_pressed(void * parent, void * sel) {
+    if (!parent) { return 0; }
+    void * button = (void *)T1_objc_msg(parent, sel);
+    if (!button) { return 0; }
+    return (T1_objc_msg(button, T1_mpl_objc->sel_ispressed) & 1) != 0;
+}
+
+static b8 T1_os_gamepad_stick_used(void * g, void * sel_stick) {
+    void * stick = (void *)T1_objc_msg(g, sel_stick);
+    if (!stick) { return 0; }
+    void * axes[2] = {
+        (void *)T1_objc_msg(stick, T1_mpl_objc->sel_xaxis),
+        (void *)T1_objc_msg(stick, T1_mpl_objc->sel_yaxis) };
+    for (u32 a = 0; a < 2; a++) {
+        if (!axes[a]) { continue; }
+        const f32 v = T1_os_gamepad_axis_value(axes[a]);
+        if (v > T1_OS_GAMEPAD_STICK_IN_USE || v < -T1_OS_GAMEPAD_STICK_IN_USE) {
+            return 1;
+        }
     }
-    
-    if (!T1_mpl_objc->good) {
-        return;
+    return 0;
+}
+
+// whether someone's using extended gamepad g right now
+static b8 T1_os_gamepad_in_use(void * g) {
+    void * const buttons[] = {
+        T1_mpl_objc->sel_button_a,
+        T1_mpl_objc->sel_button_b,
+        T1_mpl_objc->sel_button_x,
+        T1_mpl_objc->sel_button_y,
+        T1_mpl_objc->sel_button_menu,
+        T1_mpl_objc->sel_left_shoulder,
+        T1_mpl_objc->sel_right_shoulder,
+        T1_mpl_objc->sel_left_trigger,
+        T1_mpl_objc->sel_right_trigger };
+    for (u32 b = 0; b < sizeof(buttons) / sizeof(buttons[0]); b++) {
+        if (T1_os_gamepad_pressed(g, buttons[b])) { return 1; }
     }
-    
-    // Grab the primary controller (like your EasySMX X05PRO)
-    // GCController * c = [GCController current];
-    void * c = (void *)T1_objc_msg(
+    void * dpad = (void *)T1_objc_msg(g, T1_mpl_objc->sel_dpad);
+    void * const directions[4] = {
+        T1_mpl_objc->sel_left,
+        T1_mpl_objc->sel_right,
+        T1_mpl_objc->sel_up,
+        T1_mpl_objc->sel_down };
+    for (u32 d = 0; d < 4; d++) {
+        if (T1_os_gamepad_pressed(dpad, directions[d])) { return 1; }
+    }
+    return
+        T1_os_gamepad_stick_used(g, T1_mpl_objc->sel_left_thumbstick) ||
+        T1_os_gamepad_stick_used(g, T1_mpl_objc->sel_right_thumbstick);
+}
+
+/*
+The extended gamepad to listen to, NULL if there's none. The system may list
+other devices as controllers, in any order: every one of them is tried, and
+the last one somebody used stays active until it's idle and another is used.
+*/
+static void * T1_os_gamepad_pick(void) {
+    void * list = (void *)T1_objc_msg(
         T1_mpl_objc->class_GCController,
-        T1_mpl_objc->sel_current);
-    
-    if (!c) { return; }
-    
-    void * g = (void *)T1_objc_msg(
-        c,
-        T1_mpl_objc->sel_extendedgamepad);
-    
-    if (!g) { return; }
-    
+        T1_mpl_objc->sel_controllers);
+    if (!list) { return NULL; }
+    const u64 size = (u64)T1_objc_msg(list, T1_mpl_objc->sel_count);
+
+    void * active_g = NULL;
+    void * first_c = NULL;
+    void * first_g = NULL;
+    void * used_c = NULL;
+    void * used_g = NULL;
+    for (u64 i = 0; i < size; i++) {
+        void * c = (void *)T1_objc_msg_1arg(
+            list, T1_mpl_objc->sel_object_at_index, (uintptr_t)i);
+        if (!c) { continue; }
+        void * g = (void *)T1_objc_msg(c, T1_mpl_objc->sel_extendedgamepad);
+        if (!g) { continue; }
+        if (!first_c) {
+            first_c = c;
+            first_g = g;
+        }
+        if (c == T1_mpl_objc->active) {
+            active_g = g;
+        } else if (!used_c && T1_os_gamepad_in_use(g)) {
+            used_c = c;
+            used_g = g;
+        }
+    }
+
+    if (active_g && (!used_g || T1_os_gamepad_in_use(active_g))) {
+        return active_g;
+    }
+    if (used_g) {
+        T1_mpl_objc->active = used_c;
+        return used_g;
+    }
+    T1_mpl_objc->active = first_c;
+    return first_g;
+}
+
+static void T1_os_gamepad_send_keys(void * g) {
     void * dpad = (void *)T1_objc_msg(
         g,
         T1_mpl_objc->sel_dpad);
@@ -1133,14 +1224,12 @@ void T1_os_poll_gamepad_events(void) {
     void * xaxis = (void *)T1_objc_msg(
         left_thumb,
         T1_mpl_objc->sel_xaxis);
-    f32 xval = (f32)T1_objc_msg_get_f64(
-        xaxis,
-        T1_mpl_objc->sel_value);
+    f32 xval = T1_os_gamepad_axis_value(xaxis);
     
     void * yaxis = (void *)T1_objc_msg(
         left_thumb,
         T1_mpl_objc->sel_yaxis);
-    f32 yval = (f32)T1_objc_msg_get_f64(yaxis, T1_mpl_objc->sel_value);
+    f32 yval = T1_os_gamepad_axis_value(yaxis);
     
     T1_io_register_key_move_to_pos(
         T1_IO_GAMEPAD_LTHUMBSTICK,
@@ -1156,13 +1245,27 @@ void T1_os_poll_gamepad_events(void) {
     yaxis = (void *)T1_objc_msg(
         right_thumb,
         T1_mpl_objc->sel_yaxis);
-    xval = (f32)T1_objc_msg_get_f64(xaxis, T1_mpl_objc->sel_value);
-    yval = (f32)T1_objc_msg_get_f64(yaxis, T1_mpl_objc->sel_value);
+    xval = T1_os_gamepad_axis_value(xaxis);
+    yval = T1_os_gamepad_axis_value(yaxis);
     
     T1_io_register_key_move_to_pos(
         T1_IO_GAMEPAD_RTHUMBSTICK,
         xval,
         yval);
+}
+
+void T1_os_poll_gamepad_events(void) {
+    if (!T1_mpl_objc) {
+        T1_os_setup_obj_frameworks();
+        return;
+    }
+    if (!T1_mpl_objc->class_GCController) { return; }
+
+    // (what the system hands back each frame is let go each frame)
+    void * pool = T1_objc_autorelease_pool_push();
+    void * g = T1_os_gamepad_pick();
+    if (g) { T1_os_gamepad_send_keys(g); }
+    T1_objc_autorelease_pool_pop(pool);
 }
 #elif T1_GAMEPAD_ACTIVE == T1_INACTIVE
 #else
