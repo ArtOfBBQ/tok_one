@@ -125,11 +125,10 @@ int main(void) {
     }
 
     // drawn into by our passes, at the window's pixel size
-    T1Tex window_tex = T1_tex_new(
-        NULL,
-        T1_window_get_pixel_width(),
-        T1_window_get_pixel_height(),
-        &fatal_error);
+    uint32_t pixel_w = 0;
+    uint32_t pixel_h = 0;
+    T1_window_get_size(&pixel_w, &pixel_h);
+    T1Tex window_tex = T1_tex_new(NULL, pixel_w, pixel_h, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
 
     T1Buf particles = T1_buf_new(sizeof(Particle) * PARTICLES, &fatal_error);
@@ -183,18 +182,16 @@ int main(void) {
     uint64_t next_read_us = 0;
     
     while (T1_frame_update()) {
+        T1_window_get_size(&pixel_w, &pixel_h);
+        
         // a new window texture at the new pixel size
         if (
             T1_frame_resized() &&
-            (T1_tex_get_width(window_tex) != T1_window_get_pixel_width() ||
-             T1_tex_get_height(window_tex) != T1_window_get_pixel_height()))
+            (T1_tex_get_width(window_tex) != pixel_w ||
+             T1_tex_get_height(window_tex) != pixel_h))
         {
             T1_tex_delete(window_tex);
-            window_tex = T1_tex_new(
-                NULL,
-                T1_window_get_pixel_width(),
-                T1_window_get_pixel_height(),
-                &fatal_error);
+            window_tex = T1_tex_new(NULL, pixel_w, pixel_h, &fatal_error);
             if (fatal_error != NULL) {
                 printf("%s\n", fatal_error);
                 return 1;
@@ -205,10 +202,10 @@ int main(void) {
         }
 
         {
-            float w = (float)T1_window_get_width();
-            float h = (float)T1_window_get_height();
+            float w = (float)pixel_w;
+            float h = (float)pixel_h;
 
-            // window points, y up, to -1..1
+            // window pixels, y up, to -1..1
             Settings settings;
             settings.mouse[0] =
                 T1_io_get_pos_x_this_frame(T1_IO_MOUSE) / w * 2.0f - 1.0f;
@@ -221,7 +218,7 @@ int main(void) {
             
             // takes a frame or two, the loop goes on meanwhile
             if (read == T1_BUF_READ_NONE) {
-                uint64_t now_us = T1_os_get_current_time_us();
+                uint64_t now_us = T1_time_us();
                 if (now_us >= next_read_us) {
                     read = T1_buf_read_start(particles, 0, sizeof(Particle));
                     next_read_us = now_us + 1000000;
@@ -240,6 +237,5 @@ int main(void) {
         }
     }
 
-    T1_shutdown();
     return 0;
 }

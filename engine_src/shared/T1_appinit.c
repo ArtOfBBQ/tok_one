@@ -111,90 +111,11 @@ void T1_init(
         T1_os_mkdir_if_not_exist(writables_dir);
     }
     
-    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    engine_save_file = (T1EngineSaveFile *)T1_mem_malloc_unmanaged(
-        sizeof(T1EngineSaveFile));
-    if (!engine_save_file) {
-        *fatal_error = "Malloc fail";
-        return;
-    }
-    T1_std_memset(engine_save_file, 0, sizeof(T1EngineSaveFile));
-    
-    char full_writable_pathfile[512];
-    T1_std_memset(full_writable_pathfile, 0, 512);
-    T1_os_writable_filename_to_pathfile(
-        "enginestate.dat",
-        full_writable_pathfile,
-        512);
-    
-    if (full_writable_pathfile[0] == '\0') {
-        *fatal_error = "Failed to find enginestate.dat";
-        return;
-    }
-    
-    c8 * engine_save_contents = NULL;
-    u32  engine_save_size = 0;
-    u64  engine_save_cap_noterm = 0;
-    if (T1_os_file_exists(full_writable_pathfile)) {
-        engine_save_cap_noterm = T1_os_get_filesize(
-            full_writable_pathfile);
-        engine_save_contents = (char *)T1_mem_malloc_managed(
-            engine_save_cap_noterm + 1);
-        T1_std_memset(engine_save_contents, 0, engine_save_cap_noterm + 1); 
-        T1_os_read_file(
-            full_writable_pathfile,
-            engine_save_contents,
-            &engine_save_size,
-            engine_save_cap_noterm,
-            fatal_error);
-        if (*fatal_error != 0) { return; }
-        *engine_save_file = *(T1EngineSaveFile *)engine_save_contents;
-    }
-    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
-    #endif
-    
-    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    if (
-        engine_save_file->window_height > 20 &&
-        engine_save_file->window_height < T1_INITIAL_WINDOW_HEIGHT * 3 &&
-        engine_save_file->window_width > 20 &&
-        engine_save_file->window_width < T1_INITIAL_WINDOW_WIDTH * 3)
-    {
-        T1_global_update_window_size(
-            engine_save_file->window_width,
-            engine_save_file->window_height,
-            T1_os_get_current_time_us());
-        T1_global->window_left   = engine_save_file->window_left;
-        T1_global->window_bottom = engine_save_file->window_bottom;
-        T1_global->fullscreen = engine_save_file->window_fullscreen;
-        T1_global->upcoming_fullscreen_request =
-            T1_global->fullscreen;
-    } else {
-        T1_global->fullscreen = 0;
-        T1_global_update_window_size(
-            T1_INITIAL_WINDOW_WIDTH,
-            T1_INITIAL_WINDOW_HEIGHT,
-            T1_os_get_current_time_us());
-        T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
-        T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
-    }
-    
-    if (engine_save_contents != NULL) {
-        T1_mem_free_managed(engine_save_contents);
-    }
-    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     T1_global->fullscreen = 0;
     T1_global->window_wh[0]  = T1_INITIAL_WINDOW_WIDTH;
     T1_global->window_wh[1]  = T1_INITIAL_WINDOW_HEIGHT;
     T1_global->window_left   = T1_INITIAL_WINDOW_LEFT;
     T1_global->window_bottom = T1_INITIAL_WINDOW_BOTTOM;
-    
-    #else
-    #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
-    #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
     T1_global_init();
     
@@ -279,8 +200,4 @@ void T1_gpu_try_shader_source(
         error_recip,
         error_recip_cap,
         fatal_error);
-}
-
-void T1_shutdown(void) {
-    T1_os_shutdown();
 }

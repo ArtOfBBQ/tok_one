@@ -65,13 +65,13 @@ int main(void) {
         return 1;
     }
 
-    uint64_t second_start_us = T1_os_get_current_time_us();
+    uint64_t second_start_us = T1_time_us();
     uint32_t slowest_this_second_us = 0;
     uint32_t slowest_us = 0;
 
     while (T1_frame_update()) {
         // the frame starts here: T1_frame_update() waited for the display
-        uint64_t now_us = T1_os_get_current_time_us();
+        uint64_t now_us = T1_time_us();
         if (now_us - second_start_us >= 1000000) {
             slowest_us = slowest_this_second_us;
             printf("slowest frame: %u microseconds\n", slowest_us);
@@ -96,12 +96,11 @@ int main(void) {
         T1_tex_update(window_tex, rgba);
 
         // and ends here, before T1_frame_update() waits again
-        uint32_t frame_us = (uint32_t)(T1_os_get_current_time_us() - now_us);
+        uint32_t frame_us = (uint32_t)(T1_time_us() - now_us);
         if (frame_us > slowest_this_second_us) {
             slowest_this_second_us = frame_us;
         }
     }
 
-    T1_shutdown();
     return 0;
 }

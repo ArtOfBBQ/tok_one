@@ -6,6 +6,7 @@
 #include "T1_std.h"
 #include "T1_token.h"
 #include "T1_types_public_gpucpu.h"
+#include "T1_tex.h"
 
 /*
 The subset, beyond plain C expressions and statements:
@@ -1002,7 +1003,7 @@ static const c8 * const glsl_prelude =
 
 static const c8 * const glsl_textures =
     "layout(set = 1, binding = 0) uniform texture2DArray "
-        "t1_textures[T1_TEXARRAYS_CAP];\n"
+        "t1_textures[" T1_TEX_STR(T1_TEXARRAYS_CAP) "];\n"
     "layout(set = 1, binding = 1) uniform sampler t1_nearest_smp;\n"
     "layout(set = 1, binding = 2) uniform sampler t1_linear_smp;\n"
     "layout(set = 1, binding = 3) uniform sampler t1_linear_repeat_smp;\n";

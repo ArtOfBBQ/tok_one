@@ -74,39 +74,6 @@ void T1_os_forget_raw_thread_id(u64 raw_in) {
 #define MAX_FILENAME_SIZE  512
 #define MAX_SEPARATOR_SIZE   3 // 2 characters and NULL terminator
 
-#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-T1EngineSaveFile * engine_save_file = NULL;
-#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif 
-
-void T1_os_write_file_to_writables(
-    const char * filepath_inside_writables,
-    const char * output,
-    const u32 output_size,
-    b8 * good)
-{
-    char recipient[500];
-    T1_os_writable_filename_to_pathfile(
-        /* filename: */
-            filepath_inside_writables,
-        /* recipient: */
-            recipient,
-        /* recipient_capacity: */
-            500);
-    
-    T1_os_write_file(
-        /* const char * filepath: */
-            recipient,
-        /* const char * output: */
-            output,
-        /* const u32 output_size: */
-            output_size,
-        /* bool32_t * good: */
-            good);
-}
-
 void T1_os_res_filename_to_pathfile(
     const char * filename,
     char * recipient,
@@ -152,24 +119,6 @@ void T1_os_writable_filename_to_pathfile(
     T1_assert(T1_std_strlen(recipient) < recip_cap);
 }
 
-void T1_os_del_writable(
-    const char * writable_filename)
-{
-    char * filepath = T1_mem_malloc_managed(512);
-    
-    T1_os_writable_filename_to_pathfile(
-        /* const char * filename: */
-            writable_filename,
-        /* char * recipient: */
-            filepath,
-        /* const u32 assert_capacity: */
-            512);
-    
-    T1_os_del_file(filepath);
-    
-    T1_mem_free_managed(filepath);
-}
-
 void T1_os_layer_start_window_resize(
     const u64 timestamp)
 {
@@ -178,40 +127,3 @@ void T1_os_layer_start_window_resize(
     T1_global->last_resize_request_us = timestamp;
 }
 
-void T1_os_shutdown(void)
-{
-    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-    T1_assert(engine_save_file != NULL);
-    engine_save_file->window_bottom =
-        T1_global->window_bottom;
-    engine_save_file->window_height =
-        T1_global->window_wh[1];
-    engine_save_file->window_left =
-        T1_global->window_left;
-    engine_save_file->window_width =
-        T1_global->window_wh[0];
-    engine_save_file->window_fullscreen =
-        T1_global->fullscreen;
-    
-    b8 good = 0;
-    T1_os_del_writable("enginestate.dat");
-    
-    T1_os_write_file_to_writables(
-        /* const char filepath_inside_writables: */
-            "enginestate.dat",
-        /* const char * output: */
-            (char *)engine_save_file,
-        /* output_size: */
-            sizeof(T1EngineSaveFile),
-        /* u32 good: */
-            &good);
-    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-    u32 good = 1;
-    #else
-    #error
-    #endif
-    
-    if (!good) {
-        return;
-    }
-}

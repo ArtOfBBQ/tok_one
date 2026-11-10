@@ -72,22 +72,11 @@ void T1_window_toggle_fullscreen(void) {
     T1_os_toggle_fullscreen();
 }
 
-u32 T1_window_get_width(void) {
-    return (u32)T1_global->window_wh[0];
-}
-
-u32 T1_window_get_height(void) {
-    return (u32)T1_global->window_wh[1];
-}
-
-u32 T1_window_get_pixel_width(void) {
-    return (u32)(
-        T1_global->window_wh[0] * T1_os_get_screen_backing_scale_factor());
-}
-
-u32 T1_window_get_pixel_height(void) {
-    return (u32)(
-        T1_global->window_wh[1] * T1_os_get_screen_backing_scale_factor());
+void T1_window_get_size(u32 * width, u32 * height) {
+    // (the OS's points, inside T1: the client sees only pixels)
+    const f32 scale = T1_os_get_screen_backing_scale_factor();
+    if (width != NULL) { *width = (u32)(T1_global->window_wh[0] * scale); }
+    if (height != NULL) { *height = (u32)(T1_global->window_wh[1] * scale); }
 }
 
 u8 T1_gpu_lost(void) {
@@ -98,6 +87,10 @@ u64 T1_gpu_frame_us(void) {
     return T1_os_gpu_frame_us();
 }
 
+const char * T1_gpu_name(void) {
+    return T1_os_gpu_name();
+}
+
 u8 T1_frame_resized(void) {
     return T1_gl_s->frame_resized;
 }
@@ -106,10 +99,6 @@ u64 T1_frame_elapsed_us(void) {
     return T1_global->elapsed;
 }
 
-void T1_frame_set_speed(const f32 speed) {
-    T1_assert(speed >= 0.0f);
-    T1_global->timedelta_mult = speed;
-}
 
 /*
 After the client's frame: clears its one-shot input events (it has seen
@@ -205,8 +194,7 @@ u8 T1_frame_update(void) {
     
     u64 now = T1_os_get_current_time_us();
     T1_global->elapsed = T1_gl_s->previous_time == 0 ? 0 :
-        (u64)((f64)(now - T1_gl_s->previous_time) *
-            (f64)T1_global->timedelta_mult);
+        now - T1_gl_s->previous_time;
     T1_gl_s->previous_time = now;
     T1_global->this_frame_timestamp_us = now;
     T1_global->frame_consts.timestamp = (u32)now;

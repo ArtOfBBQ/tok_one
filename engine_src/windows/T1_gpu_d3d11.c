@@ -2205,6 +2205,32 @@ u64 T1_os_gpu_frame_us(void) {
     return T1_d3d != NULL ? T1_d3d->frame_gpu_us : 0;
 }
 
+#define T1_GPU_NAME_CAP 128
+const char * T1_os_gpu_name(void) {
+    static char name[T1_GPU_NAME_CAP];
+    if (name[0] != '\0' || T1_d3d == NULL || T1_d3d->device == NULL) {
+        return name;
+    }
+    T1DXGIObject * adapter = T1_gpu_d3d11_adapter();
+    if (adapter == NULL) { return name; }
+    /*
+    DXGI_ADAPTER_DESC: its Description (128 WCHARs, UTF-16) first, then ids,
+    sizes and a LUID (under 512 bytes in all)
+    */
+    u64 desc[64];
+    T1_std_memset(desc, 0, sizeof(desc));
+    if (adapter->vtbl->Method8.GetDesc(adapter, desc) >= 0) {
+        const u16 * wide = (const u16 *)desc;
+        u32 i = 0;
+        for (; i + 1 < T1_GPU_NAME_CAP && i < 128 && wide[i] != 0; i++) {
+            name[i] = wide[i] < 128 ? (char)wide[i] : '?';
+        }
+        name[i] = '\0';
+    }
+    T1_D3D_RELEASE(adapter);
+    return name;
+}
+
 /*
 Waits until the frame that last used this slot, T1_FRAMES_CAP frames ago,
 is done: this limits the number of frames in flight

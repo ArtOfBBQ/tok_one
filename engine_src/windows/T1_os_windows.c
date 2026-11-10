@@ -459,7 +459,7 @@ b8 T1_os_mkdir_if_not_exist(const char * dirname) {
     T1WChar wpath[T1_OS_WIN_PATH_CAP];
     T1_os_win_utf8_to_wide(dirname, wpath, T1_OS_WIN_PATH_CAP);
 
-    // A trailing separator (T1_os_writable_path("") gives one) is fine for
+    // A trailing separator (T1_writable_path("") gives one) is fine for
     // CreateDirectoryW, but not for checking if it exists
     u32 len = 0;
     while (wpath[len] != 0) { len++; }

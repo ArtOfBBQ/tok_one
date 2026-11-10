@@ -219,9 +219,12 @@ void T1_io_register_key_move_to_pos(
         T1_io->pos_events_size += 1;
     }
     
+    // the OS gives the mouse in points, T1's client sees pixels only
+    const f32 scale = key_id == T1_IO_MOUSE ?
+        T1_os_get_screen_backing_scale_factor() : 1.0f;
     pos->timestamp = T1_os_get_current_time_us();
-    pos->x = x;
-    pos->y = y;
+    pos->x = x * scale;
+    pos->y = y * scale;
 }
 
 static T1IOFrameEventPosition * get_pos(

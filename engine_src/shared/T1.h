@@ -88,7 +88,6 @@ while (T1_frame_update()) {
     if (T1_frame_resized()) { rebuild what depends on the window size }
     update(T1_frame_elapsed_us()); // writes buffers, textures, ...
 }
-T1_shutdown();
 
 T1_frame_update() finishes your frame and starts the next one: it runs
 your passes, shows the window's T1Tex as large as it fits in the window
@@ -118,6 +117,12 @@ passes for several frames and taking the smallest
 */
 uint64_t T1_gpu_frame_us(void);
 /*
+The GPU's name as its driver gives it (e.g. "Apple M2 Pro", "AMD Radeon(TM)
+Graphics"), for the user to see which device runs the app: "" before
+T1_gpu_init() or if the driver gives none. Characters outside ASCII are '?'
+*/
+const char * T1_gpu_name(void);
+/*
 Whether T1_frame_update() waits while the window is hidden (1, the
 default). 0 keeps your frames running at about 60 a second, unshown: for
 tools and automated runs that don't watch the window
@@ -127,27 +132,23 @@ void T1_window_set_pause_when_hidden(uint8_t pause);
 // move, rebuild or delete what depends on the size. Until then, the
 // window's T1Tex was scaled to the window.
 uint8_t  T1_frame_resized(void);
-// Microseconds since the previous frame (0 on the first), times the speed
+// Microseconds since the previous frame (0 on the first)
 uint64_t T1_frame_elapsed_us(void);
-// How fast time passes for T1_frame_elapsed_us(): 1 as it is (at first), 0.5
-// at half speed, 0 stopped
-void T1_frame_set_speed(float speed);
-// The window's size in points, the unit touches and the mouse use
-uint32_t T1_window_get_width(void);
-uint32_t T1_window_get_height(void);
-// The window's size in pixels: a T1Tex this size fills it pixel for pixel
-uint32_t T1_window_get_pixel_width(void);
-uint32_t T1_window_get_pixel_height(void);
-
-// With T1_ENGINE_SAVEFILE_ACTIVE: saves the engine's state (window position
-// etc.). Without it (the default), does nothing
-void     T1_shutdown(void);
+/*
+The window's size in pixels, the screen's own (NULL for what you don't need): a
+T1Tex this size fills the window pixel for pixel. The mouse is in the same
+pixels, so a high-DPI screen (Retina, Windows' display scaling) is just a
+window with more of them
+*/
+void T1_window_get_size(uint32_t * width, uint32_t * height);
 
 /*
 INPUT (KEYBOARD, MOUSE, GAMEPAD)
 Keyboard keys, mouse buttons and gamepad buttons are all T1IOKeys. A key
 being down lasts, but taps are cleared every frame: consume them on the
 frame they end or lose them (and there may have been several in a frame).
+The mouse's position is in the window's pixels (see T1_window_get_size()),
+(0, 0) its bottom left; a stick's is -1 to 1 each way.
 */
 uint8_t   T1_io_key_is_down(T1IOKey key);
 uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key);
@@ -374,35 +375,35 @@ uint8_t  T1_buf_read_finish(uint32_t read, void * recip);
 /*
 FILES
 Your app reads its assets from the resources dir, and may write its own
-files (saves, settings) in the writables dir. T1_os_res_path() and
-T1_os_writable_path() give the full path of a file in either (of the dir
+files (saves, settings) in the writables dir. T1_res_path() and
+T1_writable_path() give the full path of a file in either (of the dir
 itself for ""), every other function takes full paths.
 */
-void T1_os_res_path(const char * filename, char * recip, uint32_t recip_cap);
-void T1_os_writable_path(
+void T1_res_path(const char * filename, char * recip, uint32_t recip_cap);
+void T1_writable_path(
     const char * filename,
     char * recip,
     uint32_t recip_cap);
-uint8_t T1_os_file_exists(const char * path);
+uint8_t T1_file_exists(const char * path);
 // 0 if there's no such file
-uint64_t T1_os_file_size(const char * path);
+uint64_t T1_file_size(const char * path);
 // Fills recip with the file and a 0 after it, so recip_cap must be larger
 // than the file
-void T1_os_file_read(
+void T1_file_read(
     const char * path,
     char * recip,
     uint64_t recip_cap,
     char ** const fatal_error);
-void T1_os_file_write(
+void T1_file_write(
     const char * path,
     const char * data,
     uint32_t size,
     uint8_t * good);
-void T1_os_file_delete(const char * path);
-void T1_os_file_copy(
+void T1_file_delete(const char * path);
+void T1_file_copy(
     const char * src_path, const char * dst_path);
 // The names of the files in a dir, each followed by a 0
-void T1_os_dir_filenames(
+void T1_dir_filenames(
     const char * path,
     char * filenames,
     uint32_t filenames_cap);
@@ -410,19 +411,21 @@ void T1_os_dir_filenames(
 /*
 OPERATING SYSTEM
 */
-uint64_t T1_os_get_current_time_us(void);
-// at least 1
-uint32_t T1_os_get_cpu_logical_core_count(void);
+// microseconds since some point in the past (the same all run long)
+uint64_t T1_time_us(void);
+// the CPU's logical cores, at least 1
+uint32_t T1_cpu_core_count(void);
 
-void T1_os_start_thread(
+void T1_thread_start(
     void *(*function_to_run)(void *), void * arg_on_heap);
-uint32_t T1_os_init_mutex_and_return_id(void);
-uint8_t T1_os_mutex_trylock(uint32_t mutex_id);
-void T1_os_mutex_lock(uint32_t mutex_id);
-void T1_os_mutex_unlock(uint32_t mutex_id);
+// a new mutex's id
+uint32_t T1_mutex_new(void);
+uint8_t T1_mutex_trylock(uint32_t mutex_id);
+void T1_mutex_lock(uint32_t mutex_id);
+void T1_mutex_unlock(uint32_t mutex_id);
 
 // text to the error output (stderr), as it is: no newline added
-void T1_os_write_error(const char * text);
+void T1_write_error(const char * text);
 
 /*
 AUDIO

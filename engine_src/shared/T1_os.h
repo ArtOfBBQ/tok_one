@@ -26,21 +26,6 @@ and macos/, windows/), shared/ code reaches it only through this header
 #error "T1 has no platform layer for this OS"
 #endif
 
-#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
-typedef struct {
-    f32 window_left;
-    f32 window_width;
-    f32 window_bottom;
-    f32 window_height;
-    b8 window_fullscreen;
-} T1EngineSaveFile;
-
-extern T1EngineSaveFile * engine_save_file;
-#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
-// Pass
-#else
-#error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
-#endif
 
 #if T1_PLATFORM_APPLE == T1_ACTIVE
 void T1_apple_os_init(void);
@@ -95,19 +80,11 @@ u8 T1_os_file_exists(const c8 * filepath);
 
 void T1_os_del_file(const c8 * filepath);
 
-void T1_os_del_writable(const c8 * writable_filename);
-
 void T1_os_write_file(
     const c8 * filepath_destination,
     const c8 * output,
     u32 output_size,
     u8 * good);
-
-void T1_os_write_file_to_writables(
-    const c8 * filepath_inside_writables,
-    const c8 * output,
-    u32 output_size,
-    b8 * good);
 
 void T1_os_copy_file(
     const c8 * filepath_source,
@@ -229,6 +206,8 @@ u8 T1_os_gpu_active(void);
 u8 T1_os_gpu_lost(void);
 // see T1_gpu_frame_us() in T1.h
 u64 T1_os_gpu_frame_us(void);
+// see T1_gpu_name() in T1.h
+const char * T1_os_gpu_name(void);
 
 // Opens the main window, presenting with the device from T1_os_gpu_init()
 void T1_os_window_open(char ** const fatal_error);
@@ -269,8 +248,6 @@ u32 T1_os_gpu_buf_read_start(u32 buf_i, u64 offset, u64 size);
 u32 T1_os_gpu_tex_read_start(u32 tex, u32 x, u32 y, u32 w, u32 h);
 // 1 once the read's frame is done and its bytes are copied to recip
 u8 T1_os_gpu_buf_read_finish(u32 read_i, void * recip);
-
-void T1_os_shutdown(void);
 
 /*
 The platform half of the client's main loop (see T1_window_* and T1_frame_*

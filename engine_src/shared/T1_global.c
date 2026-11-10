@@ -13,8 +13,6 @@ void T1_global_init(void) {
     }
     
     T1_global->block_mouse            = 0;
-        
-    T1_global->timedelta_mult = 1.00f;
     
     T1_global->frame_consts.timestamp = 0;
 }

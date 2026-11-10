@@ -1720,6 +1720,5 @@ int main(int argc, char ** argv) {
     } else {
         printf("\n%u FAILED\n", failures);
     }
-    T1_shutdown();
     return recording ? 0 : (failures == 0 ? 0 : 1);
 }

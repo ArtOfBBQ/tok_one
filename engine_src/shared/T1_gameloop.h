@@ -14,16 +14,13 @@ void T1_window_open(T1Tex tex, char ** const fatal_error);
 void T1_window_set_tex(T1Tex tex);
 void T1_window_toggle_fullscreen(void);
 void T1_window_set_pause_when_hidden(u8 pause);
-u32  T1_window_get_width(void);
-u32  T1_window_get_height(void);
-u32  T1_window_get_pixel_width(void);
-u32  T1_window_get_pixel_height(void);
+void T1_window_get_size(u32 * width, u32 * height);
 
 u8   T1_frame_update(void);
 u8   T1_gpu_lost(void);
 u64  T1_gpu_frame_us(void);
+const char * T1_gpu_name(void);
 u8   T1_frame_resized(void);
 u64  T1_frame_elapsed_us(void);
-void T1_frame_set_speed(f32 speed);
 
 #endif // T1_GAMELOOP_H

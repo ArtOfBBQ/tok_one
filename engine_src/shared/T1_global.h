@@ -19,7 +19,6 @@ typedef struct {
     uint64_t last_resize_request_us;
     
     
-    float timedelta_mult;
     float window_wh[2];
     float window_left;
     float window_bottom;

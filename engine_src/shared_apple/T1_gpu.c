@@ -1086,7 +1086,8 @@ void T1_os_gpu_try_shader_source(
         "#define T1_threadgroup_barrier() "
             "threadgroup_barrier(mem_flags::mem_threadgroup)\n"
         // every texture, the texture(0) of every pass
-        "typedef array<texture2d_array<float>, T1_TEXARRAYS_CAP> T1Textures;\n"
+        "typedef array<texture2d_array<float>, "
+            T1_TEX_STR(T1_TEXARRAYS_CAP) "> T1Textures;\n"
         // a compute pass's \"write_tex\", texture(T1_WRITE_TEX_I)
         "typedef texture2d<float, access::read_write> T1WriteTex;\n"
         "constexpr sampler T1_nearest_smp(\n"
@@ -2893,6 +2894,19 @@ u8 T1_os_gpu_active(void) {
 
 u64 T1_os_gpu_frame_us(void) {
     return ags != NULL ? ags->frame_gpu_us : 0;
+}
+
+#define T1_GPU_NAME_CAP 128
+const char * T1_os_gpu_name(void) {
+    static char name[T1_GPU_NAME_CAP];
+    if (name[0] != '\0' || ags == NULL || ags->device == NULL) { return name; }
+    // the MTLDevice's name, an NSString (ASCII: NULL if it isn't)
+    void * nsstring = (void *)T1_objc_msg(
+        ags->device, T1_objc_reg_sel("name"));
+    const char * ascii =
+        nsstring != NULL ? T1_objc_nsstring_to_cstring(nsstring) : NULL;
+    if (ascii != NULL) { T1_std_strcpy_cap(name, T1_GPU_NAME_CAP, ascii); }
+    return name;
 }
 
 // TODO: an eGPU unplugged (MTLDeviceWasRemovedNotification)

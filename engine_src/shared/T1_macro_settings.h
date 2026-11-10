@@ -17,7 +17,6 @@
 #define T1_TEXTURES_ACTIVE 1
 #define T1_MIPMAPS_ACTIVE 2
 #define T1_AUDIO_ACTIVE 2
-#define T1_ENGINE_SAVEFILE_ACTIVE 2
 
 #ifdef NS_BLOCK_ASSERTIONS
 #ifndef NDEBUG
@@ -27,9 +26,6 @@
 
 // set to 3 for triple-buffering
 #define T1_FRAMES_CAP 2
-
-#define T1_TEXARRAYS_CAP 29
-#define T1_TEX_SLICES_CAP 250
 
 #define T1_INITIAL_WINDOW_HEIGHT 1000.0f
 #define T1_INITIAL_WINDOW_WIDTH  1400.0f // 800.0f// 375.0f

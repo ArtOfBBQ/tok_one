@@ -396,6 +396,5 @@ int main(void) {
         T1_tex_update(window_tex, rgba);
     }
 
-    T1_shutdown();
     return 0;
 }
