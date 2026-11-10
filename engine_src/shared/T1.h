@@ -69,6 +69,8 @@ void T1_window_open(
 // window's new size
 void T1_window_set_tex(T1Tex tex);
 void T1_window_toggle_fullscreen(void);
+// 1 while the window is full screen (or turning so), whoever made it so
+uint8_t T1_window_is_fullscreen(void);
 
 /*
 FATAL ERRORS

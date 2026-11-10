@@ -72,6 +72,10 @@ void T1_window_toggle_fullscreen(void) {
     T1_os_toggle_fullscreen();
 }
 
+u8 T1_window_is_fullscreen(void) {
+    return T1_global->fullscreen;
+}
+
 void T1_window_get_size(u32 * width, u32 * height) {
     // (the OS's points, inside T1: the client sees only pixels)
     const f32 scale = T1_os_get_screen_backing_scale_factor();
