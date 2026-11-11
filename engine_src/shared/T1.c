@@ -104,3 +104,56 @@ void T1_mutex_unlock(u32 mutex_id) {
 void T1_write_error(const char * text) {
     T1_os_write_error(text);
 }
+
+/*
+Fonts
+*/
+void T1_font_glyph(
+    u32 codepoint,
+    f32 size,
+    u8 * alpha,
+    u32 alpha_cap,
+    u32 * w,
+    u32 * h,
+    f32 * left,
+    f32 * top,
+    f32 * advance,
+    u8 * good)
+{
+    *w = 0;
+    *h = 0;
+    *left = 0.0f;
+    *top = 0.0f;
+    *advance = 0.0f;
+    *good = 0;
+    // (UTF-16's surrogates are no codepoints)
+    if (
+        codepoint > 0x10FFFFu ||
+        (codepoint >= 0xD800u && codepoint <= 0xDFFFu) ||
+        !(size > 0.0f))
+    {
+        return;
+    }
+    T1_os_font_glyph(
+        codepoint, size, alpha, alpha_cap, w, h, left, top, advance, good);
+}
+
+void T1_font_set_language(const char * language) {
+    // a BCP 47 code: letters, digits and '-', short (else the system's)
+    char code[T1_FONT_LANGUAGE_CAP];
+    code[0] = '\0';
+    if (language != NULL) {
+        u32 i = 0;
+        for (; language[i] != '\0' && i + 1 < T1_FONT_LANGUAGE_CAP; i++) {
+            const char c = language[i];
+            const u8 ok =
+                (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                (c >= '0' && c <= '9') || c == '-';
+            if (!ok) { break; }
+            code[i] = c;
+        }
+        code[i] = '\0';
+        if (language[i] != '\0') { code[0] = '\0'; }
+    }
+    T1_os_font_set_language(code);
+}

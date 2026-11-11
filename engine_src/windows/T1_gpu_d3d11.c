@@ -1139,14 +1139,16 @@ void T1_os_gpu_delete_texture_array(s32 array_i) {
     T1_d3d->tex_slices[array_i] = 0;
 }
 
-void T1_os_gpu_push_tex_slice(s32 tex_array_i, s32 tex_slice_i) {
+void T1_os_gpu_write_tex_slice(
+    s32 tex_array_i,
+    s32 tex_slice_i,
+    const u8 * rgba)
+{
     if (!T1_os_gpu_active()) { return; }
     T1_assert(tex_array_i >= 0 && tex_array_i < T1_TEXARRAYS_CAP);
     T1_assert(tex_slice_i >= 0);
-
-    T1Img * image = &T1_tex_arrays[tex_array_i].images[tex_slice_i].image;
-    T1_assert(image->rgba_values_page_aligned != NULL);
-    if (image->rgba_values_page_aligned == NULL) { return; }
+    T1_assert(rgba != NULL);
+    if (rgba == NULL) { return; }
 
     T1_os_gpu_update_capacity_if_needed(tex_array_i);
     if (T1_d3d->texs[tex_array_i] == NULL) { return; }
@@ -1158,17 +1160,11 @@ void T1_os_gpu_push_tex_slice(s32 tex_array_i, s32 tex_slice_i) {
         T1_d3d->texs[tex_array_i],
         (u32)tex_slice_i * T1_d3d->tex_mips[tex_array_i],
         NULL,
-        image->rgba_values_page_aligned,
+        rgba,
         width * 4,
         width * height * 4);
+    // (UpdateSubresource has copied rgba by now: the caller's again)
     T1_gpu_d3d11_written(tex_array_i, tex_slice_i);
-
-    // like on Metal, the GPU has the pixels now
-    if (image->rgba_values_freeable != NULL) {
-        T1_mem_free_managed(image->rgba_values_freeable);
-        image->rgba_values_freeable = NULL;
-        image->rgba_values_page_aligned = NULL;
-    }
 }
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE

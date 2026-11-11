@@ -16,6 +16,8 @@ What it shows of T1:
 - T1_frame_elapsed_us(): movement that doesn't depend on the frame rate
 - no shaders: the app draws its own pixels and uploads them to the
   window's T1Tex, like examples/noise
+- T1_font_glyph() for the keycaps' letters: the operating system's font,
+  drawn once and kept (see examples/text)
 
 T1_audio_start() only exists with T1_AUDIO_ACTIVE: concat turns it on in
 this folder's copy of T1.h. In your own app, set it at the top of T1.h.
@@ -153,29 +155,53 @@ static void fill(int16_t * out, uint32_t frames, void * user) {
 #define CAP_GAP     8
 
 /*
-Drawing: plain C into rgba, nothing here is T1's. The font has only the
-characters on the keycaps, 5 x 7 pixels each
+Drawing: plain C into rgba. The keycaps' letters are the operating
+system's font (T1_font_glyph()), each one drawn once and kept: asking the
+OS takes tens of microseconds, too long for every letter of every frame
 */
+#define GLYPH_SIDE_CAP 64
+#define GLYPHS_CAP 32
+
 typedef struct {
     char c;
-    uint8_t rows[7];
+    float size;
+    uint32_t w;
+    uint32_t h;
+    float left; // from the pen
+    float top; // above the baseline
+    float advance;
+    uint8_t good; // 0: no font has it, drawn as nothing
+    uint8_t alpha[GLYPH_SIDE_CAP * GLYPH_SIDE_CAP];
 } Glyph;
 
-static const Glyph glyphs[] = {
-    {'A', {0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}},
-    {'B', {0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E}},
-    {'C', {0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E}},
-    {'D', {0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E}},
-    {'E', {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F}},
-    {'F', {0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10}},
-    {'G', {0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F}},
-    {'H', {0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11}},
-    {'J', {0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C}},
-    {'K', {0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11}},
-    {'S', {0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E}},
-    {'4', {0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02}},
-    {'5', {0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E}},
-};
+static Glyph glyphs[GLYPHS_CAP];
+static uint32_t glyphs_size = 0;
+
+static const Glyph * get_glyph(char c, float size) {
+    for (uint32_t i = 0; i < glyphs_size; i++) {
+        if (glyphs[i].c == c && glyphs[i].size == size) {
+            return &glyphs[i];
+        }
+    }
+    if (glyphs_size == GLYPHS_CAP) { return NULL; }
+
+    Glyph * glyph = &glyphs[glyphs_size++];
+    glyph->c = c;
+    glyph->size = size;
+    // ASCII's codes are its Unicode codepoints
+    T1_font_glyph(
+        (uint32_t)(uint8_t)c,
+        size,
+        glyph->alpha,
+        sizeof(glyph->alpha),
+        &glyph->w,
+        &glyph->h,
+        &glyph->left,
+        &glyph->top,
+        &glyph->advance,
+        &glyph->good);
+    return glyph;
+}
 
 static void put_pixel(
     int32_t x,
@@ -209,31 +235,48 @@ static void fill_rect(
     }
 }
 
-static void draw_char(
-    char c,
-    int32_t left,
-    int32_t top,
-    int32_t scale,
+// ASCII text centred on x, on the baseline, blended over what's there
+static void draw_text(
+    const char * text,
+    float x,
+    float baseline,
+    float size,
     uint8_t r,
     uint8_t g,
     uint8_t b)
 {
-    for (uint32_t i = 0; i < sizeof(glyphs) / sizeof(glyphs[0]); i++) {
-        if (glyphs[i].c != c) { continue; }
+    float width = 0.0f;
+    for (uint32_t i = 0; text[i] != '\0'; i++) {
+        const Glyph * glyph = get_glyph(text[i], size);
+        if (glyph != NULL) { width += glyph->advance; }
+    }
 
-        for (int32_t row = 0; row < 7; row++) {
-            for (int32_t column = 0; column < 5; column++) {
-                if (glyphs[i].rows[row] & (0x10 >> column)) {
-                    fill_rect(
-                        left + column * scale,
-                        top + row * scale,
-                        scale,
-                        scale,
-                        r, g, b);
+    const uint8_t color[3] = { r, g, b };
+    float pen = x - width * 0.5f;
+    for (uint32_t i = 0; text[i] != '\0'; i++) {
+        const Glyph * glyph = get_glyph(text[i], size);
+        if (glyph == NULL) { continue; }
+        if (glyph->good) {
+            // its top left in the picture (y goes down here, up in T1's)
+            int32_t left = (int32_t)(pen + glyph->left + 0.5f);
+            int32_t top = (int32_t)(baseline - glyph->top + 0.5f);
+            for (uint32_t gy = 0; gy < glyph->h; gy++) {
+                for (uint32_t gx = 0; gx < glyph->w; gx++) {
+                    int32_t px = left + (int32_t)gx;
+                    int32_t py = top + (int32_t)gy;
+                    if (px < 0 || py < 0 || px >= WIDTH || py >= HEIGHT) {
+                        continue;
+                    }
+                    uint32_t a = glyph->alpha[gy * glyph->w + gx];
+                    uint8_t * pixel = rgba + (py * WIDTH + px) * 4;
+                    for (uint32_t c = 0; c < 3; c++) {
+                        pixel[c] = (uint8_t)(
+                            (pixel[c] * (255 - a) + color[c] * a + 127) / 255);
+                    }
                 }
             }
         }
-        return;
+        pen += glyph->advance;
     }
 }
 
@@ -282,24 +325,15 @@ static void draw_keyboard(void) {
             down ? 255 : 54, down ? 160 : 58, down ? 60 : 78);
 
         // T1IOKeys of letters are their ASCII codes
-        char letter = (char)note_keys[i];
-        int32_t text_top = top + (down ? 10 : 6);
-        draw_char(
-            letter,
-            left + (CAP_WIDTH - 5 * 4) / 2,
-            text_top,
-            4,
+        char letter[2] = { (char)note_keys[i], '\0' };
+        float middle = (float)left + CAP_WIDTH * 0.5f;
+        float text_top = (float)(top + (down ? 10 : 6));
+        draw_text(
+            letter, middle, text_top + 26.0f, 34.0f,
             down ? 30 : 225, down ? 24 : 228, down ? 20 : 240);
-
-        int32_t name_left = left + (CAP_WIDTH - (2 * 5 * 2 + 2)) / 2;
-        for (int32_t c = 0; c < 2; c++) {
-            draw_char(
-                note_names[i][c],
-                name_left + c * (5 * 2 + 2),
-                text_top + 30,
-                2,
-                down ? 90 : 130, down ? 50 : 136, down ? 20 : 165);
-        }
+        draw_text(
+            note_names[i], middle, text_top + 41.0f, 15.0f,
+            down ? 90 : 130, down ? 50 : 136, down ? 20 : 165);
     }
 }
 

@@ -51,6 +51,7 @@ static const Example examples[] = {
     {"examples", "frametime", NULL, NULL},
     {"examples", "particles", NULL, NULL},
     {"examples", "gamepad", NULL, NULL},
+    {"examples", "text", NULL, NULL},
     {"tests", "shadertest", NULL, NULL},
     {
         "examples",

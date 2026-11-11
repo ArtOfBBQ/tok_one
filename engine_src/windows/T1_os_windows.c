@@ -204,6 +204,12 @@ void T1_win32_load(char ** const fatal_error) {
         return;
     }
 
+    T1_WIN32_LOAD(gdi32, CreateCompatibleDC);
+    T1_WIN32_LOAD(gdi32, CreateFontW);
+    T1_WIN32_LOAD(gdi32, DeleteObject);
+    T1_WIN32_LOAD(gdi32, GetGlyphIndicesW);
+    T1_WIN32_LOAD(gdi32, GetGlyphOutlineW);
+    T1_WIN32_LOAD(gdi32, SelectObject);
     T1_WIN32_LOAD(user32, SetProcessDpiAwarenessContext);
     T1_WIN32_LOAD(user32, SetProcessDPIAware);
     T1_WIN32_LOAD(user32, GetDpiForSystem);
@@ -1497,4 +1503,250 @@ u8 T1_os_window_present(const u32 tex) {
 
     // waits for the display's refresh, like on macOS
     return T1_gpu_d3d11_present_tex(T1_os_win_s->hwnd, tex);
+}
+
+/*
+FONTS: GDI draws the glyph (GetGlyphOutlineW, 65 levels of grey). GDI has
+no fallback of its own, so each glyph tries the fonts below in order, the
+first one that has it drawing it: Latin first, then Japanese, Chinese,
+Korean, Indic, Thai, African scripts and symbols. T1_font_set_language()
+puts its language's fonts first (Chinese and Japanese share codepoints but
+not shapes). A font Windows doesn't have becomes one it does (GDI picks a
+stand-in), which only costs a try. Codepoints above 0xFFFF need two UTF-16
+units, which GetGlyphIndicesW can't look up: none so far.
+*/
+static const T1WChar * T1_os_win_font_faces[] = {
+    L"Segoe UI",
+    L"Meiryo",
+    L"Yu Gothic",
+    L"MS Gothic",
+    L"Microsoft YaHei",
+    L"SimSun",
+    L"Microsoft JhengHei",
+    L"Malgun Gothic",
+    L"Nirmala UI",
+    L"Leelawadee UI",
+    L"Ebrima",
+    L"Segoe UI Symbol",
+    L"Segoe UI Historic",
+    L"Arial Unicode MS",
+    L"PMingLiU",
+    L"Gulim",
+};
+#define T1_OS_WIN_FONT_FACES_SIZE \
+    (sizeof(T1_os_win_font_faces) / sizeof(T1_os_win_font_faces[0]))
+
+/*
+The faces a language tries first (indices into T1_os_win_font_faces), by
+its code's start: "zh-Hant", "zh-TW", "zh-HK" before "zh"
+*/
+typedef struct {
+    const char * code_start;
+    u8 faces[3];
+    u8 faces_size;
+} T1OsWinFontLanguage;
+static const T1OsWinFontLanguage T1_os_win_font_languages[] = {
+    { "ja", { 1, 2, 3 }, 3 },      // Meiryo, Yu Gothic, MS Gothic
+    { "zh-Hant", { 6, 14, 0 }, 2 }, // Microsoft JhengHei, PMingLiU
+    { "zh-TW", { 6, 14, 0 }, 2 },
+    { "zh-HK", { 6, 14, 0 }, 2 },
+    { "zh", { 4, 5, 0 }, 2 },      // Microsoft YaHei, SimSun
+    { "ko", { 7, 15, 0 }, 2 },     // Malgun Gothic, Gulim
+};
+
+// the order the faces are tried in, by T1_font_set_language()
+static u8 T1_os_win_font_order[T1_OS_WIN_FONT_FACES_SIZE];
+static u8 T1_os_win_font_order_set = 0;
+
+// code starts with start, as a whole part ("zh" is "zh-Hans"'s, not "zhx")
+static u8 T1_os_win_code_starts_with(const char * code, const char * start) {
+    u32 i = 0;
+    for (; start[i] != '\0'; i++) {
+        const char a = code[i] >= 'A' && code[i] <= 'Z' ?
+            (char)(code[i] + 32) : code[i];
+        const char b = start[i] >= 'A' && start[i] <= 'Z' ?
+            (char)(start[i] + 32) : start[i];
+        if (a != b) { return 0; }
+    }
+    return code[i] == '\0' || code[i] == '-';
+}
+
+void T1_os_font_set_language(const char * code) {
+    const T1OsWinFontLanguage * language = NULL;
+    const u32 languages_size = (u32)(
+        sizeof(T1_os_win_font_languages) / sizeof(T1_os_win_font_languages[0]));
+    for (u32 l = 0; l < languages_size && language == NULL; l++) {
+        if (T1_os_win_code_starts_with(
+            code, T1_os_win_font_languages[l].code_start))
+        {
+            language = &T1_os_win_font_languages[l];
+        }
+    }
+    
+    // Latin first (it has no CJK), then the language's, then the rest
+    u8 taken[T1_OS_WIN_FONT_FACES_SIZE];
+    T1_std_memset(taken, 0, sizeof(taken));
+    u32 n = 0;
+    T1_os_win_font_order[n++] = 0;
+    taken[0] = 1;
+    if (language != NULL) {
+        for (u32 i = 0; i < language->faces_size; i++) {
+            const u8 face = language->faces[i];
+            if (!taken[face]) {
+                T1_os_win_font_order[n++] = face;
+                taken[face] = 1;
+            }
+        }
+    }
+    for (u32 face = 0; face < T1_OS_WIN_FONT_FACES_SIZE; face++) {
+        if (!taken[face]) {
+            T1_os_win_font_order[n++] = (u8)face;
+            taken[face] = 1;
+        }
+    }
+    T1_os_win_font_order_set = 1;
+}
+
+#define T1_WIN_FW_NORMAL 400
+#define T1_WIN_DEFAULT_CHARSET 1
+#define T1_WIN_OUT_TT_PRECIS 4 // TrueType where there's a choice
+#define T1_WIN_ANTIALIASED_QUALITY 4
+#define T1_WIN_GGI_MARK_NONEXISTING_GLYPHS 1
+#define T1_WIN_GGO_GRAY8_BITMAP 6
+#define T1_WIN_GGO_GLYPH_INDEX 0x80
+#define T1_WIN_GDI_ERROR 0xFFFFFFFFu
+
+static T1WinHandle T1_os_win_font_dc = NULL;
+// each face at T1_os_win_fonts_size, made when first tried
+static T1WinHandle T1_os_win_fonts[T1_OS_WIN_FONT_FACES_SIZE];
+static f32 T1_os_win_fonts_size = 0.0f;
+
+void T1_os_font_glyph(
+    u32 codepoint,
+    f32 size,
+    u8 * alpha,
+    u32 alpha_cap,
+    u32 * w,
+    u32 * h,
+    f32 * left,
+    f32 * top,
+    f32 * advance,
+    u8 * good)
+{
+    if (
+        codepoint > 0xFFFFu ||
+        T1_win32 == NULL ||
+        T1_win32->CreateCompatibleDC == NULL ||
+        T1_win32->CreateFontW == NULL ||
+        T1_win32->DeleteObject == NULL ||
+        T1_win32->GetGlyphIndicesW == NULL ||
+        T1_win32->GetGlyphOutlineW == NULL ||
+        T1_win32->SelectObject == NULL)
+    {
+        return;
+    }
+    
+    if (T1_os_win_font_dc == NULL) {
+        T1_os_win_font_dc = T1_win32->CreateCompatibleDC(NULL);
+        if (T1_os_win_font_dc == NULL) { return; }
+    }
+    
+    // a new size: the fonts again (a positive height is ascent + descent)
+    if (T1_os_win_fonts_size != size) {
+        for (u32 i = 0; i < T1_OS_WIN_FONT_FACES_SIZE; i++) {
+            if (T1_os_win_fonts[i] != NULL) {
+                T1_win32->DeleteObject(T1_os_win_fonts[i]);
+                T1_os_win_fonts[i] = NULL;
+            }
+        }
+        T1_os_win_fonts_size = size;
+    }
+    s32 height = (s32)(size + 0.5f);
+    if (height < 1) { height = 1; }
+    
+    if (!T1_os_win_font_order_set) { T1_os_font_set_language(""); }
+    
+    const T1WChar unit = (T1WChar)codepoint;
+    u16 glyph = 0xFFFF;
+    u32 tried = 0;
+    for (; tried < T1_OS_WIN_FONT_FACES_SIZE; tried++) {
+        const u32 face = T1_os_win_font_order[tried];
+        if (T1_os_win_fonts[face] == NULL) {
+            T1_os_win_fonts[face] = T1_win32->CreateFontW(
+                height, 0, 0, 0, T1_WIN_FW_NORMAL, 0, 0, 0,
+                T1_WIN_DEFAULT_CHARSET, T1_WIN_OUT_TT_PRECIS, 0,
+                T1_WIN_ANTIALIASED_QUALITY, 0, T1_os_win_font_faces[face]);
+            if (T1_os_win_fonts[face] == NULL) { continue; }
+        }
+        T1_win32->SelectObject(T1_os_win_font_dc, T1_os_win_fonts[face]);
+        glyph = 0xFFFF;
+        const u32 looked_up = T1_win32->GetGlyphIndicesW(
+            T1_os_win_font_dc, &unit, 1, &glyph,
+            T1_WIN_GGI_MARK_NONEXISTING_GLYPHS);
+        // (glyph 0 is the font's "missing" box)
+        if (looked_up != T1_WIN_GDI_ERROR && glyph != 0xFFFF && glyph != 0) {
+            break;
+        }
+    }
+    if (tried == T1_OS_WIN_FONT_FACES_SIZE) { return; }
+    
+    T1WinMat2 identity;
+    T1_std_memset(&identity, 0, sizeof(T1WinMat2));
+    identity.m11.value = 1;
+    identity.m22.value = 1;
+    
+    const u32 format = T1_WIN_GGO_GRAY8_BITMAP | T1_WIN_GGO_GLYPH_INDEX;
+    T1WinGlyphMetrics metrics;
+    T1_std_memset(&metrics, 0, sizeof(T1WinGlyphMetrics));
+    const u32 bytes = T1_win32->GetGlyphOutlineW(
+        T1_os_win_font_dc, glyph, format, &metrics, 0, NULL, &identity);
+    if (bytes == T1_WIN_GDI_ERROR) { return; }
+    
+    *advance = (f32)metrics.cell_inc_x;
+    // nothing to draw (a space)
+    if (bytes == 0) {
+        *good = 1;
+        return;
+    }
+    
+    // rows of black_box_x bytes, each padded to 4
+    *w = metrics.black_box_x;
+    *h = metrics.black_box_y;
+    *left = (f32)metrics.glyph_origin.x;
+    *top = (f32)metrics.glyph_origin.y;
+    // (only measured)
+    if (alpha == NULL) {
+        *good = 1;
+        return;
+    }
+    const u32 pitch = (*w + 3u) & ~3u;
+    if (
+        *w == 0 || *h == 0 ||
+        bytes > alpha_cap ||
+        (u64)pitch * (u64)*h > (u64)alpha_cap ||
+        (u64)pitch * (u64)*h < (u64)bytes)
+    {
+        return;
+    }
+    if (
+        T1_win32->GetGlyphOutlineW(
+            T1_os_win_font_dc, glyph, format, &metrics, bytes, alpha,
+            &identity) == T1_WIN_GDI_ERROR)
+    {
+        *w = 0;
+        *h = 0;
+        return;
+    }
+    
+    // the padding out (each row moves back, never over one not yet read),
+    // 0..64 up to 0..255
+    for (u32 y = 0; y < *h; y++) {
+        const u8 * from = alpha + y * pitch;
+        u8 * to = alpha + y * *w;
+        for (u32 x = 0; x < *w; x++) {
+            const u32 level = from[x] > 64 ? 64u : (u32)from[x];
+            to[x] = (u8)((level * 255u + 32u) / 64u);
+        }
+    }
+    *good = 1;
 }

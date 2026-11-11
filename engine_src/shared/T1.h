@@ -169,7 +169,12 @@ width * height * 4 bytes of rgba, row by row.
 With rgba NULL the texture starts out blank, e.g.
 for passes to draw into. The T1Tex can then be used
 as a "texture" property and by passes. You can delete
-it or overwrite its pixels (same size) later. Every
+it or overwrite its pixels (same size) later:
+T1_tex_update() copies your rgba and returns at once
+(free or reuse it right away), and the new pixels are
+there from the next frame on, before it draws anything.
+It never waits for the GPU, so updating textures every
+frame (software rendering) costs a copy of them. Every
 texture can be sampled, drawn into and written by
 compute passes. Data that isn't a color (depth,
 touch ids) is packed into the 4 bytes of a pixel by
@@ -428,6 +433,51 @@ void T1_mutex_unlock(uint32_t mutex_id);
 
 // text to the error output (stderr), as it is: no newline added
 void T1_write_error(const char * text);
+
+/*
+FONTS
+The operating system's fonts, for text in any language without font files
+of your own. T1_font_glyph() draws one Unicode codepoint (a number from 0 to
+0x10FFFF, not its UTF-8 bytes) with the system's font, or with whichever
+installed font has it when that one doesn't (kanji, Arabic, symbols...).
+size is the font's height in pixels: its ascent plus its descent, the top
+of its tallest letters to the bottom of its lowest.
+
+The glyph comes as its coverage, 0 (none) to 255 (full), w * h bytes row by
+row from the top, into alpha (alpha_cap bytes). Its place, in pixels from
+the pen on the baseline: its left edge is left to the right of the pen, its
+top edge top above the baseline (y goes up). advance is how far the pen
+moves for the next letter. A glyph with nothing to draw (a space) has w and
+h 0.
+
+*good is 0 if no installed font has the codepoint (or none can be read), or
+if the glyph needs more than alpha_cap bytes: w and h then say how many.
+With alpha NULL it only measures the glyph (w, h, left, top, advance), which
+is quicker: a layout needs those at once, the pixels can come later.
+On Windows, only codepoints up to 0xFFFF so far. Call it from one thread at
+a time. Each call draws the glyph anew (a few dozen microseconds): keep what
+you'll draw again.
+
+T1_font_set_language() says which language the text is in, as a BCP 47
+code: "ja", "zh-Hans", "zh-Hant", "ko", "en"... (NULL or "": the system's).
+It matters for Chinese, Japanese and Korean: they share most of their
+characters' codepoints but draw them differently (直 in a Japanese font
+isn't 直 in a Chinese one), so the fonts that draw them are picked by it.
+Glyphs drawn before it changes may look wrong next to new ones: draw them
+again.
+*/
+void T1_font_set_language(const char * language);
+void T1_font_glyph(
+    uint32_t codepoint,
+    float size,
+    uint8_t * alpha,
+    uint32_t alpha_cap,
+    uint32_t * w,
+    uint32_t * h,
+    float * left,
+    float * top,
+    float * advance,
+    uint8_t * good);
 
 /*
 AUDIO

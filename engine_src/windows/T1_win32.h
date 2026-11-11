@@ -40,6 +40,22 @@ typedef struct { s32 left; s32 top; s32 right; s32 bottom; } T1WinRect;
 typedef struct { s32 x; s32 y; } T1WinPoint;
 typedef struct { u32 low; u32 high; } T1WinFileTime;
 
+// GDI's glyphs: FIXED, MAT2, GLYPHMETRICS
+typedef struct { u16 fract; s16 value; } T1WinFixed;
+typedef struct {
+    T1WinFixed m11;
+    T1WinFixed m12;
+    T1WinFixed m21;
+    T1WinFixed m22;
+} T1WinMat2;
+typedef struct {
+    u32 black_box_x;
+    u32 black_box_y;
+    T1WinPoint glyph_origin; // the ink's top left, y up from the baseline
+    s16 cell_inc_x;
+    s16 cell_inc_y;
+} T1WinGlyphMetrics;
+
 typedef struct {
     T1WinHandle hwnd;
     u32 message;
@@ -363,6 +379,18 @@ typedef struct {
     // gdi32
     s32 (T1_WINAPI * GetDeviceCaps)(T1WinHandle, s32);
     T1WinHandle (T1_WINAPI * GetStockObject)(s32);
+    // gdi32, the fonts' (missing ones: no glyphs, T1_font_glyph())
+    T1WinHandle (T1_WINAPI * CreateCompatibleDC)(T1WinHandle);
+    T1WinHandle (T1_WINAPI * CreateFontW)(
+        s32, s32, s32, s32, s32, u32, u32, u32, u32, u32, u32, u32, u32,
+        const T1WChar *);
+    T1WinBool (T1_WINAPI * DeleteObject)(T1WinHandle);
+    u32 (T1_WINAPI * GetGlyphIndicesW)(
+        T1WinHandle, const T1WChar *, s32, u16 *, u32);
+    u32 (T1_WINAPI * GetGlyphOutlineW)(
+        T1WinHandle, u32, u32, T1WinGlyphMetrics *, u32, void *,
+        const T1WinMat2 *);
+    T1WinHandle (T1_WINAPI * SelectObject)(T1WinHandle, T1WinHandle);
 
     // optional: winmm, xinput
     u32 (T1_WINAPI * timeBeginPeriod)(u32);

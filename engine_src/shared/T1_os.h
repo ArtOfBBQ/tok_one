@@ -169,6 +169,29 @@ u64 T1_os_get_current_time_us(void);
 // text to the error output (stderr), as it is: no newline added
 void T1_os_write_error(const char * text);
 
+/*
+T1_font_set_language()'s code: letters, digits and '-', shorter than
+T1_FONT_LANGUAGE_CAP; "" is the system's language
+*/
+#define T1_FONT_LANGUAGE_CAP 16
+void T1_os_font_set_language(const char * code);
+
+/*
+T1_font_glyph(), its arguments checked (a codepoint, not a surrogate; size
+above 0) and its outputs set to nothing. alpha NULL: only its measures
+*/
+void T1_os_font_glyph(
+    u32 codepoint,
+    f32 size,
+    u8 * alpha,
+    u32 alpha_cap,
+    u32 * w,
+    u32 * h,
+    f32 * left,
+    f32 * top,
+    f32 * advance,
+    u8 * good);
+
 void T1_os_enter_fullscreen(void);
 
 void T1_os_toggle_fullscreen(void);
@@ -182,9 +205,15 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 #error
 #endif
 
-void T1_os_gpu_push_tex_slice(
+/*
+A texture slice's new pixels (its width * height * 4 bytes of rgba), from
+T1_tex_update(): the platform copies what it needs before it returns (the
+caller may free rgba right away) and has them on the GPU by the next frame
+*/
+void T1_os_gpu_write_tex_slice(
     s32 tex_array_i,
-    s32 tex_slice_i);
+    s32 tex_slice_i,
+    const u8 * rgba);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 

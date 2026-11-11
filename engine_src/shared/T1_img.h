@@ -4,13 +4,11 @@
 #include "T1_stdint.h"
 
 typedef struct {
-    u8 * rgba_values_freeable;
-    u8 * rgba_values_page_aligned;
     u32 rgba_values_size;
     u32 width;
     u32 height;
     u32 pixel_count; // rgba_values_size / 4
-    b8  never_delete_me; // rgba_values_freeable must be NULL
+    b8  never_delete_me; // T1_tex_array_delete_slice() leaves it
 } T1Img;
 
 #endif // T1_IMG_H

@@ -69,14 +69,6 @@ void T1_tex_array_delete_slice(
     T1_assert(
         array_i < (s32)T1_tex_arrays_size);
     
-    if (T1_tex_arrays[array_i].images[slice_i].image.
-        rgba_values_freeable != NULL)
-    {
-        T1_mem_free_managed(
-            T1_tex_arrays[array_i].images[slice_i].image.
-                rgba_values_freeable);
-    }
-    
     T1_std_memset(
         T1_tex_arrays[array_i].images + slice_i,
         0,
@@ -97,40 +89,6 @@ void T1_tex_array_delete_slice(
     {
         T1_tex_array_delete_array(array_i);
     }
-}
-
-void T1_tex_array_update_rgba(
-    s32 array_i,
-    s32 slice_i,
-    const u8 * rgba,
-    u32 rgba_size)
-{
-    T1_assert(T1_tex_arrays[array_i].single_img_width * T1_tex_arrays[array_i].single_img_height * 4 == rgba_size);
-    
-    T1_tex_arrays[array_i].images[slice_i].image.
-        rgba_values_size = rgba_size;
-    if (
-        T1_tex_arrays[array_i].
-            images[slice_i].image.
-                rgba_values_freeable == NULL)
-    {
-        T1_mem_malloc_managed_page_aligned(
-            /* void **base_pointer_for_freeing: */
-                (void **)&T1_tex_arrays[array_i].
-                    images[slice_i].image.
-                        rgba_values_freeable,
-            /* void **aligned_subptr: */
-                (void **)&T1_tex_arrays[array_i].
-                    images[slice_i].image.
-                        rgba_values_page_aligned,
-            /* u64 subptr_size: */
-                rgba_size);
-    }
-    T1_std_memcpy(
-        T1_tex_arrays[array_i].images[slice_i].
-            image.rgba_values_page_aligned,
-        rgba,
-        rgba_size);
 }
 
 T1Tex T1_tex_array_new_slice(
@@ -278,14 +236,8 @@ void T1_tex_update(
     T1_assert(slice_i >= 0);
     T1_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
     T1_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
-    T1_tex_array_update_rgba(
-        array_i,
-        slice_i,
-        rgba,
-        T1_tex_arrays[array_i].single_img_width *
-            T1_tex_arrays[array_i].single_img_height * 4);
-    
-    T1_os_gpu_push_tex_slice(array_i, slice_i);
+    // (the platform copies what it needs: rgba is the caller's again)
+    T1_os_gpu_write_tex_slice(array_i, slice_i, rgba);
 
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     T1_os_gpu_generate_mipmaps_for_texture_array(array_i);

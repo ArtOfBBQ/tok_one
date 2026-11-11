@@ -16,6 +16,8 @@ long write(int fd, const void * bytes, unsigned long size);
 #include "T1_os_apple_audio.h"
 #include "T1_objc.h"
 
+#include <dlfcn.h> // dlsym(), for a function that may be missing
+
 #define T1NSDataReadingUncached 2
 
 // T1_os_init_mutex_and_return_id()'s, in static memory: T1_os_init() makes
@@ -753,4 +755,308 @@ u32 T1_os_get_cpu_logical_core_count(void)
         T1_os_apple_s->sel_active_processor_count);
     
     return (core_count > 0) ? (unsigned int)core_count : 1;
+}
+
+/*
+FONTS: CoreText draws the glyph into a CoreGraphics bitmap. Both are plain C
+APIs, their functions found by name (dlsym) at the first glyph, their types
+declared here: no Objective-C, no headers, nothing linked.
+*/
+typedef struct { f64 x; f64 y; } T1FontCGPoint;
+typedef struct { f64 width; f64 height; } T1FontCGSize;
+typedef struct { T1FontCGPoint origin; T1FontCGSize size; } T1FontCGRect;
+typedef struct { long location; long length; } T1FontCFRange;
+
+#define T1kCGImageAlphaOnly 7u
+#define T1kCTFontOrientationDefault 0u
+
+typedef struct {
+    void * (* CFStringCreateWithCharacters)(void *, const u16 *, long);
+    void (* CFRelease)(const void *);
+    u8 (* CFEqual)(const void *, const void *);
+    void * (* CTFontCreateWithName)(void *, f64, const void *);
+    void * (* CTFontCreateForString)(void *, void *, T1FontCFRange);
+    // (macOS 10.15+: CTFontCreateForString() without it, the system's language)
+    void * (* CTFontCreateForStringWithLanguage)(
+        void *, void *, T1FontCFRange, void *);
+    void * (* CTFontCopyPostScriptName)(void *);
+    f64 (* CTFontGetAscent)(void *);
+    f64 (* CTFontGetDescent)(void *);
+    u8 (* CTFontGetGlyphsForCharacters)(void *, const u16 *, u16 *, long);
+    T1FontCGRect (* CTFontGetBoundingRectsForGlyphs)(
+        void *, u32, const u16 *, T1FontCGRect *, long);
+    f64 (* CTFontGetAdvancesForGlyphs)(
+        void *, u32, const u16 *, T1FontCGSize *, long);
+    void (* CTFontDrawGlyphs)(
+        void *, const u16 *, const T1FontCGPoint *, size_t, void *);
+    void * (* CGBitmapContextCreate)(
+        void *, size_t, size_t, size_t, size_t, void *, u32);
+    void (* CGContextSetGrayFillColor)(void *, f64, f64);
+    void (* CGContextRelease)(void *);
+    
+    void * base_font; // the system's font, at base_size
+    f32 base_size;
+    // CoreText's font of last resort: a box for every codepoint, no glyph
+    void * last_resort_name;
+    // T1_font_set_language()'s code, and as a CFString (NULL: the system's)
+    char language[T1_FONT_LANGUAGE_CAP];
+    void * language_cf;
+    u8 language_changed;
+    u8 loaded; // 0: not yet, 1: loaded, 2: failed (no glyphs, ever)
+} T1AppleFonts;
+static T1AppleFonts T1_apple_fonts;
+
+// a CFString of ASCII text (the caller releases it)
+static void * T1_apple_cfstring(const char * ascii) {
+    u16 utf16[64];
+    long n = 0;
+    while (ascii[n] != '\0' && n < 64) {
+        utf16[n] = (u16)(u8)ascii[n];
+        n++;
+    }
+    return T1_apple_fonts.CFStringCreateWithCharacters(NULL, utf16, n);
+}
+
+static void T1_apple_fonts_load(void) {
+    T1AppleFonts * f = &T1_apple_fonts;
+    f->loaded = 2;
+    
+    if (
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/CoreFoundation.framework/"
+            "CoreFoundation") ||
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/CoreGraphics.framework/"
+            "CoreGraphics") ||
+        !T1_objc_open_framework(
+            "/System/Library/Frameworks/CoreText.framework/CoreText"))
+    {
+        return;
+    }
+    
+    // Every function pointer has the same size, the field's type is right
+    #define T1_APPLE_FONT_FN(name) { \
+        void * found = T1_objc_get_func(#name); \
+        if (found == NULL) { return; } \
+        T1_std_memcpy(&f->name, &found, sizeof(void *)); }
+    T1_APPLE_FONT_FN(CFStringCreateWithCharacters);
+    T1_APPLE_FONT_FN(CFRelease);
+    T1_APPLE_FONT_FN(CFEqual);
+    T1_APPLE_FONT_FN(CTFontCreateWithName);
+    T1_APPLE_FONT_FN(CTFontCreateForString);
+    T1_APPLE_FONT_FN(CTFontCopyPostScriptName);
+    T1_APPLE_FONT_FN(CTFontGetAscent);
+    T1_APPLE_FONT_FN(CTFontGetDescent);
+    T1_APPLE_FONT_FN(CTFontGetGlyphsForCharacters);
+    T1_APPLE_FONT_FN(CTFontGetBoundingRectsForGlyphs);
+    T1_APPLE_FONT_FN(CTFontGetAdvancesForGlyphs);
+    T1_APPLE_FONT_FN(CTFontDrawGlyphs);
+    T1_APPLE_FONT_FN(CGBitmapContextCreate);
+    T1_APPLE_FONT_FN(CGContextSetGrayFillColor);
+    T1_APPLE_FONT_FN(CGContextRelease);
+    #undef T1_APPLE_FONT_FN
+    
+    {
+        void * found = dlsym(RTLD_DEFAULT, "CTFontCreateForStringWithLanguage");
+        T1_std_memcpy(&f->CTFontCreateForStringWithLanguage, &found,
+            sizeof(void *));
+    }
+    
+    f->last_resort_name = T1_apple_cfstring("LastResort");
+    if (f->last_resort_name == NULL) { return; }
+    f->loaded = 1;
+}
+
+/*
+The system's font (Helvetica: on every Apple system, CoreText finds the
+rest), at the point size that makes its ascent plus descent size pixels
+*/
+static void * T1_apple_base_font(const f32 size) {
+    T1AppleFonts * f = &T1_apple_fonts;
+    if (f->base_font != NULL && f->base_size == size) {
+        return f->base_font;
+    }
+    if (f->base_font != NULL) {
+        f->CFRelease(f->base_font);
+        f->base_font = NULL;
+    }
+    
+    void * name = T1_apple_cfstring("Helvetica");
+    if (name == NULL) { return NULL; }
+    void * probe = f->CTFontCreateWithName(name, 100.0, NULL);
+    if (probe == NULL) {
+        f->CFRelease(name);
+        return NULL;
+    }
+    const f64 span = f->CTFontGetAscent(probe) + f->CTFontGetDescent(probe);
+    f->CFRelease(probe);
+    if (!(span > 0.0)) {
+        f->CFRelease(name);
+        return NULL;
+    }
+    f->base_font = f->CTFontCreateWithName(
+        name, (f64)size * (100.0 / span), NULL);
+    f->CFRelease(name);
+    f->base_size = size;
+    return f->base_font;
+}
+
+void T1_os_font_set_language(const char * code) {
+    T1AppleFonts * f = &T1_apple_fonts;
+    T1_std_strcpy_cap(f->language, T1_FONT_LANGUAGE_CAP, code);
+    // (made at the next glyph: CoreFoundation may not be loaded yet)
+    f->language_changed = 1;
+}
+
+// T1_font_set_language()'s language as a CFString, NULL: the system's
+static void * T1_apple_font_language(void) {
+    T1AppleFonts * f = &T1_apple_fonts;
+    if (f->language_changed) {
+        f->language_changed = 0;
+        if (f->language_cf != NULL) {
+            f->CFRelease(f->language_cf);
+            f->language_cf = NULL;
+        }
+        if (f->language[0] != '\0') {
+            f->language_cf = T1_apple_cfstring(f->language);
+        }
+    }
+    return f->language_cf;
+}
+
+static s32 T1_apple_floor(const f64 x) {
+    const s32 i = (s32)x;
+    return (f64)i > x ? i - 1 : i;
+}
+
+static s32 T1_apple_ceil(const f64 x) {
+    const s32 i = (s32)x;
+    return (f64)i < x ? i + 1 : i;
+}
+
+void T1_os_font_glyph(
+    u32 codepoint,
+    f32 size,
+    u8 * alpha,
+    u32 alpha_cap,
+    u32 * w,
+    u32 * h,
+    f32 * left,
+    f32 * top,
+    f32 * advance,
+    u8 * good)
+{
+    T1AppleFonts * f = &T1_apple_fonts;
+    if (f->loaded == 0) { T1_apple_fonts_load(); }
+    if (f->loaded != 1) { return; }
+    
+    void * base = T1_apple_base_font(size);
+    if (base == NULL) { return; }
+    
+    // the codepoint in UTF-16, CoreText's text
+    u16 utf16[2];
+    long units = 1;
+    if (codepoint < 0x10000u) {
+        utf16[0] = (u16)codepoint;
+    } else {
+        const u32 above = codepoint - 0x10000u;
+        utf16[0] = (u16)(0xD800u + (above >> 10));
+        utf16[1] = (u16)(0xDC00u + (above & 0x3FFu));
+        units = 2;
+    }
+    
+    // the base font if it has the codepoint, else one that does
+    void * text = f->CFStringCreateWithCharacters(NULL, utf16, units);
+    if (text == NULL) { return; }
+    T1FontCFRange range;
+    range.location = 0;
+    range.length = units;
+    // (the language picks between e.g. Japanese and Chinese fonts)
+    void * language = T1_apple_font_language();
+    void * font =
+        language != NULL && f->CTFontCreateForStringWithLanguage != NULL ?
+            f->CTFontCreateForStringWithLanguage(base, text, range, language) :
+            f->CTFontCreateForString(base, text, range);
+    f->CFRelease(text);
+    if (font == NULL) { return; }
+    
+    u8 is_last_resort = 0;
+    void * font_name = f->CTFontCopyPostScriptName(font);
+    if (font_name != NULL) {
+        is_last_resort = f->CFEqual(font_name, f->last_resort_name) != 0;
+        f->CFRelease(font_name);
+    }
+    u16 glyphs[2] = { 0, 0 };
+    const u8 found = f->CTFontGetGlyphsForCharacters(
+        font, utf16, glyphs, units);
+    if (is_last_resort || !found || glyphs[0] == 0) {
+        f->CFRelease(font);
+        return;
+    }
+    
+    T1FontCGRect bounds;
+    f->CTFontGetBoundingRectsForGlyphs(
+        font, T1kCTFontOrientationDefault, glyphs, &bounds, 1);
+    T1FontCGSize advance_size;
+    f->CTFontGetAdvancesForGlyphs(
+        font, T1kCTFontOrientationDefault, glyphs, &advance_size, 1);
+    *advance = (f32)advance_size.width;
+    
+    // nothing to draw (a space)
+    if (!(bounds.size.width > 0.0) || !(bounds.size.height > 0.0)) {
+        f->CFRelease(font);
+        *good = 1;
+        return;
+    }
+    if (
+        !(bounds.size.width < 4096.0) ||
+        !(bounds.size.height < 4096.0) ||
+        !(bounds.origin.x > -4096.0 && bounds.origin.x < 4096.0) ||
+        !(bounds.origin.y > -4096.0 && bounds.origin.y < 4096.0))
+    {
+        f->CFRelease(font);
+        return;
+    }
+    
+    // whole pixels around the ink, and one more for its antialiasing
+    const s32 x0 = T1_apple_floor(bounds.origin.x) - 1;
+    const s32 y0 = T1_apple_floor(bounds.origin.y) - 1;
+    const s32 x1 = T1_apple_ceil(bounds.origin.x + bounds.size.width) + 1;
+    const s32 y1 = T1_apple_ceil(bounds.origin.y + bounds.size.height) + 1;
+    *w = (u32)(x1 - x0);
+    *h = (u32)(y1 - y0);
+    *left = (f32)x0;
+    *top = (f32)y1;
+    // (only measured)
+    if (alpha == NULL) {
+        f->CFRelease(font);
+        *good = 1;
+        return;
+    }
+    if ((u64)*w * (u64)*h > (u64)alpha_cap) {
+        f->CFRelease(font);
+        return;
+    }
+    
+    /*
+    An alpha-only bitmap of our memory (its first row the top one), the
+    pen at (-x0, -y0) from its bottom left so the ink lands inside
+    */
+    T1_std_memset(alpha, 0, *w * *h);
+    void * context = f->CGBitmapContextCreate(
+        alpha, *w, *h, 8, *w, NULL, T1kCGImageAlphaOnly);
+    if (context == NULL) {
+        *w = 0;
+        *h = 0;
+        f->CFRelease(font);
+        return;
+    }
+    f->CGContextSetGrayFillColor(context, 1.0, 1.0);
+    T1FontCGPoint pen;
+    pen.x = (f64)-x0;
+    pen.y = (f64)-y0;
+    f->CTFontDrawGlyphs(font, glyphs, &pen, 1, context);
+    f->CGContextRelease(context);
+    f->CFRelease(font);
+    *good = 1;
 }
