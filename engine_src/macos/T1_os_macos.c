@@ -15,6 +15,8 @@
 #define T1NSUTF8StringEncoding 4
 #define T1NSApplicationSupportDirectory 14
 #define T1NSEventModifierFlagShift (1 << 17)
+#define T1NSEventModifierFlagControl (1 << 18)
+#define T1NSEventModifierFlagCommand (1 << 20)
 #define T1NSWindowStyleMaskFullScreen (1 << 14)
 #define T1NSWindowAnimationBehaviorNone 2
 #define T1NSBackingStoreBuffered 2
@@ -477,6 +479,30 @@ static void T1_os_macos_ns_window_flags_changed(
             T1_IO_KEYBOARD_SHIFT,
             /* debounces: */ 0);
     }
+    if (modifiers & T1NSEventModifierFlagControl) {
+        T1_io_register_keydown(T1_IO_KEYBOARD_CONTROL, 0);
+    } else {
+        T1_io_register_keyup(T1_IO_KEYBOARD_CONTROL, /* debounces: */ 0);
+    }
+    /*
+    Command went up: macOS sends no keyUp for a key released while Command
+    was held (Cmd+A: A goes up unseen), so every key still held goes up
+    (the modifiers keep what their flags say)
+    */
+    static b8 command_was_down = 0;
+    const b8 command_down = (modifiers & T1NSEventModifierFlagCommand) != 0;
+    if (command_was_down && !command_down) {
+        for (u32 key = 0; key < T1_IO_KEYBOARD_ABOVEBOUNDS; key++) {
+            if (
+                key != T1_IO_KEYBOARD_SHIFT &&
+                key != T1_IO_KEYBOARD_CONTROL &&
+                T1_io_key_is_down((T1IOKey)key))
+            {
+                T1_io_register_keyup(key, /* debounces: */ 0);
+            }
+        }
+    }
+    command_was_down = command_down;
 }
 
 static void T1_os_macos_ns_window_scroll_wheel(
@@ -635,6 +661,29 @@ T1_os_macos_ns_window_delegate_window_will_resize_to_size(
     return frame_size;
 }
 
+/*
+The window is no longer the key window (another app, Cmd-Tab): every key and
+button held goes up, as their releases go to whatever has the focus now and
+would never reach us (a key held would stay down)
+*/
+static void T1_os_macos_ns_window_delegate_window_did_resign_key(
+    void * self_ptr,
+    void * selector,
+    void * notification)
+{
+    (void)self_ptr; (void)selector; (void)notification;
+    
+    for (u32 key = 0; key <= T1_IO_MOUSE_OTHERCLICK4; key++) {
+        if (
+            key != T1_IO_KEYBOARD_ABOVEBOUNDS &&
+            key != T1_IO_MOUSE &&
+            T1_io_key_is_down((T1IOKey)key))
+        {
+            T1_io_register_keyup(key, /* debounces: */ 0);
+        }
+    }
+}
+
 static void T1_os_macos_ns_window_delegate_window_did_resize(
     void * self_ptr,
     void * selector,
@@ -783,6 +832,11 @@ void T1_os_macos_init(void) {
         T1_os_macos_s->class_T1_ns_window_delegate,
         "windowDidResize:",
         (void *)T1_os_macos_ns_window_delegate_window_did_resize,
+        "v@:@");
+    T1_objc_add_method(
+        T1_os_macos_s->class_T1_ns_window_delegate,
+        "windowDidResignKey:",
+        (void *)T1_os_macos_ns_window_delegate_window_did_resign_key,
         "v@:@");
     T1_objc_commit_child_class(
         T1_os_macos_s->class_T1_ns_window_delegate);
