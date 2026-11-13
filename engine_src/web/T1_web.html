@@ -1,0 +1,2284 @@
+<!doctype html>
+<!--
+T1's web page (see engine_src/web/ in T1's repo): copy it next to your
+app.wasm, as index.html. Your app built with
+
+    clang --target=wasm32-wasip1-threads \
+        -Wl,--import-memory,--max-memory=4294967296 \
+        your_app.c T1.c -o app.wasm
+
+(LLVM's clang for wasm with the C library for it: wasi-sdk). Serve the
+folder: a browser runs wasm only from a server, and shares memory between
+threads only if the server sends these headers with every file:
+
+    Cross-Origin-Opener-Policy: same-origin
+    Cross-Origin-Embedder-Policy: require-corp
+
+Your app's files are the files next to this page (T1's resource folder);
+if it lists a folder, its file names go in a T1_files.txt there (a server
+can't list one). It needs WebGPU and JSPI: Chrome 137 or later
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T1</title>
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+#t1_canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    outline: none;
+    touch-action: none;
+}
+#t1_log {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 40%;
+    overflow: auto;
+    margin: 0;
+    padding: 8px 12px;
+    color: #f66;
+    font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+<canvas id="t1_canvas"></canvas>
+<div id="t1_log"></div>
+<script type="text/plain" id="t1_audio_js">
+"use strict";
+
+/*
+The browser's audio thread: takes 128 frames at a time from the ring T1's
+audio thread fills in the app's memory (see AUDIO in T1_os_web.c), and
+wakes that thread for more. Silence when the ring runs dry. No wasm runs
+here
+*/
+class T1AudioProcessor extends AudioWorkletProcessor {
+    constructor(options) {
+        super();
+        const o = options.processorOptions;
+        this.ring = new Int16Array(o.buffer, o.ring, o.ring_frames * 2);
+        this.mask = o.ring_frames - 1;
+        this.counters = new Int32Array(o.buffer);
+        this.read_i = o.read_frames >> 2;
+        this.written_i = o.written_frames >> 2;
+    }
+
+    process(inputs, outputs) {
+        const out = outputs[0];
+        const left = out[0];
+        const right = out.length > 1 ? out[1] : null;
+        const frames = left.length;
+        const read = Atomics.load(this.counters, this.read_i) >>> 0;
+        const written = Atomics.load(this.counters, this.written_i) >>> 0;
+        if (((written - read) >>> 0) < frames) {
+            left.fill(0);
+            if (right !== null) { right.fill(0); }
+        } else {
+            const ring = this.ring;
+            for (let i = 0; i < frames; i++) {
+                const at = ((read + i) & this.mask) * 2;
+                left[i] = ring[at] / 32768;
+                if (right !== null) { right[i] = ring[at + 1] / 32768; }
+            }
+            Atomics.store(this.counters, this.read_i, (read + frames) | 0);
+        }
+        Atomics.notify(this.counters, this.read_i, 1);
+        return true;
+    }
+}
+
+registerProcessor("t1-audio", T1AudioProcessor);
+</script>
+<script type="text/plain" id="t1_thread_js">
+/*
+One of the app's threads (see THREADS in T1_os_web.c): a Web Worker that
+makes another instance of the app on its shared memory and runs
+the C library's wasi_thread_start(), which sets the thread's stack and
+thread-locals up and calls what pthread_create() was given. Its output goes
+to the page (T1_web.js) as messages: {kind: "log", fd, text} and
+{kind: "crash", text}. Threads it starts are workers of its own, their
+messages passed on.
+*/
+"use strict";
+
+self.onmessage = (message) => {
+    const o = message.data;
+    const memory = o.memory;
+    const utf8_decoder = new TextDecoder();
+    const mem_u8 = () => new Uint8Array(memory.buffer);
+    const mem_view = () => new DataView(memory.buffer);
+    const mem_string = (ptr, size) =>
+        utf8_decoder.decode(mem_u8().slice(ptr, ptr + size));
+    const post = (m) => { self.postMessage(m); };
+
+    class T1Exit {
+        constructor(code) { this.code = code; }
+    }
+
+    function spawn(start_arg) {
+        const tid = Atomics.add(o.next_tid, 0, 1);
+        const worker = new Worker(o.thread_url);
+        worker.onmessage = (e) => { post(e.data); };
+        worker.onerror = (e) => {
+            post({kind: "crash", text: "a thread crashed: " + e.message});
+        };
+        const start = Object.assign({}, o);
+        start.tid = tid;
+        start.start_arg = start_arg;
+        worker.postMessage(start);
+        return tid;
+    }
+
+    // what only the page has (the GPU, the window, files, fonts) isn't here
+    function missing(module, name) {
+        return () => {
+            post({
+                kind: "log",
+                fd: 2,
+                text: "T1: a thread called " + module + "." +
+                    String(name) + ", which only the main thread has\n",
+            });
+            return 0;
+        };
+    }
+    const t1_known = {
+        time_us: () =>
+            (performance.timeOrigin - o.time_origin + performance.now()) *
+                1000,
+        write_error: (text, size) => {
+            post({kind: "log", fd: 2, text: mem_string(text, size)});
+        },
+        core_count: () => navigator.hardwareConcurrency || 1,
+        // the page's resources, fetched as the page does (it can wait here)
+        file_size: (path, size) => {
+            const data = fetch_sync(mem_string(path, size));
+            return data === null ? -1 : data.length;
+        },
+        file_read: (path, path_size, recip, recip_cap) => {
+            const data = fetch_sync(mem_string(path, path_size));
+            if (data === null) { return -1; }
+            const n = Math.min(data.length, recip_cap);
+            mem_u8().set(data.subarray(0, n), recip);
+            return n;
+        },
+    };
+    // (only resources: the writables live on the page's thread)
+    const fetched = new Map();
+    function fetch_sync(path) {
+        if (fetched.has(path)) { return fetched.get(path); }
+        let url = null;
+        if (path.startsWith("/res/")) { url = path.slice(5); }
+        let data = null;
+        if (url !== null) {
+            const request = new XMLHttpRequest();
+            request.open("GET", new URL(url, o.page_url).href, false);
+            request.responseType = "arraybuffer";
+            try {
+                request.send();
+                if (request.status === 200) {
+                    data = new Uint8Array(request.response);
+                }
+            } catch (e) {
+                data = null;
+            }
+        } else {
+            post({kind: "log", fd: 2, text: "T1: a thread " +
+                "asked for " + path + ": threads only read resources\n"});
+        }
+        fetched.set(path, data);
+        return data;
+    }
+    const wasi_known = {
+        fd_write: (fd, iovs, iovs_size, written) => {
+            const view = mem_view();
+            let total = 0;
+            let text = "";
+            for (let i = 0; i < iovs_size; i++) {
+                const ptr = view.getUint32(iovs + i * 8, true);
+                const size = view.getUint32(iovs + i * 8 + 4, true);
+                text += mem_string(ptr, size);
+                total += size;
+            }
+            if (fd === 1 || fd === 2) {
+                post({kind: "log", fd: fd, text: text});
+            }
+            view.setUint32(written, total, true);
+            return 0;
+        },
+        fd_fdstat_get: (fd, stat) => {
+            if (fd > 2) { return 8; }
+            const u8 = mem_u8();
+            u8.fill(0, stat, stat + 24);
+            u8[stat] = 2;
+            return 0;
+        },
+        fd_close: () => 0,
+        fd_seek: () => 8,
+        fd_prestat_get: () => 8,
+        fd_prestat_dir_name: () => 8,
+        environ_sizes_get: (count, size) => {
+            const view = mem_view();
+            view.setUint32(count, 0, true);
+            view.setUint32(size, 0, true);
+            return 0;
+        },
+        environ_get: () => 0,
+        clock_time_get: (id, precision, time) => {
+            const ms = id === 0 ?
+                Date.now() :
+                performance.timeOrigin - o.time_origin + performance.now();
+            mem_view().setBigUint64(
+                time, BigInt(Math.round(ms * 1000000)), true);
+            return 0;
+        },
+        random_get: (buf, size) => {
+            const u8 = mem_u8();
+            for (let at = 0; at < size; at += 65536) {
+                const random = new Uint8Array(Math.min(65536, size - at));
+                crypto.getRandomValues(random);
+                u8.set(random, buf + at);
+            }
+            return 0;
+        },
+        sched_yield: () => 0,
+        proc_exit: (code) => { throw new T1Exit(code); },
+    };
+    const known_or_missing = (module, known) => new Proxy(known, {
+        get: (k, name) => name in k ? k[name] : missing(module, name),
+    });
+
+    try {
+        const instance = new WebAssembly.Instance(o.module, {
+            env: {memory: memory},
+            t1: known_or_missing("t1", t1_known),
+            wasi_snapshot_preview1:
+                known_or_missing("wasi_snapshot_preview1", wasi_known),
+            wasi: {"thread-spawn": spawn},
+        });
+        instance.exports.wasi_thread_start(o.tid, o.start_arg);
+    } catch (e) {
+        if (!(e instanceof T1Exit)) {
+            post({kind: "crash", text: "a thread crashed: " + e});
+        }
+    }
+    // (workers it started keep running until they're done)
+};
+</script>
+<script>
+/*
+The page: loads app.wasm and gives it the imports T1_os_web.c and
+T1_gpu_webgpu.c call (module "t1"), plus the WASI ones the C library calls
+(printf, fopen, exit, the clock).
+
+The app's memory is shared (it's built for wasm's threads): this makes it,
+as large as app.wasm asks, and the app's threads (workers running
+t1_thread_js) run its code on it too.
+*/
+"use strict";
+
+(async function () {
+
+const canvas = document.getElementById("t1_canvas");
+const log_box = document.getElementById("t1_log");
+
+/*
+THE LOG: stderr and crashes go to the page (what a player would report),
+stdout only to the console unless the app ends with an error
+*/
+const stdout_lines = [];
+/*
+With ?log in the page's address, every line also goes to the server
+(GET /t1_log?line), in order: T1's own development server (tools/serve.c)
+prints them in its terminal
+*/
+const log_to_server = new URLSearchParams(location.search).has("log");
+let log_chain = Promise.resolve();
+function log_to_terminal(text) {
+    if (!log_to_server) { return; }
+    log_chain = log_chain.then(() =>
+        fetch("/t1_log?" + encodeURIComponent(text)).catch(() => {}));
+}
+function show_on_page(text, color) {
+    log_to_terminal(text);
+    const line = document.createElement("div");
+    line.textContent = text;
+    if (color) { line.style.color = color; }
+    log_box.appendChild(line);
+    log_box.scrollTop = log_box.scrollHeight;
+}
+function print_line(fd, text) {
+    if (fd === 2) {
+        console.error(text);
+        show_on_page(text);
+        return;
+    } else {
+        console.log(text);
+        log_to_terminal(text);
+        stdout_lines.push(text);
+        if (stdout_lines.length > 20) { stdout_lines.shift(); }
+    }
+}
+const pending_text = {1: "", 2: ""};
+function write_text(fd, text) {
+    pending_text[fd] += text;
+    let newline;
+    while ((newline = pending_text[fd].indexOf("\n")) >= 0) {
+        print_line(fd, pending_text[fd].slice(0, newline));
+        pending_text[fd] = pending_text[fd].slice(newline + 1);
+    }
+}
+function fail(text) {
+    show_on_page(text, "#f66");
+    throw new Error(text);
+}
+
+if (!navigator.gpu) {
+    fail("This browser has no WebGPU. Try a recent Chrome.");
+}
+if (!window.crossOriginIsolated) {
+    fail("This page can't share memory between threads: serve it with " +
+        "T1's server (tools/serve.c), which sends the headers for that.");
+}
+if (typeof WebAssembly.Suspending !== "function") {
+    fail("This browser has no JSPI (WebAssembly.Suspending). " +
+        "Try Chrome 137 or later.");
+}
+
+/*
+MEMORY: the wasm memory's buffer is replaced when it grows, so views of it
+are made fresh each time
+*/
+let memory = null;
+const utf8_decoder = new TextDecoder();
+const utf8_encoder = new TextEncoder();
+function mem_u8() { return new Uint8Array(memory.buffer); }
+function mem_view() { return new DataView(memory.buffer); }
+function mem_string(ptr, size) {
+    return utf8_decoder.decode(mem_u8().slice(ptr, ptr + size));
+}
+// copies text (UTF-8, 0-terminated, cut short to fit) into the memory
+function mem_write_string(ptr, cap, text) {
+    if (cap === 0) { return; }
+    const bytes = utf8_encoder.encode(text);
+    const size = Math.min(bytes.length, cap - 1);
+    const u8 = mem_u8();
+    u8.set(bytes.subarray(0, size), ptr);
+    u8[ptr + size] = 0;
+}
+
+/*
+FILES: path -> Uint8Array. The app's resources ("/res/a/b", T1's resource
+folder) are the files next to this page on its server ("a/b"), fetched the
+first time the app asks for one (the app waits meanwhile, like it waits
+for a frame) and kept. "/writables/..." live in IndexedDB, one database per
+page, read before the app starts and written as they change. A server
+can't list its folders: a resource folder's list of files is its
+T1_files.txt (one name a line), for the apps that list one; without it,
+only the files the app has seen
+*/
+const files = new Map();
+const missing = new Set(); // paths the server doesn't have
+const listed = new Set(); // paths a T1_files.txt has, maybe not fetched
+
+// a path's address on the server, relative to the page; null: not there
+function res_url(path) {
+    if (path.startsWith("/writables/") || path === "/writables") {
+        return null;
+    }
+    if (path.startsWith("/res/")) { return path.slice(5); }
+    if (path.startsWith("/")) { return path.slice(1); }
+    return path;
+}
+
+async function fetch_file(path) {
+    if (files.has(path) || missing.has(path)) { return; }
+    const url = res_url(path);
+    if (url === null || url === "") { return; }
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            files.set(path, new Uint8Array(await response.arrayBuffer()));
+            return;
+        }
+    } catch (e) {
+        // (missing, below)
+    }
+    missing.add(path);
+}
+
+let writables_db = null;
+function open_writables() {
+    return new Promise((resolve) => {
+        if (!window.indexedDB) { resolve(null); return; }
+        const request = indexedDB.open("t1:" + location.pathname, 1);
+        request.onupgradeneeded = () => {
+            request.result.createObjectStore("files");
+        };
+        request.onsuccess = () => { resolve(request.result); };
+        request.onerror = () => { resolve(null); };
+    });
+}
+function load_writables() {
+    return new Promise((resolve) => {
+        if (writables_db === null) { resolve(); return; }
+        const cursor_request = writables_db
+            .transaction("files", "readonly")
+            .objectStore("files")
+            .openCursor();
+        cursor_request.onsuccess = () => {
+            const cursor = cursor_request.result;
+            if (cursor === null) { resolve(); return; }
+            files.set(cursor.key, new Uint8Array(cursor.value));
+            cursor.continue();
+        };
+        cursor_request.onerror = () => { resolve(); };
+    });
+}
+function store_writable(path, data) {
+    if (writables_db === null || !path.startsWith("/writables/")) { return; }
+    const store = writables_db
+        .transaction("files", "readwrite")
+        .objectStore("files");
+    if (data === null) { store.delete(path); } else { store.put(data, path); }
+}
+
+/*
+INPUT: DOM events become T1's (kind, key, x, y), queued until the app
+takes them after its next wait. Kinds are T1_WEB_EVENT_* in T1_os_web.c
+*/
+const EVENT_KEYDOWN = 1;
+const EVENT_KEYUP = 2;
+const EVENT_MOUSEMOVE = 3;
+const EVENT_WHEEL = 4;
+const EVENT_RESIZE = 5;
+const EVENT_BLUR = 6;
+const EVENT_FULLSCREEN = 7;
+const events = [];
+
+/*
+Keys by where they are on the keyboard (KeyboardEvent.code), named as
+macOS and Windows name each place (T1IOKey in T1_types_public.h): a
+Japanese keyboard's names, so '=' is HAT and '[' is AT
+*/
+const T1_KEY_UNKNOWN = 17;
+const key_codes = {
+    ArrowLeft: 0, ArrowRight: 1, ArrowUp: 2, ArrowDown: 3,
+    Enter: 4, NumpadEnter: 4, Escape: 5, Tab: 6, Space: 7, Backspace: 8,
+    IntlYen: 9, KanaMode: 10, Lang1: 10, Convert: 10,
+    Lang2: 11, NonConvert: 11,
+    AltLeft: 12, AltRight: 12, MetaLeft: 13, MetaRight: 13,
+    CapsLock: 14, ControlLeft: 15, ControlRight: 15,
+    ShiftLeft: 16, ShiftRight: 16,
+    NumpadMultiply: 42, NumpadAdd: 43, Comma: 44,
+    Minus: 45, NumpadSubtract: 45, Period: 46, NumpadDecimal: 46,
+    Slash: 47, NumpadDivide: 47, // T1's name for '/' is BACKSLASH
+    Quote: 58, Semicolon: 59, BracketLeft: 64, BracketRight: 91,
+    Backslash: 93, Equal: 94, IntlRo: 95, NumLock: 96, Backquote: 126,
+    Insert: 148, Home: 149, PageUp: 150, End: 151, PageDown: 152,
+};
+function t1_key(code) {
+    if (code in key_codes) { return key_codes[code]; }
+    if (/^Key[A-Z]$/.test(code)) { return code.charCodeAt(3); }
+    if (/^Digit[0-9]$/.test(code)) { return code.charCodeAt(5); }
+    if (/^Numpad[0-9]$/.test(code)) { return code.charCodeAt(6); }
+    const f = /^F([0-9]+)$/.exec(code);
+    if (f !== null && +f[1] >= 1 && +f[1] <= 12) { return 135 + +f[1]; }
+    return T1_KEY_UNKNOWN;
+}
+
+/*
+A page can go fullscreen only while handling a key press or click, or a
+few seconds after one. A request at another time waits for the next one
+*/
+let fullscreen_wanted = false;
+function request_fullscreen() {
+    document.documentElement.requestFullscreen().catch(() => {
+        fullscreen_wanted = true;
+    });
+}
+function user_gesture() {
+    // browsers keep audio silent until the user does something
+    if (audio_context !== null && audio_context.state !== "running") {
+        audio_context.resume().catch(() => {});
+    }
+    if (fullscreen_wanted) {
+        fullscreen_wanted = false;
+        request_fullscreen();
+    }
+}
+document.addEventListener("fullscreenchange", () => {
+    events.push([EVENT_FULLSCREEN, document.fullscreenElement ? 1 : 0, 0, 0]);
+});
+
+window.addEventListener("keydown", (e) => {
+    user_gesture();
+    // the browser's own shortcuts (reload, close, the developer tools)
+    if (e.metaKey || e.ctrlKey || e.code === "F5" || e.code === "F12") {
+        return;
+    }
+    e.preventDefault();
+    if (!e.repeat) { events.push([EVENT_KEYDOWN, t1_key(e.code), 0, 0]); }
+});
+window.addEventListener("keyup", (e) => {
+    if (!(e.metaKey || e.ctrlKey)) { e.preventDefault(); }
+    events.push([EVENT_KEYUP, t1_key(e.code), 0, 0]);
+});
+window.addEventListener("blur", () => { events.push([EVENT_BLUR, 0, 0, 0]); });
+
+// T1's mouse is in points from the bottom left
+function push_mouse(e) {
+    const rect = canvas.getBoundingClientRect();
+    events.push([
+        EVENT_MOUSEMOVE,
+        0,
+        e.clientX - rect.left,
+        rect.height - (e.clientY - rect.top),
+    ]);
+}
+// left, middle, right, back, forward: like Windows' buttons
+const mouse_keys = [155, 158, 157, 159, 160];
+canvas.addEventListener("pointermove", push_mouse);
+canvas.addEventListener("pointerdown", (e) => {
+    user_gesture();
+    // keeps the mouse while a button is held outside the page
+    canvas.setPointerCapture(e.pointerId);
+    push_mouse(e);
+    if (e.button >= 0 && e.button < 5) {
+        events.push([EVENT_KEYDOWN, mouse_keys[e.button], 0, 0]);
+    }
+    e.preventDefault();
+});
+canvas.addEventListener("pointerup", (e) => {
+    push_mouse(e);
+    if (e.button >= 0 && e.button < 5) {
+        events.push([EVENT_KEYUP, mouse_keys[e.button], 0, 0]);
+    }
+});
+canvas.addEventListener("contextmenu", (e) => { e.preventDefault(); });
+// a notch of a wheel is about 1.0, like on macOS; up is positive
+canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const per_notch = e.deltaMode === 0 ? 100 : e.deltaMode === 1 ? 3 : 1;
+    events.push([EVENT_WHEEL, 0, 0, -e.deltaY / per_notch]);
+}, {passive: false});
+
+// the canvas is the page's size: its pixels follow it
+function canvas_resized() {
+    const rect = canvas.getBoundingClientRect();
+    const scale = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * scale));
+    canvas.height = Math.max(1, Math.round(rect.height * scale));
+    events.push([EVENT_RESIZE, 0, rect.width, rect.height]);
+}
+new ResizeObserver(canvas_resized).observe(canvas);
+
+/*
+THE GPU: WebGPU's objects, by T1's indices (see T1_gpu_webgpu.c).
+
+How a pass binds what its shaders use (the layout T1_shader_to_wgsl()
+writes, see T1_shader.c): group 0 binding n is buffer(n): the frame consts
+at T1_FRAME_CONSTS_I, the pass's params at T1_PARAMS_I, its buf[k] at
+T1_BUFS_I + k. Group 1: the texture arrays (0 to TEXARRAYS_CAP - 1), the
+samplers, a compute pass's write_tex and kernels' grid. A pass that draws
+or writes into an array and reads textures reads a copy of that array
+(WebGPU won't let a pass use a texture both ways), brought up to date
+before the pass: only the slices written since the last copy are copied.
+*/
+const TEXARRAYS_CAP = 29; // T1_TEXARRAYS_CAP
+const TEX_NONE = 32109; // T1_TEX_NONE
+const BUF_NONE = 0xFFFFFFFF; // T1_BUF_NONE, T1_BUF_READ_NONE
+const FRAME_CONSTS_I = 7; // T1_FRAME_CONSTS_I
+const PARAMS_I = 9; // T1_PARAMS_I
+const PARAMS_CAP = 8; // T1_PARAMS_CAP
+const BUFS_I = 16; // T1_BUFS_I
+const PASS_BUFS_CAP = 12; // T1_PASS_BUFS_CAP
+const PASSES_CAP = 64; // T1_PASSES_CAP
+const READS_CAP = 64; // T1_BUF_READS_CAP
+const SAMPLERS_B = TEXARRAYS_CAP; // T1_WGSL_SAMPLERS_B
+const WRITE_TEX_B = TEXARRAYS_CAP + 3;
+const GRID_B = TEXARRAYS_CAP + 4;
+const WRITE_TEX_READ_B = TEXARRAYS_CAP + 5;
+const BLEND_ADDITIVE = 1; // T1_BLEND_*
+const BLEND_PREMULTIPLIED_ALPHA = 2;
+const BLEND_STRAIGHT_ALPHA = 3;
+// a uniform or storage binding's offset must be a multiple of this
+const SLOT = 256;
+const GRID_SLOTS = 1024; // dispatches a frame
+
+let adapter = null;
+let device = null;
+let gpu_lost = false;
+let canvas_context = null;
+let canvas_format = "bgra8unorm";
+let present_pipeline = null;
+let samplers = []; // nearest, linear, linear repeat (T1's)
+// by T1's array index: {texture, view, width, height, slices, copy,
+// copy_view, stale (per slice: written since the copy)}
+const tex_arrays = [];
+const bufs = new Map(); // T1Buf -> GPUBuffer
+let presented = false; // since the last wait: the next one waits a frame
+let frames_presented = 0;
+
+let units = new Map(); // entry point -> {stage, module, binds, threads}
+const pipelines = []; // by T1's pipeline index: what it was made with
+// "pipeline_i colors depth" -> {pipeline, layouts}
+let pipeline_objects = new Map();
+let frame_consts_buf = null;
+let params_buf = null;
+let grid_buf = null;
+let grid_slot = 0;
+let dummy_buf = null;
+let dummy_array_view = null;
+let dummy_tex_view = null;
+const depths = new Map(); // a depth_tex -> {texture, view, cleared}
+let encoder = null; // the frame's
+const reads = []; // by read index: {state, staging, size, rows}
+const reads_waiting = []; // started, to be encoded after the frame
+
+// T1's present shader: one triangle over the viewport, sampling the slice
+const present_wgsl = `
+@group(0) @binding(0) var t1_window_tex: texture_2d_array<f32>;
+@group(0) @binding(1) var t1_nearest: sampler;
+struct T1PresentVertex {
+    @builtin(position) pos: vec4f,
+    @location(0) uv: vec2f,
+};
+@vertex fn t1_present_vertex(@builtin(vertex_index) vid: u32)
+    -> T1PresentVertex
+{
+    let xy = vec2f(f32((vid << 1u) & 2u), f32(vid & 2u));
+    var o: T1PresentVertex;
+    o.pos = vec4f(xy.x * 2.0 - 1.0, 1.0 - xy.y * 2.0, 0.0, 1.0);
+    o.uv = xy;
+    return o;
+}
+@fragment fn t1_present_fragment(i: T1PresentVertex) -> @location(0) vec4f {
+    return textureSample(t1_window_tex, t1_nearest, i.uv, 0);
+}
+`;
+
+async function gpu_init() {
+    adapter = await navigator.gpu.requestAdapter({
+        powerPreference: "high-performance",
+    });
+    if (adapter === null) { return 0; }
+    // as much as the adapter has: T1 binds every texture array to a pass
+    const wanted = [
+        "maxSampledTexturesPerShaderStage", "maxBindingsPerBindGroup",
+        "maxStorageBuffersPerShaderStage", "maxStorageBufferBindingSize",
+        "maxBufferSize", "maxTextureArrayLayers", "maxTextureDimension2D",
+        "maxSamplersPerShaderStage", "maxColorAttachments",
+        "maxComputeWorkgroupStorageSize", "maxComputeInvocationsPerWorkgroup",
+        "maxStorageTexturesPerShaderStage",
+    ];
+    const limits = {};
+    for (const name of wanted) {
+        if (name in adapter.limits) { limits[name] = adapter.limits[name]; }
+    }
+    if (limits.maxSampledTexturesPerShaderStage < TEXARRAYS_CAP) {
+        write_text(2, "T1: this GPU binds " +
+            limits.maxSampledTexturesPerShaderStage +
+            " textures to a shader, T1 needs " + TEXARRAYS_CAP + "\n");
+        return 0;
+    }
+    device = await adapter.requestDevice({requiredLimits: limits});
+    if (device === null) { return 0; }
+    device.lost.then((info) => {
+        gpu_lost = true;
+        write_text(2, "WebGPU device lost: " + info.message + "\n");
+    });
+    const info = adapter.info || {};
+    const text = "T1: WebGPU on " +
+        [info.vendor, info.architecture, info.description]
+            .filter((s) => s).join(" ");
+    console.log(text);
+    log_to_terminal(text);
+    device.addEventListener("uncapturederror", (e) => {
+        write_text(2, "WebGPU: " + e.error.message + "\n");
+    });
+
+    canvas_context = canvas.getContext("webgpu");
+    canvas_format = navigator.gpu.getPreferredCanvasFormat();
+    canvas_context.configure({
+        device: device,
+        format: canvas_format,
+        alphaMode: "opaque",
+    });
+
+    const module = device.createShaderModule({code: present_wgsl});
+    present_pipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {module: module, entryPoint: "t1_present_vertex"},
+        fragment: {
+            module: module,
+            entryPoint: "t1_present_fragment",
+            targets: [{format: canvas_format}],
+        },
+        primitive: {topology: "triangle-list"},
+    });
+    samplers = [
+        device.createSampler({magFilter: "nearest", minFilter: "nearest"}),
+        device.createSampler({magFilter: "linear", minFilter: "linear"}),
+        device.createSampler({
+            magFilter: "linear",
+            minFilter: "linear",
+            addressModeU: "repeat",
+            addressModeV: "repeat",
+        }),
+    ];
+
+    const storage = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST;
+    frame_consts_buf = device.createBuffer({size: SLOT, usage: storage});
+    params_buf = device.createBuffer({size: SLOT * PASSES_CAP, usage: storage});
+    grid_buf = device.createBuffer({
+        size: SLOT * GRID_SLOTS,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+    // what an unbound buffer or texture array is bound as
+    dummy_buf = device.createBuffer({
+        size: 65536,
+        usage: storage | GPUBufferUsage.UNIFORM,
+    });
+    const dummy_tex = device.createTexture({
+        size: [1, 1, 1],
+        format: "rgba8unorm",
+        usage: GPUTextureUsage.TEXTURE_BINDING,
+    });
+    dummy_array_view = dummy_tex.createView({dimension: "2d-array"});
+    dummy_tex_view = dummy_tex.createView({dimension: "2d"});
+    return 1;
+}
+
+const tex_usage =
+    GPUTextureUsage.TEXTURE_BINDING |
+    GPUTextureUsage.COPY_DST |
+    GPUTextureUsage.COPY_SRC |
+    GPUTextureUsage.RENDER_ATTACHMENT |
+    GPUTextureUsage.STORAGE_BINDING;
+
+function gpu_tex_array(array_i, width, height, slices) {
+    const old = tex_arrays[array_i];
+    const texture = device.createTexture({
+        size: [width, height, slices],
+        format: "rgba8unorm",
+        usage: tex_usage,
+    });
+    // (WebGPU's new textures are zeros: blank T1Texs are transparent)
+    if (old !== undefined && old !== null) {
+        if (old.width === width && old.height === height) {
+            const copier = device.createCommandEncoder();
+            copier.copyTextureToTexture(
+                {texture: old.texture},
+                {texture: texture},
+                [width, height, Math.min(old.slices, slices)]);
+            device.queue.submit([copier.finish()]);
+        }
+        old.texture.destroy();
+        if (old.copy) { old.copy.destroy(); }
+    }
+    tex_arrays[array_i] = {
+        texture: texture,
+        view: texture.createView({dimension: "2d-array"}),
+        width: width,
+        height: height,
+        slices: slices,
+        copy: null,
+        copy_view: null,
+        stale: new Uint8Array(slices).fill(1),
+    };
+}
+
+function gpu_tex_delete(array_i) {
+    const old = tex_arrays[array_i];
+    if (old !== undefined && old !== null) {
+        old.texture.destroy();
+        if (old.copy) { old.copy.destroy(); }
+    }
+    tex_arrays[array_i] = null;
+}
+
+// a slice changed: the next copy of its array copies it
+function written(array_i, slice_i) {
+    const array = tex_arrays[array_i];
+    if (array && slice_i < array.slices) { array.stale[slice_i] = 1; }
+}
+
+function gpu_tex_write(
+    array_i, slice_i, x, y, w, h, pixels, bytes_per_row, size)
+{
+    const array = tex_arrays[array_i];
+    if (!array) { return; }
+    device.queue.writeTexture(
+        {texture: array.texture, origin: {x: x, y: y, z: slice_i}},
+        mem_u8().subarray(pixels, pixels + size),
+        {offset: 0, bytesPerRow: bytes_per_row, rowsPerImage: h},
+        {width: w, height: h, depthOrArrayLayers: 1});
+    written(array_i, slice_i);
+}
+
+function slice_view(array_i, slice_i) {
+    return tex_arrays[array_i].texture.createView({
+        dimension: "2d",
+        baseArrayLayer: slice_i,
+        arrayLayerCount: 1,
+    });
+}
+
+function frame_encoder() {
+    if (encoder === null) { encoder = device.createCommandEncoder(); }
+    return encoder;
+}
+
+function gpu_clear(array_i, slice_i, r, g, b, a) {
+    if (!tex_arrays[array_i]) { return; }
+    const pass = frame_encoder().beginRenderPass({
+        colorAttachments: [{
+            view: slice_view(array_i, slice_i),
+            loadOp: "clear",
+            clearValue: {r: r, g: g, b: b, a: a},
+            storeOp: "store",
+        }],
+    });
+    pass.end();
+    written(array_i, slice_i);
+}
+
+function gpu_present(array_i, slice_i) {
+    const array = tex_arrays[array_i];
+    if (!array || canvas.width === 0 || canvas.height === 0) { return 0; }
+
+    const presenter = device.createCommandEncoder();
+    const pass = presenter.beginRenderPass({
+        colorAttachments: [{
+            view: canvas_context.getCurrentTexture().createView(),
+            loadOp: "clear",
+            clearValue: {r: 0, g: 0, b: 0, a: 1},
+            storeOp: "store",
+        }],
+    });
+    // as large as it fits, keeping its aspect ratio, black around it
+    const scale = Math.min(
+        canvas.width / array.width,
+        canvas.height / array.height);
+    const w = array.width * scale;
+    const h = array.height * scale;
+    pass.setViewport(
+        (canvas.width - w) * 0.5, (canvas.height - h) * 0.5, w, h, 0, 1);
+    pass.setPipeline(present_pipeline);
+    pass.setBindGroup(0, device.createBindGroup({
+        layout: present_pipeline.getBindGroupLayout(0),
+        entries: [
+            {binding: 0, resource: array.texture.createView({
+                dimension: "2d-array",
+                baseArrayLayer: slice_i,
+                arrayLayerCount: 1,
+            })},
+            {binding: 1, resource: samplers[0]},
+        ],
+    }));
+    pass.draw(3);
+    pass.end();
+    device.queue.submit([presenter.finish()]);
+    presented = true;
+    frames_presented += 1;
+    if (frames_presented === 1 || frames_presented === 300) {
+        const text = "T1: " + frames_presented + " frame" +
+            (frames_presented === 1 ? "" : "s") + " shown, canvas " +
+            canvas.width + "x" + canvas.height + ", T1Tex " +
+            array.width + "x" + array.height;
+        console.log(text);
+        log_to_terminal(text);
+    }
+    return 1;
+}
+
+function gpu_buf_new(buf_i, size) {
+    const old = bufs.get(buf_i);
+    if (old !== undefined) { old.destroy(); }
+    bufs.set(buf_i, device.createBuffer({
+        // (zeros; WebGPU's sizes and writes go by 4 bytes)
+        size: Math.max(16, Math.ceil(size / 4) * 4),
+        usage:
+            GPUBufferUsage.STORAGE |
+            GPUBufferUsage.COPY_DST |
+            GPUBufferUsage.COPY_SRC |
+            GPUBufferUsage.INDIRECT |
+            GPUBufferUsage.VERTEX,
+    }));
+    return 1;
+}
+
+function gpu_buf_write(buf_i, offset, data, size) {
+    const buf = bufs.get(buf_i);
+    if (buf === undefined || size === 0) { return; }
+    if (offset % 4 !== 0 || size % 4 !== 0) {
+        write_text(2, "T1: a buffer write that isn't whole " +
+            "words (offset " + offset + ", " + size + " bytes) was skipped\n");
+        return;
+    }
+    device.queue.writeBuffer(buf, offset, memory.buffer, data, size);
+}
+
+function gpu_buf_delete(buf_i) {
+    const buf = bufs.get(buf_i);
+    if (buf !== undefined) { buf.destroy(); }
+    bufs.delete(buf_i);
+}
+
+function gpu_name(recip, cap) {
+    const info = adapter !== null ? adapter.info : null;
+    let name = "WebGPU";
+    if (info) {
+        name = info.description ||
+            [info.vendor, info.architecture].filter((s) => s).join(" ") ||
+            name;
+    }
+    mem_write_string(recip, cap, name);
+}
+
+/*
+SHADERS: the WGSL units T1_shader_to_wgsl() wrote, a module each, with the
+bindings and group sizes its comment lines list
+*/
+async function gpu_shaders(text_ptr, size, error_recip, error_cap) {
+    const text = mem_string(text_ptr, size);
+    const made = new Map();
+    const starts = [];
+    const unit_re = /^\/\/T1_UNIT (\w+) (\w+)$/gm;
+    let match;
+    while ((match = unit_re.exec(text)) !== null) {
+        starts.push({at: match.index, stage: match[1], name: match[2]});
+    }
+    let errors = "";
+    const checks = [];
+    for (let u = 0; u < starts.length; u++) {
+        const end = u + 1 < starts.length ? starts[u + 1].at : text.length;
+        const code = text.slice(starts[u].at, end);
+        const binds = [];
+        let threads = [1, 1, 1];
+        for (const line of code.split("\n", 64)) {
+            const b = /^\/\/T1_BIND (\d+) (\d+) (\w+)$/.exec(line);
+            if (b !== null) {
+                binds.push({group: +b[1], binding: +b[2], kind: b[3]});
+            }
+            const t = /^\/\/T1_THREADS (\d+) (\d+) (\d+)$/.exec(line);
+            if (t !== null) { threads = [+t[1], +t[2], +t[3]]; }
+        }
+        const module = device.createShaderModule({code: code});
+        const unit = {
+            stage: starts[u].stage,
+            module: module,
+            binds: binds,
+            threads: threads,
+        };
+        made.set(starts[u].name, unit);
+        checks.push(module.getCompilationInfo().then((info) => {
+            for (const m of info.messages) {
+                if (m.type !== "error") { continue; }
+                errors += starts[u].name + " line " + m.lineNum + ": " +
+                    m.message + "\n";
+            }
+        }));
+    }
+    await Promise.all(checks);
+    if (errors !== "") {
+        write_text(2, "T1: WebGPU refused the translated shaders:\n" +
+            errors);
+        mem_write_string(error_recip, error_cap,
+            "WebGPU refused the translated shaders: " + errors);
+        return 0;
+    }
+    units = made;
+    pipeline_objects = new Map();
+    return 1;
+}
+
+function gpu_pipeline(
+    pipeline_i, is_compute, vertex_fn, vertex_n, fragment_fn, fragment_n,
+    blend, cull)
+{
+    const p = {
+        is_compute: is_compute !== 0,
+        vertex_fn: mem_string(vertex_fn, vertex_n),
+        fragment_fn: mem_string(fragment_fn, fragment_n),
+        blend: blend,
+        cull: cull,
+    };
+    pipelines[pipeline_i] = p;
+    for (const key of pipeline_objects.keys()) {
+        if (key.startsWith(pipeline_i + " ")) { pipeline_objects.delete(key); }
+    }
+    if (p.is_compute) { return units.has(p.vertex_fn) ? 1 : 0; }
+    return units.has(p.vertex_fn) && units.has(p.fragment_fn) ? 1 : 0;
+}
+
+function gpu_pipeline_delete(pipeline_i) {
+    pipelines[pipeline_i] = null;
+    for (const key of pipeline_objects.keys()) {
+        if (key.startsWith(pipeline_i + " ")) { pipeline_objects.delete(key); }
+    }
+}
+
+// the bind group layouts of the units' bindings (both stages' together)
+function bind_layouts(stage_units) {
+    const groups = [new Map(), new Map()];
+    for (const {unit, visibility} of stage_units) {
+        for (const b of unit.binds) {
+            const entries = groups[b.group];
+            const had = entries.get(b.binding);
+            if (had !== undefined) {
+                had.visibility |= visibility;
+                // a buffer one stage writes is written
+                if (b.kind === "rw" || b.kind === "atomic") {
+                    had.kind = b.kind;
+                }
+                continue;
+            }
+            entries.set(b.binding, {kind: b.kind, visibility: visibility});
+        }
+    }
+    const layouts = [];
+    const lists = [];
+    for (const entries of groups) {
+        const list = [];
+        for (const [binding, e] of [...entries].sort((a, b) => a[0] - b[0])) {
+            const entry = {binding: binding, visibility: e.visibility};
+            if (e.kind === "read") {
+                entry.buffer = {type: "read-only-storage"};
+            } else if (e.kind === "rw" || e.kind === "atomic") {
+                entry.buffer = {type: "storage"};
+            } else if (e.kind === "tex") {
+                entry.texture = {sampleType: "float", viewDimension: "2d-array"};
+            } else if (e.kind === "sampler") {
+                entry.sampler = {type: "filtering"};
+            } else if (e.kind === "write_tex") {
+                entry.storageTexture = {
+                    access: "write-only",
+                    format: "rgba8unorm",
+                    viewDimension: "2d",
+                };
+            } else if (e.kind === "write_tex_read") {
+                entry.texture = {sampleType: "float", viewDimension: "2d"};
+            } else if (e.kind === "grid") {
+                entry.buffer = {type: "uniform"};
+            }
+            list.push({entry: entry, kind: e.kind});
+        }
+        lists.push(list);
+        layouts.push(device.createBindGroupLayout({
+            entries: list.map((l) => l.entry),
+        }));
+    }
+    return {layouts: layouts, lists: lists};
+}
+
+// the pipeline made for this pass's targets (made the first time)
+function pipeline_object(pipeline_i, colors, depth) {
+    const key = pipeline_i + " " + colors + " " + (depth ? 1 : 0);
+    let made = pipeline_objects.get(key);
+    if (made !== undefined) { return made; }
+    const p = pipelines[pipeline_i];
+    if (!p) { return null; }
+
+    if (p.is_compute) {
+        const unit = units.get(p.vertex_fn);
+        if (!unit) { return null; }
+        const layout = bind_layouts([
+            {unit: unit, visibility: GPUShaderStage.COMPUTE},
+        ]);
+        made = {
+            pipeline: device.createComputePipeline({
+                layout: device.createPipelineLayout({
+                    bindGroupLayouts: layout.layouts,
+                }),
+                compute: {module: unit.module, entryPoint: p.vertex_fn},
+            }),
+            layout: layout,
+            unit: unit,
+        };
+        pipeline_objects.set(key, made);
+        return made;
+    }
+
+    const vu = units.get(p.vertex_fn);
+    const fu = units.get(p.fragment_fn);
+    if (!vu || !fu) { return null; }
+    const layout = bind_layouts([
+        {unit: vu, visibility: GPUShaderStage.VERTEX},
+        {unit: fu, visibility: GPUShaderStage.FRAGMENT},
+    ]);
+    // only color(0) blends, and only its rgb (alpha is the output's)
+    const targets = [];
+    for (let k = 0; k < colors; k++) {
+        const target = {format: "rgba8unorm"};
+        if (k === 0 && p.blend !== 0) {
+            target.blend = {
+                color: {
+                    srcFactor: p.blend === BLEND_STRAIGHT_ALPHA ?
+                        "src-alpha" : "one",
+                    dstFactor: p.blend === BLEND_ADDITIVE ?
+                        "one" : "one-minus-src-alpha",
+                    operation: "add",
+                },
+                alpha: {srcFactor: "one", dstFactor: "zero", operation: "add"},
+            };
+        }
+        targets.push(target);
+    }
+    const descriptor = {
+        layout: device.createPipelineLayout({bindGroupLayouts: layout.layouts}),
+        vertex: {module: vu.module, entryPoint: p.vertex_fn},
+        fragment: {module: fu.module, entryPoint: p.fragment_fn, targets: targets},
+        primitive: {
+            topology: "triangle-list",
+            cullMode: ["none", "back", "front"][p.cull] || "none",
+            frontFace: "ccw", // Metal's front faces
+        },
+    };
+    if (depth) {
+        descriptor.depthStencil = {
+            format: "depth32float",
+            depthWriteEnabled: p.blend !== BLEND_ADDITIVE,
+            depthCompare: "less-equal",
+        };
+    }
+    made = {
+        pipeline: device.createRenderPipeline(descriptor),
+        layout: layout,
+        unit: null,
+    };
+    pipeline_objects.set(key, made);
+    return made;
+}
+
+// The array's copy, its stale slices copied now (for a pass that reads it
+// while it draws or writes into it)
+function array_copy_view(array_i) {
+    const array = tex_arrays[array_i];
+    if (array.copy === null) {
+        array.copy = device.createTexture({
+            size: [array.width, array.height, array.slices],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+        });
+        array.copy_view = array.copy.createView({dimension: "2d-array"});
+        array.stale.fill(1);
+    }
+    for (let s = 0; s < array.slices; s++) {
+        if (!array.stale[s]) { continue; }
+        array.stale[s] = 0;
+        frame_encoder().copyTextureToTexture(
+            {texture: array.texture, origin: {x: 0, y: 0, z: s}},
+            {texture: array.copy, origin: {x: 0, y: 0, z: s}},
+            [array.width, array.height, 1]);
+    }
+    return array.copy_view;
+}
+
+// a slice as it is now, for a kernel that reads its write_tex
+const slice_copies = new Map(); // "w h" -> texture
+function slice_copy_view(array_i, slice_i) {
+    const array = tex_arrays[array_i];
+    const key = array.width + " " + array.height;
+    let copy = slice_copies.get(key);
+    if (copy === undefined) {
+        copy = device.createTexture({
+            size: [array.width, array.height, 1],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+        });
+        slice_copies.set(key, copy);
+    }
+    frame_encoder().copyTextureToTexture(
+        {texture: array.texture, origin: {x: 0, y: 0, z: slice_i}},
+        {texture: copy},
+        [array.width, array.height, 1]);
+    return copy.createView({dimension: "2d"});
+}
+
+function depth_view(depth_tex, width, height) {
+    let d = depths.get(depth_tex);
+    if (d === undefined || d.width !== width || d.height !== height) {
+        if (d !== undefined) { d.texture.destroy(); }
+        const texture = device.createTexture({
+            size: [width, height, 1],
+            format: "depth32float",
+            usage: GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+        d = {
+            texture: texture,
+            view: texture.createView(),
+            width: width,
+            height: height,
+            cleared: false,
+        };
+        depths.set(depth_tex, d);
+    }
+    return d;
+}
+
+// What a pass binds, for a pipeline's layouts
+function bind_groups(made, pass_i, u32s, targets, grid_offset) {
+    const groups = [];
+    for (let g = 0; g < 2; g++) {
+        const entries = [];
+        for (const {entry, kind} of made.layout.lists[g]) {
+            const b = entry.binding;
+            let resource = null;
+            if (g === 0) {
+                let buf = null;
+                let offset = 0;
+                let size = undefined;
+                if (b === FRAME_CONSTS_I) {
+                    buf = frame_consts_buf;
+                } else if (b === PARAMS_I) {
+                    buf = params_buf;
+                    offset = pass_i * SLOT;
+                    size = PARAMS_CAP * 4;
+                } else if (b >= BUFS_I && b < BUFS_I + PASS_BUFS_CAP) {
+                    const t1_buf = u32s[13 + b - BUFS_I];
+                    buf = t1_buf !== BUF_NONE ? bufs.get(t1_buf) : undefined;
+                }
+                if (!buf) { buf = dummy_buf; offset = 0; size = undefined; }
+                resource = size === undefined ?
+                    {buffer: buf, offset: offset} :
+                    {buffer: buf, offset: offset, size: size};
+            } else if (kind === "tex") {
+                const array = tex_arrays[b];
+                resource = !array ? dummy_array_view :
+                    targets.has(b) ? array_copy_view(b) : array.view;
+            } else if (kind === "sampler") {
+                resource = samplers[b - SAMPLERS_B];
+            } else if (kind === "write_tex") {
+                const tex = u32s[12];
+                resource = slice_view(tex >> 11, tex & 0x7FF);
+            } else if (kind === "write_tex_read") {
+                const tex = u32s[12];
+                resource = slice_copy_view(tex >> 11, tex & 0x7FF);
+            } else if (kind === "grid") {
+                resource = {buffer: grid_buf, offset: grid_offset, size: 32};
+            }
+            entries.push({binding: b, resource: resource});
+        }
+        groups.push(device.createBindGroup({
+            layout: made.layout.layouts[g],
+            entries: entries,
+        }));
+    }
+    return groups;
+}
+
+function gpu_frame_begin(consts, size) {
+    device.queue.writeBuffer(frame_consts_buf, 0, memory.buffer, consts, size);
+    grid_slot = 0;
+    for (const d of depths.values()) { d.cleared = false; }
+}
+
+// A draw or compute pass, u32s its T1PassU32s (see T1_pass.h)
+function gpu_pass(pass_i, pipeline_i, u32s_ptr) {
+    const u32s = new Uint32Array(memory.buffer, u32s_ptr, 35).slice();
+    if (pass_i < PASSES_CAP) {
+        device.queue.writeBuffer(
+            params_buf, pass_i * SLOT, u32s.subarray(4, 4 + PARAMS_CAP));
+    }
+    const p = pipelines[pipeline_i];
+    if (!p) { return; }
+    if (p.is_compute) {
+        compute_pass(pass_i, pipeline_i, u32s);
+    } else {
+        draw_pass(pass_i, pipeline_i, u32s);
+    }
+}
+
+function draw_pass(pass_i, pipeline_i, u32s) {
+    const vertex_start = u32s[26];
+    const vertex_count = u32s[27];
+    if (vertex_count < 1) { return; }
+    const attachments = [];
+    const targets = new Set();
+    let width = 0;
+    let height = 0;
+    let colors = 0;
+    for (let k = 0; k < 4; k++) {
+        const tex = u32s[k];
+        if (tex === TEX_NONE) { continue; }
+        const array_i = tex >> 11;
+        const array = tex_arrays[array_i];
+        if (!array) { continue; }
+        while (attachments.length < k) { attachments.push(null); }
+        attachments.push({
+            view: slice_view(array_i, tex & 0x7FF),
+            loadOp: "load",
+            storeOp: "store",
+        });
+        targets.add(array_i);
+        colors = k + 1;
+        if (width === 0) { width = array.width; height = array.height; }
+    }
+    let depth = null;
+    const depth_tex = u32s[25];
+    if (depth_tex !== TEX_NONE && tex_arrays[depth_tex >> 11]) {
+        const array = tex_arrays[depth_tex >> 11];
+        depth = depth_view(depth_tex, array.width, array.height);
+        if (width === 0) { width = array.width; height = array.height; }
+    }
+    if (colors === 0 && depth === null) { return; }
+
+    const made = pipeline_object(pipeline_i, colors, depth !== null);
+    if (made === null) { return; }
+    const groups = bind_groups(made, pass_i, u32s, targets, 0);
+    const descriptor = {colorAttachments: attachments};
+    if (depth !== null) {
+        descriptor.depthStencilAttachment = {
+            view: depth.view,
+            depthLoadOp: depth.cleared ? "load" : "clear",
+            depthClearValue: 1.0,
+            depthStoreOp: "store",
+        };
+        depth.cleared = true;
+    }
+    const pass = frame_encoder().beginRenderPass(descriptor);
+    pass.setPipeline(made.pipeline);
+    pass.setBindGroup(0, groups[0]);
+    pass.setBindGroup(1, groups[1]);
+    pass.draw(vertex_count, 1, vertex_start, 0);
+    pass.end();
+    for (let k = 0; k < 4; k++) {
+        if (u32s[k] !== TEX_NONE) { written(u32s[k] >> 11, u32s[k] & 0x7FF); }
+    }
+}
+
+function compute_pass(pass_i, pipeline_i, u32s) {
+    const write_tex = u32s[12];
+    const threads = [u32s[28], u32s[29], u32s[30]];
+    const threads_buf = u32s[31];
+    const indirect = threads_buf !== BUF_NONE;
+    const targets = new Set();
+    let grid = null;
+    if (write_tex !== TEX_NONE) {
+        const array = tex_arrays[write_tex >> 11];
+        if (!array) { return; }
+        targets.add(write_tex >> 11);
+        grid = [array.width, array.height, 1];
+    }
+    if (threads[0] > 0 && !indirect) {
+        grid = [threads[0], threads[1] || 1, threads[2] || 1];
+    }
+    if (grid === null && !indirect) { return; }
+
+    const made = pipeline_object(pipeline_i, 0, false);
+    if (made === null) { return; }
+    const group = made.unit.threads;
+
+    // each dispatch's grid: its size, then its first thread (see T1_shader.c)
+    const dispatches = [];
+    if (indirect) {
+        // every thread its groups have runs: no grid to stop them
+        dispatches.push({
+            grid: [0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0],
+        });
+    } else {
+        const groups = [0, 1, 2].map((d) => Math.ceil(grid[d] / group[d]));
+        const max = 65535;
+        for (let gz = 0; gz < groups[2]; gz += max) {
+            for (let gy = 0; gy < groups[1]; gy += max) {
+                for (let gx = 0; gx < groups[0]; gx += max) {
+                    dispatches.push({
+                        grid: [grid[0], grid[1], grid[2], 0,
+                            gx * group[0], gy * group[1], gz * group[2], 0],
+                        counts: [
+                            Math.min(max, groups[0] - gx),
+                            Math.min(max, groups[1] - gy),
+                            Math.min(max, groups[2] - gz),
+                        ],
+                    });
+                }
+            }
+        }
+    }
+    for (const d of dispatches) {
+        if (grid_slot >= GRID_SLOTS) {
+            write_text(2, "T1: too many dispatches in a frame\n");
+            return;
+        }
+        const offset = grid_slot * SLOT;
+        grid_slot += 1;
+        device.queue.writeBuffer(grid_buf, offset, new Uint32Array(d.grid));
+        const groups_bound = bind_groups(made, pass_i, u32s, targets, offset);
+        const pass = frame_encoder().beginComputePass();
+        pass.setPipeline(made.pipeline);
+        pass.setBindGroup(0, groups_bound[0]);
+        pass.setBindGroup(1, groups_bound[1]);
+        if (indirect) {
+            const buf = bufs.get(threads_buf);
+            if (buf) { pass.dispatchWorkgroupsIndirect(buf, u32s[32]); }
+        } else {
+            pass.dispatchWorkgroups(d.counts[0], d.counts[1], d.counts[2]);
+        }
+        pass.end();
+    }
+    if (write_tex !== TEX_NONE) { written(write_tex >> 11, write_tex & 0x7FF); }
+}
+
+/*
+READS: a read waits for the frame after it started, is copied into a
+buffer the CPU can map after its passes, and is done when that's mapped
+*/
+function free_read() {
+    for (let r = 0; r < READS_CAP; r++) {
+        if (!reads[r]) { return r; }
+    }
+    return BUF_NONE;
+}
+
+function gpu_read_buf(buf_i, offset, size) {
+    const r = free_read();
+    const buf = bufs.get(buf_i);
+    if (r === BUF_NONE || !buf || size === 0) { return BUF_NONE; }
+    const padded = Math.ceil(size / 4) * 4;
+    reads[r] = {state: "waiting", size: size, rows: null, staging: null};
+    reads_waiting.push((enc) => {
+        const staging = device.createBuffer({
+            size: padded,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+        enc.copyBufferToBuffer(buf, offset, staging, 0, padded);
+        reads[r].staging = staging;
+    });
+    return r;
+}
+
+function gpu_read_tex(array_i, slice_i, x, y, w, h) {
+    const r = free_read();
+    if (r === BUF_NONE || !tex_arrays[array_i] || w === 0 || h === 0) {
+        return BUF_NONE;
+    }
+    // rows of a copy go by 256 bytes
+    const row = Math.ceil(w * 4 / 256) * 256;
+    reads[r] = {state: "waiting", size: w * h * 4, rows: {w: w, h: h, row: row},
+        staging: null};
+    reads_waiting.push((enc) => {
+        const array = tex_arrays[array_i];
+        if (!array) { return; }
+        const staging = device.createBuffer({
+            size: row * h,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+        enc.copyTextureToBuffer(
+            {texture: array.texture, origin: {x: x, y: y, z: slice_i}},
+            {buffer: staging, bytesPerRow: row, rowsPerImage: h},
+            [w, h, 1]);
+        reads[r].staging = staging;
+    });
+    return r;
+}
+
+function gpu_frame_end() {
+    const enc = frame_encoder();
+    const started = reads_waiting.splice(0);
+    for (const encode of started) { encode(enc); }
+    device.queue.submit([enc.finish()]);
+    encoder = null;
+    for (const read of reads) {
+        if (!read || read.state !== "waiting" || read.staging === null) {
+            continue;
+        }
+        read.state = "mapping";
+        read.staging.mapAsync(GPUMapMode.READ).then(() => {
+            read.state = "mapped";
+        }).catch(() => { read.state = "failed"; });
+    }
+}
+
+function gpu_read_finish(read_i, recip) {
+    const read = reads[read_i];
+    if (!read) { return 0; }
+    if (read.state === "failed") { reads[read_i] = null; return 0; }
+    if (read.state !== "mapped") { return 0; }
+    const bytes = new Uint8Array(read.staging.getMappedRange());
+    const out = mem_u8();
+    if (read.rows === null) {
+        out.set(bytes.subarray(0, read.size), recip);
+    } else {
+        const {w, h, row} = read.rows;
+        for (let y = 0; y < h; y++) {
+            out.set(bytes.subarray(y * row, y * row + w * 4), recip + y * w * 4);
+        }
+    }
+    read.staging.unmap();
+    read.staging.destroy();
+    reads[read_i] = null;
+    return 1;
+}
+
+/*
+FONTS: drawn by a 2D canvas, sized so that the font's ascent plus descent
+is the size T1 asks for (as on the other platforms)
+*/
+const font_canvas = new OffscreenCanvas(1, 1);
+const font_context = font_canvas.getContext("2d", {willReadFrequently: true});
+const default_fonts = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+const language_fonts = [
+    ["ja", '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", ' +
+        '"Yu Gothic", Meiryo, "Noto Sans JP", ' + default_fonts],
+    ["zh-tw", '"PingFang TC", "Microsoft JhengHei", "Noto Sans TC", ' +
+        default_fonts],
+    ["zh-hant", '"PingFang TC", "Microsoft JhengHei", "Noto Sans TC", ' +
+        default_fonts],
+    ["zh-hk", '"PingFang HK", "Microsoft JhengHei", "Noto Sans HK", ' +
+        default_fonts],
+    ["zh", '"PingFang SC", "Microsoft YaHei", "Noto Sans SC", ' +
+        default_fonts],
+    ["ko", '"Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", ' +
+        default_fonts],
+];
+let font_language = "";
+let font_families = default_fonts;
+const font_scales = new Map(); // families -> px per unit of size
+
+function font_set_language(code_ptr, size) {
+    font_language = mem_string(code_ptr, size).toLowerCase();
+    font_families = default_fonts;
+    for (const [start, families] of language_fonts) {
+        if (font_language.startsWith(start)) {
+            font_families = families;
+            break;
+        }
+    }
+}
+
+function font_scale() {
+    let scale = font_scales.get(font_families);
+    if (scale === undefined) {
+        font_context.font = "100px " + font_families;
+        const m = font_context.measureText("Hg");
+        const height = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+        scale = height > 0 ? 100 / height : 1;
+        font_scales.set(font_families, scale);
+    }
+    return scale;
+}
+
+function font_setup(px) {
+    font_context.font = px + "px " + font_families;
+    if ("lang" in font_context) {
+        font_context.lang = font_language !== "" ? font_language : "inherit";
+    }
+}
+
+// 0: no glyph, 1: measured only, 2: drawn into alpha
+function font_glyph(codepoint, size, alpha, alpha_cap, measures) {
+    const text = String.fromCodePoint(codepoint);
+    const px = size * font_scale();
+    font_setup(px);
+    const m = font_context.measureText(text);
+    const left = Math.ceil(m.actualBoundingBoxLeft);
+    const right = Math.ceil(m.actualBoundingBoxRight);
+    const ascent = Math.ceil(m.actualBoundingBoxAscent);
+    const descent = Math.ceil(m.actualBoundingBoxDescent);
+    // a pixel around it, for the antialiasing
+    let w = left + right + 2;
+    let h = ascent + descent + 2;
+    const empty = left + right <= 0 || ascent + descent <= 0;
+    if (empty) { w = 0; h = 0; }
+
+    const view = mem_view();
+    view.setUint32(measures, w, true);
+    view.setUint32(measures + 4, h, true);
+    view.setFloat32(measures + 8, -left - 1, true);
+    view.setFloat32(measures + 12, ascent + 1, true);
+    view.setFloat32(measures + 16, m.width, true);
+    if (empty || alpha === 0 || alpha_cap < w * h) { return 1; }
+
+    font_canvas.width = w;
+    font_canvas.height = h;
+    // (resizing resets the context)
+    font_setup(px);
+    font_context.clearRect(0, 0, w, h);
+    font_context.fillStyle = "#fff";
+    font_context.textBaseline = "alphabetic";
+    font_context.fillText(text, left + 1, ascent + 1);
+    const rgba = font_context.getImageData(0, 0, w, h).data;
+    const out = mem_u8();
+    for (let i = 0; i < w * h; i++) { out[alpha + i] = rgba[i * 4 + 3]; }
+    return 2;
+}
+
+/*
+GAMEPADS: the first pad with the standard layout, see T1_os_web.c
+*/
+function gamepad(state) {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let pad = null;
+    for (const p of pads) {
+        if (p && p.connected && (pad === null || p.mapping === "standard")) {
+            pad = p;
+            if (p.mapping === "standard") { break; }
+        }
+    }
+    if (pad === null) { return 0; }
+    let down = 0;
+    for (let b = 0; b < 17 && b < pad.buttons.length; b++) {
+        if (pad.buttons[b].pressed) { down |= 1 << b; }
+    }
+    const view = mem_view();
+    view.setUint32(state, down >>> 0, true);
+    for (let a = 0; a < 4; a++) {
+        view.setFloat32(state + 4 + a * 4,
+            a < pad.axes.length ? pad.axes[a] : 0, true);
+    }
+    return 1;
+}
+
+/*
+AUDIO: an AudioWorklet (t1_audio_js below) copies what T1's audio thread
+filled from the ring in the app's memory, see AUDIO in T1_os_web.c
+*/
+let audio_context = null;
+let wasm_module = null;
+
+async function audio_init(ring, ring_frames, read_frames, written_frames) {
+    if (!window.AudioContext || !window.AudioWorkletNode) { return 0; }
+    try {
+        audio_context = new AudioContext({
+            sampleRate: 44100, // T1_AUDIO_RATE
+            latencyHint: "interactive",
+        });
+        await audio_context.audioWorklet.addModule(script_url("t1_audio_js"));
+        const node = new AudioWorkletNode(audio_context, "t1-audio", {
+            numberOfInputs: 0,
+            numberOfOutputs: 1,
+            outputChannelCount: [2],
+            processorOptions: {
+                buffer: memory.buffer,
+                ring: ring,
+                ring_frames: ring_frames,
+                read_frames: read_frames,
+                written_frames: written_frames,
+            },
+        });
+        node.onprocessorerror = () => {
+            write_text(2, "T1: the audio thread crashed\n");
+        };
+        node.connect(audio_context.destination);
+    } catch (e) {
+        write_text(2, "T1: no audio: " + e + "\n");
+        audio_context = null;
+        return 0;
+    }
+    return 1;
+}
+
+/*
+THREADS: pthread_create() asks for one (WASI's thread-spawn), it becomes a
+Web Worker running t1_thread_js below, see THREADS in T1_os_web.c. Thread
+ids come from one counter that every thread shares
+*/
+// a <script type="text/plain"> of this page as an address a worker loads
+function script_url(id) {
+    const code = document.getElementById(id).textContent;
+    return URL.createObjectURL(new Blob([code], {type: "text/javascript"}));
+}
+let thread_url = null;
+const next_tid = new Int32Array(new SharedArrayBuffer(4));
+next_tid[0] = 1;
+
+function thread_message(e) {
+    const m = e.data;
+    if (m.kind === "log") {
+        write_text(m.fd, m.text);
+    } else if (m.kind === "crash") {
+        show_on_page(m.text, "#f66");
+    }
+}
+
+function thread_spawn(start_arg) {
+    const tid = Atomics.add(next_tid, 0, 1);
+    if (thread_url === null) { thread_url = script_url("t1_thread_js"); }
+    const worker = new Worker(thread_url);
+    worker.onmessage = thread_message;
+    worker.onerror = (e) => {
+        show_on_page("a thread crashed: " + e.message, "#f66");
+    };
+    worker.postMessage({
+        module: wasm_module,
+        memory: memory,
+        next_tid: next_tid,
+        time_origin: performance.timeOrigin,
+        thread_url: thread_url,
+        page_url: location.href,
+        tid: tid,
+        start_arg: start_arg,
+    });
+    return tid;
+}
+
+/*
+THE IMPORTS
+*/
+const t1_imports = {
+    time_us: () => performance.now() * 1000,
+    write_error: (text, size) => { write_text(2, mem_string(text, size)); },
+    // see THE LOOP in T1_os_web.c: the app is suspended until this is done
+    wait: new WebAssembly.Suspending(async (max_wait_us) => {
+        if (presented) {
+            presented = false;
+            // the display's next frame (none come while the tab is hidden)
+            await new Promise((resolve) => {
+                requestAnimationFrame(resolve);
+                setTimeout(resolve, 100);
+            });
+        } else {
+            await new Promise((resolve) => {
+                setTimeout(resolve, max_wait_us / 1000);
+            });
+        }
+    }),
+    next_event: (event) => {
+        if (events.length === 0) { return 0; }
+        const [kind, key, x, y] = events.shift();
+        const view = mem_view();
+        view.setInt32(event, kind, true);
+        view.setInt32(event + 4, key, true);
+        view.setFloat32(event + 8, x, true);
+        view.setFloat32(event + 12, y, true);
+        return 1;
+    },
+    visible: () => document.visibilityState === "visible" ? 1 : 0,
+    scale: () => window.devicePixelRatio || 1,
+    window_open: (title, size) => {
+        document.title = mem_string(title, size);
+        canvas_resized();
+    },
+    toggle_fullscreen: () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        } else {
+            request_fullscreen();
+        }
+    },
+    core_count: () => navigator.hardwareConcurrency || 1,
+    // (they fetch the file the first time: the app waits, see FILES)
+    file_size: new WebAssembly.Suspending(async (path, size) => {
+        const name = mem_string(path, size);
+        await fetch_file(name);
+        const data = files.get(name);
+        return data === undefined ? -1 : data.length;
+    }),
+    file_read: new WebAssembly.Suspending(
+        async (path, path_size, recip, recip_cap) =>
+    {
+        const name = mem_string(path, path_size);
+        await fetch_file(name);
+        const data = files.get(name);
+        if (data === undefined) { return -1; }
+        const size = Math.min(data.length, recip_cap);
+        mem_u8().set(data.subarray(0, size), recip);
+        return size;
+    }),
+    file_write: (path, path_size, data, data_size) => {
+        const name = mem_string(path, path_size);
+        if (name.startsWith("/res/")) { return 0; }
+        const copy = mem_u8().slice(data, data + data_size);
+        files.set(name, copy);
+        store_writable(name, copy);
+        return 1;
+    },
+    file_delete: (path, size) => {
+        const name = mem_string(path, size);
+        files.delete(name);
+        store_writable(name, null);
+    },
+    file_list: new WebAssembly.Suspending(
+        async (dir, dir_size, recip, recip_cap) =>
+    {
+        let prefix = mem_string(dir, dir_size);
+        if (!prefix.endsWith("/")) { prefix += "/"; }
+        // a resource folder's T1_files.txt: its files, as if seen
+        const list_path = prefix + "T1_files.txt";
+        await fetch_file(list_path);
+        const list = files.get(list_path);
+        if (list !== undefined) {
+            for (const line of utf8_decoder.decode(list).split("\n")) {
+                const name = line.trim();
+                if (name === "" || files.has(prefix + name)) { continue; }
+                listed.add(prefix + name);
+            }
+        }
+        const u8 = mem_u8();
+        let at = 0;
+        const names = new Set(files.keys());
+        for (const name of listed) { names.add(name); }
+        names.delete(list_path);
+        for (const name of names) {
+            if (!name.startsWith(prefix)) { continue; }
+            const rest = name.slice(prefix.length);
+            if (rest.includes("/") || rest.startsWith(".")) { continue; }
+            const bytes = utf8_encoder.encode(rest);
+            if (at + bytes.length + 1 >= recip_cap) { break; }
+            u8.set(bytes, recip + at);
+            u8[recip + at + bytes.length] = 0;
+            at += bytes.length + 1;
+        }
+        if (at < recip_cap) { u8[recip + at] = 0; }
+    }),
+    font_set_language: font_set_language,
+    font_glyph: font_glyph,
+    gamepad: gamepad,
+    audio_init: new WebAssembly.Suspending(audio_init),
+    gpu_init: new WebAssembly.Suspending(gpu_init),
+    gpu_lost: () => gpu_lost ? 1 : 0,
+    gpu_name: gpu_name,
+    gpu_tex_array: gpu_tex_array,
+    gpu_tex_delete: gpu_tex_delete,
+    gpu_tex_write: gpu_tex_write,
+    gpu_clear: gpu_clear,
+    gpu_present: gpu_present,
+    gpu_buf_new: gpu_buf_new,
+    gpu_buf_write: gpu_buf_write,
+    gpu_buf_delete: gpu_buf_delete,
+    gpu_shaders: new WebAssembly.Suspending(gpu_shaders),
+    gpu_pipeline: gpu_pipeline,
+    gpu_pipeline_delete: gpu_pipeline_delete,
+    gpu_frame_begin: gpu_frame_begin,
+    gpu_pass: gpu_pass,
+    gpu_frame_end: gpu_frame_end,
+    gpu_read_buf: gpu_read_buf,
+    gpu_read_tex: gpu_read_tex,
+    gpu_read_finish: gpu_read_finish,
+};
+
+/*
+WASI: what the C library (wasi-libc) asks of its system. Output goes to the
+log, exit ends the app. The arguments are the page's ?args= (separated by
+spaces), after "app"; the environment its ?env=NAME=value (one each). fopen() and the like reach the page's files (see
+FILES): the folder "/" is given to the app, and a path is looked up as it
+is and under /res, so "tests/x.txt" is a resource listed as tests/x.txt.
+What's written lives in memory (and in IndexedDB under /writables)
+*/
+const WASI_ERRNO_BADF = 8;
+const WASI_ERRNO_EXIST = 20;
+const WASI_ERRNO_INVAL = 28;
+const WASI_ERRNO_ISDIR = 31;
+const WASI_ERRNO_NOENT = 44;
+const WASI_ERRNO_NOSYS = 52;
+const WASI_ERRNO_NOTDIR = 54;
+const args = ["app"].concat(
+    (new URLSearchParams(location.search).get("args") || "")
+        .split(" ").filter((a) => a.length > 0));
+const args_bytes = args.map((a) => utf8_encoder.encode(a + "\0"));
+// the environment (getenv()): each ?env=NAME=value of the page's address
+const env_bytes = new URLSearchParams(location.search).getAll("env")
+    .filter((e) => e.includes("="))
+    .map((e) => utf8_encoder.encode(e + "\0"));
+const PREOPEN_FD = 3;
+// open files: fd -> {path, at, append}
+const open_files = new Map();
+let next_fd = 4;
+function wasi_path(dir_fd, ptr, size) {
+    let path = mem_string(ptr, size);
+    while (path.startsWith("./")) { path = path.slice(2); }
+    return dir_fd === PREOPEN_FD && !path.startsWith("/") ? "/" + path : path;
+}
+function wasi_find(path) {
+    if (files.has(path)) { return path; }
+    if (files.has("/res" + path)) { return "/res" + path; }
+    return null;
+}
+function wasi_is_dir(path) {
+    const prefix = path.endsWith("/") ? path : path + "/";
+    for (const name of files.keys()) {
+        if (name.startsWith(prefix) || name.startsWith("/res" + prefix)) {
+            return true;
+        }
+    }
+    return path === "/" || made_dirs.has(path);
+}
+const made_dirs = new Set();
+class T1Exit {
+    constructor(code) { this.code = code; }
+}
+const wasi_known = {
+    fd_write: (fd, iovs, iovs_size, written) => {
+        const view = mem_view();
+        let total = 0;
+        let text = "";
+        for (let i = 0; i < iovs_size; i++) {
+            const ptr = view.getUint32(iovs + i * 8, true);
+            const size = view.getUint32(iovs + i * 8 + 4, true);
+            text += mem_string(ptr, size);
+            total += size;
+        }
+        if (fd === 1 || fd === 2) {
+            write_text(fd, text);
+        } else {
+            // a file: its bytes at its place
+            const f = open_files.get(fd);
+            if (f === undefined || f.dir) { return WASI_ERRNO_BADF; }
+            let data = files.get(f.path);
+            if (f.append) { f.at = data.length; }
+            const bytes = new Uint8Array(total);
+            let at = 0;
+            const u8 = mem_u8();
+            for (let i = 0; i < iovs_size; i++) {
+                const ptr = view.getUint32(iovs + i * 8, true);
+                const size = view.getUint32(iovs + i * 8 + 4, true);
+                bytes.set(u8.subarray(ptr, ptr + size), at);
+                at += size;
+            }
+            if (f.at + total > data.length) {
+                const grown = new Uint8Array(f.at + total);
+                grown.set(data);
+                data = grown;
+            }
+            data.set(bytes, f.at);
+            f.at += total;
+            files.set(f.path, data);
+            store_writable(f.path, data);
+        }
+        view.setUint32(written, total, true);
+        return 0;
+    },
+    fd_fdstat_get: (fd, stat) => {
+        const u8 = mem_u8();
+        u8.fill(0, stat, stat + 24);
+        if (fd <= 2) {
+            u8[stat] = 2; // a character device: stdin, stdout, stderr
+        } else if (fd === PREOPEN_FD) {
+            u8[stat] = 3; // a directory
+        } else if (open_files.has(fd)) {
+            u8[stat] = 4; // a regular file
+        } else {
+            return WASI_ERRNO_BADF;
+        }
+        // every right
+        const view = mem_view();
+        view.setBigUint64(stat + 8, 0xFFFFFFFFFFFFFFFFn, true);
+        view.setBigUint64(stat + 16, 0xFFFFFFFFFFFFFFFFn, true);
+        return 0;
+    },
+    fd_close: (fd) => { open_files.delete(fd); return 0; },
+    fd_prestat_get: (fd, prestat) => {
+        if (fd !== PREOPEN_FD) { return WASI_ERRNO_BADF; }
+        const view = mem_view();
+        view.setUint32(prestat, 0, true); // a directory
+        view.setUint32(prestat + 4, 1, true); // its name's length: "/"
+        return 0;
+    },
+    fd_prestat_dir_name: (fd, ptr, size) => {
+        if (fd !== PREOPEN_FD || size < 1) { return WASI_ERRNO_BADF; }
+        mem_u8()[ptr] = 47; // "/"
+        return 0;
+    },
+    path_open: new WebAssembly.Suspending(async (dir_fd, dirflags,
+        path_ptr, path_size, oflags, rights, rights_inheriting, fdflags,
+        fd_out) =>
+    {
+        const path = wasi_path(dir_fd, path_ptr, path_size);
+        await fetch_file(path);
+        const create = (oflags & 1) !== 0;
+        const directory = (oflags & 2) !== 0;
+        const exclusive = (oflags & 4) !== 0;
+        const truncate = (oflags & 8) !== 0;
+        let found = wasi_find(path);
+        if (directory || (found === null && wasi_is_dir(path))) {
+            if (!wasi_is_dir(path)) { return WASI_ERRNO_NOTDIR; }
+            if (!directory) { return WASI_ERRNO_ISDIR; }
+            const fd = next_fd++;
+            open_files.set(fd, {path: path, at: 0, dir: true});
+            mem_view().setUint32(fd_out, fd, true);
+            return 0;
+        }
+        if (found !== null && create && exclusive) { return WASI_ERRNO_EXIST; }
+        if (found === null) {
+            if (!create) { return WASI_ERRNO_NOENT; }
+            files.set(path, new Uint8Array(0));
+            found = path;
+        } else if (truncate) {
+            files.set(found, new Uint8Array(0));
+        }
+        const fd = next_fd++;
+        open_files.set(fd, {
+            path: found,
+            at: 0,
+            append: (fdflags & 1) !== 0,
+            dir: false,
+        });
+        mem_view().setUint32(fd_out, fd, true);
+        return 0;
+    }),
+    path_create_directory: (dir_fd, path_ptr, path_size) => {
+        made_dirs.add(wasi_path(dir_fd, path_ptr, path_size));
+        return 0;
+    },
+    path_filestat_get: new WebAssembly.Suspending(async (dir_fd, flags,
+        path_ptr, path_size, stat) =>
+    {
+        const path = wasi_path(dir_fd, path_ptr, path_size);
+        await fetch_file(path);
+        const found = wasi_find(path);
+        const u8 = mem_u8();
+        u8.fill(0, stat, stat + 64);
+        if (found !== null) {
+            u8[stat + 16] = 4;
+            mem_view().setBigUint64(
+                stat + 32, BigInt(files.get(found).length), true);
+            return 0;
+        }
+        if (wasi_is_dir(path)) { u8[stat + 16] = 3; return 0; }
+        return WASI_ERRNO_NOENT;
+    }),
+    fd_filestat_get: (fd, stat) => {
+        const f = open_files.get(fd);
+        const u8 = mem_u8();
+        u8.fill(0, stat, stat + 64);
+        if (fd <= 2) { u8[stat + 16] = 2; return 0; }
+        if (f === undefined) { return WASI_ERRNO_BADF; }
+        u8[stat + 16] = f.dir ? 3 : 4;
+        if (!f.dir) {
+            mem_view().setBigUint64(
+                stat + 32, BigInt(files.get(f.path).length), true);
+        }
+        return 0;
+    },
+    fd_read: (fd, iovs, iovs_size, read_out) => {
+        const f = open_files.get(fd);
+        const view = mem_view();
+        if (f === undefined || f.dir) {
+            view.setUint32(read_out, 0, true);
+            return fd === 0 ? 0 : WASI_ERRNO_BADF;
+        }
+        const data = files.get(f.path);
+        let total = 0;
+        const u8 = mem_u8();
+        for (let i = 0; i < iovs_size; i++) {
+            const ptr = view.getUint32(iovs + i * 8, true);
+            const size = view.getUint32(iovs + i * 8 + 4, true);
+            const n = Math.max(0, Math.min(size, data.length - f.at));
+            u8.set(data.subarray(f.at, f.at + n), ptr);
+            f.at += n;
+            total += n;
+            if (n < size) { break; }
+        }
+        view.setUint32(read_out, total, true);
+        return 0;
+    },
+    fd_seek: (fd, offset, whence, out) => {
+        const f = open_files.get(fd);
+        if (f === undefined || f.dir) { return WASI_ERRNO_BADF; }
+        const size = files.get(f.path).length;
+        const base = whence === 0 ? 0 : whence === 1 ? f.at : size;
+        const at = base + Number(offset);
+        if (at < 0) { return WASI_ERRNO_INVAL; }
+        f.at = at;
+        mem_view().setBigUint64(out, BigInt(at), true);
+        return 0;
+    },
+    fd_tell: (fd, out) => {
+        const f = open_files.get(fd);
+        if (f === undefined) { return WASI_ERRNO_BADF; }
+        mem_view().setBigUint64(out, BigInt(f.at), true);
+        return 0;
+    },
+    fd_sync: () => 0,
+    fd_fdstat_set_flags: () => 0,
+    path_unlink_file: (dir_fd, path_ptr, path_size) => {
+        const found = wasi_find(wasi_path(dir_fd, path_ptr, path_size));
+        if (found === null) { return WASI_ERRNO_NOENT; }
+        files.delete(found);
+        store_writable(found, null);
+        return 0;
+    },
+    environ_sizes_get: (count, size) => {
+        const view = mem_view();
+        view.setUint32(count, env_bytes.length, true);
+        view.setUint32(size,
+            env_bytes.reduce((sum, e) => sum + e.length, 0), true);
+        return 0;
+    },
+    environ_get: (environ, buf) => {
+        const view = mem_view();
+        const u8 = mem_u8();
+        let at = buf;
+        for (let e = 0; e < env_bytes.length; e++) {
+            view.setUint32(environ + e * 4, at, true);
+            u8.set(env_bytes[e], at);
+            at += env_bytes[e].length;
+        }
+        return 0;
+    },
+    args_sizes_get: (count, size) => {
+        const view = mem_view();
+        view.setUint32(count, args.length, true);
+        view.setUint32(size,
+            args_bytes.reduce((sum, a) => sum + a.length, 0), true);
+        return 0;
+    },
+    args_get: (argv, buf) => {
+        const view = mem_view();
+        const u8 = mem_u8();
+        let at = buf;
+        for (let a = 0; a < args.length; a++) {
+            view.setUint32(argv + a * 4, at, true);
+            u8.set(args_bytes[a], at);
+            at += args_bytes[a].length;
+        }
+        return 0;
+    },
+    clock_time_get: (id, precision, time) => {
+        const ns = id === 0 ?
+            BigInt(Date.now()) * 1000000n :
+            BigInt(Math.round(performance.now() * 1000000));
+        mem_view().setBigUint64(time, ns, true);
+        return 0;
+    },
+    random_get: (buf, size) => {
+        const u8 = mem_u8();
+        for (let at = 0; at < size; at += 65536) {
+            const n = Math.min(65536, size - at);
+            const random = new Uint8Array(n);
+            crypto.getRandomValues(random);
+            u8.set(random, buf + at);
+        }
+        return 0;
+    },
+    sched_yield: () => 0,
+    proc_exit: (code) => { throw new T1Exit(code); },
+};
+const wasi_imports = new Proxy(wasi_known, {
+    get: (known, name) => {
+        if (name in known) { return known[name]; }
+        return () => {
+            write_text(2, "T1: WASI's " + String(name) +
+                " isn't there\n");
+            return WASI_ERRNO_NOSYS;
+        };
+    },
+});
+
+/*
+START: the resources and writables, then the app
+*/
+writables_db = await open_writables();
+await load_writables();
+
+/*
+The size app.wasm asks of the memory it imports (env.memory), in 64 KB
+pages: from its import section, which JS has no other way to read
+*/
+function memory_limits(bytes) {
+    let at = 8; // after the magic number and the version
+    function leb() {
+        let value = 0;
+        let shift = 0;
+        let byte;
+        do {
+            byte = bytes[at++];
+            value += (byte & 0x7F) * Math.pow(2, shift);
+            shift += 7;
+        } while (byte & 0x80);
+        return value;
+    }
+    function name() {
+        const size = leb();
+        const text = utf8_decoder.decode(bytes.subarray(at, at + size));
+        at += size;
+        return text;
+    }
+    function limits() {
+        const flags = bytes[at++];
+        const min = leb();
+        const max = (flags & 1) ? leb() : 65536;
+        return {min: min, max: max};
+    }
+    while (at < bytes.length) {
+        const id = bytes[at++];
+        const size = leb();
+        const end = at + size;
+        if (id === 2) {
+            const count = leb();
+            for (let i = 0; i < count; i++) {
+                const module = name();
+                const field = name();
+                const kind = bytes[at++];
+                if (kind === 0) { leb(); }
+                else if (kind === 1) { at++; limits(); }
+                else if (kind === 2) {
+                    const found = limits();
+                    if (module === "env" && field === "memory") {
+                        return found;
+                    }
+                }
+                else if (kind === 3) { at += 2; }
+                else if (kind === 4) { at++; leb(); }
+            }
+        }
+        at = end;
+    }
+    return null;
+}
+
+const wasm = await fetch("app.wasm");
+if (!wasm.ok) { fail("Couldn't load app.wasm"); }
+const wasm_bytes = new Uint8Array(await wasm.arrayBuffer());
+const wanted = memory_limits(wasm_bytes);
+if (wanted === null) {
+    fail("app.wasm doesn't import its memory: build it the way concat " +
+        "does (WEB_FLAGS)");
+}
+memory = new WebAssembly.Memory({
+    initial: wanted.min,
+    maximum: wanted.max,
+    shared: true,
+});
+wasm_module = await WebAssembly.compile(wasm_bytes);
+const instance = await WebAssembly.instantiate(wasm_module, {
+    env: {memory: memory},
+    t1: t1_imports,
+    wasi_snapshot_preview1: wasi_imports,
+    wasi: {"thread-spawn": thread_spawn},
+});
+
+const start = WebAssembly.promising(instance.exports._start);
+let exit_code = 0;
+try {
+    await start();
+} catch (e) {
+    if (e instanceof T1Exit) {
+        exit_code = e.code;
+    } else {
+        // a trap: an assert or T1_crash() said why on stderr just before
+        for (const fd of [1, 2]) {
+            if (pending_text[fd] !== "") { write_text(fd, "\n"); }
+        }
+        show_on_page("The app crashed: " + e, "#f66");
+        if (e.stack) { console.error(e.stack); }
+        return;
+    }
+}
+for (const fd of [1, 2]) {
+    if (pending_text[fd] !== "") { write_text(fd, "\n"); }
+}
+if (exit_code !== 0) {
+    for (const line of stdout_lines) { show_on_page(line, "#ccc"); }
+}
+show_on_page("The app ended (exit code " + exit_code + ").",
+    exit_code === 0 ? "#999" : "#f66");
+
+})();
+</script>
+</body>
+</html>

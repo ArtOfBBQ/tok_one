@@ -107,6 +107,24 @@ static void start_voice(int32_t note) {
     voices[pick].frame = 0;
 }
 
+/*
+The notes' sum as 16 bits: as it is up to 3/4 of full scale, above that
+bent smoothly toward full scale instead of cut off. Cut off, a loud sum
+stays flat at full scale while it's over, and those flat tops crackle when
+many notes ring at once. Only the mixer can do this: once a sample is 16
+bits, how far over it was is lost
+*/
+static int16_t limit(int32_t sum) {
+    const float knee = 24576.0f;
+    const float room = 32767.0f - knee;
+    float size = sum < 0 ? -(float)sum : (float)sum;
+    if (size > knee) {
+        const float over = size - knee;
+        size = knee + room * over / (over + room); // never reaches 32767
+    }
+    return (int16_t)(sum < 0 ? -size : size);
+}
+
 // T1 calls this on its audio thread: frames frames, left and right
 static void fill(int16_t * out, uint32_t frames, void * user) {
     (void)user;
@@ -119,7 +137,7 @@ static void fill(int16_t * out, uint32_t frames, void * user) {
         }
     }
     for (uint32_t f = 0; f < frames; f++) {
-        // 32 bits: overlapping notes add up past 16 before the clamp
+        // 32 bits: overlapping notes add up past 16, see limit()
         int32_t left = 0;
         int32_t right = 0;
         for (uint32_t v = 0; v < VOICES_CAP; v++) {
@@ -131,10 +149,8 @@ static void fill(int16_t * out, uint32_t frames, void * user) {
             voice->frame++;
             if (voice->frame == NOTE_FRAMES) { voice->note = -1; }
         }
-        left = left > 32767 ? 32767 : (left < -32768 ? -32768 : left);
-        right = right > 32767 ? 32767 : (right < -32768 ? -32768 : right);
-        out[f * 2 + 0] = (int16_t)left;
-        out[f * 2 + 1] = (int16_t)right;
+        out[f * 2 + 0] = limit(left);
+        out[f * 2 + 1] = limit(right);
     }
     // the panel's copy: the last SCOPE_FRAMES frames played
     const uint32_t n = frames < SCOPE_FRAMES ? frames : SCOPE_FRAMES;

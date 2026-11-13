@@ -70,6 +70,7 @@ void T1_init(
 
     void * pool = T1_objc_autorelease_pool_push();
     #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #elif T1_PLATFORM_WEB == T1_ACTIVE
     #else
     #error
     #endif
@@ -84,6 +85,7 @@ void T1_init(
     T1_os_windows_init(fatal_error);
     if (*fatal_error != 0) { return; }
     #elif T1_PLATFORM_APPLE == T1_ACTIVE
+    #elif T1_PLATFORM_WEB == T1_ACTIVE
     #else
     #error
     #endif
@@ -98,6 +100,7 @@ void T1_init(
     #error "T1's only Apple layer is macOS's"
     #endif
     #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #elif T1_PLATFORM_WEB == T1_ACTIVE
     #else
     #error
     #endif
@@ -128,6 +131,7 @@ void T1_init(
     #if T1_PLATFORM_APPLE == T1_ACTIVE
     T1_objc_autorelease_pool_pop(pool);
     #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #elif T1_PLATFORM_WEB == T1_ACTIVE
     #else
     #error
     #endif
@@ -166,7 +170,7 @@ void T1_gpu_init(
     void * pool = T1_objc_autorelease_pool_push();
     T1_appinit_gpu_modules(fatal_error);
     T1_objc_autorelease_pool_pop(pool);
-    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
+    #elif T1_PLATFORM_WINDOWS == T1_ACTIVE || T1_PLATFORM_WEB == T1_ACTIVE
     T1_appinit_gpu_modules(fatal_error);
     #else
     #error

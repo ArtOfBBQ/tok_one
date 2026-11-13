@@ -211,8 +211,9 @@ typedef struct {
 } Check;
 
 static u32 tz = 0;
-// what the translation is for: GLSL (0) or HLSL (1), see cat_name()
+// what the translation is for: GLSL (both 0), HLSL or WGSL, see cat_name()
 static b8 hlsl_target = 0;
+static b8 wgsl_target = 0;
 
 static void init_tokenizer(void) {
     tz = T1_token_new();
@@ -1079,9 +1080,13 @@ typedef struct {
 
 static b8 is_hlsl_reserved(const u32 i);
 
+static b8 is_wgsl_reserved(const u32 i);
+
 static b8 needs_rename(const u32 i) {
     if (kind(i) != SK_IDENT) { return 0; }
-    if (hlsl_target) {
+    if (wgsl_target) {
+        if (is_wgsl_reserved(i)) { return 1; }
+    } else if (hlsl_target) {
         if (is_hlsl_reserved(i)) { return 1; }
     } else if (in_list(i, glsl_reserved,
         sizeof(glsl_reserved) / sizeof(glsl_reserved[0])))
@@ -1091,7 +1096,7 @@ static b8 needs_rename(const u32 i) {
     const c8 * t = T1_token_text(tz, i);
     u32 n = T1_token_size(tz, i);
     if (
-        !hlsl_target &&
+        !hlsl_target && !wgsl_target &&
         n >= 3 && t[0] == 'g' && t[1] == 'l' && t[2] == '_')
     {
         return 1;
@@ -1458,9 +1463,15 @@ static void cat_attr_arg(Buf * b, const u32 attr_i, const c8 * name) {
             T1_std_are_equal_strings_of_length(t + j, name, n) &&
             t[j + n] == '(')
         {
+            // to its ')': buffer((16 + 1)) once macros are expanded
             u32 k = j + n + 1;
             u32 start = k;
-            while (t[k] != '\0' && t[k] != ')') { k++; }
+            u32 depth = 0;
+            while (t[k] != '\0' && (t[k] != ')' || depth > 0)) {
+                if (t[k] == '(') { depth++; }
+                if (t[k] == ')') { depth--; }
+                k++;
+            }
             buf_cat_n(b, t + start, k - start);
             return;
         }
@@ -1965,8 +1976,15 @@ static void make_unit(Gen * g, const u32 entry_f) {
 What both translations start with: the client's shaders checked, T1's
 headers before them, tokenized, collected, and g set up to write into
 recip. 0 if the check failed (its errors are in error_recip): then there's
-nothing to gen_end(). hlsl says which translation runs, see hlsl_target
+nothing to gen_end(). target says which translation runs: 0 GLSL, 1 HLSL,
+2 WGSL (which gets the text preprocessed, see THE PREPROCESSOR)
 */
+static c8 * pp_run(
+    const c8 * text,
+    const c8 * const * defines,
+    const c8 ** why,
+    u32 * why_line);
+
 static b8 gen_begin(
     Gen * g,
     Buf * out,
@@ -1975,7 +1993,7 @@ static b8 gen_begin(
     const u32 recip_cap,
     c8 * error_recip,
     const u32 error_recip_cap,
-    const b8 hlsl)
+    const u8 target)
 {
     T1_assert(recip != NULL && recip_cap > 0);
     recip[0] = '\0';
@@ -1995,8 +2013,32 @@ static b8 gen_begin(
     T1_std_strcat_cap(full, full_cap, T1_embedded_data_shader_includes);
     T1_std_strcat_cap(full, full_cap, shader_source);
 
+    if (target == 2) {
+        // as Metal's compiler sees it, and T1_WGSL for the shaders' own #ifs
+        static const c8 * const defines[] = {
+            "__METAL_VERSION__ 300", "T1_WGSL 1", NULL,
+        };
+        const c8 * why = NULL;
+        u32 why_line = 0;
+        c8 * done = pp_run(full, defines, &why, &why_line);
+        T1_mem_free_managed(full);
+        if (done == NULL) {
+            if (error_recip != NULL) {
+                T1_std_strcpy_cap(error_recip, error_recip_cap,
+                    "T1's preprocessor for WGSL: line ");
+                T1_std_strcat_u32_cap(error_recip, error_recip_cap, why_line);
+                T1_std_strcat_cap(error_recip, error_recip_cap, ": ");
+                T1_std_strcat_cap(error_recip, error_recip_cap, why);
+            }
+            return 0;
+        }
+        full = done;
+        headers_size = 0; // (its offsets moved: user_first_token is 0)
+    }
+
     T1_token_run(tz, full, T1_std_strlen(full));
-    hlsl_target = hlsl;
+    hlsl_target = target == 1;
+    wgsl_target = target == 2;
 
     Check * c = T1_mem_malloc_managed(sizeof(Check));
     T1_std_memset(c, 0, sizeof(Check));
@@ -2053,6 +2095,7 @@ static void gen_end(Gen * g, u8 * good, const c8 * ran_out) {
     *good = !g->failed;
 
     hlsl_target = 0;
+    wgsl_target = 0;
     T1_mem_free_managed(g->arena.data);
     T1_mem_free_managed(g->g_skip);
     T1_mem_free_managed(g->u_skip);
@@ -2334,6 +2377,12 @@ typedef struct {
     u32 scalar_swizzle; // a swizzle on one number
     u32 not_number; // a ! on a number
     u32 bool_math; // + - * / on a bool
+    // arithmetic and comparisons between floats and integers (WGSL needs
+    // the integers converted), and every binary operator parsed
+    VEdit mixes[VEDITS_CAP];
+    u32 mixes_size;
+    u32 binops[VEDITS_CAP];
+    u32 binops_size;
 } VParse;
 
 static VType vparse_expr(VParse * p, const u32 min_prec);
@@ -2542,6 +2591,25 @@ static VType vparse_expr(VParse * p, const u32 min_prec) {
         if (prec >= 12 && (left.base == VB_BOOL || right.base == VB_BOOL)) {
             p->bool_math = op;
         }
+        if (p->binops_size < VEDITS_CAP) { p->binops[p->binops_size++] = op; }
+        {
+            const b8 left_int = left.base == VB_INT || left.base == VB_UINT;
+            const b8 right_int = right.base == VB_INT || right.base == VB_UINT;
+            const b8 arithmetic = prec >= 9 && !(prec == 11);
+            if (
+                arithmetic && !left.array && !right.array &&
+                ((left.base == VB_FLOAT && right_int) ||
+                (right.base == VB_FLOAT && left_int)) &&
+                p->mixes_size < VEDITS_CAP)
+            {
+                VEdit * m = &p->mixes[p->mixes_size++];
+                m->left_first = first;
+                m->op = op;
+                m->right_last = p->i - 1;
+                m->left = left;
+                m->right = right;
+            }
+        }
         if (prec == 9 || prec == 10) {
             if (p->compared_size < VEDITS_CAP) {
                 p->compared[p->compared_size++] = op;
@@ -2727,7 +2795,7 @@ void T1_shader_to_glsl(
     if (
         !gen_begin(
             &g, &out, shader_source, recip, recip_cap,
-            error_recip, error_recip_cap, /* hlsl: */ 0))
+            error_recip, error_recip_cap, /* target: */ 0))
     {
         return;
     }
@@ -5056,7 +5124,7 @@ void T1_shader_to_hlsl(
     if (
         !gen_begin(
             &g, &out, shader_source, recip, recip_cap,
-            error_recip, error_recip_cap, /* hlsl: */ 1))
+            error_recip, error_recip_cap, /* target: */ 1))
     {
         return;
     }
@@ -5077,6 +5145,2555 @@ void T1_shader_to_hlsl(
     T1_mem_free_managed(loadable);
 
     gen_end(&g, good, "T1_shader_to_hlsl() ran out of room");
+}
+
+/*
+TRANSLATION TO WGSL FOR WEBGPU
+
+WGSL has no preprocessor, so T1 runs one first (THE PREPROCESSOR below):
+what the translation sees is the shaders with their macros expanded and
+the #if branches they take, as Metal's compiler would see them
+(__METAL_VERSION__ and T1_WGSL defined). Then, like the other
+translations, every entry point becomes a unit of its own that starts with
+a line "//T1_UNIT vert|frag|comp name", WGSL that WebGPU compiles as it is.
+*/
+
+/*
+THE PREPROCESSOR: C's, for what shaders use: #define (with parameters, #
+and ##), #undef, #if, #ifdef, #ifndef, #elif, #else, #endif with defined()
+and integer arithmetic, #error. #pragma lines go, #include fails. Lines stay
+where they were (a directive leaves an empty line), so errors after it give
+the line numbers of the text it was given
+*/
+
+#define PP_MACROS_CAP 1024
+#define PP_PARAMS_CAP 16
+#define PP_DEPTH_CAP 64
+#define PP_IFS_CAP 32
+
+typedef struct {
+    const c8 * name;
+    const c8 * body; // without comments or line continuations
+    const c8 * params[PP_PARAMS_CAP];
+    u32 params_n[PP_PARAMS_CAP];
+    u32 name_n;
+    u32 body_n;
+    u32 params_size;
+    b8 function_like;
+    b8 undefined; // by an #undef
+} PPMacro;
+
+typedef struct {
+    PPMacro macros[PP_MACROS_CAP];
+    u32 macros_size;
+    Buf bodies; // where macro bodies are kept
+    u32 disabled[PP_DEPTH_CAP]; // the macros being expanded
+    u32 disabled_size;
+    const c8 * why; // the first error, NULL for none
+    u32 why_line;
+    u32 line;
+} PP;
+
+static b8 pp_name_start(const c8 ch) {
+    return
+        (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
+}
+
+static void pp_fail(PP * pp, const c8 * why) {
+    if (pp->why == NULL) {
+        pp->why = why;
+        pp->why_line = pp->line;
+    }
+}
+
+// The length of the space or comment at s, 0 if it isn't one
+static u32 pp_space(const c8 * s, const c8 * end, const b8 newlines) {
+    const c8 * p = s;
+    while (p < end) {
+        if (*p == ' ' || *p == '\t' || *p == '\r' || (newlines && *p == '\n')) {
+            p++;
+        } else if (p + 1 < end && p[0] == '/' && p[1] == '/') {
+            while (p < end && *p != '\n') { p++; }
+        } else if (p + 1 < end && p[0] == '/' && p[1] == '*') {
+            p += 2;
+            while (p + 1 < end && !(p[0] == '*' && p[1] == '/')) {
+                if (*p == '\n' && !newlines) { break; }
+                p++;
+            }
+            p = p + 1 < end ? p + 2 : end;
+        } else if (p + 1 < end && p[0] == '\\' && p[1] == '\n') {
+            p += 2;
+        } else {
+            break;
+        }
+    }
+    return (u32)(p - s);
+}
+
+// A name's or a number's length at s (a pp-number: 1.5e-3f, 0x1Fu)
+static u32 pp_word(const c8 * s, const c8 * end) {
+    const c8 * p = s;
+    if (p < end && pp_name_start(*p)) {
+        while (p < end && (is_name_char(*p))) { p++; }
+    } else if (
+        p < end &&
+        ((*p >= '0' && *p <= '9') ||
+        (*p == '.' && p + 1 < end && p[1] >= '0' && p[1] <= '9')))
+    {
+        while (p < end) {
+            if (
+                (*p == '+' || *p == '-') &&
+                (p[-1] == 'e' || p[-1] == 'E'))
+            {
+                p++;
+            } else if (is_name_char(*p) || *p == '.') {
+                p++;
+            } else {
+                break;
+            }
+        }
+    }
+    return (u32)(p - s);
+}
+
+// The macro named name, the latest defined, UINT32_MAX for none
+static u32 pp_find(const PP * pp, const c8 * name, const u32 n) {
+    for (u32 m = pp->macros_size; m-- > 0;) {
+        const PPMacro * mac = &pp->macros[m];
+        if (
+            mac->name_n == n &&
+            T1_std_are_equal_strings_of_length(mac->name, name, n))
+        {
+            return mac->undefined ? UINT32_MAX : m;
+        }
+    }
+    return UINT32_MAX;
+}
+
+static b8 pp_is_disabled(const PP * pp, const u32 m) {
+    for (u32 d = 0; d < pp->disabled_size; d++) {
+        if (pp->disabled[d] == m) { return 1; }
+    }
+    return 0;
+}
+
+static void pp_expand(
+    PP * pp, const c8 * s, const u32 n, Buf * out, const u32 depth);
+
+/*
+A function-like macro's arguments, from the '(' at s: their ranges, and
+where the call ends (after its ')'). 0 if it doesn't close
+*/
+static b8 pp_args(
+    const c8 * s,
+    const c8 * end,
+    const c8 ** starts,
+    u32 * sizes,
+    u32 * size,
+    const c8 ** after)
+{
+    *size = 0;
+    u32 depth = 0;
+    const c8 * start = s + 1;
+    for (const c8 * p = s + 1; p < end; p++) {
+        const u32 skip = pp_space(p, end, 1);
+        if (skip > 0) { p += skip - 1; continue; }
+        if (*p == '(' || *p == '[' || *p == '{') { depth++; }
+        if ((*p == ')' || *p == ']' || *p == '}') && depth > 0) {
+            depth--;
+            continue;
+        }
+        if ((*p == ',' && depth == 0) || (*p == ')' && depth == 0)) {
+            if (*size < PP_PARAMS_CAP) {
+                starts[*size] = start;
+                sizes[*size] = (u32)(p - start);
+                *size += 1;
+            }
+            start = p + 1;
+            if (*p == ')') {
+                *after = p + 1;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+// The index of the parameter named so, UINT32_MAX if it isn't one
+static u32 pp_param(const PPMacro * m, const c8 * name, const u32 n) {
+    for (u32 p = 0; p < m->params_size; p++) {
+        if (
+            m->params_n[p] == n &&
+            T1_std_are_equal_strings_of_length(m->params[p], name, n))
+        {
+            return p;
+        }
+    }
+    return UINT32_MAX;
+}
+
+// text without the space at its ends
+static void pp_trim(const c8 ** text, u32 * n) {
+    while (*n > 0 && pp_space(*text, *text + *n, 1) > 0) {
+        u32 skip = pp_space(*text, *text + *n, 1);
+        *text += skip;
+        *n -= skip;
+    }
+    while (
+        *n > 0 &&
+        ((*text)[*n - 1] == ' ' || (*text)[*n - 1] == '\t' ||
+        (*text)[*n - 1] == '\n' || (*text)[*n - 1] == '\r'))
+    {
+        *n -= 1;
+    }
+}
+
+/*
+A function-like macro's body with its parameters replaced: by the argument
+as it is next to ## (which joins the two), else by the argument expanded.
+#param becomes the argument as a string
+*/
+static void pp_substitute(
+    PP * pp,
+    const PPMacro * m,
+    const c8 ** args,
+    const u32 * args_n,
+    const u32 args_size,
+    Buf * out,
+    const u32 depth)
+{
+    const c8 * s = m->body;
+    const c8 * end = m->body + m->body_n;
+    b8 paste_next = 0; // the last thing written was followed by ##
+    while (s < end) {
+        const u32 space = pp_space(s, end, 1);
+        if (space > 0) {
+            if (!paste_next) { buf_cat_n(out, s, space); }
+            s += space;
+            continue;
+        }
+        if (s + 1 < end && s[0] == '#' && s[1] == '#') {
+            // drop the space written before it
+            while (
+                out->size > 0 &&
+                (out->data[out->size - 1] == ' ' ||
+                out->data[out->size - 1] == '\t'))
+            {
+                out->size--;
+                out->data[out->size] = '\0';
+            }
+            paste_next = 1;
+            s += 2;
+            continue;
+        }
+        if (*s == '#') {
+            // #param: the argument as a string
+            const c8 * p = s + 1;
+            p += pp_space(p, end, 0);
+            const u32 w = pp_word(p, end);
+            const u32 k = w > 0 ? pp_param(m, p, w) : UINT32_MAX;
+            if (k != UINT32_MAX && k < args_size) {
+                const c8 * a = args[k];
+                u32 an = args_n[k];
+                pp_trim(&a, &an);
+                buf_cat(out, "\"");
+                buf_cat_n(out, a, an);
+                buf_cat(out, "\"");
+                s = p + w;
+                paste_next = 0;
+                continue;
+            }
+        }
+        const u32 w = pp_word(s, end);
+        if (w > 0) {
+            const u32 k = pp_name_start(*s) ? pp_param(m, s, w) : UINT32_MAX;
+            // whether ## follows it
+            const c8 * after = s + w;
+            after += pp_space(after, end, 1);
+            const b8 pasted_after =
+                after + 1 < end && after[0] == '#' && after[1] == '#';
+            if (k != UINT32_MAX) {
+                const c8 * a = k < args_size ? args[k] : "";
+                u32 an = k < args_size ? args_n[k] : 0;
+                pp_trim(&a, &an);
+                if (paste_next || pasted_after) {
+                    buf_cat_n(out, a, an);
+                } else {
+                    pp_expand(pp, a, an, out, depth + 1);
+                }
+            } else {
+                buf_cat_n(out, s, w);
+            }
+            s += w;
+            paste_next = 0;
+            continue;
+        }
+        buf_cat_n(out, s, 1);
+        s++;
+        paste_next = 0;
+    }
+}
+
+static void pp_expand(
+    PP * pp,
+    const c8 * s,
+    const u32 n,
+    Buf * out,
+    const u32 depth)
+{
+    if (depth >= PP_DEPTH_CAP) {
+        pp_fail(pp, "macros nest too deep");
+        return;
+    }
+    const c8 * end = s + n;
+    while (s < end) {
+        const u32 space = pp_space(s, end, 1);
+        if (space > 0) {
+            buf_cat_n(out, s, space);
+            s += space;
+            continue;
+        }
+        const u32 w = pp_word(s, end);
+        if (w == 0) {
+            buf_cat_n(out, s, 1);
+            s++;
+            continue;
+        }
+        const u32 m = pp_name_start(*s) ? pp_find(pp, s, w) : UINT32_MAX;
+        if (m == UINT32_MAX || pp_is_disabled(pp, m)) {
+            buf_cat_n(out, s, w);
+            s += w;
+            continue;
+        }
+        const PPMacro * mac = &pp->macros[m];
+        if (!mac->function_like) {
+            pp->disabled[pp->disabled_size++] = m;
+            pp_expand(pp, mac->body, mac->body_n, out, depth + 1);
+            pp->disabled_size--;
+            s += w;
+            continue;
+        }
+
+        // a function-like macro is called only when a '(' follows
+        const c8 * open = s + w;
+        open += pp_space(open, end, 1);
+        if (open >= end || *open != '(') {
+            buf_cat_n(out, s, w);
+            s += w;
+            continue;
+        }
+        const c8 * args[PP_PARAMS_CAP];
+        u32 args_n[PP_PARAMS_CAP];
+        u32 args_size = 0;
+        const c8 * after = open;
+        if (!pp_args(open, end, args, args_n, &args_size, &after)) {
+            pp_fail(pp, "a macro's call doesn't close");
+            return;
+        }
+        // f() is a call without arguments
+        if (args_size == 1 && mac->params_size == 0) {
+            const c8 * a = args[0];
+            u32 an = args_n[0];
+            pp_trim(&a, &an);
+            if (an == 0) { args_size = 0; }
+        }
+        if (args_size != mac->params_size) {
+            pp_fail(pp, "a macro called with the wrong number of arguments");
+            return;
+        }
+
+        Buf body;
+        body.cap = mac->body_n * 4 + 1024;
+        for (u32 a = 0; a < args_size; a++) { body.cap += args_n[a] * 8; }
+        body.data = T1_mem_malloc_managed(body.cap);
+        body.data[0] = '\0';
+        body.size = 0;
+        body.overflow = 0;
+        pp_substitute(pp, mac, args, args_n, args_size, &body, depth);
+        if (body.overflow) { pp_fail(pp, "a macro's expansion is too long"); }
+        pp->disabled[pp->disabled_size++] = m;
+        pp_expand(pp, body.data, body.size, out, depth + 1);
+        pp->disabled_size--;
+        T1_mem_free_managed(body.data);
+
+        // the call's lines stay lines
+        for (const c8 * p = s; p < after; p++) {
+            if (*p == '\n') { buf_cat(out, "\n"); }
+        }
+        s = after;
+    }
+}
+
+/*
+The arithmetic of #if: C's integer operators on numbers, after defined() and
+the macros were replaced. A name that's left is 0, like in C
+*/
+typedef struct {
+    const c8 * s;
+    const c8 * end;
+    b8 bad;
+} PPEval;
+
+static s64 pp_eval_ternary(PPEval * e);
+
+static void pp_eval_space(PPEval * e) {
+    e->s += pp_space(e->s, e->end, 1);
+}
+
+static b8 pp_eval_at(PPEval * e, const c8 * op) {
+    pp_eval_space(e);
+    const u32 n = (u32)T1_std_strlen(op);
+    if (
+        e->s + n <= e->end &&
+        T1_std_are_equal_strings_of_length(e->s, op, n))
+    {
+        // not the start of a longer operator: < and <<, & and &&, = and ==
+        const c8 next = e->s + n < e->end ? e->s[n] : '\0';
+        if (n == 1 && (next == op[0] || next == '=') &&
+            (op[0] == '<' || op[0] == '>' || op[0] == '&' || op[0] == '|' ||
+            op[0] == '!' || op[0] == '='))
+        {
+            return 0;
+        }
+        e->s += n;
+        return 1;
+    }
+    return 0;
+}
+
+static s64 pp_eval_unary(PPEval * e) {
+    pp_eval_space(e);
+    if (e->s >= e->end) { e->bad = 1; return 0; }
+    if (pp_eval_at(e, "!")) { return !pp_eval_unary(e); }
+    if (pp_eval_at(e, "~")) { return ~pp_eval_unary(e); }
+    if (pp_eval_at(e, "-")) { return -pp_eval_unary(e); }
+    if (pp_eval_at(e, "+")) { return pp_eval_unary(e); }
+    if (pp_eval_at(e, "(")) {
+        s64 v = pp_eval_ternary(e);
+        if (!pp_eval_at(e, ")")) { e->bad = 1; }
+        return v;
+    }
+    const u32 w = pp_word(e->s, e->end);
+    if (w == 0) { e->bad = 1; return 0; }
+    const c8 * t = e->s;
+    e->s += w;
+    if (pp_name_start(*t)) {
+        return t[0] == 't' && w == 4 &&
+            T1_std_are_equal_strings_of_length(t, "true", 4);
+    }
+    s64 v = 0;
+    u32 i = 0;
+    if (w > 1 && t[0] == '0' && (t[1] == 'x' || t[1] == 'X')) {
+        for (i = 2; i < w; i++) {
+            const c8 d = t[i];
+            const s64 digit =
+                d >= '0' && d <= '9' ? d - '0' :
+                d >= 'a' && d <= 'f' ? d - 'a' + 10 :
+                d >= 'A' && d <= 'F' ? d - 'A' + 10 : -1;
+            if (digit < 0) { break; }
+            v = v * 16 + digit;
+        }
+    } else {
+        const s64 base = t[0] == '0' ? 8 : 10;
+        for (i = 0; i < w && t[i] >= '0' && t[i] <= '9'; i++) {
+            v = v * base + (t[i] - '0');
+        }
+    }
+    for (; i < w; i++) {
+        const c8 ch = t[i];
+        if (ch != 'u' && ch != 'U' && ch != 'l' && ch != 'L') { e->bad = 1; }
+    }
+    return v;
+}
+
+// binary operators by precedence, lowest first
+static s64 pp_eval_binary(PPEval * e, const u32 level) {
+    static const c8 * const ops[][4] = {
+        {"||", NULL}, {"&&", NULL}, {"|", NULL}, {"^", NULL}, {"&", NULL},
+        {"==", "!=", NULL}, {"<=", ">=", "<", ">"}, {"<<", ">>", NULL},
+        {"+", "-", NULL}, {"*", "/", "%", NULL},
+    };
+    const u32 levels = sizeof(ops) / sizeof(ops[0]);
+    if (level == levels) { return pp_eval_unary(e); }
+    s64 v = pp_eval_binary(e, level + 1);
+    while (!e->bad) {
+        u32 found = UINT32_MAX;
+        for (u32 o = 0; o < 4 && ops[level][o] != NULL; o++) {
+            if (pp_eval_at(e, ops[level][o])) { found = o; break; }
+        }
+        if (found == UINT32_MAX) { break; }
+        const c8 * op = ops[level][found];
+        const s64 r = pp_eval_binary(e, level + 1);
+        switch (level) {
+            case 0: v = v || r; break;
+            case 1: v = v && r; break;
+            case 2: v = v | r; break;
+            case 3: v = v ^ r; break;
+            case 4: v = v & r; break;
+            case 5: v = op[0] == '=' ? v == r : v != r; break;
+            case 6:
+                v = op[0] == '<' ? (op[1] == '=' ? v <= r : v < r) :
+                    (op[1] == '=' ? v >= r : v > r);
+                break;
+            case 7: v = op[0] == '<' ? v << r : v >> r; break;
+            case 8: v = op[0] == '+' ? v + r : v - r; break;
+            default:
+                if (op[0] != '*' && r == 0) { e->bad = 1; return 0; }
+                v = op[0] == '*' ? v * r : op[0] == '/' ? v / r : v % r;
+                break;
+        }
+    }
+    return v;
+}
+
+static s64 pp_eval_ternary(PPEval * e) {
+    s64 c = pp_eval_binary(e, 0);
+    if (pp_eval_at(e, "?")) {
+        s64 a = pp_eval_ternary(e);
+        if (!pp_eval_at(e, ":")) { e->bad = 1; return 0; }
+        s64 b = pp_eval_ternary(e);
+        return c ? a : b;
+    }
+    return c;
+}
+
+// An #if's or #elif's condition (the text after the keyword)
+static b8 pp_condition(PP * pp, const c8 * s, const c8 * end) {
+    // defined X and defined(X) first, the macros can't touch them
+    Buf replaced;
+    replaced.cap = (u32)(end - s) + 64;
+    replaced.data = T1_mem_malloc_managed(replaced.cap);
+    replaced.data[0] = '\0';
+    replaced.size = 0;
+    replaced.overflow = 0;
+    const c8 * p = s;
+    while (p < end) {
+        const u32 w = pp_word(p, end);
+        if (w == 7 && T1_std_are_equal_strings_of_length(p, "defined", 7)) {
+            const c8 * q = p + 7;
+            q += pp_space(q, end, 0);
+            const b8 paren = q < end && *q == '(';
+            if (paren) { q++; q += pp_space(q, end, 0); }
+            const u32 nw = pp_word(q, end);
+            const b8 is_defined = nw > 0 && pp_find(pp, q, nw) != UINT32_MAX;
+            q += nw;
+            if (paren) {
+                q += pp_space(q, end, 0);
+                if (q < end && *q == ')') { q++; } else { pp_fail(pp, "bad defined()"); }
+            }
+            buf_cat(&replaced, is_defined ? " 1 " : " 0 ");
+            p = q;
+            continue;
+        }
+        if (w > 0) {
+            buf_cat_n(&replaced, p, w);
+            p += w;
+        } else {
+            buf_cat_n(&replaced, p, 1);
+            p++;
+        }
+    }
+
+    Buf expanded;
+    expanded.cap = replaced.size * 8 + 4096;
+    expanded.data = T1_mem_malloc_managed(expanded.cap);
+    expanded.data[0] = '\0';
+    expanded.size = 0;
+    expanded.overflow = 0;
+    pp_expand(pp, replaced.data, replaced.size, &expanded, 0);
+
+    PPEval e = {expanded.data, expanded.data + expanded.size, 0};
+    const s64 v = pp_eval_ternary(&e);
+    pp_eval_space(&e);
+    if (e.bad || e.s != e.end || expanded.overflow) {
+        pp_fail(pp, "an #if condition T1 can't work out");
+    }
+    T1_mem_free_managed(replaced.data);
+    T1_mem_free_managed(expanded.data);
+    return v != 0;
+}
+
+// #define at s (after "define"), to the directive's end
+static void pp_define(PP * pp, const c8 * s, const c8 * end) {
+    s += pp_space(s, end, 0);
+    const u32 w = pp_word(s, end);
+    if (w == 0 || !pp_name_start(*s)) {
+        pp_fail(pp, "#define without a name");
+        return;
+    }
+    if (pp->macros_size == PP_MACROS_CAP) {
+        pp_fail(pp, "too many macros");
+        return;
+    }
+    PPMacro * m = &pp->macros[pp->macros_size++];
+    T1_std_memset(m, 0, sizeof(PPMacro));
+    m->name = s;
+    m->name_n = w;
+    s += w;
+    if (s < end && *s == '(') {
+        m->function_like = 1;
+        s++;
+        while (s < end) {
+            s += pp_space(s, end, 0);
+            if (s < end && *s == ')') { s++; break; }
+            const u32 pw = pp_word(s, end);
+            if (pw == 0 || m->params_size == PP_PARAMS_CAP) {
+                pp_fail(pp, "a macro's parameters T1 can't read");
+                return;
+            }
+            m->params[m->params_size] = s;
+            m->params_n[m->params_size] = pw;
+            m->params_size++;
+            s += pw;
+            s += pp_space(s, end, 0);
+            if (s < end && *s == ',') { s++; }
+        }
+    }
+    // the body without its comments and line continuations
+    const u32 start = pp->bodies.size;
+    s += pp_space(s, end, 0);
+    while (s < end) {
+        const u32 space = pp_space(s, end, 0);
+        if (space > 0) {
+            buf_cat(&pp->bodies, " ");
+            s += space;
+            continue;
+        }
+        buf_cat_n(&pp->bodies, s, 1);
+        s++;
+    }
+    if (pp->bodies.overflow) { pp_fail(pp, "macros too long"); return; }
+    m->body = pp->bodies.data + start;
+    m->body_n = pp->bodies.size - start;
+    pp_trim(&m->body, &m->body_n);
+    // (the next body starts after a 0, these point into the buffer)
+    buf_cat_n(&pp->bodies, "", 0);
+    pp->bodies.size += 1;
+}
+
+/*
+The text with its directives done and its macros expanded, NULL (and
+*why) if it has an error. defines are made before the text's first line
+*/
+static c8 * pp_run(
+    const c8 * text,
+    const c8 * const * defines,
+    const c8 ** why,
+    u32 * why_line)
+{
+    PP * pp = T1_mem_malloc_managed(sizeof(PP));
+    T1_std_memset(pp, 0, sizeof(PP));
+    pp->bodies.cap = 1024 * 1024;
+    pp->bodies.data = T1_mem_malloc_managed(pp->bodies.cap);
+    pp->bodies.data[0] = '\0';
+
+    for (u32 d = 0; defines[d] != NULL; d++) {
+        pp_define(pp, defines[d], defines[d] + T1_std_strlen(defines[d]));
+    }
+
+    const u32 n = (u32)T1_std_strlen(text);
+    Buf out;
+    out.cap = n * 4 + 64 * 1024;
+    out.data = T1_mem_malloc_managed(out.cap);
+    out.data[0] = '\0';
+    out.size = 0;
+    out.overflow = 0;
+
+    // the #if levels: whether the branch is taken, whether one was
+    b8 taken[PP_IFS_CAP];
+    b8 any_taken[PP_IFS_CAP];
+    u32 ifs = 0;
+    b8 active = 1;
+
+    const c8 * end = text + n;
+    const c8 * s = text;
+    const c8 * segment = text; // text since the last directive, not done
+    pp->line = 1;
+    u32 segment_line = 1;
+    while (s < end && pp->why == NULL) {
+        // the start of a line: a directive?
+        const c8 * p = s;
+        while (p < end && (*p == ' ' || *p == '\t')) { p++; }
+        const c8 * line_end = s;
+        while (line_end < end && *line_end != '\n') {
+            if (line_end + 1 < end && line_end[0] == '\\' && line_end[1] == '\n') {
+                line_end += 2;
+                continue;
+            }
+            line_end++;
+        }
+        if (p >= end || *p != '#') {
+            if (!active) {
+                // an empty line instead, and the segment starts after it
+                u32 lines = 1;
+                for (const c8 * q = s; q < line_end; q++) {
+                    if (*q == '\n') { lines++; }
+                }
+                for (u32 l = 0; l < lines; l++) { buf_cat(&out, "\n"); }
+                pp->line += lines;
+                s = line_end < end ? line_end + 1 : end;
+                segment = s;
+                segment_line = pp->line;
+                continue;
+            }
+            for (const c8 * q = s; q < line_end; q++) {
+                if (*q == '\n') { pp->line++; }
+            }
+            pp->line++;
+            s = line_end < end ? line_end + 1 : end;
+            continue;
+        }
+
+        // the text before it, with the macros as they are now
+        {
+            const u32 line = pp->line;
+            pp->line = segment_line;
+            pp_expand(pp, segment, (u32)(s - segment), &out, 0);
+            pp->line = line;
+        }
+
+        p++;
+        p += pp_space(p, line_end, 0);
+        const u32 w = pp_word(p, line_end);
+        const c8 * rest = p + w;
+        const b8 parent = ifs == 0 || taken[ifs - 1];
+        #define PP_IS(word) \
+            (w == sizeof(word) - 1 && \
+            T1_std_are_equal_strings_of_length(p, word, w))
+        if (PP_IS("ifdef") || PP_IS("ifndef")) {
+            const b8 negate = PP_IS("ifndef");
+            const c8 * name = rest + pp_space(rest, line_end, 0);
+            const u32 nw = pp_word(name, line_end);
+            const b8 is_defined = nw > 0 && pp_find(pp, name, nw) != UINT32_MAX;
+            if (ifs == PP_IFS_CAP) { pp_fail(pp, "#ifs nest too deep"); break; }
+            taken[ifs] = parent && is_defined != negate;
+            any_taken[ifs] = taken[ifs];
+            ifs++;
+        } else if (PP_IS("if")) {
+            if (ifs == PP_IFS_CAP) { pp_fail(pp, "#ifs nest too deep"); break; }
+            const b8 value = parent && pp_condition(pp, rest, line_end);
+            taken[ifs] = value;
+            any_taken[ifs] = value;
+            ifs++;
+        } else if (PP_IS("elif")) {
+            if (ifs == 0) { pp_fail(pp, "#elif without #if"); break; }
+            const b8 outer = ifs == 1 || taken[ifs - 2];
+            const b8 value =
+                outer && !any_taken[ifs - 1] &&
+                pp_condition(pp, rest, line_end);
+            taken[ifs - 1] = value;
+            any_taken[ifs - 1] = any_taken[ifs - 1] || value;
+        } else if (PP_IS("else")) {
+            if (ifs == 0) { pp_fail(pp, "#else without #if"); break; }
+            const b8 outer = ifs == 1 || taken[ifs - 2];
+            taken[ifs - 1] = outer && !any_taken[ifs - 1];
+            any_taken[ifs - 1] = 1;
+        } else if (PP_IS("endif")) {
+            if (ifs == 0) { pp_fail(pp, "#endif without #if"); break; }
+            ifs--;
+        } else if (active && PP_IS("define")) {
+            pp_define(pp, rest, line_end);
+        } else if (active && PP_IS("undef")) {
+            const c8 * name = rest + pp_space(rest, line_end, 0);
+            const u32 nw = pp_word(name, line_end);
+            const u32 m = nw > 0 ? pp_find(pp, name, nw) : UINT32_MAX;
+            if (m != UINT32_MAX) { pp->macros[m].undefined = 1; }
+        } else if (active && PP_IS("error")) {
+            pp_fail(pp, "#error");
+        } else if (active && PP_IS("include")) {
+            pp_fail(pp, "no #include in shaders");
+        }
+        // (#pragma and anything else in an inactive branch: nothing)
+        #undef PP_IS
+        active = ifs == 0 || taken[ifs - 1];
+
+        // the directive's lines stay, empty
+        for (const c8 * q = s; q < line_end; q++) {
+            if (*q == '\n') { buf_cat(&out, "\n"); pp->line++; }
+        }
+        buf_cat(&out, "\n");
+        pp->line++;
+        s = line_end < end ? line_end + 1 : end;
+        segment = s;
+        segment_line = pp->line;
+    }
+    if (pp->why == NULL && active) {
+        pp->line = segment_line;
+        pp_expand(pp, segment, (u32)(end - segment), &out, 0);
+    }
+    if (pp->why == NULL && ifs != 0) { pp_fail(pp, "#if without #endif"); }
+    if (out.overflow) { pp_fail(pp, "the shaders grew too long"); }
+
+    *why = pp->why;
+    *why_line = pp->why_line;
+    T1_mem_free_managed(pp->bodies.data);
+    T1_mem_free_managed(pp);
+    if (*why != NULL) {
+        T1_mem_free_managed(out.data);
+        return NULL;
+    }
+    return out.data;
+}
+
+/*
+The layout a WebGPU backend must match:
+- @group(0) @binding(n): buffer(n), a storage buffer (an array of the
+  buffer's type: read-only if it's const or constant, or in a vertex
+  function; a kernel's buffer used with T1_atomic_*() is atomic<u32>s)
+- @group(1) @binding(0) to (T1_TEXARRAYS_CAP - 1): T1Textures, a
+  texture_2d_array<f32> each; bindings T1_WGSL_SAMPLERS_B and up: the
+  samplers T1_nearest, T1_linear and T1_linear_repeat
+- @group(1) @binding(T1_WGSL_WRITE_TEX_B): a compute pass's write_tex, an
+  rgba8unorm write-only storage texture of its slice (WebGPU can't read and
+  write rgba8unorm in one), and @binding(T1_WGSL_WRITE_TEX_READ_B), for a
+  kernel that reads it, a texture_2d<f32> of a copy of the slice as it was
+  before the pass
+- @group(1) @binding(T1_WGSL_GRID_B): kernels' grid, a uniform of two
+  vec3<u32>: the grid's size and (16 bytes in) the first thread of this
+  dispatch; threads past the size return right away (not in a kernel with
+  a T1_threadgroup_barrier(): its grid is a multiple of its group)
+- every binding a unit uses is listed after its T1_UNIT line, a line
+  "//T1_BIND group binding kind" each, kind one of read, rw, atomic, tex,
+  sampler, write_tex, write_tex_read, grid; a kernel's "//T1_THREADS x y
+  z" is its group
+- stage structs: [[position]] is @builtin(position), [[color(n)]]
+  @location(n), the other members @location(0) and up in their order
+- buffers keep MSL's layout: a 3-component vector takes 16 bytes
+  (@size(16)), #pragma pack() can't make anything smaller than WGSL's
+  alignment
+- clip space, texture coordinates and the winding of front faces are
+  Metal's already
+*/
+
+#define T1_WGSL_SAMPLERS_B T1_TEXARRAYS_CAP
+#define T1_WGSL_WRITE_TEX_B (T1_TEXARRAYS_CAP + 3)
+#define T1_WGSL_GRID_B (T1_TEXARRAYS_CAP + 4)
+#define T1_WGSL_WRITE_TEX_READ_B (T1_TEXARRAYS_CAP + 5)
+
+// WGSL's keywords and reserved words that can be C names, they get a '_'
+static const c8 * const wgsl_reserved[] = {
+    "alias", "const_assert", "continuing", "diagnostic", "enable", "fn",
+    "let", "loop", "override", "requires", "var", "bitcast", "array",
+    "atomic", "ptr", "sampler", "vec2", "vec3", "vec4", "mat2x2", "mat3x3",
+    "mat4x4", "i32", "f16", "texture_2d_array", "workgroupBarrier",
+    "select", "NULL", "Self", "abstract", "active", "alignas", "alignof",
+    "as", "asm", "asm_fragment", "async", "attribute", "auto", "await",
+    "become", "binding_array", "cast", "catch", "class", "co_await",
+    "co_return", "co_yield", "coherent", "column_major", "common",
+    "compile", "compile_fragment", "concept", "const_cast", "consteval",
+    "constexpr", "constinit", "crate", "debugger", "decltype", "delete",
+    "demote", "demote_to_helper", "do", "dynamic_cast", "enum", "explicit",
+    "export", "extends", "extern", "external", "fallthrough", "filter",
+    "final", "finally", "friend", "from", "fxgroup", "get", "goto",
+    "groupshared", "highp", "impl", "implements", "import", "inline",
+    "instanceof", "interface", "layout", "lowp", "macro", "macro_rules",
+    "match", "mediump", "meta", "mod", "module", "move", "mut", "mutable",
+    "namespace", "new", "nil", "noexcept", "noinline", "nointerpolation",
+    "non_coherent", "noncoherent", "noperspective", "null", "nullptr", "of",
+    "operator", "package", "packoffset", "partition", "pass", "patch",
+    "pixelfragment", "precise", "precision", "premerge", "priv",
+    "protected", "pub", "public", "readonly", "ref", "regardless",
+    "register", "reinterpret_cast", "require", "resource", "restrict",
+    "self", "set", "shared", "sizeof", "smooth", "snorm", "static",
+    "static_assert", "static_cast", "std", "subroutine", "super", "target",
+    "template", "this", "thread_local", "throw", "trait", "try", "type",
+    "typedef", "typeid", "typename", "typeof", "union", "unless", "unorm",
+    "unsafe", "unsized", "use", "using", "varying", "virtual", "volatile",
+    "wgsl", "where", "with", "writeonly", "yield",
+};
+
+static b8 is_wgsl_reserved(const u32 i) {
+    return in_list(
+        i, wgsl_reserved, sizeof(wgsl_reserved) / sizeof(wgsl_reserved[0]));
+}
+
+// The C types as aliases, so the shaders' type names stay
+#define T1_WGSL_SEL(T) \
+    "fn t1_sel_" T "(c: bool, a: " T ", b: " T ") -> " T " " \
+    "{ return select(b, a, c); }\n"
+#define T1_WGSL_SELS(T) \
+    T1_WGSL_SEL(T) T1_WGSL_SEL(T "2") T1_WGSL_SEL(T "3") T1_WGSL_SEL(T "4")
+// MSL rounds halfway away from 0, WGSL to even
+#define T1_WGSL_ROUND(T) \
+    "fn t1_round_" T "(x: " T ") -> " T " " \
+    "{ return trunc(x + 0.5f * sign(x)); }\n"
+static const c8 * const wgsl_prelude =
+    "diagnostic(off, derivative_uniformity);\n"
+    "alias float = f32;\n"
+    "alias float2 = vec2<f32>;\n"
+    "alias float3 = vec3<f32>;\n"
+    "alias float4 = vec4<f32>;\n"
+    "alias int = i32;\n"
+    "alias int2 = vec2<i32>;\n"
+    "alias int3 = vec3<i32>;\n"
+    "alias int4 = vec4<i32>;\n"
+    "alias uint = u32;\n"
+    "alias uint2 = vec2<u32>;\n"
+    "alias uint3 = vec3<u32>;\n"
+    "alias uint4 = vec4<u32>;\n"
+    "alias bool2 = vec2<bool>;\n"
+    "alias bool3 = vec3<bool>;\n"
+    "alias bool4 = vec4<bool>;\n"
+    "alias float2x2 = mat2x2<f32>;\n"
+    "alias float3x3 = mat3x3<f32>;\n"
+    "alias float4x4 = mat4x4<f32>;\n"
+    "alias s32 = i32;\n"
+    "alias uint32_t = u32;\n"
+    "alias int32_t = i32;\n"
+    T1_WGSL_SELS("float")
+    T1_WGSL_SELS("int")
+    T1_WGSL_SELS("uint")
+    T1_WGSL_SELS("bool")
+    T1_WGSL_ROUND("float")
+    T1_WGSL_ROUND("float2")
+    T1_WGSL_ROUND("float3")
+    T1_WGSL_ROUND("float4")
+    "fn t1_mat_fill_float2x2(x: f32) -> float2x2 "
+        "{ return float2x2(x, 0.0f, 0.0f, x); }\n"
+    "fn t1_mat_fill_float3x3(x: f32) -> float3x3 { return float3x3("
+        "x, 0.0f, 0.0f, 0.0f, x, 0.0f, 0.0f, 0.0f, x); }\n"
+    "fn t1_mat_fill_float4x4(x: f32) -> float4x4 { return float4x4("
+        "x, 0.0f, 0.0f, 0.0f, 0.0f, x, 0.0f, 0.0f, "
+        "0.0f, 0.0f, x, 0.0f, 0.0f, 0.0f, 0.0f, x); }\n";
+#undef T1_WGSL_SEL
+#undef T1_WGSL_SELS
+#undef T1_WGSL_ROUND
+
+// a VType's name, as the prelude's helpers are named: float3, uint, ...
+static b8 cat_vtype(Buf * b, const VType t) {
+    if (t.array || t.width < 1 || t.width > 4) { return 0; }
+    const c8 * base =
+        t.base == VB_FLOAT ? "float" :
+        t.base == VB_INT ? "int" :
+        t.base == VB_UINT ? "uint" :
+        t.base == VB_BOOL ? "bool" : NULL;
+    if (base == NULL) { return 0; }
+    buf_cat(b, base);
+    if (t.width > 1) { cat_u32(b, t.width); }
+    return 1;
+}
+
+// The arguments of the call whose '(' is at open: their token ranges
+static u32 call_args(
+    const Check * c,
+    const u32 open,
+    u32 * starts,
+    u32 * ends,
+    const u32 cap)
+{
+    const u32 close = after_match(c, open, "(", ")") - 1;
+    u32 size = 0;
+    u32 start = open + 1;
+    u32 nesting = 0;
+    for (u32 j = start; j <= close && start < close; j++) {
+        if (j == close || (nesting == 0 && is_punct(j, ","))) {
+            if (size < cap) {
+                starts[size] = start;
+                ends[size] = j;
+                size++;
+            }
+            start = j + 1;
+            continue;
+        }
+        if (is_punct(j, "(") || is_punct(j, "[") || is_punct(j, "{")) {
+            nesting++;
+        }
+        if (is_punct(j, ")") || is_punct(j, "]") || is_punct(j, "}")) {
+            nesting--;
+        }
+    }
+    return size;
+}
+
+// The type of the expression from first to end (exclusive), none if unsure
+static VType vtype_of_range(const Check * c, const u32 first, const u32 end) {
+    VParse * p = T1_mem_malloc_managed(sizeof(VParse));
+    T1_std_memset(p, 0, sizeof(VParse));
+    p->c = c;
+    p->i = first;
+    p->end = end;
+    VType t = vparse_expr(p, 1);
+    const b8 bad = p->bad || p->i != end;
+    T1_mem_free_managed(p);
+    return bad ? vtype_none() : t;
+}
+
+static b8 wgsl_in_struct(const Check * c, const u32 i) {
+    for (u32 s = 0; s < c->struct_defs_size; s++) {
+        if (i > c->struct_defs[s].body_open && i < c->struct_defs[s].body_close) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static b8 wgsl_in_params(const Check * c, const u32 i) {
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        if (i > c->funcs[f].params_open && i < c->funcs[f].params_close) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+Whole-file edits that need no types: what's spelled another way, what's
+dropped, calls of C's forms WGSL has as operators
+*/
+static void wgsl_global_edits(Gen * g) {
+    Check * c = g->c;
+
+    for (u32 i = 0; i < c->count; i++) {
+        const u32 k = kind(i);
+        if (k == SK_ATTR) {
+            g->g_skip[i] = 1; // the structs and entry points use them
+        } else if (is(i, "static") || is(i, "inline") || is(i, "constexpr")) {
+            g->g_skip[i] = 1;
+        } else if (
+            is(i, "discard_fragment") &&
+            is_punct(i + 1, "(") &&
+            is_punct(i + 2, ")"))
+        {
+            g->g_repl[i] = "discard";
+            g->g_skip[i + 1] = 1;
+            g->g_skip[i + 2] = 1;
+        } else if (is(i, "as_type") && is_punct(i + 1, "<")) {
+            if (!is_punct(i + 3, ">")) {
+                fail(g, i, "unsupported as_type<>, use a 32-bit type");
+                continue;
+            }
+            u32 s = str_begin(g);
+            buf_cat(&g->arena, "bitcast<");
+            cat_name(&g->arena, i + 2);
+            buf_cat(&g->arena, ">");
+            g->g_repl[i] = str_end(g, s);
+            g->g_skip[i + 1] = 1;
+            g->g_skip[i + 2] = 1;
+            g->g_skip[i + 3] = 1;
+        } else if (is(i, "typedef")) {
+            if (is(i + 1, "struct") && is_punct(i + 2, "{")) {
+                // typedef struct {...} Name; -> struct Name {...}
+                const u32 name = after_match(c, i + 2, "{", "}");
+                u32 s = str_begin(g);
+                buf_cat(&g->arena, "struct ");
+                cat_name(&g->arena, name);
+                g->g_repl[i] = str_end(g, s);
+                g->g_skip[i + 1] = 1;
+                g->g_skip[name] = 1;
+                if (is_punct(name + 1, ";")) { g->g_skip[name + 1] = 1; }
+            } else {
+                u32 j = i;
+                while (j < c->count && !is_punct(j, ";")) {
+                    g->g_skip[j++] = 1;
+                }
+                g->g_skip[j] = 1;
+            }
+        } else if (
+            is(i, "struct") && kind(i + 1) == SK_IDENT &&
+            is_punct(i + 2, "{"))
+        {
+            // struct Name {...}; -> struct Name {...}
+            const u32 close = after_match(c, i + 2, "{", "}") - 1;
+            if (is_punct(close + 1, ";")) { g->g_skip[close + 1] = 1; }
+        } else if (is_cast(c, i) && is(i + 1, "void")) {
+            // (void)x; only says x is unused
+            const u32 end = unary_end(c, i + 3);
+            for (u32 t = i; t < end; t++) { g->g_skip[t] = 1; }
+            if (is_punct(end, ";")) { g->g_skip[end] = 1; }
+        } else if (is_cast(c, i)) {
+            // (type)x -> type(x)
+            g->g_skip[i] = 1;
+            g->g_repl[i + 2] = "(";
+            add_text(g, &g->g_post[unary_end(c, i + 3) - 1], ")");
+        } else if (
+            (is(i, "mul") || is(i, "fmod")) &&
+            is_punct(i + 1, "(") && !is_punct(i - 1, "."))
+        {
+            // mul(a, b) -> ((a) * (b)), fmod(a, b) -> ((a) % (b)): WGSL's
+            // % on floats truncates, like MSL's fmod
+            u32 starts[2];
+            u32 ends[2];
+            if (call_args(c, i + 1, starts, ends, 2) != 2) {
+                fail(g, i, "mul() and fmod() take two arguments");
+                continue;
+            }
+            g->g_repl[i] = "(";
+            add_text(g, &g->g_post[i + 1], "(");
+            g->g_repl[ends[0]] = is(i, "mul") ? ") * (" : ") % (";
+            add_text_before(g, &g->g_pre[ends[1]], ")");
+            add_text(g, &g->g_post[ends[1]], ")");
+        } else if (is(i, "rsqrt") && is_punct(i + 1, "(")) {
+            g->g_repl[i] = "inverseSqrt";
+        } else if (is(i, "fmax") && is_punct(i + 1, "(")) {
+            g->g_repl[i] = "max";
+        } else if (is(i, "fmin") && is_punct(i + 1, "(")) {
+            g->g_repl[i] = "min";
+        } else if (is(i, "T1_threadgroup_barrier")) {
+            g->g_repl[i] = "workgroupBarrier";
+        } else if (k == SK_NUMBER) {
+            // WGSL's suffixes are lower case, it has no octal
+            const c8 * t = T1_token_text(tz, i);
+            const u32 n = T1_token_size(tz, i);
+            const b8 hex = n > 1 && t[0] == '0' && (t[1] == 'x' || t[1] == 'X');
+            b8 octal = n > 1 && t[0] == '0' && !hex;
+            b8 upper = 0;
+            for (u32 j = 0; j < n; j++) {
+                if (t[j] == '.' || t[j] == 'e' || t[j] == 'E') { octal = 0; }
+                if (!hex && (t[j] == 'F' || t[j] == 'U')) { upper = 1; }
+                if (hex && t[j] == 'U') { upper = 1; }
+                if (t[j] == 'l' || t[j] == 'L') { upper = 1; }
+            }
+            if (!upper && !octal) { continue; }
+            u32 s = str_begin(g);
+            if (octal) {
+                u32 v = 0;
+                u32 j = 1;
+                for (; j < n && t[j] >= '0' && t[j] <= '7'; j++) {
+                    v = v * 8 + (u32)(t[j] - '0');
+                }
+                cat_u32(&g->arena, v);
+                for (; j < n; j++) {
+                    if (t[j] == 'u' || t[j] == 'U') { buf_cat(&g->arena, "u"); }
+                }
+            } else {
+                for (u32 j = 0; j < n; j++) {
+                    c8 ch = t[j];
+                    if (ch == 'l' || ch == 'L') { continue; }
+                    if (ch == 'U' || (!hex && ch == 'F')) { ch = (c8)(ch + 32); }
+                    buf_cat_n(&g->arena, &ch, 1);
+                }
+            }
+            g->g_repl[i] = str_end(g, s);
+        } else if (
+            is_punct(i, "+") &&
+            !(i > 0 && (ends_operand(i - 1) || is_punct(i - 1, ")"))))
+        {
+            g->g_skip[i] = 1; // WGSL has no unary +
+        } else if (is_punct(i, "++") || is_punct(i, "--")) {
+            // x++ and ++x: x += 1 (WGSL's ++ is only for integers, and
+            // only a statement)
+            const c8 * add = is_punct(i, "++") ? " += 1" : " -= 1";
+            if (i > 0 && (ends_operand(i - 1) || is_punct(i - 1, ")"))) {
+                g->g_repl[i] = add;
+            } else {
+                g->g_skip[i] = 1;
+                add_text(g, &g->g_post[unary_end(c, i + 1) - 1], add);
+            }
+        }
+    }
+
+    // helpers lose their buffer and texture parameters, calls their args
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        if (fn->is_entry) { continue; }
+        skip_list_items(
+            g,
+            fn->params_start,
+            fn->params_end,
+            fn->param_global,
+            fn->params_size);
+    }
+    for (u32 i = 0; i + 1 < c->count; i++) {
+        if (kind(i) != SK_IDENT || !is_punct(i + 1, "(")) { continue; }
+        const Func * fn = find_func(c, i);
+        if (fn == NULL || fn->is_entry || fn->name_i == i) { continue; }
+        u32 starts[PARAMS_CAP];
+        u32 ends[PARAMS_CAP];
+        const u32 size = call_args(c, i + 1, starts, ends, PARAMS_CAP);
+        if (size != fn->params_size) {
+            fail(g, i, "a call with the wrong number of arguments");
+            continue;
+        }
+        skip_list_items(g, starts, ends, fn->param_global, size);
+    }
+}
+
+/*
+A declaration's type as WGSL writes it after the name: ": T", or for an
+array ": array<T, N>"
+*/
+static void cat_wgsl_decl_type(
+    Buf * b,
+    const u32 type_i,
+    const u32 count_open,
+    const u32 count_close)
+{
+    if (count_open == UINT32_MAX) {
+        cat_name(b, type_i);
+        return;
+    }
+    buf_cat(b, "array<");
+    cat_name(b, type_i);
+    buf_cat(b, ", ");
+    cat_tokens(b, count_open + 1, count_close);
+    buf_cat(b, ">");
+}
+
+/*
+An initializer's braces from open: an array's become array<T, N>(...), a
+struct's T(...), and their inner braces the element type's constructor
+*/
+static void wgsl_brace_init(
+    Gen * g,
+    const u32 open,
+    const u32 type_i,
+    const u32 count_open,
+    const u32 count_close)
+{
+    Check * c = g->c;
+    const u32 close = after_match(c, open, "{", "}") - 1;
+    u32 s = str_begin(g);
+    cat_wgsl_decl_type(&g->arena, type_i, count_open, count_close);
+    buf_cat(&g->arena, "(");
+    g->g_repl[open] = str_end(g, s);
+    g->g_repl[close] = ")";
+    // inner lists: the element's type
+    for (u32 t = open + 1; t < close; t++) {
+        if (!is_punct(t, "{")) { continue; }
+        const u32 inner_close = after_match(c, t, "{", "}") - 1;
+        s = str_begin(g);
+        cat_name(&g->arena, type_i);
+        buf_cat(&g->arena, "(");
+        g->g_repl[t] = str_end(g, s);
+        g->g_repl[inner_close] = ")";
+        if (count_open == UINT32_MAX) {
+            fail(g, t, "a struct's member lists itself in braces");
+        }
+    }
+    // a trailing comma isn't an argument
+    if (is_punct(close - 1, ",")) { g->g_skip[close - 1] = 1; }
+}
+
+/*
+Declarations: const T a = x, b[N] = {...}; -> let a: T = x; let b:
+array<T, N> = array<T, N>(...);. var for the others, const at program
+scope (its constants)
+*/
+static void wgsl_declarations(Gen * g) {
+    Check * c = g->c;
+    for (u32 i = 0; i + 1 < c->count; i++) {
+        if (!is_type(c, i) || kind(i + 1) != SK_IDENT) { continue; }
+        const u32 after_name = i + 2;
+        if (
+            !is_punct(after_name, "=") && !is_punct(after_name, ";") &&
+            !is_punct(after_name, ",") && !is_punct(after_name, "["))
+        {
+            continue;
+        }
+        if (wgsl_in_struct(c, i) || wgsl_in_params(c, i)) { continue; }
+        // what stands before: a statement's start, a for's '(' or const
+        u32 before = i;
+        b8 is_const = 0;
+        while (before > 0) {
+            const u32 b = before - 1;
+            if (is(b, "const") || is(b, "constant")) {
+                is_const = 1;
+                before = b;
+            } else if (is(b, "static") || is(b, "constexpr") || is(b, "thread")) {
+                before = b;
+            } else {
+                break;
+            }
+        }
+        if (before > 0) {
+            const u32 b = before - 1;
+            const b8 starts =
+                is_punct(b, ";") || is_punct(b, "{") || is_punct(b, "}") ||
+                (is_punct(b, "(") && b > 0 && is(b - 1, "for")) ||
+                is_punct(b, ":") || kind(b) == SK_ATTR;
+            if (!starts) { continue; }
+        }
+        if (is(i - 1, "threadgroup")) { continue; } // see threadgroup_decls()
+        const b8 program_scope = func_at(c, i) == NULL;
+        const c8 * keyword =
+            program_scope ? "const" : (is_const ? "let" : "var");
+        for (u32 b = before; b < i; b++) { g->g_skip[b] = 1; }
+        g->g_repl[i] = keyword;
+
+        // each declarator
+        u32 name = i + 1;
+        while (1) {
+            u32 count_open = UINT32_MAX;
+            u32 count_close = UINT32_MAX;
+            u32 t = name + 1;
+            if (is_punct(t, "[")) {
+                count_open = t;
+                count_close = after_match(c, t, "[", "]") - 1;
+                for (u32 k = count_open; k <= count_close; k++) {
+                    g->g_skip[k] = 1;
+                }
+                t = count_close + 1;
+            }
+            u32 s = str_begin(g);
+            buf_cat(&g->arena, ": ");
+            cat_wgsl_decl_type(&g->arena, i, count_open, count_close);
+            add_text(g, &g->g_post[name], str_end(g, s));
+            if (is_punct(t, "=")) {
+                t++;
+                if (is_punct(t, "{")) {
+                    wgsl_brace_init(g, t, i, count_open, count_close);
+                }
+                // to the declarator's end
+                u32 nesting = 0;
+                while (t < c->count) {
+                    if (is_punct(t, "(") || is_punct(t, "[") || is_punct(t, "{")) {
+                        nesting++;
+                    }
+                    if (is_punct(t, ")") || is_punct(t, "]") || is_punct(t, "}")) {
+                        if (nesting == 0) { break; }
+                        nesting--;
+                    }
+                    if (nesting == 0 && (is_punct(t, ",") || is_punct(t, ";"))) {
+                        break;
+                    }
+                    t++;
+                }
+            } else if (is_const && !program_scope) {
+                fail(g, name, "a const without a value");
+            }
+            if (is_punct(t, ",") && kind(t + 1) == SK_IDENT) {
+                if (is_punct(before - 1, "(")) {
+                    fail(g, t, "one variable per for, WGSL has no more");
+                    break;
+                }
+                s = str_begin(g);
+                buf_cat(&g->arena, "; ");
+                buf_cat(&g->arena, keyword);
+                g->g_repl[t] = str_end(g, s);
+                name = t + 1;
+                continue;
+            }
+            break;
+        }
+    }
+}
+
+// The struct is a stage's: what a vertex function returns, a stage_in
+static b8 wgsl_stage_struct(const Check * c, const u32 name_i) {
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        if (!fn->is_entry || fn->stage == STAGE_KERNEL) { continue; }
+        if (same_text(fn->name_i - 1, name_i)) { return 1; }
+        for (u32 p = 0; p < fn->params_size; p++) {
+            for (u32 t = fn->params_start[p]; t < fn->params_end[p]; t++) {
+                if (
+                    kind(t) == SK_ATTR && attr_has(t, "stage_in") &&
+                    same_text(t - 2, name_i))
+                {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static b8 is_vector3_type(const u32 i) {
+    return is(i, "float3") || is(i, "int3") || is(i, "uint3");
+}
+
+/*
+Structs: their members as WGSL's "name: T," with the attributes a stage
+needs, a 3-component vector 16 bytes like in MSL
+*/
+static void wgsl_structs(Gen * g) {
+    Check * c = g->c;
+    for (u32 s = 0; s < c->struct_defs_size; s++) {
+        const StructDef * d = &c->struct_defs[s];
+        const b8 stage = wgsl_stage_struct(c, d->name_i);
+        u32 location = 0;
+        u32 i = d->body_open + 1;
+        while (i < d->body_close) {
+            if (is(i, "const")) { g->g_skip[i] = 1; i++; }
+            if (kind(i) != SK_IDENT || kind(i + 1) != SK_IDENT) {
+                fail(g, i, "struct members are: Type name;");
+                break;
+            }
+            const u32 type = i;
+            g->g_skip[type] = 1;
+            i++;
+            while (1) {
+                const u32 name = i++;
+                u32 count_open = UINT32_MAX;
+                u32 count_close = UINT32_MAX;
+                if (is_punct(i, "[")) {
+                    count_open = i;
+                    count_close = after_match(c, i, "[", "]") - 1;
+                    for (u32 k = count_open; k <= count_close; k++) {
+                        g->g_skip[k] = 1;
+                    }
+                    i = count_close + 1;
+                }
+                u32 attr = UINT32_MAX;
+                if (kind(i) == SK_ATTR) { attr = i++; }
+
+                u32 str = str_begin(g);
+                Buf * a = &g->arena;
+                if (attr_has(attr, "position")) {
+                    buf_cat(a, "@builtin(position) ");
+                } else if (attr_has(attr, "color")) {
+                    buf_cat(a, "@location(");
+                    cat_attr_arg(a, attr, "color");
+                    buf_cat(a, ") ");
+                } else if (stage) {
+                    if (is_matrix_type(type) || count_open != UINT32_MAX) {
+                        fail(g, name, "no matrices or arrays in stage structs");
+                    }
+                    buf_cat(a, "@location(");
+                    cat_u32(a, location++);
+                    buf_cat(a, ") ");
+                    if (attr_has(attr, "flat") || is_integer_type(type)) {
+                        buf_cat(a, "@interpolate(flat) ");
+                    }
+                }
+                if (is_vector3_type(type) && count_open == UINT32_MAX) {
+                    buf_cat(a, "@size(16) ");
+                }
+                add_text_before(g, &g->g_pre[name], str_end(g, str));
+
+                str = str_begin(g);
+                buf_cat(a, ": ");
+                cat_wgsl_decl_type(a, type, count_open, count_close);
+                add_text(g, &g->g_post[name], str_end(g, str));
+
+                if (is_punct(i, ",")) { i++; continue; }
+                if (is_punct(i, ";")) { g->g_repl[i] = ","; i++; break; }
+                fail(g, i, "struct members are: Type name;");
+                i = d->body_close;
+                break;
+            }
+        }
+    }
+}
+
+/*
+Helpers: T name(P a, Q b) { -> fn name(t1_p_a: P, t1_p_b: Q) -> T {, the
+body starting with var a = t1_p_a; ... (WGSL's parameters can't change).
+Declarations without a body go
+*/
+static void wgsl_functions(Gen * g) {
+    Check * c = g->c;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        if (fn->is_entry) { continue; }
+        const u32 ret = fn->name_i - 1;
+        if (kind(ret) != SK_IDENT) {
+            fail(g, fn->name_i, "a function's return type T1 can't read");
+            continue;
+        }
+        g->g_repl[ret] = "fn";
+        if (!is(ret, "void")) {
+            u32 s = str_begin(g);
+            buf_cat(&g->arena, " -> ");
+            cat_name(&g->arena, ret);
+            add_text(g, &g->g_post[fn->params_close], str_end(g, s));
+        }
+        u32 pro = str_begin(g);
+        for (u32 p = 0; p < fn->params_size; p++) {
+            if (fn->param_global[p]) { continue; }
+            u32 t = fn->params_start[p];
+            while (is(t, "const") || is(t, "thread")) { g->g_skip[t++] = 1; }
+            const u32 type = t;
+            const u32 name = t + 1;
+            if (
+                kind(type) != SK_IDENT || kind(name) != SK_IDENT ||
+                name + 1 != fn->params_end[p])
+            {
+                fail(g, type, "parameters are: Type name");
+                continue;
+            }
+            g->g_skip[type] = 1;
+            u32 s = str_begin(g);
+            buf_cat(&g->arena, "t1_p_");
+            cat_name(&g->arena, name);
+            buf_cat(&g->arena, ": ");
+            cat_name(&g->arena, type);
+            g->g_repl[name] = str_end(g, s);
+        }
+        (void)pro;
+        pro = str_begin(g);
+        for (u32 p = 0; p < fn->params_size; p++) {
+            if (fn->param_global[p]) { continue; }
+            u32 t = fn->params_start[p];
+            while (is(t, "const") || is(t, "thread")) { t++; }
+            buf_cat(&g->arena, " var ");
+            cat_name(&g->arena, t + 1);
+            buf_cat(&g->arena, " = t1_p_");
+            cat_name(&g->arena, t + 1);
+            buf_cat(&g->arena, ";");
+        }
+        add_text(g, &g->g_post[fn->body_open], str_end(g, pro));
+    }
+
+    // declarations without a body: Type name(...);
+    u32 depth = 0;
+    for (u32 i = 0; i + 1 < c->count; i++) {
+        if (is_punct(i, "{")) { depth++; }
+        if (is_punct(i, "}") && depth > 0) { depth--; }
+        if (
+            depth != 0 || kind(i) != SK_IDENT || !is_punct(i + 1, "(") ||
+            !is_type(c, i - 1) || find_func(c, i) != NULL)
+        {
+            continue;
+        }
+        const u32 close = after_match(c, i + 1, "(", ")") - 1;
+        if (!is_punct(close + 1, ";")) { continue; }
+        u32 start = i - 1;
+        while (start > 0 && kind(start - 1) == SK_IDENT) { start--; }
+        for (u32 t = start; t <= close + 1; t++) { g->g_skip[t] = 1; }
+    }
+}
+
+// The end (exclusive) of the statement that starts at i
+static u32 wgsl_statement_end(const Check * c, const u32 i, const u32 limit) {
+    if (i >= limit) { return limit; }
+    if (is_punct(i, "{")) { return after_match(c, i, "{", "}"); }
+    if (is(i, "if") && is_punct(i + 1, "(")) {
+        const u32 body = after_match(c, i + 1, "(", ")");
+        const u32 end = wgsl_statement_end(c, body, limit);
+        if (end < limit && is(end, "else")) {
+            return wgsl_statement_end(c, end + 1, limit);
+        }
+        return end;
+    }
+    if ((is(i, "for") || is(i, "while")) && is_punct(i + 1, "(")) {
+        return wgsl_statement_end(c, after_match(c, i + 1, "(", ")"), limit);
+    }
+    if (is(i, "do")) {
+        u32 end = wgsl_statement_end(c, i + 1, limit);
+        if (is(end, "while") && is_punct(end + 1, "(")) {
+            end = after_match(c, end + 1, "(", ")");
+        }
+        return is_punct(end, ";") ? end + 1 : end;
+    }
+    if (is(i, "switch") && is_punct(i + 1, "(")) {
+        const u32 open = after_match(c, i + 1, "(", ")");
+        return is_punct(open, "{") ? after_match(c, open, "{", "}") : open;
+    }
+    u32 t = i;
+    u32 nesting = 0;
+    while (t < limit) {
+        if (is_punct(t, "(") || is_punct(t, "[") || is_punct(t, "{")) {
+            nesting++;
+        }
+        if (is_punct(t, ")") || is_punct(t, "]") || is_punct(t, "}")) {
+            if (nesting == 0) { return t; }
+            nesting--;
+        }
+        if (nesting == 0 && is_punct(t, ";")) { return t + 1; }
+        t++;
+    }
+    return limit;
+}
+
+// The statement at i gets braces if it has none (WGSL's bodies need them)
+static void wgsl_brace(Gen * g, const u32 i, const u32 limit) {
+    if (is_punct(i, "{") || i >= limit) { return; }
+    const u32 end = wgsl_statement_end(g->c, i, limit);
+    add_text_before(g, &g->g_pre[i], "{ ");
+    add_text(g, &g->g_post[end - 1], " }");
+}
+
+/*
+A switch: each run of cases that fall into each other becomes one case
+with all their labels (WGSL has no falling through), where each part but
+the last runs only if the selector isn't one of the later parts' labels
+(where the old switch would have come in), like the HLSL translation does
+(see hlsl_switch_edits()). Labels go together (case A, B:), bodies in
+braces, and a switch without a default gets an empty one (WGSL needs one).
+The selector is kept in a let only when a part needs it:
+    switch (x) { case 0: a; case 1: b; break; }
+->  { let t1_swN = (x); switch (t1_swN) { case 0, 1: {
+        if (!(t1_swN == 1)) { a; } b; break; } default: { } } }
+*/
+static void cat_wgsl_label_list(
+    Buf * b,
+    const SwitchSeg * seg,
+    b8 * first)
+{
+    for (u32 t = seg->first_label; t < seg->body_start; t++) {
+        const b8 is_case = is(t, "case");
+        if (!is_case && !is(t, "default")) { continue; }
+        if (!*first) { buf_cat(b, ", "); }
+        *first = 0;
+        u32 colon = t + 1;
+        while (colon < seg->body_start && !is_punct(colon, ":")) { colon++; }
+        if (is_case) {
+            cat_tokens(b, t + 1, colon);
+        } else {
+            buf_cat(b, "default");
+        }
+        t = colon;
+    }
+}
+
+static void wgsl_switch(Gen * g, const u32 sw) {
+    Check * c = g->c;
+    const u32 sel_close = after_match(c, sw + 1, "(", ")") - 1;
+    const u32 open = sel_close + 1;
+    if (!is_bracket(c, open, "{")) { return; }
+    const u32 close = after_match(c, open, "{", "}") - 1;
+
+    SwitchSeg segs[SWITCH_SEGS_CAP];
+    u32 segs_size = 0;
+    u32 depth = 0;
+    b8 in_labels = 0;
+    b8 has_default = 0;
+    for (u32 t = open + 1; t < close; t++) {
+        const b8 label =
+            depth == 0 &&
+            (is(t, "case") || (is(t, "default") && is_punct(t + 1, ":")));
+        if (label) {
+            if (!in_labels) {
+                if (segs_size == SWITCH_SEGS_CAP) {
+                    fail(g, t, "too many cases");
+                    return;
+                }
+                if (segs_size > 0) { segs[segs_size - 1].body_end = t; }
+                segs[segs_size].first_label = t;
+                segs[segs_size].has_default = 0;
+                segs_size++;
+            }
+            in_labels = 1;
+            SwitchSeg * seg = &segs[segs_size - 1];
+            if (is(t, "default")) { seg->has_default = 1; has_default = 1; }
+            while (t < close && !is_punct(t, ":")) { t++; }
+            seg->body_start = t + 1;
+            seg->body_end = close;
+            continue;
+        }
+        if (segs_size == 0) {
+            fail(g, t, "a switch's body starts with a label");
+            return;
+        }
+        in_labels = 0;
+        if (is_punct(t, "(") || is_punct(t, "[") || is_punct(t, "{")) {
+            depth++;
+        }
+        if (is_punct(t, ")") || is_punct(t, "]") || is_punct(t, "}")) {
+            depth--;
+        }
+    }
+
+    b8 any_falls = 0;
+    for (u32 k = 0; k < segs_size; k++) {
+        segs[k].falls = k + 1 < segs_size && !switch_seg_ends(c, &segs[k]);
+        if (segs[k].falls) { any_falls = 1; }
+    }
+
+    u32 s = str_begin(g);
+    buf_cat(&g->arena, "t1_sw");
+    cat_u32(&g->arena, sw);
+    const c8 * sel = str_end(g, s);
+    if (any_falls) {
+        s = str_begin(g);
+        buf_cat(&g->arena, "{ let ");
+        buf_cat(&g->arena, sel);
+        buf_cat(&g->arena, " = ");
+        g->g_repl[sw] = str_end(g, s);
+        s = str_begin(g);
+        buf_cat(&g->arena, "; switch (");
+        buf_cat(&g->arena, sel);
+        buf_cat(&g->arena, ")");
+        add_text(g, &g->g_post[sel_close], str_end(g, s));
+    }
+
+    for (u32 k = 0; k < segs_size; k++) {
+        u32 end = k;
+        while (segs[end].falls) { end++; }
+        // the run's labels together, in front of its first one
+        s = str_begin(g);
+        buf_cat(&g->arena, "case ");
+        b8 first = 1;
+        for (u32 q = k; q <= end; q++) {
+            cat_wgsl_label_list(&g->arena, &segs[q], &first);
+            for (u32 t = segs[q].first_label; t < segs[q].body_start; t++) {
+                g->g_skip[t] = 1;
+            }
+        }
+        buf_cat(&g->arena, ": {");
+        // (after the "} " that ends the run before)
+        add_text(g, &g->g_pre[segs[k].first_label], str_end(g, s));
+        // each part but the last runs unless the switch came in later
+        for (u32 p = k; p < end; p++) {
+            s = str_begin(g);
+            buf_cat(&g->arena, "if (!(");
+            b8 any = 0;
+            for (u32 q = p + 1; q <= end; q++) {
+                for (u32 t = segs[q].first_label; t < segs[q].body_start; t++) {
+                    if (is(t, "default")) {
+                        // default: none of the switch's labels
+                        if (any) { buf_cat(&g->arena, " || "); }
+                        any = 1;
+                        buf_cat(&g->arena, "(true");
+                        for (u32 r = 0; r < segs_size; r++) {
+                            for (u32 u = segs[r].first_label;
+                                u < segs[r].body_start; u++)
+                            {
+                                if (!is(u, "case")) { continue; }
+                                u32 colon = u + 1;
+                                while (!is_punct(colon, ":")) { colon++; }
+                                buf_cat(&g->arena, " && ");
+                                buf_cat(&g->arena, sel);
+                                buf_cat(&g->arena, " != (");
+                                cat_tokens(&g->arena, u + 1, colon);
+                                buf_cat(&g->arena, ")");
+                                u = colon;
+                            }
+                        }
+                        buf_cat(&g->arena, ")");
+                        continue;
+                    }
+                    if (!is(t, "case")) { continue; }
+                    u32 colon = t + 1;
+                    while (!is_punct(colon, ":")) { colon++; }
+                    if (any) { buf_cat(&g->arena, " || "); }
+                    any = 1;
+                    buf_cat(&g->arena, sel);
+                    buf_cat(&g->arena, " == (");
+                    cat_tokens(&g->arena, t + 1, colon);
+                    buf_cat(&g->arena, ")");
+                    t = colon;
+                }
+            }
+            if (!any) { buf_cat(&g->arena, "false"); }
+            buf_cat(&g->arena, ")) { ");
+            if (segs[p].body_end > segs[p].body_start) {
+                add_text_before(g, &g->g_pre[segs[p].body_start], str_end(g, s));
+                add_text(g, &g->g_post[segs[p].body_end - 1], " }");
+            }
+        }
+        // the run's case ends before the next label, or the switch's '}'
+        const u32 after = end + 1 < segs_size ? segs[end + 1].first_label : close;
+        add_text_before(g, &g->g_pre[after], "} ");
+        k = end;
+    }
+    if (!has_default) { add_text_before(g, &g->g_pre[close], "default: { } "); }
+    if (any_falls) { add_text(g, &g->g_post[close], " }"); }
+}
+
+/*
+WGSL can't assign to a swizzle of more than one component, so the value
+goes into a let first and then into each component:
+    v.zx = e;   ->  { let t1_s = (e); v.z = t1_s.x; v.x = t1_s.y; }
+    v.xy *= k;  ->  { let t1_s = (k); v.x *= t1_s; v.y *= t1_s; } (a scalar)
+The base (v) is written again for each, so it must be plain: names,
+members and indices without calls or assignments
+*/
+static void wgsl_swizzle_writes(Gen * g) {
+    Check * c = g->c;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 i = fn->body_open + 1; i + 2 < fn->body_close; i++) {
+            if (
+                !is_punct(i, ".") || kind(i + 1) != SK_IDENT ||
+                swizzle_size(i + 1) < 2 || binary_prec(i + 2) != 2)
+            {
+                continue;
+            }
+            const u32 op = i + 2;
+            // the chain before it, to the statement's start
+            u32 first = i;
+            while (first > fn->body_open + 1) {
+                const u32 b = first - 1;
+                if (is_punct(b, "]")) { first = before_match(c, b); continue; }
+                if (kind(b) == SK_IDENT || is_punct(b, ".")) { first = b; continue; }
+                break;
+            }
+            const u32 b = first - 1;
+            if (!(is_punct(b, ";") || is_punct(b, "{") || is_punct(b, "}"))) {
+                continue; // not a statement of its own
+            }
+            // a vector's swizzle, not a member that's spelled like one
+            if (!is_vector(vtype_of_range(c, first, i))) { continue; }
+            if (!chain_is_plain(fn, first, i) || is_punct(op, "=") == 0 &&
+                !(is(op, "+=") || is(op, "-=") || is(op, "*=") || is(op, "/=")))
+            {
+                fail(g, op, "a write to a swizzle T1 can't split");
+                continue;
+            }
+            const u32 semi = assign_statement_end(fn, op);
+            const VType t = vtype_of_range(c, op + 1, semi);
+            const b8 scalar = is_scalar(t);
+            for (u32 k = first; k <= i + 1; k++) { g->g_skip[k] = 1; }
+            g->g_repl[op] = "{ let t1_s = (";
+            u32 str = str_begin(g);
+            Buf * a = &g->arena;
+            buf_cat(a, ");");
+            const c8 * sw = T1_token_text(tz, i + 1);
+            const u32 n = T1_token_size(tz, i + 1);
+            static const c8 xyzw[4] = {'x', 'y', 'z', 'w'};
+            for (u32 k = 0; k < n; k++) {
+                buf_cat(a, " ");
+                cat_tokens(a, first, i);
+                buf_cat(a, ".");
+                buf_cat_n(a, sw + k, 1);
+                buf_cat(a, " ");
+                buf_cat_n(a, T1_token_text(tz, op), T1_token_size(tz, op));
+                buf_cat(a, " t1_s");
+                if (!scalar) {
+                    buf_cat(a, ".");
+                    buf_cat_n(a, &xyzw[k], 1);
+                }
+                buf_cat(a, ";");
+            }
+            buf_cat(a, " }");
+            g->g_repl[semi] = str_end(g, str);
+        }
+    }
+}
+
+/*
+Statements: bodies in braces, do { } while (c); as a loop that breaks in
+its continuing, switch cases in braces with their labels together
+*/
+static void wgsl_statements(Gen * g) {
+    Check * c = g->c;
+    for (u32 f = 0; f < c->funcs_size; f++) {
+        const Func * fn = &c->funcs[f];
+        const u32 limit = fn->body_close;
+        for (u32 i = fn->body_open + 1; i < limit; i++) {
+            if ((is(i, "if") || is(i, "for") || is(i, "while")) &&
+                is_punct(i + 1, "("))
+            {
+                // (a do's while has no body of its own)
+                const u32 close = after_match(c, i + 1, "(", ")");
+                if (is(i, "while") && is_punct(close, ";")) { continue; }
+                wgsl_brace(g, close, limit);
+            } else if (is(i, "else") && !is(i + 1, "if")) {
+                wgsl_brace(g, i + 1, limit);
+            } else if (is(i, "do")) {
+                const u32 body_end = wgsl_statement_end(c, i + 1, limit);
+                if (
+                    !is(body_end, "while") || !is_punct(body_end + 1, "(")
+                ) {
+                    fail(g, i, "a do without its while");
+                    continue;
+                }
+                const u32 cond_close = after_match(c, body_end + 1, "(", ")") - 1;
+                g->g_repl[i] = "loop";
+                if (is_punct(i + 1, "{")) {
+                    g->g_skip[body_end - 1] = 1; // its '}', after continuing
+                } else {
+                    add_text_before(g, &g->g_pre[i + 1], "{ ");
+                }
+                g->g_repl[body_end] = "continuing { break if !";
+                if (is_punct(cond_close + 1, ";")) {
+                    g->g_repl[cond_close + 1] = "; } }";
+                }
+            } else if (is(i, "switch") && is_punct(i + 1, "(")) {
+                wgsl_switch(g, i);
+            }
+        }
+    }
+}
+
+/*
+Edits that need types (see VECTOR COMPARISONS IN GLSL for how they're
+found): ?: becomes the prelude's t1_sel_T(c, a, b), round() its t1_round_T(),
+float4x4(x) its t1_mat_fill_float4x4(x), a scalar beside a vector in a
+comparison or in min(), max(), clamp(), step(), smoothstep(), pow(),
+atan2() becomes a vector, a shift by an int shifts by a uint
+*/
+static b8 wgsl_cond_boundary(const u32 i) {
+    if (kind(i) == SK_PUNCT) {
+        const u32 prec = binary_prec(i);
+        if (prec == 2) { return 1; } // = += ...
+        return
+            is(i, ";") || is(i, ",") || is(i, "?") || is(i, ":") ||
+            is(i, "{") || is(i, "}") || is(i, "(") || is(i, "[");
+    }
+    return is(i, "return") || is(i, "case");
+}
+
+static void wgsl_widen(Gen * g, const u32 first, const u32 last, const VType to) {
+    u32 s = str_begin(g);
+    if (!cat_vtype(&g->arena, to)) { return; }
+    buf_cat(&g->arena, "(");
+    add_text_before(g, &g->g_pre[first], str_end(g, s));
+    add_text(g, &g->g_post[last], ")");
+}
+
+static void wgsl_typed_edits(Gen * g) {
+    Check * c = g->c;
+    VParse * p = T1_mem_malloc_managed(sizeof(VParse));
+    for (u32 f = 0; f < c->funcs_size && !g->failed; f++) {
+        const Func * fn = &c->funcs[f];
+        for (u32 i = fn->body_open + 1; i < fn->body_close; i++) {
+            if (is_punct(i, "?")) {
+                // the condition: back to an operator below ?: or a bracket
+                u32 first = i;
+                while (first > fn->body_open + 1) {
+                    const u32 b = first - 1;
+                    if (is_punct(b, ")") || is_punct(b, "]")) {
+                        first = before_match(c, b);
+                        continue;
+                    }
+                    if (wgsl_cond_boundary(b)) { break; }
+                    first = b;
+                }
+                // the ':' of this ?, then the end of the second choice
+                u32 colon = i + 1;
+                u32 depth = 0;
+                u32 inner = 0;
+                while (colon < fn->body_close) {
+                    if (is_punct(colon, "(") || is_punct(colon, "[")) { depth++; }
+                    if (is_punct(colon, ")") || is_punct(colon, "]")) { depth--; }
+                    if (depth == 0 && is_punct(colon, "?")) { inner++; }
+                    if (depth == 0 && is_punct(colon, ":")) {
+                        if (inner == 0) { break; }
+                        inner--;
+                    }
+                    colon++;
+                }
+                u32 end = colon + 1;
+                depth = 0;
+                while (end < fn->body_close) {
+                    if (is_punct(end, "(") || is_punct(end, "[")) { depth++; }
+                    if (is_punct(end, ")") || is_punct(end, "]")) {
+                        if (depth == 0) { break; }
+                        depth--;
+                    }
+                    if (
+                        depth == 0 &&
+                        (is_punct(end, ",") || is_punct(end, ";") ||
+                        is_punct(end, ":") || is_punct(end, "}")))
+                    {
+                        break;
+                    }
+                    end++;
+                }
+                VType t = vtype_of_range(c, i + 1, colon);
+                if (t.base == VB_NONE) { t = vtype_of_range(c, colon + 1, end); }
+                u32 s = str_begin(g);
+                buf_cat(&g->arena, "t1_sel_");
+                if (!cat_vtype(&g->arena, t)) {
+                    fail(g, i, "a ?: whose type T1 can't tell (cast it)");
+                    continue;
+                }
+                buf_cat(&g->arena, "(");
+                add_text_before(g, &g->g_pre[first], str_end(g, s));
+                g->g_repl[i] = ", ";
+                g->g_repl[colon] = ", ";
+                add_text(g, &g->g_post[end - 1], ")");
+                continue;
+            }
+            if (kind(i) == SK_PUNCT && (is(i, "<<") || is(i, ">>") ||
+                is(i, "<<=") || is(i, ">>=")))
+            {
+                const u32 end = unary_end(c, i + 1);
+                if (vtype_of_range(c, i + 1, end).base == VB_INT) {
+                    add_text_before(g, &g->g_pre[i + 1], "u32(");
+                    add_text(g, &g->g_post[end - 1], ")");
+                }
+                continue;
+            }
+            if (kind(i) != SK_IDENT || !is_punct(i + 1, "(") ||
+                is_punct(i - 1, "."))
+            {
+                continue;
+            }
+            u32 starts[VARGS_CAP];
+            u32 ends[VARGS_CAP];
+            const u32 size = call_args(c, i + 1, starts, ends, VARGS_CAP);
+            if (is(i, "round") && size == 1) {
+                const VType t = vtype_of_range(c, starts[0], ends[0]);
+                u32 s = str_begin(g);
+                buf_cat(&g->arena, "t1_round_");
+                if (t.base != VB_FLOAT || !cat_vtype(&g->arena, t)) {
+                    fail(g, i, "a round() whose type T1 can't tell");
+                    continue;
+                }
+                g->g_repl[i] = str_end(g, s);
+            } else if (is_matrix_type(i) && size == 1) {
+                const VType t = vtype_of_range(c, starts[0], ends[0]);
+                if (is_scalar(t)) {
+                    u32 s = str_begin(g);
+                    buf_cat(&g->arena, "t1_mat_fill_");
+                    cat_name(&g->arena, i);
+                    g->g_repl[i] = str_end(g, s);
+                }
+            } else if (
+                is(i, "min") || is(i, "max") || is(i, "fmin") ||
+                is(i, "fmax") || is(i, "clamp") || is(i, "step") ||
+                is(i, "smoothstep") || is(i, "pow") || is(i, "atan2") ||
+                is(i, "mix"))
+            {
+                VType types[VARGS_CAP];
+                VType widest = vtype_none();
+                for (u32 a = 0; a < size; a++) {
+                    types[a] = vtype_of_range(c, starts[a], ends[a]);
+                    if (is_vector(types[a]) && types[a].width > widest.width) {
+                        widest = types[a];
+                    }
+                }
+                if (!is_vector(widest)) { continue; }
+                for (u32 a = 0; a < size; a++) {
+                    if (is(i, "mix") && a == 2) { continue; } // mix(v, v, f)
+                    if (is_scalar(types[a])) {
+                        wgsl_widen(g, starts[a], ends[a] - 1, widest);
+                    }
+                }
+            }
+        }
+    }
+
+    // comparisons of a vector and a scalar: the scalar becomes a vector
+    u8 * seen = T1_mem_malloc_managed(c->count + 1);
+    T1_std_memset(seen, 0, c->count + 1);
+    for (u32 i = 0; i < c->count; i++) {
+        const u32 prec = binary_prec(i);
+        if (prec < 9 || prec == 11 || seen[i]) { continue; }
+        const Func * f = func_at(c, i);
+        if (f == NULL || i <= f->body_open) { continue; }
+        u32 first = i;
+        while (first > f->body_open + 1) {
+            const u32 b = first - 1;
+            if (is_punct(b, ")") || is_punct(b, "]")) {
+                first = before_match(c, b);
+                continue;
+            }
+            if (is_punct(b, "(") || is_punct(b, "[") || vparse_boundary(b)) {
+                break;
+            }
+            first = b;
+        }
+        u32 end = i + 1;
+        while (end < f->body_close) {
+            if (is_punct(end, "(")) { end = after_match(c, end, "(", ")"); continue; }
+            if (is_punct(end, "[")) { end = after_match(c, end, "[", "]"); continue; }
+            if (is_punct(end, ")") || is_punct(end, "]") || vparse_boundary(end)) {
+                break;
+            }
+            end++;
+        }
+        T1_std_memset(p, 0, sizeof(VParse));
+        p->c = c;
+        p->i = first;
+        p->end = end;
+        vparse_expr(p, 1);
+        if (p->bad || p->i != end) { continue; }
+        for (u32 e = 0; e < p->edits_size; e++) {
+            const VEdit * v = &p->edits[e];
+            if (seen[v->op] || is_punct(v->op, "!")) { continue; }
+            if (is_scalar(v->left) && is_vector(v->right)) {
+                wgsl_widen(g, v->left_first, v->op - 1, v->right);
+            } else if (is_scalar(v->right) && is_vector(v->left)) {
+                wgsl_widen(g, v->op + 1, v->right_last, v->left);
+            }
+        }
+        // an integer beside a float becomes a float (as wide as it is)
+        for (u32 e = 0; e < p->mixes_size; e++) {
+            const VEdit * m = &p->mixes[e];
+            if (seen[m->op]) { continue; }
+            const b8 left_int = m->left.base != VB_FLOAT;
+            VType to = left_int ? m->left : m->right;
+            to.base = VB_FLOAT;
+            if (left_int) {
+                wgsl_widen(g, m->left_first, m->op - 1, to);
+            } else {
+                wgsl_widen(g, m->op + 1, m->right_last, to);
+            }
+        }
+        for (u32 k = 0; k < p->compared_size; k++) { seen[p->compared[k]] = 1; }
+        for (u32 k = 0; k < p->binops_size; k++) { seen[p->binops[k]] = 1; }
+    }
+    T1_mem_free_managed(seen);
+    T1_mem_free_managed(p);
+}
+
+// The buffer T1_atomic_*() is called on at i (its first argument's name)
+static b8 wgsl_atomic_buffer(const u32 call_i, const u32 name_i) {
+    return is_atomic_call(call_i) && is_punct(call_i + 1, "(") &&
+        same_text(call_i + 2, name_i);
+}
+
+/*
+Calls of T1's helpers and atomics, per unit (a texture helper needs to
+know the stage)
+*/
+static void wgsl_helper_calls(
+    Gen * g,
+    const Func * e,
+    b8 * uses_textures,
+    b8 * reads_write_tex)
+{
+    Check * c = g->c;
+    for (u32 i = 0; i + 1 < c->count; i++) {
+        if (g->u_drop[i] || kind(i) != SK_IDENT || !is_punct(i + 1, "(")) {
+            continue;
+        }
+        u32 starts[4];
+        u32 ends[4];
+        const b8 sample =
+            is(i, "T1_sample_nearest") || is(i, "T1_sample_linear") ||
+            is(i, "T1_sample_linear_repeat");
+        if (sample || is(i, "T1_read")) {
+            if (call_args(c, i + 1, starts, ends, 4) != 3) {
+                fail(g, i, "T1_sample_*() and T1_read() take 3 arguments");
+                continue;
+            }
+            *uses_textures = 1;
+            // (textures, tex, uv) -> (sampler, u32(tex), uv)
+            g->u_repl[i] = sample ? "t1_tex_sample" : "t1_tex_read";
+            for (u32 t = starts[0]; t <= ends[0]; t++) { g->u_skip[t] = 1; }
+            if (sample) {
+                g->u_post[i + 1] =
+                    is(i, "T1_sample_nearest") ? "t1_nearest_smp, " :
+                    is(i, "T1_sample_linear") ? "t1_linear_smp, " :
+                    "t1_linear_repeat_smp, ";
+            }
+            g->u_pre[starts[1]] = "u32(";
+            g->u_post[ends[1] - 1] = ")";
+            if (!sample) {
+                g->u_pre[starts[2]] = "vec2<i32>(";
+                g->u_post[ends[2] - 1] = ")";
+            }
+        } else if (
+            is(i, "T1_write_tex_read") || is(i, "T1_write_tex_write") ||
+            is(i, "T1_write_tex_size"))
+        {
+            const u32 size = call_args(c, i + 1, starts, ends, 4);
+            const b8 write = is(i, "T1_write_tex_write");
+            const b8 read = is(i, "T1_write_tex_read");
+            g->u_repl[i] =
+                write ? "textureStore" : read ? "textureLoad" :
+                "textureDimensions";
+            g->u_post[i + 1] = read ? "t1_write_tex_read" : "t1_write_tex";
+            for (u32 t = starts[0]; t < ends[0]; t++) { g->u_skip[t] = 1; }
+            if (size >= 2) {
+                g->u_pre[starts[1]] = "vec2<i32>(";
+                g->u_post[ends[1] - 1] = read ? "), 0" : ")";
+            }
+            if (read) { *reads_write_tex = 1; }
+        } else if (is_atomic_call(i)) {
+            const u32 size = call_args(c, i + 1, starts, ends, 4);
+            if (size < 2) { fail(g, i, "T1_atomic_*() needs a buffer and an index"); continue; }
+            static const c8 * const ops[][2] = {
+                {"T1_atomic_load", "atomicLoad"},
+                {"T1_atomic_store", "atomicStore"},
+                {"T1_atomic_add", "atomicAdd"},
+                {"T1_atomic_min", "atomicMin"},
+                {"T1_atomic_max", "atomicMax"},
+                {"T1_atomic_and", "atomicAnd"},
+                {"T1_atomic_or", "atomicOr"},
+                {"T1_atomic_xor", "atomicXor"},
+                {"T1_atomic_exchange", "atomicExchange"},
+                {"T1_atomic_compare_exchange", "atomicCompareExchangeWeak"},
+            };
+            for (u32 o = 0; o < sizeof(ops) / sizeof(ops[0]); o++) {
+                if (is(i, ops[o][0])) { g->u_repl[i] = ops[o][1]; }
+            }
+            // (b, i, v) -> (&b[i], v)
+            g->u_post[i + 1] = "&";
+            g->u_repl[ends[0]] = "[";
+            const u32 close = after_match(c, i + 1, "(", ")") - 1;
+            if (size == 2) {
+                g->u_pre[close] = "]";
+            } else {
+                g->u_repl[ends[1]] = "], ";
+            }
+            if (is(i, "T1_atomic_compare_exchange")) {
+                g->u_repl[close] = ").old_value";
+            }
+        }
+    }
+    (void)e;
+}
+
+static void cat_wgsl_bind(Buf * b, const u32 group, const u32 binding,
+    const c8 * kind_name)
+{
+    buf_cat(b, "//T1_BIND ");
+    cat_u32(b, group);
+    buf_cat(b, " ");
+    cat_u32(b, binding);
+    buf_cat(b, " ");
+    buf_cat(b, kind_name);
+    buf_cat(b, "\n");
+}
+
+static void make_unit_wgsl(Gen * g, const u32 entry_f) {
+    Check * c = g->c;
+    const Func * e = &c->funcs[entry_f];
+    const u32 first_kept_func = unit_begin(g, entry_f);
+
+    static const c8 * const stage_names[] = {"", "vert", "frag", "comp"};
+    buf_cat(g->out, "//T1_UNIT ");
+    buf_cat(g->out, stage_names[e->stage]);
+    buf_cat(g->out, " ");
+    buf_cat_n(g->out, T1_token_text(tz, e->name_i),
+        T1_token_size(tz, e->name_i));
+    buf_cat(g->out, "\n");
+
+    b8 uses_textures = 0;
+    b8 reads_write_tex = 0;
+    wgsl_helper_calls(g, e, &uses_textures, &reads_write_tex);
+
+    Buf binds_buf;
+    c8 binds_data[4096];
+    binds_buf.data = binds_data;
+    binds_buf.size = 0;
+    binds_buf.cap = 4096;
+    binds_buf.overflow = 0;
+    binds_data[0] = '\0';
+    Buf * binds = &binds_buf;
+
+    Buf globals_buf;
+    globals_buf.cap = 64 * 1024;
+    globals_buf.data = T1_mem_malloc_managed(globals_buf.cap);
+    globals_buf.data[0] = '\0';
+    globals_buf.size = 0;
+    globals_buf.overflow = 0;
+    Buf * gl = &globals_buf;
+    buf_cat(gl, "\n");
+
+    Buf header_buf;
+    c8 header_data[4096];
+    header_buf.data = header_data;
+    header_buf.size = 0;
+    header_buf.cap = 4096;
+    header_buf.overflow = 0;
+    header_data[0] = '\0';
+    Buf * hd = &header_buf;
+
+    Buf prologue_buf;
+    c8 prologue_data[8192];
+    prologue_buf.data = prologue_data;
+    prologue_buf.size = 0;
+    prologue_buf.cap = 8192;
+    prologue_buf.overflow = 0;
+    prologue_data[0] = '\0';
+    Buf * pro = &prologue_buf;
+
+    const b8 barrier = e->stage == STAGE_KERNEL && kernel_has_barrier(e);
+    if (e->stage == STAGE_KERNEL) {
+        u32 threads[3];
+        kernel_group_size(e, threads);
+        buf_cat(binds, "//T1_THREADS ");
+        cat_u32(binds, threads[0]);
+        buf_cat(binds, " ");
+        cat_u32(binds, threads[1]);
+        buf_cat(binds, " ");
+        cat_u32(binds, threads[2]);
+        buf_cat(binds, "\n");
+        buf_cat(hd, "@compute @workgroup_size(");
+        cat_u32(hd, threads[0]);
+        buf_cat(hd, ", ");
+        cat_u32(hd, threads[1]);
+        buf_cat(hd, ", ");
+        cat_u32(hd, threads[2]);
+        buf_cat(hd, ") fn ");
+        cat_wgsl_bind(binds, 1, T1_WGSL_GRID_B, "grid");
+        buf_cat(gl, "struct T1Grid { size: vec3<u32>, first: vec3<u32>, }\n");
+        buf_cat(gl, "@group(1) @binding(");
+        cat_u32(gl, T1_WGSL_GRID_B);
+        buf_cat(gl, ") var<uniform> t1_grid: T1Grid;\n");
+    } else {
+        buf_cat(hd, e->stage == STAGE_VERTEX ? "@vertex fn " : "@fragment fn ");
+    }
+    cat_name(hd, e->name_i);
+    buf_cat(hd, "(");
+    b8 first_param = 1;
+    b8 has_gid = 0;
+
+    for (u32 p = 0; p < e->params_size; p++) {
+        const u32 start = e->params_start[p];
+        const u32 end = e->params_end[p];
+        u32 attr = UINT32_MAX;
+        u32 star = UINT32_MAX;
+        b8 readonly = 0;
+        for (u32 t = start; t < end; t++) {
+            if (kind(t) == SK_ATTR) { attr = t; }
+            if (is_punct(t, "*")) { star = t; }
+            if (is(t, "const") || is(t, "constant")) { readonly = 1; }
+        }
+        const u32 name = (attr != UINT32_MAX ? attr : end) - 1;
+        if (attr == UINT32_MAX || kind(name) != SK_IDENT) {
+            fail(g, start, "entry point parameters need an attribute");
+            continue;
+        }
+
+        if (attr_has(attr, "buffer")) {
+            if (star == UINT32_MAX) {
+                fail(g, start, "a buffer parameter must be a pointer");
+                continue;
+            }
+            const s64 n = eval_attr_arg(c, attr, "buffer");
+            if (n < 0) { fail(g, attr, "buffer() needs a constant"); continue; }
+            b8 atomic = 0;
+            for (u32 t = e->body_open; t < e->body_close; t++) {
+                if (wgsl_atomic_buffer(t, name)) { atomic = 1; }
+            }
+            // helpers this unit reaches may use it atomically too
+            for (u32 f = 0; f < c->funcs_size && !atomic; f++) {
+                if (!g->reachable[f]) { continue; }
+                const Func * h = &c->funcs[f];
+                for (u32 t = h->body_open; t < h->body_close; t++) {
+                    if (wgsl_atomic_buffer(t, name)) { atomic = 1; }
+                }
+            }
+            // a vertex function's buffers can only be read
+            if (e->stage == STAGE_VERTEX) { readonly = 1; }
+            cat_wgsl_bind(binds, 0, (u32)n,
+                atomic ? "atomic" : readonly ? "read" : "rw");
+            buf_cat(gl, "@group(0) @binding(");
+            cat_u32(gl, (u32)n);
+            buf_cat(gl, readonly && !atomic ?
+                ") var<storage, read> " : ") var<storage, read_write> ");
+            cat_name(gl, name);
+            buf_cat(gl, ": array<");
+            if (atomic) {
+                buf_cat(gl, "atomic<u32>");
+            } else {
+                cat_name(gl, star - 1);
+            }
+            buf_cat(gl, ">;\n");
+        } else if (attr_has(attr, "texture")) {
+            if (is(name - 1, "T1WriteTex")) {
+                cat_wgsl_bind(binds, 1, T1_WGSL_WRITE_TEX_B, "write_tex");
+                buf_cat(gl, "@group(1) @binding(");
+                cat_u32(gl, T1_WGSL_WRITE_TEX_B);
+                buf_cat(gl,
+                    ") var t1_write_tex: "
+                    "texture_storage_2d<rgba8unorm, write>;\n");
+                if (reads_write_tex) {
+                    cat_wgsl_bind(
+                        binds, 1, T1_WGSL_WRITE_TEX_READ_B, "write_tex_read");
+                    buf_cat(gl, "@group(1) @binding(");
+                    cat_u32(gl, T1_WGSL_WRITE_TEX_READ_B);
+                    buf_cat(gl,
+                        ") var t1_write_tex_read: texture_2d<f32>;\n");
+                }
+            } else if (!is(name - 1, "T1Textures")) {
+                fail(g, start, "textures are T1Textures or T1WriteTex");
+            }
+        } else if (attr_has(attr, "stage_in")) {
+            if (!first_param) { buf_cat(hd, ", "); }
+            first_param = 0;
+            cat_name(hd, name);
+            buf_cat(hd, ": ");
+            cat_name(hd, name - 1);
+        } else if (
+            attr_has(attr, "vertex_id") || attr_has(attr, "instance_id") ||
+            attr_has(attr, "position"))
+        {
+            if (!first_param) { buf_cat(hd, ", "); }
+            first_param = 0;
+            const b8 position = attr_has(attr, "position");
+            buf_cat(hd,
+                attr_has(attr, "vertex_id") ? "@builtin(vertex_index) t1_b_" :
+                attr_has(attr, "instance_id") ? "@builtin(instance_index) t1_b_" :
+                "@builtin(position) t1_b_");
+            cat_name(hd, name);
+            buf_cat(hd, position ? ": vec4<f32>" : ": u32");
+            buf_cat(pro, " let ");
+            cat_name(pro, name);
+            buf_cat(pro, " = ");
+            cat_name(pro, name - 1);
+            buf_cat(pro, "(t1_b_");
+            cat_name(pro, name);
+            buf_cat(pro, ");");
+        } else if (
+            attr_has(attr, "thread_position_in_grid") ||
+            attr_has(attr, "thread_position_in_threadgroup") ||
+            attr_has(attr, "threadgroup_position_in_grid"))
+        {
+            const b8 grid = attr_has(attr, "thread_position_in_grid");
+            if (grid && !has_gid) {
+                if (!first_param) { buf_cat(hd, ", "); }
+                first_param = 0;
+                buf_cat(hd, "@builtin(global_invocation_id) t1_gid: vec3<u32>");
+                has_gid = 1;
+            }
+            if (!grid) {
+                if (!first_param) { buf_cat(hd, ", "); }
+                first_param = 0;
+                buf_cat(hd,
+                    attr_has(attr, "thread_position_in_threadgroup") ?
+                        "@builtin(local_invocation_id) t1_b_" :
+                        "@builtin(workgroup_id) t1_b_");
+                cat_name(hd, name);
+                buf_cat(hd, ": vec3<u32>");
+            }
+            const c8 * swizzle =
+                is(name - 1, "uint3") ? "" :
+                is(name - 1, "uint2") ? ".xy" : ".x";
+            buf_cat(pro, " let ");
+            cat_name(pro, name);
+            buf_cat(pro, " = ");
+            if (grid) {
+                buf_cat(pro, "(t1_gid + t1_grid.first)");
+            } else {
+                buf_cat(pro, "t1_b_");
+                cat_name(pro, name);
+            }
+            buf_cat(pro, swizzle);
+            buf_cat(pro, ";");
+        } else {
+            fail(g, attr, "unsupported entry point parameter");
+        }
+    }
+    if (e->stage == STAGE_KERNEL && !has_gid) {
+        if (!first_param) { buf_cat(hd, ", "); }
+        buf_cat(hd, "@builtin(global_invocation_id) t1_gid: vec3<u32>");
+    }
+    buf_cat(hd, ")");
+    if (e->stage == STAGE_KERNEL && !barrier) {
+        // the grid check first, before the parameters are made
+        u32 s = str_begin(g);
+        buf_cat(&g->arena,
+            " if (any(t1_gid + t1_grid.first >= t1_grid.size)) { return; }");
+        buf_cat(&g->arena, pro->data);
+        pro->size = 0;
+        pro->data[0] = '\0';
+        buf_cat(pro, str_end(g, s));
+    }
+
+    // the return type
+    const u32 ret = e->name_i - 1;
+    if (e->stage == STAGE_VERTEX) {
+        if (find_struct(c, ret) == NULL) {
+            fail(g, ret, "a vertex function returns a struct");
+        }
+        buf_cat(hd, " -> ");
+        cat_name(hd, ret);
+    } else if (e->stage == STAGE_FRAGMENT) {
+        buf_cat(hd, " -> ");
+        if (find_struct(c, ret) == NULL) { buf_cat(hd, "@location(0) "); }
+        cat_name(hd, ret);
+    }
+    buf_cat(hd, " ");
+
+    // the entry point's head
+    {
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, hd->data);
+        g->u_repl[e->decl_start] = str_end(g, s);
+        for (u32 t = e->decl_start + 1; t <= e->params_close; t++) {
+            g->u_skip[t] = 1;
+        }
+        s = str_begin(g);
+        buf_cat(&g->arena, pro->data);
+        add_text(g, &g->u_post[e->body_open], str_end(g, s));
+    }
+
+    // T1Textures: every array and the samplers, and the helpers that pick
+    if (uses_textures) {
+        for (u32 a = 0; a < T1_TEXARRAYS_CAP; a++) {
+            cat_wgsl_bind(binds, 1, a, "tex");
+            buf_cat(gl, "@group(1) @binding(");
+            cat_u32(gl, a);
+            buf_cat(gl, ") var t1_tex_");
+            cat_u32(gl, a);
+            buf_cat(gl, ": texture_2d_array<f32>;\n");
+        }
+        static const c8 * const samplers[3] = {
+            "t1_nearest_smp", "t1_linear_smp", "t1_linear_repeat_smp",
+        };
+        for (u32 s = 0; s < 3; s++) {
+            cat_wgsl_bind(binds, 1, T1_WGSL_SAMPLERS_B + s, "sampler");
+            buf_cat(gl, "@group(1) @binding(");
+            cat_u32(gl, T1_WGSL_SAMPLERS_B + s);
+            buf_cat(gl, ") var ");
+            buf_cat(gl, samplers[s]);
+            buf_cat(gl, ": sampler;\n");
+        }
+        // derivatives only in fragment functions, elsewhere the top mip
+        const b8 frag = e->stage == STAGE_FRAGMENT;
+        buf_cat(gl,
+            "fn t1_tex_sample(s: sampler, tex: u32, uv: vec2<f32>) -> "
+            "vec4<f32> {\n    let sl = i32(tex & 0x7FFu);\n"
+            "    switch (tex >> 11u) {\n");
+        for (u32 a = 0; a < T1_TEXARRAYS_CAP; a++) {
+            buf_cat(gl, "        case ");
+            cat_u32(gl, a);
+            buf_cat(gl, frag ? "u: { return textureSample(t1_tex_" :
+                "u: { return textureSampleLevel(t1_tex_");
+            cat_u32(gl, a);
+            buf_cat(gl, frag ? ", s, uv, sl); }\n" : ", s, uv, sl, 0.0f); }\n");
+        }
+        buf_cat(gl,
+            "        default: { return vec4<f32>(0.0f); }\n    }\n}\n"
+            "fn t1_tex_read(tex: u32, pos: vec2<i32>) -> vec4<f32> {\n"
+            "    let sl = i32(tex & 0x7FFu);\n"
+            "    switch (tex >> 11u) {\n");
+        for (u32 a = 0; a < T1_TEXARRAYS_CAP; a++) {
+            buf_cat(gl, "        case ");
+            cat_u32(gl, a);
+            buf_cat(gl, "u: { return textureLoad(t1_tex_");
+            cat_u32(gl, a);
+            buf_cat(gl, ", pos, sl, 0); }\n");
+        }
+        buf_cat(gl, "        default: { return vec4<f32>(0.0f); }\n    }\n}\n");
+    }
+
+    // threadgroup memory: var<workgroup> name: array<T, N>;
+    if (e->stage == STAGE_KERNEL) {
+        for (u32 t = e->body_open; t < e->body_close; t++) {
+            if (!is(t, "threadgroup")) { continue; }
+            if (!is_punct(t + 3, "[")) {
+                fail(g, t, "threadgroup memory is an array");
+                continue;
+            }
+            const u32 close = after_match(c, t + 3, "[", "]") - 1;
+            buf_cat(gl, "var<workgroup> ");
+            cat_name(gl, t + 2);
+            buf_cat(gl, ": array<");
+            cat_name(gl, t + 1);
+            buf_cat(gl, ", ");
+            cat_tokens(gl, t + 4, close);
+            buf_cat(gl, ">;\n");
+            for (u32 s = t; s <= close + 1; s++) { g->u_skip[s] = 1; }
+        }
+    }
+
+    buf_cat(g->out, binds->data);
+    buf_cat(g->out, wgsl_prelude);
+    if (gl->overflow || binds->overflow || hd->overflow || pro->overflow) {
+        fail(g, e->name_i, "too many globals or parameters");
+    }
+    {
+        u32 s = str_begin(g);
+        buf_cat(&g->arena, gl->data);
+        add_text_before(g, &g->u_pre[first_kept_func], str_end(g, s));
+    }
+    T1_mem_free_managed(gl->data);
+
+    write_unit(g);
+}
+
+void T1_shader_to_wgsl(
+    const c8 * shader_source,
+    c8 * recip,
+    const u32 recip_cap,
+    u8 * good,
+    c8 * error_recip,
+    const u32 error_recip_cap)
+{
+    *good = 0;
+    Gen g;
+    Buf out;
+    if (
+        !gen_begin(
+            &g, &out, shader_source, recip, recip_cap,
+            error_recip, error_recip_cap, /* target: */ 2))
+    {
+        return;
+    }
+
+    wgsl_global_edits(&g);
+    wgsl_declarations(&g);
+    wgsl_structs(&g);
+    wgsl_functions(&g);
+    wgsl_statements(&g);
+    wgsl_swizzle_writes(&g);
+    wgsl_typed_edits(&g);
+    for (u32 f = 0; f < g.c->funcs_size && !g.failed; f++) {
+        if (g.c->funcs[f].is_entry) { make_unit_wgsl(&g, f); }
+    }
+
+    gen_end(&g, good, "T1_shader_to_wgsl() ran out of room");
 }
 
 /*
@@ -5824,6 +8441,11 @@ void T1_shader_check(
         shader_source, translated, cap, good, error_recip, error_recip_cap);
     if (*good) {
         T1_shader_to_glsl(
+            shader_source, translated, cap, good, error_recip,
+            error_recip_cap);
+    }
+    if (*good) {
+        T1_shader_to_wgsl(
             shader_source, translated, cap, good, error_recip,
             error_recip_cap);
     }

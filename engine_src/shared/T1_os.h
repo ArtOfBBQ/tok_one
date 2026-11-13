@@ -13,15 +13,22 @@ your platform
 /*
 The platform T1 is built for, as the compiler says: one of these is
 T1_ACTIVE, the rest T1_INACTIVE. Its layer is in engine_src/ (shared_apple/
-and macos/, windows/), shared/ code reaches it only through this header
+and macos/, windows/, web/), shared/ code reaches it only through this header
 */
-#if defined(_WIN32)
+#if defined(__wasm__)
+// the browser: WebAssembly in a web page, its window a canvas
+#define T1_PLATFORM_APPLE T1_INACTIVE
+#define T1_PLATFORM_WINDOWS T1_INACTIVE
+#define T1_PLATFORM_WEB T1_ACTIVE
+#elif defined(_WIN32)
 #define T1_PLATFORM_APPLE T1_INACTIVE
 #define T1_PLATFORM_WINDOWS T1_ACTIVE
+#define T1_PLATFORM_WEB T1_INACTIVE
 #elif defined(__APPLE__)
 #include <TargetConditionals.h> // TARGET_OS_OSX (macOS: 1, iOS: 0)
 #define T1_PLATFORM_APPLE T1_ACTIVE
 #define T1_PLATFORM_WINDOWS T1_INACTIVE
+#define T1_PLATFORM_WEB T1_INACTIVE
 #else
 #error "T1 has no platform layer for this OS"
 #endif
@@ -37,6 +44,7 @@ void T1_os_macos_init(void);
 #elif T1_PLATFORM_WINDOWS == T1_ACTIVE
 // loads the DLLs the rest of the platform layer calls, after T1_os_init()
 void T1_os_windows_init(char ** const fatal_error);
+#elif T1_PLATFORM_WEB == T1_ACTIVE
 #else
 #error
 #endif
@@ -110,8 +118,8 @@ void T1_os_audio_start_loop(void);
 #endif
 
 /*
-Reads up to recip_cap - 1 bytes of the file into recip and puts a 0 after
-them, *recip_size gets how many were read
+Reads up to recip_cap bytes of the file into recip and puts a 0 after them
+(so recip has room for recip_cap + 1), *recip_size gets how many were read
 */
 void T1_os_read_file(
     const c8 * filepath,

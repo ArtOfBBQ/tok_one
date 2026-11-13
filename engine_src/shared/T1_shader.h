@@ -45,6 +45,21 @@ void T1_shader_to_hlsl(
     c8 * error_recip,
     u32 error_recip_cap);
 
+/*
+Translates shader_source like T1_shader_to_glsl(), to WGSL for WebGPU,
+after running T1's own preprocessor on it (WGSL has none): every entry
+point a unit of its own, each starting with a line "//T1_UNIT
+vert|frag|comp name", then the bindings it uses. The layout a WebGPU
+backend must match is in T1_shader.c.
+*/
+void T1_shader_to_wgsl(
+    const c8 * shader_source,
+    c8 * recip,
+    u32 recip_cap,
+    u8 * good,
+    c8 * error_recip,
+    u32 error_recip_cap);
+
 // buffer(n) is the HLSL register t(T1_HLSL_BUFS_T + n), after the textures
 #define T1_HLSL_BUFS_T 32
 

@@ -6,8 +6,20 @@ Q: It worked! how do I build T1?
 ./concat
 
 Q: It worked, where is the library?
-The library is in the /build folder (T1.h and T1.c). The examples are built
-against it too, their binaries are in /build/examples
+The library is in the /build folder (T1.h and T1.c), the same two files for
+every platform (each platform's layer is in an #if, the compiler picks).
+The examples are built against it too, their binaries are in
+/build/examples
+
+Q: And the web?
+The same T1.c, compiled for WebAssembly, with build/T1_web.html as the page
+(how, at its top; see engine_src/web/). If wasi-sdk's clang is where WEB_CC
+below says, the examples and shadertest are built for it too, each a folder
+in build/web/: T1's own server for trying them (tools/serve.c, built into
+build/web/ when it's newer)
+    ./build/web/serve build/web
+then http://localhost:8000/examples/ in Chrome (add ?log to an example's
+address to have its log printed by the server)
 */
 
 #include <stdlib.h>
@@ -61,17 +73,19 @@ static const Example examples[] = {
     },
 };
 
+/*
+Every platform's layer is in T1.c, each in an #if of its own (see
+T1_PLATFORM_* in T1_os.h): the compiler keeps the one it builds for, so
+T1.h and T1.c are the same files on every platform, whichever one concat
+ran on
+*/
 static const char * search_paths[] = {
 "./",
 "engine_src/shared/",
-#if defined(_WIN32)
-"engine_src/windows/",
-#elif defined(__APPLE__)
 "engine_src/shared_apple/",
 "engine_src/macos/",
-#else
-#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
-#endif
+"engine_src/windows/",
+"engine_src/web/",
 "resources/",
 };
 
@@ -104,16 +118,11 @@ static const Embeddable to_embed_files[] = {
     {"shader_includes",  0, 1, shader_include_files},
 };
 
+// the files every platform compiles
 static const char * c_files[] = {
 "T1.c",
 "T1_embedded_data.c",
 "T1_fatal_error.c",
-#if defined(_WIN32)
-#elif defined(__APPLE__)
-"T1_objc.c",
-#else
-#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
-#endif
 "T1_img.c",
 "T1_std.c",
 "T1_token.c",
@@ -124,27 +133,9 @@ static const char * c_files[] = {
 "T1_buf.c",
 "T1_audio.c",
 "T1_global.c",
-#if defined(_WIN32)
 "T1_os_common.c",
-"T1_os_windows.c",
-"T1_os_windows_audio.c",
-#elif defined(__APPLE__)
-"T1_os_apple_audio.c",
-"T1_os_common.c",
-"T1_os_macos.c",
-"T1_os_apple.c",
-#else
-#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
-#endif
 "T1_mem.c",
 "T1_io.c",
-#if defined(_WIN32)
-"T1_gpu_d3d11.c",
-#elif defined(__APPLE__)
-"T1_gpu.c",
-#else
-#error "no platform layer for this OS: Windows (_WIN32) or macOS (__APPLE__)"
-#endif
 "T1_tex.c",
 "T1_tex_array.c",
 "T1_bc.c",
@@ -152,6 +143,65 @@ static const char * c_files[] = {
 "T1_gameloop.c",
 "T1_appinit.c",
 };
+
+/*
+The platform layers, after the shared files (so the shared headers are in
+before them, outside every #if), each layer's files in an
+"#if T1_PLATFORM_X == T1_ACTIVE // T1_LAYER" of its own. The headers only a
+layer includes are pasted into its #if again for each layer that does
+*/
+#define LAYER_FILES_CAP 8
+typedef struct {
+    const char * platform; // its T1_PLATFORM_* macro
+    const char * files[LAYER_FILES_CAP]; // NULL after the last
+} Layer;
+
+static const Layer layers[] = {
+    {"T1_PLATFORM_APPLE", {
+        "T1_objc.c",
+        "T1_os_apple_audio.c",
+        "T1_os_macos.c",
+        "T1_os_apple.c",
+        "T1_gpu.c",
+        NULL,
+    }},
+    {"T1_PLATFORM_WINDOWS", {
+        "T1_os_windows.c",
+        "T1_os_windows_audio.c",
+        "T1_gpu_d3d11.c",
+        NULL,
+    }},
+    {"T1_PLATFORM_WEB", {
+        "T1_os_web.c",
+        "T1_gpu_webgpu.c",
+        NULL,
+    }},
+};
+
+/*
+THE WEB BUILD: wasi-sdk's clang (LLVM's clang for wasm with the C library
+for it, one download: github.com/WebAssembly/wasi-sdk), unpacked into a
+folder wasi-sdk in your home folder (C:/wasi-sdk on Windows). The page is
+engine_src/web/T1_web.html, copied next to each app.wasm as index.html
+*/
+#if defined(_WIN32)
+#define WEB_CC "C:/wasi-sdk/bin/clang"
+#define WEB_NULL "NUL"
+#define WEB_SERVE "build/web/serve.exe"
+#else
+#define WEB_CC "~/wasi-sdk/bin/clang"
+#define WEB_NULL "/dev/null"
+#define WEB_SERVE "build/web/serve"
+#endif
+/*
+What every T1 app for the web needs (see T1_web.html): wasm with threads,
+and a shared memory the page makes, up to 4 GB. Then the examples' own:
+-msimd128, wasm's 128-bit vectors (the target's like a CPU's are), -O3
+*/
+#define WEB_FLAGS \
+    " --target=wasm32-wasip1-threads" \
+    " -Wl,--import-memory,--max-memory=4294967296" \
+    " -std=c11 -O3 -msimd128"
 
 #define PERMA_CAP    50000
 #define ARENA_CAP 60000000
@@ -385,11 +435,24 @@ static void deduplicate_includes_clean_comments(char * in_out)
     asm_state->observed_includes_size = 0;
     
     char * tempcopy_head = tempcopy;
+    // a layer's <> includes count only inside it (see layers[])
+    uint16_t layer_mark = 0;
     
     while (*tempcopy != '\0') {
         while (*tempcopy == ' ' || *tempcopy == '\t')
         {
             tempcopy++;
+        }
+        
+        if (strncmp(tempcopy, "#if T1_PLATFORM_", 16) == 0) {
+            const char * eol = strchr(tempcopy, '\n');
+            const char * mark = strstr(tempcopy, "// T1_LAYER");
+            if (mark != NULL && (eol == NULL || mark < eol)) {
+                layer_mark = asm_state->observed_includes_size;
+            }
+        }
+        if (strncmp(tempcopy, "#endif // T1_LAYER", 18) == 0) {
+            asm_state->observed_includes_size = layer_mark;
         }
         
         if (tempcopy[0] == '/' && tempcopy[1] == '/') {
@@ -918,6 +981,198 @@ static void append_shader_settings_to_out(void) {
     strcat(asm_state->output, "    \"\";\n\n");
 }
 
+/*
+T1.c, into out_dir: the shared files, then every platform's layer in its
+#if. It includes T1.h rather than repeating it, so the macro settings at
+the top of T1.h are the only ones: edit them there
+*/
+static void write_library_c(
+    const char * out_dir,
+    char ** t1_h_includes,
+    uint16_t t1_h_includes_size)
+{
+    asm_state->arena_i = 0;
+    memset(asm_state->output, 0, OUTPUT_CAP);
+    memset(asm_state->arena, 0, ARENA_CAP);
+    
+    memcpy(
+        asm_state->observed_includes,
+        t1_h_includes,
+        sizeof(char *) * t1_h_includes_size);
+    asm_state->observed_includes_size = t1_h_includes_size;
+    find_observed_include_or_register_new(encapsulation_h_file);
+    strcat(asm_state->output, "#include \"T1.h\"\n\n");
+    
+    for (int32_t i = 0; i < asm_state->c_files_size; i++) {
+        parse_file_recursively(/* filename: */ c_files[i]);
+    }
+    
+    for (uint32_t l = 0; l < sizeof(layers) / sizeof(layers[0]); l++) {
+        // what this layer pastes in, forgotten after it for the next one
+        const uint16_t observed_mark = asm_state->observed_includes_size;
+        char line[256];
+        snprintf(line, sizeof(line),
+            "\n#if %s == T1_ACTIVE // T1_LAYER\n", layers[l].platform);
+        strcat(asm_state->output, line);
+        for (uint32_t f = 0; layers[l].files[f] != NULL; f++) {
+            parse_file_recursively(/* filename: */ layers[l].files[f]);
+        }
+        strcat(asm_state->output, "\n#endif // T1_LAYER\n");
+        asm_state->observed_includes_size = observed_mark;
+    }
+    
+    deduplicate_includes_clean_comments(asm_state->output);
+    strip_include_guards(asm_state->output);
+    write_output_to("T1.c", out_dir);
+}
+
+static uint8_t copy_file(const char * from, const char * to) {
+    FILE * src = fopen(from, "rb");
+    if (src == NULL) { return 0; }
+    FILE * dst = fopen(to, "wb");
+    if (dst == NULL) { fclose(src); return 0; }
+    char chunk[65536];
+    size_t read;
+    while ((read = fread(chunk, 1, sizeof(chunk), src)) > 0) {
+        fwrite(chunk, 1, read, dst);
+    }
+    fclose(src);
+    fclose(dst);
+    return 1;
+}
+
+/*
+The examples for the browser, into build/web/examples/<name>/ (the page
+and app.wasm), from each example's own T1.h and T1.c (copied there for the
+host build before), and shadertest into build/web/tests/shadertest/ with
+its files next to its page (see web_test_files[]). Without a wasm toolchain they're skipped, which isn't a
+failure
+*/
+static const char * web_test_files[] = {
+    "tests/shadertest/shadertest.metal",
+    "tests/shadertest/rejects.metal",
+    "tests/shadertest/reference.bin",
+};
+/*
+tools/serve.c, the server to try the web builds with, into build/web/ when
+it's missing or older than its source. Built with the host's gcc, like the
+examples: it needs no wasm toolchain
+*/
+static uint8_t build_web_server(void) {
+    struct stat source;
+    struct stat built;
+    if (stat("tools/serve.c", &source) != 0) { return 0; }
+    if (stat(WEB_SERVE, &built) == 0 && built.st_mtime >= source.st_mtime) {
+        return 1;
+    }
+    printf("building: " WEB_SERVE "\n");
+    #if defined(_WIN32)
+    const char * cmd = "gcc -std=c11 -O2 tools/serve.c -o " WEB_SERVE " -lws2_32";
+    #else
+    const char * cmd = "gcc -std=c11 -O2 tools/serve.c -o " WEB_SERVE;
+    #endif
+    if (system(cmd) != 0) {
+        printf("ERROR - failed to build: " WEB_SERVE "\n");
+        return 0;
+    }
+    return 1;
+}
+
+static uint8_t build_web_examples(void) {
+    FILE * check = fopen("build/web/check.c", "wb");
+    if (check == NULL) { return 0; }
+    fprintf(check, "#include <stdio.h>\nint main(void) { puts(\"\"); }\n");
+    fclose(check);
+    if (
+        system(
+            WEB_CC WEB_FLAGS " build/web/check.c -o build/web/check.wasm"
+            " > " WEB_NULL " 2>&1") != 0)
+    {
+        printf(
+            "web: examples skipped, no wasm compiler at " WEB_CC
+            " (see THE WEB BUILD in concat.c)\n");
+        return 1;
+    }
+    
+    mkdir("build/web/examples", 0777);
+    uint32_t examples_size = sizeof(examples) / sizeof(examples[0]);
+    
+    // a page that links them, for ./serve build/web/examples
+    FILE * index = fopen("build/web/examples/index.html", "wb");
+    if (index == NULL) { return 0; }
+    fprintf(
+        index,
+        "<!doctype html>\n<meta charset=\"utf-8\">\n"
+        "<title>T1's examples</title>\n"
+        "<style>body { font: 18px/1.6 system-ui, sans-serif; "
+        "margin: 40px; }</style>\n<h1>T1's examples</h1>\n<ul>\n");
+    for (uint32_t e = 0; e < examples_size; e++) {
+        if (strcmp(examples[e].dir, "examples") != 0) { continue; }
+        fprintf(
+            index,
+            "<li><a href=\"%s/\">%s</a></li>\n",
+            examples[e].name,
+            examples[e].name);
+    }
+    fprintf(index, "</ul>\n");
+    fclose(index);
+    
+    mkdir("build/web/tests", 0777);
+    for (uint32_t e = 0; e < examples_size; e++) {
+        const char * kind = examples[e].dir;
+        const char * name = examples[e].name;
+        
+        char dir[256];
+        snprintf(dir, sizeof(dir), "build/web/%s/%s", kind, name);
+        mkdir(dir, 0777);
+        
+        // a test's files, where it opens them from: tests/<name>/
+        if (strcmp(kind, "tests") == 0) {
+            char path[512];
+            snprintf(path, sizeof(path), "%s/tests", dir);
+            mkdir(path, 0777);
+            snprintf(path, sizeof(path), "%s/tests/%s", dir, name);
+            mkdir(path, 0777);
+            uint32_t files_size =
+                sizeof(web_test_files) / sizeof(web_test_files[0]);
+            for (uint32_t f = 0; f < files_size; f++) {
+                char prefix[256];
+                snprintf(prefix, sizeof(prefix), "tests/%s/", name);
+                if (strncmp(web_test_files[f], prefix, strlen(prefix)) != 0) {
+                    continue;
+                }
+                snprintf(path, sizeof(path), "%s/%s", dir, web_test_files[f]);
+                if (!copy_file(web_test_files[f], path)) {
+                    printf("ERROR - no %s\n", web_test_files[f]);
+                    return 0;
+                }
+            }
+        }
+        
+        char to[512];
+        snprintf(to, sizeof(to), "%s/index.html", dir);
+        if (!copy_file("engine_src/web/T1_web.html", to)) { return 0; }
+        
+        char cmd[1024];
+        snprintf(
+            cmd,
+            sizeof(cmd),
+            WEB_CC WEB_FLAGS " %s/%s/%s.c %s/%s/T1.c -o %s/app.wasm",
+            kind,
+            name,
+            name,
+            kind,
+            name,
+            dir);
+        printf("building: %s\n", dir);
+        if (system(cmd) != 0) {
+            printf("ERROR - failed to build: %s\n", dir);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main(void) {
     printf("Concatenating all source into T1.h/T1.c...\n");
     mkdir("build", 0777);
@@ -1043,31 +1298,12 @@ int main(void) {
 
     write_output_to("T1.h", "build/");
     
-    memset(asm_state->output, 0, OUTPUT_CAP);
-    
-    /*
-    T1.c includes T1.h rather than repeating it, so the macro settings at
-    the top of T1.h are the only ones: edit them there
-    */
-    memcpy(
-        asm_state->observed_includes,
-        t1_h_includes,
-        sizeof(char *) * t1_h_includes_size);
-    asm_state->observed_includes_size = t1_h_includes_size;
-    find_observed_include_or_register_new(encapsulation_h_file);
-    strcat(asm_state->output, "#include \"T1.h\"\n\n");
-    
-    int32_t i;
-    for (i = 0; i < asm_state->c_files_size; i++) {
-        const char * filename = c_files[i];
-        
-        parse_file_recursively(
-            /* filename: */ filename);
+    write_library_c("build/", t1_h_includes, t1_h_includes_size);
+    // the web's page, the third file a web app needs (see its top)
+    if (!copy_file("engine_src/web/T1_web.html", "build/T1_web.html")) {
+        printf("ERROR - couldn't copy engine_src/web/T1_web.html\n");
+        return 1;
     }
-    
-    deduplicate_includes_clean_comments(asm_state->output);
-    strip_include_guards(asm_state->output);
-    write_output_to("T1.c", "build/");
     
     /*
     Every example keeps its own T1.h and T1.c next to its source, like your
@@ -1113,6 +1349,9 @@ int main(void) {
             return 1;
         }
     }
+    
+    mkdir("build/web", 0777);
+    if (!build_web_server() || !build_web_examples()) { return 1; }
     
     printf("Success.\n");
     
