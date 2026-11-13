@@ -118,6 +118,7 @@ typedef struct {
     u32 tex_mips[T1_TEXARRAYS_CAP];
     u32 tex_widths[T1_TEXARRAYS_CAP];
     u32 tex_heights[T1_TEXARRAYS_CAP];
+    T1TexFormat tex_formats[T1_TEXARRAYS_CAP];
     // copies for passes that draw into the array, made on first use
     T1D3D11Resource * tex_copies[T1_TEXARRAYS_CAP];
     T1D3D11View * tex_copy_srvs[T1_TEXARRAYS_CAP];
@@ -924,13 +925,24 @@ static void T1_gpu_d3d11_release_tex_views(s32 array_i) {
     }
 }
 
+u8 T1_os_gpu_compressed_format(void) {
+    // (BC3: every feature level 11_0 GPU, and WARP, samples it)
+    return T1_os_gpu_active() ? T1_TEX_FORMAT_BC3 : T1_TEX_FORMAT_RGBA8;
+}
+
+static u32 T1_gpu_d3d11_format(const T1TexFormat format) {
+    if (format == T1_TEX_FORMAT_BC3) { return T1DXGI_FORMAT_BC3_UNORM; }
+    return T1DXGI_FORMAT_R8G8B8A8_UNORM;
+}
+
 static T1D3D11View * T1_gpu_d3d11_array_srv(
     T1D3D11Resource * tex,
-    const u32 slices)
+    const u32 slices,
+    const T1TexFormat format)
 {
     T1D3D11SRVDesc desc;
     T1_std_memset(&desc, 0, sizeof(T1D3D11SRVDesc));
-    desc.format = T1DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.format = T1_gpu_d3d11_format(format);
     desc.view_dimension = T1D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
     desc.u[0] = 0; // most detailed mip
     desc.u[1] = 0xFFFFFFFF; // all mips
@@ -1017,6 +1029,7 @@ static u32 T1_gpu_d3d11_mip_levels(s32 array_i) {
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     // like Metal: down to 1 pixel, except array 0
     if (array_i == 0) { return 1; }
+    if (T1_tex_arrays[array_i].format != T1_TEX_FORMAT_RGBA8) { return 1; }
     u32 size = T1_tex_arrays[array_i].single_img_width;
     if (T1_tex_arrays[array_i].single_img_height > size) {
         size = T1_tex_arrays[array_i].single_img_height;
@@ -1048,7 +1061,8 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
     } else if (T1_d3d->texs[tex_array_i] != NULL) {
         b8 same_size =
             T1_d3d->tex_widths[tex_array_i] == array->single_img_width &&
-            T1_d3d->tex_heights[tex_array_i] == array->single_img_height;
+            T1_d3d->tex_heights[tex_array_i] == array->single_img_height &&
+            T1_d3d->tex_formats[tex_array_i] == array->format;
         if (
             same_size &&
             array->images_size <= T1_d3d->tex_slices[tex_array_i])
@@ -1075,14 +1089,19 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
     desc.mip_levels = mips;
     desc.array_size = slices;
     // typeless, so kernels can write it as uints, see T1_gpu_d3d11_tex_uav()
-    desc.format = T1DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    // (a compressed one is only sampled)
+    const b8 compressed = array->format != T1_TEX_FORMAT_RGBA8;
+    desc.format = compressed ?
+        T1_gpu_d3d11_format(array->format) : T1DXGI_FORMAT_R8G8B8A8_TYPELESS;
     desc.sample_count = 1;
     desc.usage = T1D3D11_USAGE_DEFAULT;
-    // any texture can be sampled, drawn to and written by compute passes
-    desc.bind_flags =
-        T1D3D11_BIND_SHADER_RESOURCE |
-        T1D3D11_BIND_RENDER_TARGET |
-        T1D3D11_BIND_UNORDERED_ACCESS;
+    // any rgba8 texture can be sampled, drawn to and written by compute
+    // passes
+    desc.bind_flags = compressed ?
+        T1D3D11_BIND_SHADER_RESOURCE :
+        (T1D3D11_BIND_SHADER_RESOURCE |
+            T1D3D11_BIND_RENDER_TARGET |
+            T1D3D11_BIND_UNORDERED_ACCESS);
     desc.misc_flags = mips > 1 ? T1D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 
     T1_d3d->device->vtbl->CreateTexture2D(
@@ -1096,13 +1115,14 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
     T1_d3d->tex_mips[tex_array_i] = mips;
     T1_d3d->tex_widths[tex_array_i] = array->single_img_width;
     T1_d3d->tex_heights[tex_array_i] = array->single_img_height;
+    T1_d3d->tex_formats[tex_array_i] = array->format;
     T1_d3d->tex_srvs[tex_array_i] = T1_gpu_d3d11_array_srv(
-        T1_d3d->texs[tex_array_i], slices);
+        T1_d3d->texs[tex_array_i], slices, array->format);
     array->gpu_capacity = slices;
 
     // Direct3D doesn't clear new textures, blank T1Texs start transparent
     f32 clear[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    for (u32 s = prev_slices; s < slices; s++) {
+    for (u32 s = prev_slices; s < slices && !compressed; s++) {
         T1D3D11View * rtv = T1_gpu_d3d11_tex_rtv(tex_array_i, (s32)s);
         if (rtv != NULL) {
             T1_d3d->ctx->vtbl->ClearRenderTargetView(T1_d3d->ctx, rtv, clear);
@@ -1155,14 +1175,16 @@ void T1_os_gpu_write_tex_slice(
 
     u32 width = T1_tex_arrays[tex_array_i].single_img_width;
     u32 height = T1_tex_arrays[tex_array_i].single_img_height;
+    const T1TexFormat format = T1_tex_arrays[tex_array_i].format;
+    // (a compressed array's rows are rows of 4x4 blocks)
     T1_d3d->ctx->vtbl->UpdateSubresource(
         T1_d3d->ctx,
         T1_d3d->texs[tex_array_i],
         (u32)tex_slice_i * T1_d3d->tex_mips[tex_array_i],
         NULL,
         rgba,
-        width * 4,
-        width * height * 4);
+        T1_tex_format_row_bytes(format, width),
+        T1_tex_format_bytes(format, width, height));
     // (UpdateSubresource has copied rgba by now: the caller's again)
     T1_gpu_d3d11_written(tex_array_i, tex_slice_i);
 }
@@ -1852,7 +1874,8 @@ static void T1_gpu_d3d11_tex_srvs(
                 T1_d3d->device, &desc, NULL, &T1_d3d->tex_copies[a]);
             if (T1_d3d->tex_copies[a] == NULL) { continue; }
             T1_d3d->tex_copy_srvs[a] = T1_gpu_d3d11_array_srv(
-                T1_d3d->tex_copies[a], T1_d3d->tex_slices[a]);
+                T1_d3d->tex_copies[a], T1_d3d->tex_slices[a],
+                T1_TEX_FORMAT_RGBA8);
             T1_gpu_d3d11_written((s32)a, -1);
         }
         u32 mips = T1_d3d->tex_mips[a];

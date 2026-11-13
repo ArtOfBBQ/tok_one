@@ -210,10 +210,18 @@ A texture slice's new pixels (its width * height * 4 bytes of rgba), from
 T1_tex_update(): the platform copies what it needs before it returns (the
 caller may free rgba right away) and has them on the GPU by the next frame
 */
+// a slice's pixels in its array's format (T1_tex_format_bytes() of them)
 void T1_os_gpu_write_tex_slice(
     s32 tex_array_i,
     s32 tex_slice_i,
     const u8 * rgba);
+
+/*
+The T1TexFormat (T1_tex_array.h) compressed textures take on this GPU, the
+first it samples of BC3 and ETC2 + EAC; rgba8 (no compression) if neither,
+or before the GPU is up
+*/
+u8 T1_os_gpu_compressed_format(void);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 

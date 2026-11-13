@@ -5,6 +5,7 @@
 #include "T1_assert.h"
 #include "T1_mem.h"
 #include "T1_pipeline.h"
+#include "T1_tex_array.h"
 
 T1Pass * T1_passes = NULL;
 u32 T1_passes_size = 0;
@@ -155,6 +156,12 @@ void T1_pass_set_u32(u32 pass, const char * property, u32 value) {
     
     for (u32 j = 0; j < T1_PASS_PROPERTIES_SIZE; j++) {
         if (T1_std_are_equal_strings(T1_pass_properties[j].name, property)) {
+            // (a pass can't draw or write into a compressed texture)
+            T1_assert(
+                value == T1_TEX_NONE ||
+                !(T1_std_are_equal_strings_of_length(property, "color_tex", 9) ||
+                    T1_std_are_equal_strings(property, "write_tex")) ||
+                !T1_tex_is_compressed(value));
             *(u32 *)((u8 *)&T1_passes[i].u32s +
                 T1_pass_properties[j].offset) = value;
             return;

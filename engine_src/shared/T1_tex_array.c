@@ -3,6 +3,8 @@
 #include "T1_assert.h"
 #include "T1_mem.h"
 #include "T1_os.h"
+#include "T1_bc.h"
+#include "T1_etc.h"
 // #include "T1_cpu_gpu_shared_types.h"
 
 static u32 tex_arrays_mutex_ids[T1_TEXARRAYS_CAP];
@@ -91,9 +93,29 @@ void T1_tex_array_delete_slice(
     }
 }
 
+u32 T1_tex_format_row_bytes(T1TexFormat format, u32 width) {
+    if (format == T1_TEX_FORMAT_RGBA8) { return width * 4; }
+    // (both compressed formats: 16 bytes a 4x4 block)
+    return width / 4 * (format == T1_TEX_FORMAT_BC3 ?
+        T1_BC3_BLOCK_BYTES : T1_ETC2_EAC_BLOCK_BYTES);
+}
+
+u32 T1_tex_format_bytes(T1TexFormat format, u32 width, u32 height) {
+    if (format == T1_TEX_FORMAT_RGBA8) { return width * height * 4; }
+    return T1_tex_format_row_bytes(format, width) * (height / 4);
+}
+
+b8 T1_tex_is_compressed(T1Tex tex) {
+    if (tex == T1_TEX_NONE) { return 0; }
+    const s16 array_i = T1_tex_to_array_i(tex);
+    T1_assert(array_i >= 0 && array_i < (s16)T1_tex_arrays_size);
+    return T1_tex_arrays[array_i].format != T1_TEX_FORMAT_RGBA8;
+}
+
 T1Tex T1_tex_array_new_slice(
     u32 width,
     u32 height,
+    T1TexFormat format,
     b8 never_delete,
     char ** const fatal_error)
 {
@@ -118,7 +140,8 @@ T1Tex T1_tex_array_new_slice(
             !T1_tex_arrays[i].deleted &&
             T1_tex_arrays[i].images_size > 0 &&
             T1_tex_arrays[i].single_img_width  == width &&
-            T1_tex_arrays[i].single_img_height == height)
+            T1_tex_arrays[i].single_img_height == height &&
+            T1_tex_arrays[i].format == format)
         {
             // reuse a deleted slice if there is one, else append
             s16 slice_i = (s16)T1_tex_arrays[i].images_size;
@@ -180,6 +203,7 @@ T1Tex T1_tex_array_new_slice(
         T1_tex_arrays[array_i].images_size = 1;
         T1_tex_arrays[array_i].single_img_width = width;
         T1_tex_arrays[array_i].single_img_height = height;
+        T1_tex_arrays[array_i].format = format;
         
         T1Img * img = &T1_tex_arrays[array_i].images[0].image;
         img->width = width;
@@ -199,6 +223,7 @@ T1Tex T1_tex_new(
     const u8 * rgba,
     u32 width,
     u32 height,
+    b8 compress_if_possible,
     char ** const fatal_error)
 {
     if (*fatal_error != 0) { return T1_TEX_NONE; }
@@ -207,10 +232,20 @@ T1Tex T1_tex_new(
         *fatal_error = "T1_tex_new() needs a width and height";
         return T1_TEX_NONE;
     }
+    // (a blank texture is for passes to draw into: it can't be compressed)
+    T1_assert(rgba != NULL || !compress_if_possible);
+    
+    // compressed if it can be: pixels, whole 4x4 blocks, and a GPU that
+    // samples a compressed format (else rgba8, as asked or not)
+    const T1TexFormat format =
+        compress_if_possible && rgba != NULL &&
+        width % 4 == 0 && height % 4 == 0 ?
+            (T1TexFormat)T1_os_gpu_compressed_format() : T1_TEX_FORMAT_RGBA8;
     
     T1Tex tex = T1_tex_array_new_slice(
         width,
         height,
+        format,
         /* b8 never_delete: */ 0,
         fatal_error);
     if (*fatal_error != 0) { return T1_TEX_NONE; }
@@ -225,6 +260,55 @@ T1Tex T1_tex_new(
     return tex;
 }
 
+T1Tex T1_tex_new_bc(
+    const u8 * blocks,
+    u32 width,
+    u32 height,
+    b8 bc3,
+    char ** const fatal_error)
+{
+    if (*fatal_error != 0) { return T1_TEX_NONE; }
+    
+    if (blocks == NULL || width < 1 || height < 1) {
+        *fatal_error = "T1_tex_new_bc() needs blocks, a width and a height";
+        return T1_TEX_NONE;
+    }
+    
+    // a GPU that keeps BC3: the blocks as they are (BC1 ones made BC3)
+    if (
+        T1_os_gpu_compressed_format() == T1_TEX_FORMAT_BC3 &&
+        width % 4 == 0 && height % 4 == 0)
+    {
+        T1Tex tex = T1_tex_array_new_slice(
+            width,
+            height,
+            T1_TEX_FORMAT_BC3,
+            /* b8 never_delete: */ 0,
+            fatal_error);
+        if (*fatal_error != 0) { return T1_TEX_NONE; }
+        const s32 array_i = T1_tex_to_array_i(tex);
+        const s32 slice_i = T1_tex_to_slice_i(tex);
+        if (bc3) {
+            T1_os_gpu_write_tex_slice(array_i, slice_i, blocks);
+        } else {
+            u8 * as_bc3 = T1_mem_malloc_managed(
+                T1_tex_format_bytes(T1_TEX_FORMAT_BC3, width, height));
+            T1_bc1_to_bc3(blocks, width, height, as_bc3);
+            T1_os_gpu_write_tex_slice(array_i, slice_i, as_bc3);
+            T1_mem_free_managed(as_bc3);
+        }
+        return tex;
+    }
+    
+    // any other: its pixels, compressed in this GPU's format if it has one
+    u8 * rgba = T1_mem_malloc_managed((u64)width * height * 4);
+    T1_bc_decode(blocks, width, height, bc3, rgba);
+    T1Tex tex = T1_tex_new(
+        rgba, width, height, /* compress_if_possible: */ 1, fatal_error);
+    T1_mem_free_managed(rgba);
+    return tex;
+}
+
 void T1_tex_update(
     T1Tex tex,
     const u8 * rgba)
@@ -236,6 +320,23 @@ void T1_tex_update(
     T1_assert(slice_i >= 0);
     T1_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
     T1_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
+
+    const T1TexFormat format = T1_tex_arrays[array_i].format;
+    if (format != T1_TEX_FORMAT_RGBA8) {
+        // encoded first (no mipmaps: see T1TexFormat)
+        const u32 w = T1_tex_arrays[array_i].single_img_width;
+        const u32 h = T1_tex_arrays[array_i].single_img_height;
+        u8 * blocks = T1_mem_malloc_managed(T1_tex_format_bytes(format, w, h));
+        if (format == T1_TEX_FORMAT_BC3) {
+            T1_bc3_encode(rgba, w, h, blocks);
+        } else {
+            T1_etc2_eac_encode(rgba, w, h, blocks);
+        }
+        T1_os_gpu_write_tex_slice(array_i, slice_i, blocks);
+        T1_mem_free_managed(blocks);
+        return;
+    }
+
     // (the platform copies what it needs: rgba is the caller's again)
     T1_os_gpu_write_tex_slice(array_i, slice_i, rgba);
 

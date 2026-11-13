@@ -33,6 +33,9 @@
 #define T1MTLPixelFormatInvalid 0
 #define T1MTLPixelFormatRGBA8Unorm 70
 #define T1MTLPixelFormatBGRA8Unorm 80
+#define T1MTLPixelFormatBC3_RGBA 134
+#define T1MTLPixelFormatEAC_RGBA8 178
+#define T1MTLGPUFamilyApple1 1001
 #define T1MTLPixelFormatDepth32Float 252
 #define T1MTLDepthClipModeClip 0
 #define T1MTLDepthClipModeClamp 1
@@ -196,11 +199,12 @@ typedef struct {
     u64 offset;
     u64 size;
     u32 buf_i;
-    // a texture's slice instead (-1: a T1Buf's), w * h rgba
+    // a texture's slice instead (-1: a T1Buf's), w * h pixels in format
     s32 tex_array_i;
     s32 tex_slice_i;
     u32 tex_w;
     u32 tex_h;
+    T1TexFormat tex_format;
 } T1GPUBufWrite;
 
 /*
@@ -417,6 +421,7 @@ typedef struct {
     u64 frame_gpu_us; // see T1_gpu_frame_us()
     u8  frame_i;
     b8  metal_active;
+    u8  compressed_format; // see T1_os_gpu_compressed_format()
     b8  shaders_ready;
     b8  objc_metal_framework_good;
 } AppleGPUState;
@@ -749,6 +754,34 @@ void T1_apple_gpu_init(
     ags->command_queue = (void *)T1_objc_msg(
         ags->device,
         ags->sel_new_command_queue);
+    
+    /*
+    The compressed format: BC3 if the GPU samples it (every Mac's, Intel
+    and Apple silicon alike), else ETC2 + EAC (every Apple GPU: iPhones and
+    iPads), else none. (Each asked only if this OS knows how to ask)
+    */
+    void * sel_responds = T1_objc_reg_sel("respondsToSelector:");
+    void * sel_supports_bc = T1_objc_reg_sel("supportsBCTextureCompression");
+    void * sel_supports_family = T1_objc_reg_sel("supportsFamily:");
+    ags->compressed_format = T1_TEX_FORMAT_RGBA8;
+    if (
+        (T1_objc_msg_1arg(
+            ags->device, sel_responds, (uintptr_t)sel_supports_family) &
+                0xFF) != 0 &&
+        (T1_objc_msg_1arg(
+            ags->device, sel_supports_family, T1MTLGPUFamilyApple1) &
+                0xFF) != 0)
+    {
+        ags->compressed_format = T1_TEX_FORMAT_ETC2_EAC;
+    }
+    if (
+        (T1_objc_msg_1arg(
+            ags->device, sel_responds, (uintptr_t)sel_supports_bc) &
+                0xFF) != 0 &&
+        (T1_objc_msg(ags->device, sel_supports_bc) & 0xFF) != 0)
+    {
+        ags->compressed_format = T1_TEX_FORMAT_BC3;
+    }
     
     ags->metal_active = 1;
     
@@ -1251,6 +1284,17 @@ u8 T1_os_gpu_shaders_ready(void) {
     return ags != NULL && ags->shaders_ready;
 }
 
+u8 T1_os_gpu_compressed_format(void) {
+    if (ags == NULL || !ags->metal_active) { return T1_TEX_FORMAT_RGBA8; }
+    return ags->compressed_format;
+}
+
+static uintptr_t T1_gpu_pixel_format(const T1TexFormat format) {
+    if (format == T1_TEX_FORMAT_BC3) { return T1MTLPixelFormatBC3_RGBA; }
+    if (format == T1_TEX_FORMAT_ETC2_EAC) { return T1MTLPixelFormatEAC_RGBA8; }
+    return T1MTLPixelFormatRGBA8Unorm;
+}
+
 void T1_os_gpu_update_capacity_if_needed(
     s32 tex_array_i)
 {
@@ -1269,7 +1313,7 @@ void T1_os_gpu_update_capacity_if_needed(
         T1_objc_msg(
             ags->metal_textures[tex_array_i],
             ags->sel_pixel_format) !=
-                T1MTLPixelFormatRGBA8Unorm ||
+                T1_gpu_pixel_format(T1_tex_arrays[tex_array_i].format) ||
             T1_tex_arrays[tex_array_i].single_img_width !=
                 T1_objc_msg(
                     ags->metal_textures[tex_array_i],
@@ -1325,19 +1369,24 @@ void T1_os_gpu_update_capacity_if_needed(
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_pixel_format,
-        T1MTLPixelFormatRGBA8Unorm);
+        T1_gpu_pixel_format(T1_tex_arrays[tex_array_i].format));
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_storage_mode,
         T1MTLStorageModePrivate);
     
-    // any texture can be sampled, drawn to and written by compute passes
+    // any rgba8 texture can be sampled, drawn to and written by compute
+    // passes, a compressed one only sampled
+    const b8 compressed =
+        T1_tex_arrays[tex_array_i].format != T1_TEX_FORMAT_RGBA8;
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_usage,
-        T1MTLTextureUsageShaderRead |
-            T1MTLTextureUsageShaderWrite |
-            T1MTLTextureUsageRenderTarget);
+        compressed ?
+            T1MTLTextureUsageShaderRead :
+            (T1MTLTextureUsageShaderRead |
+                T1MTLTextureUsageShaderWrite |
+                T1MTLTextureUsageRenderTarget));
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_width,
@@ -1358,7 +1407,7 @@ void T1_os_gpu_update_capacity_if_needed(
     T1_objc_msg_1arg(
         texture_descriptor,
         ags->sel_set_mipmap_level_count,
-        tex_array_i == 0 ? 1 : mip_levels);
+        tex_array_i == 0 || compressed ? 1 : mip_levels);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     T1_objc_msg_1arg(
         texture_descriptor,
@@ -1499,8 +1548,12 @@ void T1_os_gpu_write_tex_slice(
     only if it doesn't fit the staging, or when mipmaps are made right
     after this (they'd be made of the pixels before it)
     */
+    const T1TexFormat format = T1_tex_arrays[tex_array_i].format;
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-    const u8 queued = 0;
+    // (a compressed array has no mipmaps)
+    const u8 queued = format == T1_TEX_FORMAT_RGBA8 ? 0 :
+        T1_gpu_queue_tex_write(
+            tex_array_i, tex_slice_i, rgba, img_width, img_height);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     const u8 queued = T1_gpu_queue_tex_write(
         tex_array_i, tex_slice_i, rgba, img_width, img_height);
@@ -1510,7 +1563,7 @@ void T1_os_gpu_write_tex_slice(
     if (queued) { return; }
     
     // (now: a buffer of its own, page aligned for Metal to use as it is)
-    const u32 rgba_size = img_width * img_height * 4;
+    const u32 rgba_size = T1_tex_format_bytes(format, img_width, img_height);
     u32 temp_buf_cap = rgba_size;
     T1_assert(temp_buf_cap > 0);
     while (temp_buf_cap % T1_mem_page_size != 0) {
@@ -1556,8 +1609,8 @@ void T1_os_gpu_write_tex_slice(
         ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
         temp_source_buf,
         0,
-        img_width * 4,
-        img_width * img_height * 4,
+        T1_tex_format_row_bytes(format, img_width),
+        rgba_size,
         T1_mtlsize_make(img_width, img_height, 1),
         ags->metal_textures[tex_array_i],
         (uintptr_t)tex_slice_i,
@@ -1759,6 +1812,7 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
                 texture != NULL &&
                 T1_tex_arrays[w->tex_array_i].single_img_width == w->tex_w &&
                 T1_tex_arrays[w->tex_array_i].single_img_height == w->tex_h &&
+                T1_tex_arrays[w->tex_array_i].format == w->tex_format &&
                 (uintptr_t)w->tex_slice_i <
                     T1_objc_msg(texture, ags->sel_array_length))
             {
@@ -1767,8 +1821,8 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
                     ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
                     w->staging,
                     (uintptr_t)w->staging_offset,
-                    (uintptr_t)w->tex_w * 4,
-                    (uintptr_t)w->tex_w * w->tex_h * 4,
+                    (uintptr_t)T1_tex_format_row_bytes(w->tex_format, w->tex_w),
+                    (uintptr_t)w->size,
                     T1_mtlsize_make(w->tex_w, w->tex_h, 1),
                     texture,
                     (uintptr_t)w->tex_slice_i,
@@ -1932,7 +1986,7 @@ void T1_os_gpu_buf_write(
 }
 
 /*
-A texture slice's rgba (w * h * 4 bytes) for the next frame's first blit,
+A texture slice's pixels (in its array's format) for the next frame's first blit,
 like T1_os_gpu_buf_write(): copied into staging now, no waiting. 0 if it
 doesn't fit the staging (T1_GPU_STAGING_MAX_SIZE): the caller sends it now
 */
@@ -1943,7 +1997,8 @@ static u8 T1_gpu_queue_tex_write(
     const u32 w,
     const u32 h)
 {
-    const u64 size = (u64)w * (u64)h * 4;
+    const T1TexFormat format = T1_tex_arrays[tex_array_i].format;
+    const u64 size = T1_tex_format_bytes(format, w, h);
     if (size == 0 || size > T1_GPU_STAGING_MAX_SIZE) { return 0; }
     
     // (too many waiting, or the staging full: those go first, as above)
@@ -1982,6 +2037,7 @@ static u8 T1_gpu_queue_tex_write(
     write->tex_slice_i = tex_slice_i;
     write->tex_w = w;
     write->tex_h = h;
+    write->tex_format = format;
     return 1;
 }
 

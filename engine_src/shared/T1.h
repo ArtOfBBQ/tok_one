@@ -21,7 +21,7 @@ already set, so you can call multiple and check for errors once at the end:
 T1_init(malloc, malloc, free, &fatal_error); // no GPU yet
 T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
 T1_gpu_try_shader_source(...); // only if you make pipelines
-T1Tex window_tex = T1_tex_new(NULL, width, height, &fatal_error);
+T1Tex window_tex = T1_tex_new(NULL, width, height, 0, &fatal_error);
 T1_window_open(window_tex, &fatal_error);
 
 The window always shows a T1Tex, so T1_gpu_init() comes first. Call it
@@ -179,12 +179,53 @@ texture can be sampled, drawn into and written by
 compute passes. Data that isn't a color (depth,
 touch ids) is packed into the 4 bytes of a pixel by
 your shaders.
+
+compress_if_possible is for pictures: the GPU keeps
+them compressed, a quarter of the memory (alpha too),
+in a format T1 picks for it (BC3 on desktop GPUs,
+ETC2 + EAC on Apple's phones and tablets). You still
+hand it rgba and never see the format. It's ignored,
+and the texture kept as rgba, when the GPU samples
+none of them or the width or height isn't a multiple
+of 4. A compressed texture costs detail where 4x4
+pixels hold more than two colours with sharp edges
+between them (text, pixel art: leave those
+uncompressed), needs pixels (not NULL), can only be
+sampled (no pass draws into it, writes or reads it)
+and has no mipmaps. T1_tex_update() encodes it again,
+some 10 to 100 nanoseconds a pixel.
 */
 T1Tex T1_tex_new(
     const uint8_t * rgba,
     uint32_t width,
     uint32_t height,
+    uint8_t compress_if_possible,
     char ** const fatal_error);
+/*
+T1_tex_new_bc() is T1_tex_new() for pictures already compressed as BC1
+(bc3 0: 8 bytes a 4x4 block, no alpha) or BC3 (16 bytes, alpha), the
+blocks of .dds files (from after their header: the first mip level, block
+row by block row). On a GPU that keeps BC3 (every desktop GPU) and with a
+width and height that are multiples of 4, they go to the GPU as they are
+(BC1 ones turned into BC3, mostly by copying): no compression work, the
+fastest way to load a picture. Otherwise T1 decodes them and it's
+T1_tex_new() with compress_if_possible. The texture is then like any
+compressed one (see above); T1_tex_update() takes rgba as always.
+T1_bc_decode() gives you their rgba8 too (width * height * 4 bytes), as a
+GPU decodes them.
+*/
+T1Tex T1_tex_new_bc(
+    const uint8_t * blocks,
+    uint32_t width,
+    uint32_t height,
+    uint8_t bc3,
+    char ** const fatal_error);
+void T1_bc_decode(
+    const uint8_t * blocks,
+    const uint32_t width,
+    const uint32_t height,
+    const uint8_t bc3,
+    uint8_t * rgba);
 void T1_tex_update(
     T1Tex tex,
     const uint8_t * rgba);

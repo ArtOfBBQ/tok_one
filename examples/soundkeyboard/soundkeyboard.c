@@ -379,7 +379,8 @@ int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
     T1_gpu_init(&fatal_error);
-    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT, &fatal_error);
+    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT,
+        /* compress_if_possible: */ 0, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
 
     if (fatal_error != NULL) {
