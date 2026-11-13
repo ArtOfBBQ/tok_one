@@ -7599,19 +7599,29 @@ static void make_unit_wgsl(Gen * g, const u32 entry_f) {
             buf_cat(gl, samplers[s]);
             buf_cat(gl, ": sampler;\n");
         }
-        // derivatives only in fragment functions, elsewhere the top mip
+        /*
+        Derivatives only in fragment functions (elsewhere the top mip), and
+        those once, before the switch picks the array: each case working
+        them out for itself made sampling many times slower
+        */
         const b8 frag = e->stage == STAGE_FRAGMENT;
         buf_cat(gl,
             "fn t1_tex_sample(s: sampler, tex: u32, uv: vec2<f32>) -> "
-            "vec4<f32> {\n    let sl = i32(tex & 0x7FFu);\n"
-            "    switch (tex >> 11u) {\n");
+            "vec4<f32> {\n    let sl = i32(tex & 0x7FFu);\n");
+        if (frag) {
+            buf_cat(gl,
+                "    let ddx = dpdx(uv);\n"
+                "    let ddy = dpdy(uv);\n");
+        }
+        buf_cat(gl, "    switch (tex >> 11u) {\n");
         for (u32 a = 0; a < T1_TEXARRAYS_CAP; a++) {
             buf_cat(gl, "        case ");
             cat_u32(gl, a);
-            buf_cat(gl, frag ? "u: { return textureSample(t1_tex_" :
+            buf_cat(gl, frag ? "u: { return textureSampleGrad(t1_tex_" :
                 "u: { return textureSampleLevel(t1_tex_");
             cat_u32(gl, a);
-            buf_cat(gl, frag ? ", s, uv, sl); }\n" : ", s, uv, sl, 0.0f); }\n");
+            buf_cat(gl, frag ?
+                ", s, uv, sl, ddx, ddy); }\n" : ", s, uv, sl, 0.0f); }\n");
         }
         buf_cat(gl,
             "        default: { return vec4<f32>(0.0f); }\n    }\n}\n"

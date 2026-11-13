@@ -10,8 +10,7 @@ module per entry point; how a pass binds what they use is in THE GPU in
 T1_web.html. A frame's passes go into one command encoder, submitted when
 T1_os_gpu_render_frame() is done with them.
 
-Not yet: compressed textures (every array is rgba8), mipmaps, the GPU's
-frame time.
+Mipmaps are drawn by the page (WebGPU has no generateMipmap).
 */
 
 #include "T1_os.h"
@@ -29,16 +28,25 @@ frame time.
 #define T1_WEB_IMPORT(name) \
     __attribute__((import_module("t1"), import_name(#name)))
 
-// asks for an adapter and a device (suspends, like t1.wait()): 1 if it got one
-T1_WEB_IMPORT(gpu_init) s32 T1_web_gpu_init(void);
+/*
+asks for an adapter and a device (suspends, like t1.wait()): 1 if it got
+one. mipmaps: whether the linear samplers use the mip levels
+*/
+T1_WEB_IMPORT(gpu_init) s32 T1_web_gpu_init(s32 mipmaps);
 T1_WEB_IMPORT(gpu_lost) s32 T1_web_gpu_lost(void);
+// the last frame's passes on the GPU, microseconds (0: unknown)
+T1_WEB_IMPORT(gpu_frame_us) f64 T1_web_gpu_frame_us(void);
 T1_WEB_IMPORT(gpu_name) void T1_web_gpu_name(char * recip, u32 recip_cap);
 /*
 Makes the array's GPUTexture this size with at least this many slices,
 copying the slices it had if only the count grows
 */
 T1_WEB_IMPORT(gpu_tex_array) void T1_web_gpu_tex_array(
-    s32 array_i, u32 width, u32 height, u32 slices);
+    s32 array_i, u32 width, u32 height, u32 slices, u32 format, u32 mips);
+// the array's smaller mip levels from its first, for the slices written
+T1_WEB_IMPORT(gpu_mips) void T1_web_gpu_mips(s32 array_i);
+// the T1TexFormat compressed textures take: BC3, else ETC2 + EAC, else rgba8
+T1_WEB_IMPORT(gpu_compressed_format) u32 T1_web_gpu_compressed_format(void);
 T1_WEB_IMPORT(gpu_tex_delete) void T1_web_gpu_tex_delete(s32 array_i);
 T1_WEB_IMPORT(gpu_tex_write) void T1_web_gpu_tex_write(
     s32 array_i,
@@ -99,6 +107,7 @@ typedef struct {
     u32 tex_widths[T1_TEXARRAYS_CAP];
     u32 tex_heights[T1_TEXARRAYS_CAP];
     u32 tex_slices[T1_TEXARRAYS_CAP]; // 0: none on the GPU
+    u8 tex_formats[T1_TEXARRAYS_CAP];
     b8 active;
     b8 shaders_ready;
 } T1WebGPUState;
@@ -107,7 +116,14 @@ static T1WebGPUState T1_wgpu;
 
 void T1_os_gpu_init(char ** const fatal_error) {
     if (*fatal_error != 0) { return; }
-    if (!T1_web_gpu_init()) {
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    const s32 mipmaps = 1;
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    const s32 mipmaps = 0;
+    #else
+    #error
+    #endif
+    if (!T1_web_gpu_init(mipmaps)) {
         *fatal_error =
             "No WebGPU: this browser doesn't have it, or it's switched off";
         return;
@@ -124,8 +140,8 @@ u8 T1_os_gpu_lost(void) {
 }
 
 u64 T1_os_gpu_frame_us(void) {
-    // unknown: timestamp queries are an optional WebGPU feature (TODO)
-    return 0;
+    // 0 where the GPU has no timestamps (see THE FRAME'S TIME in the page)
+    return T1_wgpu.active ? (u64)T1_web_gpu_frame_us() : 0;
 }
 
 const char * T1_os_gpu_name(void) {
@@ -141,8 +157,32 @@ TEXTURES
 */
 
 u8 T1_os_gpu_compressed_format(void) {
-    // (TODO: BC3 where the adapter has "texture-compression-bc", else ETC2)
-    return T1_TEX_FORMAT_RGBA8;
+    // the first the device has of BC3 and ETC2 + EAC, like on Metal
+    if (!T1_wgpu.active) { return T1_TEX_FORMAT_RGBA8; }
+    return (u8)T1_web_gpu_compressed_format();
+}
+
+/*
+An array's mip levels, like on Direct3D (and Metal): down to 1 pixel, but
+array 0's and a compressed array's (only the first)
+*/
+static u32 T1_web_mip_levels(s32 array_i) {
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
+    if (array_i == 0) { return 1; }
+    if (T1_tex_arrays[array_i].format != T1_TEX_FORMAT_RGBA8) { return 1; }
+    u32 size = T1_tex_arrays[array_i].single_img_width;
+    if (T1_tex_arrays[array_i].single_img_height > size) {
+        size = T1_tex_arrays[array_i].single_img_height;
+    }
+    u32 levels = 1;
+    while (size > 1) { size /= 2; levels++; }
+    return levels;
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    (void)array_i;
+    return 1;
+    #else
+    #error
+    #endif
 }
 
 void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
@@ -160,7 +200,8 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
     if (
         T1_wgpu.tex_slices[tex_array_i] >= slices &&
         T1_wgpu.tex_widths[tex_array_i] == array->single_img_width &&
-        T1_wgpu.tex_heights[tex_array_i] == array->single_img_height)
+        T1_wgpu.tex_heights[tex_array_i] == array->single_img_height &&
+        T1_wgpu.tex_formats[tex_array_i] == array->format)
     {
         return;
     }
@@ -169,8 +210,11 @@ void T1_os_gpu_update_capacity_if_needed(s32 tex_array_i) {
         tex_array_i,
         array->single_img_width,
         array->single_img_height,
-        slices);
+        slices,
+        array->format,
+        T1_web_mip_levels(tex_array_i));
     T1_wgpu.tex_slices[tex_array_i] = slices;
+    T1_wgpu.tex_formats[tex_array_i] = array->format;
     T1_wgpu.tex_widths[tex_array_i] = array->single_img_width;
     T1_wgpu.tex_heights[tex_array_i] = array->single_img_height;
     array->gpu_capacity = slices;
@@ -216,8 +260,9 @@ void T1_os_gpu_write_tex_slice(
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void T1_os_gpu_generate_mipmaps_for_texture_array(s32 texture_array_i) {
-    // one mip level for now (WebGPU has no generateMipmap, it's a pass)
-    (void)texture_array_i;
+    // (WebGPU has no generateMipmap: the page draws each level, see MIPMAPS)
+    if (!T1_wgpu.active) { return; }
+    T1_web_gpu_mips(texture_array_i);
 }
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 #else

@@ -16,7 +16,8 @@ threads only if the server sends these headers with every file:
 
 Your app's files are the files next to this page (T1's resource folder);
 if it lists a folder, its file names go in a T1_files.txt there (a server
-can't list one). It needs WebGPU and JSPI: Chrome 137 or later
+can't list one). It needs WebGPU and JSPI: Chrome 137 or Safari 27 or
+later
 -->
 <html>
 <head>
@@ -354,7 +355,7 @@ if (!window.crossOriginIsolated) {
 }
 if (typeof WebAssembly.Suspending !== "function") {
     fail("This browser has no JSPI (WebAssembly.Suspending). " +
-        "Try Chrome 137 or later.");
+        "Try Chrome 137 or Safari 27 or later.");
 }
 
 /*
@@ -645,6 +646,24 @@ let dummy_array_view = null;
 let dummy_tex_view = null;
 const depths = new Map(); // a depth_tex -> {texture, view, cleared}
 let encoder = null; // the frame's
+/*
+THE FRAME'S TIME: a compute pass before the frame's passes and one after
+write the GPU's time as they start (where it has "timestamp-query"); a
+buffer the CPU can map gets the two, a frame or two later. Without it the
+time is 0, unknown. Each pass runs one group of an empty kernel, and the
+times are their starts: Apple's GPUs write none for an empty pass, nor at
+a pass's end. (Browsers round these times, to tenths of a millisecond
+or so)
+*/
+let timer = null; // {queries, resolved, free: mappable buffers, tick}
+
+function timer_pass(enc, writes) {
+    const pass = enc.beginComputePass({timestampWrites: writes});
+    pass.setPipeline(timer.tick);
+    pass.dispatchWorkgroups(1);
+    pass.end();
+}
+let frame_us = 0;
 const reads = []; // by read index: {state, staging, size, rows}
 const reads_waiting = []; // started, to be encoded after the frame
 
@@ -670,7 +689,7 @@ struct T1PresentVertex {
 }
 `;
 
-async function gpu_init() {
+async function gpu_init(mipmaps) {
     adapter = await navigator.gpu.requestAdapter({
         powerPreference: "high-performance",
     });
@@ -694,8 +713,43 @@ async function gpu_init() {
             " textures to a shader, T1 needs " + TEXARRAYS_CAP + "\n");
         return 0;
     }
-    device = await adapter.requestDevice({requiredLimits: limits});
+    // the GPU's frame time, where it has timestamps (see THE FRAME'S TIME)
+    const features = [];
+    for (const f of [
+        "timestamp-query", "texture-compression-bc", "texture-compression-etc2",
+    ]) {
+        if (adapter.features.has(f)) { features.push(f); }
+    }
+    device = await adapter.requestDevice({
+        requiredLimits: limits,
+        requiredFeatures: features,
+    });
     if (device === null) { return 0; }
+    if (device.features.has("timestamp-query")) {
+        timer = {
+            queries: device.createQuerySet({type: "timestamp", count: 2}),
+            resolved: device.createBuffer({
+                size: 16,
+                usage: GPUBufferUsage.QUERY_RESOLVE | GPUBufferUsage.COPY_SRC,
+            }),
+            free: [],
+            tick: device.createComputePipeline({
+                layout: "auto",
+                compute: {
+                    module: device.createShaderModule({
+                        code: "@compute @workgroup_size(1) fn t1_tick() {}",
+                    }),
+                    entryPoint: "t1_tick",
+                },
+            }),
+        };
+        for (let b = 0; b < 4; b++) {
+            timer.free.push(device.createBuffer({
+                size: 16,
+                usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+            }));
+        }
+    }
     device.lost.then((info) => {
         gpu_lost = true;
         write_text(2, "WebGPU device lost: " + info.message + "\n");
@@ -703,7 +757,10 @@ async function gpu_init() {
     const info = adapter.info || {};
     const text = "T1: WebGPU on " +
         [info.vendor, info.architecture, info.description]
-            .filter((s) => s).join(" ");
+            .filter((s) => s).join(" ") +
+        (timer !== null ? ", timing the GPU" : ", the GPU untimed") +
+        ", compressed textures " +
+        ["off", "BC3", "ETC2"][gpu_compressed_format()];
     console.log(text);
     log_to_terminal(text);
     device.addEventListener("uncapturederror", (e) => {
@@ -729,14 +786,28 @@ async function gpu_init() {
         },
         primitive: {topology: "triangle-list"},
     });
+    /*
+    like Metal's: the nearest one samples the first mip level only, the
+    linear ones every level (the nearest one) when T1's mipmaps are on
+    */
+    const linear_lods = mipmaps ? 32 : 0;
     samplers = [
-        device.createSampler({magFilter: "nearest", minFilter: "nearest"}),
-        device.createSampler({magFilter: "linear", minFilter: "linear"}),
+        device.createSampler({
+            magFilter: "nearest",
+            minFilter: "nearest",
+            lodMaxClamp: 0,
+        }),
+        device.createSampler({
+            magFilter: "linear",
+            minFilter: "linear",
+            lodMaxClamp: linear_lods,
+        }),
         device.createSampler({
             magFilter: "linear",
             minFilter: "linear",
             addressModeU: "repeat",
             addressModeV: "repeat",
+            lodMaxClamp: linear_lods,
         }),
     ];
 
@@ -769,21 +840,39 @@ const tex_usage =
     GPUTextureUsage.RENDER_ATTACHMENT |
     GPUTextureUsage.STORAGE_BINDING;
 
-function gpu_tex_array(array_i, width, height, slices) {
+/*
+T1TexFormat (T1_tex_array.h): rgba8, or compressed (only sampled, never
+drawn or written into, so no render target or storage use)
+*/
+const tex_formats = ["rgba8unorm", "bc3-rgba-unorm", "etc2-rgba8unorm"];
+
+function gpu_compressed_format() {
+    if (device.features.has("texture-compression-bc")) { return 1; }
+    if (device.features.has("texture-compression-etc2")) { return 2; }
+    return 0;
+}
+
+function gpu_tex_array(array_i, width, height, slices, format, mips) {
     const old = tex_arrays[array_i];
+    const compressed = format !== 0;
     const texture = device.createTexture({
         size: [width, height, slices],
-        format: "rgba8unorm",
-        usage: tex_usage,
+        mipLevelCount: mips,
+        format: tex_formats[format],
+        usage: compressed ?
+            GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.COPY_SRC :
+            tex_usage,
     });
     // (WebGPU's new textures are zeros: blank T1Texs are transparent)
     if (old !== undefined && old !== null) {
-        if (old.width === width && old.height === height) {
+        if (
+            old.width === width && old.height === height &&
+            old.format === format && old.mips === mips)
+        {
             const copier = device.createCommandEncoder();
-            copier.copyTextureToTexture(
-                {texture: old.texture},
-                {texture: texture},
-                [width, height, Math.min(old.slices, slices)]);
+            copy_levels(copier, old.texture, texture, width, height, mips,
+                0, Math.min(old.slices, slices));
             device.queue.submit([copier.finish()]);
         }
         old.texture.destroy();
@@ -792,13 +881,104 @@ function gpu_tex_array(array_i, width, height, slices) {
     tex_arrays[array_i] = {
         texture: texture,
         view: texture.createView({dimension: "2d-array"}),
+        format: format,
         width: width,
         height: height,
         slices: slices,
+        mips: mips,
         copy: null,
         copy_view: null,
         stale: new Uint8Array(slices).fill(1),
+        // written since its smaller mip levels were drawn
+        mips_stale: new Uint8Array(slices).fill(1),
     };
+}
+
+// slices first to first + count of from, every mip level, into to
+function copy_levels(enc, from, to, width, height, mips, first, count) {
+    for (let m = 0; m < mips; m++) {
+        enc.copyTextureToTexture(
+            {texture: from, mipLevel: m, origin: {x: 0, y: 0, z: first}},
+            {texture: to, mipLevel: m, origin: {x: 0, y: 0, z: first}},
+            [Math.max(1, width >> m), Math.max(1, height >> m), count]);
+    }
+}
+
+/*
+MIPMAPS: WebGPU has no generateMipmap, so each smaller level is drawn from
+the one above, a triangle over it sampling it linearly (the average of its
+2x2 pixels), for the slices written since
+*/
+let mips_pipeline = null;
+const mips_wgsl = `
+@group(0) @binding(0) var t1_above: texture_2d<f32>;
+@group(0) @binding(1) var t1_linear: sampler;
+struct T1MipVertex {
+    @builtin(position) pos: vec4f,
+    @location(0) uv: vec2f,
+};
+@vertex fn t1_mip_vertex(@builtin(vertex_index) vid: u32) -> T1MipVertex {
+    let xy = vec2f(f32((vid << 1u) & 2u), f32(vid & 2u));
+    var o: T1MipVertex;
+    o.pos = vec4f(xy.x * 2.0 - 1.0, 1.0 - xy.y * 2.0, 0.0, 1.0);
+    o.uv = xy;
+    return o;
+}
+@fragment fn t1_mip_fragment(i: T1MipVertex) -> @location(0) vec4f {
+    return textureSampleLevel(t1_above, t1_linear, i.uv, 0.0);
+}
+`;
+
+function gpu_mips(array_i) {
+    const array = tex_arrays[array_i];
+    if (!array || array.mips < 2) { return; }
+    if (mips_pipeline === null) {
+        const module = device.createShaderModule({code: mips_wgsl});
+        mips_pipeline = device.createRenderPipeline({
+            layout: "auto",
+            vertex: {module: module, entryPoint: "t1_mip_vertex"},
+            fragment: {
+                module: module,
+                entryPoint: "t1_mip_fragment",
+                targets: [{format: "rgba8unorm"}],
+            },
+            primitive: {topology: "triangle-list"},
+        });
+    }
+    const enc = device.createCommandEncoder();
+    const level_view = (s, m) => array.texture.createView({
+        dimension: "2d",
+        baseArrayLayer: s,
+        arrayLayerCount: 1,
+        baseMipLevel: m,
+        mipLevelCount: 1,
+    });
+    for (let s = 0; s < array.slices; s++) {
+        if (!array.mips_stale[s]) { continue; }
+        array.mips_stale[s] = 0;
+        for (let m = 1; m < array.mips; m++) {
+            const pass = enc.beginRenderPass({
+                colorAttachments: [{
+                    view: level_view(s, m),
+                    loadOp: "clear",
+                    clearValue: {r: 0, g: 0, b: 0, a: 0},
+                    storeOp: "store",
+                }],
+            });
+            pass.setPipeline(mips_pipeline);
+            pass.setBindGroup(0, device.createBindGroup({
+                layout: mips_pipeline.getBindGroupLayout(0),
+                entries: [
+                    {binding: 0, resource: level_view(s, m - 1)},
+                    {binding: 1, resource: samplers[1]},
+                ],
+            }));
+            pass.draw(3);
+            pass.end();
+        }
+        array.stale[s] = 1; // (its copy, if it has one, is behind now)
+    }
+    device.queue.submit([enc.finish()]);
 }
 
 function gpu_tex_delete(array_i) {
@@ -813,7 +993,10 @@ function gpu_tex_delete(array_i) {
 // a slice changed: the next copy of its array copies it
 function written(array_i, slice_i) {
     const array = tex_arrays[array_i];
-    if (array && slice_i < array.slices) { array.stale[slice_i] = 1; }
+    if (array && slice_i < array.slices) {
+        array.stale[slice_i] = 1;
+        array.mips_stale[slice_i] = 1;
+    }
 }
 
 function gpu_tex_write(
@@ -829,11 +1012,14 @@ function gpu_tex_write(
     written(array_i, slice_i);
 }
 
+// a slice's first mip level, what passes draw and write into
 function slice_view(array_i, slice_i) {
     return tex_arrays[array_i].texture.createView({
         dimension: "2d",
         baseArrayLayer: slice_i,
         arrayLayerCount: 1,
+        baseMipLevel: 0,
+        mipLevelCount: 1,
     });
 }
 
@@ -885,6 +1071,8 @@ function gpu_present(array_i, slice_i) {
                 dimension: "2d-array",
                 baseArrayLayer: slice_i,
                 arrayLayerCount: 1,
+                baseMipLevel: 0,
+                mipLevelCount: 1,
             })},
             {binding: 1, resource: samplers[0]},
         ],
@@ -1171,6 +1359,7 @@ function array_copy_view(array_i) {
     if (array.copy === null) {
         array.copy = device.createTexture({
             size: [array.width, array.height, array.slices],
+            mipLevelCount: array.mips,
             format: "rgba8unorm",
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
         });
@@ -1180,10 +1369,8 @@ function array_copy_view(array_i) {
     for (let s = 0; s < array.slices; s++) {
         if (!array.stale[s]) { continue; }
         array.stale[s] = 0;
-        frame_encoder().copyTextureToTexture(
-            {texture: array.texture, origin: {x: 0, y: 0, z: s}},
-            {texture: array.copy, origin: {x: 0, y: 0, z: s}},
-            [array.width, array.height, 1]);
+        copy_levels(frame_encoder(), array.texture, array.copy,
+            array.width, array.height, array.mips, s, 1);
     }
     return array.copy_view;
 }
@@ -1285,6 +1472,13 @@ function gpu_frame_begin(consts, size) {
     device.queue.writeBuffer(frame_consts_buf, 0, memory.buffer, consts, size);
     grid_slot = 0;
     for (const d of depths.values()) { d.cleared = false; }
+    if (timer !== null && timer.free.length > 0) {
+        timer_pass(frame_encoder(), {
+            querySet: timer.queries,
+            beginningOfPassWriteIndex: 0,
+        });
+        timer.timing = true;
+    }
 }
 
 // A draw or compute pass, u32s its T1PassU32s (see T1_pass.h)
@@ -1488,10 +1682,30 @@ function gpu_read_tex(array_i, slice_i, x, y, w, h) {
 
 function gpu_frame_end() {
     const enc = frame_encoder();
+    let timed = null;
+    if (timer !== null && timer.timing) {
+        timer.timing = false;
+        // (the start of a pass: Apple's GPUs write no time at a pass's end)
+        timer_pass(enc, {
+            querySet: timer.queries,
+            beginningOfPassWriteIndex: 1,
+        });
+        enc.resolveQuerySet(timer.queries, 0, 2, timer.resolved, 0);
+        timed = timer.free.pop();
+        enc.copyBufferToBuffer(timer.resolved, 0, timed, 0, 16);
+    }
     const started = reads_waiting.splice(0);
     for (const encode of started) { encode(enc); }
     device.queue.submit([enc.finish()]);
     encoder = null;
+    if (timed !== null) {
+        timed.mapAsync(GPUMapMode.READ).then(() => {
+            const ns = new BigUint64Array(timed.getMappedRange());
+            if (ns[1] > ns[0]) { frame_us = Number(ns[1] - ns[0]) / 1000; }
+            timed.unmap();
+            timer.free.push(timed);
+        }).catch(() => { timer.free.push(timed); });
+    }
     for (const read of reads) {
         if (!read || read.state !== "waiting" || read.staging === null) {
             continue;
@@ -1843,6 +2057,8 @@ const t1_imports = {
     gpu_lost: () => gpu_lost ? 1 : 0,
     gpu_name: gpu_name,
     gpu_tex_array: gpu_tex_array,
+    gpu_compressed_format: gpu_compressed_format,
+    gpu_mips: gpu_mips,
     gpu_tex_delete: gpu_tex_delete,
     gpu_tex_write: gpu_tex_write,
     gpu_clear: gpu_clear,
@@ -1856,6 +2072,7 @@ const t1_imports = {
     gpu_frame_begin: gpu_frame_begin,
     gpu_pass: gpu_pass,
     gpu_frame_end: gpu_frame_end,
+    gpu_frame_us: () => frame_us,
     gpu_read_buf: gpu_read_buf,
     gpu_read_tex: gpu_read_tex,
     gpu_read_finish: gpu_read_finish,
