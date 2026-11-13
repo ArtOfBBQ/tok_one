@@ -379,7 +379,7 @@ int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
     T1_gpu_init(&fatal_error);
-    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT,
+    T1Tex window_tex = T1_tex_new(WIDTH, HEIGHT,
         /* compress_if_possible: */ 0, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
 
@@ -428,7 +428,7 @@ int main(void) {
 
         draw((int32_t)panel_left, (int32_t)panel_top);
         // The window shows window_tex from the next T1_frame_update() on
-        T1_tex_update(window_tex, rgba);
+        T1_tex_update_from_rgba(window_tex, 0, 0, WIDTH, HEIGHT, rgba);
     }
 
     return 0;

@@ -1,12 +1,6 @@
 #ifndef T1_H
 #define T1_H
 
-/*
-Search for documentation by section:
-  APPLICATION STARTUP, FATAL ERRORS, MAIN LOOP, INPUT, TEXTURES,
-  RENDERING, BUFFERS, FILES, TOKENS, OPERATING SYSTEM, AUDIO
-*/
-
 #include <stdint.h>
 #include <stddef.h>
 
@@ -15,27 +9,14 @@ Search for documentation by section:
 
 /*
 APPLICATION STARTUP
-Each step reports problems through fatal_error and does nothing if it's
-already set, so you can call multiple and check for errors once at the end:
-
-T1_init(malloc, malloc, free, &fatal_error); // no GPU yet
-T1_gpu_init(&fatal_error);     // GPU device, T1's own textures
-T1_gpu_try_shader_source(...); // only if you make pipelines
-T1Tex window_tex = T1_tex_new(NULL, width, height, 0, &fatal_error);
+T1_init(malloc, malloc, free, &fatal_error);
+T1_gpu_init(&fatal_error);
+T1_gpu_try_shader_source(...); // only for your own pipelines
+T1Tex window_tex = T1_tex_new(width, height, 0, &fatal_error);
 T1_window_open(window_tex, &fatal_error);
 
-The window always shows a T1Tex, so T1_gpu_init() comes first. Call it
-before you use anything that renders: textures, buffers, pipelines or
-passes. Shaders are only needed for your own pipelines: an app that draws
-its own pixels just uploads them to the window's T1Tex, see examples/ for
-the smallest app.
-*/
-
-/*
-T1 allocates all its memory through your functions, they only need to align
-like malloc(). alloc_forever's memory is never freed, so it can be a bump
-allocator in a block of yours: then you know exactly what T1 took and the
-rest stays yours. alloc_temp's memory is given back with free_temp.
+T1 allocates only through your functions (aligned like malloc()).
+alloc_forever's memory is never freed, alloc_temp's goes back to free_temp.
 */
 void T1_init(
     void * (* alloc_forever)(size_t size),
@@ -46,12 +27,10 @@ void T1_gpu_init(
     char ** const fatal_error);
 
 /*
-Compiles shader_source, with T1's macro settings and GPU struct headers put
-in front of it, and builds your pipelines from it. If anything fails, *good
-is 0, error_recip (optional, may be NULL, else needs a cap of at least 512)
-gets a description, and the shaders of an earlier successful call stay, so
-you can retry with a different source. Needs T1_gpu_init(). Until one succeeds,
-only clear passes run.
+Compiles your shaders (T1's macro settings and GPU headers put in front) and
+builds your pipelines from them. On failure *good is 0, error_recip (NULL,
+or a cap of at least 512) says why, and the last good shaders stay. Until
+one succeeds, only clear passes run.
 */
 void T1_gpu_try_shader_source(
     const char * shader_source,
@@ -60,183 +39,92 @@ void T1_gpu_try_shader_source(
     const uint32_t error_recip_cap,
     char ** const fatal_error);
 
-// Opens the (one) window, showing tex (see MAIN LOOP). Your first frame
-// after this reports T1_frame_resized(), so you can build your scene there.
+// The first frame after this reports T1_frame_resized()
 void T1_window_open(
     T1Tex tex,
     char ** const fatal_error);
-// The T1Tex the window shows from the next frame on, e.g. a new one at the
-// window's new size
+// from the next frame on
 void T1_window_set_tex(T1Tex tex);
 void T1_window_toggle_fullscreen(void);
-// 1 while the window is full screen (or turning so), whoever made it so
 uint8_t T1_window_is_fullscreen(void);
 
 /*
 FATAL ERRORS
-Functions that can fail fatally take char ** const fatal_error:
-- declare char * fatal_error = NULL and pass &fatal_error, never NULL
-- they do nothing if *fatal_error is already set, so you can call several
-  in a row and check once afterwards
-- the first error stays, later ones don't overwrite it; T1 owns the string
-- after a fatal error, T1 is unusable
+Pass &fatal_error (a char * set to NULL). A function does nothing if it's
+already set, so check once after several calls. The first error stays, T1
+owns the string, and T1 is unusable after one.
 */
 
 /*
 MAIN LOOP
-T1 doesn't run a loop of its own, your app does:
-
 while (T1_frame_update()) {
     if (T1_frame_resized()) { rebuild what depends on the window size }
-    update(T1_frame_elapsed_us()); // writes buffers, textures, ...
+    update(T1_frame_elapsed_us());
 }
 
-T1_frame_update() finishes your frame and starts the next one: it runs
-your passes, shows the window's T1Tex as large as it fits in the window
-(keeping its aspect ratio, with black bands on the sides or on the top and
-bottom), handles input, and waits until the GPU is done with what your
-next frame writes. Showing the T1Tex blocks at the display's refresh rate.
-It doesn't care whether your passes or T1_tex_update() made the T1Tex.
-While the window is minimized or fully covered, it waits (handling input)
-until the window shows again, and that time doesn't count as elapsed. It
-returns 0 when the window's close button or the OS's quit command was
-used, or the GPU was lost (see T1_gpu_lost()). Call it from the main thread.
+T1_frame_update() runs your passes, shows the window's T1Tex (scaled to fit,
+black bands around), handles input and waits for the display. While the
+window is hidden it waits, and that time doesn't count as elapsed. Returns 0
+when the app should quit or the GPU was lost. Main thread only.
 */
 uint8_t  T1_frame_update(void);
-/*
-The GPU device stopped working: its driver crashed or was updated, or the
-GPU was removed. Every texture, buffer and pipeline went with it, T1 can't
-make them again, so the app ends (T1_frame_update() returns 0). Check this
-after your loop to tell the user why
-*/
+// The GPU is gone with everything on it: the app ends
 uint8_t  T1_gpu_lost(void);
-/*
-How long the GPU took to run a recent frame's passes, in microseconds: the
-latest frame T1 knows is done (a frame or two ago, see T1_FRAMES_CAP), 0
-until one is. GPUs differ too much for this to mean anything on its own:
-compare passes on one GPU, e.g. against a trivial pass, running the same
-passes for several frames and taking the smallest
-*/
+// A recent frame's GPU time (0 until one is known): compare on one GPU only
 uint64_t T1_gpu_frame_us(void);
-/*
-The GPU's name as its driver gives it (e.g. "Apple M2 Pro", "AMD Radeon(TM)
-Graphics"), for the user to see which device runs the app: "" before
-T1_gpu_init() or if the driver gives none. Characters outside ASCII are '?'
-*/
+// "" if unknown, '?' for non-ASCII
 const char * T1_gpu_name(void);
-/*
-Whether T1_frame_update() waits while the window is hidden (1, the
-default). 0 keeps your frames running at about 60 a second, unshown: for
-tools and automated runs that don't watch the window
-*/
+// 0: frames keep running (about 60 a second) while the window is hidden
 void T1_window_set_pause_when_hidden(uint8_t pause);
-// The window settled on a new size this frame. T1 keeps all your objects,
-// move, rebuild or delete what depends on the size. Until then, the
-// window's T1Tex was scaled to the window.
 uint8_t  T1_frame_resized(void);
-// Microseconds since the previous frame (0 on the first)
 uint64_t T1_frame_elapsed_us(void);
-/*
-The window's size in pixels, the screen's own (NULL for what you don't need): a
-T1Tex this size fills the window pixel for pixel. The mouse is in the same
-pixels, so a high-DPI screen (Retina, Windows' display scaling) is just a
-window with more of them
-*/
+// In the screen's own pixels, the mouse's too (NULL for what you don't need)
 void T1_window_get_size(uint32_t * width, uint32_t * height);
 
 /*
 INPUT (KEYBOARD, MOUSE, GAMEPAD)
-Keyboard keys, mouse buttons and gamepad buttons are all T1IOKeys. A key
-being down lasts, but taps are cleared every frame: consume them on the
-frame they end or lose them (and there may have been several in a frame).
-The mouse's position is in the window's pixels (see T1_window_get_size()),
-(0, 0) its bottom left; a stick's is -1 to 1 each way.
+Taps are cleared every frame: consume them on the frame they end. The
+mouse is in window pixels, (0, 0) at the bottom left; a stick is -1 to 1.
 */
 uint8_t   T1_io_key_is_down(T1IOKey key);
 uint8_t   T1_io_key_consume_tap_began_frame(T1IOKey key);
-// Whether any key at all began a tap this frame (consumes them all)
 uint8_t   T1_io_any_key_consume_tap_began_frame(void);
 uint8_t   T1_io_key_consume_short_tap_this_frame(T1IOKey key);
 uint8_t   T1_io_key_consume_long_tap_this_frame(T1IOKey key);
-float     T1_io_get_pos_x_this_frame(T1IOKey key); 
+float     T1_io_get_pos_x_this_frame(T1IOKey key);
 float     T1_io_get_pos_y_this_frame(T1IOKey key);
 uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y);
 
 /*
 TEXTURES
-T1_tex_new() uploads an image to gpu:
-width * height * 4 bytes of rgba, row by row.
-With rgba NULL the texture starts out blank, e.g.
-for passes to draw into. The T1Tex can then be used
-as a "texture" property and by passes. You can delete
-it or overwrite its pixels (same size) later:
-T1_tex_update() copies your rgba and returns at once
-(free or reuse it right away), and the new pixels are
-there from the next frame on, before it draws anything.
-It never waits for the GPU, so updating textures every
-frame (software rendering) costs a copy of them. Every
-texture can be sampled, drawn into and written by
-compute passes. Data that isn't a color (depth,
-touch ids) is packed into the 4 bytes of a pixel by
-your shaders.
-
-compress_if_possible is for pictures: the GPU keeps
-them compressed, a quarter of the memory (alpha too),
-in a format T1 picks for it (BC3 on desktop GPUs,
-ETC2 + EAC on Apple's phones and tablets). You still
-hand it rgba and never see the format. It's ignored,
-and the texture kept as rgba, when the GPU samples
-none of them or the width or height isn't a multiple
-of 4. A compressed texture costs detail where 4x4
-pixels hold more than two colours with sharp edges
-between them (text, pixel art: leave those
-uncompressed), needs pixels (not NULL), can only be
-sampled (no pass draws into it, writes or reads it)
-and has no mipmaps. T1_tex_update() encodes it again,
-some 10 to 100 nanoseconds a pixel.
+compress_if_possible: kept compressed (a quarter of the memory) when the GPU
+and size allow, then only sampled: no pass draws into, writes or reads it.
+Updates take x, y, width and height in multiples of 4 (or up to the edge),
+copy the pixels and return at once.
 */
 T1Tex T1_tex_new(
-    const uint8_t * rgba,
     uint32_t width,
     uint32_t height,
     uint8_t compress_if_possible,
     char ** const fatal_error);
-/*
-T1_tex_new_bc() is T1_tex_new() for pictures already compressed as BC1
-(bc3 0: 8 bytes a 4x4 block, no alpha) or BC3 (16 bytes, alpha), the
-blocks of .dds files (from after their header: the first mip level, block
-row by block row). On a GPU that keeps BC3 (every desktop GPU) and with a
-width and height that are multiples of 4, they go to the GPU as they are
-(BC1 ones turned into BC3, mostly by copying): no compression work, the
-fastest way to load a picture. Otherwise T1 decodes them and it's
-T1_tex_new() with compress_if_possible. The texture is then like any
-compressed one (see above); T1_tex_update() takes rgba as always.
-T1_bc_decode() gives you their rgba8 too (width * height * 4 bytes), as a
-GPU decodes them.
-*/
-T1Tex T1_tex_new_bc(
-    const uint8_t * blocks,
+void T1_tex_update_from_rgba(
+    T1Tex tex,
+    uint32_t x,
+    uint32_t y,
     uint32_t width,
     uint32_t height,
-    uint8_t bc3,
-    char ** const fatal_error);
-void T1_bc_decode(
-    const uint8_t * blocks,
-    const uint32_t width,
-    const uint32_t height,
-    const uint8_t bc3,
-    uint8_t * rgba);
-void T1_tex_update(
-    T1Tex tex,
     const uint8_t * rgba);
+void T1_tex_update_from_bc3(
+    T1Tex tex,
+    uint32_t x,
+    uint32_t y,
+    uint32_t width,
+    uint32_t height,
+    const uint8_t * bc3);
 void     T1_tex_delete(T1Tex tex);
 uint32_t T1_tex_get_width(T1Tex tex);
 uint32_t T1_tex_get_height(T1Tex tex);
-/*
-Like T1_buf_read_start(), and finished with T1_buf_read_finish(): w * h
-pixels (4 bytes each, row by row) from (x, y), the top left being (0, 0),
-as they are after the next rendered frame's passes
-*/
+// Like T1_buf_read_start(): rgba8 pixels, (0, 0) at the top left
 uint32_t T1_tex_read_start(
     T1Tex tex,
     uint32_t x,
@@ -246,118 +134,70 @@ uint32_t T1_tex_read_start(
 
 /*
 RENDERING
+Passes run in the order you made them.
 
-A frame is your list of passes, run in the order you made them. Passes and
-pipelines have ids: set a pass's properties with
-T1_pass_set_u32(), delete them with T1_pass_delete() and T1_pipeline_delete().
-
-Shaders are written in T1's small subset of MSL, which T1 will translate
-for other platforms, so keep them simple (with T1_SHADER_CHECK_ACTIVE,
-T1_gpu_try_shader_source() fails on anything outside it, or that a
-translation can't take, on every platform alike, and says where):
-- no #include or "using namespace", T1 puts what's needed in front
-- floats only (no half), and no typedefs except typedef struct {...} Name;
-- constants shared by your functions go at program scope with constant,
-  e.g. constant float2 offsets[4] = { float2(0.0f, 1.0f), ... };
-- no pointers: buffers are entry point parameters, e.g.
+Shaders are a subset of MSL (T1_SHADER_CHECK_ACTIVE refuses the rest and
+says where):
+- no #include or "using namespace"
+- floats only (no half), no typedefs but typedef struct {...} Name;
+- shared constants at program scope with constant
+- no pointers: buffers are entry point parameters,
   "const device MyStruct * things [[ buffer(T1_BUFS_I) ]]", used as
-  things[i].field. Copy an element into a local (MyStruct t = things[i]) or
-  pass the whole buffer on to a helper under the same name, never &things[i]
-- multiply matrices with mul(v, m), the row vector v times m, and two
-  matrices with mul(a, b) (a then b: mul(mul(v, a), b) is mul(v, mul(a, b))),
-  never with *
-- no implicit conversions between bool, ints and floats: write x != 0,
-  (b ? 1.0f : 0.0f), 35 instead of 35.0f for an s32, and both sides of
-  ?: of one type (float4(1.0f), not 1.0f, next to a float4)
-- a condition is one bool (a number: compare it; a vector: any() or all()),
-  no ! or math on the wrong type, % only on integers, and a vector or matrix
-  takes only its own type (a constructor converts)
-- || and && and ?: may run both of their sides, so no ++, = or calls that
-  write in what they might skip; ?: is between numbers and vectors, not structs
-- every path through a function that returns a value returns one, and no
-  recursion
+  things[i] (copy one into a local, or pass the whole buffer on under the
+  same name, never &things[i])
+- mul(v, m) for the row vector v times m, mul(a, b) for a then b, never *
+- no implicit conversions between bool, ints and floats; both sides of ?:
+  of one type
+- a condition is one bool (vectors: any() or all()), % only on integers
+- both sides of ||, && and ?: may run: nothing there may write; ?: only
+  between numbers and vectors
+- every path of a function that returns a value returns one; no recursion
 - a for's variable has a name of its own among those around it
-- = { ... } lists every element; no arrays as parameters, or assigned whole
-- structs go at program scope
-- threads write a buffer's vector one component at a time: a swizzle of
-  several may undo what another thread wrote to the rest of it. Threadgroup
-  memory's vectors take literal indices only. A write to threadgroup memory
-  is indexed by the thread's position, or inside an if on it (not one place
-  for all threads), and something must write it
-- sample a T1Tex with T1_sample_nearest(), T1_sample_linear() or
-  T1_sample_linear_repeat() (textures, tex, uv), read one pixel with
-  T1_read(), from the T1Textures at texture(0); no samplers of your own
-- a compute pass's "write_tex" is a T1WriteTex, used through
-  T1_write_tex_read(), T1_write_tex_write() and T1_write_tex_size()
+- = { ... } lists every element; no array parameters or array assignment
+- structs at program scope
+- threads write a buffer's vector one component at a time. Threadgroup
+  vectors take literal indices only; a threadgroup write is indexed by the
+  thread's position (or inside an if on it), and something must write it
+- textures: T1_sample_nearest(), T1_sample_linear(),
+  T1_sample_linear_repeat() (textures, tex, uv), T1_read(), on the
+  T1Textures at texture(0)
+- a compute pass's "write_tex": T1_write_tex_read(), _write(), _size()
 
-A pipeline is a function of your shaders (by name) plus the state that
-can't change afterwards: for drawing a vertex and a fragment function, how
-color(0) blends (T1_BLEND_*) and which triangles to skip (T1_CULL_*). *good
-is 0 if a function doesn't exist in the loaded shaders (names are checked
-when the first shaders load if there are none yet).
+A pipeline's function must exist in the loaded shaders, else *good is 0.
 
-Passes:
-- Any pass with "off" (u32) 1 is skipped until it's 0 again: e.g. a cache
-  drawn only when what it holds changed. It keeps its place in the order.
-- A clear pass fills a texture with a color.
-- A draw pass draws "vertex_count" (u32) vertices as triangles, from
-  vertex_id "vertex_start" (u32) on, with a pipeline. T1 binds no geometry:
-  your vertex function builds them from its vertex_id and your buffers.
-  "color_tex[0]" to "color_tex[3]" (u32 T1Texs, all one size) are where the
-  fragment function's [[color(k)]] go. To show what you drew, draw into
-  the window's T1Tex (see MAIN LOOP).
-  With "depth_tex" (u32 T1Tex) it depth-tests against a
-  depth buffer of that texture's size: passes with the same "depth_tex"
-  share it, the first one of the frame clears it, and the targets must be
-  its size.
-- A compute pass runs a compute pipeline once per pixel of its "write_tex"
-  (u32 T1Tex, see T1_WRITE_TEX_I), or once per element of a "threads[0]" *
-  "threads[1]" * "threads[2]" grid (u32s, 0 counts as 1) if "threads[0]" is
-  set, e.g. once per particle in a buffer. Its kernel gets its position in
-  the grid as [[thread_position_in_grid]], threads past the end don't run.
-  For a grid sized by the GPU, "threads_buf" (a T1Buf) holds it as 3 u32s,
-  "threads_buf_offset" (a multiple of 4) bytes in, read when the pass runs (an
-  earlier compute pass may have written them), in groups, not threads:
-  COMPUTE GROUPS below, set "threads_dims" (1, 2 or 3) to what the kernel's
-  position has. At most 65535 groups each way there.
-Draw and compute passes also have "params[0]" to "params[7]" (u32s for
-your shaders, e.g. T1Texs to sample, see T1_PARAMS_I), and "buf[0]" to
-"buf[11]" (u32 T1Bufs, see BUFFERS). Every pass's shaders also get a
-T1GPUFrameConsts at buffer(T1_FRAME_CONSTS_I). A pass that reads what an
-earlier pass drew or wrote waits for it.
+Pass properties (u32):
+- "off": 1 skips the pass, it keeps its place
+- draw: "vertex_count", "vertex_start" (no geometry is bound: build it from
+  vertex_id), "color_tex[0]" to "color_tex[3]" (one size), "depth_tex" (a
+  depth buffer its size, shared by passes with the same one, cleared by the
+  first of the frame)
+- compute: once per pixel of "write_tex", or per element of the grid
+  "threads[0]" * "threads[1]" * "threads[2]" (0 counts as 1), or of
+  "threads_buf" at "threads_buf_offset" (3 u32s read on the GPU, in groups,
+  at most 65535 a side; "threads_dims" 1 to 3)
+- draw and compute: "params[0]" to "params[7]" (T1_PARAMS_I), "buf[0]" to
+  "buf[11]". Every pass gets T1GPUFrameConsts at T1_FRAME_CONSTS_I.
 
 COMPUTE GROUPS
-Threads run in groups, whose size the type of the kernel's position says:
-uint: 256 x 1 x 1, uint2: 16 x 16 x 1, uint3: 8 x 8 x 4 (a uint2 kernel needs
-a grid more than a thread tall to be in groups of 16 x 16). The kernel gets
-[[thread_position_in_threadgroup]] and [[threadgroup_position_in_grid]] as
-well, same type. At the top of a kernel's body it may declare memory that its
-group shares, not its helpers', starting out with anything in it, at most
-32 KB in all:
-    threadgroup float samples[256];
-T1_threadgroup_barrier(), only at the top of a kernel's body (outside every
-if and loop), waits for all of its group, and what they wrote is then seen.
-A kernel with one needs a grid that's a multiple of its group.
+By the kernel position's type: uint 256 x 1 x 1, uint2 16 x 16 x 1, uint3
+8 x 8 x 4. Threadgroup memory (at most 32 KB, uninitialized) is declared at
+the top of a kernel's body. T1_threadgroup_barrier() only at the top level
+of a kernel's body; a kernel with one needs a grid of whole groups.
 
 COMPUTE ATOMICS
-Any number of threads may change the same uint at once with these, in kernels
-and their helpers. buf is a writable buffer of uints ("device uint * buf",
-one of the kernel's own, by name), i its index. Each gives what was there
-before, but T1_atomic_store() (nothing):
+On a kernel's own "device uint * buf", returning the old value (store:
+nothing), ordering nothing else; don't mix with plain buf[i] in a pass:
     T1_atomic_load(buf, i)                T1_atomic_store(buf, i, value)
     T1_atomic_add(buf, i, value)          T1_atomic_exchange(buf, i, value)
     T1_atomic_min(buf, i, value)          T1_atomic_max(buf, i, value)
     T1_atomic_and(buf, i, value)          T1_atomic_or(buf, i, value)
     T1_atomic_xor(buf, i, value)
-    T1_atomic_compare_exchange(buf, i, expected, value) // if it's expected
-They order nothing else: another thread may see the other memory you wrote
-before or after them. Don't mix them with plain buf[i] in the same pass.
+    T1_atomic_compare_exchange(buf, i, expected, value)
 */
 #define T1_BLEND_NONE                0
-// black adds nothing; it's tested against depth but doesn't write it: what
-// adds up doesn't depend on its order, so nothing it draws may hide the rest
+// tested against depth, doesn't write it
 #define T1_BLEND_ADDITIVE            1
-#define T1_BLEND_PREMULTIPLIED_ALPHA 2 // rgb already multiplied by alpha
+#define T1_BLEND_PREMULTIPLIED_ALPHA 2
 #define T1_BLEND_STRAIGHT_ALPHA      3
 #define T1_CULL_NONE  0
 #define T1_CULL_BACK  1
@@ -381,24 +221,15 @@ uint32_t T1_pass_new_clear(
 uint32_t T1_pass_new_draw(uint32_t pipeline);
 uint32_t T1_pass_new_compute(uint32_t pipeline);
 void     T1_pass_set_u32(uint32_t pass, const char * property, uint32_t value);
-// the passes after it move up, so the order stays the same
 void     T1_pass_delete(uint32_t pass);
 uint8_t  T1_pass_exists(uint32_t pass);
 void     T1_pipeline_delete(uint32_t pipeline);
 
 /*
 BUFFERS
-GPU memory of any size for your shaders, zeroed at first. A pass binds up to
-12 of them with its "buf[0]" to "buf[11]" properties, and its shaders read
-"buf[k]" at buffer(T1_BUFS_I + k) as whatever you stored there, e.g.
-    device MyParticle * particles [[ buffer(T1_BUFS_I) ]]
-Compute passes can write to them, and later passes see what they wrote.
-
-T1_buf_write() copies data right away, so it can live on your stack. The
-GPU sees your writes in order, from the next rendered frame on, and they
-stay until something overwrites them. Offsets and sizes are multiples of 4. Keep the C and shader versions of a
-struct identical: floats, uint32_ts and arrays of them are safe, while
-Metal's float3 takes 16 bytes.
+Zeroed at first; a pass's "buf[k]" is buffer(T1_BUFS_I + k). Writes are
+copied at once and seen in order from the next frame on. Offsets and sizes
+are multiples of 4. Metal's float3 takes 16 bytes.
 */
 T1Buf T1_buf_new(uint64_t size, char ** const fatal_error);
 void  T1_buf_write(
@@ -409,23 +240,17 @@ void  T1_buf_write(
 void  T1_buf_delete(T1Buf buf);
 
 /*
-Reading back what your shaders wrote. T1_buf_read_start() asks for size bytes
-at offset as they are after the next rendered frame's passes, and returns an
-id (T1_BUF_READ_NONE if T1_BUF_READS_CAP reads are already waiting). Call
-T1_buf_read_finish() with it once per frame or so: it returns 0 while the
-GPU isn't done, usually for a frame or two, then copies the bytes to recip
-and returns 1, after which the id is free again. Deleting the buffer before
-the frame renders gives zeros.
+The bytes as they are after the next frame's passes. start gives
+T1_BUF_READ_NONE if too many are waiting; finish returns 0 until they're
+there, then copies them to recip (once).
 */
 uint32_t T1_buf_read_start(T1Buf buf, uint64_t offset, uint64_t size);
 uint8_t  T1_buf_read_finish(uint32_t read, void * recip);
 
 /*
 FILES
-Your app reads its assets from the resources dir, and may write its own
-files (saves, settings) in the writables dir. T1_res_path() and
-T1_writable_path() give the full path of a file in either (of the dir
-itself for ""), every other function takes full paths.
+T1_res_path() and T1_writable_path() give full paths (of the dir for ""),
+the rest take full paths.
 */
 void T1_res_path(const char * filename, char * recip, uint32_t recip_cap);
 void T1_writable_path(
@@ -433,10 +258,8 @@ void T1_writable_path(
     char * recip,
     uint32_t recip_cap);
 uint8_t T1_file_exists(const char * path);
-// 0 if there's no such file
 uint64_t T1_file_size(const char * path);
-// Fills recip with the file and a 0 after it, so recip_cap must be larger
-// than the file
+// recip gets a 0 after the file: its cap must be larger
 void T1_file_read(
     const char * path,
     char * recip,
@@ -450,7 +273,7 @@ void T1_file_write(
 void T1_file_delete(const char * path);
 void T1_file_copy(
     const char * src_path, const char * dst_path);
-// The names of the files in a dir, each followed by a 0
+// each name followed by a 0
 void T1_dir_filenames(
     const char * path,
     char * filenames,
@@ -459,53 +282,28 @@ void T1_dir_filenames(
 /*
 OPERATING SYSTEM
 */
-// microseconds since some point in the past (the same all run long)
 uint64_t T1_time_us(void);
-// the CPU's logical cores, at least 1
 uint32_t T1_cpu_core_count(void);
 
 void T1_thread_start(
     void *(*function_to_run)(void *), void * arg_on_heap);
-// a new mutex's id
 uint32_t T1_mutex_new(void);
 uint8_t T1_mutex_trylock(uint32_t mutex_id);
 void T1_mutex_lock(uint32_t mutex_id);
 void T1_mutex_unlock(uint32_t mutex_id);
 
-// text to the error output (stderr), as it is: no newline added
+// to stderr, no newline added
 void T1_write_error(const char * text);
 
 /*
 FONTS
-The operating system's fonts, for text in any language without font files
-of your own. T1_font_glyph() draws one Unicode codepoint (a number from 0 to
-0x10FFFF, not its UTF-8 bytes) with the system's font, or with whichever
-installed font has it when that one doesn't (kanji, Arabic, symbols...).
-size is the font's height in pixels: its ascent plus its descent, the top
-of its tallest letters to the bottom of its lowest.
-
-The glyph comes as its coverage, 0 (none) to 255 (full), w * h bytes row by
-row from the top, into alpha (alpha_cap bytes). Its place, in pixels from
-the pen on the baseline: its left edge is left to the right of the pen, its
-top edge top above the baseline (y goes up). advance is how far the pen
-moves for the next letter. A glyph with nothing to draw (a space) has w and
-h 0.
-
-*good is 0 if no installed font has the codepoint (or none can be read), or
-if the glyph needs more than alpha_cap bytes: w and h then say how many.
-With alpha NULL it only measures the glyph (w, h, left, top, advance), which
-is quicker: a layout needs those at once, the pixels can come later.
-On Windows, only codepoints up to 0xFFFF so far. Call it from one thread at
-a time. Each call draws the glyph anew (a few dozen microseconds): keep what
-you'll draw again.
-
-T1_font_set_language() says which language the text is in, as a BCP 47
-code: "ja", "zh-Hans", "zh-Hant", "ko", "en"... (NULL or "": the system's).
-It matters for Chinese, Japanese and Korean: they share most of their
-characters' codepoints but draw them differently (直 in a Japanese font
-isn't 直 in a Chinese one), so the fonts that draw them are picked by it.
-Glyphs drawn before it changes may look wrong next to new ones: draw them
-again.
+The system's fonts. A glyph is drawn as coverage (w * h bytes from the top)
+into alpha; left and top place it from the pen on the baseline (y up). size
+is ascent plus descent in pixels. *good is 0 if no font has the codepoint
+or alpha_cap is too small (w and h then say how much); alpha NULL only
+measures. Windows: codepoints up to 0xFFFF. One thread at a time.
+T1_font_set_language() (BCP 47, NULL: the system's) picks Chinese, Japanese
+or Korean shapes for shared codepoints.
 */
 void T1_font_set_language(const char * language);
 void T1_font_glyph(
@@ -522,22 +320,9 @@ void T1_font_glyph(
 
 /*
 AUDIO
-T1 plays 16-bit stereo at T1_AUDIO_RATE (44.1kHz) and makes none of it:
-your fill makes every sample. T1_audio_start() opens the audio device, and
-from then on T1's audio thread calls fill whenever the device wants more:
-out gets frames frames, a frame a left and a right sample (frames * 2
-int16_t, left first). Calls come every few milliseconds, a few hundred
-frames each, so whatever you put in out plays almost at once.
-
-fill runs on the audio thread, not yours: it must be quick and must never
-wait (no locks held for long, no allocations, no file reads, no printing),
-or the sound stutters. Hand it work through memory both threads can see,
-e.g. C11's <stdatomic.h> (see examples/soundkeyboard: notes tapped on the
-main thread start playing in fill). Mixing sounds, volumes, music, effects
-are all yours to make in fill.
-
-Call it once. *good is 0 when there's no audio device (the app goes on,
-silent).
+16-bit stereo at T1_AUDIO_RATE. fill makes every sample, frames * 2 int16_t
+(left first), on T1's audio thread: it must never wait (no locks, allocation,
+files or printing). Call T1_audio_start() once; *good is 0 without a device.
 */
 #define T1_AUDIO_RATE 44100
 #if T1_AUDIO_ACTIVE == T1_ACTIVE
@@ -550,51 +335,21 @@ void T1_audio_start(T1AudioFill fill, void * user, uint8_t * good);
 
 /*
 TOKENS
-
-A tokenizer is absolutely not necessary for rendering - it's exposed here
-only because T1 needs it for transpiling your shader code, and I experienced
-a regular need for it.
-
-Splits text into tokens by rules you register, e.g. for a parser of your
-own file format. Each rule gives its tokens a kind, a number you choose:
-- a literal is exact text: "==", "{", "float"
-- a run is one byte from first_set, then as many bytes from rest_set as
-  follow: identifiers, numbers, whitespace. Sets are written like
-  "A-Za-z0-9_" (ranges and single bytes, a '-' first or last is itself), a
-  '^' first means every byte except those; "" is the empty set
-- a delimited token is start text, then everything up to stop text, and
-  the stop too if stop_in_token: block comments, strings, or line comments
-  that leave their newline. The byte after escape (0 for none) is never
-  part of stop. If stop never comes, the token ends with the text.
-At every position the longest match wins, and of equally long ones the rule
-registered first, so register keywords before an identifier run (then
-"float" is the keyword and "float4" an identifier). Tokens of discarded
-rules (whitespace, comments) aren't stored. Bytes no rule matches become
-T1_TOKEN_UNMATCHED tokens, a row of them is one token.
-
-uint32_t t = T1_token_new();
-T1_token_add_run(t, " \t\r\n", " \t\r\n", MY_SPACE, 1);
-T1_token_add_run(t, "#", "^\n", MY_COMMENT, 1); // to the end of the line
-T1_token_add_literal(t, "newmtl", MY_NEWMTL, 0);
-T1_token_add_run(t, "^ \t\r\n", "^ \t\r\n", MY_WORD, 0);
-T1_token_build(t); // once, after the last rule
-T1_token_run(t, text, text_size);
-
-T1_token_build() merges the rules into one state machine, so a run costs
-about one table lookup per byte, however many rules there are. Tokens point
-into the text you ran on: keep it until you're done with them, they last
-until the next T1_token_run(). Lines count from 1. Needs T1_init().
-
-A token's text is all it matched, its value is the same except that a
-delimited token's value leaves out start and stop ("abc" for "\"abc\"").
-T1_token_value() gives it 0-terminated, and T1_token_equals(), _copy() and
-_parse_*() work on values too. Asking for a token past the last one is fine:
-it's a T1_TOKEN_END token of size 0 at the end of the text, so a parser can
-look ahead without checking the count.
+A tokenizer by rules, each giving its tokens a kind of your choosing:
+- literal: exact text
+- run: a byte of first_set, then any from rest_set. Sets are like
+  "A-Za-z0-9_"; '^' first negates; "" is empty
+- delimited: start, then up to stop (included if stop_in_token); the byte
+  after escape never ends it
+The longest match wins, then the rule added first. Discarded tokens aren't
+kept; unmatched bytes make T1_TOKEN_UNMATCHED tokens. Call T1_token_build()
+after the last rule. Tokens point into the text you ran on and last until
+the next run. Lines count from 1. A delimited token's value leaves out start
+and stop. Past the last token is a T1_TOKEN_END token of size 0.
 */
 #define T1_TOKEN_UNMATCHED UINT32_MAX
 #define T1_TOKEN_END       (UINT32_MAX - 1)
-// 0 is never a tokenizer
+// never 0
 uint32_t T1_token_new(void);
 void     T1_token_delete(uint32_t tokenizer);
 void     T1_token_add_literal(
@@ -623,25 +378,20 @@ void     T1_token_run(
     uint64_t text_size);
 uint32_t T1_token_count(uint32_t tokenizer);
 uint32_t T1_token_kind(uint32_t tokenizer, uint32_t i);
-// Not 0-terminated, see T1_token_size()
+// not 0-terminated
 const char * T1_token_text(uint32_t tokenizer, uint32_t i);
-// 0-terminated, lasts until the next T1_token_run()
 const char * T1_token_value(uint32_t tokenizer, uint32_t i);
 uint32_t T1_token_size(uint32_t tokenizer, uint32_t i);
 uint32_t T1_token_line(uint32_t tokenizer, uint32_t i);
 uint8_t  T1_token_equals(uint32_t tokenizer, uint32_t i, const char * str);
-// Copies the value and a 0, cut short to fit recip_cap
+// cut short to fit
 void     T1_token_copy(
     uint32_t tokenizer,
     uint32_t i,
     char * recip,
     uint32_t recip_cap);
-/*
-The whole value as a number, else *good is 0: f64 takes 12, -0.5, .5, 1e-3
-(not rounded perfectly in the last bit), s64 takes -12 and 0x1F
-*/
+// f64: 12, -0.5, .5, 1e-3; s64: -12, 0x1F
 double   T1_token_parse_f64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 int64_t  T1_token_parse_s64(uint32_t tokenizer, uint32_t i, uint8_t * good);
 
 #endif // T1_H
-

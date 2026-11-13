@@ -208,7 +208,7 @@ int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
     T1_gpu_init(&fatal_error);
-    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT,
+    T1Tex window_tex = T1_tex_new(WIDTH, HEIGHT,
         /* compress_if_possible: */ 0, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
     if (fatal_error != NULL) {
@@ -236,7 +236,7 @@ int main(void) {
         glyphs_missing);
 
     // the picture doesn't change: T1 shows it every frame
-    T1_tex_update(window_tex, rgba);
+    T1_tex_update_from_rgba(window_tex, 0, 0, WIDTH, HEIGHT, rgba);
     while (T1_frame_update()) {}
 
     return 0;

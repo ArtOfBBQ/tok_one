@@ -437,39 +437,3 @@ void T1_bc_decode(
         }
     }
 }
-
-void T1_bc1_to_bc3(
-    const u8 * restrict bc1,
-    const u32 width,
-    const u32 height,
-    u8 * restrict bc3)
-{
-    T1_assert(width % 4 == 0 && height % 4 == 0);
-    T1BCBlock k;
-    u8 px[16 * 4];
-    const u64 blocks = (u64)(width / 4) * (height / 4);
-    for (u64 b = 0; b < blocks; b++) {
-        const u8 * in = bc1 + b * T1_BC1_BLOCK_BYTES;
-        u8 * out = bc3 + b * T1_BC3_BLOCK_BYTES;
-        const u32 c0 = (u32)in[0] | ((u32)in[1] << 8);
-        const u32 c1 = (u32)in[2] | ((u32)in[3] << 8);
-        if (c0 > c1) {
-            // 4 colours, as BC3 reads them: opaque, the colours as they are
-            out[0] = 255;
-            out[1] = 255;
-            for (u32 i = 2; i < 8; i++) { out[i] = 0; }
-            for (u32 i = 0; i < 8; i++) { out[8 + i] = in[i]; }
-            continue;
-        }
-        // 3 colours and maybe holes, which BC3 reads otherwise: again
-        T1_bc_decode_color(in, 1, px);
-        for (u32 i = 0; i < 16; i++) {
-            k.r[i] = px[i * 4 + 0];
-            k.g[i] = px[i * 4 + 1];
-            k.b[i] = px[i * 4 + 2];
-            k.a[i] = px[i * 4 + 3];
-        }
-        T1_bc_alpha_block(&k, out);
-        T1_bc_color_block(&k, out + 8);
-    }
-}

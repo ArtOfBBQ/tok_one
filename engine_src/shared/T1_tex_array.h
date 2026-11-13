@@ -12,7 +12,7 @@ asked to) in the one format the platform picked for this GPU
 (T1_os_gpu_compressed_format(): BC3, see T1_bc.h, else ETC2 + EAC, see
 T1_etc.h, else none). Arrays of one size but another format are arrays of
 their own. A compressed array is only sampled (no pass draws or writes into
-it, no reads), has one mip level, and T1_tex_update() encodes its pixels
+it, no reads), has one mip level, and T1_tex_update_from_rgba() encodes its pixels
 */
 typedef u8 T1TexFormat;
 enum {
@@ -68,20 +68,24 @@ b8 T1_tex_is_compressed(T1Tex tex);
 Public functions (exposed via T1.h)
 */
 T1Tex T1_tex_new(
-    const u8 * rgba,
     u32 width,
     u32 height,
     b8 compress_if_possible,
     char ** const fatal_error);
-T1Tex T1_tex_new_bc(
-    const u8 * blocks,
+void T1_tex_update_from_rgba(
+    T1Tex tex,
+    u32 x,
+    u32 y,
     u32 width,
     u32 height,
-    b8 bc3,
-    char ** const fatal_error);
-void T1_tex_update(
-    T1Tex tex,
     const u8 * rgba);
+void T1_tex_update_from_bc3(
+    T1Tex tex,
+    u32 x,
+    u32 y,
+    u32 width,
+    u32 height,
+    const u8 * bc3);
 void T1_tex_delete(T1Tex tex);
 u32 T1_tex_get_width(T1Tex tex);
 u32 T1_tex_get_height(T1Tex tex);

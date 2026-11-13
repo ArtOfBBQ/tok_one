@@ -1162,30 +1162,41 @@ void T1_os_gpu_delete_texture_array(s32 array_i) {
 void T1_os_gpu_write_tex_slice(
     s32 tex_array_i,
     s32 tex_slice_i,
-    const u8 * rgba)
+    u32 x,
+    u32 y,
+    u32 w,
+    u32 h,
+    const u8 * pixels)
 {
     if (!T1_os_gpu_active()) { return; }
     T1_assert(tex_array_i >= 0 && tex_array_i < T1_TEXARRAYS_CAP);
     T1_assert(tex_slice_i >= 0);
-    T1_assert(rgba != NULL);
-    if (rgba == NULL) { return; }
+    T1_assert(pixels != NULL);
+    if (pixels == NULL) { return; }
+    T1_assert(x + w <= T1_tex_arrays[tex_array_i].single_img_width);
+    T1_assert(y + h <= T1_tex_arrays[tex_array_i].single_img_height);
 
     T1_os_gpu_update_capacity_if_needed(tex_array_i);
     if (T1_d3d->texs[tex_array_i] == NULL) { return; }
 
-    u32 width = T1_tex_arrays[tex_array_i].single_img_width;
-    u32 height = T1_tex_arrays[tex_array_i].single_img_height;
     const T1TexFormat format = T1_tex_arrays[tex_array_i].format;
-    // (a compressed array's rows are rows of 4x4 blocks)
+    T1D3D11Box box;
+    box.left = x;
+    box.top = y;
+    box.front = 0;
+    box.right = x + w;
+    box.bottom = y + h;
+    box.back = 1;
+    // (a compressed array's rows are rows of 4x4 blocks, its box on them)
     T1_d3d->ctx->vtbl->UpdateSubresource(
         T1_d3d->ctx,
         T1_d3d->texs[tex_array_i],
         (u32)tex_slice_i * T1_d3d->tex_mips[tex_array_i],
-        NULL,
-        rgba,
-        T1_tex_format_row_bytes(format, width),
-        T1_tex_format_bytes(format, width, height));
-    // (UpdateSubresource has copied rgba by now: the caller's again)
+        &box,
+        pixels,
+        T1_tex_format_row_bytes(format, w),
+        T1_tex_format_bytes(format, w, h));
+    // (UpdateSubresource has copied the pixels by now: the caller's again)
     T1_gpu_d3d11_written(tex_array_i, tex_slice_i);
 }
 

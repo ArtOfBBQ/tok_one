@@ -206,15 +206,20 @@ void T1_os_gpu_generate_mipmaps_for_texture_array(
 #endif
 
 /*
-A texture slice's new pixels (its width * height * 4 bytes of rgba), from
-T1_tex_update(): the platform copies what it needs before it returns (the
-caller may free rgba right away) and has them on the GPU by the next frame
+A part of a texture slice, at (x, y), w * h pixels (whole 4x4 blocks in a
+compressed array, but at its edge), from pixels in its array's format
+(T1_tex_format_bytes(format, w, h) of them, rows of the part): the platform
+copies what it needs before it returns (the caller may free them right away)
+and has them on the GPU by the next frame
 */
-// a slice's pixels in its array's format (T1_tex_format_bytes() of them)
 void T1_os_gpu_write_tex_slice(
     s32 tex_array_i,
     s32 tex_slice_i,
-    const u8 * rgba);
+    u32 x,
+    u32 y,
+    u32 w,
+    u32 h,
+    const u8 * pixels);
 
 /*
 The T1TexFormat (T1_tex_array.h) compressed textures take on this GPU, the

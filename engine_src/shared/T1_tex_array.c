@@ -220,7 +220,6 @@ T1Tex T1_tex_array_new_slice(
 }
 
 T1Tex T1_tex_new(
-    const u8 * rgba,
     u32 width,
     u32 height,
     b8 compress_if_possible,
@@ -232,14 +231,11 @@ T1Tex T1_tex_new(
         *fatal_error = "T1_tex_new() needs a width and height";
         return T1_TEX_NONE;
     }
-    // (a blank texture is for passes to draw into: it can't be compressed)
-    T1_assert(rgba != NULL || !compress_if_possible);
     
-    // compressed if it can be: pixels, whole 4x4 blocks, and a GPU that
-    // samples a compressed format (else rgba8, as asked or not)
+    // compressed if it can be: whole 4x4 blocks, and a GPU that samples a
+    // compressed format (else rgba8, as asked or not)
     const T1TexFormat format =
-        compress_if_possible && rgba != NULL &&
-        width % 4 == 0 && height % 4 == 0 ?
+        compress_if_possible && width % 4 == 0 && height % 4 == 0 ?
             (T1TexFormat)T1_os_gpu_compressed_format() : T1_TEX_FORMAT_RGBA8;
     
     T1Tex tex = T1_tex_array_new_slice(
@@ -250,102 +246,122 @@ T1Tex T1_tex_new(
         fatal_error);
     if (*fatal_error != 0) { return T1_TEX_NONE; }
     
-    if (rgba != NULL) {
-        T1_tex_update(tex, rgba);
-    } else {
-        // blank until a pass draws to it
-        T1_os_gpu_update_capacity_if_needed(T1_tex_to_array_i(tex));
-    }
-    
-    return tex;
-}
-
-T1Tex T1_tex_new_bc(
-    const u8 * blocks,
-    u32 width,
-    u32 height,
-    b8 bc3,
-    char ** const fatal_error)
-{
-    if (*fatal_error != 0) { return T1_TEX_NONE; }
-    
-    if (blocks == NULL || width < 1 || height < 1) {
-        *fatal_error = "T1_tex_new_bc() needs blocks, a width and a height";
-        return T1_TEX_NONE;
-    }
-    
-    // a GPU that keeps BC3: the blocks as they are (BC1 ones made BC3)
-    if (
-        T1_os_gpu_compressed_format() == T1_TEX_FORMAT_BC3 &&
-        width % 4 == 0 && height % 4 == 0)
-    {
-        T1Tex tex = T1_tex_array_new_slice(
-            width,
-            height,
-            T1_TEX_FORMAT_BC3,
-            /* b8 never_delete: */ 0,
-            fatal_error);
-        if (*fatal_error != 0) { return T1_TEX_NONE; }
-        const s32 array_i = T1_tex_to_array_i(tex);
-        const s32 slice_i = T1_tex_to_slice_i(tex);
-        if (bc3) {
-            T1_os_gpu_write_tex_slice(array_i, slice_i, blocks);
-        } else {
-            u8 * as_bc3 = T1_mem_malloc_managed(
-                T1_tex_format_bytes(T1_TEX_FORMAT_BC3, width, height));
-            T1_bc1_to_bc3(blocks, width, height, as_bc3);
-            T1_os_gpu_write_tex_slice(array_i, slice_i, as_bc3);
-            T1_mem_free_managed(as_bc3);
-        }
+    const s32 array_i = T1_tex_to_array_i(tex);
+    if (format == T1_TEX_FORMAT_RGBA8) {
+        // blank until a pass draws to it or it's updated
+        T1_os_gpu_update_capacity_if_needed(array_i);
         return tex;
     }
-    
-    // any other: its pixels, compressed in this GPU's format if it has one
-    u8 * rgba = T1_mem_malloc_managed((u64)width * height * 4);
-    T1_bc_decode(blocks, width, height, bc3, rgba);
-    T1Tex tex = T1_tex_new(
-        rgba, width, height, /* compress_if_possible: */ 1, fatal_error);
-    T1_mem_free_managed(rgba);
+    // (black: a compressed one is never drawn into, only updated)
+    const u32 bytes = T1_tex_format_bytes(format, width, height);
+    u8 * zeros = T1_mem_malloc_managed(bytes);
+    T1_std_memset(zeros, 0, bytes);
+    T1_os_gpu_write_tex_slice(
+        array_i, T1_tex_to_slice_i(tex), 0, 0, width, height, zeros);
+    T1_mem_free_managed(zeros);
     return tex;
 }
 
-void T1_tex_update(
+/*
+Whether (x, y, w, h) is a part of tex an update can take: inside it, in
+whole 4x4 blocks except where it reaches the edge (a compressed texture
+takes whole blocks, and every texture takes the same parts)
+*/
+static b8 T1_tex_update_part_is_legal(
+    const T1Tex tex,
+    const u32 x,
+    const u32 y,
+    const u32 w,
+    const u32 h)
+{
+    const s32 array_i = T1_tex_to_array_i(tex);
+    const s32 slice_i = T1_tex_to_slice_i(tex);
+    if (
+        array_i < 0 || array_i >= (s32)T1_tex_arrays_size ||
+        slice_i < 0 || slice_i >= (s32)T1_tex_arrays[array_i].images_size ||
+        T1_tex_arrays[array_i].images[slice_i].deleted)
+    {
+        return 0;
+    }
+    const u32 tex_w = T1_tex_arrays[array_i].single_img_width;
+    const u32 tex_h = T1_tex_arrays[array_i].single_img_height;
+    return
+        w > 0 && h > 0 &&
+        x <= tex_w && w <= tex_w - x &&
+        y <= tex_h && h <= tex_h - y &&
+        x % 4 == 0 && y % 4 == 0 &&
+        (w % 4 == 0 || x + w == tex_w) &&
+        (h % 4 == 0 || y + h == tex_h);
+}
+
+void T1_tex_update_from_rgba(
     T1Tex tex,
+    u32 x,
+    u32 y,
+    u32 width,
+    u32 height,
     const u8 * rgba)
 {
-    s32 array_i = T1_tex_to_array_i(tex);
-    s32 slice_i = T1_tex_to_slice_i(tex);
-    T1_assert(array_i >= 0);
-    T1_assert(array_i < (s32)T1_tex_arrays_size);
-    T1_assert(slice_i >= 0);
-    T1_assert(slice_i < (s32)T1_tex_arrays[array_i].images_size);
-    T1_assert(!T1_tex_arrays[array_i].images[slice_i].deleted);
-
+    const b8 legal = rgba != NULL &&
+        T1_tex_update_part_is_legal(tex, x, y, width, height);
+    T1_assert(legal);
+    if (!legal) { return; }
+    const s32 array_i = T1_tex_to_array_i(tex);
+    const s32 slice_i = T1_tex_to_slice_i(tex);
+    
     const T1TexFormat format = T1_tex_arrays[array_i].format;
     if (format != T1_TEX_FORMAT_RGBA8) {
         // encoded first (no mipmaps: see T1TexFormat)
-        const u32 w = T1_tex_arrays[array_i].single_img_width;
-        const u32 h = T1_tex_arrays[array_i].single_img_height;
-        u8 * blocks = T1_mem_malloc_managed(T1_tex_format_bytes(format, w, h));
+        u8 * blocks = T1_mem_malloc_managed(
+            T1_tex_format_bytes(format, width, height));
         if (format == T1_TEX_FORMAT_BC3) {
-            T1_bc3_encode(rgba, w, h, blocks);
+            T1_bc3_encode(rgba, width, height, blocks);
         } else {
-            T1_etc2_eac_encode(rgba, w, h, blocks);
+            T1_etc2_eac_encode(rgba, width, height, blocks);
         }
-        T1_os_gpu_write_tex_slice(array_i, slice_i, blocks);
+        T1_os_gpu_write_tex_slice(
+            array_i, slice_i, x, y, width, height, blocks);
         T1_mem_free_managed(blocks);
         return;
     }
-
+    
     // (the platform copies what it needs: rgba is the caller's again)
-    T1_os_gpu_write_tex_slice(array_i, slice_i, rgba);
-
+    T1_os_gpu_write_tex_slice(array_i, slice_i, x, y, width, height, rgba);
+    
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     T1_os_gpu_generate_mipmaps_for_texture_array(array_i);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     #else
     #error "T1_MIPMAPS_ACTIVE undefined!"
     #endif
+}
+
+void T1_tex_update_from_bc3(
+    T1Tex tex,
+    u32 x,
+    u32 y,
+    u32 width,
+    u32 height,
+    const u8 * bc3)
+{
+    const b8 legal = bc3 != NULL &&
+        T1_tex_update_part_is_legal(tex, x, y, width, height);
+    T1_assert(legal);
+    if (!legal) { return; }
+    const s32 array_i = T1_tex_to_array_i(tex);
+    
+    // a BC3 texture: the blocks as they are
+    if (T1_tex_arrays[array_i].format == T1_TEX_FORMAT_BC3) {
+        T1_os_gpu_write_tex_slice(
+            array_i, T1_tex_to_slice_i(tex), x, y, width, height, bc3);
+        return;
+    }
+    
+    // any other: their pixels
+    u8 * rgba = T1_mem_malloc_managed((u64)width * height * 4);
+    T1_bc_decode(bc3, width, height, /* bc3: */ 1, rgba);
+    T1_tex_update_from_rgba(tex, x, y, width, height, rgba);
+    T1_mem_free_managed(rgba);
 }
 
 void T1_tex_delete(T1Tex tex) {

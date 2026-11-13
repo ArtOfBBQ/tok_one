@@ -58,7 +58,7 @@ int main(void) {
     char * fatal_error = NULL;
     T1_init(malloc, malloc, free, &fatal_error);
     T1_gpu_init(&fatal_error);
-    T1Tex window_tex = T1_tex_new(NULL, WIDTH, HEIGHT,
+    T1Tex window_tex = T1_tex_new(WIDTH, HEIGHT,
         /* compress_if_possible: */ 0, &fatal_error);
     T1_window_open(window_tex, &fatal_error);
     if (fatal_error != NULL) {
@@ -94,7 +94,7 @@ int main(void) {
         }
         draw_number(slowest_us, 8, 8);
         
-        T1_tex_update(window_tex, rgba);
+        T1_tex_update_from_rgba(window_tex, 0, 0, WIDTH, HEIGHT, rgba);
 
         // and ends here, before T1_frame_update() waits again
         uint32_t frame_us = (uint32_t)(T1_time_us() - now_us);

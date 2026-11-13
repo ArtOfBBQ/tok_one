@@ -187,7 +187,7 @@ typedef struct {
 } T1CGSize;
 
 /*
-A T1_buf_write() or T1_tex_update() waiting for the next frame: its bytes
+A T1_buf_write() or texture update waiting for the next frame: its bytes
 were copied into staging right away, the frame's first blit copies them to
 the T1Buf, or to the texture array's slice (whichever texture the array has
 by then: it may have grown since)
@@ -199,12 +199,17 @@ typedef struct {
     u64 offset;
     u64 size;
     u32 buf_i;
-    // a texture's slice instead (-1: a T1Buf's), w * h pixels in format
+    // a texture's slice instead (-1: a T1Buf's), of an array tex_w * tex_h
+    // in tex_format: the part at (x, y), w * h pixels
     s32 tex_array_i;
     s32 tex_slice_i;
     u32 tex_w;
     u32 tex_h;
     T1TexFormat tex_format;
+    u32 x;
+    u32 y;
+    u32 w;
+    u32 h;
 } T1GPUBufWrite;
 
 /*
@@ -1445,7 +1450,7 @@ void T1_os_gpu_update_capacity_if_needed(
         /*
         No waiting: the command buffer keeps the old texture until it's
         copied, and runs before anything committed after it (the frame,
-        whose first blits are the waiting T1_tex_update()s)
+        whose first blits are the waiting texture updates)
         */
         T1_objc_msg(combuf, ags->sel_commit);
         
@@ -1519,17 +1524,26 @@ typedef void (* T1GPUCopyBufToTexFn)(
 static u8 T1_gpu_queue_tex_write(
     const s32 tex_array_i,
     const s32 tex_slice_i,
-    const u8 * rgba,
+    const u32 x,
+    const u32 y,
     const u32 w,
-    const u32 h);
+    const u32 h,
+    const u8 * pixels);
+
+static void T1_gpu_encode_buf_writes(void * combuf);
 
 void T1_os_gpu_write_tex_slice(
     s32 tex_array_i,
     s32 tex_slice_i,
-    const u8 * rgba)
+    u32 x,
+    u32 y,
+    u32 w,
+    u32 h,
+    const u8 * pixels)
 {
     if (!ags || !ags->metal_active) { return; }
     
+    const u8 * rgba = pixels;
     T1_assert(rgba != NULL);
     T1_assert(tex_slice_i >= 0);
     T1_assert(tex_array_i >= 0);
@@ -1538,8 +1552,8 @@ void T1_os_gpu_write_tex_slice(
     
     T1_os_gpu_update_capacity_if_needed(tex_array_i);
     
-    u32 img_width = T1_tex_arrays[tex_array_i].single_img_width;
-    u32 img_height = T1_tex_arrays[tex_array_i].single_img_height;
+    T1_assert(x + w <= T1_tex_arrays[tex_array_i].single_img_width);
+    T1_assert(y + h <= T1_tex_arrays[tex_array_i].single_img_height);
     
     /*
     Usually copied into the frame's staging and left for the next frame,
@@ -1552,18 +1566,17 @@ void T1_os_gpu_write_tex_slice(
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     // (a compressed array has no mipmaps)
     const u8 queued = format == T1_TEX_FORMAT_RGBA8 ? 0 :
-        T1_gpu_queue_tex_write(
-            tex_array_i, tex_slice_i, rgba, img_width, img_height);
+        T1_gpu_queue_tex_write(tex_array_i, tex_slice_i, x, y, w, h, rgba);
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
     const u8 queued = T1_gpu_queue_tex_write(
-        tex_array_i, tex_slice_i, rgba, img_width, img_height);
+        tex_array_i, tex_slice_i, x, y, w, h, rgba);
     #else
     #error
     #endif
     if (queued) { return; }
     
     // (now: a buffer of its own, page aligned for Metal to use as it is)
-    const u32 rgba_size = T1_tex_format_bytes(format, img_width, img_height);
+    const u32 rgba_size = T1_tex_format_bytes(format, w, h);
     u32 temp_buf_cap = rgba_size;
     T1_assert(temp_buf_cap > 0);
     while (temp_buf_cap % T1_mem_page_size != 0) {
@@ -1599,6 +1612,8 @@ void T1_os_gpu_write_tex_slice(
     void * combuf = (void *)T1_objc_msg(
         ags->command_queue,
         ags->sel_command_buffer);
+    // (the writes waiting go first: one to this slice comes before this one)
+    T1_gpu_encode_buf_writes(combuf);
     
     void * blit_copy_encoder = (void *)T1_objc_msg(
         combuf,
@@ -1609,13 +1624,13 @@ void T1_os_gpu_write_tex_slice(
         ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
         temp_source_buf,
         0,
-        T1_tex_format_row_bytes(format, img_width),
+        T1_tex_format_row_bytes(format, w),
         rgba_size,
-        T1_mtlsize_make(img_width, img_height, 1),
+        T1_mtlsize_make(w, h, 1),
         ags->metal_textures[tex_array_i],
         (uintptr_t)tex_slice_i,
         0,
-        T1_mtlorigin_make(0, 0, 0));
+        T1_mtlorigin_make(x, y, 0));
     
     T1_objc_msg(blit_copy_encoder, ags->sel_end_encoding);
     
@@ -1796,7 +1811,7 @@ static void * T1_gpu_pass_target(
 typedef void (* T1GPUCopyBufFn)(
     void *, void *, void *, uintptr_t, void *, uintptr_t, uintptr_t);
 
-// Encodes the waiting writes (T1_buf_write(), T1_tex_update()) into
+// Encodes the waiting writes (T1_buf_write(), texture updates) into
 // combuf, before anything else
 static void T1_gpu_encode_buf_writes(void * combuf) {
     if (ags->buf_writes_size == 0) { return; }
@@ -1821,13 +1836,13 @@ static void T1_gpu_encode_buf_writes(void * combuf) {
                     ags->sel_copy_from_buffer_source_offset_source_bytes_per_row,
                     w->staging,
                     (uintptr_t)w->staging_offset,
-                    (uintptr_t)T1_tex_format_row_bytes(w->tex_format, w->tex_w),
+                    (uintptr_t)T1_tex_format_row_bytes(w->tex_format, w->w),
                     (uintptr_t)w->size,
-                    T1_mtlsize_make(w->tex_w, w->tex_h, 1),
+                    T1_mtlsize_make(w->w, w->h, 1),
                     texture,
                     (uintptr_t)w->tex_slice_i,
                     0,
-                    T1_mtlorigin_make(0, 0, 0));
+                    T1_mtlorigin_make(w->x, w->y, 0));
             }
             T1_gpu_release(&w->staging);
             continue;
@@ -1993,9 +2008,11 @@ doesn't fit the staging (T1_GPU_STAGING_MAX_SIZE): the caller sends it now
 static u8 T1_gpu_queue_tex_write(
     const s32 tex_array_i,
     const s32 tex_slice_i,
-    const u8 * rgba,
+    const u32 x,
+    const u32 y,
     const u32 w,
-    const u32 h)
+    const u32 h,
+    const u8 * pixels)
 {
     const T1TexFormat format = T1_tex_arrays[tex_array_i].format;
     const u64 size = T1_tex_format_bytes(format, w, h);
@@ -2023,7 +2040,7 @@ static u8 T1_gpu_queue_tex_write(
     if (staging == NULL) { return 0; }
     T1_std_memcpy(
         (u8 *)T1_objc_msg(staging, ags->sel_contents) + staging_offset,
-        rgba,
+        pixels,
         size);
     
     T1GPUBufWrite * write = ags->buf_writes + ags->buf_writes_size;
@@ -2035,9 +2052,13 @@ static u8 T1_gpu_queue_tex_write(
     write->buf_i = 0;
     write->tex_array_i = tex_array_i;
     write->tex_slice_i = tex_slice_i;
-    write->tex_w = w;
-    write->tex_h = h;
+    write->tex_w = T1_tex_arrays[tex_array_i].single_img_width;
+    write->tex_h = T1_tex_arrays[tex_array_i].single_img_height;
     write->tex_format = format;
+    write->x = x;
+    write->y = y;
+    write->w = w;
+    write->h = h;
     return 1;
 }
 
