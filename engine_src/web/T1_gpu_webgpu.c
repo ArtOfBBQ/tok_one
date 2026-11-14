@@ -48,6 +48,8 @@ T1_WEB_IMPORT(gpu_mips) void T1_web_gpu_mips(s32 array_i);
 // 1 if the device samples BC1 and BC3
 T1_WEB_IMPORT(gpu_samples_bc) u32 T1_web_gpu_samples_bc(void);
 T1_WEB_IMPORT(gpu_tex_delete) void T1_web_gpu_tex_delete(s32 array_i);
+// the depth buffer of passes with this "depth_tex", if there is one
+T1_WEB_IMPORT(gpu_depth_delete) void T1_web_gpu_depth_delete(u32 tex);
 T1_WEB_IMPORT(gpu_tex_write) void T1_web_gpu_tex_write(
     s32 array_i,
     s32 slice_i,
@@ -158,6 +160,11 @@ TEXTURES
 
 b8 T1_os_gpu_samples_bc(void) {
     return T1_wgpu.active && T1_web_gpu_samples_bc() != 0;
+}
+
+void T1_os_gpu_tex_deleted(u32 tex) {
+    if (!T1_wgpu.active) { return; }
+    T1_web_gpu_depth_delete(tex);
 }
 
 /*

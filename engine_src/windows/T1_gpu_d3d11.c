@@ -930,6 +930,18 @@ b8 T1_os_gpu_samples_bc(void) {
     return T1_os_gpu_active();
 }
 
+void T1_os_gpu_tex_deleted(u32 tex) {
+    if (T1_d3d == NULL) { return; }
+    for (u32 i = 0; i < T1_D3D_TEX_DEPTHS_CAP; i++) {
+        T1D3DTexDepth * d = &T1_d3d->tex_depths[i];
+        if (d->depth != NULL && d->tex == tex) {
+            T1_D3D_RELEASE(d->dsv);
+            T1_D3D_RELEASE(d->depth);
+            d->last_used_frame = 0;
+        }
+    }
+}
+
 static u32 T1_gpu_d3d11_format(const T1TexFormat format) {
     if (format == T1_TEX_FORMAT_BC1) { return T1DXGI_FORMAT_BC1_UNORM; }
     if (format == T1_TEX_FORMAT_BC3) { return T1DXGI_FORMAT_BC3_UNORM; }

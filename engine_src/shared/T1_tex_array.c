@@ -422,7 +422,8 @@ void T1_tex_update_from_bc3(
 
 void T1_tex_delete(T1Tex tex) {
     if (tex == T1_TEX_NONE) { return; }
-    
+
+    T1_os_gpu_tex_deleted((u32)tex);
     T1_tex_array_delete_slice(
         T1_tex_to_array_i(tex),
         T1_tex_to_slice_i(tex));

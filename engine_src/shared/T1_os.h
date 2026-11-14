@@ -232,6 +232,12 @@ void T1_os_gpu_write_tex_slice(
 // Whether this GPU samples BC1 and BC3 (0 before the GPU is up)
 b8 T1_os_gpu_samples_bc(void);
 
+/*
+tex is deleted: the depth buffer passes with it as their "depth_tex" drew
+into goes too (a texture made later may get the same T1Tex)
+*/
+void T1_os_gpu_tex_deleted(u32 tex);
+
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 
 void T1_os_gpu_delete_texture_array(

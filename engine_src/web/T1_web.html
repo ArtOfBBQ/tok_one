@@ -1393,6 +1393,15 @@ function slice_copy_view(array_i, slice_i) {
     return copy.createView({dimension: "2d"});
 }
 
+// tex is deleted: its depth buffer too (see T1_os_gpu_tex_deleted())
+function gpu_depth_delete(tex) {
+    const d = depths.get(tex);
+    if (d !== undefined) {
+        d.texture.destroy();
+        depths.delete(tex);
+    }
+}
+
 function depth_view(depth_tex, width, height) {
     let d = depths.get(depth_tex);
     if (d === undefined || d.width !== width || d.height !== height) {
@@ -2057,6 +2066,7 @@ const t1_imports = {
     gpu_samples_bc: gpu_samples_bc,
     gpu_mips: gpu_mips,
     gpu_tex_delete: gpu_tex_delete,
+    gpu_depth_delete: gpu_depth_delete,
     gpu_tex_write: gpu_tex_write,
     gpu_clear: gpu_clear,
     gpu_present: gpu_present,

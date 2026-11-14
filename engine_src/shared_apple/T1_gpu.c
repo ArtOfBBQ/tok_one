@@ -1276,6 +1276,18 @@ b8 T1_os_gpu_samples_bc(void) {
     return ags != NULL && ags->metal_active && ags->samples_bc;
 }
 
+void T1_os_gpu_tex_deleted(u32 tex) {
+    if (ags == NULL) { return; }
+    // (a frame in flight keeps its own reference)
+    for (u32 i = 0; i < T1_GPU_TEX_DEPTHS_CAP; i++) {
+        T1GPUTexDepth * d = &ags->tex_depths[i];
+        if (d->depth != NULL && d->tex == tex) {
+            T1_gpu_release(&d->depth);
+            d->last_used_frame = 0;
+        }
+    }
+}
+
 static uintptr_t T1_gpu_pixel_format(const T1TexFormat format) {
     if (format == T1_TEX_FORMAT_BC3) { return T1MTLPixelFormatBC3_RGBA; }
     if (format == T1_TEX_FORMAT_BC1) { return T1MTLPixelFormatBC1_RGBA; }
