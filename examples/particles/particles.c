@@ -128,8 +128,8 @@ int main(void) {
     uint32_t pixel_w = 0;
     uint32_t pixel_h = 0;
     T1_window_get_size(&pixel_w, &pixel_h);
-    T1Tex window_tex = T1_tex_new(pixel_w, pixel_h,
-        /* compress_if_possible: */ 0, &fatal_error);
+    T1Tex window_tex = T1_tex_new_rgba(pixel_w, pixel_h,
+        &fatal_error);
     T1_window_open(window_tex, &fatal_error);
 
     T1Buf particles = T1_buf_new(sizeof(Particle) * PARTICLES, &fatal_error);
@@ -192,8 +192,8 @@ int main(void) {
              T1_tex_get_height(window_tex) != pixel_h))
         {
             T1_tex_delete(window_tex);
-            window_tex = T1_tex_new(pixel_w, pixel_h,
-                /* compress_if_possible: */ 0, &fatal_error);
+            window_tex = T1_tex_new_rgba(pixel_w, pixel_h,
+                &fatal_error);
             if (fatal_error != NULL) {
                 printf("%s\n", fatal_error);
                 return 1;

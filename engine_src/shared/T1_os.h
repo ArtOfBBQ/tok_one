@@ -229,12 +229,8 @@ void T1_os_gpu_write_tex_slice(
     u32 h,
     const u8 * pixels);
 
-/*
-The T1TexFormat (T1_tex_array.h) compressed textures take on this GPU, the
-first it samples of BC3 and ETC2 + EAC; rgba8 (no compression) if neither,
-or before the GPU is up
-*/
-u8 T1_os_gpu_compressed_format(void);
+// Whether this GPU samples BC1 and BC3 (0 before the GPU is up)
+b8 T1_os_gpu_samples_bc(void);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
 

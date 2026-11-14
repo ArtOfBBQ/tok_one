@@ -33,9 +33,8 @@
 #define T1MTLPixelFormatInvalid 0
 #define T1MTLPixelFormatRGBA8Unorm 70
 #define T1MTLPixelFormatBGRA8Unorm 80
+#define T1MTLPixelFormatBC1_RGBA 130
 #define T1MTLPixelFormatBC3_RGBA 134
-#define T1MTLPixelFormatEAC_RGBA8 178
-#define T1MTLGPUFamilyApple1 1001
 #define T1MTLPixelFormatDepth32Float 252
 #define T1MTLDepthClipModeClip 0
 #define T1MTLDepthClipModeClamp 1
@@ -426,7 +425,7 @@ typedef struct {
     u64 frame_gpu_us; // see T1_gpu_frame_us()
     u8  frame_i;
     b8  metal_active;
-    u8  compressed_format; // see T1_os_gpu_compressed_format()
+    b8  samples_bc; // see T1_os_gpu_samples_bc()
     b8  shaders_ready;
     b8  objc_metal_framework_good;
 } AppleGPUState;
@@ -761,32 +760,16 @@ void T1_apple_gpu_init(
         ags->sel_new_command_queue);
     
     /*
-    The compressed format: BC3 if the GPU samples it (every Mac's, Intel
-    and Apple silicon alike), else ETC2 + EAC (every Apple GPU: iPhones and
-    iPads), else none. (Each asked only if this OS knows how to ask)
+    Whether the GPU samples BC (every Mac's, Intel and Apple silicon alike;
+    asked only if this OS knows how to ask)
     */
     void * sel_responds = T1_objc_reg_sel("respondsToSelector:");
     void * sel_supports_bc = T1_objc_reg_sel("supportsBCTextureCompression");
-    void * sel_supports_family = T1_objc_reg_sel("supportsFamily:");
-    ags->compressed_format = T1_TEX_FORMAT_RGBA8;
-    if (
-        (T1_objc_msg_1arg(
-            ags->device, sel_responds, (uintptr_t)sel_supports_family) &
-                0xFF) != 0 &&
-        (T1_objc_msg_1arg(
-            ags->device, sel_supports_family, T1MTLGPUFamilyApple1) &
-                0xFF) != 0)
-    {
-        ags->compressed_format = T1_TEX_FORMAT_ETC2_EAC;
-    }
-    if (
+    ags->samples_bc =
         (T1_objc_msg_1arg(
             ags->device, sel_responds, (uintptr_t)sel_supports_bc) &
                 0xFF) != 0 &&
-        (T1_objc_msg(ags->device, sel_supports_bc) & 0xFF) != 0)
-    {
-        ags->compressed_format = T1_TEX_FORMAT_BC3;
-    }
+        (T1_objc_msg(ags->device, sel_supports_bc) & 0xFF) != 0;
     
     ags->metal_active = 1;
     
@@ -1289,14 +1272,13 @@ u8 T1_os_gpu_shaders_ready(void) {
     return ags != NULL && ags->shaders_ready;
 }
 
-u8 T1_os_gpu_compressed_format(void) {
-    if (ags == NULL || !ags->metal_active) { return T1_TEX_FORMAT_RGBA8; }
-    return ags->compressed_format;
+b8 T1_os_gpu_samples_bc(void) {
+    return ags != NULL && ags->metal_active && ags->samples_bc;
 }
 
 static uintptr_t T1_gpu_pixel_format(const T1TexFormat format) {
     if (format == T1_TEX_FORMAT_BC3) { return T1MTLPixelFormatBC3_RGBA; }
-    if (format == T1_TEX_FORMAT_ETC2_EAC) { return T1MTLPixelFormatEAC_RGBA8; }
+    if (format == T1_TEX_FORMAT_BC1) { return T1MTLPixelFormatBC1_RGBA; }
     return T1MTLPixelFormatRGBA8Unorm;
 }
 

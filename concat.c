@@ -139,7 +139,6 @@ static const char * c_files[] = {
 "T1_tex.c",
 "T1_tex_array.c",
 "T1_bc.c",
-"T1_etc.c",
 "T1_gameloop.c",
 "T1_appinit.c",
 };

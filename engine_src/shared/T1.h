@@ -12,7 +12,7 @@ APPLICATION STARTUP
 T1_init(malloc, malloc, free, &fatal_error);
 T1_gpu_init(&fatal_error);
 T1_gpu_try_shader_source(...); // only for your own pipelines
-T1Tex window_tex = T1_tex_new(width, height, 0, &fatal_error);
+T1Tex window_tex = T1_tex_new_rgba(width, height, &fatal_error);
 T1_window_open(window_tex, &fatal_error);
 
 T1 allocates only through your functions (aligned like malloc()).
@@ -97,15 +97,25 @@ uint8_t   T1_io_consume_mouse_drag(float * delta_x, float * delta_y);
 
 /*
 TEXTURES
-compress_if_possible: kept compressed (a quarter of the memory) when the GPU
-and size allow, then only sampled: no pass draws into, writes or reads it.
-Updates take x, y, width and height in multiples of 4 (or up to the edge),
-copy the pixels and return at once.
+A texture takes updates in the format it was made for, and keeps them so.
+BC1 (8 bytes a 4x4 block, colour) and BC3 (16, colour and alpha) are an
+eighth and a quarter of rgba8's memory: sides in multiples of 4, only
+sampled (no pass draws into, writes or reads them). A GPU that can't sample
+BC fails T1_tex_new_bc*() in builds with asserts; release builds keep them
+as rgba8 there. Updates take x, y, width and height in multiples of 4 (or
+up to the edge), copy the pixels and return at once.
 */
-T1Tex T1_tex_new(
+T1Tex T1_tex_new_rgba(
     uint32_t width,
     uint32_t height,
-    uint8_t compress_if_possible,
+    char ** const fatal_error);
+T1Tex T1_tex_new_bc1(
+    uint32_t width,
+    uint32_t height,
+    char ** const fatal_error);
+T1Tex T1_tex_new_bc3(
+    uint32_t width,
+    uint32_t height,
     char ** const fatal_error);
 void T1_tex_update_from_rgba(
     T1Tex tex,
@@ -114,6 +124,13 @@ void T1_tex_update_from_rgba(
     uint32_t width,
     uint32_t height,
     const uint8_t * rgba);
+void T1_tex_update_from_bc1(
+    T1Tex tex,
+    uint32_t x,
+    uint32_t y,
+    uint32_t width,
+    uint32_t height,
+    const uint8_t * bc1);
 void T1_tex_update_from_bc3(
     T1Tex tex,
     uint32_t x,

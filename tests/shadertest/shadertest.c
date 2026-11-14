@@ -766,9 +766,9 @@ static uint8_t compiled(const char * section) {
 }
 
 static T1Tex new_tex(uint32_t w, uint32_t h, const uint8_t * rgba) {
-    T1Tex tex = T1_tex_new(w, h,
-        /* compress_if_possible: */ 0, &fatal_error);
-    if (fatal_error != NULL) { fail_fatal("T1_tex_new"); }
+    T1Tex tex = T1_tex_new_rgba(w, h,
+        &fatal_error);
+    if (fatal_error != NULL) { fail_fatal("T1_tex_new_rgba"); }
     if (rgba != NULL) { T1_tex_update_from_rgba(tex, 0, 0, w, h, rgba); }
     return tex;
 }

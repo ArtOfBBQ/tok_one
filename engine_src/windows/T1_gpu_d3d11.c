@@ -925,12 +925,13 @@ static void T1_gpu_d3d11_release_tex_views(s32 array_i) {
     }
 }
 
-u8 T1_os_gpu_compressed_format(void) {
-    // (BC3: every feature level 11_0 GPU, and WARP, samples it)
-    return T1_os_gpu_active() ? T1_TEX_FORMAT_BC3 : T1_TEX_FORMAT_RGBA8;
+b8 T1_os_gpu_samples_bc(void) {
+    // (every feature level 11_0 GPU, and WARP, samples BC1 and BC3)
+    return T1_os_gpu_active();
 }
 
 static u32 T1_gpu_d3d11_format(const T1TexFormat format) {
+    if (format == T1_TEX_FORMAT_BC1) { return T1DXGI_FORMAT_BC1_UNORM; }
     if (format == T1_TEX_FORMAT_BC3) { return T1DXGI_FORMAT_BC3_UNORM; }
     return T1DXGI_FORMAT_R8G8B8A8_UNORM;
 }

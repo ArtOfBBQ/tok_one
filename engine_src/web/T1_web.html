@@ -716,7 +716,7 @@ async function gpu_init(mipmaps) {
     // the GPU's frame time, where it has timestamps (see THE FRAME'S TIME)
     const features = [];
     for (const f of [
-        "timestamp-query", "texture-compression-bc", "texture-compression-etc2",
+        "timestamp-query", "texture-compression-bc",
     ]) {
         if (adapter.features.has(f)) { features.push(f); }
     }
@@ -759,8 +759,7 @@ async function gpu_init(mipmaps) {
         [info.vendor, info.architecture, info.description]
             .filter((s) => s).join(" ") +
         (timer !== null ? ", timing the GPU" : ", the GPU untimed") +
-        ", compressed textures " +
-        ["off", "BC3", "ETC2"][gpu_compressed_format()];
+        ", BC textures " + (gpu_samples_bc() ? "on" : "off");
     console.log(text);
     log_to_terminal(text);
     device.addEventListener("uncapturederror", (e) => {
@@ -844,12 +843,10 @@ const tex_usage =
 T1TexFormat (T1_tex_array.h): rgba8, or compressed (only sampled, never
 drawn or written into, so no render target or storage use)
 */
-const tex_formats = ["rgba8unorm", "bc3-rgba-unorm", "etc2-rgba8unorm"];
+const tex_formats = ["rgba8unorm", "bc1-rgba-unorm", "bc3-rgba-unorm"];
 
-function gpu_compressed_format() {
-    if (device.features.has("texture-compression-bc")) { return 1; }
-    if (device.features.has("texture-compression-etc2")) { return 2; }
-    return 0;
+function gpu_samples_bc() {
+    return device.features.has("texture-compression-bc") ? 1 : 0;
 }
 
 function gpu_tex_array(array_i, width, height, slices, format, mips) {
@@ -2057,7 +2054,7 @@ const t1_imports = {
     gpu_lost: () => gpu_lost ? 1 : 0,
     gpu_name: gpu_name,
     gpu_tex_array: gpu_tex_array,
-    gpu_compressed_format: gpu_compressed_format,
+    gpu_samples_bc: gpu_samples_bc,
     gpu_mips: gpu_mips,
     gpu_tex_delete: gpu_tex_delete,
     gpu_tex_write: gpu_tex_write,

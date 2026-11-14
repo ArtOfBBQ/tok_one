@@ -45,8 +45,8 @@ T1_WEB_IMPORT(gpu_tex_array) void T1_web_gpu_tex_array(
     s32 array_i, u32 width, u32 height, u32 slices, u32 format, u32 mips);
 // the array's smaller mip levels from its first, for the slices written
 T1_WEB_IMPORT(gpu_mips) void T1_web_gpu_mips(s32 array_i);
-// the T1TexFormat compressed textures take: BC3, else ETC2 + EAC, else rgba8
-T1_WEB_IMPORT(gpu_compressed_format) u32 T1_web_gpu_compressed_format(void);
+// 1 if the device samples BC1 and BC3
+T1_WEB_IMPORT(gpu_samples_bc) u32 T1_web_gpu_samples_bc(void);
 T1_WEB_IMPORT(gpu_tex_delete) void T1_web_gpu_tex_delete(s32 array_i);
 T1_WEB_IMPORT(gpu_tex_write) void T1_web_gpu_tex_write(
     s32 array_i,
@@ -156,10 +156,8 @@ const char * T1_os_gpu_name(void) {
 TEXTURES
 */
 
-u8 T1_os_gpu_compressed_format(void) {
-    // the first the device has of BC3 and ETC2 + EAC, like on Metal
-    if (!T1_wgpu.active) { return T1_TEX_FORMAT_RGBA8; }
-    return (u8)T1_web_gpu_compressed_format();
+b8 T1_os_gpu_samples_bc(void) {
+    return T1_wgpu.active && T1_web_gpu_samples_bc() != 0;
 }
 
 /*
